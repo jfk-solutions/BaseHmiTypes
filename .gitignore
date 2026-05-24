@@ -1,0 +1,8 @@
+bin/
+obj/
+dist/
+node_modules/
+*.user
+*.suo
+*.nupkg
+*.snupkg
