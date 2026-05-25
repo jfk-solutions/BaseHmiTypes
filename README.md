@@ -32,6 +32,7 @@ npm run build
 The first model slice covers screen-related objects:
 
 - base screen model/container types
+- screen-owned layers as non-visual item containers
 - screens and screen windows
 - shape objects
 - widget objects

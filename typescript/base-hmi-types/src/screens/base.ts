@@ -6,6 +6,12 @@ export abstract class HmiModelBase {
 export abstract class HmiScreenModelBase extends HmiModelBase {}
 
 export abstract class HmiScreenBase extends HmiScreenModelBase {
+  readonly layers: HmiLayer[] = [];
+}
+
+export class HmiLayer extends HmiModelBase {
+  visible = true;
+  locked = false;
   readonly items: HmiScreenItemBase[] = [];
 }
 
