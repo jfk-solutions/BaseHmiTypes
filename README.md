@@ -8,8 +8,10 @@ The goal is that readers for systems such as WinCC Advanced, WinCC Professional,
 ## Projects
 
 - `src/BaseHmiTypes`: C# class library targeting `net8.0`.
+- `src/BaseHmiTypes/Projects`: project root and source metadata types.
 - `src/BaseHmiTypes/Screens`: UI and screen-related C# model types.
 - `typescript/base-hmi-types`: mirrored TypeScript package.
+- `typescript/base-hmi-types/src/projects.ts`: mirrored project root and metadata types.
 - `typescript/base-hmi-types/src/screens`: UI and screen-related TypeScript model types.
 
 ## Development Rule
@@ -31,6 +33,7 @@ npm run build
 
 The first model slice covers screen-related objects:
 
+- project root and project info metadata
 - base screen model/container types
 - screen-owned layers as non-visual item containers
 - screens and screen windows
