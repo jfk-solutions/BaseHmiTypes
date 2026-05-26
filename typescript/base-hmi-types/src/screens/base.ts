@@ -1,60 +1,21 @@
-export abstract class HmiModelBase {
-  id?: string;
-  name?: string;
-}
-
-export abstract class HmiScreenModelBase extends HmiModelBase {}
-
-export abstract class HmiScreenBase extends HmiScreenModelBase {
-  readonly layers: HmiLayer[] = [];
-}
-
-export class HmiLayer extends HmiModelBase {
-  visible = true;
-  locked = false;
-  readonly items: HmiScreenItemBase[] = [];
-}
-
-export abstract class HmiScreenItemBase extends HmiScreenModelBase {
-  x = 0;
-  y = 0;
-  width = 0;
-  height = 0;
-  visible = true;
-}
-
-export abstract class HmiLayoutContainerBase extends HmiScreenItemBase {
-  readonly items: HmiScreenItemBase[] = [];
-}
-
-export abstract class HmiSimpleScreenItemBase extends HmiScreenItemBase {}
-
-export abstract class HmiWindowBase extends HmiScreenItemBase {}
-
-export class HmiGroup extends HmiLayoutContainerBase {}
-
-export class HmiCustomWidgetContainer extends HmiSimpleScreenItemBase {}
-
-export abstract class HmiContainerBase extends HmiWindowBase {
-  readonly items: HmiScreenItemBase[] = [];
-}
-
-export abstract class HmiControlWindowBase extends HmiWindowBase {}
-
-export class HmiDcsFaceplateContainer extends HmiWindowBase {}
-
-export class HmiSymbolContainer extends HmiCustomWidgetContainer {}
-
-export class HmiCustomWebControlContainer extends HmiContainerBase {}
-
-export class HmiDotNetControlContainer extends HmiContainerBase {}
-
-export class HmiFaceplateContainer extends HmiContainerBase {}
-
-export class HmiSwacContainer extends HmiContainerBase {}
-
-export class HmiFaceplateType extends HmiScreenBase {}
-
-export abstract class HmiCompanionBase extends HmiControlWindowBase {}
-
-export abstract class HmiTrendControlBase extends HmiControlWindowBase {}
+export * from "./base/HmiModelBase.js";
+export * from "./base/HmiScreenModelBase.js";
+export * from "./base/HmiScreenBase.js";
+export * from "./base/HmiLayer.js";
+export * from "./base/HmiScreenItemBase.js";
+export * from "./base/HmiLayoutContainerBase.js";
+export * from "./base/HmiSimpleScreenItemBase.js";
+export * from "./base/HmiWindowBase.js";
+export * from "./base/HmiGroup.js";
+export * from "./base/HmiCustomWidgetContainer.js";
+export * from "./base/HmiContainerBase.js";
+export * from "./base/HmiControlWindowBase.js";
+export * from "./base/HmiDcsFaceplateContainer.js";
+export * from "./base/HmiSymbolContainer.js";
+export * from "./base/HmiCustomWebControlContainer.js";
+export * from "./base/HmiDotNetControlContainer.js";
+export * from "./base/HmiFaceplateContainer.js";
+export * from "./base/HmiSwacContainer.js";
+export * from "./base/HmiFaceplateType.js";
+export * from "./base/HmiCompanionBase.js";
+export * from "./base/HmiTrendControlBase.js";

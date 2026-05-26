@@ -1,62 +1,19 @@
-import { HmiSimpleScreenItemBase } from "./base.js";
-
-export abstract class HmiShapeBase extends HmiSimpleScreenItemBase {}
-
-export abstract class HmiCentricShapeBase extends HmiShapeBase {
-  centerX = 0;
-  centerY = 0;
-}
-
-export abstract class HmiSurfaceShapeBase extends HmiShapeBase {}
-
-export abstract class HmiCircularShapeBase extends HmiCentricShapeBase {
-  radius = 0;
-}
-
-export abstract class HmiEllipticalShapeBase extends HmiCentricShapeBase {
-  radiusX = 0;
-  radiusY = 0;
-}
-
-export class HmiRectangle extends HmiSurfaceShapeBase {}
-
-export class HmiText extends HmiSurfaceShapeBase {
-  text?: string;
-}
-
-export class HmiGraphicView extends HmiSurfaceShapeBase {
-  source?: string;
-}
-
-export class HmiLine extends HmiSurfaceShapeBase {}
-
-export abstract class HmiPointBasedShapeBase extends HmiSurfaceShapeBase {
-  readonly points: HmiPoint[] = [];
-}
-
-export class HmiCircle extends HmiCircularShapeBase {}
-
-export class HmiCircleSegment extends HmiCircle {}
-
-export class HmiCircularArc extends HmiCircularShapeBase {
-  startAngle = 0;
-  sweepAngle = 0;
-}
-
-export class HmiEllipse extends HmiEllipticalShapeBase {}
-
-export class HmiEllipseSegment extends HmiEllipse {}
-
-export class HmiEllipticalArc extends HmiEllipticalShapeBase {
-  startAngle = 0;
-  sweepAngle = 0;
-}
-
-export class HmiPolygon extends HmiPointBasedShapeBase {}
-
-export class HmiPolyline extends HmiPointBasedShapeBase {}
-
-export interface HmiPoint {
-  x: number;
-  y: number;
-}
+export * from "./shapes/HmiShapeBase.js";
+export * from "./shapes/HmiCentricShapeBase.js";
+export * from "./shapes/HmiSurfaceShapeBase.js";
+export * from "./shapes/HmiCircularShapeBase.js";
+export * from "./shapes/HmiEllipticalShapeBase.js";
+export * from "./shapes/HmiRectangle.js";
+export * from "./shapes/HmiText.js";
+export * from "./shapes/HmiGraphicView.js";
+export * from "./shapes/HmiLine.js";
+export * from "./shapes/HmiPointBasedShapeBase.js";
+export * from "./shapes/HmiCircle.js";
+export * from "./shapes/HmiCircleSegment.js";
+export * from "./shapes/HmiCircularArc.js";
+export * from "./shapes/HmiEllipse.js";
+export * from "./shapes/HmiEllipseSegment.js";
+export * from "./shapes/HmiEllipticalArc.js";
+export * from "./shapes/HmiPolygon.js";
+export * from "./shapes/HmiPolyline.js";
+export * from "./shapes/HmiPoint.js";

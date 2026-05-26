@@ -8,17 +8,19 @@ The goal is that readers for systems such as WinCC Advanced, WinCC Professional,
 ## Projects
 
 - `src/BaseHmiTypes`: C# class library targeting `net8.0`.
-- `src/BaseHmiTypes/Projects`: project root and source metadata types.
+- `src/BaseHmiTypes/Projects`: project base, lazy project interface, descriptors, and source metadata types.
 - `src/BaseHmiTypes/Screens`: UI and screen-related C# model types.
 - `typescript/base-hmi-types`: mirrored TypeScript package.
-- `typescript/base-hmi-types/src/projects.ts`: mirrored project root and metadata types.
+- `typescript/base-hmi-types/src/projects.ts`: mirrored project API barrel.
 - `typescript/base-hmi-types/src/screens`: UI and screen-related TypeScript model types.
 
 ## Development Rule
 
-The C# model and TypeScript model are kept in sync manually for now. When a class, base class, or public container property changes in `src/BaseHmiTypes/Screens`, make the matching change in `typescript/base-hmi-types/src/screens`.
+The C# model and TypeScript model are kept in sync manually for now. When a class, base class, interface, or public container property changes in `src/BaseHmiTypes`, make the matching change in `typescript/base-hmi-types/src`.
 
 Property abstraction is intentionally left for a later step, because many HMI properties can later become static, dynamic, scripted, localized, or connected to tags.
+
+Project implementations should implement `IHmiProject`. The project API is intentionally lazy: it exposes lightweight screen descriptors first and loads a full `HmiScreen` only when requested.
 
 ## Build
 
