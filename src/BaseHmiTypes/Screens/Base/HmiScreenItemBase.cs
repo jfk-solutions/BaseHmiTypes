@@ -2,13 +2,31 @@ namespace BaseHmiTypes.Screens.Base;
 
 public abstract class HmiScreenItemBase : HmiScreenModelBase
 {
-    public double X { get; set; }
+    public HmiProperty<double> X { get; set; } = 0;
 
-    public double Y { get; set; }
+    public HmiProperty<double> Y { get; set; } = 0;
 
-    public double Width { get; set; }
+    public HmiProperty<double> Width { get; set; } = 0;
 
-    public double Height { get; set; }
+    public HmiProperty<double> Height { get; set; } = 0;
 
-    public bool Visible { get; set; } = true;
+    public HmiProperty<bool> Visible { get; set; } = true;
+
+    public HmiProperty<bool> Enabled { get; set; } = true;
+
+    public HmiProperty<double>? Opacity { get; set; }
+
+    public HmiProperty<double>? RotationAngle { get; set; }
+
+    public HmiProperty<double>? RotationCenterX { get; set; }
+
+    public HmiProperty<double>? RotationCenterY { get; set; }
+
+    public HmiProperty<int>? TabIndex { get; set; }
+
+    public HmiProperty<string>? ToolTipText { get; set; }
+
+    public HmiProperty<bool>? CanBeGrouped { get; set; }
+
+    public HmiVisualStyle Style { get; } = new HmiVisualStyle();
 }

@@ -2,11 +2,11 @@ namespace BaseHmiTypes.Projects;
 
 public class HmiScreenDescriptor
 {
-    public required string Id { get; init; }
+    public string? Id { get; set; }
 
-    public string? Name { get; init; }
+    public string? Name { get; set; }
 
-    public string? DisplayName { get; init; }
+    public string? DisplayName { get; set; }
 
-    public string? SourceType { get; init; }
+    public string? SourceType { get; set; }
 }

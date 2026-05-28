@@ -4,5 +4,29 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public abstract class HmiTextWidgetBase : HmiWidgetBase
 {
-    public string? Text { get; set; }
+    public HmiProperty<string>? Text { get; set; }
+
+    public HmiProperty<string>? AlternateText { get; set; }
+
+    public HmiProperty<bool>? ReadOnly { get; set; }
+
+    public HmiProperty<int>? TextWrapping { get; set; }
+
+    public HmiProperty<int>? TextTrimming { get; set; }
+
+    public HmiProperty<string>? OutputFormat { get; set; }
+
+    public HmiProperty<string>? FormatPattern { get; set; }
+
+    public HmiProperty<int>? FieldLength { get; set; }
+
+    public HmiProperty<bool>? FitToLargest { get; set; }
+
+    public HmiProperty<bool>? Resizable { get; set; }
+
+    public HmiProperty<double>? ExtraHeightOffset { get; set; }
+
+    public HmiProperty<HmiColor>? AboveUpperLimitColor { get; set; }
+
+    public HmiProperty<HmiColor>? BelowLowerLimitColor { get; set; }
 }

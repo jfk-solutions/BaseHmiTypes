@@ -1,6 +1,13 @@
+import { HmiProperty } from "../base/HmiProperty.js";
 import { HmiWindowBase } from "../base/HmiWindowBase.js";
-import { HmiScreen } from "./HmiScreen.js";
 
 export class HmiScreenWindow extends HmiWindowBase {
-  screen?: HmiScreen;
+  screenId?: string;
+  screenName?: string;
+  tabIntoWindow?: HmiProperty<boolean>;
+  startupPosition?: HmiProperty<number>;
+  windowState?: HmiProperty<number>;
+  isModal?: HmiProperty<boolean>;
+  offsetLeft?: HmiProperty<number>;
+  offsetTop?: HmiProperty<number>;
 }

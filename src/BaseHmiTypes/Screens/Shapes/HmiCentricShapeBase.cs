@@ -4,7 +4,7 @@ namespace BaseHmiTypes.Screens.Shapes;
 
 public abstract class HmiCentricShapeBase : HmiShapeBase
 {
-    public double CenterX { get; set; }
+    public HmiProperty<double> CenterX { get; set; } = 0;
 
-    public double CenterY { get; set; }
+    public HmiProperty<double> CenterY { get; set; } = 0;
 }

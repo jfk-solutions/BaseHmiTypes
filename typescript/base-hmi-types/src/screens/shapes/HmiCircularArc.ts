@@ -1,6 +1,7 @@
+import { HmiProperty, staticProperty } from "../base.js";
 import { HmiCircularShapeBase } from "./HmiCircularShapeBase.js";
 
 export class HmiCircularArc extends HmiCircularShapeBase {
-  startAngle = 0;
-  sweepAngle = 0;
+  startAngle: HmiProperty<number> = staticProperty(0);
+  sweepAngle: HmiProperty<number> = staticProperty(0);
 }

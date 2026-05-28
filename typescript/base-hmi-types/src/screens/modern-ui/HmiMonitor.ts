@@ -1,5 +1,7 @@
+import { HmiProperty, staticProperty } from "../base.js";
+
 export class HmiMonitor {
   name?: string;
-  width = 0;
-  height = 0;
+  width: HmiProperty<number> = staticProperty(0);
+  height: HmiProperty<number> = staticProperty(0);
 }

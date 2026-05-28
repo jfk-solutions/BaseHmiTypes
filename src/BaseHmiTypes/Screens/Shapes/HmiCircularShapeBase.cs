@@ -4,5 +4,5 @@ namespace BaseHmiTypes.Screens.Shapes;
 
 public abstract class HmiCircularShapeBase : HmiCentricShapeBase
 {
-    public double Radius { get; set; }
+    public HmiProperty<double> Radius { get; set; } = 0;
 }

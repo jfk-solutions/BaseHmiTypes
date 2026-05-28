@@ -1,5 +1,18 @@
+import { HmiColor, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 
 export abstract class HmiTextWidgetBase extends HmiWidgetBase {
-  text?: string;
+  text?: HmiProperty<string>;
+  alternateText?: HmiProperty<string>;
+  readOnly?: HmiProperty<boolean>;
+  textWrapping?: HmiProperty<number>;
+  textTrimming?: HmiProperty<number>;
+  outputFormat?: HmiProperty<string>;
+  formatPattern?: HmiProperty<string>;
+  fieldLength?: HmiProperty<number>;
+  fitToLargest?: HmiProperty<boolean>;
+  resizable?: HmiProperty<boolean>;
+  extraHeightOffset?: HmiProperty<number>;
+  aboveUpperLimitColor?: HmiProperty<HmiColor>;
+  belowLowerLimitColor?: HmiProperty<HmiColor>;
 }

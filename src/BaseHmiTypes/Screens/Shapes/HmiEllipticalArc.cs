@@ -4,7 +4,7 @@ namespace BaseHmiTypes.Screens.Shapes;
 
 public class HmiEllipticalArc : HmiEllipticalShapeBase
 {
-    public double StartAngle { get; set; }
+    public HmiProperty<double> StartAngle { get; set; } = 0;
 
-    public double SweepAngle { get; set; }
+    public HmiProperty<double> SweepAngle { get; set; } = 0;
 }

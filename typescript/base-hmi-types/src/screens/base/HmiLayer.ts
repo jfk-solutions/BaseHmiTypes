@@ -1,8 +1,9 @@
 import { HmiModelBase } from "./HmiModelBase.js";
+import { HmiProperty, staticProperty } from "./HmiProperty.js";
 import { HmiScreenItemBase } from "./HmiScreenItemBase.js";
 
 export class HmiLayer extends HmiModelBase {
-  visible = true;
-  locked = false;
+  visible: HmiProperty<boolean> = staticProperty(true);
+  locked: HmiProperty<boolean> = staticProperty(false);
   readonly items: HmiScreenItemBase[] = [];
 }

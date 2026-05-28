@@ -4,7 +4,7 @@ namespace BaseHmiTypes.Screens.Shapes;
 
 public abstract class HmiEllipticalShapeBase : HmiCentricShapeBase
 {
-    public double RadiusX { get; set; }
+    public HmiProperty<double> RadiusX { get; set; } = 0;
 
-    public double RadiusY { get; set; }
+    public HmiProperty<double> RadiusY { get; set; } = 0;
 }

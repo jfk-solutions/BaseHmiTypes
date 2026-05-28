@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/BaseHmiTypes/BaseHmiTypes.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BaseHmiTypes.Tests/BaseHmiTypes.Tests.csproj" />
+  </Folder>
 </Solution>
