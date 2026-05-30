@@ -1,5 +1,7 @@
 namespace BaseHmiTypes.Screens.Base;
 
+using BaseHmiTypes.Scripts;
+
 public abstract class HmiScreenItemBase : HmiScreenModelBase
 {
     public HmiProperty<double> X { get; set; } = 0;
@@ -29,4 +31,6 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
     public HmiProperty<bool>? CanBeGrouped { get; set; }
 
     public HmiVisualStyle Style { get; } = new HmiVisualStyle();
+
+    public IList<HmiEventBinding> Events { get; } = new List<HmiEventBinding>();
 }
