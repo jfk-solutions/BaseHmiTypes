@@ -2,7 +2,7 @@ using BaseHmiTypes.Screens.Base;
 
 namespace BaseHmiTypes.Screens.ModernUI;
 
-public class HmiMonitor
+public class HmiMonitor : IHmiObject
 {
     public string? Name { get; set; }
 

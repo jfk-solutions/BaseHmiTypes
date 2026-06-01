@@ -30,6 +30,8 @@ public class HmiVisualStyle
 
     public HmiProperty<int>? BackFillPattern { get; set; }
 
+    public HmiProperty<HmiFillPattern>? FillPattern { get; set; }
+
     public HmiProperty<int>? CornerRadius { get; set; }
 
     public HmiProperty<int>? CornerStyle { get; set; }

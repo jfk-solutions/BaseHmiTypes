@@ -1,3 +1,3 @@
-import { HmiSimpleScreenItemBase } from "./HmiSimpleScreenItemBase.js";
+import { HmiLayoutContainerBase } from "./HmiLayoutContainerBase.js";
 
-export class HmiCustomWidgetContainer extends HmiSimpleScreenItemBase {}
+export class HmiCustomWidgetContainer extends HmiLayoutContainerBase {}

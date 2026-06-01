@@ -4,6 +4,7 @@ namespace BaseHmiTypes.Screens.Shapes;
 
 public class HmiGraphicView : HmiSurfaceShapeBase
 {
+    //TODO: we have here Source and Image. Source used in Unified, Image in Adavnced and WinnCC (as blob uri atm)
     public HmiProperty<string>? Source { get; set; }
 
     public HmiProperty<HmiImageSource>? Image { get; set; }

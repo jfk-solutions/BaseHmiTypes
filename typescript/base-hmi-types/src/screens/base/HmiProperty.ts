@@ -88,3 +88,21 @@ export function blinkProperty<T>(
 ): HmiBlinkProperty<T> {
   return { kind: HmiPropertyKind.Blink, staticValue, blinkValue, rate, condition, conditionTagName };
 }
+
+export function getStaticValue<T>(property?: HmiProperty<T>): T | undefined {
+  return property?.staticValue;
+}
+
+export function getStaticValueOrDefault<T>(property: HmiProperty<T> | undefined, defaultValue: T): T {
+  return property?.staticValue ?? defaultValue;
+}
+
+export class HmiPropertyExtensions {
+  static getStaticValue<T>(property?: HmiProperty<T>): T | undefined {
+    return getStaticValue(property);
+  }
+
+  static getStaticValueOrDefault<T>(property: HmiProperty<T> | undefined, defaultValue: T): T {
+    return getStaticValueOrDefault(property, defaultValue);
+  }
+}

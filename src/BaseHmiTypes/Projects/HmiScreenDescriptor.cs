@@ -1,12 +1,12 @@
 namespace BaseHmiTypes.Projects;
 
-public class HmiScreenDescriptor
+public class HmiScreenDescriptor : HmiProjectItemDescriptor
 {
-    public string? Id { get; set; }
-
-    public string? Name { get; set; }
-
     public string? DisplayName { get; set; }
 
-    public string? SourceType { get; set; }
+    public HmiScreenDescriptor()
+    {
+        Kind = HmiProjectItemKind.Screen;
+        FolderType = HmiProjectFolderType.Screens;
+    }
 }

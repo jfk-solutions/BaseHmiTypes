@@ -1,5 +1,5 @@
 namespace BaseHmiTypes.Screens.Base;
 
-public class HmiCustomWidgetContainer : HmiSimpleScreenItemBase
+public class HmiCustomWidgetContainer : HmiLayoutContainerBase
 {
 }

@@ -1,0 +1,13 @@
+export enum HmiProjectItemKind {
+  Unknown = "Unknown",
+  Screen = "Screen",
+  TagTable = "TagTable",
+  Tag = "Tag",
+  Script = "Script",
+  TextList = "TextList",
+  GraphicList = "GraphicList",
+  Image = "Image",
+  Cycle = "Cycle",
+  AlarmList = "AlarmList",
+  ConnectionList = "ConnectionList",
+}

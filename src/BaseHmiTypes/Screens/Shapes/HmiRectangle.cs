@@ -4,11 +4,11 @@ namespace BaseHmiTypes.Screens.Shapes;
 
 public class HmiRectangle : HmiSurfaceShapeBase
 {
-    public HmiProperty<double>? TopLeftRadius { get; set; }
+    public HmiProperty<(double x, double y)>? TopLeftRadius { get; set; }
 
-    public HmiProperty<double>? TopRightRadius { get; set; }
+    public HmiProperty<(double x, double y)>? TopRightRadius { get; set; }
 
-    public HmiProperty<double>? BottomLeftRadius { get; set; }
+    public HmiProperty<(double x, double y)>? BottomLeftRadius { get; set; }
 
-    public HmiProperty<double>? BottomRightRadius { get; set; }
+    public HmiProperty<(double x, double y)>? BottomRightRadius { get; set; }
 }

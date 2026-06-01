@@ -124,7 +124,119 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "MissingDetail");
     }
 
-    private sealed class FakeProject : IHmiProject
+    [TestMethod]
+    public async Task ConvertAsync_RendersVectorShapesAsSvg()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "main",
+            Name = "Main",
+            Width = 300,
+            Height = 200
+        };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiLine
+        {
+            Id = "line-1",
+            Name = "PipeLine",
+            Width = 100,
+            Height = 40,
+            X2 = 100,
+            Y2 = 40,
+            Style =
+            {
+                LineColor = HmiColor.FromArgb(255, 255, 0, 0),
+                LineWidth = 3
+            }
+        });
+        var polyline = new HmiPolyline
+        {
+            Id = "polyline-1",
+            Name = "TrendLine",
+            Width = 120,
+            Height = 50
+        };
+        polyline.Points.Add(new HmiPoint(0, 50));
+        polyline.Points.Add(new HmiPoint(40, 10));
+        polyline.Points.Add(new HmiPoint(120, 30));
+        layer.Items.Add(polyline);
+        var polygon = new HmiPolygon
+        {
+            Id = "polygon-1",
+            Name = "TankShape",
+            Width = 90,
+            Height = 90,
+            Style =
+            {
+                BackgroundColor = HmiColor.FromArgb(255, 0, 128, 255),
+                BorderColor = HmiColor.FromArgb(255, 0, 0, 0)
+            }
+        };
+        polygon.Points.Add(new HmiPoint(45, 0));
+        polygon.Points.Add(new HmiPoint(90, 90));
+        polygon.Points.Add(new HmiPoint(0, 90));
+        layer.Items.Add(polygon);
+        layer.Items.Add(new HmiCircle
+        {
+            Id = "circle-1",
+            Name = "StatusLamp",
+            Width = 40,
+            Height = 40,
+            Radius = 18,
+            CenterX = 20,
+            CenterY = 20
+        });
+        layer.Items.Add(new HmiCircularArc
+        {
+            Id = "arc-1",
+            Name = "GaugeArc",
+            Width = 80,
+            Height = 80,
+            Radius = 30,
+            CenterX = 40,
+            CenterY = 40,
+            StartAngle = 180,
+            SweepAngle = 90
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<svg id=\"PipeLine\"");
+        StringAssert.Contains(html, "<line");
+        StringAssert.Contains(html, "stroke=\"#FF0000\"");
+        StringAssert.Contains(html, "stroke-width=\"3\"");
+        StringAssert.Contains(html, "<polyline");
+        StringAssert.Contains(html, "points=\"0,50 40,10 120,30\"");
+        StringAssert.Contains(html, "<polygon");
+        StringAssert.Contains(html, "fill=\"#0080FF\"");
+        StringAssert.Contains(html, "<circle");
+        StringAssert.Contains(html, "r=\"18\"");
+        StringAssert.Contains(html, "<path");
+        StringAssert.Contains(html, "A 30 30 0 0 1");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_RendersRectangleWithDefaultBorder()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiRectangle
+        {
+            Id = "rect-1",
+            Name = "Frame",
+            Width = 100,
+            Height = 50
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"Frame\"");
+        StringAssert.Contains(html, "border: 1px solid #000000;");
+    }
+
+    private sealed class FakeProject : HmiProjectBase
     {
         private readonly Dictionary<string, HmiScreen> _screens;
 
@@ -133,9 +245,7 @@ public class HmiScreenToHtmlConverterTests
             _screens = screens.ToDictionary(screen => screen.Id ?? screen.Name ?? string.Empty);
         }
 
-        public HmiProjectInfo Info { get; } = new HmiProjectInfo();
-
-        public ValueTask<IReadOnlyList<HmiScreenDescriptor>> GetScreensAsync(CancellationToken cancellationToken = default)
+        public override ValueTask<IReadOnlyList<HmiScreenDescriptor>> GetScreensAsync(CancellationToken cancellationToken = default)
         {
             IReadOnlyList<HmiScreenDescriptor> descriptors = _screens.Values
                 .Select(screen => new HmiScreenDescriptor { Id = screen.Id, Name = screen.Name })
@@ -143,7 +253,7 @@ public class HmiScreenToHtmlConverterTests
             return new ValueTask<IReadOnlyList<HmiScreenDescriptor>>(descriptors);
         }
 
-        public ValueTask<HmiScreen?> GetScreenAsync(string screenId, CancellationToken cancellationToken = default)
+        public override ValueTask<HmiScreen?> GetScreenAsync(string screenId, CancellationToken cancellationToken = default)
         {
             _screens.TryGetValue(screenId, out var screen);
             return new ValueTask<HmiScreen?>(screen);

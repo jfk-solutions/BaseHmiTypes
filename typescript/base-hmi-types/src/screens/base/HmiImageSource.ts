@@ -4,6 +4,8 @@ export enum HmiImageSourceKind {
 }
 
 export interface HmiImageSource {
+  imageId?: string;
+  imageName?: string;
   uri?: string;
   kind: HmiImageSourceKind;
 }
