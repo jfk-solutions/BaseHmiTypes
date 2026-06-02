@@ -20,6 +20,8 @@ export * from "./base/HmiContainerBase.js";
 export * from "./base/HmiControlWindowBase.js";
 export * from "./base/HmiDcsFaceplateContainer.js";
 export * from "./base/HmiSymbolContainer.js";
+export * from "./base/HmiSymbolFillColorMode.js";
+export * from "./base/HmiSymbolFlipMode.js";
 export * from "./base/HmiCustomWebControlContainer.js";
 export * from "./base/HmiDotNetControlContainer.js";
 export * from "./base/HmiFaceplateContainer.js";

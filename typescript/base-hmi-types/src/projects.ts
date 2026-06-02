@@ -2,3 +2,8 @@ export * from "./projects/HmiProjectInfo.js";
 export * from "./projects/HmiScreenDescriptor.js";
 export * from "./projects/IHmiProject.js";
 export * from "./projects/HmiProjectBase.js";
+export * from "./projects/HmiProjectFolder.js";
+export * from "./projects/HmiProjectFolderType.js";
+export * from "./projects/HmiProjectItemDescriptor.js";
+export * from "./projects/HmiProjectItemKind.js";
+export * from "./projects/HmiProjectSoftwareType.js";

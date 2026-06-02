@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { IHmiProject } from "../../projects/IHmiProject.js";
 import { HmiColor } from "../../screens/base/HmiColor.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";

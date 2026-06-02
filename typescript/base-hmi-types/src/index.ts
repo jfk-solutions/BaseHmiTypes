@@ -5,6 +5,7 @@ export * from "./converters.js";
 export * from "./cycles.js";
 export * from "./database.js";
 export * from "./images.js";
+export * from "./IHmiObject.js";
 export * from "./projects.js";
 export * from "./screens/base.js";
 export * from "./screens/controls.js";

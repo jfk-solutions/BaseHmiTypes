@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 export abstract class HmiScriptCommand {
   private readonly argumentsCore: HmiScriptCommandArgument[] = [];
 

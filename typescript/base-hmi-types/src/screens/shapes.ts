@@ -17,3 +17,4 @@ export * from "./shapes/HmiEllipticalArc.js";
 export * from "./shapes/HmiPolygon.js";
 export * from "./shapes/HmiPolyline.js";
 export * from "./shapes/HmiPoint.js";
+export * from "./shapes/HmiUnkown.js";
