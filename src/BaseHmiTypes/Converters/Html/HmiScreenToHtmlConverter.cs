@@ -206,8 +206,8 @@ public class HmiScreenToHtmlConverter
         CancellationToken cancellationToken)
     {
         HmiScreen? resolved = null;
-        if (project != null && !string.IsNullOrWhiteSpace(screenWindow.ScreenId))
-            resolved = await project.GetScreenAsync(screenWindow.ScreenId!, cancellationToken).ConfigureAwait(false);
+        if (project != null && !string.IsNullOrWhiteSpace(screenWindow.ScreenId?.StaticValue))
+            resolved = await project.GetScreenAsync(screenWindow.ScreenId!.StaticValue!, cancellationToken).ConfigureAwait(false);
 
         html.Append("<div");
         AppendCommonAttributes(html, screenWindow);
@@ -218,7 +218,7 @@ public class HmiScreenToHtmlConverter
             html.Append("<div");
             AppendAttribute(html, "class", options.MissingScreenPlaceholderCssClass);
             html.Append(">");
-            html.Append(WebUtility.HtmlEncode(screenWindow.ScreenName ?? screenWindow.ScreenId ?? "Missing screen"));
+            html.Append(WebUtility.HtmlEncode(screenWindow.ScreenName?.StaticValue ?? screenWindow.ScreenId?.StaticValue ?? "Missing screen"));
             html.Append("</div>");
         }
         else

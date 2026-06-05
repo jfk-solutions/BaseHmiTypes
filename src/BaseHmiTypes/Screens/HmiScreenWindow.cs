@@ -4,9 +4,9 @@ namespace BaseHmiTypes.Screens;
 
 public class HmiScreenWindow : HmiWindowBase
 {
-    public string? ScreenId { get; set; }
+    public HmiProperty<string>? ScreenId { get; set; }
 
-    public string? ScreenName { get; set; }
+    public HmiProperty<string>? ScreenName { get; set; }
 
     public HmiProperty<bool>? TabIntoWindow { get; set; }
 

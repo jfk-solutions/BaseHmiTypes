@@ -178,7 +178,7 @@ export class HmiScreenToHtmlConverter {
     options: HmiHtmlConvertOptions,
     signal?: AbortSignal,
   ): Promise<void> {
-    const resolved = project && screenWindow.screenId ? await project.getScreen(screenWindow.screenId, signal) : undefined;
+    const resolved = project && screenWindow.screenId?.staticValue ? await project.getScreen(screenWindow.screenId?.staticValue, signal) : undefined;
     html.push("<div");
     appendCommonAttributes(html, screenWindow);
     html.push(">");
@@ -186,7 +186,7 @@ export class HmiScreenToHtmlConverter {
       html.push("<div");
       appendAttribute(html, "class", options.missingScreenPlaceholderCssClass);
       html.push(">");
-      html.push(escapeHtml(screenWindow.screenName ?? screenWindow.screenId ?? "Missing screen"));
+      html.push(escapeHtml(screenWindow.screenName?.staticValue ?? screenWindow.screenId?.staticValue ?? "Missing screen"));
       html.push("</div>");
     } else {
       html.push(await this.convertAsync(resolved, project, options, signal));
