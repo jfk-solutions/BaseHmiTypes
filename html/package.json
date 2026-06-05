@@ -1,0 +1,6 @@
+{
+  "name": "html",
+  "dependencies": {
+    "@node-projects/svghmi.webcomponent": "^1.2.0"
+  }
+}
