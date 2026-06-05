@@ -18,11 +18,23 @@ public class HmiScreenToHtmlConverter
         HmiHtmlConvertOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        return await ConvertCoreAsync(screen, project, options, true, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<string> ConvertCoreAsync(
+        HmiScreen screen,
+        IHmiProject? project,
+        HmiHtmlConvertOptions? options,
+        bool includeRuntime,
+        CancellationToken cancellationToken)
+    {
         options ??= new HmiHtmlConvertOptions();
 
         var html = new StringBuilder();
-        if (options.IncludeMetaCharset)
+        if (includeRuntime && options.IncludeMetaCharset)
             html.Append("<meta charset=\"utf-8\">");
+        if (includeRuntime)
+            AppendRuntimeModule(html);
 
         html.Append("<div");
         AppendAttribute(html, "id", screen.Name);
@@ -78,7 +90,7 @@ public class HmiScreenToHtmlConverter
                 AppendTextBlock(html, text, text.Text.GetStaticValue());
                 break;
             case HmiGraphicView graphicView:
-                AppendImage(html, graphicView, graphicView.Image.GetStaticValue()?.Uri ?? graphicView.Source.GetStaticValue());
+                AppendImage(html, graphicView, graphicView.Image.GetStaticValue()?.Uri ?? graphicView.Source.GetStaticValue(), options);
                 break;
             case HmiRectangle rectangle:
                 AppendRectangle(html, rectangle);
@@ -109,6 +121,9 @@ public class HmiScreenToHtmlConverter
                 break;
             case HmiEllipse ellipse:
                 AppendEllipse(html, ellipse);
+                break;
+            case HmiDynamicSvg dynamicSvg:
+                AppendDynamicSvg(html, dynamicSvg);
                 break;
             case HmiSymbolContainer symbolContainer:
                 await AppendSymbolContainerAsync(html, symbolContainer, project, options, cancellationToken).ConfigureAwait(false);
@@ -168,7 +183,7 @@ public class HmiScreenToHtmlConverter
         html.Append(">");
 
         if (!string.IsNullOrWhiteSpace(imageUri))
-            AppendSymbolImage(html, symbolContainer, image!, imageUri!);
+            AppendSymbolImage(html, symbolContainer, image!, imageUri!, options);
 
         foreach (var child in symbolContainer.Items)
             await AppendItemAsync(html, child, project, options, cancellationToken).ConfigureAwait(false);
@@ -223,7 +238,7 @@ public class HmiScreenToHtmlConverter
         }
         else
         {
-            html.Append(await ConvertAsync(resolved, project, options, cancellationToken).ConfigureAwait(false));
+            html.Append(await ConvertCoreAsync(resolved, project, options, false, cancellationToken).ConfigureAwait(false));
         }
 
         html.Append("</div>");
@@ -479,14 +494,22 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, name, ToCss(value));
     }
 
+    private static void AppendRuntimeModule(StringBuilder html)
+    {
+        html.Append("<script type=\"module\">");
+        html.Append(HmiHtmlRuntimeModule.Script);
+        html.Append("</script>");
+    }
+
     private static void AppendButton(StringBuilder html, HmiButton button)
     {
         html.Append("<button");
         AppendCommonAttributes(html, button);
         html.Append(">");
         var image = button.Image.GetStaticValue();
-        if (!string.IsNullOrWhiteSpace(image?.Uri))
-            AppendInnerImage(html, image.Uri);
+        var imageUri = image?.Uri;
+        if (!string.IsNullOrWhiteSpace(imageUri))
+            AppendInnerImage(html, imageUri);
         html.Append(WebUtility.HtmlEncode(button.Text.GetStaticValue() ?? string.Empty));
         html.Append("</button>");
     }
@@ -524,7 +547,7 @@ public class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendImage(StringBuilder html, HmiScreenItemBase item, string? uri)
+    private static void AppendImage(StringBuilder html, HmiScreenItemBase item, string? uri, HmiHtmlConvertOptions options)
     {
         if (string.IsNullOrWhiteSpace(uri))
         {
@@ -532,9 +555,10 @@ public class HmiScreenToHtmlConverter
             return;
         }
 
+        var imageUri = uri!;
         html.Append("<img");
         AppendCommonAttributes(html, item);
-        AppendAttribute(html, "src", uri);
+        AppendAttribute(html, "src", imageUri);
         html.Append(">");
     }
 
@@ -548,7 +572,7 @@ public class HmiScreenToHtmlConverter
         html.Append(" style=\"width: 100%; height: 100%;\">");
     }
 
-    private static void AppendSymbolImage(StringBuilder html, HmiSymbolContainer symbolContainer, HmiImageSource image, string uri)
+    private static void AppendSymbolImage(StringBuilder html, HmiSymbolContainer symbolContainer, HmiImageSource image, string uri, HmiHtmlConvertOptions options)
     {
         html.Append("<img");
         AppendAttribute(html, "src", uri);
@@ -558,6 +582,53 @@ public class HmiScreenToHtmlConverter
         html.Append(" style=\"position: absolute; inset: 0; width: 100%; height: 100%; display: block;");
         html.Append(symbolContainer.FixedAspectRatio.GetStaticValueOrDefault() ? "object-fit: contain;" : "object-fit: fill;");
         html.Append("\">");
+    }
+
+    private static void AppendDynamicSvg(StringBuilder html, HmiDynamicSvg dynamicSvg)
+    {
+        html.Append("<node-projects-svghmi");
+        AppendCommonAttributes(html, dynamicSvg);
+        AppendAttribute(html, "src", dynamicSvg.Image.GetStaticValue()?.Uri);
+        foreach (var property in dynamicSvg.Properties)
+            AppendAttribute(html, ToDynamicSvgAttributeName(property.Name), FormatDynamicSvgPropertyValue(property.Value.GetStaticValue()));
+        html.Append("></node-projects-svghmi>");
+    }
+
+    private static string? FormatDynamicSvgPropertyValue(object? value)
+    {
+        if (value == null)
+            return null;
+        if (value is bool boolean)
+            return boolean ? "true" : "false";
+        if (value is HmiColor color)
+            return ToCss(color);
+        if (value is IFormattable formattable)
+            return formattable.ToString(null, CultureInfo.InvariantCulture);
+        return value.ToString();
+    }
+
+    private static string? ToDynamicSvgAttributeName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return null;
+
+        var result = new StringBuilder();
+        for (var i = 0; i < name!.Length; i++)
+        {
+            var character = name[i];
+            if (char.IsUpper(character))
+            {
+                if (i > 0)
+                    result.Append('-');
+                result.Append(char.ToLowerInvariant(character));
+            }
+            else
+            {
+                result.Append(character);
+            }
+        }
+
+        return result.ToString();
     }
 
     private static void AppendDiv(StringBuilder html, HmiScreenItemBase item, string? cssClass, string? content)
@@ -692,8 +763,10 @@ public class HmiScreenToHtmlConverter
         }
     }
 
-    private static void AppendAttribute(StringBuilder html, string name, string? value)
+    private static void AppendAttribute(StringBuilder html, string? name, string? value)
     {
+        if (string.IsNullOrWhiteSpace(name))
+            return;
         if (string.IsNullOrWhiteSpace(value))
             return;
 
@@ -750,4 +823,5 @@ public class HmiScreenToHtmlConverter
                 return "center";
         }
     }
+
 }

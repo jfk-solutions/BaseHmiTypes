@@ -1,6 +1,14 @@
 {
   "name": "html",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node build-runtime.mjs"
+  },
   "dependencies": {
-    "@node-projects/svghmi.webcomponent": "^1.2.0"
+    "@node-projects/svghmi.webcomponent": "^1.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.3"
   }
 }

@@ -102,6 +102,8 @@ public class HmiScreenToHtmlConverterTests
 
         StringAssert.Contains(html, "id=\"DetailWindow\"");
         StringAssert.Contains(html, "Loaded lazily");
+        Assert.AreEqual(1, CountOccurrences(html, "<script type=\"module\">"));
+        Assert.AreEqual(1, CountOccurrences(html, "<meta charset=\"utf-8\">"));
     }
 
     [TestMethod]
@@ -236,6 +238,70 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "border: 1px solid #000000;");
     }
 
+    [TestMethod]
+    public async Task ConvertAsync_IncludesInlineHtmlRuntimeModule()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<script type=\"module\">");
+        StringAssert.Contains(html, "customElements.define(\"node-projects-svghmi\"");
+        Assert.AreEqual(1, CountOccurrences(html, "<script type=\"module\">"));
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_RendersDynamicSvgAsSvgHmiWebComponent()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        var dynamicSvg = new HmiDynamicSvg
+        {
+            Id = "symbol-1",
+            Name = "Valve",
+            Width = 32,
+            Height = 32
+        };
+        dynamicSvg.Properties.Add(new HmiDynamicSvgProperty { Name = "FillColor", Value = HmiColor.FromArgb(255, 0, 128, 255) });
+        dynamicSvg.Properties.Add(new HmiDynamicSvgProperty { Name = "ShowCaption", Value = true });
+        layer.Items.Add(dynamicSvg);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<script type=\"module\">");
+        StringAssert.Contains(html, "<node-projects-svghmi id=\"Valve\"");
+        StringAssert.Contains(html, "src=\"symbols/valve.svghmi\"");
+        StringAssert.Contains(html, "fill-color=\"#0080FF\"");
+        StringAssert.Contains(html, "show-caption=\"true\"");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_RendersStaticSvgImagesAsPlainImages()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiGraphicView
+        {
+            Id = "logo-1",
+            Name = "Logo",
+            Width = 32,
+            Height = 32,
+            Image = new HmiImageSource
+            {
+                Kind = HmiImageSourceKind.Uri,
+                Uri = "symbols/logo.svg"
+            }
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<img id=\"Logo\"");
+        StringAssert.Contains(html, "src=\"symbols/logo.svg\"");
+        Assert.IsFalse(html.Contains("<node-projects-svghmi", StringComparison.Ordinal));
+    }
+
     private sealed class FakeProject : HmiProjectBase
     {
         private readonly Dictionary<string, HmiScreen> _screens;
@@ -258,5 +324,18 @@ public class HmiScreenToHtmlConverterTests
             _screens.TryGetValue(screenId, out var screen);
             return new ValueTask<HmiScreen?>(screen);
         }
+    }
+
+    private static int CountOccurrences(string value, string search)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = value.IndexOf(search, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += search.Length;
+        }
+
+        return count;
     }
 }

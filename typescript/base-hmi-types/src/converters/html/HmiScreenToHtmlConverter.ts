@@ -1,8 +1,7 @@
-// @ts-nocheck
-
 import { IHmiProject } from "../../projects/IHmiProject.js";
 import { HmiColor } from "../../screens/base/HmiColor.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
+import { HmiDynamicSvg } from "../../screens/base/HmiDynamicSvg.js";
 import { HmiFont } from "../../screens/base/HmiFont.js";
 import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
@@ -38,6 +37,7 @@ import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiToggleSwitch } from "../../screens/widgets/HmiToggleSwitch.js";
 import { HmiHtmlConvertOptions } from "./HmiHtmlConvertOptions.js";
+import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
 
 type ArcShape = HmiCircularArc | HmiEllipticalArc | HmiCircleSegment | HmiEllipseSegment;
 
@@ -48,9 +48,22 @@ export class HmiScreenToHtmlConverter {
     options: HmiHtmlConvertOptions = new HmiHtmlConvertOptions(),
     signal?: AbortSignal,
   ): Promise<string> {
+    return this.convertCoreAsync(screen, project, options, true, signal);
+  }
+
+  private async convertCoreAsync(
+    screen: HmiScreen,
+    project: IHmiProject | undefined,
+    options: HmiHtmlConvertOptions,
+    includeRuntime: boolean,
+    signal?: AbortSignal,
+  ): Promise<string> {
     const html: string[] = [];
-    if (options.includeMetaCharset) {
+    if (includeRuntime && options.includeMetaCharset) {
       html.push("<meta charset=\"utf-8\">");
+    }
+    if (includeRuntime) {
+      appendRuntimeModule(html);
     }
 
     html.push("<div");
@@ -97,7 +110,7 @@ export class HmiScreenToHtmlConverter {
     } else if (item instanceof HmiTextBox || item instanceof HmiLabel || item instanceof HmiText) {
       appendDiv(html, item, undefined, getStaticValue(item.text));
     } else if (item instanceof HmiGraphicView) {
-      appendImage(html, item, getStaticValue(item.image)?.uri ?? getStaticValue(item.source));
+      appendImage(html, item, getStaticValue(item.image)?.uri ?? getStaticValue(item.source), options);
     } else if (item instanceof HmiRectangle) {
       appendRectangle(html, item);
     } else if (item instanceof HmiLine) {
@@ -118,6 +131,8 @@ export class HmiScreenToHtmlConverter {
       appendCircle(html, item);
     } else if (item instanceof HmiEllipse) {
       appendEllipse(html, item);
+    } else if (item instanceof HmiDynamicSvg) {
+      appendDynamicSvg(html, item);
     } else if (item instanceof HmiSymbolContainer) {
       await this.appendSymbolContainerAsync(html, item, project, options, signal);
     } else if (item instanceof HmiGroup || item instanceof HmiLayoutContainerBase || item instanceof HmiContainerBase) {
@@ -146,7 +161,7 @@ export class HmiScreenToHtmlConverter {
     appendSymbolAttributes(html, symbolContainer);
     html.push(">");
     if (imageUri?.trim()) {
-      appendSymbolImage(html, symbolContainer, image, imageUri);
+      appendSymbolImage(html, symbolContainer, image, imageUri, options);
     }
     for (const child of symbolContainer.items) {
       await this.appendItemAsync(html, child, project, options, signal);
@@ -189,7 +204,7 @@ export class HmiScreenToHtmlConverter {
       html.push(escapeHtml(screenWindow.screenName?.staticValue ?? screenWindow.screenId?.staticValue ?? "Missing screen"));
       html.push("</div>");
     } else {
-      html.push(await this.convertAsync(resolved, project, options, signal));
+      html.push(await this.convertCoreAsync(resolved, project, options, false, signal));
     }
     html.push("</div>");
   }
@@ -418,7 +433,12 @@ function appendRectangle(html: string[], rectangle: HmiRectangle): void {
   html.push("\"></div>");
 }
 
-function appendImage(html: string[], item: HmiScreenItemBase, uri: string | undefined): void {
+function appendImage(
+  html: string[],
+  item: HmiScreenItemBase,
+  uri: string | undefined,
+  options: HmiHtmlConvertOptions,
+): void {
   if (!uri?.trim()) {
     appendDiv(html, item, undefined, undefined);
     return;
@@ -445,6 +465,7 @@ function appendSymbolImage(
   symbolContainer: HmiSymbolContainer,
   image: HmiImageSource | undefined,
   uri: string,
+  options: HmiHtmlConvertOptions,
 ): void {
   html.push("<img");
   appendAttribute(html, "src", uri);
@@ -454,6 +475,61 @@ function appendSymbolImage(
   html.push(" style=\"position: absolute; inset: 0; width: 100%; height: 100%; display: block;");
   html.push(getStaticValueOrDefault(symbolContainer.fixedAspectRatio, false) ? "object-fit: contain;" : "object-fit: fill;");
   html.push("\">");
+}
+
+function appendDynamicSvg(html: string[], dynamicSvg: HmiDynamicSvg): void {
+  html.push("<node-projects-svghmi");
+  appendCommonAttributes(html, dynamicSvg);
+  appendAttribute(
+    html,
+    "src",
+    getStaticValue(dynamicSvg.image)?.uri,
+  );
+  appendAttribute(html, "data-hmi-svg-type", getStaticValue(dynamicSvg.svgType));
+  for (const property of dynamicSvg.properties) {
+    appendAttribute(html, toDynamicSvgAttributeName(property.name), formatDynamicSvgPropertyValue(getStaticValue(property.value)));
+  }
+  html.push("></node-projects-svghmi>");
+}
+
+function formatDynamicSvgPropertyValue(value: unknown): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (isHmiColor(value)) {
+    return colorToCss(value);
+  }
+  if (typeof value === "number") {
+    return toCss(value);
+  }
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return String(value);
+}
+
+function toDynamicSvgAttributeName(name: string | undefined): string | undefined {
+  if (!name?.trim()) {
+    return undefined;
+  }
+
+  let result = "";
+  for (let index = 0; index < name.length; index++) {
+    const character = name[index];
+    const lower = character.toLowerCase();
+    if (character !== lower) {
+      if (index > 0) {
+        result += "-";
+      }
+      result += lower;
+    } else {
+      result += character;
+    }
+  }
+  return result;
 }
 
 function appendDiv(html: string[], item: HmiScreenItemBase, cssClass: string | undefined, content: string | undefined): void {
@@ -596,11 +672,24 @@ function appendSvgAttribute(html: string[], name: string, value: number): void {
   appendAttribute(html, name, toCss(value));
 }
 
-function appendAttribute(html: string[], name: string, value: string | undefined): void {
-  if (!value?.trim()) {
+function appendRuntimeModule(html: string[]): void {
+  html.push("<script type=\"module\">");
+  html.push(hmiHtmlRuntimeModuleScript);
+  html.push("</script>");
+}
+
+function appendAttribute(html: string[], name: string | undefined, value: string | undefined): void {
+  if (!name?.trim() || !value?.trim()) {
     return;
   }
   html.push(` ${name}="${escapeHtml(value)}"`);
+}
+
+function isHmiColor(value: unknown): value is HmiColor {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  return "alpha" in value && "red" in value && "green" in value && "blue" in value;
 }
 
 function toSvgPoint(point: HmiPoint): string {
