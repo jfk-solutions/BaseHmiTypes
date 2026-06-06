@@ -26,29 +26,86 @@ export enum HmiBlinkRate {
   Fast = "Fast",
 }
 
+export enum HmiTriggerKind {
+  Tag = "Tag",
+  Cycle = "Cycle",
+  Event = "Event",
+}
+
+export enum HmiTagTriggerMode {
+  ValueChange = "ValueChange",
+  RisingEdge = "RisingEdge",
+  FallingEdge = "FallingEdge",
+}
+
+export enum HmiValueConverterKind {
+  Unknown = "Unknown",
+  Linear = "Linear",
+  Range = "Range",
+  Expression = "Expression",
+  Script = "Script",
+}
+
 export interface HmiProperty<T> {
   readonly kind: HmiPropertyKind;
   staticValue?: T;
+}
+
+export interface HmiDynamicProperty<T> extends HmiProperty<T> {
+  triggers: HmiTrigger[];
+}
+
+export interface HmiTrigger {
+  readonly kind: HmiTriggerKind;
+  name?: string;
+}
+
+export interface HmiTagTrigger extends HmiTrigger {
+  readonly kind: HmiTriggerKind.Tag;
+  tagNames: string[];
+  mode: HmiTagTriggerMode;
+}
+
+export interface HmiCycleTrigger extends HmiTrigger {
+  readonly kind: HmiTriggerKind.Cycle;
+  cycleName?: string;
+  cycleTime?: number;
+  cycleUnit?: string;
+}
+
+export interface HmiEventTrigger extends HmiTrigger {
+  readonly kind: HmiTriggerKind.Event;
+  eventName?: string;
+}
+
+export interface HmiValueConverter {
+  kind: HmiValueConverterKind;
+  name?: string;
+  expression?: string;
+  language: HmiScriptLanguage;
+  script?: string;
+  parameters: Record<string, unknown>;
 }
 
 export interface HmiStaticProperty<T> extends HmiProperty<T> {
   readonly kind: HmiPropertyKind.Static;
 }
 
-export interface HmiTagProperty<T> extends HmiProperty<T> {
+export interface HmiTagProperty<T> extends HmiDynamicProperty<T> {
   readonly kind: HmiPropertyKind.Tag;
   tagName?: string;
 }
 
-export interface HmiScriptProperty<T> extends HmiProperty<T> {
+export interface HmiScriptProperty<T> extends HmiDynamicProperty<T> {
   readonly kind: HmiPropertyKind.Script;
   language: HmiScriptLanguage;
   script?: string;
 }
 
-export interface HmiExpressionProperty<T> extends HmiProperty<T> {
+export interface HmiExpressionProperty<T> extends HmiDynamicProperty<T> {
   readonly kind: HmiPropertyKind.Expression;
   expression?: string;
+  converters: HmiValueConverter[];
 }
 
 export interface HmiBlinkProperty<T> extends HmiProperty<T> {
@@ -64,7 +121,7 @@ export function staticProperty<T>(value?: T): HmiStaticProperty<T> {
 }
 
 export function tagProperty<T>(tagName: string, fallbackValue?: T): HmiTagProperty<T> {
-  return { kind: HmiPropertyKind.Tag, tagName, staticValue: fallbackValue };
+  return { kind: HmiPropertyKind.Tag, tagName, staticValue: fallbackValue, triggers: [] };
 }
 
 export function scriptProperty<T>(
@@ -72,11 +129,11 @@ export function scriptProperty<T>(
   language: HmiScriptLanguage,
   fallbackValue?: T,
 ): HmiScriptProperty<T> {
-  return { kind: HmiPropertyKind.Script, language, script, staticValue: fallbackValue };
+  return { kind: HmiPropertyKind.Script, language, script, staticValue: fallbackValue, triggers: [] };
 }
 
 export function expressionProperty<T>(expression: string, fallbackValue?: T): HmiExpressionProperty<T> {
-  return { kind: HmiPropertyKind.Expression, expression, staticValue: fallbackValue };
+  return { kind: HmiPropertyKind.Expression, expression, staticValue: fallbackValue, triggers: [], converters: [] };
 }
 
 export function blinkProperty<T>(

@@ -32,6 +32,29 @@ public enum HmiBlinkRate
     Fast
 }
 
+public enum HmiTriggerKind
+{
+    Tag,
+    Cycle,
+    Event
+}
+
+public enum HmiTagTriggerMode
+{
+    ValueChange,
+    RisingEdge,
+    FallingEdge
+}
+
+public enum HmiValueConverterKind
+{
+    Unknown,
+    Linear,
+    Range,
+    Expression,
+    Script
+}
+
 public abstract class HmiProperty<T>
 {
     public abstract HmiPropertyKind Kind { get; }
@@ -44,19 +67,73 @@ public abstract class HmiProperty<T>
     }
 }
 
+public abstract class HmiDynamicProperty<T> : HmiProperty<T>
+{
+    public IList<HmiTrigger> Triggers { get; } = new List<HmiTrigger>();
+}
+
+public abstract class HmiTrigger
+{
+    public abstract HmiTriggerKind Kind { get; }
+
+    public string? Name { get; set; }
+}
+
+public sealed class HmiTagTrigger : HmiTrigger
+{
+    public override HmiTriggerKind Kind => HmiTriggerKind.Tag;
+
+    public IList<string> TagNames { get; } = new List<string>();
+
+    public HmiTagTriggerMode Mode { get; set; } = HmiTagTriggerMode.ValueChange;
+}
+
+public sealed class HmiCycleTrigger : HmiTrigger
+{
+    public override HmiTriggerKind Kind => HmiTriggerKind.Cycle;
+
+    public string? CycleName { get; set; }
+
+    public int? CycleTime { get; set; }
+
+    public string? CycleUnit { get; set; }
+}
+
+public sealed class HmiEventTrigger : HmiTrigger
+{
+    public override HmiTriggerKind Kind => HmiTriggerKind.Event;
+
+    public string? EventName { get; set; }
+}
+
+public sealed class HmiValueConverter
+{
+    public HmiValueConverterKind Kind { get; set; } = HmiValueConverterKind.Unknown;
+
+    public string? Name { get; set; }
+
+    public string? Expression { get; set; }
+
+    public HmiScriptLanguage Language { get; set; } = HmiScriptLanguage.Unknown;
+
+    public string? Script { get; set; }
+
+    public IDictionary<string, object?> Parameters { get; } = new Dictionary<string, object?>();
+}
+
 public sealed class HmiStaticProperty<T> : HmiProperty<T>
 {
     public override HmiPropertyKind Kind => HmiPropertyKind.Static;
 }
 
-public sealed class HmiTagProperty<T> : HmiProperty<T>
+public sealed class HmiTagProperty<T> : HmiDynamicProperty<T>
 {
     public override HmiPropertyKind Kind => HmiPropertyKind.Tag;
 
     public string? TagName { get; set; }
 }
 
-public sealed class HmiScriptProperty<T> : HmiProperty<T>
+public sealed class HmiScriptProperty<T> : HmiDynamicProperty<T>
 {
     public override HmiPropertyKind Kind => HmiPropertyKind.Script;
 
@@ -65,11 +142,13 @@ public sealed class HmiScriptProperty<T> : HmiProperty<T>
     public string? Script { get; set; }
 }
 
-public sealed class HmiExpressionProperty<T> : HmiProperty<T>
+public sealed class HmiExpressionProperty<T> : HmiDynamicProperty<T>
 {
     public override HmiPropertyKind Kind => HmiPropertyKind.Expression;
 
     public string? Expression { get; set; }
+
+    public IList<HmiValueConverter> Converters { get; } = new List<HmiValueConverter>();
 }
 
 public sealed class HmiBlinkProperty<T> : HmiProperty<T>
