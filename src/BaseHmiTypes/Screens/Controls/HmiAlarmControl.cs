@@ -4,6 +4,11 @@ namespace BaseHmiTypes.Screens.Controls;
 
 public class HmiAlarmControl : HmiControlWindowBase
 {
+    public HmiAlarmControl()
+    {
+        HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiAlarmControl;
+    }
+
     public HmiProperty<bool>? SuppressFlashing { get; set; }
 
     public HmiProperty<int>? AcknowledgmentFlashingRate { get; set; }

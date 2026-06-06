@@ -4,4 +4,9 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public class HmiBar : HmiScaleWidgetBase
 {
+    public HmiBar()
+    {
+        HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiBar;
+    }
+
 }

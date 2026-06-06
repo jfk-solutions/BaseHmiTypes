@@ -4,6 +4,11 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public class HmiClock : HmiWidgetBase
 {
+    public HmiClock()
+    {
+        HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiClock;
+    }
+
     public HmiProperty<bool>? ShowDate { get; set; }
 
     public HmiProperty<bool>? ShowTime { get; set; }

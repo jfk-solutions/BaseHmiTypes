@@ -1,7 +1,13 @@
 import { HmiColor, HmiProperty } from "../base.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
+import { HmiObjectType } from "../base/HmiObjectType.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
+  constructor() {
+    super();
+    this.hmiObjectType = HmiObjectType.HmiAlarmControl;
+  }
+
   suppressFlashing?: HmiProperty<boolean>;
   acknowledgmentFlashingRate?: HmiProperty<number>;
   resetFlashingRate?: HmiProperty<number>;

@@ -260,7 +260,12 @@ public class HmiScreenToHtmlConverterTests
             Id = "symbol-1",
             Name = "Valve",
             Width = 32,
-            Height = 32
+            Height = 32,
+            Image = new HmiImageSource
+            {
+                Kind = HmiImageSourceKind.Uri,
+                Uri = "symbols/valve.svghmi"
+            }
         };
         dynamicSvg.Properties.Add(new HmiDynamicSvgProperty { Name = "FillColor", Value = HmiColor.FromArgb(255, 0, 128, 255) });
         dynamicSvg.Properties.Add(new HmiDynamicSvgProperty { Name = "ShowCaption", Value = true });

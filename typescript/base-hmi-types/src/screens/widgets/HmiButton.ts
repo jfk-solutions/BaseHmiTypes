@@ -1,7 +1,13 @@
 import { HmiImageSource, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
+import { HmiObjectType } from "../base/HmiObjectType.js";
 
 export class HmiButton extends HmiWidgetBase {
+  constructor() {
+    super();
+    this.hmiObjectType = HmiObjectType.HmiButton;
+  }
+
   text?: HmiProperty<string>;
   alternateText?: HmiProperty<string>;
   image?: HmiProperty<HmiImageSource>;

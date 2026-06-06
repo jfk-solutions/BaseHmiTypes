@@ -1,7 +1,13 @@
 import { HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
+import { HmiObjectType } from "../base/HmiObjectType.js";
 
 export class HmiClock extends HmiWidgetBase {
+  constructor() {
+    super();
+    this.hmiObjectType = HmiObjectType.HmiClock;
+  }
+
   showDate?: HmiProperty<boolean>;
   showTime?: HmiProperty<boolean>;
   showHours?: HmiProperty<boolean>;

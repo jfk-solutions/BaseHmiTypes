@@ -4,6 +4,11 @@ namespace BaseHmiTypes.Screens;
 
 public class HmiScreenWindow : HmiWindowBase
 {
+    public HmiScreenWindow()
+    {
+        HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiScreenWindow;
+    }
+
     public HmiProperty<string>? ScreenId { get; set; }
 
     public HmiProperty<string>? ScreenName { get; set; }

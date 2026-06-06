@@ -1,3 +1,4 @@
+export * from "./base/HmiObjectType.js";
 export * from "./base/HmiModelBase.js";
 export * from "./base/HmiProperty.js";
 export * from "./base/HmiColor.js";

@@ -2,6 +2,11 @@ namespace BaseHmiTypes.Screens.Base;
 
 public class HmiSymbolContainer : HmiCustomWidgetContainer
 {
+    public HmiSymbolContainer()
+    {
+        HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiSymbolContainer;
+    }
+
     public HmiProperty<HmiSymbolFillColorMode>? FillColorMode { get; set; }
 
     public HmiProperty<HmiSymbolFlipMode>? Flip { get; set; }

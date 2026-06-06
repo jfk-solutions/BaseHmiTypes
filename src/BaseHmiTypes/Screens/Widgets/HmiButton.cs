@@ -4,6 +4,11 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public class HmiButton : HmiWidgetBase
 {
+    public HmiButton()
+    {
+        HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiButton;
+    }
+
     public HmiProperty<string>? Text { get; set; }
 
     public HmiProperty<string>? AlternateText { get; set; }

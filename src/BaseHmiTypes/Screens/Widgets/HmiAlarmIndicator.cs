@@ -4,6 +4,11 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 {
+    public HmiAlarmIndicator()
+    {
+        HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiAlarmIndicator;
+    }
+
     public HmiProperty<bool>? IsFlashingRequired { get; set; }
 
     public HmiProperty<HmiColor>? FlashingColor { get; set; }
