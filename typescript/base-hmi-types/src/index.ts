@@ -17,3 +17,4 @@ export * from "./screens/widgets.js";
 export * from "./scripts.js";
 export * from "./tags.js";
 export * from "./text-graphic-lists.js";
+export * from "./zip.js";
