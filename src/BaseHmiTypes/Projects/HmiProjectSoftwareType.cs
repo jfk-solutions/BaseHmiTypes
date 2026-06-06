@@ -2,10 +2,12 @@
 {
     public enum HmiProjectSoftwareType
     {
+        Unknown,
         ProTool,
         WinCCFlexible,
         WinCC,
         WinCCAdvanced,
+        WinCCProfessional,
         WinCCUnified
     }
 }

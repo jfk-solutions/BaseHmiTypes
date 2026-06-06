@@ -1,8 +1,9 @@
 export enum HmiProjectSoftwareType {
   Unknown = "Unknown",
   ProTool = "ProTool",
-  WinCcFlexible = "WinCcFlexible",
-  WinCcAdvanced = "WinCcAdvanced",
-  WinCcProfessional = "WinCcProfessional",
-  WinCcUnified = "WinCcUnified",
+  WinCCFlexible = "WinCCFlexible",
+  WinCC = "WinCC",
+  WinCCAdvanced = "WinCCAdvanced",
+  WinCCProfessional = "WinCCProfessional",
+  WinCCUnified = "WinCCUnified",
 }
