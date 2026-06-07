@@ -711,7 +711,7 @@ public class HmiScreenToHtmlConverter
         var lineColor = style.LineColor;
         var lineWidth = style.LineWidth;
         var margin = style.Margin;
-        var font = style.Font.GetStaticValue();
+        var font = style.Font;
         var horizontalAlignment = style.HorizontalAlignment;
         var verticalAlignment = style.VerticalAlignment;
 
@@ -743,15 +743,16 @@ public class HmiScreenToHtmlConverter
         }
         if (font != null)
         {
-            if (!string.IsNullOrWhiteSpace(font.Name))
-                html.Append("font-family: ").Append(WebUtility.HtmlEncode(font.Name)).Append(";");
-            if (font.Size.HasValue)
-                html.Append("font-size: ").Append(ToCss(font.Size.Value)).Append("px;");
-            if (font.Bold)
+            var name = font.Name.GetStaticValue();
+            if (!string.IsNullOrWhiteSpace(name))
+                html.Append("font-family: ").Append(WebUtility.HtmlEncode(name)).Append(";");
+            if (TryGetStaticValue(font.Size, out var size))
+                html.Append("font-size: ").Append(ToCss(size)).Append("px;");
+            if (font.Bold.GetStaticValueOrDefault())
                 html.Append("font-weight: bold;");
-            if (font.Italic)
+            if (font.Italic.GetStaticValueOrDefault())
                 html.Append("font-style: italic;");
-            if (font.Underline)
+            if (font.Underline.GetStaticValueOrDefault())
                 html.Append("text-decoration: underline;");
         }
         if (horizontalAlignment != null)

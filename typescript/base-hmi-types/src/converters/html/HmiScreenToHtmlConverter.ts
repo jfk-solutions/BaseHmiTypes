@@ -618,7 +618,7 @@ function appendStyle(html: string[], style: HmiVisualStyle): void {
     );
   }
 
-  const font = getStaticValue(style.font);
+  const font = style.font;
   if (font !== undefined) {
     appendFont(html, font);
   }
@@ -636,19 +636,21 @@ function appendStyle(html: string[], style: HmiVisualStyle): void {
 }
 
 function appendFont(html: string[], font: HmiFont): void {
-  if (font.name?.trim()) {
-    html.push(`font-family: ${escapeHtml(font.name)};`);
+  const name = getStaticValue(font.name);
+  const size = getStaticValue(font.size);
+  if (name?.trim()) {
+    html.push(`font-family: ${escapeHtml(name)};`);
   }
-  if (font.size !== undefined) {
-    html.push(`font-size: ${toCss(font.size)}px;`);
+  if (size !== undefined) {
+    html.push(`font-size: ${toCss(size)}px;`);
   }
-  if (font.bold) {
+  if (getStaticValueOrDefault(font.bold, false)) {
     html.push("font-weight: bold;");
   }
-  if (font.italic) {
+  if (getStaticValueOrDefault(font.italic, false)) {
     html.push("font-style: italic;");
   }
-  if (font.underline) {
+  if (getStaticValueOrDefault(font.underline, false)) {
     html.push("text-decoration: underline;");
   }
 }

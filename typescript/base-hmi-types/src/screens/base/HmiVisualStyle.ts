@@ -55,10 +55,10 @@ export class HmiVisualStyle {
   useDesignShadowSettings?: HmiProperty<boolean>;
   margin?: HmiThickness;
   padding?: HmiThickness;
-  font?: HmiProperty<HmiFont>;
-  headerFont?: HmiProperty<HmiFont>;
-  contentFont?: HmiProperty<HmiFont>;
-  labelFont?: HmiProperty<HmiFont>;
+  font?: HmiFont;
+  headerFont?: HmiFont;
+  contentFont?: HmiFont;
+  labelFont?: HmiFont;
   horizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   verticalAlignment?: HmiProperty<HmiVerticalAlignment>;
 }

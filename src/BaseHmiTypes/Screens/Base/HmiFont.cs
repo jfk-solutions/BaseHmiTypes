@@ -2,15 +2,15 @@ namespace BaseHmiTypes.Screens.Base;
 
 public class HmiFont
 {
-    public string? Name { get; set; }
+    public HmiProperty<string>? Name { get; set; }
 
-    public double? Size { get; set; }
+    public HmiProperty<double>? Size { get; set; }
 
-    public bool Bold { get; set; }
+    public HmiProperty<bool>? Bold { get; set; }
 
-    public bool Italic { get; set; }
+    public HmiProperty<bool>? Italic { get; set; }
 
-    public bool Underline { get; set; }
+    public HmiProperty<bool>? Underline { get; set; }
 
-    public bool Strikethrough { get; set; }
+    public HmiProperty<bool>? Strikethrough { get; set; }
 }

@@ -102,13 +102,13 @@ public class HmiVisualStyle
 
     public HmiThickness? Padding { get; set; }
 
-    public HmiProperty<HmiFont>? Font { get; set; }
+    public HmiFont? Font { get; set; }
 
-    public HmiProperty<HmiFont>? HeaderFont { get; set; }
+    public HmiFont? HeaderFont { get; set; }
 
-    public HmiProperty<HmiFont>? ContentFont { get; set; }
+    public HmiFont? ContentFont { get; set; }
 
-    public HmiProperty<HmiFont>? LabelFont { get; set; }
+    public HmiFont? LabelFont { get; set; }
 
     public HmiProperty<HmiHorizontalAlignment>? HorizontalAlignment { get; set; }
 
