@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Globalization;
 using System.Net;
 using System.Text;
@@ -124,6 +126,9 @@ public class HmiScreenToHtmlConverter
                 break;
             case HmiDynamicSvg dynamicSvg:
                 AppendDynamicSvg(html, dynamicSvg);
+                break;
+            case HmiGauge gauge:
+                AppendGauge(html, gauge);
                 break;
             case HmiSymbolContainer symbolContainer:
                 await AppendSymbolContainerAsync(html, symbolContainer, project, options, cancellationToken).ConfigureAwait(false);
@@ -592,6 +597,146 @@ public class HmiScreenToHtmlConverter
         foreach (var property in dynamicSvg.Properties)
             AppendAttribute(html, ToDynamicSvgAttributeName(property.Name), FormatDynamicSvgPropertyValue(property.Value.GetStaticValue()));
         html.Append("></node-projects-svghmi>");
+    }
+
+    private static void AppendGauge(StringBuilder html, HmiGauge gauge)
+    {
+        html.Append("<hmi-gauge");
+        AppendCommonAttributes(html, gauge);
+        AppendStaticAttribute(html, "value", gauge.Value);
+        AppendStaticAttribute(html, "fill-level", gauge.FillLevel);
+        AppendBooleanAttribute(html, "show-fill-level", gauge.ShowFillLevel.GetStaticValueOrDefault(true));
+        AppendStaticAttribute(html, "begin-value", gauge.BeginValue);
+        AppendStaticAttribute(html, "end-value", gauge.EndValue);
+        AppendStaticAttribute(html, "origin-value", gauge.OriginValue);
+        AppendStaticAttribute(html, "division-count", gauge.DivisionCount);
+        AppendStaticAttribute(html, "sub-division-count", gauge.SubDivisionCount);
+        AppendStaticAttribute(html, "bar-mode", gauge.BarMode);
+        AppendStaticAttribute(html, "scale-mode", gauge.ScaleMode);
+        AppendStaticAttribute(html, "orientation", gauge.Orientation);
+        AppendBooleanAttribute(html, "show-value", gauge.ShowValue.GetStaticValueOrDefault(true));
+        AppendStaticAttribute(html, "value-position", gauge.ValuePosition);
+        AppendStaticAttribute(html, "label-color", gauge.LabelColor);
+        AppendStaticAttribute(html, "scale-background-color", gauge.ScaleBackgroundColor);
+        AppendStaticAttribute(html, "scale-foreground-color", gauge.ScaleForegroundColor);
+        AppendStaticAttribute(html, "tick-color", gauge.TickColor);
+        AppendAttribute(html, "label-font", FormatFont(gauge.LabelFont));
+        html.Append("></hmi-gauge>");
+    }
+
+    private static void AppendBooleanAttribute(StringBuilder html, string name, bool value)
+    {
+        if (!value)
+            return;
+
+        html.Append(' ').Append(name);
+    }
+
+    private static void AppendStaticAttribute<T>(StringBuilder html, string name, HmiProperty<T>? property)
+    {
+        if (property == null)
+            return;
+
+        var value = property.StaticValue;
+        if (value == null)
+            return;
+
+        if (value is bool boolean)
+        {
+            AppendBooleanAttribute(html, name, boolean);
+            return;
+        }
+
+        AppendAttribute(html, name, FormatAttributeValue(value));
+    }
+
+    private static string? FormatAttributeValue(object? value)
+    {
+        if (value == null)
+            return null;
+        if (value is bool boolean)
+            return boolean ? "true" : "false";
+        if (value is HmiColor color)
+            return ToCss(color);
+        if (value is IFormattable formattable)
+            return formattable.ToString(null, CultureInfo.InvariantCulture);
+        return value.ToString();
+    }
+
+    private static string? FormatFont(HmiFont? font)
+    {
+        if (font == null)
+            return null;
+
+        var values = new List<string>();
+        AddFontValue(values, "name", font.Name);
+        AddFontValue(values, "size", font.Size);
+        AddFontValue(values, "bold", font.Bold);
+        AddFontValue(values, "italic", font.Italic);
+        AddFontValue(values, "underline", font.Underline);
+        AddFontValue(values, "strikethrough", font.Strikethrough);
+
+        return values.Count == 0 ? null : "{" + string.Join(",", values) + "}";
+    }
+
+    private static void AddFontValue<T>(List<string> values, string name, HmiProperty<T>? property)
+    {
+        if (property == null)
+            return;
+
+        var value = property.StaticValue;
+        if (value == null)
+            return;
+
+        values.Add("\"" + EscapeJsonString(name) + "\":" + FormatJsonValue(value));
+    }
+
+    private static string FormatJsonValue(object value)
+    {
+        if (value is bool boolean)
+            return boolean ? "true" : "false";
+        if (value is string text)
+            return "\"" + EscapeJsonString(text) + "\"";
+        if (value is IFormattable formattable)
+            return formattable.ToString(null, CultureInfo.InvariantCulture);
+        return "\"" + EscapeJsonString(value.ToString() ?? string.Empty) + "\"";
+    }
+
+    private static string EscapeJsonString(string value)
+    {
+        var escaped = new StringBuilder();
+        foreach (var character in value)
+        {
+            switch (character)
+            {
+                case '\\':
+                    escaped.Append("\\\\");
+                    break;
+                case '"':
+                    escaped.Append("\\\"");
+                    break;
+                case '\b':
+                    escaped.Append("\\b");
+                    break;
+                case '\f':
+                    escaped.Append("\\f");
+                    break;
+                case '\n':
+                    escaped.Append("\\n");
+                    break;
+                case '\r':
+                    escaped.Append("\\r");
+                    break;
+                case '\t':
+                    escaped.Append("\\t");
+                    break;
+                default:
+                    escaped.Append(character);
+                    break;
+            }
+        }
+
+        return escaped.ToString();
     }
 
     private static string? FormatDynamicSvgPropertyValue(object? value)

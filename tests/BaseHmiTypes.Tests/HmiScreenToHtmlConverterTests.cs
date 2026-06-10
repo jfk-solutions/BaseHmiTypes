@@ -273,6 +273,61 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersGaugeAsGaugeWebComponent()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiGauge
+        {
+            Id = "gauge-1",
+            Name = "SpeedGauge",
+            X = 10,
+            Y = 20,
+            Width = 160,
+            Height = 120,
+            Value = 20,
+            FillLevel = 25,
+            ShowFillLevel = true,
+            BeginValue = 0,
+            EndValue = 50,
+            OriginValue = 0,
+            DivisionCount = 5,
+            SubDivisionCount = 5,
+            ShowValue = true,
+            LabelColor = HmiColor.FromArgb(255, 32, 36, 42),
+            ScaleBackgroundColor = HmiColor.FromArgb(255, 111, 113, 121),
+            ScaleForegroundColor = HmiColor.FromArgb(255, 134, 189, 40),
+            TickColor = HmiColor.FromArgb(255, 111, 113, 121),
+            LabelFont = new HmiFont
+            {
+                Name = "Arial",
+                Size = 8,
+                Bold = true
+            }
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<hmi-gauge id=\"SpeedGauge\"");
+        StringAssert.Contains(html, "left: 10px;");
+        StringAssert.Contains(html, "value=\"20\"");
+        StringAssert.Contains(html, "fill-level=\"25\"");
+        StringAssert.Contains(html, " show-fill-level ");
+        StringAssert.Contains(html, "begin-value=\"0\"");
+        StringAssert.Contains(html, "end-value=\"50\"");
+        StringAssert.Contains(html, "division-count=\"5\"");
+        StringAssert.Contains(html, "sub-division-count=\"5\"");
+        StringAssert.Contains(html, " show-value ");
+        StringAssert.Contains(html, "label-color=\"#20242A\"");
+        StringAssert.Contains(html, "scale-background-color=\"#6F7179\"");
+        StringAssert.Contains(html, "scale-foreground-color=\"#86BD28\"");
+        StringAssert.Contains(html, "tick-color=\"#6F7179\"");
+        StringAssert.Contains(html, "label-font=\"{&quot;name&quot;:&quot;Arial&quot;,&quot;size&quot;:8,&quot;bold&quot;:true}\"");
+        StringAssert.Contains(html, "</hmi-gauge>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersStaticSvgImagesAsPlainImages()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };

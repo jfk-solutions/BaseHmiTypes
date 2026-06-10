@@ -33,6 +33,7 @@ import { HmiShapeBase } from "../../screens/shapes/HmiShapeBase.js";
 import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
+import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
@@ -135,6 +136,8 @@ export class HmiScreenToHtmlConverter {
       appendEllipse(html, item);
     } else if (item instanceof HmiDynamicSvg) {
       appendDynamicSvg(html, item);
+    } else if (item instanceof HmiGauge) {
+      appendGauge(html, item);
     } else if (item instanceof HmiSymbolContainer) {
       await this.appendSymbolContainerAsync(html, item, project, options, signal);
     } else if (item instanceof HmiGroup || item instanceof HmiLayoutContainerBase || item instanceof HmiContainerBase) {
@@ -492,6 +495,96 @@ function appendDynamicSvg(html: string[], dynamicSvg: HmiDynamicSvg): void {
     appendAttribute(html, toDynamicSvgAttributeName(property.name), formatDynamicSvgPropertyValue(getStaticValue(property.value)));
   }
   html.push("></node-projects-svghmi>");
+}
+
+function appendGauge(html: string[], gauge: HmiGauge): void {
+  html.push("<hmi-gauge");
+  appendCommonAttributes(html, gauge);
+  appendStaticAttribute(html, "value", gauge.value);
+  appendStaticAttribute(html, "fill-level", gauge.fillLevel);
+  appendBooleanAttribute(html, "show-fill-level", getStaticValueOrDefault(gauge.showFillLevel, true));
+  appendStaticAttribute(html, "begin-value", gauge.beginValue);
+  appendStaticAttribute(html, "end-value", gauge.endValue);
+  appendStaticAttribute(html, "origin-value", gauge.originValue);
+  appendStaticAttribute(html, "division-count", gauge.divisionCount);
+  appendStaticAttribute(html, "sub-division-count", gauge.subDivisionCount);
+  appendStaticAttribute(html, "bar-mode", gauge.barMode);
+  appendStaticAttribute(html, "scale-mode", gauge.scaleMode);
+  appendStaticAttribute(html, "orientation", gauge.orientation);
+  appendBooleanAttribute(html, "show-value", getStaticValueOrDefault(gauge.showValue, true));
+  appendStaticAttribute(html, "value-position", gauge.valuePosition);
+  appendStaticAttribute(html, "label-color", gauge.labelColor);
+  appendStaticAttribute(html, "scale-background-color", gauge.scaleBackgroundColor);
+  appendStaticAttribute(html, "scale-foreground-color", gauge.scaleForegroundColor);
+  appendStaticAttribute(html, "tick-color", gauge.tickColor);
+  appendAttribute(html, "label-font", formatFont(gauge.labelFont));
+  html.push("></hmi-gauge>");
+}
+
+function appendBooleanAttribute(html: string[], name: string, value: boolean): void {
+  if (value) {
+    html.push(` ${name}`);
+  }
+}
+
+function appendStaticAttribute<T>(html: string[], name: string, property: HmiProperty<T> | undefined): void {
+  const value = getStaticValue(property);
+  if (value === undefined || value === null) {
+    return;
+  }
+
+  if (typeof value === "boolean") {
+    appendBooleanAttribute(html, name, value);
+    return;
+  }
+
+  appendAttribute(html, name, formatAttributeValue(value));
+}
+
+function formatAttributeValue(value: unknown): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (isHmiColor(value)) {
+    return colorToCss(value);
+  }
+  if (typeof value === "number") {
+    return toCss(value);
+  }
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return String(value);
+}
+
+function formatFont(font: HmiFont | undefined): string | undefined {
+  if (font === undefined) {
+    return undefined;
+  }
+
+  const values: Record<string, string | number | boolean> = {};
+  addFontValue(values, "name", font.name);
+  addFontValue(values, "size", font.size);
+  addFontValue(values, "bold", font.bold);
+  addFontValue(values, "italic", font.italic);
+  addFontValue(values, "underline", font.underline);
+  addFontValue(values, "strikethrough", font.strikethrough);
+
+  return Object.keys(values).length === 0 ? undefined : JSON.stringify(values);
+}
+
+function addFontValue<T extends string | number | boolean>(
+  values: Record<string, string | number | boolean>,
+  name: string,
+  property: HmiProperty<T> | undefined,
+): void {
+  const value = getStaticValue(property);
+  if (value !== undefined && value !== null) {
+    values[name] = value;
+  }
 }
 
 function formatDynamicSvgPropertyValue(value: unknown): string | undefined {
