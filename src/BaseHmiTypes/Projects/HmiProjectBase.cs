@@ -3,6 +3,7 @@ using BaseHmiTypes.Connections;
 using BaseHmiTypes.Cycles;
 using BaseHmiTypes.Images;
 using BaseHmiTypes.Screens;
+using BaseHmiTypes.Screens.Base;
 using BaseHmiTypes.Scripts;
 using BaseHmiTypes.Tags;
 using BaseHmiTypes.TextGraphicLists;
@@ -53,9 +54,9 @@ public abstract class HmiProjectBase : IHmiProject
         return new ValueTask<IReadOnlyList<IHmiProjectItemDescriptor>>(Array.Empty<IHmiProjectItemDescriptor>());
     }
 
-    public virtual ValueTask<HmiScreen?> GetScreenAsync(string id, CancellationToken cancellationToken = default)
+    public virtual ValueTask<HmiScreenBase?> GetScreenAsync(string id, CancellationToken cancellationToken = default)
     {
-        return new ValueTask<HmiScreen?>((HmiScreen?)null);
+        return new ValueTask<HmiScreenBase?>((HmiScreenBase?)null);
     }
 
     public virtual ValueTask<HmiTagTable?> GetTagTableAsync(string id, CancellationToken cancellationToken = default)

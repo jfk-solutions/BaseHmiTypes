@@ -2,7 +2,7 @@ import { HmiAlarmList } from "../alarms/HmiAlarm.js";
 import { HmiConnectionList } from "../connections/HmiConnectionList.js";
 import { HmiCycle } from "../cycles/HmiCycle.js";
 import { HmiImage } from "../images/HmiImage.js";
-import { HmiScreen } from "../screens/screen/HmiScreen.js";
+import { HmiScreenBase } from "../screens/base/HmiScreenBase.js";
 import { HmiScript } from "../scripts/HmiScript.js";
 import { HmiTagTable } from "../tags/HmiTagTable.js";
 import { HmiGraphicList } from "../text-graphic-lists/HmiGraphicList.js";
@@ -37,7 +37,7 @@ export interface IHmiProjectFolder {
 }
 
 export interface IHmiScreenProvider {
-  getScreen(id: string, signal?: AbortSignal): Promise<HmiScreen | undefined>;
+  getScreen(id: string, signal?: AbortSignal): Promise<HmiScreenBase | undefined>;
 }
 
 export interface IHmiTagProvider {

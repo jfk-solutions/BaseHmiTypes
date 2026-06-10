@@ -75,6 +75,136 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_DisablesPointerEventsForEmptyLayers()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "screen",
+            Name = "Screen",
+            Width = 320,
+            Height = 240
+        };
+        screen.Layers.Add(new HmiLayer { Id = "empty-layer", Name = "EmptyLayer" });
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"EmptyLayer\" style=\"position: absolute; inset: 0; pointer-events: none;\"");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_RendersScreenAbsoluteGroupChildrenAtSourcePosition()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "screen",
+            Name = "Screen",
+            Width = 320,
+            Height = 240
+        };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        var group = new HmiGroup
+        {
+            Id = "group-1",
+            Name = "PumpGroup",
+            X = 100,
+            Y = 50,
+            Width = 80,
+            Height = 40,
+            ChildCoordinateSpace = HmiChildCoordinateSpace.ScreenAbsolute
+        };
+        group.Items.Add(new HmiLabel
+        {
+            Id = "label-1",
+            Name = "PumpLabel",
+            Text = "Pump",
+            X = 110,
+            Y = 70,
+            Width = 40,
+            Height = 20
+        });
+        layer.Items.Add(group);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"PumpGroup\" style=\"position: absolute;left: 100px;top: 50px;width: 80px;height: 40px;\"");
+        StringAssert.Contains(html, "<div style=\"position: absolute;left: -100px;top: -50px;\">");
+        StringAssert.Contains(html, "id=\"PumpLabel\" style=\"position: absolute;left: 110px;top: 70px;width: 40px;height: 20px;\"");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_UsesScreenBackgroundColorOnRootElement()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "screen",
+            Name = "Screen",
+            Width = 320,
+            Height = 240,
+            BackgroundColor = HmiColor.FromArgb(255, 17, 34, 51)
+        };
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"Screen\" style=\"position: relative; overflow: hidden;width: 320px;height: 240px;background-color: #112233;\"");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_RendersTemplateBeforeScreenItemsById()
+    {
+        var main = new HmiScreen
+        {
+            Id = "main",
+            Name = "Main",
+            TemplateId = "template-id"
+        };
+        var mainLayer = new HmiLayer { Id = "main-layer", Name = "MainLayer" };
+        mainLayer.Items.Add(new HmiLabel { Id = "main-label", Name = "MainLabel", Text = "Screen item" });
+        main.Layers.Add(mainLayer);
+
+        var template = new HmiScreenMaster
+        {
+            Id = "template-id",
+            Name = "Template"
+        };
+        var templateLayer = new HmiLayer { Id = "template-layer", Name = "TemplateLayer" };
+        templateLayer.Items.Add(new HmiLabel { Id = "template-label", Name = "TemplateLabel", Text = "Template item" });
+        template.Layers.Add(templateLayer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(main, new FakeProject(template));
+
+        StringAssert.Contains(html, "Template item");
+        StringAssert.Contains(html, "Screen item");
+        Assert.IsLessThan(html.IndexOf("Screen item", StringComparison.Ordinal), html.IndexOf("Template item", StringComparison.Ordinal));
+        Assert.AreEqual(1, CountOccurrences(html, "<script type=\"module\">"));
+        Assert.AreEqual(1, CountOccurrences(html, "<meta charset=\"utf-8\">"));
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_ResolvesTemplateByName()
+    {
+        var main = new HmiScreen
+        {
+            Id = "main",
+            Name = "Main",
+            TemplateName = "TemplateByName"
+        };
+
+        var template = new HmiScreenMaster
+        {
+            Id = "template-id",
+            Name = "TemplateByName"
+        };
+        var templateLayer = new HmiLayer { Id = "template-layer", Name = "TemplateLayer" };
+        templateLayer.Items.Add(new HmiLabel { Id = "template-label", Name = "TemplateLabel", Text = "Named template item" });
+        template.Layers.Add(templateLayer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(main, new FakeProject(template));
+
+        StringAssert.Contains(html, "Named template item");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_ResolvesScreenWindowThroughProject()
     {
         var main = new HmiScreen { Id = "main", Name = "Main" };
@@ -355,25 +485,31 @@ public class HmiScreenToHtmlConverterTests
 
     private sealed class FakeProject : HmiProjectBase
     {
-        private readonly Dictionary<string, HmiScreen> _screens;
+        private readonly Dictionary<string, HmiScreenBase> _screens = new(StringComparer.Ordinal);
 
-        public FakeProject(params HmiScreen[] screens)
+        public FakeProject(params HmiScreenBase[] screens)
         {
-            _screens = screens.ToDictionary(screen => screen.Id ?? screen.Name ?? string.Empty);
+            foreach (var screen in screens)
+            {
+                if (!string.IsNullOrWhiteSpace(screen.Id))
+                    _screens[screen.Id!] = screen;
+                if (!string.IsNullOrWhiteSpace(screen.Name))
+                    _screens[screen.Name!] = screen;
+            }
         }
 
         public override ValueTask<IReadOnlyList<HmiScreenDescriptor>> GetScreensAsync(CancellationToken cancellationToken = default)
         {
             IReadOnlyList<HmiScreenDescriptor> descriptors = _screens.Values
-                .Select(screen => new HmiScreenDescriptor { Id = screen.Id, Name = screen.Name })
+                .Select(screen => new HmiScreenDescriptor { Id = screen.Id ?? string.Empty, Name = screen.Name ?? string.Empty })
                 .ToList();
             return new ValueTask<IReadOnlyList<HmiScreenDescriptor>>(descriptors);
         }
 
-        public override ValueTask<HmiScreen?> GetScreenAsync(string screenId, CancellationToken cancellationToken = default)
+        public override ValueTask<HmiScreenBase?> GetScreenAsync(string screenId, CancellationToken cancellationToken = default)
         {
             _screens.TryGetValue(screenId, out var screen);
-            return new ValueTask<HmiScreen?>(screen);
+            return new ValueTask<HmiScreenBase?>(screen);
         }
     }
 

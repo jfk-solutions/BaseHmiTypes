@@ -13,50 +13,70 @@ namespace BaseHmiTypes.Converters.Html;
 public class HmiScreenToHtmlConverter
 {
     public async ValueTask<string> ConvertAsync(
-        HmiScreen screen,
+        HmiScreenBase screen,
         IHmiProject? project = null,
         HmiHtmlConvertOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        return await ConvertCoreAsync(screen, project, options, true, cancellationToken).ConfigureAwait(false);
+        return await ConvertCoreAsync(screen, project, options, true, new HashSet<string>(StringComparer.OrdinalIgnoreCase), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<string> ConvertCoreAsync(
-        HmiScreen screen,
+        HmiScreenBase screen,
         IHmiProject? project,
         HmiHtmlConvertOptions? options,
         bool includeRuntime,
+        ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
         options ??= new HmiHtmlConvertOptions();
+        var currentKeys = GetScreenReferenceKeys(screen).ToList();
+        foreach (var key in currentKeys)
+            screenStack.Add(key);
 
-        var html = new StringBuilder();
-        if (includeRuntime && options.IncludeMetaCharset)
-            html.Append("<meta charset=\"utf-8\">");
-        if (includeRuntime)
-            AppendRuntimeModule(html);
-
-        html.Append("<div");
-        AppendAttribute(html, "id", screen.Name);
-        html.Append(" style=\"position: relative; overflow: hidden;");
-        AppendSize(html, screen.Width.GetStaticValueOrDefault(), screen.Height.GetStaticValueOrDefault());
-        html.Append("\">");
-
-        foreach (var layer in screen.Layers)
+        try
         {
-            if (!layer.Visible.GetStaticValueOrDefault(true))
-                continue;
+            var html = new StringBuilder();
+            if (includeRuntime && options.IncludeMetaCharset)
+                html.Append("<meta charset=\"utf-8\">");
+            if (includeRuntime)
+                AppendRuntimeModule(html);
 
             html.Append("<div");
-            AppendAttribute(html, "id", layer.Name);
-            html.Append(" style=\"position: absolute; inset: 0;\">");
-            foreach (var item in layer.Items)
-                await AppendItemAsync(html, item, project, options, cancellationToken).ConfigureAwait(false);
-            html.Append("</div>");
-        }
+            AppendAttribute(html, "id", screen.Name);
+            html.Append(" style=\"position: relative; overflow: hidden;");
+            AppendSize(html, screen.Width.GetStaticValueOrDefault(), screen.Height.GetStaticValueOrDefault());
+            AppendScreenStyle(html, screen);
+            html.Append("\">");
 
-        html.Append("</div>");
-        return html.ToString();
+            var template = await ResolveTemplateAsync(screen, project, screenStack, cancellationToken).ConfigureAwait(false);
+            if (template != null)
+                html.Append(await ConvertCoreAsync(template, project, options, false, screenStack, cancellationToken).ConfigureAwait(false));
+
+            foreach (var layer in screen.Layers)
+            {
+                if (!layer.Visible.GetStaticValueOrDefault(true))
+                    continue;
+
+                html.Append("<div");
+                AppendAttribute(html, "id", layer.Name);
+                html.Append(" style=\"position: absolute; inset: 0;");
+                if (layer.Items.Count == 0)
+                    html.Append(" pointer-events: none;");
+                html.Append("\">");
+                foreach (var item in layer.Items)
+                    await AppendItemAsync(html, item, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+                html.Append("</div>");
+            }
+
+            html.Append("</div>");
+            return html.ToString();
+        }
+        finally
+        {
+            foreach (var key in currentKeys)
+                screenStack.Remove(key);
+        }
     }
 
     private async ValueTask AppendItemAsync(
@@ -64,6 +84,7 @@ public class HmiScreenToHtmlConverter
         HmiScreenItemBase item,
         IHmiProject? project,
         HmiHtmlConvertOptions options,
+        ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
         if (!item.Visible.GetStaticValueOrDefault(true))
@@ -129,19 +150,19 @@ public class HmiScreenToHtmlConverter
                 AppendGauge(html, gauge);
                 break;
             case HmiSymbolContainer symbolContainer:
-                await AppendSymbolContainerAsync(html, symbolContainer, project, options, cancellationToken).ConfigureAwait(false);
+                await AppendSymbolContainerAsync(html, symbolContainer, project, options, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiGroup group:
-                await AppendContainerAsync(html, group, group.Items, project, options, cancellationToken).ConfigureAwait(false);
+                await AppendContainerAsync(html, group, group.Items, project, options, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiLayoutContainerBase layoutContainer:
-                await AppendContainerAsync(html, layoutContainer, layoutContainer.Items, project, options, cancellationToken).ConfigureAwait(false);
+                await AppendContainerAsync(html, layoutContainer, layoutContainer.Items, project, options, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiContainerBase container:
-                await AppendContainerAsync(html, container, container.Items, project, options, cancellationToken).ConfigureAwait(false);
+                await AppendContainerAsync(html, container, container.Items, project, options, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiScreenWindow screenWindow:
-                await AppendScreenWindowAsync(html, screenWindow, project, options, cancellationToken).ConfigureAwait(false);
+                await AppendScreenWindowAsync(html, screenWindow, project, options, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiAlarmControl alarmControl:
                 AppendDiv(html, alarmControl, options.UnsupportedItemPlaceholderCssClass, "Alarm control");
@@ -161,13 +182,24 @@ public class HmiScreenToHtmlConverter
         IEnumerable<HmiScreenItemBase> items,
         IHmiProject? project,
         HmiHtmlConvertOptions options,
+        ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
         html.Append("<div");
         AppendCommonAttributes(html, container);
         html.Append(">");
-        foreach (var child in items)
-            await AppendItemAsync(html, child, project, options, cancellationToken).ConfigureAwait(false);
+        if (container is HmiLayoutContainerBase { ChildCoordinateSpace: HmiChildCoordinateSpace.ScreenAbsolute } layoutContainer)
+        {
+            AppendAbsoluteChildCoordinateSpaceOpen(html, layoutContainer);
+            foreach (var child in items)
+                await AppendItemAsync(html, child, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+            html.Append("</div>");
+        }
+        else
+        {
+            foreach (var child in items)
+                await AppendItemAsync(html, child, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+        }
         html.Append("</div>");
     }
 
@@ -176,6 +208,7 @@ public class HmiScreenToHtmlConverter
         HmiSymbolContainer symbolContainer,
         IHmiProject? project,
         HmiHtmlConvertOptions options,
+        ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
         var image = symbolContainer.Image.GetStaticValue();
@@ -189,7 +222,7 @@ public class HmiScreenToHtmlConverter
             AppendSymbolImage(html, symbolContainer, image!, imageUri!, options);
 
         foreach (var child in symbolContainer.Items)
-            await AppendItemAsync(html, child, project, options, cancellationToken).ConfigureAwait(false);
+            await AppendItemAsync(html, child, project, options, screenStack, cancellationToken).ConfigureAwait(false);
 
         html.Append("</div>");
     }
@@ -221,9 +254,10 @@ public class HmiScreenToHtmlConverter
         HmiScreenWindow screenWindow,
         IHmiProject? project,
         HmiHtmlConvertOptions options,
+        ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
-        HmiScreen? resolved = null;
+        HmiScreenBase? resolved = null;
         if (project != null && !string.IsNullOrWhiteSpace(screenWindow.ScreenId?.StaticValue))
             resolved = await project.GetScreenAsync(screenWindow.ScreenId!.StaticValue!, cancellationToken).ConfigureAwait(false);
 
@@ -241,10 +275,43 @@ public class HmiScreenToHtmlConverter
         }
         else
         {
-            html.Append(await ConvertCoreAsync(resolved, project, options, false, cancellationToken).ConfigureAwait(false));
+            html.Append(await ConvertCoreAsync(resolved, project, options, false, screenStack, cancellationToken).ConfigureAwait(false));
         }
 
         html.Append("</div>");
+    }
+
+    private static async ValueTask<HmiScreenBase?> ResolveTemplateAsync(
+        HmiScreenBase screen,
+        IHmiProject? project,
+        ISet<string> screenStack,
+        CancellationToken cancellationToken)
+    {
+        if (project == null)
+            return null;
+
+        var templateId = screen.TemplateId.GetStaticValue();
+        var templateName = screen.TemplateName.GetStaticValue();
+        HmiScreenBase? template = null;
+
+        if (!string.IsNullOrWhiteSpace(templateId))
+            template = await project.GetScreenAsync(templateId!, cancellationToken).ConfigureAwait(false);
+
+        if (template == null && !string.IsNullOrWhiteSpace(templateName))
+            template = await project.GetScreenAsync(templateName!, cancellationToken).ConfigureAwait(false);
+
+        if (template == null || GetScreenReferenceKeys(template).Any(screenStack.Contains))
+            return null;
+
+        return template;
+    }
+
+    private static IEnumerable<string> GetScreenReferenceKeys(HmiScreenBase screen)
+    {
+        if (!string.IsNullOrWhiteSpace(screen.Id))
+            yield return "id:" + screen.Id;
+        if (!string.IsNullOrWhiteSpace(screen.Name))
+            yield return "name:" + screen.Name;
     }
 
     private static void AppendLine(StringBuilder html, HmiLine line)
@@ -788,6 +855,14 @@ public class HmiScreenToHtmlConverter
         html.Append("\"");
     }
 
+    private static void AppendAbsoluteChildCoordinateSpaceOpen(StringBuilder html, HmiLayoutContainerBase container)
+    {
+        html.Append("<div style=\"position: absolute;");
+        html.Append("left: ").Append(ToCss(-container.X.GetStaticValueOrDefault())).Append("px;");
+        html.Append("top: ").Append(ToCss(-container.Y.GetStaticValueOrDefault())).Append("px;");
+        html.Append("\">");
+    }
+
     private static void AppendSymbolAttributes(StringBuilder html, HmiSymbolContainer symbolContainer)
     {
         AppendAttribute(html, "id", symbolContainer.Name);
@@ -837,6 +912,12 @@ public class HmiScreenToHtmlConverter
             html.Append("width: ").Append(ToCss(width)).Append("px;");
         if (height > 0)
             html.Append("height: ").Append(ToCss(height)).Append("px;");
+    }
+
+    private static void AppendScreenStyle(StringBuilder html, HmiScreenBase screen)
+    {
+        if (screen.BackgroundColor != null)
+            html.Append("background-color: ").Append(ToCss(screen.BackgroundColor.StaticValue)).Append(";");
     }
 
     private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item)

@@ -10,6 +10,14 @@ public abstract class HmiScreenBase : HmiScreenModelBase
 
     public HmiProperty<double> Height { get; set; } = 0;
 
+    public HmiProperty<HmiColor>? BackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? RasterColor { get; set; }
+
+    public HmiProperty<string>? TemplateId { get; set; }
+
+    public HmiProperty<string>? TemplateName { get; set; }
+
     public HmiProperty<HmiCursorMode>? CursorMode { get; set; }
 
     public HmiProperty<HmiUpdateCycle>? UpdateCycle { get; set; }

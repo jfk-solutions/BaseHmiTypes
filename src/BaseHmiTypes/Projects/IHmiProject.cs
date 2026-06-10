@@ -3,6 +3,7 @@ using BaseHmiTypes.Connections;
 using BaseHmiTypes.Cycles;
 using BaseHmiTypes.Images;
 using BaseHmiTypes.Screens;
+using BaseHmiTypes.Screens.Base;
 using BaseHmiTypes.Scripts;
 using BaseHmiTypes.Tags;
 using BaseHmiTypes.TextGraphicLists;
@@ -62,7 +63,7 @@ public interface IHmiProjectItemDescriptor
 
 public interface IHmiScreenProvider
 {
-    ValueTask<HmiScreen?> GetScreenAsync(string id, CancellationToken cancellationToken = default);
+    ValueTask<HmiScreenBase?> GetScreenAsync(string id, CancellationToken cancellationToken = default);
 }
 
 public interface IHmiTagProvider

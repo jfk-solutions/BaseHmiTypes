@@ -2,6 +2,7 @@ export * from "./base/HmiObjectType.js";
 export * from "./base/HmiModelBase.js";
 export * from "./base/HmiProperty.js";
 export * from "./base/HmiColor.js";
+export * from "./base/HmiChildCoordinateSpace.js";
 export * from "./base/HmiThickness.js";
 export * from "./base/HmiFont.js";
 export * from "./base/HmiHorizontalAlignment.js";

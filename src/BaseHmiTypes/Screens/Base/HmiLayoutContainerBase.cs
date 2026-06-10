@@ -2,5 +2,7 @@ namespace BaseHmiTypes.Screens.Base;
 
 public abstract class HmiLayoutContainerBase : HmiPaintedScreenItemBase
 {
+    public HmiChildCoordinateSpace ChildCoordinateSpace { get; set; } = HmiChildCoordinateSpace.ParentRelative;
+
     public IList<HmiScreenItemBase> Items { get; } = new List<HmiScreenItemBase>();
 }
