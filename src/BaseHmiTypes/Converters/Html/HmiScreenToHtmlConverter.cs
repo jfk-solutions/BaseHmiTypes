@@ -1,5 +1,3 @@
-#nullable enable
-
 using System.Globalization;
 using System.Net;
 using System.Text;
@@ -634,13 +632,10 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendStaticAttribute<T>(StringBuilder html, string name, HmiProperty<T>? property)
     {
-        if (property == null)
+        if (property == null || property.StaticValue == null)
             return;
 
-        var value = property.StaticValue;
-        if (value == null)
-            return;
-
+        object value = property.StaticValue;
         if (value is bool boolean)
         {
             AppendBooleanAttribute(html, name, boolean);
@@ -681,14 +676,10 @@ public class HmiScreenToHtmlConverter
 
     private static void AddFontValue<T>(List<string> values, string name, HmiProperty<T>? property)
     {
-        if (property == null)
+        if (property == null || property.StaticValue == null)
             return;
 
-        var value = property.StaticValue;
-        if (value == null)
-            return;
-
-        values.Add("\"" + EscapeJsonString(name) + "\":" + FormatJsonValue(value));
+        values.Add("\"" + EscapeJsonString(name) + "\":" + FormatJsonValue(property.StaticValue));
     }
 
     private static string FormatJsonValue(object value)
