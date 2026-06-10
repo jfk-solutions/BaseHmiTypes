@@ -16,4 +16,10 @@ public class HmiRectangle : HmiSurfaceShapeBase
     public HmiProperty<(double x, double y)>? BottomLeftRadius { get; set; }
 
     public HmiProperty<(double x, double y)>? BottomRightRadius { get; set; }
+
+    public HmiProperty<int>? CornerRadius { get; set; }
+
+    public HmiProperty<int>? CornerStyle { get; set; }
+
+    public HmiProperty<int>? EdgeStyle { get; set; }
 }

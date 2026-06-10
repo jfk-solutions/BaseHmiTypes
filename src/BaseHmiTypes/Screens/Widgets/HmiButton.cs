@@ -26,4 +26,8 @@ public class HmiButton : HmiWidgetBase
     public HmiProperty<int>? Mode { get; set; }
 
     public HmiProperty<bool>? WindowsStyle { get; set; }
+
+    public HmiProperty<HmiColor>? CaptionColor { get; set; }
+
+    public HmiProperty<HmiColor>? CaptionBackgroundColor { get; set; }
 }

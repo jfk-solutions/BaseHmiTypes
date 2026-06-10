@@ -9,4 +9,7 @@ public class HmiSlider : HmiBar
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiSlider;
     }
 
+    public HmiProperty<HmiColor>? ThumbBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? ThumbForegroundColor { get; set; }
 }

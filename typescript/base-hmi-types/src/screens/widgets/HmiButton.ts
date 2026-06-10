@@ -1,4 +1,4 @@
-import { HmiImageSource, HmiProperty } from "../base.js";
+import { HmiColor, HmiImageSource, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 
@@ -17,4 +17,6 @@ export class HmiButton extends HmiWidgetBase {
   pressedStateTags?: HmiProperty<string>;
   mode?: HmiProperty<number>;
   windowsStyle?: HmiProperty<boolean>;
+  captionColor?: HmiProperty<HmiColor>;
+  captionBackgroundColor?: HmiProperty<HmiColor>;
 }

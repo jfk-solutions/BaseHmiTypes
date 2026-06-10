@@ -32,12 +32,9 @@ public class HmiScreenToHtmlConverterTests
             Y = 20,
             Width = 80,
             Height = 30,
-            Style =
-            {
-                BackgroundColor = HmiColor.FromArgb(255, 10, 20, 30),
-                ForegroundColor = HmiColor.FromArgb(255, 250, 250, 250),
-                BorderWidth = 2
-            }
+            BackgroundColor = HmiColor.FromArgb(255, 10, 20, 30),
+            ForegroundColor = HmiColor.FromArgb(255, 250, 250, 250),
+            BorderWidth = 2
         });
         layer.Items.Add(new HmiText
         {
@@ -145,11 +142,8 @@ public class HmiScreenToHtmlConverterTests
             Height = 40,
             X2 = 100,
             Y2 = 40,
-            Style =
-            {
-                LineColor = HmiColor.FromArgb(255, 255, 0, 0),
-                LineWidth = 3
-            }
+            LineColor = HmiColor.FromArgb(255, 255, 0, 0),
+            LineWidth = 3
         });
         var polyline = new HmiPolyline
         {
@@ -168,11 +162,8 @@ public class HmiScreenToHtmlConverterTests
             Name = "TankShape",
             Width = 90,
             Height = 90,
-            Style =
-            {
-                BackgroundColor = HmiColor.FromArgb(255, 0, 128, 255),
-                BorderColor = HmiColor.FromArgb(255, 0, 0, 0)
-            }
+            BackgroundColor = HmiColor.FromArgb(255, 0, 128, 255),
+            BorderColor = HmiColor.FromArgb(255, 0, 0, 0)
         };
         polygon.Points.Add(new HmiPoint(45, 0));
         polygon.Points.Add(new HmiPoint(90, 90));

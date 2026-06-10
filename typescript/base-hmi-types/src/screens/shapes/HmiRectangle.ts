@@ -12,4 +12,7 @@ export class HmiRectangle extends HmiSurfaceShapeBase {
   topRightRadius?: HmiProperty<number>;
   bottomLeftRadius?: HmiProperty<number>;
   bottomRightRadius?: HmiProperty<number>;
+  cornerRadius?: HmiProperty<number>;
+  cornerStyle?: HmiProperty<number>;
+  edgeStyle?: HmiProperty<number>;
 }

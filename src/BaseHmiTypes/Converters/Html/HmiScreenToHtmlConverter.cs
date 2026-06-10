@@ -353,7 +353,7 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendArcPath(
         StringBuilder html,
-        HmiScreenItemBase item,
+        HmiShapeBase item,
         double centerX,
         double centerY,
         double radiusX,
@@ -378,7 +378,7 @@ public class HmiScreenToHtmlConverter
         html.Append(">");
     }
 
-    private static void AppendStrokeAttributes(StringBuilder html, HmiScreenItemBase item, HmiColor? fillColor)
+    private static void AppendStrokeAttributes(StringBuilder html, HmiShapeBase item, HmiColor? fillColor)
     {
         AppendAttribute(html, "fill", fillColor == null ? "none" : ToCss(fillColor.Value));
         AppendAttribute(html, "stroke", ToCss(GetStrokeColor(item)));
@@ -443,30 +443,30 @@ public class HmiScreenToHtmlConverter
         return item.Height.GetStaticValueOrDefault(1d);
     }
 
-    private static HmiColor GetStrokeColor(HmiScreenItemBase item)
+    private static HmiColor GetStrokeColor(HmiShapeBase item)
     {
-        if (TryGetStaticValue(item.Style.LineColor, out var lineColor))
+        if (TryGetStaticValue(item.LineColor, out var lineColor))
             return lineColor;
-        if (TryGetStaticValue(item.Style.BorderColor, out var borderColor))
+        if (item is HmiPaintedScreenItemBase paintedItem && TryGetStaticValue(paintedItem.BorderColor, out var borderColor))
             return borderColor;
-        if (TryGetStaticValue(item.Style.ForegroundColor, out var foregroundColor))
+        if (item is HmiPaintedScreenItemBase foregroundItem && TryGetStaticValue(foregroundItem.ForegroundColor, out var foregroundColor))
             return foregroundColor;
 
         return HmiColor.FromArgb(255, 0, 0, 0);
     }
 
-    private static HmiColor? GetFillColor(HmiScreenItemBase item)
+    private static HmiColor? GetFillColor(HmiShapeBase item)
     {
-        return TryGetStaticValue(item.Style.BackgroundColor, out var backgroundColor)
+        return TryGetStaticValue(item.BackgroundColor, out var backgroundColor)
             ? backgroundColor
             : (HmiColor?)null;
     }
 
-    private static double GetStrokeWidth(HmiScreenItemBase item)
+    private static double GetStrokeWidth(HmiShapeBase item)
     {
-        if (TryGetStaticValue(item.Style.LineWidth, out var lineWidth))
+        if (TryGetStaticValue(item.LineWidth, out var lineWidth))
             return lineWidth;
-        if (TryGetStaticValue(item.Style.BorderWidth, out var borderWidth))
+        if (item is HmiPaintedScreenItemBase paintedItem && TryGetStaticValue(paintedItem.BorderWidth, out var borderWidth))
             return borderWidth;
 
         return 1d;
@@ -539,8 +539,8 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", rectangle.Name);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, rectangle);
-        AppendStyle(html, rectangle.Style);
-        if (rectangle.Style.BorderColor == null && rectangle.Style.BorderWidth == null && rectangle.Style.LineColor == null && rectangle.Style.LineWidth == null)
+        AppendStyle(html, rectangle);
+        if (rectangle.BorderColor == null && rectangle.BorderWidth == null && rectangle.LineColor == null && rectangle.LineWidth == null)
             html.Append("border: 1px solid #000000;");
         html.Append("\"");
         html.Append(">");
@@ -647,7 +647,8 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", item.Name);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, item);
-        AppendStyle(html, item.Style);
+        if (item is HmiPaintedScreenItemBase paintedItem)
+            AppendStyle(html, paintedItem);
         html.Append("\"");
     }
 
@@ -658,7 +659,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-hmi-flip", symbolContainer.Flip == null ? null : symbolContainer.Flip.StaticValue.ToString());
         html.Append(" style=\"position: absolute; overflow: hidden;");
         AppendPosition(html, symbolContainer);
-        AppendStyle(html, symbolContainer.Style);
+        AppendStyle(html, symbolContainer);
         AppendSymbolTransform(html, symbolContainer);
         html.Append("\"");
     }
@@ -702,18 +703,16 @@ public class HmiScreenToHtmlConverter
             html.Append("height: ").Append(ToCss(height)).Append("px;");
     }
 
-    private static void AppendStyle(StringBuilder html, HmiVisualStyle style)
+    private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item)
     {
-        var foregroundColor = style.ForegroundColor;
-        var backgroundColor = style.BackgroundColor;
-        var borderColor = style.BorderColor;
-        var borderWidth = style.BorderWidth;
-        var lineColor = style.LineColor;
-        var lineWidth = style.LineWidth;
-        var margin = style.Margin;
-        var font = style.Font;
-        var horizontalAlignment = style.HorizontalAlignment;
-        var verticalAlignment = style.VerticalAlignment;
+        var foregroundColor = item.ForegroundColor;
+        var backgroundColor = item.BackgroundColor;
+        var borderColor = item.BorderColor;
+        var borderWidth = item.BorderWidth;
+        var margin = item.Margin;
+        var font = GetFont(item);
+        var horizontalAlignment = GetHorizontalAlignment(item);
+        var verticalAlignment = GetVerticalAlignment(item);
 
         if (foregroundColor != null)
             html.Append("color: ").Append(ToCss(foregroundColor.StaticValue)).Append(";");
@@ -721,17 +720,21 @@ public class HmiScreenToHtmlConverter
             html.Append("background-color: ").Append(ToCss(backgroundColor.StaticValue)).Append(";");
         if (borderColor != null)
             html.Append("border-color: ").Append(ToCss(borderColor.StaticValue)).Append(";");
-        if (lineColor != null)
-            html.Append("border-color: ").Append(ToCss(lineColor.StaticValue)).Append(";");
         if (borderWidth != null)
         {
             html.Append("border-style: solid;");
             html.Append("border-width: ").Append(ToCss(borderWidth.StaticValue)).Append("px;");
         }
-        if (lineWidth != null)
+
+        if (item is HmiShapeBase shape)
         {
-            html.Append("border-style: solid;");
-            html.Append("border-width: ").Append(ToCss(lineWidth.StaticValue)).Append("px;");
+            if (shape.LineColor != null)
+                html.Append("border-color: ").Append(ToCss(shape.LineColor.StaticValue)).Append(";");
+            if (shape.LineWidth != null)
+            {
+                html.Append("border-style: solid;");
+                html.Append("border-width: ").Append(ToCss(shape.LineWidth.StaticValue)).Append("px;");
+            }
         }
         if (margin != null)
         {
@@ -762,6 +765,33 @@ public class HmiScreenToHtmlConverter
             html.Append("display: flex;");
             html.Append("align-items: ").Append(ToCss(verticalAlignment.StaticValue)).Append(";");
         }
+    }
+
+    private static HmiFont? GetFont(HmiScreenItemBase item)
+    {
+        if (item is HmiText text)
+            return text.Font;
+        if (item is HmiWidgetBase widget)
+            return widget.Font;
+        return null;
+    }
+
+    private static HmiProperty<HmiHorizontalAlignment>? GetHorizontalAlignment(HmiScreenItemBase item)
+    {
+        if (item is HmiText text)
+            return text.HorizontalAlignment;
+        if (item is HmiWidgetBase widget)
+            return widget.HorizontalAlignment;
+        return null;
+    }
+
+    private static HmiProperty<HmiVerticalAlignment>? GetVerticalAlignment(HmiScreenItemBase item)
+    {
+        if (item is HmiText text)
+            return text.VerticalAlignment;
+        if (item is HmiWidgetBase widget)
+            return widget.VerticalAlignment;
+        return null;
     }
 
     private static void AppendAttribute(StringBuilder html, string? name, string? value)

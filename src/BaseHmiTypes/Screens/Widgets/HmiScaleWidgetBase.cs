@@ -29,4 +29,14 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
     public HmiProperty<bool>? ShowValue { get; set; }
 
     public HmiProperty<int>? ValuePosition { get; set; }
+
+    public HmiProperty<HmiColor>? LabelColor { get; set; }
+
+    public HmiProperty<HmiColor>? ScaleBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? ScaleForegroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? TickColor { get; set; }
+
+    public HmiFont? LabelFont { get; set; }
 }

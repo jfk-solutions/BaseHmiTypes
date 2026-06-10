@@ -16,4 +16,10 @@ public class HmiText : HmiSurfaceShapeBase
     public HmiProperty<int>? TextWrapping { get; set; }
 
     public HmiProperty<int>? TextTrimming { get; set; }
+
+    public HmiFont? Font { get; set; }
+
+    public HmiProperty<HmiHorizontalAlignment>? HorizontalAlignment { get; set; }
+
+    public HmiProperty<HmiVerticalAlignment>? VerticalAlignment { get; set; }
 }

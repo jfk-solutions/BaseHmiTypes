@@ -1,4 +1,4 @@
-import { HmiProperty } from "../base.js";
+import { HmiColor, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 
 export abstract class HmiSelectionGroupBase extends HmiWidgetBase {
@@ -6,4 +6,9 @@ export abstract class HmiSelectionGroupBase extends HmiWidgetBase {
   selectedIndex?: HmiProperty<number>;
   selectionMode?: HmiProperty<number>;
   selectionItemHeight?: HmiProperty<number>;
+  selectionBackgroundColor?: HmiProperty<HmiColor>;
+  selectionForegroundColor?: HmiProperty<HmiColor>;
+  evenRowBackgroundColor?: HmiProperty<HmiColor>;
+  selectionBorderColor?: HmiProperty<HmiColor>;
+  selectionBorderWidth?: HmiProperty<number>;
 }

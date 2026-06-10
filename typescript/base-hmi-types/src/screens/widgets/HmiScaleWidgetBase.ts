@@ -1,4 +1,4 @@
-import { HmiProperty } from "../base.js";
+import { HmiColor, HmiFont, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 
 export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
@@ -15,4 +15,9 @@ export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   orientation?: HmiProperty<number>;
   showValue?: HmiProperty<boolean>;
   valuePosition?: HmiProperty<number>;
+  labelColor?: HmiProperty<HmiColor>;
+  scaleBackgroundColor?: HmiProperty<HmiColor>;
+  scaleForegroundColor?: HmiProperty<HmiColor>;
+  tickColor?: HmiProperty<HmiColor>;
+  labelFont?: HmiFont;
 }

@@ -1,3 +1,3 @@
-import { HmiScreenItemBase } from "./HmiScreenItemBase.js";
+import { HmiPaintedScreenItemBase } from "./HmiPaintedScreenItemBase.js";
 
-export abstract class HmiSimpleScreenItemBase extends HmiScreenItemBase {}
+export abstract class HmiSimpleScreenItemBase extends HmiPaintedScreenItemBase {}

@@ -11,4 +11,14 @@ public abstract class HmiSelectionGroupBase : HmiWidgetBase
     public HmiProperty<int>? SelectionMode { get; set; }
 
     public HmiProperty<double>? SelectionItemHeight { get; set; }
+
+    public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? EvenRowBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? SelectionBorderColor { get; set; }
+
+    public HmiProperty<double>? SelectionBorderWidth { get; set; }
 }

@@ -1,6 +1,5 @@
 import { HmiScreenModelBase } from "./HmiScreenModelBase.js";
 import { HmiProperty, staticProperty } from "./HmiProperty.js";
-import { HmiVisualStyle } from "./HmiVisualStyle.js";
 import { HmiEventBinding } from "../../scripts/HmiEventBinding.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
@@ -17,6 +16,5 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   tabIndex?: HmiProperty<number>;
   toolTipText?: HmiProperty<string>;
   canBeGrouped?: HmiProperty<boolean>;
-  readonly style = new HmiVisualStyle();
   readonly events: HmiEventBinding[] = [];
 }

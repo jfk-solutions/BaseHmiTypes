@@ -7,12 +7,12 @@ import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
+import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { getStaticValue, getStaticValueOrDefault, HmiProperty } from "../../screens/base/HmiProperty.js";
 import { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
 import { HmiSymbolContainer } from "../../screens/base/HmiSymbolContainer.js";
 import { HmiSymbolFlipMode } from "../../screens/base/HmiSymbolFlipMode.js";
 import { HmiVerticalAlignment } from "../../screens/base/HmiVerticalAlignment.js";
-import { HmiVisualStyle } from "../../screens/base/HmiVisualStyle.js";
 import { HmiAlarmControl } from "../../screens/controls/HmiAlarmControl.js";
 import { HmiScreen } from "../../screens/screen/HmiScreen.js";
 import { HmiScreenWindow } from "../../screens/screen/HmiScreenWindow.js";
@@ -29,6 +29,7 @@ import { HmiPointBasedShapeBase } from "../../screens/shapes/HmiPointBasedShapeB
 import { HmiPolygon } from "../../screens/shapes/HmiPolygon.js";
 import { HmiPolyline } from "../../screens/shapes/HmiPolyline.js";
 import { HmiRectangle } from "../../screens/shapes/HmiRectangle.js";
+import { HmiShapeBase } from "../../screens/shapes/HmiShapeBase.js";
 import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
@@ -36,6 +37,7 @@ import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiToggleSwitch } from "../../screens/widgets/HmiToggleSwitch.js";
+import { HmiWidgetBase } from "../../screens/widgets/HmiWidgetBase.js";
 import { HmiHtmlConvertOptions } from "./HmiHtmlConvertOptions.js";
 import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
 
@@ -369,27 +371,27 @@ function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, h
   html.push(">");
 }
 
-function appendStrokeAttributes(html: string[], item: HmiScreenItemBase, fillColor: HmiColor | undefined): void {
+function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined): void {
   appendAttribute(html, "fill", fillColor === undefined ? "none" : colorToCss(fillColor));
   appendAttribute(html, "stroke", colorToCss(getStrokeColor(item)));
   appendSvgAttribute(html, "stroke-width", getStrokeWidth(item));
 }
 
-function getStrokeColor(item: HmiScreenItemBase): HmiColor {
+function getStrokeColor(item: HmiShapeBase): HmiColor {
   return (
-    getStaticValue(item.style.lineColor) ??
-    getStaticValue(item.style.borderColor) ??
-    getStaticValue(item.style.foregroundColor) ??
+    getStaticValue(item.lineColor) ??
+    (item instanceof HmiPaintedScreenItemBase ? getStaticValue(item.borderColor) : undefined) ??
+    (item instanceof HmiPaintedScreenItemBase ? getStaticValue(item.foregroundColor) : undefined) ??
     { alpha: 255, red: 0, green: 0, blue: 0 }
   );
 }
 
-function getFillColor(item: HmiScreenItemBase): HmiColor | undefined {
-  return getStaticValue(item.style.backgroundColor);
+function getFillColor(item: HmiShapeBase): HmiColor | undefined {
+  return getStaticValue(item.backgroundColor);
 }
 
-function getStrokeWidth(item: HmiScreenItemBase): number {
-  return getStaticValue(item.style.lineWidth) ?? getStaticValue(item.style.borderWidth) ?? 1;
+function getStrokeWidth(item: HmiShapeBase): number {
+  return getStaticValue(item.lineWidth) ?? (item instanceof HmiPaintedScreenItemBase ? getStaticValue(item.borderWidth) : undefined) ?? 1;
 }
 
 function appendButton(html: string[], button: HmiButton): void {
@@ -421,12 +423,12 @@ function appendRectangle(html: string[], rectangle: HmiRectangle): void {
   appendAttribute(html, "id", rectangle.name);
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle);
-  appendStyle(html, rectangle.style);
+  appendStyle(html, rectangle);
   if (
-    rectangle.style.borderColor === undefined &&
-    rectangle.style.borderWidth === undefined &&
-    rectangle.style.lineColor === undefined &&
-    rectangle.style.lineWidth === undefined
+    rectangle.borderColor === undefined &&
+    rectangle.borderWidth === undefined &&
+    rectangle.lineColor === undefined &&
+    rectangle.lineWidth === undefined
   ) {
     html.push("border: 1px solid #000000;");
   }
@@ -547,7 +549,9 @@ function appendCommonAttributes(html: string[], item: HmiScreenItemBase): void {
   appendAttribute(html, "id", item.name);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item);
-  appendStyle(html, item.style);
+  if (item instanceof HmiPaintedScreenItemBase) {
+    appendStyle(html, item);
+  }
   html.push("\"");
 }
 
@@ -557,7 +561,7 @@ function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContai
   appendAttribute(html, "data-hmi-flip", getStaticValue(symbolContainer.flip));
   html.push(" style=\"position: absolute; overflow: hidden;");
   appendPosition(html, symbolContainer);
-  appendStyle(html, symbolContainer.style);
+  appendStyle(html, symbolContainer);
   appendSymbolTransform(html, symbolContainer);
   html.push("\"");
 }
@@ -601,38 +605,70 @@ function appendSize(html: string[], width: number, height: number): void {
   }
 }
 
-function appendStyle(html: string[], style: HmiVisualStyle): void {
-  appendColorStyle(html, "color", style.foregroundColor);
-  appendColorStyle(html, "background-color", style.backgroundColor);
-  appendColorStyle(html, "border-color", style.borderColor);
-  appendColorStyle(html, "border-color", style.lineColor);
-  appendWidthStyle(html, style.borderWidth);
-  appendWidthStyle(html, style.lineWidth);
-  if (style.margin !== undefined) {
+function appendStyle(html: string[], item: HmiPaintedScreenItemBase): void {
+  appendColorStyle(html, "color", item.foregroundColor);
+  appendColorStyle(html, "background-color", item.backgroundColor);
+  appendColorStyle(html, "border-color", item.borderColor);
+  appendWidthStyle(html, item.borderWidth);
+  if (item instanceof HmiShapeBase) {
+    appendColorStyle(html, "border-color", item.lineColor);
+    appendWidthStyle(html, item.lineWidth);
+  }
+  if (item.margin !== undefined) {
     html.push(
-      `margin: ${toCss(getStaticValueOrDefault(style.margin.top, 0))}px ${toCss(
-        getStaticValueOrDefault(style.margin.right, 0),
-      )}px ${toCss(getStaticValueOrDefault(style.margin.bottom, 0))}px ${toCss(
-        getStaticValueOrDefault(style.margin.left, 0),
+      `margin: ${toCss(getStaticValueOrDefault(item.margin.top, 0))}px ${toCss(
+        getStaticValueOrDefault(item.margin.right, 0),
+      )}px ${toCss(getStaticValueOrDefault(item.margin.bottom, 0))}px ${toCss(
+        getStaticValueOrDefault(item.margin.left, 0),
       )}px;`,
     );
   }
 
-  const font = style.font;
+  const font = getFont(item);
   if (font !== undefined) {
     appendFont(html, font);
   }
 
-  const horizontalAlignment = getStaticValue(style.horizontalAlignment);
+  const horizontalAlignment = getStaticValue(getHorizontalAlignment(item));
   if (horizontalAlignment !== undefined) {
     html.push(`text-align: ${horizontalAlignmentToCss(horizontalAlignment)};`);
   }
 
-  const verticalAlignment = getStaticValue(style.verticalAlignment);
+  const verticalAlignment = getStaticValue(getVerticalAlignment(item));
   if (verticalAlignment !== undefined) {
     html.push("display: flex;");
     html.push(`align-items: ${verticalAlignmentToCss(verticalAlignment)};`);
   }
+}
+
+function getFont(item: HmiScreenItemBase): HmiFont | undefined {
+  if (item instanceof HmiText) {
+    return item.font;
+  }
+  if (item instanceof HmiWidgetBase) {
+    return item.font;
+  }
+  return undefined;
+}
+
+function getHorizontalAlignment(item: HmiScreenItemBase): HmiProperty<HmiHorizontalAlignment> | undefined {
+  if (item instanceof HmiText) {
+    return item.horizontalAlignment;
+  }
+  if (item instanceof HmiWidgetBase) {
+    return item.horizontalAlignment;
+  }
+  return undefined;
+}
+
+function getVerticalAlignment(item: HmiScreenItemBase): HmiProperty<HmiVerticalAlignment> | undefined {
+  if (item instanceof HmiText) {
+    return item.verticalAlignment;
+  }
+  if (item instanceof HmiWidgetBase) {
+    return item.verticalAlignment;
+  }
+  return undefined;
 }
 
 function appendFont(html: string[], font: HmiFont): void {
