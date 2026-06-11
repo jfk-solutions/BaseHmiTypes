@@ -28,6 +28,7 @@ import { HmiGraphicView } from "../../screens/shapes/HmiGraphicView.js";
 import { HmiLine } from "../../screens/shapes/HmiLine.js";
 import { HmiPoint } from "../../screens/shapes/HmiPoint.js";
 import { HmiPointBasedShapeBase } from "../../screens/shapes/HmiPointBasedShapeBase.js";
+import { HmiPointCoordinateSpace } from "../../screens/shapes/HmiPointCoordinateSpace.js";
 import { HmiPolygon } from "../../screens/shapes/HmiPolygon.js";
 import { HmiPolyline } from "../../screens/shapes/HmiPolyline.js";
 import { HmiRectangle } from "../../screens/shapes/HmiRectangle.js";
@@ -38,6 +39,7 @@ import { HmiButton } from "../../screens/widgets/HmiButton.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
+import { HmiSwitchType } from "../../screens/widgets/HmiSwitchType.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiToggleSwitch } from "../../screens/widgets/HmiToggleSwitch.js";
 import { HmiWidgetBase } from "../../screens/widgets/HmiWidgetBase.js";
@@ -331,7 +333,7 @@ function appendLine(html: string[], line: HmiLine, context: HmiHtmlConvertContex
 function appendPointShape(html: string[], shape: HmiPointBasedShapeBase, elementName: string, fill: boolean, context: HmiHtmlConvertContext): void {
   appendSvgOpen(html, shape, getSvgWidth(shape), getSvgHeight(shape), context);
   html.push(`<${elementName}`);
-  appendAttribute(html, "points", shape.points.map(toSvgPoint).join(" "));
+  appendAttribute(html, "points", shape.points.map((point) => toSvgPoint(shape, point)).join(" "));
   appendStrokeAttributes(html, shape, fill ? getFillColor(shape, context) : undefined, context);
   html.push(`></${elementName}></svg>`);
 }
@@ -475,7 +477,7 @@ function getEllipsePoint(centerX: number, centerY: number, radiusX: number, radi
 
 function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, height: number, context: HmiHtmlConvertContext): void {
   html.push("<svg");
-  appendCommonAttributes(html, item, context);
+  appendCommonAttributes(html, item, context, false);
   appendAttribute(html, "viewBox", `0 0 ${toCss(Math.max(width, 1))} ${toCss(Math.max(height, 1))}`);
   appendAttribute(html, "xmlns", "http://www.w3.org/2000/svg");
   html.push(">");
@@ -533,9 +535,20 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
 }
 
 function appendToggleSwitch(html: string[], toggleSwitch: HmiToggleSwitch, context: HmiHtmlConvertContext): void {
-  html.push("<input type=\"checkbox\"");
+  html.push("<hmi-toggle-switch");
   appendCommonAttributes(html, toggleSwitch, context);
-  html.push(">");
+  appendStaticAttribute(
+    html,
+    "mode",
+    context.effectiveProperties.resolve<HmiSwitchType>(toggleSwitch, "Mode", toggleSwitch.mode),
+  );
+  appendStaticAttribute(html, "text", toggleSwitch.text);
+  appendStaticAttribute(html, "alternate-text", toggleSwitch.alternateText);
+  appendAttribute(html, "image", getStaticValue(toggleSwitch.image)?.uri);
+  appendAttribute(html, "alternate-image", getStaticValue(toggleSwitch.alternateImage)?.uri);
+  appendStaticAttribute(html, "header", toggleSwitch.header);
+  appendStaticAttribute(html, "header-text", toggleSwitch.headerText);
+  html.push("></hmi-toggle-switch>");
 }
 
 function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHtmlConvertContext): void {
@@ -760,11 +773,16 @@ function appendDiv(
   html.push("</div>");
 }
 
-function appendCommonAttributes(html: string[], item: HmiScreenItemBase, context: HmiHtmlConvertContext): void {
+function appendCommonAttributes(
+  html: string[],
+  item: HmiScreenItemBase,
+  context: HmiHtmlConvertContext,
+  includePaintedStyle = true,
+): void {
   appendAttribute(html, "id", item.name);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
-  if (item instanceof HmiPaintedScreenItemBase) {
+  if (includePaintedStyle && item instanceof HmiPaintedScreenItemBase) {
     appendStyle(html, item, context);
   }
   html.push("\"");
@@ -960,8 +978,15 @@ function isHmiColor(value: unknown): value is HmiColor {
   return "alpha" in value && "red" in value && "green" in value && "blue" in value;
 }
 
-function toSvgPoint(point: HmiPoint): string {
-  return `${toCss(point.x)},${toCss(point.y)}`;
+function toSvgPoint(shape: HmiPointBasedShapeBase, point: HmiPoint): string {
+  let x = point.x;
+  let y = point.y;
+  if (shape.pointCoordinateSpace === HmiPointCoordinateSpace.ScreenAbsolute) {
+    x -= getStaticValueOrDefault(shape.x, 0);
+    y -= getStaticValueOrDefault(shape.y, 0);
+  }
+
+  return `${toCss(x)},${toCss(y)}`;
 }
 
 function getSvgWidth(item: HmiScreenItemBase): number {

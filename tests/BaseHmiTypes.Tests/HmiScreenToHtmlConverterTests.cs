@@ -76,6 +76,50 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersToggleSwitchComponent()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "main",
+            Name = "MainScreen",
+            Width = 320,
+            Height = 240
+        };
+
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiToggleSwitch
+        {
+            Id = "toggle-1",
+            Name = "ModeSwitch",
+            X = 10,
+            Y = 20,
+            Width = 120,
+            Height = 52,
+            Mode = HmiSwitchType.Switch,
+            Header = true,
+            HeaderText = "LabelText",
+            Text = "OFF",
+            AlternateText = "ON",
+            Image = new HmiImageSource { Uri = "off.svg" },
+            AlternateImage = new HmiImageSource { Uri = "on.svg" }
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<hmi-toggle-switch");
+        StringAssert.Contains(html, "id=\"ModeSwitch\"");
+        StringAssert.Contains(html, "mode=\"Switch\"");
+        StringAssert.Contains(html, "text=\"OFF\"");
+        StringAssert.Contains(html, "alternate-text=\"ON\"");
+        StringAssert.Contains(html, "image=\"off.svg\"");
+        StringAssert.Contains(html, "alternate-image=\"on.svg\"");
+        StringAssert.Contains(html, " header");
+        StringAssert.Contains(html, "header-text=\"LabelText\"");
+        StringAssert.Contains(html, "</hmi-toggle-switch>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_DisablesPointerEventsForEmptyLayers()
     {
         var screen = new HmiScreen
@@ -382,6 +426,37 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersScreenAbsolutePolygonPointsAsLocalSvgPoints()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        var polygon = new HmiPolygon
+        {
+            Id = "polygon-1",
+            Name = "PumpShape",
+            X = 100,
+            Y = 50,
+            Width = 60,
+            Height = 40,
+            PointCoordinateSpace = HmiPointCoordinateSpace.ScreenAbsolute,
+            BackgroundColor = HmiColor.FromArgb(255, 0, 128, 255)
+        };
+        polygon.Points.Add(new HmiPoint(100, 50));
+        polygon.Points.Add(new HmiPoint(160, 50));
+        polygon.Points.Add(new HmiPoint(130, 90));
+        layer.Items.Add(polygon);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<svg id=\"PumpShape\" style=\"position: absolute;left: 100px;top: 50px;width: 60px;height: 40px;\" viewBox=\"0 0 60 40\"");
+        StringAssert.Contains(html, "<polygon");
+        StringAssert.Contains(html, "points=\"0,0 60,0 30,40\"");
+        StringAssert.Contains(html, "fill=\"#0080FF\"");
+        StringAssert.DoesNotMatch(html, new System.Text.RegularExpressions.Regex("<svg[^>]*background-color"));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersRectangleWithDefaultBorder()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
@@ -580,6 +655,11 @@ public class HmiScreenToHtmlConverterTests
             Id = "button-1",
             Name = "Button"
         };
+        var toggleSwitch = new HmiToggleSwitch
+        {
+            Id = "toggle-1",
+            Name = "Toggle"
+        };
         var symbolicIoField = new HmiSymbolicIOField
         {
             Id = "symbolic-1",
@@ -589,9 +669,13 @@ public class HmiScreenToHtmlConverterTests
         var resolver = new HmiEffectivePropertyResolver(HmiDefaultProfiles.WinCcAdvancedV21);
 
         var styleSettings = resolver.Resolve(button, nameof(HmiButton.StyleSettings), button.StyleSettings);
+        var toggleStyleSettings = resolver.Resolve(toggleSwitch, nameof(HmiToggleSwitch.StyleSettings), toggleSwitch.StyleSettings);
+        var toggleMode = resolver.Resolve(toggleSwitch, nameof(HmiToggleSwitch.Mode), toggleSwitch.Mode);
         var mode = resolver.Resolve(symbolicIoField, nameof(HmiSymbolicIOField.Mode), symbolicIoField.Mode);
 
         Assert.AreEqual(1, styleSettings!.StaticValue);
+        Assert.AreEqual(1, toggleStyleSettings!.StaticValue);
+        Assert.AreEqual(HmiSwitchType.Switch, toggleMode!.StaticValue);
         Assert.AreEqual(2, mode!.StaticValue);
     }
 

@@ -4,5 +4,7 @@ namespace BaseHmiTypes.Screens.Shapes;
 
 public abstract class HmiPointBasedShapeBase : HmiSurfaceShapeBase
 {
+    public HmiPointCoordinateSpace PointCoordinateSpace { get; set; } = HmiPointCoordinateSpace.ItemRelative;
+
     public IList<HmiPoint> Points { get; } = new List<HmiPoint>();
 }

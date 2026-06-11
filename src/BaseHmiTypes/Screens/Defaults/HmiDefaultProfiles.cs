@@ -9,7 +9,7 @@ public static class HmiDefaultProfiles
     private const int AdvancedFillStyleSolid = 0;
     private const HmiLineStyle AdvancedLineStyleNone = HmiLineStyle.None;
     private const HmiLineStyle AdvancedLineStyleSolid = HmiLineStyle.Solid;
-    private const int AdvancedSwitchTypeSwitch = 0;
+    private const HmiSwitchType AdvancedSwitchTypeSwitch = HmiSwitchType.Switch;
     private const int AdvancedWinCcStyleGlobalDesign = 1;
     private const int AdvancedSymbolicIoFieldTypeInOutput = 2;
     private const int AdvancedClockNumberStyleNoNumber = 0;
@@ -50,9 +50,9 @@ public static class HmiDefaultProfiles
         profile.Set<HmiScaleWidgetBase, bool>(nameof(HmiScaleWidgetBase.UseAutoScaling), true);
         profile.Set<HmiScaleWidgetBase, bool>(nameof(HmiScaleWidgetBase.ShowLimitRanges), false);
 
-        profile.Set<HmiButton, int>(nameof(HmiButton.StyleSettings), AdvancedWinCcStyleGlobalDesign);
-        profile.Set<HmiButton, bool>(nameof(HmiButton.WindowsStyle), true);
-        profile.Set<HmiToggleSwitch, int>(nameof(HmiToggleSwitch.Mode), AdvancedSwitchTypeSwitch);
+        profile.Set<HmiButtonBase, int>(nameof(HmiButtonBase.StyleSettings), AdvancedWinCcStyleGlobalDesign);
+        profile.Set<HmiButtonBase, bool>(nameof(HmiButtonBase.WindowsStyle), true);
+        profile.Set<HmiToggleSwitch, HmiSwitchType>(nameof(HmiToggleSwitch.Mode), AdvancedSwitchTypeSwitch);
 
         profile.Set<HmiSymbolicIOField, int>(nameof(HmiSymbolicIOField.Mode), AdvancedSymbolicIoFieldTypeInOutput);
         profile.Set<HmiSymbolicIOField, bool>(nameof(HmiSymbolicIOField.ShowDropDownButton), true);

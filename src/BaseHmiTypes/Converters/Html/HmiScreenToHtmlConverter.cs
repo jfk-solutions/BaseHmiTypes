@@ -346,10 +346,10 @@ public class HmiScreenToHtmlConverter
         var height = line.Height.GetStaticValueOrDefault();
         AppendSvgOpen(html, line, GetSvgWidth(line), GetSvgHeight(line), context);
         html.Append("<line");
-        AppendSvgAttribute(html, "x1", line.X1.GetStaticValueOrDefault());
-        AppendSvgAttribute(html, "y1", line.Y1.GetStaticValueOrDefault());
-        AppendSvgAttribute(html, "x2", line.X2.GetStaticValueOrDefault(width));
-        AppendSvgAttribute(html, "y2", line.Y2.GetStaticValueOrDefault(height));
+        AppendSvgAttribute(html, "x1", ToSvgLineX(line, line.X1.GetStaticValueOrDefault()));
+        AppendSvgAttribute(html, "y1", ToSvgLineY(line, line.Y1.GetStaticValueOrDefault()));
+        AppendSvgAttribute(html, "x2", ToSvgLineX(line, line.X2.GetStaticValueOrDefault(width)));
+        AppendSvgAttribute(html, "y2", ToSvgLineY(line, line.Y2.GetStaticValueOrDefault(height)));
         AppendStrokeAttributes(html, line, null, context);
         html.Append("></line></svg>");
     }
@@ -358,7 +358,7 @@ public class HmiScreenToHtmlConverter
     {
         AppendSvgOpen(html, shape, GetSvgWidth(shape), GetSvgHeight(shape), context);
         html.Append('<').Append(elementName);
-        AppendAttribute(html, "points", string.Join(" ", shape.Points.Select(ToSvgPoint)));
+        AppendAttribute(html, "points", string.Join(" ", shape.Points.Select(point => ToSvgPoint(shape, point))));
         AppendStrokeAttributes(html, shape, fill ? GetFillColor(shape, context) : null, context);
         html.Append("></").Append(elementName).Append("></svg>");
     }
@@ -471,7 +471,7 @@ public class HmiScreenToHtmlConverter
     private static void AppendSvgOpen(StringBuilder html, HmiScreenItemBase item, double width, double height, HmiHtmlConvertContext context)
     {
         html.Append("<svg");
-        AppendCommonAttributes(html, item, context);
+        AppendCommonAttributes(html, item, context, includePaintedStyle: false);
         AppendAttribute(html, "viewBox", "0 0 " + ToCss(Math.Max(width, 1)) + " " + ToCss(Math.Max(height, 1)));
         AppendAttribute(html, "xmlns", "http://www.w3.org/2000/svg");
         html.Append(">");
@@ -586,9 +586,31 @@ public class HmiScreenToHtmlConverter
         return true;
     }
 
-    private static string ToSvgPoint(HmiPoint point)
+    private static string ToSvgPoint(HmiPointBasedShapeBase shape, HmiPoint point)
     {
-        return ToCss(point.X) + "," + ToCss(point.Y);
+        var x = point.X;
+        var y = point.Y;
+        if (shape.PointCoordinateSpace == HmiPointCoordinateSpace.ScreenAbsolute)
+        {
+            x -= shape.X.GetStaticValueOrDefault();
+            y -= shape.Y.GetStaticValueOrDefault();
+        }
+
+        return ToCss(x) + "," + ToCss(y);
+    }
+
+    private static double ToSvgLineX(HmiLine line, double x)
+    {
+        return line.PointCoordinateSpace == HmiPointCoordinateSpace.ScreenAbsolute
+            ? x - line.X.GetStaticValueOrDefault()
+            : x;
+    }
+
+    private static double ToSvgLineY(HmiLine line, double y)
+    {
+        return line.PointCoordinateSpace == HmiPointCoordinateSpace.ScreenAbsolute
+            ? y - line.Y.GetStaticValueOrDefault()
+            : y;
     }
 
     private static void AppendSvgAttribute(StringBuilder html, string name, double value)
@@ -632,9 +654,16 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendToggleSwitch(StringBuilder html, HmiToggleSwitch toggleSwitch, HmiHtmlConvertContext context)
     {
-        html.Append("<input type=\"checkbox\"");
+        html.Append("<hmi-toggle-switch");
         AppendCommonAttributes(html, toggleSwitch, context);
-        html.Append(">");
+        AppendStaticAttribute(html, "mode", context.EffectiveProperties.Resolve(toggleSwitch, nameof(HmiToggleSwitch.Mode), toggleSwitch.Mode));
+        AppendStaticAttribute(html, "text", toggleSwitch.Text);
+        AppendStaticAttribute(html, "alternate-text", toggleSwitch.AlternateText);
+        AppendAttribute(html, "image", toggleSwitch.Image.GetStaticValue()?.Uri);
+        AppendAttribute(html, "alternate-image", toggleSwitch.AlternateImage.GetStaticValue()?.Uri);
+        AppendStaticAttribute(html, "header", toggleSwitch.Header);
+        AppendStaticAttribute(html, "header-text", toggleSwitch.HeaderText);
+        html.Append("></hmi-toggle-switch>");
     }
 
     private static void AppendTextBlock(StringBuilder html, HmiScreenItemBase item, string? text, HmiHtmlConvertContext context)
@@ -884,12 +913,12 @@ public class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendCommonAttributes(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
+    private static void AppendCommonAttributes(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context, bool includePaintedStyle = true)
     {
         AppendAttribute(html, "id", item.Name);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, item, context);
-        if (item is HmiPaintedScreenItemBase paintedItem)
+        if (includePaintedStyle && item is HmiPaintedScreenItemBase paintedItem)
             AppendStyle(html, paintedItem, context);
         html.Append("\"");
     }
