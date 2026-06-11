@@ -16,4 +16,6 @@ public class HmiLine : HmiSurfaceShapeBase
     public HmiProperty<double>? X2 { get; set; }
 
     public HmiProperty<double>? Y2 { get; set; }
+
+    public HmiPointCoordinateSpace PointCoordinateSpace { get; set; } = HmiPointCoordinateSpace.ItemRelative;
 }

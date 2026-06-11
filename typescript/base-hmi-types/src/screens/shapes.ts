@@ -8,6 +8,7 @@ export * from "./shapes/HmiText.js";
 export * from "./shapes/HmiGraphicView.js";
 export * from "./shapes/HmiLine.js";
 export * from "./shapes/HmiPointBasedShapeBase.js";
+export * from "./shapes/HmiPointCoordinateSpace.js";
 export * from "./shapes/HmiCircle.js";
 export * from "./shapes/HmiCircleSegment.js";
 export * from "./shapes/HmiCircularArc.js";

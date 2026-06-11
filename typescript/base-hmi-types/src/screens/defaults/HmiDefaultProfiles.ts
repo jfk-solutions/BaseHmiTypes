@@ -1,10 +1,11 @@
 import { HmiColor, HmiLineStyle, hmiColorFromArgb } from "../base.js";
+import { HmiSwitchType } from "../widgets.js";
 import { HmiDefaultProfile } from "./HmiDefaultProfile.js";
 
 const advancedFillStyleSolid = 0;
 const advancedLineStyleNone = HmiLineStyle.None;
 const advancedLineStyleSolid = HmiLineStyle.Solid;
-const advancedSwitchTypeSwitch = 0;
+const advancedSwitchTypeSwitch = HmiSwitchType.Switch;
 const advancedWinCcStyleGlobalDesign = 1;
 const advancedSymbolicIoFieldTypeInOutput = 2;
 const advancedClockNumberStyleNoNumber = 0;
@@ -41,8 +42,8 @@ function createWinCcAdvancedV21(): HmiDefaultProfile {
   profile.set("HmiScaleWidgetBase", "UseAutoScaling", true);
   profile.set("HmiScaleWidgetBase", "ShowLimitRanges", false);
 
-  profile.set("HmiButton", "StyleSettings", advancedWinCcStyleGlobalDesign);
-  profile.set("HmiButton", "WindowsStyle", true);
+  profile.set("HmiButtonBase", "StyleSettings", advancedWinCcStyleGlobalDesign);
+  profile.set("HmiButtonBase", "WindowsStyle", true);
   profile.set("HmiToggleSwitch", "Mode", advancedSwitchTypeSwitch);
 
   profile.set("HmiSymbolicIOField", "Mode", advancedSymbolicIoFieldTypeInOutput);
