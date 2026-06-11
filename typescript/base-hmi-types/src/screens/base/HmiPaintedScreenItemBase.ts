@@ -14,5 +14,5 @@ export abstract class HmiPaintedScreenItemBase extends HmiScreenItemBase {
   borderWidth?: HmiProperty<number>;
   borderStyle?: HmiProperty<number>;
   margin?: HmiThickness;
-  padding?: HmiThickness;
+  padding?: HmiThickness | HmiProperty<number>;
 }

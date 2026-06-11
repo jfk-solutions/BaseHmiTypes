@@ -10,4 +10,5 @@ export enum HmiImageType {
   Ico = "Ico",
   Rtf = "Rtf",
   Ole = "Ole",
+  Tif = "Tif",
 }

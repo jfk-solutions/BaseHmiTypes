@@ -12,5 +12,6 @@ public enum HmiImageType
     Wmf,
     Ico,
     Rtf,
-    Ole
+    Ole,
+    Tif
 }
