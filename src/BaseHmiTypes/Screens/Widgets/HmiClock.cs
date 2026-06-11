@@ -9,6 +9,10 @@ public class HmiClock : HmiWidgetBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiClock;
     }
 
+    public HmiProperty<bool>? Analog { get; set; }
+
+    public HmiProperty<int>? NumberStyle { get; set; }
+
     public HmiProperty<bool>? ShowDate { get; set; }
 
     public HmiProperty<bool>? ShowTime { get; set; }

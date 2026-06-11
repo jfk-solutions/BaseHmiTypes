@@ -8,6 +8,8 @@ export class HmiClock extends HmiWidgetBase {
     this.hmiObjectType = HmiObjectType.HmiClock;
   }
 
+  analog?: HmiProperty<boolean>;
+  numberStyle?: HmiProperty<number>;
   showDate?: HmiProperty<boolean>;
   showTime?: HmiProperty<boolean>;
   showHours?: HmiProperty<boolean>;

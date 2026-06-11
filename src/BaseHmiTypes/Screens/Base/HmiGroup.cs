@@ -7,4 +7,5 @@ public class HmiGroup : HmiLayoutContainerBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiGroup;
     }
 
+    public bool IsLogicGrouping { get; set; }
 }

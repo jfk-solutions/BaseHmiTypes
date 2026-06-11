@@ -1,4 +1,5 @@
 import { IHmiProject } from "../../projects/IHmiProject.js";
+import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js";
 import { HmiColor } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
@@ -40,10 +41,25 @@ import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiToggleSwitch } from "../../screens/widgets/HmiToggleSwitch.js";
 import { HmiWidgetBase } from "../../screens/widgets/HmiWidgetBase.js";
+import { HmiDefaultProfiles } from "../../screens/defaults/HmiDefaultProfiles.js";
+import { HmiEffectivePropertyResolver } from "../../screens/defaults/HmiEffectivePropertyResolver.js";
+import { HmiDefaultProfile } from "../../screens/defaults/HmiDefaultProfile.js";
 import { HmiHtmlConvertOptions } from "./HmiHtmlConvertOptions.js";
+import { hmiHtmlCommonStyle } from "./HmiHtmlCommonStyle.generated.js";
 import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
 
 type ArcShape = HmiCircularArc | HmiEllipticalArc | HmiCircleSegment | HmiEllipseSegment;
+
+function resolveDefaultProfile(project: IHmiProject | undefined): HmiDefaultProfile {
+  switch (project?.info.hmiProjectSoftwareType) {
+    case HmiProjectSoftwareType.WinCCAdvanced:
+      return HmiDefaultProfiles.winCcAdvancedV21;
+    case HmiProjectSoftwareType.WinCCUnified:
+      return HmiDefaultProfiles.winCcUnifiedV21;
+    default:
+      return HmiDefaultProfiles.neutral;
+  }
+}
 
 export class HmiScreenToHtmlConverter {
   async convertAsync(
@@ -52,13 +68,14 @@ export class HmiScreenToHtmlConverter {
     options: HmiHtmlConvertOptions = new HmiHtmlConvertOptions(),
     signal?: AbortSignal,
   ): Promise<string> {
-    return this.convertCoreAsync(screen, project, options, true, new Set<string>(), signal);
+    const context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(resolveDefaultProfile(project)));
+    return this.convertCoreAsync(screen, project, context, true, new Set<string>(), signal);
   }
 
   private async convertCoreAsync(
     screen: HmiScreenBase,
     project: IHmiProject | undefined,
-    options: HmiHtmlConvertOptions,
+    context: HmiHtmlConvertContext,
     includeRuntime: boolean,
     screenStack: Set<string>,
     signal?: AbortSignal,
@@ -70,8 +87,11 @@ export class HmiScreenToHtmlConverter {
 
     const html: string[] = [];
     try {
-      if (includeRuntime && options.includeMetaCharset) {
+      if (includeRuntime && context.options.includeMetaCharset) {
         html.push("<meta charset=\"utf-8\">");
+      }
+      if (includeRuntime) {
+        appendGlobalStyle(html);
       }
       if (includeRuntime) {
         appendRuntimeModule(html);
@@ -86,7 +106,7 @@ export class HmiScreenToHtmlConverter {
 
       const template = await resolveTemplateAsync(screen, project, screenStack, signal);
       if (template !== undefined) {
-        html.push(await this.convertCoreAsync(template, project, options, false, screenStack, signal));
+        html.push(await this.convertCoreAsync(template, project, context, false, screenStack, signal));
       }
 
       for (const layer of screen.layers) {
@@ -102,7 +122,7 @@ export class HmiScreenToHtmlConverter {
         }
         html.push("\">");
         for (const item of layer.items) {
-          await this.appendItemAsync(html, item, project, options, screenStack, signal);
+          await this.appendItemAsync(html, item, project, context, screenStack, signal);
         }
         html.push("</div>");
       }
@@ -120,7 +140,7 @@ export class HmiScreenToHtmlConverter {
     html: string[],
     item: HmiScreenItemBase,
     project: IHmiProject | undefined,
-    options: HmiHtmlConvertOptions,
+    context: HmiHtmlConvertContext,
     screenStack: Set<string>,
     signal?: AbortSignal,
   ): Promise<void> {
@@ -129,51 +149,59 @@ export class HmiScreenToHtmlConverter {
     }
 
     if (item instanceof HmiToggleSwitch) {
-      appendToggleSwitch(html, item);
+      appendToggleSwitch(html, item, context);
     } else if (item instanceof HmiButton) {
-      appendButton(html, item);
+      appendButton(html, item, context);
     } else if (item instanceof HmiIOField) {
-      appendInput(html, item);
+      appendInput(html, item, context);
     } else if (item instanceof HmiTextBox || item instanceof HmiLabel || item instanceof HmiText) {
-      appendDiv(html, item, undefined, getStaticValue(item.text));
+      appendDiv(html, item, undefined, getStaticValue(item.text), context);
     } else if (item instanceof HmiGraphicView) {
-      appendImage(html, item, getStaticValue(item.image)?.uri ?? getStaticValue(item.source), options);
+      appendImage(html, item, getStaticValue(item.image)?.uri ?? getStaticValue(item.source), context);
     } else if (item instanceof HmiRectangle) {
-      appendRectangle(html, item);
+      appendRectangle(html, item, context);
     } else if (item instanceof HmiLine) {
-      appendLine(html, item);
+      appendLine(html, item, context);
     } else if (item instanceof HmiPolyline) {
-      appendPointShape(html, item, "polyline", false);
+      appendPointShape(html, item, "polyline", false, context);
     } else if (item instanceof HmiPolygon) {
-      appendPointShape(html, item, "polygon", true);
+      appendPointShape(html, item, "polygon", true, context);
     } else if (item instanceof HmiCircleSegment) {
-      appendCircularSegment(html, item);
+      appendCircularSegment(html, item, context);
     } else if (item instanceof HmiEllipseSegment) {
-      appendEllipticalSegment(html, item);
+      appendEllipticalSegment(html, item, context);
     } else if (item instanceof HmiCircularArc) {
-      appendCircularArc(html, item);
+      appendCircularArc(html, item, context);
     } else if (item instanceof HmiEllipticalArc) {
-      appendEllipticalArc(html, item);
+      appendEllipticalArc(html, item, context);
     } else if (item instanceof HmiCircle) {
-      appendCircle(html, item);
+      appendCircle(html, item, context);
     } else if (item instanceof HmiEllipse) {
-      appendEllipse(html, item);
+      appendEllipse(html, item, context);
     } else if (item instanceof HmiDynamicSvg) {
-      appendDynamicSvg(html, item);
+      appendDynamicSvg(html, item, context);
     } else if (item instanceof HmiGauge) {
-      appendGauge(html, item);
+      appendGauge(html, item, context);
     } else if (item instanceof HmiSymbolContainer) {
-      await this.appendSymbolContainerAsync(html, item, project, options, screenStack, signal);
-    } else if (item instanceof HmiGroup || item instanceof HmiLayoutContainerBase || item instanceof HmiContainerBase) {
-      await this.appendContainerAsync(html, item, item.items, project, options, screenStack, signal);
+      await this.appendSymbolContainerAsync(html, item, project, context, screenStack, signal);
+    } else if (item instanceof HmiGroup) {
+      if (item.isLogicGrouping) {
+        for (const child of item.items) {
+          await this.appendItemAsync(html, child, project, context, screenStack, signal);
+        }
+      } else {
+        await this.appendContainerAsync(html, item, item.items, project, context, screenStack, signal);
+      }
+    } else if (item instanceof HmiLayoutContainerBase || item instanceof HmiContainerBase) {
+      await this.appendContainerAsync(html, item, item.items, project, context, screenStack, signal);
     } else if (item instanceof HmiScreenWindow) {
-      await this.appendScreenWindowAsync(html, item, project, options, screenStack, signal);
+      await this.appendScreenWindowAsync(html, item, project, context, screenStack, signal);
     } else if (item instanceof HmiAlarmControl) {
-      appendDiv(html, item, options.unsupportedItemPlaceholderCssClass, "Alarm control");
+      appendDiv(html, item, context.options.unsupportedItemPlaceholderCssClass, "Alarm control", context);
     } else if (item instanceof HmiUnkown) {
-      appendDiv(html, item, undefined, `Unkown:${item.type ?? ""}`);
+      appendDiv(html, item, undefined, `Unkown:${item.type ?? ""}`, context);
     } else {
-      appendDiv(html, item, options.unsupportedItemPlaceholderCssClass, item.constructor.name);
+      appendDiv(html, item, context.options.unsupportedItemPlaceholderCssClass, item.constructor.name, context);
     }
   }
 
@@ -181,20 +209,20 @@ export class HmiScreenToHtmlConverter {
     html: string[],
     symbolContainer: HmiSymbolContainer,
     project: IHmiProject | undefined,
-    options: HmiHtmlConvertOptions,
+    context: HmiHtmlConvertContext,
     screenStack: Set<string>,
     signal?: AbortSignal,
   ): Promise<void> {
     const image = getStaticValue(symbolContainer.image);
     const imageUri = await resolveImageUri(image, project, signal);
     html.push("<div");
-    appendSymbolAttributes(html, symbolContainer);
+    appendSymbolAttributes(html, symbolContainer, context);
     html.push(">");
     if (imageUri?.trim()) {
-      appendSymbolImage(html, symbolContainer, image, imageUri, options);
+      appendSymbolImage(html, symbolContainer, image, imageUri);
     }
     for (const child of symbolContainer.items) {
-      await this.appendItemAsync(html, child, project, options, screenStack, signal);
+      await this.appendItemAsync(html, child, project, context, screenStack, signal);
     }
     html.push("</div>");
   }
@@ -204,22 +232,21 @@ export class HmiScreenToHtmlConverter {
     container: HmiScreenItemBase,
     items: readonly HmiScreenItemBase[],
     project: IHmiProject | undefined,
-    options: HmiHtmlConvertOptions,
+    context: HmiHtmlConvertContext,
     screenStack: Set<string>,
     signal?: AbortSignal,
   ): Promise<void> {
     html.push("<div");
-    appendCommonAttributes(html, container);
+    appendCommonAttributes(html, container, context);
     html.push(">");
     if (container instanceof HmiLayoutContainerBase && container.childCoordinateSpace === HmiChildCoordinateSpace.ScreenAbsolute) {
-      appendAbsoluteChildCoordinateSpaceOpen(html, container);
+      const childContext = context.withPositionOffset(-getStaticValueOrDefault(container.x, 0), -getStaticValueOrDefault(container.y, 0));
       for (const child of items) {
-        await this.appendItemAsync(html, child, project, options, screenStack, signal);
+        await this.appendItemAsync(html, child, project, childContext, screenStack, signal);
       }
-      html.push("</div>");
     } else {
       for (const child of items) {
-        await this.appendItemAsync(html, child, project, options, screenStack, signal);
+        await this.appendItemAsync(html, child, project, context, screenStack, signal);
       }
     }
     html.push("</div>");
@@ -229,22 +256,22 @@ export class HmiScreenToHtmlConverter {
     html: string[],
     screenWindow: HmiScreenWindow,
     project: IHmiProject | undefined,
-    options: HmiHtmlConvertOptions,
+    context: HmiHtmlConvertContext,
     screenStack: Set<string>,
     signal?: AbortSignal,
   ): Promise<void> {
     const resolved = project && screenWindow.screenId?.staticValue ? await project.getScreen(screenWindow.screenId?.staticValue, signal) : undefined;
     html.push("<div");
-    appendCommonAttributes(html, screenWindow);
+    appendCommonAttributes(html, screenWindow, context);
     html.push(">");
     if (resolved === undefined) {
       html.push("<div");
-      appendAttribute(html, "class", options.missingScreenPlaceholderCssClass);
+      appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);
       html.push(">");
       html.push(escapeHtml(screenWindow.screenName?.staticValue ?? screenWindow.screenId?.staticValue ?? "Missing screen"));
       html.push("</div>");
     } else {
-      html.push(await this.convertCoreAsync(resolved, project, options, false, screenStack, signal));
+      html.push(await this.convertCoreAsync(resolved, project, context, false, screenStack, signal));
     }
     html.push("</div>");
   }
@@ -290,51 +317,51 @@ function getScreenReferenceKeys(screen: HmiScreenBase): string[] {
   return keys;
 }
 
-function appendLine(html: string[], line: HmiLine): void {
-  appendSvgOpen(html, line, getSvgWidth(line), getSvgHeight(line));
+function appendLine(html: string[], line: HmiLine, context: HmiHtmlConvertContext): void {
+  appendSvgOpen(html, line, getSvgWidth(line), getSvgHeight(line), context);
   html.push("<line");
   appendSvgAttribute(html, "x1", getStaticValueOrDefault(line.x1, 0));
   appendSvgAttribute(html, "y1", getStaticValueOrDefault(line.y1, 0));
   appendSvgAttribute(html, "x2", getStaticValueOrDefault(line.x2, getStaticValueOrDefault(line.width, 0)));
   appendSvgAttribute(html, "y2", getStaticValueOrDefault(line.y2, getStaticValueOrDefault(line.height, 0)));
-  appendStrokeAttributes(html, line, undefined);
+  appendStrokeAttributes(html, line, undefined, context);
   html.push("></line></svg>");
 }
 
-function appendPointShape(html: string[], shape: HmiPointBasedShapeBase, elementName: string, fill: boolean): void {
-  appendSvgOpen(html, shape, getSvgWidth(shape), getSvgHeight(shape));
+function appendPointShape(html: string[], shape: HmiPointBasedShapeBase, elementName: string, fill: boolean, context: HmiHtmlConvertContext): void {
+  appendSvgOpen(html, shape, getSvgWidth(shape), getSvgHeight(shape), context);
   html.push(`<${elementName}`);
   appendAttribute(html, "points", shape.points.map(toSvgPoint).join(" "));
-  appendStrokeAttributes(html, shape, fill ? getFillColor(shape) : undefined);
+  appendStrokeAttributes(html, shape, fill ? getFillColor(shape, context) : undefined, context);
   html.push(`></${elementName}></svg>`);
 }
 
-function appendCircle(html: string[], circle: HmiCircle): void {
+function appendCircle(html: string[], circle: HmiCircle, context: HmiHtmlConvertContext): void {
   const width = getSvgWidth(circle);
   const height = getSvgHeight(circle);
-  appendSvgOpen(html, circle, width, height);
+  appendSvgOpen(html, circle, width, height, context);
   html.push("<circle");
   appendSvgAttribute(html, "cx", getStaticValueOrDefault(circle.centerX, width / 2));
   appendSvgAttribute(html, "cy", getStaticValueOrDefault(circle.centerY, height / 2));
   appendSvgAttribute(html, "r", getStaticValueOrDefault(circle.radius, Math.min(width, height) / 2));
-  appendStrokeAttributes(html, circle, getFillColor(circle));
+  appendStrokeAttributes(html, circle, getFillColor(circle, context), context);
   html.push("></circle></svg>");
 }
 
-function appendEllipse(html: string[], ellipse: HmiEllipse): void {
+function appendEllipse(html: string[], ellipse: HmiEllipse, context: HmiHtmlConvertContext): void {
   const width = getSvgWidth(ellipse);
   const height = getSvgHeight(ellipse);
-  appendSvgOpen(html, ellipse, width, height);
+  appendSvgOpen(html, ellipse, width, height, context);
   html.push("<ellipse");
   appendSvgAttribute(html, "cx", getStaticValueOrDefault(ellipse.centerX, width / 2));
   appendSvgAttribute(html, "cy", getStaticValueOrDefault(ellipse.centerY, height / 2));
   appendSvgAttribute(html, "rx", getStaticValueOrDefault(ellipse.radiusX, width / 2));
   appendSvgAttribute(html, "ry", getStaticValueOrDefault(ellipse.radiusY, height / 2));
-  appendStrokeAttributes(html, ellipse, getFillColor(ellipse));
+  appendStrokeAttributes(html, ellipse, getFillColor(ellipse, context), context);
   html.push("></ellipse></svg>");
 }
 
-function appendCircularArc(html: string[], arc: HmiCircularArc): void {
+function appendCircularArc(html: string[], arc: HmiCircularArc, context: HmiHtmlConvertContext): void {
   const width = getSvgWidth(arc);
   const height = getSvgHeight(arc);
   appendArcPath(
@@ -347,10 +374,11 @@ function appendCircularArc(html: string[], arc: HmiCircularArc): void {
     getStaticValueOrDefault(arc.startAngle, 0),
     getStaticValueOrDefault(arc.sweepAngle, 0),
     false,
+    context,
   );
 }
 
-function appendEllipticalArc(html: string[], arc: HmiEllipticalArc): void {
+function appendEllipticalArc(html: string[], arc: HmiEllipticalArc, context: HmiHtmlConvertContext): void {
   const width = getSvgWidth(arc);
   const height = getSvgHeight(arc);
   appendArcPath(
@@ -363,10 +391,11 @@ function appendEllipticalArc(html: string[], arc: HmiEllipticalArc): void {
     getStaticValueOrDefault(arc.startAngle, 0),
     getStaticValueOrDefault(arc.sweepAngle, 0),
     false,
+    context,
   );
 }
 
-function appendCircularSegment(html: string[], segment: HmiCircleSegment): void {
+function appendCircularSegment(html: string[], segment: HmiCircleSegment, context: HmiHtmlConvertContext): void {
   const width = getSvgWidth(segment);
   const height = getSvgHeight(segment);
   appendArcPath(
@@ -379,10 +408,11 @@ function appendCircularSegment(html: string[], segment: HmiCircleSegment): void 
     getStaticValueOrDefault(segment.startAngle, 0),
     getStaticValueOrDefault(segment.sweepAngle, 0),
     true,
+    context,
   );
 }
 
-function appendEllipticalSegment(html: string[], segment: HmiEllipseSegment): void {
+function appendEllipticalSegment(html: string[], segment: HmiEllipseSegment, context: HmiHtmlConvertContext): void {
   const width = getSvgWidth(segment);
   const height = getSvgHeight(segment);
   appendArcPath(
@@ -395,6 +425,7 @@ function appendEllipticalSegment(html: string[], segment: HmiEllipseSegment): vo
     getStaticValueOrDefault(segment.startAngle, 0),
     getStaticValueOrDefault(segment.sweepAngle, 0),
     true,
+    context,
   );
 }
 
@@ -408,11 +439,12 @@ function appendArcPath(
   startAngle: number,
   sweepAngle: number,
   segment: boolean,
+  context: HmiHtmlConvertContext,
 ): void {
-  appendSvgOpen(html, item, getSvgWidth(item), getSvgHeight(item));
+  appendSvgOpen(html, item, getSvgWidth(item), getSvgHeight(item), context);
   html.push("<path");
   appendAttribute(html, "d", createArcPath(centerX, centerY, radiusX, radiusY, startAngle, sweepAngle, segment));
-  appendStrokeAttributes(html, item, segment ? getFillColor(item) : undefined);
+  appendStrokeAttributes(html, item, segment ? getFillColor(item, context) : undefined, context);
   html.push("></path></svg>");
 }
 
@@ -441,40 +473,50 @@ function getEllipsePoint(centerX: number, centerY: number, radiusX: number, radi
   return { x: centerX + Math.cos(radians) * radiusX, y: centerY + Math.sin(radians) * radiusY };
 }
 
-function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, height: number): void {
+function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, height: number, context: HmiHtmlConvertContext): void {
   html.push("<svg");
-  appendCommonAttributes(html, item);
+  appendCommonAttributes(html, item, context);
   appendAttribute(html, "viewBox", `0 0 ${toCss(Math.max(width, 1))} ${toCss(Math.max(height, 1))}`);
   appendAttribute(html, "xmlns", "http://www.w3.org/2000/svg");
   html.push(">");
 }
 
-function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined): void {
+function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined, context: HmiHtmlConvertContext): void {
   appendAttribute(html, "fill", fillColor === undefined ? "none" : colorToCss(fillColor));
-  appendAttribute(html, "stroke", colorToCss(getStrokeColor(item)));
-  appendSvgAttribute(html, "stroke-width", getStrokeWidth(item));
+  appendAttribute(html, "stroke", colorToCss(getStrokeColor(item, context)));
+  appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context));
 }
 
-function getStrokeColor(item: HmiShapeBase): HmiColor {
+function getStrokeColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor {
   return (
-    getStaticValue(item.lineColor) ??
-    (item instanceof HmiPaintedScreenItemBase ? getStaticValue(item.borderColor) : undefined) ??
-    (item instanceof HmiPaintedScreenItemBase ? getStaticValue(item.foregroundColor) : undefined) ??
+    context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "LineColor", item.lineColor).value ??
+    (item instanceof HmiPaintedScreenItemBase
+      ? context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "BorderColor", item.borderColor).value
+      : undefined) ??
+    (item instanceof HmiPaintedScreenItemBase
+      ? context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "ForegroundColor", item.foregroundColor).value
+      : undefined) ??
     { alpha: 255, red: 0, green: 0, blue: 0 }
   );
 }
 
-function getFillColor(item: HmiShapeBase): HmiColor | undefined {
-  return getStaticValue(item.backgroundColor);
+function getFillColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor | undefined {
+  return context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "BackgroundColor", item.backgroundColor).value;
 }
 
-function getStrokeWidth(item: HmiShapeBase): number {
-  return getStaticValue(item.lineWidth) ?? (item instanceof HmiPaintedScreenItemBase ? getStaticValue(item.borderWidth) : undefined) ?? 1;
+function getStrokeWidth(item: HmiShapeBase, context: HmiHtmlConvertContext): number {
+  return (
+    context.effectiveProperties.tryGetStaticValue<number>(item, "LineWidth", item.lineWidth).value ??
+    (item instanceof HmiPaintedScreenItemBase
+      ? context.effectiveProperties.tryGetStaticValue<number>(item, "BorderWidth", item.borderWidth).value
+      : undefined) ??
+    1
+  );
 }
 
-function appendButton(html: string[], button: HmiButton): void {
+function appendButton(html: string[], button: HmiButton, context: HmiHtmlConvertContext): void {
   html.push("<button");
-  appendCommonAttributes(html, button);
+  appendCommonAttributes(html, button, context);
   html.push(">");
   const image = getStaticValue(button.image);
   if (image?.uri) {
@@ -484,24 +526,24 @@ function appendButton(html: string[], button: HmiButton): void {
   html.push("</button>");
 }
 
-function appendInput(html: string[], ioField: HmiIOField): void {
+function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConvertContext): void {
   html.push("<input");
-  appendCommonAttributes(html, ioField);
+  appendCommonAttributes(html, ioField, context);
   html.push(">");
 }
 
-function appendToggleSwitch(html: string[], toggleSwitch: HmiToggleSwitch): void {
+function appendToggleSwitch(html: string[], toggleSwitch: HmiToggleSwitch, context: HmiHtmlConvertContext): void {
   html.push("<input type=\"checkbox\"");
-  appendCommonAttributes(html, toggleSwitch);
+  appendCommonAttributes(html, toggleSwitch, context);
   html.push(">");
 }
 
-function appendRectangle(html: string[], rectangle: HmiRectangle): void {
+function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHtmlConvertContext): void {
   html.push("<div");
   appendAttribute(html, "id", rectangle.name);
   html.push(" style=\"position: absolute;");
-  appendPosition(html, rectangle);
-  appendStyle(html, rectangle);
+  appendPosition(html, rectangle, context);
+  appendStyle(html, rectangle, context);
   if (
     rectangle.borderColor === undefined &&
     rectangle.borderWidth === undefined &&
@@ -517,15 +559,15 @@ function appendImage(
   html: string[],
   item: HmiScreenItemBase,
   uri: string | undefined,
-  options: HmiHtmlConvertOptions,
+  context: HmiHtmlConvertContext,
 ): void {
   if (!uri?.trim()) {
-    appendDiv(html, item, undefined, undefined);
+    appendDiv(html, item, undefined, undefined, context);
     return;
   }
 
   html.push("<img");
-  appendCommonAttributes(html, item);
+  appendCommonAttributes(html, item, context);
   appendAttribute(html, "src", uri);
   html.push(">");
 }
@@ -545,7 +587,6 @@ function appendSymbolImage(
   symbolContainer: HmiSymbolContainer,
   image: HmiImageSource | undefined,
   uri: string,
-  options: HmiHtmlConvertOptions,
 ): void {
   html.push("<img");
   appendAttribute(html, "src", uri);
@@ -557,9 +598,9 @@ function appendSymbolImage(
   html.push("\">");
 }
 
-function appendDynamicSvg(html: string[], dynamicSvg: HmiDynamicSvg): void {
+function appendDynamicSvg(html: string[], dynamicSvg: HmiDynamicSvg, context: HmiHtmlConvertContext): void {
   html.push("<node-projects-svghmi");
-  appendCommonAttributes(html, dynamicSvg);
+  appendCommonAttributes(html, dynamicSvg, context);
   appendAttribute(
     html,
     "src",
@@ -572,9 +613,9 @@ function appendDynamicSvg(html: string[], dynamicSvg: HmiDynamicSvg): void {
   html.push("></node-projects-svghmi>");
 }
 
-function appendGauge(html: string[], gauge: HmiGauge): void {
+function appendGauge(html: string[], gauge: HmiGauge, context: HmiHtmlConvertContext): void {
   html.push("<hmi-gauge");
-  appendCommonAttributes(html, gauge);
+  appendCommonAttributes(html, gauge, context);
   appendStaticAttribute(html, "value", gauge.value);
   appendStaticAttribute(html, "fill-level", gauge.fillLevel);
   appendBooleanAttribute(html, "show-fill-level", getStaticValueOrDefault(gauge.showFillLevel, true));
@@ -702,9 +743,15 @@ function toDynamicSvgAttributeName(name: string | undefined): string | undefined
   return result;
 }
 
-function appendDiv(html: string[], item: HmiScreenItemBase, cssClass: string | undefined, content: string | undefined): void {
+function appendDiv(
+  html: string[],
+  item: HmiScreenItemBase,
+  cssClass: string | undefined,
+  content: string | undefined,
+  context: HmiHtmlConvertContext,
+): void {
   html.push("<div");
-  appendCommonAttributes(html, item);
+  appendCommonAttributes(html, item, context);
   appendAttribute(html, "class", cssClass);
   html.push(">");
   if (content) {
@@ -713,30 +760,23 @@ function appendDiv(html: string[], item: HmiScreenItemBase, cssClass: string | u
   html.push("</div>");
 }
 
-function appendCommonAttributes(html: string[], item: HmiScreenItemBase): void {
+function appendCommonAttributes(html: string[], item: HmiScreenItemBase, context: HmiHtmlConvertContext): void {
   appendAttribute(html, "id", item.name);
   html.push(" style=\"position: absolute;");
-  appendPosition(html, item);
+  appendPosition(html, item, context);
   if (item instanceof HmiPaintedScreenItemBase) {
-    appendStyle(html, item);
+    appendStyle(html, item, context);
   }
   html.push("\"");
 }
 
-function appendAbsoluteChildCoordinateSpaceOpen(html: string[], container: HmiLayoutContainerBase): void {
-  html.push("<div style=\"position: absolute;");
-  html.push(`left: ${toCss(-getStaticValueOrDefault(container.x, 0))}px;`);
-  html.push(`top: ${toCss(-getStaticValueOrDefault(container.y, 0))}px;`);
-  html.push("\">");
-}
-
-function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContainer): void {
+function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContainer, context: HmiHtmlConvertContext): void {
   appendAttribute(html, "id", symbolContainer.name);
   appendAttribute(html, "data-hmi-fill-color-mode", getStaticValue(symbolContainer.fillColorMode));
   appendAttribute(html, "data-hmi-flip", getStaticValue(symbolContainer.flip));
   html.push(" style=\"position: absolute; overflow: hidden;");
-  appendPosition(html, symbolContainer);
-  appendStyle(html, symbolContainer);
+  appendPosition(html, symbolContainer, context);
+  appendStyle(html, symbolContainer, context);
   appendSymbolTransform(html, symbolContainer);
   html.push("\"");
 }
@@ -765,9 +805,9 @@ function appendSymbolTransform(html: string[], symbolContainer: HmiSymbolContain
   }
 }
 
-function appendPosition(html: string[], item: HmiScreenItemBase): void {
-  html.push(`left: ${toCss(getStaticValueOrDefault(item.x, 0))}px;`);
-  html.push(`top: ${toCss(getStaticValueOrDefault(item.y, 0))}px;`);
+function appendPosition(html: string[], item: HmiScreenItemBase, context: HmiHtmlConvertContext): void {
+  html.push(`left: ${toCss(getStaticValueOrDefault(item.x, 0) + context.positionOffsetX)}px;`);
+  html.push(`top: ${toCss(getStaticValueOrDefault(item.y, 0) + context.positionOffsetY)}px;`);
   appendSize(html, getStaticValueOrDefault(item.width, 0), getStaticValueOrDefault(item.height, 0));
 }
 
@@ -784,21 +824,26 @@ function appendScreenStyle(html: string[], screen: HmiScreenBase): void {
   appendColorStyle(html, "background-color", screen.backgroundColor);
 }
 
-function appendStyle(html: string[], item: HmiPaintedScreenItemBase): void {
-  appendColorStyle(html, "color", item.foregroundColor);
-  appendColorStyle(html, "background-color", item.backgroundColor);
-  appendColorStyle(html, "border-color", item.borderColor);
-  appendWidthStyle(html, item.borderWidth);
-  if (item instanceof HmiShapeBase) {
-    appendColorStyle(html, "border-color", item.lineColor);
-    appendWidthStyle(html, item.lineWidth);
-  }
+function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): void {
+  appendColorStyle(html, "color", context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor));
+  appendColorStyle(html, "background-color", context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor));
+  appendColorStyle(html, "border-color", context.effectiveProperties.resolve(item, "BorderColor", item.borderColor));
+  appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth));
   if (item.margin !== undefined) {
     html.push(
       `margin: ${toCss(getStaticValueOrDefault(item.margin.top, 0))}px ${toCss(
         getStaticValueOrDefault(item.margin.right, 0),
       )}px ${toCss(getStaticValueOrDefault(item.margin.bottom, 0))}px ${toCss(
         getStaticValueOrDefault(item.margin.left, 0),
+      )}px;`,
+    );
+  }
+  if (item.padding !== undefined) {
+    html.push(
+      `padding: ${toCss(getStaticValueOrDefault(item.padding.top, 0))}px ${toCss(
+        getStaticValueOrDefault(item.padding.right, 0),
+      )}px ${toCss(getStaticValueOrDefault(item.padding.bottom, 0))}px ${toCss(
+        getStaticValueOrDefault(item.padding.left, 0),
       )}px;`,
     );
   }
@@ -893,6 +938,12 @@ function appendRuntimeModule(html: string[]): void {
   html.push("<script type=\"module\">");
   html.push(hmiHtmlRuntimeModuleScript);
   html.push("</script>");
+}
+
+function appendGlobalStyle(html: string[]): void {
+  html.push("<style>");
+  html.push(hmiHtmlCommonStyle);
+  html.push("</style>");
 }
 
 function appendAttribute(html: string[], name: string | undefined, value: string | undefined): void {
@@ -1021,4 +1072,22 @@ function escapeHtml(value: string): string {
     }
   }
   return result;
+}
+
+class HmiHtmlConvertContext {
+  constructor(
+    readonly options: HmiHtmlConvertOptions,
+    readonly effectiveProperties: HmiEffectivePropertyResolver,
+    readonly positionOffsetX = 0,
+    readonly positionOffsetY = 0,
+  ) {}
+
+  withPositionOffset(offsetX: number, offsetY: number): HmiHtmlConvertContext {
+    return new HmiHtmlConvertContext(
+      this.options,
+      this.effectiveProperties,
+      this.positionOffsetX + offsetX,
+      this.positionOffsetY + offsetY,
+    );
+  }
 }

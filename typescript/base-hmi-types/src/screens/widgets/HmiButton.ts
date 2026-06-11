@@ -16,6 +16,7 @@ export class HmiButton extends HmiWidgetBase {
   hotKey?: HmiProperty<string>;
   pressedStateTags?: HmiProperty<string>;
   mode?: HmiProperty<number>;
+  styleSettings?: HmiProperty<number>;
   windowsStyle?: HmiProperty<boolean>;
   captionColor?: HmiProperty<HmiColor>;
   captionBackgroundColor?: HmiProperty<HmiColor>;

@@ -1,4 +1,4 @@
-import { HmiColor, HmiFont, HmiHorizontalAlignment, HmiProperty, HmiVerticalAlignment } from "../base.js";
+import { HmiColor, HmiFont, HmiHorizontalAlignment, HmiLineStyle, HmiProperty, HmiVerticalAlignment } from "../base.js";
 import { HmiFillPattern } from "../base/HmiFillPattern.js";
 import { HmiSimpleScreenItemBase } from "../base/HmiSimpleScreenItemBase.js";
 
@@ -12,7 +12,7 @@ export abstract class HmiWidgetBase extends HmiSimpleScreenItemBase {
   fillPattern?: HmiProperty<HmiFillPattern>;
   cornerRadius?: HmiProperty<number>;
   cornerStyle?: HmiProperty<number>;
-  edgeStyle?: HmiProperty<number>;
+  edgeStyle?: HmiProperty<HmiLineStyle>;
   firstGradientColor?: HmiProperty<HmiColor>;
   firstGradientOffset?: HmiProperty<number>;
   middleGradientColor?: HmiProperty<HmiColor>;

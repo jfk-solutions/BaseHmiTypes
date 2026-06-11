@@ -10,6 +10,16 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<bool>? ShowFillLevel { get; set; }
 
+    public HmiProperty<bool>? ShowScale { get; set; }
+
+    public HmiProperty<bool>? DrawInsideFrame { get; set; }
+
+    public HmiProperty<bool>? ShowTickLabels { get; set; }
+
+    public HmiProperty<bool>? UseAutoScaling { get; set; }
+
+    public HmiProperty<bool>? ShowLimitRanges { get; set; }
+
     public HmiProperty<double>? BeginValue { get; set; }
 
     public HmiProperty<double>? EndValue { get; set; }

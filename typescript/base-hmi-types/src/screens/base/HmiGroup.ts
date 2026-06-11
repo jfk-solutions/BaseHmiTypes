@@ -6,4 +6,6 @@ export class HmiGroup extends HmiLayoutContainerBase {
     super();
     this.hmiObjectType = HmiObjectType.HmiGroup;
   }
+
+  isLogicGrouping = false;
 }

@@ -3,6 +3,7 @@ namespace BaseHmiTypes.Screens.Base;
 public enum HmiPropertyKind
 {
     Static,
+    Default,
     Tag,
     Script,
     Expression,
@@ -126,6 +127,15 @@ public sealed class HmiStaticProperty<T> : HmiProperty<T>
     public override HmiPropertyKind Kind => HmiPropertyKind.Static;
 }
 
+public sealed class HmiDefaultProperty<T> : HmiProperty<T>
+{
+    public override HmiPropertyKind Kind => HmiPropertyKind.Default;
+
+    public string? ProfileName { get; set; }
+
+    public string? PropertyName { get; set; }
+}
+
 public sealed class HmiTagProperty<T> : HmiDynamicProperty<T>
 {
     public override HmiPropertyKind Kind => HmiPropertyKind.Tag;
@@ -169,6 +179,16 @@ public static class HmiProperty
     public static HmiStaticProperty<T> Static<T>(T? value)
     {
         return new HmiStaticProperty<T> { StaticValue = value };
+    }
+
+    public static HmiDefaultProperty<T> Default<T>(T? value, string? profileName = null, string? propertyName = null)
+    {
+        return new HmiDefaultProperty<T>
+        {
+            StaticValue = value,
+            ProfileName = profileName,
+            PropertyName = propertyName
+        };
     }
 
     public static HmiTagProperty<T> Tag<T>(string tagName, T? fallbackValue = default)

@@ -1,5 +1,6 @@
 import { HmiColor } from "./HmiColor.js";
 import { HmiFillPattern } from "./HmiFillPattern.js";
+import { HmiLineStyle } from "./HmiLineStyle.js";
 import { HmiPaintedScreenItemBase } from "./HmiPaintedScreenItemBase.js";
 import { HmiProperty } from "./HmiProperty.js";
 
@@ -10,7 +11,7 @@ export abstract class HmiWindowBase extends HmiPaintedScreenItemBase {
   fillPattern?: HmiProperty<HmiFillPattern>;
   cornerRadius?: HmiProperty<number>;
   cornerStyle?: HmiProperty<number>;
-  edgeStyle?: HmiProperty<number>;
+  edgeStyle?: HmiProperty<HmiLineStyle>;
   firstGradientColor?: HmiProperty<HmiColor>;
   firstGradientOffset?: HmiProperty<number>;
   middleGradientColor?: HmiProperty<HmiColor>;

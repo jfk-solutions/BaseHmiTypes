@@ -2,6 +2,7 @@ using BaseHmiTypes.Converters.Html;
 using BaseHmiTypes.Projects;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
+using BaseHmiTypes.Screens.Defaults;
 using BaseHmiTypes.Screens.Shapes;
 using BaseHmiTypes.Screens.Widgets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -128,7 +129,48 @@ public class HmiScreenToHtmlConverterTests
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
         StringAssert.Contains(html, "id=\"PumpGroup\" style=\"position: absolute;left: 100px;top: 50px;width: 80px;height: 40px;\"");
-        StringAssert.Contains(html, "<div style=\"position: absolute;left: -100px;top: -50px;\">");
+        Assert.IsFalse(html.Contains("left: -100px;top: -50px;", StringComparison.Ordinal));
+        StringAssert.Contains(html, "id=\"PumpLabel\" style=\"position: absolute;left: 10px;top: 20px;width: 40px;height: 20px;\"");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_FlattensLogicOnlyGroupsWithoutAdjustingChildCoordinates()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "screen",
+            Name = "Screen",
+            Width = 320,
+            Height = 240
+        };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        var group = new HmiGroup
+        {
+            Id = "group-1",
+            Name = "PumpGroup",
+            X = 100,
+            Y = 50,
+            Width = 80,
+            Height = 40,
+            ChildCoordinateSpace = HmiChildCoordinateSpace.ScreenAbsolute,
+            IsLogicGrouping = true
+        };
+        group.Items.Add(new HmiLabel
+        {
+            Id = "label-1",
+            Name = "PumpLabel",
+            Text = "Pump",
+            X = 110,
+            Y = 70,
+            Width = 40,
+            Height = 20
+        });
+        layer.Items.Add(group);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        Assert.IsFalse(html.Contains("id=\"PumpGroup\"", StringComparison.Ordinal));
         StringAssert.Contains(html, "id=\"PumpLabel\" style=\"position: absolute;left: 110px;top: 70px;width: 40px;height: 20px;\"");
     }
 
@@ -360,14 +402,252 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersPaintedItemPadding()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiText
+        {
+            Id = "text-1",
+            Name = "PaddedText",
+            Text = "Padded",
+            Width = 100,
+            Height = 40,
+            Padding = new HmiThickness
+            {
+                Top = 1,
+                Right = 2,
+                Bottom = 3,
+                Left = 4
+            }
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"PaddedText\"");
+        StringAssert.Contains(html, "padding: 1px 2px 3px 4px;");
+    }
+
+    [TestMethod]
+    public void AdvancedDefaults_ResolveTextBorderWidthWithoutMaterializingItOnItem()
+    {
+        var text = new HmiText
+        {
+            Id = "text-1",
+            Name = "TextField"
+        };
+
+        var resolver = new HmiEffectivePropertyResolver(HmiDefaultProfiles.WinCcAdvancedV21);
+        var resolved = resolver.Resolve(text, nameof(HmiPaintedScreenItemBase.BorderWidth), text.BorderWidth);
+
+        Assert.IsNull(text.BorderWidth);
+        Assert.IsNotNull(resolved);
+        Assert.AreEqual(HmiPropertyKind.Default, resolved!.Kind);
+        Assert.AreEqual(1d, resolved.StaticValue);
+    }
+
+    [TestMethod]
+    public void DefaultProfile_ResolvesBaseTypeDefaultsByInheritance()
+    {
+        var profile = new HmiDefaultProfile("TestProfile");
+        profile.Set<HmiPaintedScreenItemBase, double>(nameof(HmiPaintedScreenItemBase.BorderWidth), 4d);
+        var text = new HmiText
+        {
+            Id = "text-1",
+            Name = "TextField"
+        };
+
+        var resolver = new HmiEffectivePropertyResolver(profile);
+        var resolved = resolver.Resolve(text, nameof(HmiPaintedScreenItemBase.BorderWidth), text.BorderWidth);
+
+        Assert.IsNotNull(resolved);
+        Assert.AreEqual(HmiPropertyKind.Default, resolved!.Kind);
+        Assert.AreEqual(4d, resolved.StaticValue);
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_WithoutProjectUsesNeutralDefaults()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiText
+        {
+            Id = "text-1",
+            Name = "OccupiedMf12",
+            Text = "Occupied",
+            Width = 80,
+            Height = 20
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"OccupiedMf12\"");
+        Assert.IsFalse(html.Contains("border-width: 1px;", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_UsesAdvancedTextBorderWidthDefault()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiText
+        {
+            Id = "text-1",
+            Name = "OccupiedMf12",
+            Text = "Occupied",
+            Width = 80,
+            Height = 20
+        });
+        screen.Layers.Add(layer);
+
+        var project = new FakeProject();
+        project.Info.HmiProjectSoftwareType = HmiProjectSoftwareType.WinCCAdvanced;
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen, project);
+
+        StringAssert.Contains(html, "<div id=\"OccupiedMf12\"");
+        StringAssert.Contains(html, "border-style: solid;");
+        StringAssert.Contains(html, "border-width: 1px;");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_ExplicitTextBorderWidthOverridesAdvancedDefault()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiText
+        {
+            Id = "text-1",
+            Name = "CommandMf12",
+            Text = "Cmd",
+            Width = 80,
+            Height = 20,
+            BorderWidth = 2
+        });
+        screen.Layers.Add(layer);
+
+        var project = new FakeProject();
+        project.Info.HmiProjectSoftwareType = HmiProjectSoftwareType.WinCCAdvanced;
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen, project);
+
+        StringAssert.Contains(html, "<div id=\"CommandMf12\"");
+        StringAssert.Contains(html, "border-width: 2px;");
+        Assert.IsFalse(html.Contains("border-width: 1px;", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void AdvancedDefaults_ResolveBaseDefaultAndConcreteOverride()
+    {
+        var shape = new HmiRectangle
+        {
+            Id = "shape-1",
+            Name = "Shape"
+        };
+        var svg = new HmiDynamicSvg
+        {
+            Id = "svg-1",
+            Name = "Svg"
+        };
+        var explicitSvg = new HmiDynamicSvg
+        {
+            Id = "svg-2",
+            Name = "ExplicitSvg",
+            UseTransparentColor = false
+        };
+
+        var resolver = new HmiEffectivePropertyResolver(HmiDefaultProfiles.WinCcAdvancedV21);
+
+        var shapeUseTransparentColor = resolver.Resolve(shape, nameof(HmiShapeBase.UseTransparentColor), shape.UseTransparentColor);
+        var svgUseTransparentColor = resolver.Resolve(svg, nameof(HmiDynamicSvg.UseTransparentColor), svg.UseTransparentColor);
+        var explicitSvgUseTransparentColor = resolver.Resolve(explicitSvg, nameof(HmiDynamicSvg.UseTransparentColor), explicitSvg.UseTransparentColor);
+
+        Assert.IsFalse(shapeUseTransparentColor!.StaticValue);
+        Assert.AreEqual(HmiPropertyKind.Default, shapeUseTransparentColor.Kind);
+        Assert.IsTrue(svgUseTransparentColor!.StaticValue);
+        Assert.AreEqual(HmiPropertyKind.Default, svgUseTransparentColor.Kind);
+        Assert.IsFalse(explicitSvgUseTransparentColor!.StaticValue);
+        Assert.AreEqual(HmiPropertyKind.Static, explicitSvgUseTransparentColor.Kind);
+    }
+
+    [TestMethod]
+    public void AdvancedDefaults_ResolveEnumFallbacksAsIntegers()
+    {
+        var button = new HmiButton
+        {
+            Id = "button-1",
+            Name = "Button"
+        };
+        var symbolicIoField = new HmiSymbolicIOField
+        {
+            Id = "symbolic-1",
+            Name = "Symbolic"
+        };
+
+        var resolver = new HmiEffectivePropertyResolver(HmiDefaultProfiles.WinCcAdvancedV21);
+
+        var styleSettings = resolver.Resolve(button, nameof(HmiButton.StyleSettings), button.StyleSettings);
+        var mode = resolver.Resolve(symbolicIoField, nameof(HmiSymbolicIOField.Mode), symbolicIoField.Mode);
+
+        Assert.AreEqual(1, styleSettings!.StaticValue);
+        Assert.AreEqual(2, mode!.StaticValue);
+    }
+
+    [TestMethod]
+    public void UnifiedDefaults_ResolveShapeLineColorFromStyleProfile()
+    {
+        var line = new HmiLine
+        {
+            Id = "line-1",
+            Name = "Line"
+        };
+
+        var resolver = new HmiEffectivePropertyResolver(HmiDefaultProfiles.WinCcUnifiedV21);
+        var resolved = resolver.Resolve(line, nameof(HmiShapeBase.LineColor), line.LineColor);
+
+        Assert.IsNotNull(resolved);
+        Assert.AreEqual(HmiPropertyKind.Default, resolved!.Kind);
+        Assert.AreEqual(HmiColor.FromArgb(255, 125, 125, 133), resolved.StaticValue);
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_UsesUnifiedDefaultsFromProjectSoftwareType()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiButton
+        {
+            Id = "button-1",
+            Name = "UnifiedButton",
+            Text = "Button",
+            Width = 80,
+            Height = 30
+        });
+        screen.Layers.Add(layer);
+
+        var project = new FakeProject();
+        project.Info.HmiProjectSoftwareType = HmiProjectSoftwareType.WinCCUnified;
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen, project);
+
+        StringAssert.Contains(html, "<button id=\"UnifiedButton\"");
+        StringAssert.Contains(html, "background-color: #7B92A2;");
+        StringAssert.Contains(html, "border-width: 2px;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_IncludesInlineHtmlRuntimeModule()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
+        StringAssert.Contains(html, "<style>*,*::before,*::after{box-sizing:border-box;}</style>");
         StringAssert.Contains(html, "<script type=\"module\">");
         StringAssert.Contains(html, "customElements.define(\"node-projects-svghmi\"");
+        Assert.AreEqual(1, CountOccurrences(html, "<style>*,*::before,*::after{box-sizing:border-box;}</style>"));
         Assert.AreEqual(1, CountOccurrences(html, "<script type=\"module\">"));
     }
 

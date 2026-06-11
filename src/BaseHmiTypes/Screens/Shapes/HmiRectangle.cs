@@ -21,5 +21,4 @@ public class HmiRectangle : HmiSurfaceShapeBase
 
     public HmiProperty<int>? CornerStyle { get; set; }
 
-    public HmiProperty<int>? EdgeStyle { get; set; }
 }
