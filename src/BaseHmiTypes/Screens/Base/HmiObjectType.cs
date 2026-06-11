@@ -36,6 +36,7 @@ public static class HmiObjectType
     public const string HmiListBox = nameof(HmiListBox);
     public const string HmiMediaControl = nameof(HmiMediaControl);
     public const string HmiObjectExplorerControl = nameof(HmiObjectExplorerControl);
+    public const string HmiOcxControl = nameof(HmiOcxControl);
     public const string HmiPolygon = nameof(HmiPolygon);
     public const string HmiPolyline = nameof(HmiPolyline);
     public const string HmiPopupScreenWindow = nameof(HmiPopupScreenWindow);
@@ -53,6 +54,7 @@ public static class HmiObjectType
     public const string HmiSlider = nameof(HmiSlider);
     public const string HmiSwacContainer = nameof(HmiSwacContainer);
     public const string HmiSymbolContainer = nameof(HmiSymbolContainer);
+    public const string HmiSymbolLibraryControl = nameof(HmiSymbolLibraryControl);
     public const string HmiSymbolicIOField = nameof(HmiSymbolicIOField);
     public const string HmiSystemDiagnosisControl = nameof(HmiSystemDiagnosisControl);
     public const string HmiText = nameof(HmiText);

@@ -842,6 +842,22 @@ function appendScreenStyle(html: string[], screen: HmiScreenBase): void {
   appendColorStyle(html, "background-color", screen.backgroundColor);
 }
 
+function hasThicknessEdges(value: unknown): value is {
+  top: HmiProperty<number>;
+  right: HmiProperty<number>;
+  bottom: HmiProperty<number>;
+  left: HmiProperty<number>;
+} {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "top" in value &&
+    "right" in value &&
+    "bottom" in value &&
+    "left" in value
+  );
+}
+
 function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): void {
   appendColorStyle(html, "color", context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor));
   appendColorStyle(html, "background-color", context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor));
@@ -856,7 +872,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
       )}px;`,
     );
   }
-  if (item.padding !== undefined) {
+  if (hasThicknessEdges(item.padding)) {
     html.push(
       `padding: ${toCss(getStaticValueOrDefault(item.padding.top, 0))}px ${toCss(
         getStaticValueOrDefault(item.padding.right, 0),
