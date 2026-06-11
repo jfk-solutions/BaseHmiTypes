@@ -1,4 +1,4 @@
-import { HmiColor, HmiProperty } from "../base.js";
+import { HmiColor, HmiLineStyle, HmiProperty } from "../base.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 
@@ -33,7 +33,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   tableHeaderBorderWidth?: HmiProperty<number>;
   tableHeaderBackFillStyle?: HmiProperty<number>;
   tableHeaderCornerRadius?: HmiProperty<number>;
-  tableHeaderEdgeStyle?: HmiProperty<number>;
+  tableHeaderEdgeStyle?: HmiProperty<HmiLineStyle>;
   tableHeaderFirstGradientColor?: HmiProperty<HmiColor>;
   tableHeaderMiddleGradientColor?: HmiProperty<HmiColor>;
   tableHeaderSecondGradientColor?: HmiProperty<HmiColor>;
@@ -44,7 +44,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   buttonBorderWidth?: HmiProperty<number>;
   buttonBackFillStyle?: HmiProperty<number>;
   buttonCornerRadius?: HmiProperty<number>;
-  buttonEdgeStyle?: HmiProperty<number>;
+  buttonEdgeStyle?: HmiProperty<HmiLineStyle>;
   buttonFirstGradientColor?: HmiProperty<HmiColor>;
   buttonFirstGradientOffset?: HmiProperty<number>;
   buttonMiddleGradientColor?: HmiProperty<HmiColor>;

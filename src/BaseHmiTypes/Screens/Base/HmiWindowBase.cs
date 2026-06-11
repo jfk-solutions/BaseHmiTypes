@@ -14,7 +14,7 @@ public abstract class HmiWindowBase : HmiPaintedScreenItemBase
 
     public HmiProperty<int>? CornerStyle { get; set; }
 
-    public HmiProperty<int>? EdgeStyle { get; set; }
+    public HmiProperty<HmiLineStyle>? EdgeStyle { get; set; }
 
     public HmiProperty<HmiColor>? FirstGradientColor { get; set; }
 

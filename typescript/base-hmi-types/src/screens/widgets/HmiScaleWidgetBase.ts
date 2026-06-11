@@ -5,6 +5,11 @@ export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   value?: HmiProperty<number>;
   fillLevel?: HmiProperty<number>;
   showFillLevel?: HmiProperty<boolean>;
+  showScale?: HmiProperty<boolean>;
+  drawInsideFrame?: HmiProperty<boolean>;
+  showTickLabels?: HmiProperty<boolean>;
+  useAutoScaling?: HmiProperty<boolean>;
+  showLimitRanges?: HmiProperty<boolean>;
   beginValue?: HmiProperty<number>;
   endValue?: HmiProperty<number>;
   originValue?: HmiProperty<number>;

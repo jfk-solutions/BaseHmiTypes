@@ -59,7 +59,7 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<int>? TableHeaderCornerRadius { get; set; }
 
-    public HmiProperty<int>? TableHeaderEdgeStyle { get; set; }
+    public HmiProperty<HmiLineStyle>? TableHeaderEdgeStyle { get; set; }
 
     public HmiProperty<HmiColor>? TableHeaderFirstGradientColor { get; set; }
 
@@ -81,7 +81,7 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<int>? ButtonCornerRadius { get; set; }
 
-    public HmiProperty<int>? ButtonEdgeStyle { get; set; }
+    public HmiProperty<HmiLineStyle>? ButtonEdgeStyle { get; set; }
 
     public HmiProperty<HmiColor>? ButtonFirstGradientColor { get; set; }
 

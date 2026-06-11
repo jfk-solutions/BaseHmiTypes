@@ -5,6 +5,7 @@ using BaseHmiTypes.Projects;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
 using BaseHmiTypes.Screens.Controls;
+using BaseHmiTypes.Screens.Defaults;
 using BaseHmiTypes.Screens.Shapes;
 using BaseHmiTypes.Screens.Widgets;
 
@@ -18,18 +19,32 @@ public class HmiScreenToHtmlConverter
         HmiHtmlConvertOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        return await ConvertCoreAsync(screen, project, options, true, new HashSet<string>(StringComparer.OrdinalIgnoreCase), cancellationToken).ConfigureAwait(false);
+        options ??= new HmiHtmlConvertOptions();
+        var context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(ResolveDefaultProfile(project)));
+        return await ConvertCoreAsync(screen, project, context, true, new HashSet<string>(StringComparer.OrdinalIgnoreCase), cancellationToken).ConfigureAwait(false);
+    }
+
+    private static HmiDefaultProfile ResolveDefaultProfile(IHmiProject? project)
+    {
+        switch (project?.Info.HmiProjectSoftwareType)
+        {
+            case HmiProjectSoftwareType.WinCCAdvanced:
+                return HmiDefaultProfiles.WinCcAdvancedV21;
+            case HmiProjectSoftwareType.WinCCUnified:
+                return HmiDefaultProfiles.WinCcUnifiedV21;
+            default:
+                return HmiDefaultProfiles.Neutral;
+        }
     }
 
     private async ValueTask<string> ConvertCoreAsync(
         HmiScreenBase screen,
         IHmiProject? project,
-        HmiHtmlConvertOptions? options,
+        HmiHtmlConvertContext context,
         bool includeRuntime,
         ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
-        options ??= new HmiHtmlConvertOptions();
         var currentKeys = GetScreenReferenceKeys(screen).ToList();
         foreach (var key in currentKeys)
             screenStack.Add(key);
@@ -37,8 +52,10 @@ public class HmiScreenToHtmlConverter
         try
         {
             var html = new StringBuilder();
-            if (includeRuntime && options.IncludeMetaCharset)
+            if (includeRuntime && context.Options.IncludeMetaCharset)
                 html.Append("<meta charset=\"utf-8\">");
+            if (includeRuntime)
+                AppendGlobalStyle(html);
             if (includeRuntime)
                 AppendRuntimeModule(html);
 
@@ -51,7 +68,7 @@ public class HmiScreenToHtmlConverter
 
             var template = await ResolveTemplateAsync(screen, project, screenStack, cancellationToken).ConfigureAwait(false);
             if (template != null)
-                html.Append(await ConvertCoreAsync(template, project, options, false, screenStack, cancellationToken).ConfigureAwait(false));
+                html.Append(await ConvertCoreAsync(template, project, context, false, screenStack, cancellationToken).ConfigureAwait(false));
 
             foreach (var layer in screen.Layers)
             {
@@ -65,7 +82,7 @@ public class HmiScreenToHtmlConverter
                     html.Append(" pointer-events: none;");
                 html.Append("\">");
                 foreach (var item in layer.Items)
-                    await AppendItemAsync(html, item, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+                    await AppendItemAsync(html, item, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 html.Append("</div>");
             }
 
@@ -83,7 +100,7 @@ public class HmiScreenToHtmlConverter
         StringBuilder html,
         HmiScreenItemBase item,
         IHmiProject? project,
-        HmiHtmlConvertOptions options,
+        HmiHtmlConvertContext context,
         ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
@@ -93,85 +110,93 @@ public class HmiScreenToHtmlConverter
         switch (item)
         {
             case HmiToggleSwitch toggleSwitch:
-                AppendToggleSwitch(html, toggleSwitch);
+                AppendToggleSwitch(html, toggleSwitch, context);
                 break;
             case HmiButton button:
-                AppendButton(html, button);
+                AppendButton(html, button, context);
                 break;
             case HmiIOField ioField:
-                AppendInput(html, ioField);
+                AppendInput(html, ioField, context);
                 break;
             case HmiTextBox textBox:
-                AppendTextBlock(html, textBox, textBox.Text.GetStaticValue());
+                AppendTextBlock(html, textBox, textBox.Text.GetStaticValue(), context);
                 break;
             case HmiLabel label:
-                AppendTextBlock(html, label, label.Text.GetStaticValue());
+                AppendTextBlock(html, label, label.Text.GetStaticValue(), context);
                 break;
             case HmiText text:
-                AppendTextBlock(html, text, text.Text.GetStaticValue());
+                AppendTextBlock(html, text, text.Text.GetStaticValue(), context);
                 break;
             case HmiGraphicView graphicView:
-                AppendImage(html, graphicView, graphicView.Image.GetStaticValue()?.Uri ?? graphicView.Source.GetStaticValue(), options);
+                AppendImage(html, graphicView, graphicView.Image.GetStaticValue()?.Uri ?? graphicView.Source.GetStaticValue(), context);
                 break;
             case HmiRectangle rectangle:
-                AppendRectangle(html, rectangle);
+                AppendRectangle(html, rectangle, context);
                 break;
             case HmiLine line:
-                AppendLine(html, line);
+                AppendLine(html, line, context);
                 break;
             case HmiPolyline polyline:
-                AppendPointShape(html, polyline, "polyline", false);
+                AppendPointShape(html, polyline, "polyline", false, context);
                 break;
             case HmiPolygon polygon:
-                AppendPointShape(html, polygon, "polygon", true);
+                AppendPointShape(html, polygon, "polygon", true, context);
                 break;
             case HmiCircleSegment circleSegment:
-                AppendCircularSegment(html, circleSegment);
+                AppendCircularSegment(html, circleSegment, context);
                 break;
             case HmiEllipseSegment ellipseSegment:
-                AppendEllipticalSegment(html, ellipseSegment);
+                AppendEllipticalSegment(html, ellipseSegment, context);
                 break;
             case HmiCircularArc circularArc:
-                AppendCircularArc(html, circularArc);
+                AppendCircularArc(html, circularArc, context);
                 break;
             case HmiEllipticalArc ellipticalArc:
-                AppendEllipticalArc(html, ellipticalArc);
+                AppendEllipticalArc(html, ellipticalArc, context);
                 break;
             case HmiCircle circle:
-                AppendCircle(html, circle);
+                AppendCircle(html, circle, context);
                 break;
             case HmiEllipse ellipse:
-                AppendEllipse(html, ellipse);
+                AppendEllipse(html, ellipse, context);
                 break;
             case HmiDynamicSvg dynamicSvg:
-                AppendDynamicSvg(html, dynamicSvg);
+                AppendDynamicSvg(html, dynamicSvg, context);
                 break;
             case HmiGauge gauge:
-                AppendGauge(html, gauge);
+                AppendGauge(html, gauge, context);
                 break;
             case HmiSymbolContainer symbolContainer:
-                await AppendSymbolContainerAsync(html, symbolContainer, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+                await AppendSymbolContainerAsync(html, symbolContainer, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiGroup group:
-                await AppendContainerAsync(html, group, group.Items, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+                if (group.IsLogicGrouping)
+                {
+                    foreach (var child in group.Items)
+                        await AppendItemAsync(html, child, project, context, screenStack, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    await AppendContainerAsync(html, group, group.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
+                }
                 break;
             case HmiLayoutContainerBase layoutContainer:
-                await AppendContainerAsync(html, layoutContainer, layoutContainer.Items, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+                await AppendContainerAsync(html, layoutContainer, layoutContainer.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiContainerBase container:
-                await AppendContainerAsync(html, container, container.Items, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+                await AppendContainerAsync(html, container, container.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiScreenWindow screenWindow:
-                await AppendScreenWindowAsync(html, screenWindow, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+                await AppendScreenWindowAsync(html, screenWindow, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiAlarmControl alarmControl:
-                AppendDiv(html, alarmControl, options.UnsupportedItemPlaceholderCssClass, "Alarm control");
+                AppendDiv(html, alarmControl, context.Options.UnsupportedItemPlaceholderCssClass, "Alarm control", context);
                 break;
             case HmiUnkown unkown:
-                AppendDiv(html, unkown, null, "Unkown:" + (unkown.Type ?? ""));
+                AppendDiv(html, unkown, null, "Unkown:" + (unkown.Type ?? ""), context);
                 break;
             default:
-                AppendDiv(html, item, options.UnsupportedItemPlaceholderCssClass, item.GetType().Name);
+                AppendDiv(html, item, context.Options.UnsupportedItemPlaceholderCssClass, item.GetType().Name, context);
                 break;
         }
     }
@@ -181,24 +206,25 @@ public class HmiScreenToHtmlConverter
         HmiScreenItemBase container,
         IEnumerable<HmiScreenItemBase> items,
         IHmiProject? project,
-        HmiHtmlConvertOptions options,
+        HmiHtmlConvertContext context,
         ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
         html.Append("<div");
-        AppendCommonAttributes(html, container);
+        AppendCommonAttributes(html, container, context);
         html.Append(">");
         if (container is HmiLayoutContainerBase { ChildCoordinateSpace: HmiChildCoordinateSpace.ScreenAbsolute } layoutContainer)
         {
-            AppendAbsoluteChildCoordinateSpaceOpen(html, layoutContainer);
+            var childContext = context.WithPositionOffset(
+                -layoutContainer.X.GetStaticValueOrDefault(),
+                -layoutContainer.Y.GetStaticValueOrDefault());
             foreach (var child in items)
-                await AppendItemAsync(html, child, project, options, screenStack, cancellationToken).ConfigureAwait(false);
-            html.Append("</div>");
+                await AppendItemAsync(html, child, project, childContext, screenStack, cancellationToken).ConfigureAwait(false);
         }
         else
         {
             foreach (var child in items)
-                await AppendItemAsync(html, child, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+                await AppendItemAsync(html, child, project, context, screenStack, cancellationToken).ConfigureAwait(false);
         }
         html.Append("</div>");
     }
@@ -207,7 +233,7 @@ public class HmiScreenToHtmlConverter
         StringBuilder html,
         HmiSymbolContainer symbolContainer,
         IHmiProject? project,
-        HmiHtmlConvertOptions options,
+        HmiHtmlConvertContext context,
         ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
@@ -215,14 +241,14 @@ public class HmiScreenToHtmlConverter
         var imageUri = await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
 
         html.Append("<div");
-        AppendSymbolAttributes(html, symbolContainer);
+        AppendSymbolAttributes(html, symbolContainer, context);
         html.Append(">");
 
         if (!string.IsNullOrWhiteSpace(imageUri))
-            AppendSymbolImage(html, symbolContainer, image!, imageUri!, options);
+            AppendSymbolImage(html, symbolContainer, image!, imageUri!);
 
         foreach (var child in symbolContainer.Items)
-            await AppendItemAsync(html, child, project, options, screenStack, cancellationToken).ConfigureAwait(false);
+            await AppendItemAsync(html, child, project, context, screenStack, cancellationToken).ConfigureAwait(false);
 
         html.Append("</div>");
     }
@@ -253,7 +279,7 @@ public class HmiScreenToHtmlConverter
         StringBuilder html,
         HmiScreenWindow screenWindow,
         IHmiProject? project,
-        HmiHtmlConvertOptions options,
+        HmiHtmlConvertContext context,
         ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
@@ -262,20 +288,20 @@ public class HmiScreenToHtmlConverter
             resolved = await project.GetScreenAsync(screenWindow.ScreenId!.StaticValue!, cancellationToken).ConfigureAwait(false);
 
         html.Append("<div");
-        AppendCommonAttributes(html, screenWindow);
+        AppendCommonAttributes(html, screenWindow, context);
         html.Append(">");
 
         if (resolved == null)
         {
             html.Append("<div");
-            AppendAttribute(html, "class", options.MissingScreenPlaceholderCssClass);
+            AppendAttribute(html, "class", context.Options.MissingScreenPlaceholderCssClass);
             html.Append(">");
             html.Append(WebUtility.HtmlEncode(screenWindow.ScreenName?.StaticValue ?? screenWindow.ScreenId?.StaticValue ?? "Missing screen"));
             html.Append("</div>");
         }
         else
         {
-            html.Append(await ConvertCoreAsync(resolved, project, options, false, screenStack, cancellationToken).ConfigureAwait(false));
+            html.Append(await ConvertCoreAsync(resolved, project, context, false, screenStack, cancellationToken).ConfigureAwait(false));
         }
 
         html.Append("</div>");
@@ -314,68 +340,68 @@ public class HmiScreenToHtmlConverter
             yield return "name:" + screen.Name;
     }
 
-    private static void AppendLine(StringBuilder html, HmiLine line)
+    private static void AppendLine(StringBuilder html, HmiLine line, HmiHtmlConvertContext context)
     {
         var width = line.Width.GetStaticValueOrDefault();
         var height = line.Height.GetStaticValueOrDefault();
-        AppendSvgOpen(html, line, GetSvgWidth(line), GetSvgHeight(line));
+        AppendSvgOpen(html, line, GetSvgWidth(line), GetSvgHeight(line), context);
         html.Append("<line");
         AppendSvgAttribute(html, "x1", line.X1.GetStaticValueOrDefault());
         AppendSvgAttribute(html, "y1", line.Y1.GetStaticValueOrDefault());
         AppendSvgAttribute(html, "x2", line.X2.GetStaticValueOrDefault(width));
         AppendSvgAttribute(html, "y2", line.Y2.GetStaticValueOrDefault(height));
-        AppendStrokeAttributes(html, line, null);
+        AppendStrokeAttributes(html, line, null, context);
         html.Append("></line></svg>");
     }
 
-    private static void AppendPointShape(StringBuilder html, HmiPointBasedShapeBase shape, string elementName, bool fill)
+    private static void AppendPointShape(StringBuilder html, HmiPointBasedShapeBase shape, string elementName, bool fill, HmiHtmlConvertContext context)
     {
-        AppendSvgOpen(html, shape, GetSvgWidth(shape), GetSvgHeight(shape));
+        AppendSvgOpen(html, shape, GetSvgWidth(shape), GetSvgHeight(shape), context);
         html.Append('<').Append(elementName);
         AppendAttribute(html, "points", string.Join(" ", shape.Points.Select(ToSvgPoint)));
-        AppendStrokeAttributes(html, shape, fill ? GetFillColor(shape) : null);
+        AppendStrokeAttributes(html, shape, fill ? GetFillColor(shape, context) : null, context);
         html.Append("></").Append(elementName).Append("></svg>");
     }
 
-    private static void AppendCircle(StringBuilder html, HmiCircle circle)
+    private static void AppendCircle(StringBuilder html, HmiCircle circle, HmiHtmlConvertContext context)
     {
         var width = GetSvgWidth(circle);
         var height = GetSvgHeight(circle);
         var radius = circle.Radius.GetStaticValueOrDefault(Math.Min(width, height) / 2d);
-        AppendSvgOpen(html, circle, width, height);
+        AppendSvgOpen(html, circle, width, height, context);
         html.Append("<circle");
         AppendSvgAttribute(html, "cx", circle.CenterX.GetStaticValueOrDefault(width / 2d));
         AppendSvgAttribute(html, "cy", circle.CenterY.GetStaticValueOrDefault(height / 2d));
         AppendSvgAttribute(html, "r", radius);
-        AppendStrokeAttributes(html, circle, GetFillColor(circle));
+        AppendStrokeAttributes(html, circle, GetFillColor(circle, context), context);
         html.Append("></circle></svg>");
     }
 
-    private static void AppendEllipse(StringBuilder html, HmiEllipse ellipse)
+    private static void AppendEllipse(StringBuilder html, HmiEllipse ellipse, HmiHtmlConvertContext context)
     {
         var width = GetSvgWidth(ellipse);
         var height = GetSvgHeight(ellipse);
-        AppendSvgOpen(html, ellipse, width, height);
+        AppendSvgOpen(html, ellipse, width, height, context);
         html.Append("<ellipse");
         AppendSvgAttribute(html, "cx", ellipse.CenterX.GetStaticValueOrDefault(width / 2d));
         AppendSvgAttribute(html, "cy", ellipse.CenterY.GetStaticValueOrDefault(height / 2d));
         AppendSvgAttribute(html, "rx", ellipse.RadiusX.GetStaticValueOrDefault(width / 2d));
         AppendSvgAttribute(html, "ry", ellipse.RadiusY.GetStaticValueOrDefault(height / 2d));
-        AppendStrokeAttributes(html, ellipse, GetFillColor(ellipse));
+        AppendStrokeAttributes(html, ellipse, GetFillColor(ellipse, context), context);
         html.Append("></ellipse></svg>");
     }
 
-    private static void AppendCircularArc(StringBuilder html, HmiCircularArc arc)
+    private static void AppendCircularArc(StringBuilder html, HmiCircularArc arc, HmiHtmlConvertContext context)
     {
         var width = GetSvgWidth(arc);
         var height = GetSvgHeight(arc);
         var radius = arc.Radius.GetStaticValueOrDefault(Math.Min(width, height) / 2d);
         var cx = arc.CenterX.GetStaticValueOrDefault(width / 2d);
         var cy = arc.CenterY.GetStaticValueOrDefault(height / 2d);
-        AppendArcPath(html, arc, cx, cy, radius, radius, arc.StartAngle.GetStaticValueOrDefault(), arc.SweepAngle.GetStaticValueOrDefault(), false);
+        AppendArcPath(html, arc, cx, cy, radius, radius, arc.StartAngle.GetStaticValueOrDefault(), arc.SweepAngle.GetStaticValueOrDefault(), false, context);
     }
 
-    private static void AppendEllipticalArc(StringBuilder html, HmiEllipticalArc arc)
+    private static void AppendEllipticalArc(StringBuilder html, HmiEllipticalArc arc, HmiHtmlConvertContext context)
     {
         var width = GetSvgWidth(arc);
         var height = GetSvgHeight(arc);
@@ -390,20 +416,21 @@ public class HmiScreenToHtmlConverter
             arc.RadiusY.GetStaticValueOrDefault(height / 2d),
             arc.StartAngle.GetStaticValueOrDefault(),
             arc.SweepAngle.GetStaticValueOrDefault(),
-            false);
+            false,
+            context);
     }
 
-    private static void AppendCircularSegment(StringBuilder html, HmiCircleSegment segment)
+    private static void AppendCircularSegment(StringBuilder html, HmiCircleSegment segment, HmiHtmlConvertContext context)
     {
         var width = GetSvgWidth(segment);
         var height = GetSvgHeight(segment);
         var radius = segment.Radius.GetStaticValueOrDefault(Math.Min(width, height) / 2d);
         var cx = segment.CenterX.GetStaticValueOrDefault(width / 2d);
         var cy = segment.CenterY.GetStaticValueOrDefault(height / 2d);
-        AppendArcPath(html, segment, cx, cy, radius, radius, segment.StartAngle.GetStaticValueOrDefault(), segment.SweepAngle.GetStaticValueOrDefault(), true);
+        AppendArcPath(html, segment, cx, cy, radius, radius, segment.StartAngle.GetStaticValueOrDefault(), segment.SweepAngle.GetStaticValueOrDefault(), true, context);
     }
 
-    private static void AppendEllipticalSegment(StringBuilder html, HmiEllipseSegment segment)
+    private static void AppendEllipticalSegment(StringBuilder html, HmiEllipseSegment segment, HmiHtmlConvertContext context)
     {
         var width = GetSvgWidth(segment);
         var height = GetSvgHeight(segment);
@@ -418,7 +445,8 @@ public class HmiScreenToHtmlConverter
             segment.RadiusY.GetStaticValueOrDefault(height / 2d),
             segment.StartAngle.GetStaticValueOrDefault(),
             segment.SweepAngle.GetStaticValueOrDefault(),
-            true);
+            true,
+            context);
     }
 
     private static void AppendArcPath(
@@ -430,29 +458,30 @@ public class HmiScreenToHtmlConverter
         double radiusY,
         double startAngle,
         double sweepAngle,
-        bool segment)
+        bool segment,
+        HmiHtmlConvertContext context)
     {
-        AppendSvgOpen(html, item, GetSvgWidth(item), GetSvgHeight(item));
+        AppendSvgOpen(html, item, GetSvgWidth(item), GetSvgHeight(item), context);
         html.Append("<path");
         AppendAttribute(html, "d", CreateArcPath(centerX, centerY, radiusX, radiusY, startAngle, sweepAngle, segment));
-        AppendStrokeAttributes(html, item, segment ? GetFillColor(item) : null);
+        AppendStrokeAttributes(html, item, segment ? GetFillColor(item, context) : null, context);
         html.Append("></path></svg>");
     }
 
-    private static void AppendSvgOpen(StringBuilder html, HmiScreenItemBase item, double width, double height)
+    private static void AppendSvgOpen(StringBuilder html, HmiScreenItemBase item, double width, double height, HmiHtmlConvertContext context)
     {
         html.Append("<svg");
-        AppendCommonAttributes(html, item);
+        AppendCommonAttributes(html, item, context);
         AppendAttribute(html, "viewBox", "0 0 " + ToCss(Math.Max(width, 1)) + " " + ToCss(Math.Max(height, 1)));
         AppendAttribute(html, "xmlns", "http://www.w3.org/2000/svg");
         html.Append(">");
     }
 
-    private static void AppendStrokeAttributes(StringBuilder html, HmiShapeBase item, HmiColor? fillColor)
+    private static void AppendStrokeAttributes(StringBuilder html, HmiShapeBase item, HmiColor? fillColor, HmiHtmlConvertContext context)
     {
         AppendAttribute(html, "fill", fillColor == null ? "none" : ToCss(fillColor.Value));
-        AppendAttribute(html, "stroke", ToCss(GetStrokeColor(item)));
-        AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item));
+        AppendAttribute(html, "stroke", ToCss(GetStrokeColor(item, context)));
+        AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item, context));
     }
 
     private static string CreateArcPath(
@@ -513,30 +542,33 @@ public class HmiScreenToHtmlConverter
         return item.Height.GetStaticValueOrDefault(1d);
     }
 
-    private static HmiColor GetStrokeColor(HmiShapeBase item)
+    private static HmiColor GetStrokeColor(HmiShapeBase item, HmiHtmlConvertContext context)
     {
-        if (TryGetStaticValue(item.LineColor, out var lineColor))
+        if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineColor), item.LineColor, out var lineColor))
             return lineColor;
-        if (item is HmiPaintedScreenItemBase paintedItem && TryGetStaticValue(paintedItem.BorderColor, out var borderColor))
+        if (item is HmiPaintedScreenItemBase paintedItem
+            && context.EffectiveProperties.TryGetStaticValue(paintedItem, nameof(HmiPaintedScreenItemBase.BorderColor), paintedItem.BorderColor, out var borderColor))
             return borderColor;
-        if (item is HmiPaintedScreenItemBase foregroundItem && TryGetStaticValue(foregroundItem.ForegroundColor, out var foregroundColor))
+        if (item is HmiPaintedScreenItemBase foregroundItem
+            && context.EffectiveProperties.TryGetStaticValue(foregroundItem, nameof(HmiPaintedScreenItemBase.ForegroundColor), foregroundItem.ForegroundColor, out var foregroundColor))
             return foregroundColor;
 
         return HmiColor.FromArgb(255, 0, 0, 0);
     }
 
-    private static HmiColor? GetFillColor(HmiShapeBase item)
+    private static HmiColor? GetFillColor(HmiShapeBase item, HmiHtmlConvertContext context)
     {
-        return TryGetStaticValue(item.BackgroundColor, out var backgroundColor)
+        return context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor, out var backgroundColor)
             ? backgroundColor
             : (HmiColor?)null;
     }
 
-    private static double GetStrokeWidth(HmiShapeBase item)
+    private static double GetStrokeWidth(HmiShapeBase item, HmiHtmlConvertContext context)
     {
-        if (TryGetStaticValue(item.LineWidth, out var lineWidth))
+        if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineWidth), item.LineWidth, out var lineWidth))
             return lineWidth;
-        if (item is HmiPaintedScreenItemBase paintedItem && TryGetStaticValue(paintedItem.BorderWidth, out var borderWidth))
+        if (item is HmiPaintedScreenItemBase paintedItem
+            && context.EffectiveProperties.TryGetStaticValue(paintedItem, nameof(HmiPaintedScreenItemBase.BorderWidth), paintedItem.BorderWidth, out var borderWidth))
             return borderWidth;
 
         return 1d;
@@ -571,10 +603,17 @@ public class HmiScreenToHtmlConverter
         html.Append("</script>");
     }
 
-    private static void AppendButton(StringBuilder html, HmiButton button)
+    private static void AppendGlobalStyle(StringBuilder html)
+    {
+        html.Append("<style>");
+        html.Append(HmiHtmlCommonStyle.Style);
+        html.Append("</style>");
+    }
+
+    private static void AppendButton(StringBuilder html, HmiButton button, HmiHtmlConvertContext context)
     {
         html.Append("<button");
-        AppendCommonAttributes(html, button);
+        AppendCommonAttributes(html, button, context);
         html.Append(">");
         var image = button.Image.GetStaticValue();
         var imageUri = image?.Uri;
@@ -584,32 +623,32 @@ public class HmiScreenToHtmlConverter
         html.Append("</button>");
     }
 
-    private static void AppendInput(StringBuilder html, HmiIOField ioField)
+    private static void AppendInput(StringBuilder html, HmiIOField ioField, HmiHtmlConvertContext context)
     {
         html.Append("<input");
-        AppendCommonAttributes(html, ioField);
+        AppendCommonAttributes(html, ioField, context);
         html.Append(">");
     }
 
-    private static void AppendToggleSwitch(StringBuilder html, HmiToggleSwitch toggleSwitch)
+    private static void AppendToggleSwitch(StringBuilder html, HmiToggleSwitch toggleSwitch, HmiHtmlConvertContext context)
     {
         html.Append("<input type=\"checkbox\"");
-        AppendCommonAttributes(html, toggleSwitch);
+        AppendCommonAttributes(html, toggleSwitch, context);
         html.Append(">");
     }
 
-    private static void AppendTextBlock(StringBuilder html, HmiScreenItemBase item, string? text)
+    private static void AppendTextBlock(StringBuilder html, HmiScreenItemBase item, string? text, HmiHtmlConvertContext context)
     {
-        AppendDiv(html, item, null, text);
+        AppendDiv(html, item, null, text, context);
     }
 
-    private static void AppendRectangle(StringBuilder html, HmiRectangle rectangle)
+    private static void AppendRectangle(StringBuilder html, HmiRectangle rectangle, HmiHtmlConvertContext context)
     {
         html.Append("<div");
         AppendAttribute(html, "id", rectangle.Name);
         html.Append(" style=\"position: absolute;");
-        AppendPosition(html, rectangle);
-        AppendStyle(html, rectangle);
+        AppendPosition(html, rectangle, context);
+        AppendStyle(html, rectangle, context);
         if (rectangle.BorderColor == null && rectangle.BorderWidth == null && rectangle.LineColor == null && rectangle.LineWidth == null)
             html.Append("border: 1px solid #000000;");
         html.Append("\"");
@@ -617,17 +656,17 @@ public class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendImage(StringBuilder html, HmiScreenItemBase item, string? uri, HmiHtmlConvertOptions options)
+    private static void AppendImage(StringBuilder html, HmiScreenItemBase item, string? uri, HmiHtmlConvertContext context)
     {
         if (string.IsNullOrWhiteSpace(uri))
         {
-            AppendDiv(html, item, null, null);
+            AppendDiv(html, item, null, null, context);
             return;
         }
 
         var imageUri = uri!;
         html.Append("<img");
-        AppendCommonAttributes(html, item);
+        AppendCommonAttributes(html, item, context);
         AppendAttribute(html, "src", imageUri);
         html.Append(">");
     }
@@ -642,7 +681,7 @@ public class HmiScreenToHtmlConverter
         html.Append(" style=\"width: 100%; height: 100%;\">");
     }
 
-    private static void AppendSymbolImage(StringBuilder html, HmiSymbolContainer symbolContainer, HmiImageSource image, string uri, HmiHtmlConvertOptions options)
+    private static void AppendSymbolImage(StringBuilder html, HmiSymbolContainer symbolContainer, HmiImageSource image, string uri)
     {
         html.Append("<img");
         AppendAttribute(html, "src", uri);
@@ -654,20 +693,20 @@ public class HmiScreenToHtmlConverter
         html.Append("\">");
     }
 
-    private static void AppendDynamicSvg(StringBuilder html, HmiDynamicSvg dynamicSvg)
+    private static void AppendDynamicSvg(StringBuilder html, HmiDynamicSvg dynamicSvg, HmiHtmlConvertContext context)
     {
         html.Append("<node-projects-svghmi");
-        AppendCommonAttributes(html, dynamicSvg);
+        AppendCommonAttributes(html, dynamicSvg, context);
         AppendAttribute(html, "src", dynamicSvg.Image.GetStaticValue()?.Uri);
         foreach (var property in dynamicSvg.Properties)
             AppendAttribute(html, ToDynamicSvgAttributeName(property.Name), FormatDynamicSvgPropertyValue(property.Value.GetStaticValue()));
         html.Append("></node-projects-svghmi>");
     }
 
-    private static void AppendGauge(StringBuilder html, HmiGauge gauge)
+    private static void AppendGauge(StringBuilder html, HmiGauge gauge, HmiHtmlConvertContext context)
     {
         html.Append("<hmi-gauge");
-        AppendCommonAttributes(html, gauge);
+        AppendCommonAttributes(html, gauge, context);
         AppendStaticAttribute(html, "value", gauge.Value);
         AppendStaticAttribute(html, "fill-level", gauge.FillLevel);
         AppendBooleanAttribute(html, "show-fill-level", gauge.ShowFillLevel.GetStaticValueOrDefault(true));
@@ -834,10 +873,10 @@ public class HmiScreenToHtmlConverter
         return result.ToString();
     }
 
-    private static void AppendDiv(StringBuilder html, HmiScreenItemBase item, string? cssClass, string? content)
+    private static void AppendDiv(StringBuilder html, HmiScreenItemBase item, string? cssClass, string? content, HmiHtmlConvertContext context)
     {
         html.Append("<div");
-        AppendCommonAttributes(html, item);
+        AppendCommonAttributes(html, item, context);
         AppendAttribute(html, "class", cssClass);
         html.Append(">");
         if (!string.IsNullOrEmpty(content))
@@ -845,32 +884,24 @@ public class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendCommonAttributes(StringBuilder html, HmiScreenItemBase item)
+    private static void AppendCommonAttributes(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
     {
         AppendAttribute(html, "id", item.Name);
         html.Append(" style=\"position: absolute;");
-        AppendPosition(html, item);
+        AppendPosition(html, item, context);
         if (item is HmiPaintedScreenItemBase paintedItem)
-            AppendStyle(html, paintedItem);
+            AppendStyle(html, paintedItem, context);
         html.Append("\"");
     }
 
-    private static void AppendAbsoluteChildCoordinateSpaceOpen(StringBuilder html, HmiLayoutContainerBase container)
-    {
-        html.Append("<div style=\"position: absolute;");
-        html.Append("left: ").Append(ToCss(-container.X.GetStaticValueOrDefault())).Append("px;");
-        html.Append("top: ").Append(ToCss(-container.Y.GetStaticValueOrDefault())).Append("px;");
-        html.Append("\">");
-    }
-
-    private static void AppendSymbolAttributes(StringBuilder html, HmiSymbolContainer symbolContainer)
+    private static void AppendSymbolAttributes(StringBuilder html, HmiSymbolContainer symbolContainer, HmiHtmlConvertContext context)
     {
         AppendAttribute(html, "id", symbolContainer.Name);
         AppendAttribute(html, "data-hmi-fill-color-mode", symbolContainer.FillColorMode == null ? null : symbolContainer.FillColorMode.StaticValue.ToString());
         AppendAttribute(html, "data-hmi-flip", symbolContainer.Flip == null ? null : symbolContainer.Flip.StaticValue.ToString());
         html.Append(" style=\"position: absolute; overflow: hidden;");
-        AppendPosition(html, symbolContainer);
-        AppendStyle(html, symbolContainer);
+        AppendPosition(html, symbolContainer, context);
+        AppendStyle(html, symbolContainer, context);
         AppendSymbolTransform(html, symbolContainer);
         html.Append("\"");
     }
@@ -899,10 +930,10 @@ public class HmiScreenToHtmlConverter
             html.Append("transform: ").Append(string.Join(" ", transforms)).Append(";transform-origin: center;");
     }
 
-    private static void AppendPosition(StringBuilder html, HmiScreenItemBase item)
+    private static void AppendPosition(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
     {
-        html.Append("left: ").Append(ToCss(item.X.GetStaticValueOrDefault())).Append("px;");
-        html.Append("top: ").Append(ToCss(item.Y.GetStaticValueOrDefault())).Append("px;");
+        html.Append("left: ").Append(ToCss(item.X.GetStaticValueOrDefault() + context.PositionOffsetX)).Append("px;");
+        html.Append("top: ").Append(ToCss(item.Y.GetStaticValueOrDefault() + context.PositionOffsetY)).Append("px;");
         AppendSize(html, item.Width.GetStaticValueOrDefault(), item.Height.GetStaticValueOrDefault());
     }
 
@@ -920,24 +951,25 @@ public class HmiScreenToHtmlConverter
             html.Append("background-color: ").Append(ToCss(screen.BackgroundColor.StaticValue)).Append(";");
     }
 
-    private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item)
+    private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
-        var foregroundColor = item.ForegroundColor;
-        var backgroundColor = item.BackgroundColor;
-        var borderColor = item.BorderColor;
-        var borderWidth = item.BorderWidth;
+        var foregroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.ForegroundColor), item.ForegroundColor);
+        var backgroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
+        var borderColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderColor), item.BorderColor);
+        var borderWidth = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderWidth), item.BorderWidth);
         var margin = item.Margin;
+        var padding = item.Padding;
         var font = GetFont(item);
         var horizontalAlignment = GetHorizontalAlignment(item);
         var verticalAlignment = GetVerticalAlignment(item);
 
-        if (foregroundColor != null)
+        if (foregroundColor?.StaticValue != null)
             html.Append("color: ").Append(ToCss(foregroundColor.StaticValue)).Append(";");
-        if (backgroundColor != null)
+        if (backgroundColor?.StaticValue != null)
             html.Append("background-color: ").Append(ToCss(backgroundColor.StaticValue)).Append(";");
-        if (borderColor != null)
+        if (borderColor?.StaticValue != null)
             html.Append("border-color: ").Append(ToCss(borderColor.StaticValue)).Append(";");
-        if (borderWidth != null)
+        if (borderWidth?.StaticValue != null)
         {
             html.Append("border-style: solid;");
             html.Append("border-width: ").Append(ToCss(borderWidth.StaticValue)).Append("px;");
@@ -960,6 +992,14 @@ public class HmiScreenToHtmlConverter
                 .Append(ToCss(margin.Right.GetStaticValueOrDefault())).Append("px ")
                 .Append(ToCss(margin.Bottom.GetStaticValueOrDefault())).Append("px ")
                 .Append(ToCss(margin.Left.GetStaticValueOrDefault())).Append("px;");
+        }
+        if (padding != null)
+        {
+            html.Append("padding: ")
+                .Append(ToCss(padding.Top.GetStaticValueOrDefault())).Append("px ")
+                .Append(ToCss(padding.Right.GetStaticValueOrDefault())).Append("px ")
+                .Append(ToCss(padding.Bottom.GetStaticValueOrDefault())).Append("px ")
+                .Append(ToCss(padding.Left.GetStaticValueOrDefault())).Append("px;");
         }
         if (font != null)
         {
@@ -1072,4 +1112,35 @@ public class HmiScreenToHtmlConverter
         }
     }
 
+    private readonly struct HmiHtmlConvertContext
+    {
+        public HmiHtmlConvertContext(
+            HmiHtmlConvertOptions options,
+            HmiEffectivePropertyResolver effectiveProperties,
+            double positionOffsetX = 0,
+            double positionOffsetY = 0)
+        {
+            Options = options;
+            EffectiveProperties = effectiveProperties;
+            PositionOffsetX = positionOffsetX;
+            PositionOffsetY = positionOffsetY;
+        }
+
+        public HmiHtmlConvertOptions Options { get; }
+
+        public HmiEffectivePropertyResolver EffectiveProperties { get; }
+
+        public double PositionOffsetX { get; }
+
+        public double PositionOffsetY { get; }
+
+        public HmiHtmlConvertContext WithPositionOffset(double offsetX, double offsetY)
+        {
+            return new HmiHtmlConvertContext(
+                Options,
+                EffectiveProperties,
+                PositionOffsetX + offsetX,
+                PositionOffsetY + offsetY);
+        }
+    }
 }
