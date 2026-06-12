@@ -1,4 +1,7 @@
 import { IHmiProject } from "../../projects/IHmiProject.js";
+import { HmiImage } from "../../images/HmiImage.js";
+import { HmiImageType } from "../../images/HmiImageType.js";
+import { MetafileToSvgRenderer } from "../../images/converters/metafile-to-svg-renderer.js";
 import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js";
 import { HmiColor } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
@@ -15,6 +18,12 @@ import { HmiScreenBase } from "../../screens/base/HmiScreenBase.js";
 import { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
 import { HmiSymbolContainer } from "../../screens/base/HmiSymbolContainer.js";
 import { HmiSymbolFlipMode } from "../../screens/base/HmiSymbolFlipMode.js";
+import { HmiSymbolLibraryControl } from "../../screens/base/HmiSymbolLibraryControl.js";
+import {
+  HmiSymbolLibraryBackFillStyle,
+  HmiSymbolLibraryFlip,
+  HmiSymbolLibraryRotation,
+} from "../../screens/base/HmiSymbolLibraryEnums.js";
 import { HmiVerticalAlignment } from "../../screens/base/HmiVerticalAlignment.js";
 import { HmiAlarmControl } from "../../screens/controls/HmiAlarmControl.js";
 import { HmiScreenWindow } from "../../screens/screen/HmiScreenWindow.js";
@@ -159,7 +168,7 @@ export class HmiScreenToHtmlConverter {
     } else if (item instanceof HmiTextBox || item instanceof HmiLabel || item instanceof HmiText) {
       appendDiv(html, item, undefined, getStaticValue(item.text), context);
     } else if (item instanceof HmiGraphicView) {
-      appendImage(html, item, getStaticValue(item.image)?.uri ?? getStaticValue(item.source), context);
+      await this.appendGraphicViewAsync(html, item, project, context, signal);
     } else if (item instanceof HmiRectangle) {
       appendRectangle(html, item, context);
     } else if (item instanceof HmiLine) {
@@ -186,6 +195,8 @@ export class HmiScreenToHtmlConverter {
       appendGauge(html, item, context);
     } else if (item instanceof HmiSymbolContainer) {
       await this.appendSymbolContainerAsync(html, item, project, context, screenStack, signal);
+    } else if (item instanceof HmiSymbolLibraryControl) {
+      appendSymbolLibraryControl(html, item, context);
     } else if (item instanceof HmiGroup) {
       if (item.isLogicGrouping) {
         for (const child of item.items) {
@@ -227,6 +238,23 @@ export class HmiScreenToHtmlConverter {
       await this.appendItemAsync(html, child, project, context, screenStack, signal);
     }
     html.push("</div>");
+  }
+
+  private async appendGraphicViewAsync(
+    html: string[],
+    graphicView: HmiGraphicView,
+    project: IHmiProject | undefined,
+    context: HmiHtmlConvertContext,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    const image = getStaticValue(graphicView.image);
+    let imageUri = await resolveImageUri(image, project, signal);
+    if (!imageUri?.trim()) {
+      const source = getStaticValue(graphicView.source);
+      imageUri = resolveMetafileDataUri(source ?? "") ?? source;
+    }
+
+    appendImage(html, graphicView, imageUri, context);
   }
 
   private async appendContainerAsync(
@@ -583,6 +611,161 @@ function appendImage(
   appendCommonAttributes(html, item, context);
   appendAttribute(html, "src", uri);
   html.push(">");
+}
+
+function appendSymbolLibraryControl(
+  html: string[],
+  symbolLibraryControl: HmiSymbolLibraryControl,
+  context: HmiHtmlConvertContext,
+): void {
+  const symbolSvg = resolveImageSvg(symbolLibraryControl.symbol);
+  if (symbolSvg?.trim()) {
+    html.push("<div");
+    appendSymbolLibraryAttributes(html, symbolLibraryControl, context);
+    html.push(">");
+    html.push(normalizeEmbeddedSymbolSvg(symbolSvg, symbolLibraryControl));
+    html.push("</div>");
+    return;
+  }
+
+  const imageUri = resolveImageUriFromImage(symbolLibraryControl.symbol);
+  if (!imageUri?.trim()) {
+    appendDiv(html, symbolLibraryControl, context.options.unsupportedItemPlaceholderCssClass, "Symbol library control", context);
+    return;
+  }
+
+  html.push("<div");
+  appendSymbolLibraryAttributes(html, symbolLibraryControl, context);
+  html.push(">");
+  html.push("<img");
+  appendAttribute(html, "src", imageUri);
+  appendAttribute(html, "alt", symbolLibraryControl.symbol?.name ?? symbolLibraryControl.name);
+  appendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.symbolId);
+  html.push(" style=\"width: 100%; height: 100%; display: block;");
+  html.push(getStaticValueOrDefault(symbolLibraryControl.fixedAspectRatio, false) ? "object-fit: contain;" : "object-fit: fill;");
+  html.push("\">");
+  html.push("</div>");
+}
+
+function normalizeEmbeddedSymbolSvg(svg: string, symbolLibraryControl: HmiSymbolLibraryControl): string {
+  const svgStart = svg.toLowerCase().indexOf("<svg");
+  if (svgStart < 0) {
+    return svg;
+  }
+
+  const svgTagEnd = svg.indexOf(">", svgStart);
+  if (svgTagEnd < 0) {
+    return svg;
+  }
+
+  const rootTag = svg.substring(svgStart, svgTagEnd);
+  const existingStyle = tryGetAttributeValue(rootTag, "style");
+  const normalizedStyle = appendCssDeclaration(
+    existingStyle,
+    "width: 100%; height: 100%; display: block; transform: rotate(180deg); transform-origin: center;",
+  );
+  let result = svg;
+  const attributes: string[] = [];
+  if (existingStyle === undefined) {
+    attributes.push(` style="${escapeHtml(normalizedStyle)}"`);
+  } else {
+    result = replaceAttributeValue(result, svgStart, svgTagEnd, "style", normalizedStyle);
+  }
+  if (!/preserveAspectRatio\s*=/i.test(rootTag)) {
+    attributes.push(getStaticValueOrDefault(symbolLibraryControl.fixedAspectRatio, false)
+      ? " preserveAspectRatio=\"xMidYMid meet\""
+      : " preserveAspectRatio=\"none\"");
+  }
+  if (symbolLibraryControl.symbolId?.trim()) {
+    attributes.push(` data-hmi-symbol-id="${escapeHtml(symbolLibraryControl.symbolId)}"`);
+  }
+
+  return attributes.length === 0 ? result : result.slice(0, svgTagEnd) + attributes.join("") + result.slice(svgTagEnd);
+}
+
+function tryGetAttributeValue(tag: string, attributeName: string): string | undefined {
+  const pattern = new RegExp(`${attributeName}\\s*=\\s*"([^"]*)"`, "i");
+  return pattern.exec(tag)?.[1];
+}
+
+function appendCssDeclaration(existingStyle: string | undefined, declaration: string): string {
+  if (!existingStyle?.trim()) {
+    return declaration;
+  }
+
+  return `${existingStyle}${existingStyle.trimEnd().endsWith(";") ? " " : "; "}${declaration}`;
+}
+
+function replaceAttributeValue(
+  value: string,
+  tagStart: number,
+  tagEnd: number,
+  attributeName: string,
+  attributeValue: string,
+): string {
+  const tag = value.substring(tagStart, tagEnd);
+  const match = new RegExp(`${attributeName}\\s*=\\s*"([^"]*)"`, "i").exec(tag);
+  if (match?.index === undefined) {
+    return value;
+  }
+
+  const valueStart = tagStart + match.index + match[0].indexOf("\"") + 1;
+  const valueEnd = valueStart + match[1].length;
+  return value.substring(0, valueStart) + escapeHtml(attributeValue) + value.substring(valueEnd);
+}
+
+function appendSymbolLibraryAttributes(
+  html: string[],
+  symbolLibraryControl: HmiSymbolLibraryControl,
+  context: HmiHtmlConvertContext,
+): void {
+  appendAttribute(html, "id", symbolLibraryControl.name);
+  appendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.symbolId);
+  appendAttribute(html, "data-hmi-symbol-appearance", formatAttributeValue(getStaticValue(symbolLibraryControl.symbolAppearance)));
+  appendAttribute(html, "data-hmi-fill-color-mode", formatAttributeValue(getStaticValue(symbolLibraryControl.fillColorMode)));
+  appendAttribute(html, "data-hmi-blink-mode", formatAttributeValue(getStaticValue(symbolLibraryControl.blinkMode)));
+  html.push(" style=\"position: absolute; overflow: hidden;");
+  appendPosition(html, symbolLibraryControl, context);
+  if (
+    getStaticValueOrDefault(symbolLibraryControl.backFillStyle, HmiSymbolLibraryBackFillStyle.Transparent) ===
+      HmiSymbolLibraryBackFillStyle.Solid &&
+    getStaticValue(symbolLibraryControl.backColor) !== undefined
+  ) {
+    html.push(`background-color: ${colorToCss(getStaticValue(symbolLibraryControl.backColor)!)};`);
+  }
+  appendSymbolLibraryTransform(html, symbolLibraryControl);
+  html.push("\"");
+}
+
+function appendSymbolLibraryTransform(html: string[], symbolLibraryControl: HmiSymbolLibraryControl): void {
+  const transforms: string[] = [];
+  switch (getStaticValueOrDefault(symbolLibraryControl.flip, HmiSymbolLibraryFlip.None)) {
+    case HmiSymbolLibraryFlip.Horizontal:
+      transforms.push("scaleX(-1)");
+      break;
+    case HmiSymbolLibraryFlip.Vertical:
+      transforms.push("scaleY(-1)");
+      break;
+    case HmiSymbolLibraryFlip.Both:
+      transforms.push("scale(-1, -1)");
+      break;
+  }
+
+  switch (getStaticValueOrDefault(symbolLibraryControl.rotation, HmiSymbolLibraryRotation.Angle0)) {
+    case HmiSymbolLibraryRotation.Angle90:
+      transforms.push("rotate(90deg)");
+      break;
+    case HmiSymbolLibraryRotation.Angle180:
+      transforms.push("rotate(180deg)");
+      break;
+    case HmiSymbolLibraryRotation.Angle270:
+      transforms.push("rotate(270deg)");
+      break;
+  }
+
+  if (transforms.length > 0) {
+    html.push(`transform: ${transforms.join(" ")};transform-origin: center;`);
+  }
 }
 
 function appendInnerImage(html: string[], uri: string): void {
@@ -1064,18 +1247,139 @@ async function resolveImageUri(
     return undefined;
   }
   if (image.uri?.trim()) {
-    return image.uri;
+    return resolveMetafileDataUri(image.uri) ?? image.uri;
   }
   if (project === undefined || !image.imageId?.trim()) {
     return undefined;
   }
 
   const resolved = await project.getImage(image.imageId, signal);
-  if (resolved === undefined || resolved.data.byteLength === 0) {
+  return resolveImageUriFromImage(resolved);
+}
+
+function resolveMetafileDataUri(uri: string): string | undefined {
+  const base64Marker = ";base64,";
+  if (!uri.toLowerCase().startsWith("data:")) {
     return undefined;
   }
 
-  return `data:${resolved.mimeType?.trim() || "application/octet-stream"};base64,${toBase64(resolved.data)}`;
+  const markerIndex = uri.toLowerCase().indexOf(base64Marker);
+  if (markerIndex < 0) {
+    return undefined;
+  }
+
+  const mediaType = uri.substring(5, markerIndex);
+  if (!isMetafileMimeType(mediaType)) {
+    return undefined;
+  }
+
+  try {
+    const data = fromBase64(uri.substring(markerIndex + base64Marker.length));
+    const extension = mediaType.toLowerCase().includes("wmf") ? ".wmf" : ".emf";
+    const svg = new MetafileToSvgRenderer().render(data, extension);
+    return svg?.trim() ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}` : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveImageUriFromImage(image: HmiImage | undefined): string | undefined {
+  if (image === undefined || image.data.byteLength === 0) {
+    return undefined;
+  }
+
+  if (isMetafileImage(image)) {
+    const svg = new MetafileToSvgRenderer().render(image.data, getImageExtension(image));
+    if (svg?.trim()) {
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    }
+  }
+
+  const mimeType = image.mimeType?.trim() || getMimeType(image);
+  return `data:${mimeType};base64,${toBase64(image.data)}`;
+}
+
+function resolveImageSvg(image: HmiImage | undefined): string | undefined {
+  if (image === undefined || image.data.byteLength === 0) {
+    return undefined;
+  }
+
+  if (isMetafileImage(image)) {
+    return new MetafileToSvgRenderer().render(image.data, getImageExtension(image)) ?? undefined;
+  }
+
+  if (image.imageType === HmiImageType.Svg || image.mimeType?.toLowerCase() === "image/svg+xml") {
+    return new TextDecoder().decode(image.data);
+  }
+
+  return undefined;
+}
+
+function isMetafileImage(image: HmiImage): boolean {
+  return (
+    image.imageType === HmiImageType.Emf ||
+    image.imageType === HmiImageType.Wmf ||
+    isMetafileMimeType(image.mimeType) ||
+    isMetafileExtension(getExtensionFromName(image.name))
+  );
+}
+
+function isMetafileMimeType(mimeType: string | undefined): boolean {
+  if (!mimeType?.trim()) {
+    return false;
+  }
+
+  const normalized = mimeType.toLowerCase();
+  return normalized.includes("emf") || normalized.includes("wmf") || normalized.includes("metafile");
+}
+
+function getImageExtension(image: HmiImage): string | undefined {
+  switch (image.imageType) {
+    case HmiImageType.Emf:
+      return ".emf";
+    case HmiImageType.Wmf:
+      return ".wmf";
+    default:
+      return getExtensionFromName(image.name);
+  }
+}
+
+function getExtensionFromName(name: string | undefined): string | undefined {
+  if (!name?.trim()) {
+    return undefined;
+  }
+
+  const index = name.lastIndexOf(".");
+  return index >= 0 ? name.substring(index).toLowerCase() : undefined;
+}
+
+function isMetafileExtension(extension: string | undefined): boolean {
+  return extension === ".emf" || extension === ".wmf";
+}
+
+function getMimeType(image: HmiImage): string {
+  switch (image.imageType) {
+    case HmiImageType.Png:
+      return "image/png";
+    case HmiImageType.Bmp:
+      return "image/bmp";
+    case HmiImageType.Jpg:
+      return "image/jpeg";
+    case HmiImageType.Gif:
+      return "image/gif";
+    case HmiImageType.Svg:
+      return "image/svg+xml";
+    case HmiImageType.Emf:
+      return "image/x-emf";
+    case HmiImageType.Wmf:
+      return "image/x-wmf";
+    case HmiImageType.Ico:
+      return "image/x-icon";
+    case HmiImageType.Tif:
+      return "image/tiff";
+    default:
+      return "application/octet-stream";
+  }
 }
 
 function toBase64(bytes: Uint8Array): string {
@@ -1084,6 +1388,15 @@ function toBase64(bytes: Uint8Array): string {
     binary += String.fromCharCode(value);
   }
   return btoa(binary);
+}
+
+function fromBase64(value: string): Uint8Array {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index++) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
 }
 
 function escapeHtml(value: string): string {

@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
+using BaseHmiTypes.Images;
+using BaseHmiTypes.Images.Converters;
 using BaseHmiTypes.Projects;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
@@ -128,7 +130,7 @@ public class HmiScreenToHtmlConverter
                 AppendTextBlock(html, text, text.Text.GetStaticValue(), context);
                 break;
             case HmiGraphicView graphicView:
-                AppendImage(html, graphicView, graphicView.Image.GetStaticValue()?.Uri ?? graphicView.Source.GetStaticValue(), context);
+                await AppendGraphicViewAsync(html, graphicView, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiRectangle rectangle:
                 AppendRectangle(html, rectangle, context);
@@ -168,6 +170,9 @@ public class HmiScreenToHtmlConverter
                 break;
             case HmiSymbolContainer symbolContainer:
                 await AppendSymbolContainerAsync(html, symbolContainer, project, context, screenStack, cancellationToken).ConfigureAwait(false);
+                break;
+            case HmiSymbolLibraryControl symbolLibraryControl:
+                AppendSymbolLibraryControl(html, symbolLibraryControl, context);
                 break;
             case HmiGroup group:
                 if (group.IsLogicGrouping)
@@ -262,17 +267,142 @@ public class HmiScreenToHtmlConverter
             return null;
 
         if (!string.IsNullOrWhiteSpace(image.Uri))
-            return image.Uri;
+            return ResolveMetafileDataUri(image.Uri!) ?? image.Uri;
 
         if (project == null || string.IsNullOrWhiteSpace(image.ImageId))
             return null;
 
         var resolved = await project.GetImageAsync(image.ImageId!, cancellationToken).ConfigureAwait(false);
-        if (resolved == null || resolved.Data.Length == 0)
+        return ResolveImageUri(resolved);
+    }
+
+    private static string? ResolveMetafileDataUri(string uri)
+    {
+        const string base64Marker = ";base64,";
+        if (!uri.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
             return null;
 
-        var mimeType = string.IsNullOrWhiteSpace(resolved.MimeType) ? "application/octet-stream" : resolved.MimeType;
-        return "data:" + mimeType + ";base64," + Convert.ToBase64String(resolved.Data);
+        var markerIndex = uri.IndexOf(base64Marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0)
+            return null;
+
+        var mediaType = uri.Substring(5, markerIndex - 5);
+        if (!IsMetafileMimeType(mediaType))
+            return null;
+
+        try
+        {
+            var data = Convert.FromBase64String(uri.Substring(markerIndex + base64Marker.Length));
+            var extension = mediaType.IndexOf("wmf", StringComparison.OrdinalIgnoreCase) >= 0 ? ".wmf" : ".emf";
+            var svg = new MetafileToSvgRenderer().Render(data, extension);
+            return string.IsNullOrWhiteSpace(svg)
+                ? null
+                : "data:image/svg+xml;charset=utf-8," + Uri.EscapeDataString(svg!);
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+    }
+
+    private static string? ResolveImageUri(HmiImage? image)
+    {
+        if (image == null || image.Data.Length == 0)
+            return null;
+
+        if (IsMetafileImage(image))
+        {
+            var svg = new MetafileToSvgRenderer().Render(image.Data, GetImageExtension(image));
+            if (!string.IsNullOrWhiteSpace(svg))
+                return "data:image/svg+xml;charset=utf-8," + Uri.EscapeDataString(svg!);
+        }
+
+        var mimeType = string.IsNullOrWhiteSpace(image.MimeType) ? GetMimeType(image) : image.MimeType!;
+        return "data:" + mimeType + ";base64," + Convert.ToBase64String(image.Data);
+    }
+
+    private static string? ResolveImageSvg(HmiImage? image)
+    {
+        if (image == null || image.Data.Length == 0)
+            return null;
+
+        if (IsMetafileImage(image))
+            return new MetafileToSvgRenderer().Render(image.Data, GetImageExtension(image));
+
+        if (image.ImageType == HmiImageType.Svg || string.Equals(image.MimeType, "image/svg+xml", StringComparison.OrdinalIgnoreCase))
+            return Encoding.UTF8.GetString(image.Data);
+
+        return null;
+    }
+
+    private static bool IsMetafileImage(HmiImage image)
+    {
+        return image.ImageType == HmiImageType.Emf
+            || image.ImageType == HmiImageType.Wmf
+            || IsMetafileMimeType(image.MimeType)
+            || IsMetafileExtension(GetExtensionFromName(image.Name));
+    }
+
+    private static bool IsMetafileMimeType(string? mimeType)
+    {
+        return !string.IsNullOrWhiteSpace(mimeType)
+            && (mimeType!.IndexOf("emf", StringComparison.OrdinalIgnoreCase) >= 0
+                || mimeType.IndexOf("wmf", StringComparison.OrdinalIgnoreCase) >= 0
+                || mimeType.IndexOf("metafile", StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+
+    private static string? GetImageExtension(HmiImage image)
+    {
+        switch (image.ImageType)
+        {
+            case HmiImageType.Emf:
+                return ".emf";
+            case HmiImageType.Wmf:
+                return ".wmf";
+            default:
+                return GetExtensionFromName(image.Name);
+        }
+    }
+
+    private static string? GetExtensionFromName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return null;
+
+        var index = name!.LastIndexOf('.');
+        return index >= 0 ? name.Substring(index).ToLowerInvariant() : null;
+    }
+
+    private static bool IsMetafileExtension(string? extension)
+    {
+        return extension == ".emf" || extension == ".wmf";
+    }
+
+    private static string GetMimeType(HmiImage image)
+    {
+        switch (image.ImageType)
+        {
+            case HmiImageType.Png:
+                return "image/png";
+            case HmiImageType.Bmp:
+                return "image/bmp";
+            case HmiImageType.Jpg:
+                return "image/jpeg";
+            case HmiImageType.Gif:
+                return "image/gif";
+            case HmiImageType.Svg:
+                return "image/svg+xml";
+            case HmiImageType.Emf:
+                return "image/x-emf";
+            case HmiImageType.Wmf:
+                return "image/x-wmf";
+            case HmiImageType.Ico:
+                return "image/x-icon";
+            case HmiImageType.Tif:
+                return "image/tiff";
+            default:
+                return "application/octet-stream";
+        }
     }
 
     private async ValueTask AppendScreenWindowAsync(
@@ -685,6 +815,21 @@ public class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
+    private static async ValueTask AppendGraphicViewAsync(
+        StringBuilder html,
+        HmiGraphicView graphicView,
+        IHmiProject? project,
+        HmiHtmlConvertContext context,
+        CancellationToken cancellationToken)
+    {
+        var image = graphicView.Image.GetStaticValue();
+        var imageUri = await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(imageUri))
+            imageUri = ResolveMetafileDataUri(graphicView.Source.GetStaticValue() ?? string.Empty) ?? graphicView.Source.GetStaticValue();
+
+        AppendImage(html, graphicView, imageUri, context);
+    }
+
     private static void AppendImage(StringBuilder html, HmiScreenItemBase item, string? uri, HmiHtmlConvertContext context)
     {
         if (string.IsNullOrWhiteSpace(uri))
@@ -698,6 +843,151 @@ public class HmiScreenToHtmlConverter
         AppendCommonAttributes(html, item, context);
         AppendAttribute(html, "src", imageUri);
         html.Append(">");
+    }
+
+    private static void AppendSymbolLibraryControl(StringBuilder html, HmiSymbolLibraryControl symbolLibraryControl, HmiHtmlConvertContext context)
+    {
+        var symbolSvg = ResolveImageSvg(symbolLibraryControl.Symbol);
+        if (!string.IsNullOrWhiteSpace(symbolSvg))
+        {
+            html.Append("<div");
+            AppendSymbolLibraryAttributes(html, symbolLibraryControl, context);
+            html.Append(">");
+            html.Append(NormalizeEmbeddedSymbolSvg(symbolSvg!, symbolLibraryControl));
+            html.Append("</div>");
+            return;
+        }
+
+        var imageUri = ResolveImageUri(symbolLibraryControl.Symbol);
+        if (string.IsNullOrWhiteSpace(imageUri))
+        {
+            AppendDiv(html, symbolLibraryControl, context.Options.UnsupportedItemPlaceholderCssClass, "Symbol library control", context);
+            return;
+        }
+
+        html.Append("<div");
+        AppendSymbolLibraryAttributes(html, symbolLibraryControl, context);
+        html.Append(">");
+        html.Append("<img");
+        AppendAttribute(html, "src", imageUri);
+        AppendAttribute(html, "alt", symbolLibraryControl.Symbol?.Name ?? symbolLibraryControl.Name);
+        AppendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.SymbolId);
+        html.Append(" style=\"width: 100%; height: 100%; display: block;");
+        html.Append(symbolLibraryControl.FixedAspectRatio.GetStaticValueOrDefault() ? "object-fit: contain;" : "object-fit: fill;");
+        html.Append("\">");
+        html.Append("</div>");
+    }
+
+    private static string NormalizeEmbeddedSymbolSvg(string svg, HmiSymbolLibraryControl symbolLibraryControl)
+    {
+        var svgStart = svg.IndexOf("<svg", StringComparison.OrdinalIgnoreCase);
+        if (svgStart < 0)
+            return svg;
+
+        var svgTagEnd = svg.IndexOf('>', svgStart);
+        if (svgTagEnd < 0)
+            return svg;
+
+        var rootTag = svg.Substring(svgStart, svgTagEnd - svgStart);
+        var existingStyle = TryGetAttributeValue(rootTag, "style");
+        var normalizedStyle = AppendCssDeclaration(existingStyle, "width: 100%; height: 100%; display: block; transform: rotate(180deg); transform-origin: center;");
+        var attributes = new StringBuilder();
+        if (existingStyle == null)
+            attributes.Append(" style=\"").Append(normalizedStyle).Append('"');
+        else
+            svg = ReplaceAttributeValue(svg, svgStart, svgTagEnd, "style", normalizedStyle);
+        if (rootTag.IndexOf("preserveAspectRatio", StringComparison.OrdinalIgnoreCase) < 0)
+            attributes.Append(symbolLibraryControl.FixedAspectRatio.GetStaticValueOrDefault()
+                ? " preserveAspectRatio=\"xMidYMid meet\""
+                : " preserveAspectRatio=\"none\"");
+        if (!string.IsNullOrWhiteSpace(symbolLibraryControl.SymbolId))
+            attributes.Append(" data-hmi-symbol-id=\"").Append(WebUtility.HtmlEncode(symbolLibraryControl.SymbolId)).Append('"');
+
+        return attributes.Length == 0 ? svg : svg.Insert(svgTagEnd, attributes.ToString());
+    }
+
+    private static string? TryGetAttributeValue(string tag, string attributeName)
+    {
+        var pattern = attributeName + "=\"";
+        var start = tag.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+        if (start < 0)
+            return null;
+
+        start += pattern.Length;
+        var end = tag.IndexOf('"', start);
+        return end < 0 ? null : WebUtility.HtmlDecode(tag.Substring(start, end - start));
+    }
+
+    private static string AppendCssDeclaration(string? existingStyle, string declaration)
+    {
+        if (string.IsNullOrWhiteSpace(existingStyle))
+            return declaration;
+
+        var separator = existingStyle!.TrimEnd().EndsWith(";", StringComparison.Ordinal) ? " " : "; ";
+        return existingStyle + separator + declaration;
+    }
+
+    private static string ReplaceAttributeValue(string value, int tagStart, int tagEnd, string attributeName, string attributeValue)
+    {
+        var pattern = attributeName + "=\"";
+        var attributeStart = value.IndexOf(pattern, tagStart, tagEnd - tagStart, StringComparison.OrdinalIgnoreCase);
+        if (attributeStart < 0)
+            return value;
+
+        var valueStart = attributeStart + pattern.Length;
+        var valueEnd = value.IndexOf('"', valueStart);
+        if (valueEnd < 0 || valueEnd > tagEnd)
+            return value;
+
+        return value.Substring(0, valueStart) + WebUtility.HtmlEncode(attributeValue) + value.Substring(valueEnd);
+    }
+
+    private static void AppendSymbolLibraryAttributes(StringBuilder html, HmiSymbolLibraryControl symbolLibraryControl, HmiHtmlConvertContext context)
+    {
+        AppendAttribute(html, "id", symbolLibraryControl.Name);
+        AppendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.SymbolId);
+        AppendAttribute(html, "data-hmi-symbol-appearance", FormatAttributeValue(symbolLibraryControl.SymbolAppearance?.StaticValue));
+        AppendAttribute(html, "data-hmi-fill-color-mode", FormatAttributeValue(symbolLibraryControl.FillColorMode?.StaticValue));
+        AppendAttribute(html, "data-hmi-blink-mode", FormatAttributeValue(symbolLibraryControl.BlinkMode?.StaticValue));
+        html.Append(" style=\"position: absolute; overflow: hidden;");
+        AppendPosition(html, symbolLibraryControl, context);
+        if (symbolLibraryControl.BackFillStyle.GetStaticValueOrDefault() == HmiSymbolLibraryBackFillStyle.Solid && symbolLibraryControl.BackColor?.StaticValue != null)
+            html.Append("background-color: ").Append(ToCss(symbolLibraryControl.BackColor.StaticValue)).Append(";");
+        AppendSymbolLibraryTransform(html, symbolLibraryControl);
+        html.Append("\"");
+    }
+
+    private static void AppendSymbolLibraryTransform(StringBuilder html, HmiSymbolLibraryControl symbolLibraryControl)
+    {
+        var transforms = new List<string>();
+        switch (symbolLibraryControl.Flip.GetStaticValueOrDefault(HmiSymbolLibraryFlip.None))
+        {
+            case HmiSymbolLibraryFlip.Horizontal:
+                transforms.Add("scaleX(-1)");
+                break;
+            case HmiSymbolLibraryFlip.Vertical:
+                transforms.Add("scaleY(-1)");
+                break;
+            case HmiSymbolLibraryFlip.Both:
+                transforms.Add("scale(-1, -1)");
+                break;
+        }
+
+        switch (symbolLibraryControl.Rotation.GetStaticValueOrDefault(HmiSymbolLibraryRotation.Angle0))
+        {
+            case HmiSymbolLibraryRotation.Angle90:
+                transforms.Add("rotate(90deg)");
+                break;
+            case HmiSymbolLibraryRotation.Angle180:
+                transforms.Add("rotate(180deg)");
+                break;
+            case HmiSymbolLibraryRotation.Angle270:
+                transforms.Add("rotate(270deg)");
+                break;
+        }
+
+        if (transforms.Count > 0)
+            html.Append("transform: ").Append(string.Join(" ", transforms)).Append(";transform-origin: center;");
     }
 
     private static void AppendInnerImage(StringBuilder html, string? uri)

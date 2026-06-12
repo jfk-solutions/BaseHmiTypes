@@ -1,4 +1,5 @@
 using BaseHmiTypes.Converters.Html;
+using BaseHmiTypes.Images;
 using BaseHmiTypes.Projects;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
@@ -847,9 +848,78 @@ public class HmiScreenToHtmlConverterTests
         Assert.IsFalse(html.Contains("<node-projects-svghmi", StringComparison.Ordinal));
     }
 
+    [TestMethod]
+    public async Task ConvertAsync_RendersGraphicViewProjectMetafileAsSvgImage()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiGraphicView
+        {
+            Id = "symbol-1",
+            Name = "Symbol",
+            Width = 32,
+            Height = 32,
+            Image = new HmiImageSource
+            {
+                ImageId = "symbol-image"
+            }
+        });
+        screen.Layers.Add(layer);
+
+        var project = new FakeProject(screen);
+        project.AddImage(new HmiImage
+        {
+            Id = "symbol-image",
+            Name = "symbol.emf",
+            ImageType = HmiImageType.Emf,
+            MimeType = "image/x-emf",
+            Data = CreateMinimalEmf()
+        });
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen, project);
+
+        StringAssert.Contains(html, "<img id=\"Symbol\"");
+        StringAssert.Contains(html, "src=\"data:image/svg+xml;charset=utf-8,");
+        Assert.IsFalse(html.Contains("data:image/x-emf", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_RendersSymbolLibraryControlMetafileSymbol()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiSymbolLibraryControl
+        {
+            Id = "library-symbol-1",
+            Name = "LibrarySymbol",
+            SymbolId = "siemens-symbol",
+            Width = 48,
+            Height = 48,
+            FixedAspectRatio = true,
+            Symbol = new HmiImage
+            {
+                Id = "symbol-image",
+                Name = "symbol.wmf",
+                ImageType = HmiImageType.Emf,
+                Data = CreateMinimalEmf()
+            }
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"LibrarySymbol\"");
+        StringAssert.Contains(html, "data-hmi-symbol-id=\"siemens-symbol\"");
+        StringAssert.Contains(html, "<svg xmlns=\"http://www.w3.org/2000/svg\"");
+        StringAssert.Contains(html, "preserveAspectRatio=\"xMidYMid meet\"");
+        StringAssert.Contains(html, "transform: rotate(180deg);");
+        Assert.IsFalse(html.Contains("<img src=\"data:image/svg+xml;charset=utf-8,", StringComparison.Ordinal));
+    }
+
     private sealed class FakeProject : HmiProjectBase
     {
         private readonly Dictionary<string, HmiScreenBase> _screens = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, HmiImage> _images = new(StringComparer.Ordinal);
 
         public FakeProject(params HmiScreenBase[] screens)
         {
@@ -875,6 +945,49 @@ public class HmiScreenToHtmlConverterTests
             _screens.TryGetValue(screenId, out var screen);
             return new ValueTask<HmiScreenBase?>(screen);
         }
+
+        public void AddImage(HmiImage image)
+        {
+            if (!string.IsNullOrWhiteSpace(image.Id))
+                _images[image.Id!] = image;
+            if (!string.IsNullOrWhiteSpace(image.Name))
+                _images[image.Name!] = image;
+        }
+
+        public override ValueTask<HmiImage?> GetImageAsync(string id, CancellationToken cancellationToken = default)
+        {
+            _images.TryGetValue(id, out var image);
+            return new ValueTask<HmiImage?>(image);
+        }
+    }
+
+    private static byte[] CreateMinimalEmf()
+    {
+        var bytes = new byte[88];
+        SetU32(bytes, 0, 0x0001);
+        SetU32(bytes, 4, 88);
+        SetU32(bytes, 8, 0);
+        SetU32(bytes, 12, 0);
+        SetU32(bytes, 16, 31);
+        SetU32(bytes, 20, 31);
+        SetU32(bytes, 24, 0);
+        SetU32(bytes, 28, 0);
+        SetU32(bytes, 32, 3200);
+        SetU32(bytes, 36, 3200);
+        SetU32(bytes, 40, 0x464d4520);
+        SetU32(bytes, 72, 32);
+        SetU32(bytes, 76, 32);
+        SetU32(bytes, 80, 10);
+        SetU32(bytes, 84, 10);
+        return bytes;
+    }
+
+    private static void SetU32(byte[] bytes, int offset, uint value)
+    {
+        bytes[offset] = (byte)(value & 0xff);
+        bytes[offset + 1] = (byte)((value >> 8) & 0xff);
+        bytes[offset + 2] = (byte)((value >> 16) & 0xff);
+        bytes[offset + 3] = (byte)((value >> 24) & 0xff);
     }
 
     private static int CountOccurrences(string value, string search)

@@ -53,6 +53,14 @@ interface ViewBox {
   height: number;
 }
 
+interface BoundsBuilder {
+  hasValue: boolean;
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
 interface EmfRecord {
   type: number;
   offset: number;
@@ -350,6 +358,8 @@ export class MetafileToSvgRenderer {
     const elements: string[] = [];
     let windowOrg = { x: viewBox.x, y: viewBox.y };
     let windowExt = { x: viewBox.width, y: viewBox.height };
+    let hasExplicitWindow = false;
+    const bounds = createBoundsBuilder();
 
     for (const record of wmfRecords(bytes, start)) {
       const p = record.offset + 6;
@@ -357,10 +367,12 @@ export class MetafileToSvgRenderer {
         case META.SETWINDOWORG:
           windowOrg = { y: i16(bytes, p), x: i16(bytes, p + 2) };
           viewBox = normalizeViewBox({ x: windowOrg.x, y: windowOrg.y, width: windowExt.x, height: windowExt.y });
+          hasExplicitWindow = true;
           break;
         case META.SETWINDOWEXT:
           windowExt = { y: i16(bytes, p), x: i16(bytes, p + 2) };
           viewBox = normalizeViewBox({ x: windowOrg.x, y: windowOrg.y, width: windowExt.x, height: windowExt.y });
+          hasExplicitWindow = true;
           break;
         case META.SETPOLYFILLMODE:
           state.fillRule = polyFillRule(u16(bytes, p));
@@ -393,26 +405,51 @@ export class MetafileToSvgRenderer {
         case META.LINETO: {
           const y = i16(bytes, p);
           const x = i16(bytes, p + 2);
+          addBoundsPoint(bounds, state.currentX, state.currentY);
+          addBoundsPoint(bounds, x, y);
           elements.push(lineElement(state.currentX, state.currentY, x, y, state));
           state.currentX = x;
           state.currentY = y;
           break;
         }
-        case META.RECTANGLE:
-          elements.push(rectElement(i16(bytes, p + 6), i16(bytes, p + 4), i16(bytes, p + 2), i16(bytes, p), state));
+        case META.RECTANGLE: {
+          const left = i16(bytes, p + 6);
+          const top = i16(bytes, p + 4);
+          const right = i16(bytes, p + 2);
+          const bottom = i16(bytes, p);
+          addBoundsPoint(bounds, left, top);
+          addBoundsPoint(bounds, right, bottom);
+          elements.push(rectElement(left, top, right, bottom, state));
           break;
-        case META.ELLIPSE:
-          elements.push(ellipseElement(i16(bytes, p + 6), i16(bytes, p + 4), i16(bytes, p + 2), i16(bytes, p), state));
+        }
+        case META.ELLIPSE: {
+          const left = i16(bytes, p + 6);
+          const top = i16(bytes, p + 4);
+          const right = i16(bytes, p + 2);
+          const bottom = i16(bytes, p);
+          addBoundsPoint(bounds, left, top);
+          addBoundsPoint(bounds, right, bottom);
+          elements.push(ellipseElement(left, top, right, bottom, state));
           break;
-        case META.POLYGON:
-          elements.push(polyElement(readWmfPoints(bytes, p), true, state));
+        }
+        case META.POLYGON: {
+          const points = readWmfPoints(bytes, p);
+          addBoundsPoints(bounds, points);
+          elements.push(polyElement(points, true, state));
           break;
+        }
         case META.POLYPOLYGON:
-          elements.push(...readWmfPolyPolygon(bytes, p).map(points => polyElement(points, true, state)));
+          for (const points of readWmfPolyPolygon(bytes, p)) {
+            addBoundsPoints(bounds, points);
+            elements.push(polyElement(points, true, state));
+          }
           break;
-        case META.POLYLINE:
-          elements.push(polyElement(readWmfPoints(bytes, p), false, state));
+        case META.POLYLINE: {
+          const points = readWmfPoints(bytes, p);
+          addBoundsPoints(bounds, points);
+          elements.push(polyElement(points, false, state));
           break;
+        }
         case META.STRETCHDIB: {
           const image = wmfStretchDibElement(bytes, record, state);
           if (image)
@@ -422,8 +459,8 @@ export class MetafileToSvgRenderer {
       }
     }
 
-    if (!placeable && unitsPerInch)
-      viewBox = normalizeViewBox(viewBox);
+    if (!placeable && !hasExplicitWindow && bounds.hasValue)
+      viewBox = boundsToViewBox(bounds);
     return svgDocument(viewBox, mirrorVertically ? mirrorElementsVertically(elements, viewBox) : elements);
   }
 }
@@ -1378,6 +1415,41 @@ function normalizeViewBox(value: ViewBox): ViewBox {
     y: value.height < 0 ? value.y + value.height : value.y,
     width,
     height,
+  };
+}
+
+function createBoundsBuilder(): BoundsBuilder {
+  return {
+    hasValue: false,
+    left: Number.POSITIVE_INFINITY,
+    top: Number.POSITIVE_INFINITY,
+    right: Number.NEGATIVE_INFINITY,
+    bottom: Number.NEGATIVE_INFINITY,
+  };
+}
+
+function addBoundsPoint(bounds: BoundsBuilder, x: number, y: number): void {
+  if (!Number.isFinite(x) || !Number.isFinite(y))
+    return;
+
+  bounds.left = Math.min(bounds.left, x);
+  bounds.top = Math.min(bounds.top, y);
+  bounds.right = Math.max(bounds.right, x);
+  bounds.bottom = Math.max(bounds.bottom, y);
+  bounds.hasValue = true;
+}
+
+function addBoundsPoints(bounds: BoundsBuilder, points: Array<[number, number]>): void {
+  for (const [x, y] of points)
+    addBoundsPoint(bounds, x, y);
+}
+
+function boundsToViewBox(bounds: BoundsBuilder): ViewBox {
+  return {
+    x: bounds.left,
+    y: bounds.top,
+    width: Math.max(1, bounds.right - bounds.left),
+    height: Math.max(1, bounds.bottom - bounds.top),
   };
 }
 
