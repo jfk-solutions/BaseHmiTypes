@@ -890,7 +890,7 @@ public class HmiScreenToHtmlConverter
 
         var rootTag = svg.Substring(svgStart, svgTagEnd - svgStart);
         var existingStyle = TryGetAttributeValue(rootTag, "style");
-        var normalizedStyle = AppendCssDeclaration(existingStyle, "width: 100%; height: 100%; display: block; transform: rotate(180deg); transform-origin: center;");
+        var normalizedStyle = AppendCssDeclaration(existingStyle, "width: 100%; height: 100%; display: block;");
         var attributes = new StringBuilder();
         if (existingStyle == null)
             attributes.Append(" style=\"").Append(normalizedStyle).Append('"');

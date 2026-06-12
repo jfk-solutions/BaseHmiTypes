@@ -348,12 +348,14 @@ function getScreenReferenceKeys(screen: HmiScreenBase): string[] {
 }
 
 function appendLine(html: string[], line: HmiLine, context: HmiHtmlConvertContext): void {
+  const width = getStaticValueOrDefault(line.width, 0);
+  const height = getStaticValueOrDefault(line.height, 0);
   appendSvgOpen(html, line, getSvgWidth(line), getSvgHeight(line), context);
   html.push("<line");
-  appendSvgAttribute(html, "x1", getStaticValueOrDefault(line.x1, 0));
-  appendSvgAttribute(html, "y1", getStaticValueOrDefault(line.y1, 0));
-  appendSvgAttribute(html, "x2", getStaticValueOrDefault(line.x2, getStaticValueOrDefault(line.width, 0)));
-  appendSvgAttribute(html, "y2", getStaticValueOrDefault(line.y2, getStaticValueOrDefault(line.height, 0)));
+  appendSvgAttribute(html, "x1", toSvgLineX(line, getStaticValueOrDefault(line.x1, 0)));
+  appendSvgAttribute(html, "y1", toSvgLineY(line, getStaticValueOrDefault(line.y1, 0)));
+  appendSvgAttribute(html, "x2", toSvgLineX(line, getStaticValueOrDefault(line.x2, width)));
+  appendSvgAttribute(html, "y2", toSvgLineY(line, getStaticValueOrDefault(line.y2, height)));
   appendStrokeAttributes(html, line, undefined, context);
   html.push("></line></svg>");
 }
@@ -662,7 +664,7 @@ function normalizeEmbeddedSymbolSvg(svg: string, symbolLibraryControl: HmiSymbol
   const existingStyle = tryGetAttributeValue(rootTag, "style");
   const normalizedStyle = appendCssDeclaration(
     existingStyle,
-    "width: 100%; height: 100%; display: block; transform: rotate(180deg); transform-origin: center;",
+    "width: 100%; height: 100%; display: block;",
   );
   let result = svg;
   const attributes: string[] = [];
@@ -1186,6 +1188,18 @@ function toSvgPoint(shape: HmiPointBasedShapeBase, point: HmiPoint): string {
   }
 
   return `${toCss(x)},${toCss(y)}`;
+}
+
+function toSvgLineX(line: HmiLine, x: number): number {
+  return line.pointCoordinateSpace === HmiPointCoordinateSpace.ScreenAbsolute
+    ? x - getStaticValueOrDefault(line.x, 0)
+    : x;
+}
+
+function toSvgLineY(line: HmiLine, y: number): number {
+  return line.pointCoordinateSpace === HmiPointCoordinateSpace.ScreenAbsolute
+    ? y - getStaticValueOrDefault(line.y, 0)
+    : y;
 }
 
 function getSvgWidth(item: HmiScreenItemBase): number {

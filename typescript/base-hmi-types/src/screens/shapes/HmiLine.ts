@@ -1,6 +1,7 @@
 import { HmiProperty } from "../base.js";
 import { HmiSurfaceShapeBase } from "./HmiSurfaceShapeBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
+import { HmiPointCoordinateSpace } from "./HmiPointCoordinateSpace.js";
 
 export class HmiLine extends HmiSurfaceShapeBase {
   constructor() {
@@ -12,4 +13,5 @@ export class HmiLine extends HmiSurfaceShapeBase {
   y1?: HmiProperty<number>;
   x2?: HmiProperty<number>;
   y2?: HmiProperty<number>;
+  pointCoordinateSpace = HmiPointCoordinateSpace.ItemRelative;
 }
