@@ -47,6 +47,8 @@ public class HmiSymbolLibraryControl : HmiOcxControl
 
     public HmiProperty<HmiColor>? ForeColor { get; set; }
 
+    public HmiProperty<IntPtr>? Blob { get; set; }
+
     public HmiProperty<int>? Flashing { get; set; }
 
     public HmiProperty<bool>? FlashingOnLimitViolation { get; set; }
