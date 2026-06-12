@@ -351,7 +351,7 @@ export class MetafileToSvgRenderer {
           height: i16(bytes, 12) - i16(bytes, 8),
         }
       : { x: 0, y: 0, width: 1000, height: 1000 };
-    const mirrorVertically = placeable && shouldMirrorPlaceableWmfVertically(bytes, start, rawViewBox);
+    let mirrorVertically = placeable && shouldMirrorPlaceableWmfVertically(bytes, start, rawViewBox);
     let viewBox = normalizeViewBox(rawViewBox);
     const state = createInitialState();
     const objects: Array<MetafileObject | null> = [];
@@ -372,13 +372,14 @@ export class MetafileToSvgRenderer {
         case META.SETWINDOWEXT:
           windowExt = { y: i16(bytes, p), x: i16(bytes, p + 2) };
           viewBox = normalizeViewBox({ x: windowOrg.x, y: windowOrg.y, width: windowExt.x, height: windowExt.y });
+          mirrorVertically = windowExt.y < 0;
           hasExplicitWindow = true;
           break;
         case META.SETPOLYFILLMODE:
           state.fillRule = polyFillRule(u16(bytes, p));
           break;
         case META.CREATEPENINDIRECT:
-          objects.push({
+          addWmfObject(objects, {
             kind: 'pen',
             width: Math.max(1, Math.abs(i16(bytes, p + 2))),
             color: colorRef(bytes, p + 6),
@@ -386,7 +387,7 @@ export class MetafileToSvgRenderer {
           });
           break;
         case META.CREATEBRUSHINDIRECT:
-          objects.push({
+          addWmfObject(objects, {
             kind: 'brush',
             color: colorRef(bytes, p + 2),
             none: u16(bytes, p) === 1,
@@ -461,7 +462,11 @@ export class MetafileToSvgRenderer {
 
     if (!placeable && !hasExplicitWindow && bounds.hasValue)
       viewBox = boundsToViewBox(bounds);
-    return svgDocument(viewBox, mirrorVertically ? mirrorElementsVertically(elements, viewBox) : elements);
+
+    let mirroredElements = elements;
+    if (mirrorVertically)
+      mirroredElements = mirrorElementsVertically(mirroredElements, viewBox);
+    return svgDocument(viewBox, mirroredElements);
   }
 }
 
@@ -673,6 +678,14 @@ function mirrorElementsVertically(elements: string[], viewBox: ViewBox): string[
 
 function nearlyEqual(left: number, right: number): boolean {
   return Math.abs(left - right) <= 1;
+}
+
+function addWmfObject(objects: Array<MetafileObject | null>, object: MetafileObject): void {
+  const deletedIndex = objects.findIndex(existing => existing == null);
+  if (deletedIndex >= 0)
+    objects[deletedIndex] = object;
+  else
+    objects.push(object);
 }
 
 function createInitialState(): DrawState {

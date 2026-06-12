@@ -912,7 +912,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-hmi-symbol-id=\"siemens-symbol\"");
         StringAssert.Contains(html, "<svg xmlns=\"http://www.w3.org/2000/svg\"");
         StringAssert.Contains(html, "preserveAspectRatio=\"xMidYMid meet\"");
-        StringAssert.Contains(html, "transform: rotate(180deg);");
+        Assert.IsFalse(html.Contains("style=\"width: 100%; height: 100%; display: block; transform: rotate(180deg);", StringComparison.Ordinal));
         Assert.IsFalse(html.Contains("<img src=\"data:image/svg+xml;charset=utf-8,", StringComparison.Ordinal));
     }
 

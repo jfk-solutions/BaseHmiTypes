@@ -286,16 +286,17 @@ public sealed class MetafileToSvgRenderer
                 case META.SetWindowExt:
                     windowExt = (I16(bytes, p + 2), I16(bytes, p));
                     viewBox = NormalizeViewBox(new ViewBox { X = windowOrg.X, Y = windowOrg.Y, Width = windowExt.X, Height = windowExt.Y });
+                    mirrorVertically = windowExt.Y < 0;
                     hasExplicitWindow = true;
                     break;
                 case META.SetPolyFillMode:
                     state.FillRule = PolyFillRule(U16(bytes, p));
                     break;
                 case META.CreatePenIndirect:
-                    objects.Add(new PenObject { Width = Math.Max(1, Math.Abs((int)I16(bytes, p + 2))), Color = ColorRef(bytes, p + 6), None = U16(bytes, p) == 5 });
+                    AddWmfObject(objects, new PenObject { Width = Math.Max(1, Math.Abs((int)I16(bytes, p + 2))), Color = ColorRef(bytes, p + 6), None = U16(bytes, p) == 5 });
                     break;
                 case META.CreateBrushIndirect:
-                    objects.Add(new BrushObject { Color = ColorRef(bytes, p + 2), None = U16(bytes, p) == 1 });
+                    AddWmfObject(objects, new BrushObject { Color = ColorRef(bytes, p + 2), None = U16(bytes, p) == 1 });
                     break;
                 case META.SelectObject:
                     SelectObject(state, U16(bytes, p) < objects.Count ? objects[U16(bytes, p)] : null);
@@ -375,7 +376,25 @@ public sealed class MetafileToSvgRenderer
         if (!placeable && !hasExplicitWindow && bounds.HasValue)
             viewBox = bounds.ToViewBox();
 
-        return SvgDocument(viewBox, mirrorVertically ? MirrorElementsVertically(elements, viewBox) : elements);
+        var mirroredElements = elements;
+        if (mirrorVertically)
+            mirroredElements = MirrorElementsVertically(mirroredElements, viewBox);
+
+        return SvgDocument(viewBox, mirroredElements);
+    }
+
+    private static void AddWmfObject(IList<MetafileObject?> objects, MetafileObject obj)
+    {
+        for (var index = 0; index < objects.Count; index++)
+        {
+            if (objects[index] == null)
+            {
+                objects[index] = obj;
+                return;
+            }
+        }
+
+        objects.Add(obj);
     }
 
     private const uint PlaceableWmfKey = 0x9ac6cdd7;
