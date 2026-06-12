@@ -39,7 +39,6 @@ export class HmiSymbolLibraryControl extends HmiOcxControl {
   declare padding?: HmiProperty<number>;
   changeMouseCursor?: HmiProperty<boolean>;
   foreColor?: HmiProperty<HmiColor>;
-  blob?: HmiProperty<number>;
   flashing?: HmiProperty<number>;
   flashingOnLimitViolation?: HmiProperty<boolean>;
   aboveUpperLimitColor?: HmiProperty<HmiColor>;
