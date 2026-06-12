@@ -270,6 +270,8 @@ public sealed class MetafileToSvgRenderer
         var elements = new List<string>();
         var windowOrg = (X: viewBox.X, Y: viewBox.Y);
         var windowExt = (X: viewBox.Width, Y: viewBox.Height);
+        var hasExplicitWindow = false;
+        var bounds = new BoundsBuilder();
 
         foreach (var record in WmfRecords(bytes, start))
         {
@@ -279,10 +281,12 @@ public sealed class MetafileToSvgRenderer
                 case META.SetWindowOrg:
                     windowOrg = (I16(bytes, p + 2), I16(bytes, p));
                     viewBox = NormalizeViewBox(new ViewBox { X = windowOrg.X, Y = windowOrg.Y, Width = windowExt.X, Height = windowExt.Y });
+                    hasExplicitWindow = true;
                     break;
                 case META.SetWindowExt:
                     windowExt = (I16(bytes, p + 2), I16(bytes, p));
                     viewBox = NormalizeViewBox(new ViewBox { X = windowOrg.X, Y = windowOrg.Y, Width = windowExt.X, Height = windowExt.Y });
+                    hasExplicitWindow = true;
                     break;
                 case META.SetPolyFillMode:
                     state.FillRule = PolyFillRule(U16(bytes, p));
@@ -308,27 +312,56 @@ public sealed class MetafileToSvgRenderer
                     {
                         var y = I16(bytes, p);
                         var x = I16(bytes, p + 2);
+                        bounds.Add(state.CurrentX, state.CurrentY);
+                        bounds.Add(x, y);
                         elements.Add(LineElement(state.CurrentX, state.CurrentY, x, y, state));
                         state.CurrentX = x;
                         state.CurrentY = y;
                         break;
                     }
                 case META.Rectangle:
-                    elements.Add(RectElement(I16(bytes, p + 6), I16(bytes, p + 4), I16(bytes, p + 2), I16(bytes, p), state));
-                    break;
+                    {
+                        var left = I16(bytes, p + 6);
+                        var top = I16(bytes, p + 4);
+                        var right = I16(bytes, p + 2);
+                        var bottom = I16(bytes, p);
+                        bounds.Add(left, top);
+                        bounds.Add(right, bottom);
+                        elements.Add(RectElement(left, top, right, bottom, state));
+                        break;
+                    }
                 case META.Ellipse:
-                    elements.Add(EllipseElement(I16(bytes, p + 6), I16(bytes, p + 4), I16(bytes, p + 2), I16(bytes, p), state));
-                    break;
+                    {
+                        var left = I16(bytes, p + 6);
+                        var top = I16(bytes, p + 4);
+                        var right = I16(bytes, p + 2);
+                        var bottom = I16(bytes, p);
+                        bounds.Add(left, top);
+                        bounds.Add(right, bottom);
+                        elements.Add(EllipseElement(left, top, right, bottom, state));
+                        break;
+                    }
                 case META.Polygon:
-                    elements.Add(PolyElement(ReadWmfPoints(bytes, p), true, state));
-                    break;
+                    {
+                        var points = ReadWmfPoints(bytes, p);
+                        bounds.Add(points);
+                        elements.Add(PolyElement(points, true, state));
+                        break;
+                    }
                 case META.PolyPolygon:
                     foreach (var points in ReadWmfPolyPolygon(bytes, p))
+                    {
+                        bounds.Add(points);
                         elements.Add(PolyElement(points, true, state));
+                    }
                     break;
                 case META.Polyline:
-                    elements.Add(PolyElement(ReadWmfPoints(bytes, p), false, state));
-                    break;
+                    {
+                        var points = ReadWmfPoints(bytes, p);
+                        bounds.Add(points);
+                        elements.Add(PolyElement(points, false, state));
+                        break;
+                    }
                 case META.StretchDib:
                     {
                         var image = WmfStretchDibElement(bytes, record, state);
@@ -338,6 +371,9 @@ public sealed class MetafileToSvgRenderer
                     }
             }
         }
+
+        if (!placeable && !hasExplicitWindow && bounds.HasValue)
+            viewBox = bounds.ToViewBox();
 
         return SvgDocument(viewBox, mirrorVertically ? MirrorElementsVertically(elements, viewBox) : elements);
     }
@@ -1158,6 +1194,45 @@ internal sealed class ViewBox
     public double Width { get; set; }
 
     public double Height { get; set; }
+}
+
+internal sealed class BoundsBuilder
+{
+    private double _left = double.PositiveInfinity;
+    private double _top = double.PositiveInfinity;
+    private double _right = double.NegativeInfinity;
+    private double _bottom = double.NegativeInfinity;
+
+    public bool HasValue { get; private set; }
+
+    public void Add(double x, double y)
+    {
+        if (double.IsNaN(x) || double.IsInfinity(x) || double.IsNaN(y) || double.IsInfinity(y))
+            return;
+
+        _left = Math.Min(_left, x);
+        _top = Math.Min(_top, y);
+        _right = Math.Max(_right, x);
+        _bottom = Math.Max(_bottom, y);
+        HasValue = true;
+    }
+
+    public void Add(IEnumerable<(double X, double Y)> points)
+    {
+        foreach (var point in points)
+            Add(point.X, point.Y);
+    }
+
+    public ViewBox ToViewBox()
+    {
+        return new ViewBox
+        {
+            X = _left,
+            Y = _top,
+            Width = Math.Max(1, _right - _left),
+            Height = Math.Max(1, _bottom - _top),
+        };
+    }
 }
 
 internal readonly struct EmfRecord
