@@ -1,3 +1,4 @@
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Screens.Base;
 
 namespace BaseHmiTypes.Screens.Widgets;
@@ -13,5 +14,5 @@ public class HmiToggleSwitch : HmiButtonBase
 
     public HmiProperty<bool>? Header { get; set; }
 
-    public HmiProperty<string>? HeaderText { get; set; }
+    public HmiProperty<HmiMultilingualText>? HeaderText { get; set; }
 }

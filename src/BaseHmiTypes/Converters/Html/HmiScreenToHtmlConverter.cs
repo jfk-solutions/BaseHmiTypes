@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Images;
 using BaseHmiTypes.Images.Converters;
 using BaseHmiTypes.Projects;
@@ -121,13 +122,13 @@ public class HmiScreenToHtmlConverter
                 AppendInput(html, ioField, context);
                 break;
             case HmiTextBox textBox:
-                AppendTextBlock(html, textBox, textBox.Text.GetStaticValue(), context);
+                AppendTextBlock(html, textBox, textBox.Text, context);
                 break;
             case HmiLabel label:
-                AppendTextBlock(html, label, label.Text.GetStaticValue(), context);
+                AppendTextBlock(html, label, label.Text, context);
                 break;
             case HmiText text:
-                AppendTextBlock(html, text, text.Text.GetStaticValue(), context);
+                AppendTextBlock(html, text, text.Text, context);
                 break;
             case HmiGraphicView graphicView:
                 await AppendGraphicViewAsync(html, graphicView, project, context, cancellationToken).ConfigureAwait(false);
@@ -771,7 +772,7 @@ public class HmiScreenToHtmlConverter
         var imageUri = image?.Uri;
         if (!string.IsNullOrWhiteSpace(imageUri))
             AppendInnerImage(html, imageUri);
-        html.Append(WebUtility.HtmlEncode(button.Text.GetStaticValue() ?? string.Empty));
+        AppendMultilingualText(html, button.Text.GetStaticValue(), context);
         html.Append("</button>");
     }
 
@@ -787,18 +788,22 @@ public class HmiScreenToHtmlConverter
         html.Append("<hmi-toggle-switch");
         AppendCommonAttributes(html, toggleSwitch, context);
         AppendStaticAttribute(html, "mode", context.EffectiveProperties.Resolve(toggleSwitch, nameof(HmiToggleSwitch.Mode), toggleSwitch.Mode));
-        AppendStaticAttribute(html, "text", toggleSwitch.Text);
-        AppendStaticAttribute(html, "alternate-text", toggleSwitch.AlternateText);
+        AppendTextAttribute(html, "text", toggleSwitch.Text, context);
+        AppendTextAttribute(html, "alternate-text", toggleSwitch.AlternateText, context);
         AppendAttribute(html, "image", toggleSwitch.Image.GetStaticValue()?.Uri);
         AppendAttribute(html, "alternate-image", toggleSwitch.AlternateImage.GetStaticValue()?.Uri);
         AppendStaticAttribute(html, "header", toggleSwitch.Header);
-        AppendStaticAttribute(html, "header-text", toggleSwitch.HeaderText);
+        AppendTextAttribute(html, "header-text", toggleSwitch.HeaderText, context);
         html.Append("></hmi-toggle-switch>");
     }
 
-    private static void AppendTextBlock(StringBuilder html, HmiScreenItemBase item, string? text, HmiHtmlConvertContext context)
+    private static void AppendTextBlock(StringBuilder html, HmiScreenItemBase item, HmiProperty<HmiMultilingualText>? text, HmiHtmlConvertContext context)
     {
-        AppendDiv(html, item, null, text, context);
+        html.Append("<div");
+        AppendCommonAttributes(html, item, context);
+        html.Append(">");
+        AppendMultilingualText(html, text.GetStaticValue(), context);
+        html.Append("</div>");
     }
 
     private static void AppendRectangle(StringBuilder html, HmiRectangle rectangle, HmiHtmlConvertContext context)
@@ -1055,6 +1060,19 @@ public class HmiScreenToHtmlConverter
         html.Append(' ').Append(name);
     }
 
+    private static void AppendTextAttribute(
+        StringBuilder html,
+        string name,
+        HmiProperty<HmiMultilingualText>? property,
+        HmiHtmlConvertContext context)
+    {
+        var value = property.GetStaticValue();
+        if (value == null)
+            return;
+
+        AppendAttribute(html, name, value.GetText(context.CultureInfo));
+    }
+
     private static void AppendStaticAttribute<T>(StringBuilder html, string name, HmiProperty<T>? property)
     {
         if (property == null || property.StaticValue == null)
@@ -1081,6 +1099,21 @@ public class HmiScreenToHtmlConverter
         if (value is IFormattable formattable)
             return formattable.ToString(null, CultureInfo.InvariantCulture);
         return value.ToString();
+    }
+
+    private static void AppendMultilingualText(StringBuilder html, HmiMultilingualText? text, HmiHtmlConvertContext context)
+    {
+        if (text == null)
+            return;
+
+        var formattedBody = text.GetFormattedTextBody(context.CultureInfo);
+        if (!string.IsNullOrWhiteSpace(formattedBody))
+        {
+            html.Append(formattedBody);
+            return;
+        }
+
+        html.Append(WebUtility.HtmlEncode(text.GetText(context.CultureInfo)));
     }
 
     private static string? FormatFont(HmiFont? font)
@@ -1449,6 +1482,8 @@ public class HmiScreenToHtmlConverter
 
         public HmiEffectivePropertyResolver EffectiveProperties { get; }
 
+        public CultureInfo? CultureInfo => GetCultureInfo(Options.CultureLcid);
+
         public double PositionOffsetX { get; }
 
         public double PositionOffsetY { get; }
@@ -1460,6 +1495,21 @@ public class HmiScreenToHtmlConverter
                 EffectiveProperties,
                 PositionOffsetX + offsetX,
                 PositionOffsetY + offsetY);
+        }
+
+        private static CultureInfo? GetCultureInfo(int? lcid)
+        {
+            if (lcid == null)
+                return null;
+
+            try
+            {
+                return new CultureInfo(lcid.Value);
+            }
+            catch (CultureNotFoundException)
+            {
+                return null;
+            }
         }
     }
 }

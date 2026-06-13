@@ -1,3 +1,4 @@
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiProperty } from "../base.js";
 import { HmiButtonBase } from "./HmiButtonBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
@@ -11,5 +12,5 @@ export class HmiToggleSwitch extends HmiButtonBase {
 
   mode?: HmiProperty<HmiSwitchType>;
   header?: HmiProperty<boolean>;
-  headerText?: HmiProperty<string>;
+  headerText?: HmiProperty<HmiMultilingualText>;
 }

@@ -1,3 +1,4 @@
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Converters.Html;
 using BaseHmiTypes.Images;
 using BaseHmiTypes.Projects;
@@ -29,7 +30,7 @@ public class HmiScreenToHtmlConverterTests
         {
             Id = "button-1",
             Name = "StartButton",
-            Text = "Start",
+            Text = HmiMultilingualText.FromText("Start"),
             X = 10,
             Y = 20,
             Width = 80,
@@ -42,7 +43,7 @@ public class HmiScreenToHtmlConverterTests
         {
             Id = "text-1",
             Name = "TitleText",
-            Text = "Hello <HMI>",
+            Text = HmiMultilingualText.FromText("Hello <HMI>"),
             X = 5,
             Y = 60,
             Width = 100,
@@ -77,6 +78,40 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_UsesFormattedTextBodyForSelectedCulture()
+    {
+        var screen = new HmiScreen
+        {
+            Name = "Main",
+            Width = 320,
+            Height = 240
+        };
+        var layer = new HmiLayer { Name = "Layer0" };
+        screen.Layers.Add(layer);
+        layer.Items.Add(new HmiText
+        {
+            Name = "TitleText",
+            Text = new HmiMultilingualText
+            {
+                Texts = { [1033] = "Initialize parameter", [1031] = "Parameter initialisieren" },
+                FormattedTexts =
+                {
+                    [1031] = "<?xml version=\"1.0\" encoding=\"utf-8\"?><ProjectText xmlns=\"http://www.siemens.com/Industry/2009/10/01/Automation/FormattedText\"><body><p>Parameter<br />initialisieren</p></body></ProjectText>"
+                }
+            }
+        });
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(
+            screen,
+            options: new HmiHtmlConvertOptions { CultureLcid = 1031 });
+
+        StringAssert.Contains(html, "<p>Parameter<br />initialisieren</p>");
+        Assert.IsFalse(html.Contains("<body>"));
+        Assert.IsFalse(html.Contains("ProjectText"));
+        Assert.IsFalse(html.Contains("xmlns="));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersToggleSwitchComponent()
     {
         var screen = new HmiScreen
@@ -98,9 +133,9 @@ public class HmiScreenToHtmlConverterTests
             Height = 52,
             Mode = HmiSwitchType.Switch,
             Header = true,
-            HeaderText = "LabelText",
-            Text = "OFF",
-            AlternateText = "ON",
+            HeaderText = HmiMultilingualText.FromText("LabelText"),
+            Text = HmiMultilingualText.FromText("OFF"),
+            AlternateText = HmiMultilingualText.FromText("ON"),
             Image = new HmiImageSource { Uri = "off.svg" },
             AlternateImage = new HmiImageSource { Uri = "on.svg" }
         });
@@ -162,7 +197,7 @@ public class HmiScreenToHtmlConverterTests
         {
             Id = "label-1",
             Name = "PumpLabel",
-            Text = "Pump",
+            Text = HmiMultilingualText.FromText("Pump"),
             X = 110,
             Y = 70,
             Width = 40,
@@ -204,7 +239,7 @@ public class HmiScreenToHtmlConverterTests
         {
             Id = "label-1",
             Name = "PumpLabel",
-            Text = "Pump",
+            Text = HmiMultilingualText.FromText("Pump"),
             X = 110,
             Y = 70,
             Width = 40,
@@ -246,7 +281,7 @@ public class HmiScreenToHtmlConverterTests
             TemplateId = "template-id"
         };
         var mainLayer = new HmiLayer { Id = "main-layer", Name = "MainLayer" };
-        mainLayer.Items.Add(new HmiLabel { Id = "main-label", Name = "MainLabel", Text = "Screen item" });
+        mainLayer.Items.Add(new HmiLabel { Id = "main-label", Name = "MainLabel", Text = HmiMultilingualText.FromText("Screen item") });
         main.Layers.Add(mainLayer);
 
         var template = new HmiScreenMaster
@@ -255,7 +290,7 @@ public class HmiScreenToHtmlConverterTests
             Name = "Template"
         };
         var templateLayer = new HmiLayer { Id = "template-layer", Name = "TemplateLayer" };
-        templateLayer.Items.Add(new HmiLabel { Id = "template-label", Name = "TemplateLabel", Text = "Template item" });
+        templateLayer.Items.Add(new HmiLabel { Id = "template-label", Name = "TemplateLabel", Text = HmiMultilingualText.FromText("Template item") });
         template.Layers.Add(templateLayer);
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(main, new FakeProject(template));
@@ -283,7 +318,7 @@ public class HmiScreenToHtmlConverterTests
             Name = "TemplateByName"
         };
         var templateLayer = new HmiLayer { Id = "template-layer", Name = "TemplateLayer" };
-        templateLayer.Items.Add(new HmiLabel { Id = "template-label", Name = "TemplateLabel", Text = "Named template item" });
+        templateLayer.Items.Add(new HmiLabel { Id = "template-label", Name = "TemplateLabel", Text = HmiMultilingualText.FromText("Named template item") });
         template.Layers.Add(templateLayer);
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(main, new FakeProject(template));
@@ -309,7 +344,7 @@ public class HmiScreenToHtmlConverterTests
 
         var detail = new HmiScreen { Id = "detail", Name = "Detail" };
         var detailLayer = new HmiLayer { Id = "detail-layer", Name = "DetailLayer" };
-        detailLayer.Items.Add(new HmiLabel { Id = "label-1", Name = "DetailLabel", Text = "Loaded lazily" });
+        detailLayer.Items.Add(new HmiLabel { Id = "label-1", Name = "DetailLabel", Text = HmiMultilingualText.FromText("Loaded lazily") });
         detail.Layers.Add(detailLayer);
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(main, new FakeProject(detail));
@@ -486,7 +521,7 @@ public class HmiScreenToHtmlConverterTests
         {
             Id = "text-1",
             Name = "PaddedText",
-            Text = "Padded",
+            Text = HmiMultilingualText.FromText("Padded"),
             Width = 100,
             Height = 40,
             Padding = new HmiThickness
@@ -551,7 +586,7 @@ public class HmiScreenToHtmlConverterTests
         {
             Id = "text-1",
             Name = "OccupiedMf12",
-            Text = "Occupied",
+            Text = HmiMultilingualText.FromText("Occupied"),
             Width = 80,
             Height = 20
         });
@@ -572,7 +607,7 @@ public class HmiScreenToHtmlConverterTests
         {
             Id = "text-1",
             Name = "OccupiedMf12",
-            Text = "Occupied",
+            Text = HmiMultilingualText.FromText("Occupied"),
             Width = 80,
             Height = 20
         });
@@ -597,7 +632,7 @@ public class HmiScreenToHtmlConverterTests
         {
             Id = "text-1",
             Name = "CommandMf12",
-            Text = "Cmd",
+            Text = HmiMultilingualText.FromText("Cmd"),
             Width = 80,
             Height = 20,
             BorderWidth = 2
@@ -706,7 +741,7 @@ public class HmiScreenToHtmlConverterTests
         {
             Id = "button-1",
             Name = "UnifiedButton",
-            Text = "Button",
+            Text = HmiMultilingualText.FromText("Button"),
             Width = 80,
             Height = 30
         });

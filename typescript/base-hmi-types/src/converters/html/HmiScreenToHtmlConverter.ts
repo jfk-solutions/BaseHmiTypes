@@ -1,4 +1,5 @@
 import { IHmiProject } from "../../projects/IHmiProject.js";
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiImage } from "../../images/HmiImage.js";
 import { HmiImageType } from "../../images/HmiImageType.js";
 import { MetafileToSvgRenderer } from "../../images/converters/metafile-to-svg-renderer.js";
@@ -166,7 +167,7 @@ export class HmiScreenToHtmlConverter {
     } else if (item instanceof HmiIOField) {
       appendInput(html, item, context);
     } else if (item instanceof HmiTextBox || item instanceof HmiLabel || item instanceof HmiText) {
-      appendDiv(html, item, undefined, getStaticValue(item.text), context);
+      appendTextBlock(html, item, item.text, context);
     } else if (item instanceof HmiGraphicView) {
       await this.appendGraphicViewAsync(html, item, project, context, signal);
     } else if (item instanceof HmiRectangle) {
@@ -554,7 +555,7 @@ function appendButton(html: string[], button: HmiButton, context: HmiHtmlConvert
   if (image?.uri) {
     appendInnerImage(html, image.uri);
   }
-  html.push(escapeHtml(getStaticValue(button.text) ?? ""));
+  appendMultilingualText(html, getStaticValue(button.text), context);
   html.push("</button>");
 }
 
@@ -572,13 +573,26 @@ function appendToggleSwitch(html: string[], toggleSwitch: HmiToggleSwitch, conte
     "mode",
     context.effectiveProperties.resolve<HmiSwitchType>(toggleSwitch, "Mode", toggleSwitch.mode),
   );
-  appendStaticAttribute(html, "text", toggleSwitch.text);
-  appendStaticAttribute(html, "alternate-text", toggleSwitch.alternateText);
+  appendTextAttribute(html, "text", toggleSwitch.text, context);
+  appendTextAttribute(html, "alternate-text", toggleSwitch.alternateText, context);
   appendAttribute(html, "image", getStaticValue(toggleSwitch.image)?.uri);
   appendAttribute(html, "alternate-image", getStaticValue(toggleSwitch.alternateImage)?.uri);
   appendStaticAttribute(html, "header", toggleSwitch.header);
-  appendStaticAttribute(html, "header-text", toggleSwitch.headerText);
+  appendTextAttribute(html, "header-text", toggleSwitch.headerText, context);
   html.push("></hmi-toggle-switch>");
+}
+
+function appendTextBlock(
+  html: string[],
+  item: HmiScreenItemBase,
+  text: HmiProperty<HmiMultilingualText> | undefined,
+  context: HmiHtmlConvertContext,
+): void {
+  html.push("<div");
+  appendCommonAttributes(html, item, context);
+  html.push(">");
+  appendMultilingualText(html, getStaticValue(text), context);
+  html.push("</div>");
 }
 
 function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHtmlConvertContext): void {
@@ -841,6 +855,20 @@ function appendBooleanAttribute(html: string[], name: string, value: boolean): v
   }
 }
 
+function appendTextAttribute(
+  html: string[],
+  name: string,
+  property: HmiProperty<HmiMultilingualText> | undefined,
+  context: HmiHtmlConvertContext,
+): void {
+  const value = getStaticValue(property);
+  if (value === undefined) {
+    return;
+  }
+
+  appendAttribute(html, name, value.getText(context.options.cultureLcid));
+}
+
 function appendStaticAttribute<T>(html: string[], name: string, property: HmiProperty<T> | undefined): void {
   const value = getStaticValue(property);
   if (value === undefined || value === null) {
@@ -872,6 +900,24 @@ function formatAttributeValue(value: unknown): string | undefined {
     return value;
   }
   return String(value);
+}
+
+function appendMultilingualText(
+  html: string[],
+  text: HmiMultilingualText | undefined,
+  context: HmiHtmlConvertContext,
+): void {
+  if (text === undefined) {
+    return;
+  }
+
+  const formattedBody = text.getFormattedTextBody(context.options.cultureLcid);
+  if (formattedBody.trim() !== "") {
+    html.push(formattedBody);
+    return;
+  }
+
+  html.push(escapeHtml(text.getText(context.options.cultureLcid)));
 }
 
 function formatFont(font: HmiFont | undefined): string | undefined {

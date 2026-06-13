@@ -4,6 +4,8 @@ public class HmiHtmlConvertOptions
 {
     public bool IncludeMetaCharset { get; set; } = true;
 
+    public int? CultureLcid { get; set; }
+
     public string MissingScreenPlaceholderCssClass { get; set; } = "hmi-missing-screen";
 
     public string UnsupportedItemPlaceholderCssClass { get; set; } = "hmi-unsupported-item";
