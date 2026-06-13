@@ -866,7 +866,7 @@ function appendTextAttribute(
     return;
   }
 
-  appendAttribute(html, name, value.getText(context.options.cultureLcid));
+  appendAttribute(html, name, value.getDisplayText(context.options.cultureLcid));
 }
 
 function appendStaticAttribute<T>(html: string[], name: string, property: HmiProperty<T> | undefined): void {

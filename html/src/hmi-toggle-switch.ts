@@ -165,6 +165,13 @@ export class HmiToggleSwitch extends HTMLElement {
           text-overflow: ellipsis;
         }
 
+        .header :is(p, div),
+        .thumb-text :is(p, div),
+        .value :is(p, div),
+        .button :is(p, div) {
+          margin: 0;
+        }
+
         .body {
           flex: 1 1 auto;
           min-height: 0;
@@ -269,26 +276,26 @@ export class HmiToggleSwitch extends HTMLElement {
         }
       </style>
       <div class="wrap">
-        ${this._header ? `<div class="header">${escapeHtml(headerText)}</div>` : ""}
+        ${this._header ? `<div class="header">${renderHtml(headerText)}</div>` : ""}
         ${this.renderBody(mode, offText, onText, activeText, activeImage)}
       </div>`;
   }
 
   private renderBody(mode: string, offText: string, onText: string, activeText: string, activeImage: string): string {
     if (mode === "GraphicSwitchButton") {
-      return `<div class="button">${activeImage ? `<img src="${escapeAttribute(activeImage)}" alt="${escapeAttribute(activeText)}">` : ""}</div>`;
+      return `<div class="button">${activeImage ? `<img src="${escapeAttribute(activeImage)}" alt="${escapeAttribute(toPlainText(activeText))}">` : ""}</div>`;
     }
 
     if (mode === "TextSwitchButton") {
-      return `<div class="button">${escapeHtml(activeText)}</div>`;
+      return `<div class="button">${renderHtml(activeText)}</div>`;
     }
 
     const thumbText = this._checked ? offText : onText;
     return `
       <div class="body">
         <div class="switch${this._checked ? " checked" : ""}">
-          <div class="thumb"><span class="thumb-text">${escapeHtml(thumbText)}</span><span class="grip"></span></div>
-          <div class="value">${escapeHtml(activeText)}</div>
+          <div class="thumb"><span class="thumb-text">${renderHtml(thumbText)}</span><span class="grip"></span></div>
+          <div class="value">${renderHtml(activeText)}</div>
         </div>
       </div>`;
   }
@@ -317,8 +324,14 @@ function fromKebabCase(value: string): string {
   return value.replace(/-([a-z])/g, (_, character: string) => character.toUpperCase());
 }
 
-function escapeHtml(value: string): string {
-  return escapeAttribute(value);
+function renderHtml(value: string): string {
+  return value;
+}
+
+function toPlainText(value: string): string {
+  const template = document.createElement("template");
+  template.innerHTML = value;
+  return template.content.textContent ?? "";
 }
 
 function escapeAttribute(value: string): string {
