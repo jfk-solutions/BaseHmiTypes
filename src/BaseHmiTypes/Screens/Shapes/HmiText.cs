@@ -1,3 +1,4 @@
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Screens.Base;
 
 namespace BaseHmiTypes.Screens.Shapes;
@@ -9,9 +10,9 @@ public class HmiText : HmiSurfaceShapeBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiText;
     }
 
-    public HmiProperty<string>? Text { get; set; }
+    public HmiProperty<HmiMultilingualText>? Text { get; set; }
 
-    public HmiProperty<string>? AlternateText { get; set; }
+    public HmiProperty<HmiMultilingualText>? AlternateText { get; set; }
 
     public HmiProperty<int>? TextWrapping { get; set; }
 

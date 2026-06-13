@@ -1,3 +1,4 @@
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiScreenModelBase } from "./HmiScreenModelBase.js";
 import { HmiProperty, staticProperty } from "./HmiProperty.js";
 import { HmiEventBinding } from "../../scripts/HmiEventBinding.js";
@@ -14,7 +15,7 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   rotationCenterX?: HmiProperty<number>;
   rotationCenterY?: HmiProperty<number>;
   tabIndex?: HmiProperty<number>;
-  toolTipText?: HmiProperty<string>;
+  toolTipText?: HmiProperty<HmiMultilingualText>;
   canBeGrouped?: HmiProperty<boolean>;
   readonly events: HmiEventBinding[] = [];
 }

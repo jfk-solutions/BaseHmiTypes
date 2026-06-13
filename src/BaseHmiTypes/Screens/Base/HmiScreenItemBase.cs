@@ -1,5 +1,6 @@
 namespace BaseHmiTypes.Screens.Base;
 
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Scripts;
 
 public abstract class HmiScreenItemBase : HmiScreenModelBase
@@ -26,7 +27,7 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiProperty<int>? TabIndex { get; set; }
 
-    public HmiProperty<string>? ToolTipText { get; set; }
+    public HmiProperty<HmiMultilingualText>? ToolTipText { get; set; }
 
     public HmiProperty<bool>? CanBeGrouped { get; set; }
 

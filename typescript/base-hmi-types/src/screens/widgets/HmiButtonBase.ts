@@ -1,9 +1,10 @@
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiColor, HmiImageSource, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
-  text?: HmiProperty<string>;
-  alternateText?: HmiProperty<string>;
+  text?: HmiProperty<HmiMultilingualText>;
+  alternateText?: HmiProperty<HmiMultilingualText>;
   image?: HmiProperty<HmiImageSource>;
   alternateImage?: HmiProperty<HmiImageSource>;
   graphicStretchMode?: HmiProperty<number>;

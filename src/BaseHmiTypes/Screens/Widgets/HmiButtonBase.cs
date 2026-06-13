@@ -1,12 +1,13 @@
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Screens.Base;
 
 namespace BaseHmiTypes.Screens.Widgets;
 
 public abstract class HmiButtonBase : HmiWidgetBase
 {
-    public HmiProperty<string>? Text { get; set; }
+    public HmiProperty<HmiMultilingualText>? Text { get; set; }
 
-    public HmiProperty<string>? AlternateText { get; set; }
+    public HmiProperty<HmiMultilingualText>? AlternateText { get; set; }
 
     public HmiProperty<HmiImageSource>? Image { get; set; }
 
