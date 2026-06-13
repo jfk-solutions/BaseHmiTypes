@@ -772,6 +772,33 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public void UnifiedDefaults_ResolveTextAlignmentFromStyleProfile()
+    {
+        var text = new HmiText
+        {
+            Id = "text-1",
+            Name = "Text"
+        };
+        var button = new HmiButton
+        {
+            Id = "button-1",
+            Name = "Button"
+        };
+
+        var resolver = new HmiEffectivePropertyResolver(HmiDefaultProfiles.WinCcUnifiedV21);
+
+        var textHorizontal = resolver.Resolve(text, nameof(HmiText.HorizontalAlignment), text.HorizontalAlignment);
+        var textVertical = resolver.Resolve(text, nameof(HmiText.VerticalAlignment), text.VerticalAlignment);
+        var buttonHorizontal = resolver.Resolve(button, nameof(HmiWidgetBase.HorizontalAlignment), button.HorizontalAlignment);
+        var buttonVertical = resolver.Resolve(button, nameof(HmiWidgetBase.VerticalAlignment), button.VerticalAlignment);
+
+        Assert.AreEqual(HmiHorizontalAlignment.Center, textHorizontal!.StaticValue);
+        Assert.AreEqual(HmiVerticalAlignment.Center, textVertical!.StaticValue);
+        Assert.AreEqual(HmiHorizontalAlignment.Center, buttonHorizontal!.StaticValue);
+        Assert.AreEqual(HmiVerticalAlignment.Center, buttonVertical!.StaticValue);
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_UsesUnifiedDefaultsFromProjectSoftwareType()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
@@ -794,6 +821,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<button id=\"UnifiedButton\"");
         StringAssert.Contains(html, "background-color: #7B92A2;");
         StringAssert.Contains(html, "border-width: 2px;");
+        StringAssert.Contains(html, "text-align: center;");
+        StringAssert.Contains(html, "justify-content: center;");
+        StringAssert.Contains(html, "align-items: center;");
     }
 
     [TestMethod]
@@ -863,6 +893,7 @@ public class HmiScreenToHtmlConverterTests
             DivisionCount = 5,
             SubDivisionCount = 5,
             ShowValue = true,
+            BackgroundColor = HmiColor.FromArgb(255, 240, 244, 248),
             LabelColor = HmiColor.FromArgb(255, 32, 36, 42),
             ScaleBackgroundColor = HmiColor.FromArgb(255, 111, 113, 121),
             ScaleForegroundColor = HmiColor.FromArgb(255, 134, 189, 40),
@@ -888,6 +919,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "division-count=\"5\"");
         StringAssert.Contains(html, "sub-division-count=\"5\"");
         StringAssert.Contains(html, " show-value ");
+        StringAssert.Contains(html, "background-color=\"#F0F4F8\"");
+        StringAssert.DoesNotMatch(html, new System.Text.RegularExpressions.Regex("<hmi-gauge[^>]*style=\"[^\"]*background-color:"));
         StringAssert.Contains(html, "label-color=\"#20242A\"");
         StringAssert.Contains(html, "scale-background-color=\"#6F7179\"");
         StringAssert.Contains(html, "scale-foreground-color=\"#86BD28\"");

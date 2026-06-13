@@ -291,7 +291,9 @@ export class HmiScreenToHtmlConverter {
     screenStack: Set<string>,
     signal?: AbortSignal,
   ): Promise<void> {
-    const resolved = project && screenWindow.screenId?.staticValue ? await project.getScreen(screenWindow.screenId?.staticValue, signal) : undefined;
+    const screenId = getStaticValue(screenWindow.screenId);
+    const screenName = getStaticValue(screenWindow.screenName);
+    const resolved = project && screenId ? await project.getScreen(screenId, signal) : undefined;
     html.push("<div");
     appendCommonAttributes(html, screenWindow, context);
     html.push(">");
@@ -299,7 +301,7 @@ export class HmiScreenToHtmlConverter {
       html.push("<div");
       appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);
       html.push(">");
-      html.push(escapeHtml(screenWindow.screenName?.staticValue ?? screenWindow.screenId?.staticValue ?? "Missing screen"));
+      html.push(escapeHtml(screenName ?? screenId ?? "Missing screen"));
       html.push("</div>");
     } else {
       html.push(await this.convertCoreAsync(resolved, project, context, false, screenStack, signal));
@@ -828,6 +830,7 @@ function appendDynamicSvg(html: string[], dynamicSvg: HmiDynamicSvg, context: Hm
 function appendGauge(html: string[], gauge: HmiGauge, context: HmiHtmlConvertContext): void {
   html.push("<hmi-gauge");
   appendCommonAttributes(html, gauge, context);
+  appendStaticAttribute(html, "background-color", context.effectiveProperties.resolve(gauge, "BackgroundColor", gauge.backgroundColor));
   appendStaticAttribute(html, "value", gauge.value);
   appendStaticAttribute(html, "fill-level", gauge.fillLevel);
   appendBooleanAttribute(html, "show-fill-level", getStaticValueOrDefault(gauge.showFillLevel, true));
@@ -1091,7 +1094,9 @@ function hasThicknessEdges(value: unknown): value is {
 
 function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): void {
   appendColorStyle(html, "color", context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor));
-  appendColorStyle(html, "background-color", context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor));
+  if (!(item instanceof HmiGauge)) {
+    appendColorStyle(html, "background-color", context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor));
+  }
   appendColorStyle(html, "border-color", context.effectiveProperties.resolve(item, "BorderColor", item.borderColor));
   appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth));
   if (item.margin !== undefined) {
@@ -1118,12 +1123,17 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     appendFont(html, font);
   }
 
-  const horizontalAlignment = getStaticValue(getHorizontalAlignment(item));
+  const horizontalAlignment = getStaticValue(
+    context.effectiveProperties.resolve(item, "HorizontalAlignment", getHorizontalAlignment(item)),
+  );
   if (horizontalAlignment !== undefined) {
     html.push(`text-align: ${horizontalAlignmentToCss(horizontalAlignment)};`);
+    html.push(`justify-content: ${horizontalAlignmentToFlexCss(horizontalAlignment)};`);
   }
 
-  const verticalAlignment = getStaticValue(getVerticalAlignment(item));
+  const verticalAlignment = getStaticValue(
+    context.effectiveProperties.resolve(item, "VerticalAlignment", getVerticalAlignment(item)),
+  );
   if (verticalAlignment !== undefined) {
     html.push("display: flex;");
     html.push(`align-items: ${verticalAlignmentToCss(verticalAlignment)};`);
@@ -1280,6 +1290,19 @@ function horizontalAlignmentToCss(alignment: HmiHorizontalAlignment): string {
       return "right";
     case HmiHorizontalAlignment.Stretch:
       return "justify";
+    default:
+      return "center";
+  }
+}
+
+function horizontalAlignmentToFlexCss(alignment: HmiHorizontalAlignment): string {
+  switch (alignment) {
+    case HmiHorizontalAlignment.Left:
+      return "flex-start";
+    case HmiHorizontalAlignment.Right:
+      return "flex-end";
+    case HmiHorizontalAlignment.Stretch:
+      return "stretch";
     default:
       return "center";
   }

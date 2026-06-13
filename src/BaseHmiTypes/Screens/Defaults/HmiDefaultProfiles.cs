@@ -102,6 +102,9 @@ public static class HmiDefaultProfiles
         SetPainted<HmiTextBox>(profile, foregroundColor: 4280363308u, backgroundColor: 15922431u, borderColor: 4284769386u, borderWidth: 0d);
         SetPainted<HmiToggleSwitch>(profile, foregroundColor: 4280363308u, backgroundColor: 4291680737u, borderColor: 0u, borderWidth: 0d);
 
+        SetCenteredTextAlignment<HmiText>(profile);
+        SetCenteredTextAlignment<HmiWidgetBase>(profile);
+
         return profile;
     }
 
@@ -127,6 +130,13 @@ public static class HmiDefaultProfiles
         where TItem : HmiShapeBase
     {
         profile.Set<TItem, HmiColor>(nameof(HmiShapeBase.LineColor), FromUnifiedColor(lineColor));
+    }
+
+    private static void SetCenteredTextAlignment<TItem>(HmiDefaultProfile profile)
+        where TItem : HmiScreenItemBase
+    {
+        profile.Set<TItem, HmiHorizontalAlignment>("HorizontalAlignment", HmiHorizontalAlignment.Center);
+        profile.Set<TItem, HmiVerticalAlignment>("VerticalAlignment", HmiVerticalAlignment.Center);
     }
 
     private static HmiColor FromUnifiedColor(uint value)

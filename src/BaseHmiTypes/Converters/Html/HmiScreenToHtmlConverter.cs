@@ -1031,6 +1031,7 @@ public class HmiScreenToHtmlConverter
     {
         html.Append("<hmi-gauge");
         AppendCommonAttributes(html, gauge, context);
+        AppendStaticAttribute(html, "background-color", context.EffectiveProperties.Resolve(gauge, nameof(HmiPaintedScreenItemBase.BackgroundColor), gauge.BackgroundColor));
         AppendStaticAttribute(html, "value", gauge.Value);
         AppendStaticAttribute(html, "fill-level", gauge.FillLevel);
         AppendBooleanAttribute(html, "show-fill-level", gauge.ShowFillLevel.GetStaticValueOrDefault(true));
@@ -1312,12 +1313,12 @@ public class HmiScreenToHtmlConverter
         var margin = item.Margin;
         var padding = item.Padding;
         var font = GetFont(item);
-        var horizontalAlignment = GetHorizontalAlignment(item);
-        var verticalAlignment = GetVerticalAlignment(item);
+        var horizontalAlignment = context.EffectiveProperties.Resolve(item, "HorizontalAlignment", GetHorizontalAlignment(item));
+        var verticalAlignment = context.EffectiveProperties.Resolve(item, "VerticalAlignment", GetVerticalAlignment(item));
 
         if (foregroundColor?.StaticValue != null)
             html.Append("color: ").Append(ToCss(foregroundColor.StaticValue)).Append(";");
-        if (backgroundColor?.StaticValue != null)
+        if (backgroundColor?.StaticValue != null && item is not HmiGauge)
             html.Append("background-color: ").Append(ToCss(backgroundColor.StaticValue)).Append(";");
         if (borderColor?.StaticValue != null)
             html.Append("border-color: ").Append(ToCss(borderColor.StaticValue)).Append(";");
@@ -1368,7 +1369,10 @@ public class HmiScreenToHtmlConverter
                 html.Append("text-decoration: underline;");
         }
         if (horizontalAlignment != null)
+        {
             html.Append("text-align: ").Append(ToCss(horizontalAlignment.StaticValue)).Append(";");
+            html.Append("justify-content: ").Append(ToFlexCss(horizontalAlignment.StaticValue)).Append(";");
+        }
         if (verticalAlignment != null)
         {
             html.Append("display: flex;");
@@ -1458,6 +1462,21 @@ public class HmiScreenToHtmlConverter
             case HmiVerticalAlignment.Bottom:
                 return "flex-end";
             case HmiVerticalAlignment.Stretch:
+                return "stretch";
+            default:
+                return "center";
+        }
+    }
+
+    private static string ToFlexCss(HmiHorizontalAlignment alignment)
+    {
+        switch (alignment)
+        {
+            case HmiHorizontalAlignment.Left:
+                return "flex-start";
+            case HmiHorizontalAlignment.Right:
+                return "flex-end";
+            case HmiHorizontalAlignment.Stretch:
                 return "stretch";
             default:
                 return "center";

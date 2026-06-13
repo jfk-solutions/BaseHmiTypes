@@ -29,6 +29,7 @@ const gaugeProperties = {
   showValue: Boolean,
   valuePosition: Number,
   labelColor: String,
+  backgroundColor: String,
   scaleBackgroundColor: String,
   scaleForegroundColor: String,
   tickColor: String,
@@ -90,6 +91,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   private _showValue = false;
   private _valuePosition = 0;
   private _labelColor = "#20242a";
+  private _backgroundColor = "#ffffff";
   private _scaleBackgroundColor = "#6f7179";
   private _scaleForegroundColor = "#86bd28";
   private _tickColor = "#6f7179";
@@ -192,6 +194,13 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   }
   set labelColor(value: string) {
     this.setStringProperty("_labelColor", value, "#20242a");
+  }
+
+  get backgroundColor(): string {
+    return this._backgroundColor;
+  }
+  set backgroundColor(value: string) {
+    this.setStringProperty("_backgroundColor", value, "#ffffff");
   }
 
   get scaleBackgroundColor(): string {
@@ -305,6 +314,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     const fillTarget = clamp(fillLevel, Math.min(begin, end), Math.max(begin, end));
     const origin = clamp(this.originValue, Math.min(begin, end), Math.max(begin, end));
     const labelStyle = this.getLabelStyle();
+    const bevel = getBevelColors(this.backgroundColor);
 
     const majorTicks = this.renderMajorTicks(begin, range, divisionCount, subDivisionCount, labelStyle);
     const fill = this.showFillLevel
@@ -319,8 +329,8 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
           <stop offset="100%" stop-color="#08090c"></stop>
         </radialGradient>
         <linearGradient id="hmi-gauge-bevel" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#f7f8fb"></stop>
-          <stop offset="100%" stop-color="#d8dbe1"></stop>
+          <stop offset="0%" stop-color="${escapeAttribute(bevel.light)}"></stop>
+          <stop offset="100%" stop-color="${escapeAttribute(bevel.dark)}"></stop>
         </linearGradient>
       </defs>
       <path d="${arcPath(50, 55, 40, startAngle, startAngle + sweepAngle)}"
@@ -466,6 +476,64 @@ function valueToAngle(ratio: number): number {
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
+}
+
+function getBevelColors(baseColor: string): { light: string; dark: string } {
+  const rgb = parseCssColor(baseColor);
+  if (rgb === undefined)
+    return { light: baseColor, dark: baseColor };
+
+  return {
+    light: formatRgb(mixRgb(rgb, { r: 255, g: 255, b: 255 }, 0.36)),
+    dark: formatRgb(mixRgb(rgb, { r: 0, g: 0, b: 0 }, 0.15)),
+  };
+}
+
+function parseCssColor(value: string): { r: number; g: number; b: number } | undefined {
+  const color = value.trim();
+  const hex = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.exec(color);
+  if (hex !== null) {
+    const digits = hex[1].length === 3
+      ? hex[1].split("").map((character) => character + character).join("")
+      : hex[1].substring(0, 6);
+
+    return {
+      r: Number.parseInt(digits.substring(0, 2), 16),
+      g: Number.parseInt(digits.substring(2, 4), 16),
+      b: Number.parseInt(digits.substring(4, 6), 16),
+    };
+  }
+
+  const rgb = /^rgba?\(\s*([.\d]+)\s*,\s*([.\d]+)\s*,\s*([.\d]+)/i.exec(color);
+  if (rgb !== null) {
+    return {
+      r: clamp(Math.round(Number(rgb[1])), 0, 255),
+      g: clamp(Math.round(Number(rgb[2])), 0, 255),
+      b: clamp(Math.round(Number(rgb[3])), 0, 255),
+    };
+  }
+
+  return undefined;
+}
+
+function mixRgb(
+  from: { r: number; g: number; b: number },
+  to: { r: number; g: number; b: number },
+  amount: number,
+): { r: number; g: number; b: number } {
+  return {
+    r: Math.round(from.r + (to.r - from.r) * amount),
+    g: Math.round(from.g + (to.g - from.g) * amount),
+    b: Math.round(from.b + (to.b - from.b) * amount),
+  };
+}
+
+function formatRgb(color: { r: number; g: number; b: number }): string {
+  return `#${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}`;
+}
+
+function toHex(value: number): string {
+  return clamp(value, 0, 255).toString(16).padStart(2, "0");
 }
 
 function formatNumber(value: number): string {
