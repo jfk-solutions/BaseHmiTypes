@@ -1,4 +1,4 @@
-import { HmiColor, HmiLineStyle, hmiColorFromArgb } from "../base.js";
+import { HmiColor, HmiHorizontalAlignment, HmiLineStyle, HmiVerticalAlignment, hmiColorFromArgb } from "../base.js";
 import { HmiSwitchType } from "../widgets.js";
 import { HmiDefaultProfile } from "./HmiDefaultProfile.js";
 
@@ -91,6 +91,9 @@ function createWinCcUnifiedV21(): HmiDefaultProfile {
   setPainted(profile, "HmiTextBox", 4280363308, 15922431, 4284769386, 0);
   setPainted(profile, "HmiToggleSwitch", 4280363308, 4291680737, 0, 0);
 
+  setCenteredTextAlignment(profile, "HmiText");
+  setCenteredTextAlignment(profile, "HmiWidgetBase");
+
   return profile;
 }
 
@@ -118,6 +121,11 @@ function setPainted(
 
 function setLine(profile: HmiDefaultProfile, objectType: string, lineColor: number): void {
   profile.set<HmiColor>(objectType, "LineColor", fromUnifiedColor(lineColor));
+}
+
+function setCenteredTextAlignment(profile: HmiDefaultProfile, objectType: string): void {
+  profile.set<HmiHorizontalAlignment>(objectType, "HorizontalAlignment", HmiHorizontalAlignment.Center);
+  profile.set<HmiVerticalAlignment>(objectType, "VerticalAlignment", HmiVerticalAlignment.Center);
 }
 
 function fromUnifiedColor(value: number): HmiColor {
