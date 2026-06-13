@@ -1070,7 +1070,7 @@ public class HmiScreenToHtmlConverter
         if (value == null)
             return;
 
-        AppendAttribute(html, name, value.GetText(context.CultureInfo));
+        AppendAttribute(html, name, value.GetDisplayText(context.CultureInfo));
     }
 
     private static void AppendStaticAttribute<T>(StringBuilder html, string name, HmiProperty<T>? property)

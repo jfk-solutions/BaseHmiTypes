@@ -23,7 +23,7 @@ public sealed class HmiMultilingualText
 
     public string GetText(CultureInfo? cultureInfo)
     {
-        return GetCultureValue(Texts, cultureInfo) ?? string.Empty;
+        return GetCultureValue(Texts, cultureInfo) ?? GetDefaultText();
     }
 
     public string GetFormattedText(CultureInfo? cultureInfo)
@@ -35,7 +35,7 @@ public sealed class HmiMultilingualText
     {
         var formattedText = GetFormattedText(cultureInfo);
         if (!string.IsNullOrWhiteSpace(formattedText))
-            return formattedText;
+            return ExtractFormattedTextBody(formattedText);
 
         return GetText(cultureInfo);
     }

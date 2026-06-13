@@ -11,7 +11,7 @@ export class HmiMultilingualText {
   }
 
   getText(cultureId?: number): string {
-    return this.getCultureValue(this.texts, cultureId) ?? "";
+    return this.getCultureValue(this.texts, cultureId) ?? this.getDefaultText();
   }
 
   getFormattedText(cultureId?: number): string {
@@ -20,7 +20,7 @@ export class HmiMultilingualText {
 
   getDisplayText(cultureId?: number): string {
     const formattedText = this.getFormattedText(cultureId);
-    return formattedText.trim() === "" ? this.getText(cultureId) : formattedText;
+    return formattedText.trim() === "" ? this.getText(cultureId) : HmiMultilingualText.extractFormattedTextBody(formattedText);
   }
 
   getFormattedTextBody(cultureId?: number): string {

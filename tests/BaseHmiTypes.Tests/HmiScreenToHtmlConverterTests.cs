@@ -156,6 +156,45 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "main",
+            Name = "MainScreen",
+            Width = 320,
+            Height = 240
+        };
+
+        var formattedText = "<?xml version=\"1.0\" encoding=\"utf-8\"?><ProjectText xmlns=\"http://www.siemens.com/Industry/2009/10/01/Automation/FormattedText\"><body><p>Parameter<br />initialisieren</p></body></ProjectText>";
+        var text = new HmiMultilingualText
+        {
+            Texts = { [1031] = "Parameter initialisieren" },
+            FormattedTexts = { [1031] = formattedText }
+        };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiToggleSwitch
+        {
+            Id = "toggle-1",
+            Name = "ModeSwitch",
+            Header = true,
+            HeaderText = text,
+            Text = text,
+            AlternateText = text
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(
+            screen,
+            options: new HmiHtmlConvertOptions { CultureLcid = 1031 });
+
+        StringAssert.Contains(html, "text=\"&lt;p&gt;Parameter&lt;br /&gt;initialisieren&lt;/p&gt;\"");
+        StringAssert.Contains(html, "alternate-text=\"&lt;p&gt;Parameter&lt;br /&gt;initialisieren&lt;/p&gt;\"");
+        StringAssert.Contains(html, "header-text=\"&lt;p&gt;Parameter&lt;br /&gt;initialisieren&lt;/p&gt;\"");
+        Assert.IsFalse(html.Contains("ProjectText"));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_DisablesPointerEventsForEmptyLayers()
     {
         var screen = new HmiScreen
