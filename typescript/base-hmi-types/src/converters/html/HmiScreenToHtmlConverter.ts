@@ -46,9 +46,12 @@ import { HmiShapeBase } from "../../screens/shapes/HmiShapeBase.js";
 import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
+import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
+import { HmiRadioButtonGroup } from "../../screens/widgets/HmiRadioButtonGroup.js";
+import { HmiSelectionGroupBase, HmiSelectionGroupItem } from "../../screens/widgets/HmiSelectionGroupBase.js";
 import { HmiSwitchType } from "../../screens/widgets/HmiSwitchType.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiToggleSwitch } from "../../screens/widgets/HmiToggleSwitch.js";
@@ -59,6 +62,7 @@ import { HmiDefaultProfile } from "../../screens/defaults/HmiDefaultProfile.js";
 import { HmiHtmlConvertOptions } from "./HmiHtmlConvertOptions.js";
 import { hmiHtmlCommonStyle } from "./HmiHtmlCommonStyle.generated.js";
 import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
+import { HmiTrendControl } from "../../screens/controls/HmiTrendControl.js";
 
 type ArcShape = HmiCircularArc | HmiEllipticalArc | HmiCircleSegment | HmiEllipseSegment;
 
@@ -162,6 +166,10 @@ export class HmiScreenToHtmlConverter {
 
     if (item instanceof HmiToggleSwitch) {
       appendToggleSwitch(html, item, context);
+    } else if (item instanceof HmiCheckBoxGroup) {
+      await appendSelectionGroup(html, "hmi-checkbox-group", item, project, context, signal);
+    } else if (item instanceof HmiRadioButtonGroup) {
+      await appendSelectionGroup(html, "hmi-radio-button-group", item, project, context, signal);
     } else if (item instanceof HmiButton) {
       appendButton(html, item, context);
     } else if (item instanceof HmiIOField) {
@@ -194,6 +202,8 @@ export class HmiScreenToHtmlConverter {
       appendDynamicSvg(html, item, context);
     } else if (item instanceof HmiGauge) {
       appendGauge(html, item, context);
+    } else if (item instanceof HmiTrendControl) {
+      appendTrendControl(html, item, context);
     } else if (item instanceof HmiSymbolContainer) {
       await this.appendSymbolContainerAsync(html, item, project, context, screenStack, signal);
     } else if (item instanceof HmiSymbolLibraryControl) {
@@ -584,6 +594,42 @@ function appendToggleSwitch(html: string[], toggleSwitch: HmiToggleSwitch, conte
   html.push("></hmi-toggle-switch>");
 }
 
+async function appendSelectionGroup(
+  html: string[],
+  elementName: string,
+  selectionGroup: HmiSelectionGroupBase,
+  project: IHmiProject | undefined,
+  context: HmiHtmlConvertContext,
+  signal?: AbortSignal,
+): Promise<void> {
+  html.push(`<${elementName}`);
+  appendCommonAttributes(html, selectionGroup, context);
+  appendStaticAttribute(html, "selected-index", selectionGroup.selectedIndex);
+  appendStaticAttribute(html, "selection-item-height", selectionGroup.selectionItemHeight);
+  appendStaticAttribute(html, "selection-background-color", selectionGroup.selectionBackgroundColor);
+  appendStaticAttribute(html, "selection-foreground-color", selectionGroup.selectionForegroundColor);
+  appendStaticAttribute(html, "selection-border-color", selectionGroup.selectionBorderColor);
+  appendStaticAttribute(html, "selection-border-width", selectionGroup.selectionBorderWidth);
+  html.push(">");
+  for (const item of selectionGroup.items) {
+    await appendSelectionGroupItem(html, item, project, signal);
+  }
+  html.push(`</${elementName}>`);
+}
+
+async function appendSelectionGroupItem(
+  html: string[],
+  item: HmiSelectionGroupItem,
+  project: IHmiProject | undefined,
+  signal?: AbortSignal,
+): Promise<void> {
+  html.push("<span slot=\"item\"");
+  appendAttribute(html, "text", item.text);
+  appendAttribute(html, "image", await resolveImageUri(item.image, project, signal));
+  appendAttribute(html, "image-name", item.imageName ?? item.image?.imageName);
+  html.push("></span>");
+}
+
 function appendTextBlock(
   html: string[],
   item: HmiScreenItemBase,
@@ -852,6 +898,14 @@ function appendGauge(html: string[], gauge: HmiGauge, context: HmiHtmlConvertCon
   html.push("></hmi-gauge>");
 }
 
+function appendTrendControl(html: string[], trendControl: HmiTrendControl, context: HmiHtmlConvertContext): void {
+  html.push("<hmi-trend-control");
+  appendCommonAttributes(html, trendControl, context);
+  appendAttribute(html, "control-name", trendControl.name);
+  appendAttribute(html, "type-name", "Trend control");
+  html.push("></hmi-trend-control>");
+}
+
 function appendBooleanAttribute(html: string[], name: string, value: boolean): void {
   if (value) {
     html.push(` ${name}`);
@@ -955,7 +1009,7 @@ function formatDynamicSvgPropertyValue(value: unknown): string | undefined {
     return undefined;
   }
   if (isHmiColor(value)) {
-    return colorToCss(value);
+    return colorToHmi(value);
   }
   if (typeof value === "number") {
     return toCss(value);
@@ -1019,7 +1073,22 @@ function appendCommonAttributes(
   if (includePaintedStyle && item instanceof HmiPaintedScreenItemBase) {
     appendStyle(html, item, context);
   }
+  appendItemTransform(html, item);
   html.push("\"");
+}
+
+function appendItemTransform(html: string[], item: HmiScreenItemBase): void {
+  const rotationAngle = getStaticValue(item.rotationAngle);
+  if (rotationAngle === undefined) return;
+
+  html.push(`transform: rotate(${toCss(rotationAngle)}deg);`);
+  const rotationCenterX = getStaticValue(item.rotationCenterX);
+  const rotationCenterY = getStaticValue(item.rotationCenterY);
+  if (rotationCenterX !== undefined && rotationCenterY !== undefined) {
+    html.push(`transform-origin: ${toCss(rotationCenterX)}px ${toCss(rotationCenterY)}px;`);
+  } else {
+    html.push("transform-origin: center;");
+  }
 }
 
 function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContainer, context: HmiHtmlConvertContext): void {
@@ -1093,12 +1162,13 @@ function hasThicknessEdges(value: unknown): value is {
 }
 
 function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): void {
+  const suppressBorderStyle = item instanceof HmiCheckBoxGroup || item instanceof HmiRadioButtonGroup;
   appendColorStyle(html, "color", context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor));
   if (!(item instanceof HmiGauge)) {
     appendColorStyle(html, "background-color", context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor));
   }
   appendColorStyle(html, "border-color", context.effectiveProperties.resolve(item, "BorderColor", item.borderColor));
-  appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth));
+  appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth), !suppressBorderStyle);
   if (item.margin !== undefined) {
     html.push(
       `margin: ${toCss(getStaticValueOrDefault(item.margin.top, 0))}px ${toCss(
@@ -1197,10 +1267,12 @@ function appendColorStyle(html: string[], name: string, property: HmiProperty<Hm
   }
 }
 
-function appendWidthStyle(html: string[], property: HmiProperty<number> | undefined): void {
+function appendWidthStyle(html: string[], property: HmiProperty<number> | undefined, includeBorderStyle = true): void {
   const value = getStaticValue(property);
   if (value !== undefined) {
-    html.push("border-style: solid;");
+    if (includeBorderStyle) {
+      html.push("border-style: solid;");
+    }
     html.push(`border-width: ${toCss(value)}px;`);
   }
 }
@@ -1276,6 +1348,10 @@ function colorToCss(color: HmiColor): string {
   }
 
   return `rgba(${color.red},${color.green},${color.blue},${toCss(color.alpha / 255)})`;
+}
+
+function colorToHmi(color: HmiColor): string {
+  return `0x${toHex(color.alpha)}${toHex(color.red)}${toHex(color.green)}${toHex(color.blue)}`;
 }
 
 function toHex(value: number): string {

@@ -4,7 +4,7 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public abstract class HmiSelectionGroupBase : HmiWidgetBase
 {
-    public IList<string> Items { get; } = new List<string>();
+    public IList<HmiSelectionGroupItem> Items { get; } = new List<HmiSelectionGroupItem>();
 
     public HmiProperty<int>? SelectedIndex { get; set; }
 
@@ -21,4 +21,13 @@ public abstract class HmiSelectionGroupBase : HmiWidgetBase
     public HmiProperty<HmiColor>? SelectionBorderColor { get; set; }
 
     public HmiProperty<double>? SelectionBorderWidth { get; set; }
+}
+
+public class HmiSelectionGroupItem
+{
+    public string? Text { get; set; }
+
+    public HmiImageSource? Image { get; set; }
+
+    public string? ImageName { get; set; }
 }
