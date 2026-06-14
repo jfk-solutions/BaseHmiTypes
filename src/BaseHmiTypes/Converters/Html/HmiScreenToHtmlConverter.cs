@@ -115,6 +115,12 @@ public class HmiScreenToHtmlConverter
             case HmiToggleSwitch toggleSwitch:
                 AppendToggleSwitch(html, toggleSwitch, context);
                 break;
+            case HmiCheckBoxGroup checkBoxGroup:
+                await AppendSelectionGroupAsync(html, "hmi-checkbox-group", checkBoxGroup, project, context, cancellationToken).ConfigureAwait(false);
+                break;
+            case HmiRadioButtonGroup radioButtonGroup:
+                await AppendSelectionGroupAsync(html, "hmi-radio-button-group", radioButtonGroup, project, context, cancellationToken).ConfigureAwait(false);
+                break;
             case HmiButton button:
                 AppendButton(html, button, context);
                 break;
@@ -168,6 +174,9 @@ public class HmiScreenToHtmlConverter
                 break;
             case HmiGauge gauge:
                 AppendGauge(html, gauge, context);
+                break;
+            case HmiTrendControl trendControl:
+                AppendTrendControl(html, trendControl, context);
                 break;
             case HmiSymbolContainer symbolContainer:
                 await AppendSymbolContainerAsync(html, symbolContainer, project, context, screenStack, cancellationToken).ConfigureAwait(false);
@@ -797,6 +806,43 @@ public class HmiScreenToHtmlConverter
         html.Append("></hmi-toggle-switch>");
     }
 
+    private static async ValueTask AppendSelectionGroupAsync(
+        StringBuilder html,
+        string elementName,
+        HmiSelectionGroupBase selectionGroup,
+        IHmiProject? project,
+        HmiHtmlConvertContext context,
+        CancellationToken cancellationToken)
+    {
+        html.Append('<').Append(elementName);
+        AppendCommonAttributes(html, selectionGroup, context);
+        AppendStaticAttribute(html, "selected-index", selectionGroup.SelectedIndex);
+        AppendStaticAttribute(html, "selection-item-height", selectionGroup.SelectionItemHeight);
+        AppendStaticAttribute(html, "selection-background-color", selectionGroup.SelectionBackgroundColor);
+        AppendStaticAttribute(html, "selection-foreground-color", selectionGroup.SelectionForegroundColor);
+        AppendStaticAttribute(html, "selection-border-color", selectionGroup.SelectionBorderColor);
+        AppendStaticAttribute(html, "selection-border-width", selectionGroup.SelectionBorderWidth);
+        html.Append('>');
+
+        foreach (var item in selectionGroup.Items)
+            await AppendSelectionGroupItemAsync(html, item, project, cancellationToken).ConfigureAwait(false);
+
+        html.Append("</").Append(elementName).Append('>');
+    }
+
+    private static async ValueTask AppendSelectionGroupItemAsync(
+        StringBuilder html,
+        HmiSelectionGroupItem item,
+        IHmiProject? project,
+        CancellationToken cancellationToken)
+    {
+        html.Append("<span slot=\"item\"");
+        AppendAttribute(html, "text", item.Text);
+        AppendAttribute(html, "image", await ResolveImageUriAsync(item.Image, project, cancellationToken).ConfigureAwait(false));
+        AppendAttribute(html, "image-name", item.ImageName ?? item.Image?.ImageName);
+        html.Append("></span>");
+    }
+
     private static void AppendTextBlock(StringBuilder html, HmiScreenItemBase item, HmiProperty<HmiMultilingualText>? text, HmiHtmlConvertContext context)
     {
         html.Append("<div");
@@ -1053,6 +1099,15 @@ public class HmiScreenToHtmlConverter
         html.Append("></hmi-gauge>");
     }
 
+    private static void AppendTrendControl(StringBuilder html, HmiTrendControl trendControl, HmiHtmlConvertContext context)
+    {
+        html.Append("<hmi-trend-control");
+        AppendCommonAttributes(html, trendControl, context);
+        AppendAttribute(html, "control-name", trendControl.Name);
+        AppendAttribute(html, "type-name", "Trend control");
+        html.Append("></hmi-trend-control>");
+    }
+
     private static void AppendBooleanAttribute(StringBuilder html, string name, bool value)
     {
         if (!value)
@@ -1196,7 +1251,7 @@ public class HmiScreenToHtmlConverter
         if (value is bool boolean)
             return boolean ? "true" : "false";
         if (value is HmiColor color)
-            return ToCss(color);
+            return ToHmiColor(color);
         if (value is IFormattable formattable)
             return formattable.ToString(null, CultureInfo.InvariantCulture);
         return value.ToString();
@@ -1244,7 +1299,28 @@ public class HmiScreenToHtmlConverter
         AppendPosition(html, item, context);
         if (includePaintedStyle && item is HmiPaintedScreenItemBase paintedItem)
             AppendStyle(html, paintedItem, context);
+        AppendItemTransform(html, item);
         html.Append("\"");
+    }
+
+    private static void AppendItemTransform(StringBuilder html, HmiScreenItemBase item)
+    {
+        if (item.RotationAngle == null)
+            return;
+
+        html.Append("transform: rotate(").Append(ToCss(item.RotationAngle.GetStaticValueOrDefault())).Append("deg);");
+        if (item.RotationCenterX != null && item.RotationCenterY != null)
+        {
+            html.Append("transform-origin: ")
+                .Append(ToCss(item.RotationCenterX.GetStaticValueOrDefault()))
+                .Append("px ")
+                .Append(ToCss(item.RotationCenterY.GetStaticValueOrDefault()))
+                .Append("px;");
+        }
+        else
+        {
+            html.Append("transform-origin: center;");
+        }
     }
 
     private static void AppendSymbolAttributes(StringBuilder html, HmiSymbolContainer symbolContainer, HmiHtmlConvertContext context)
@@ -1315,6 +1391,7 @@ public class HmiScreenToHtmlConverter
         var font = GetFont(item);
         var horizontalAlignment = context.EffectiveProperties.Resolve(item, "HorizontalAlignment", GetHorizontalAlignment(item));
         var verticalAlignment = context.EffectiveProperties.Resolve(item, "VerticalAlignment", GetVerticalAlignment(item));
+        var suppressBorderStyle = item is HmiCheckBoxGroup or HmiRadioButtonGroup;
 
         if (foregroundColor?.StaticValue != null)
             html.Append("color: ").Append(ToCss(foregroundColor.StaticValue)).Append(";");
@@ -1324,7 +1401,8 @@ public class HmiScreenToHtmlConverter
             html.Append("border-color: ").Append(ToCss(borderColor.StaticValue)).Append(";");
         if (borderWidth?.StaticValue != null)
         {
-            html.Append("border-style: solid;");
+            if (!suppressBorderStyle)
+                html.Append("border-style: solid;");
             html.Append("border-width: ").Append(ToCss(borderWidth.StaticValue)).Append("px;");
         }
 
@@ -1436,6 +1514,15 @@ public class HmiScreenToHtmlConverter
             color.Green.ToString(CultureInfo.InvariantCulture) + "," +
             color.Blue.ToString(CultureInfo.InvariantCulture) + "," +
             (color.Alpha / 255d).ToString("0.###", CultureInfo.InvariantCulture) + ")";
+    }
+
+    private static string ToHmiColor(HmiColor color)
+    {
+        return "0x" +
+            color.Alpha.ToString("X2", CultureInfo.InvariantCulture) +
+            color.Red.ToString("X2", CultureInfo.InvariantCulture) +
+            color.Green.ToString("X2", CultureInfo.InvariantCulture) +
+            color.Blue.ToString("X2", CultureInfo.InvariantCulture);
     }
 
     private static string ToCss(HmiHorizontalAlignment alignment)
