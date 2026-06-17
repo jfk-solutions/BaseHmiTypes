@@ -13,6 +13,7 @@ namespace BaseHmiTypes.Projects;
 public interface IHmiProject :
     IHmiProjectFolder,
     IHmiScreenProvider,
+    IHmiFaceplateProvider,
     IHmiTagProvider,
     IHmiScriptProvider,
     IHmiTextListProvider,
@@ -64,6 +65,13 @@ public interface IHmiProjectItemDescriptor
 public interface IHmiScreenProvider
 {
     ValueTask<HmiScreenBase?> GetScreenAsync(string id, CancellationToken cancellationToken = default);
+}
+
+public interface IHmiFaceplateProvider
+{
+    ValueTask<HmiFaceplateType?> GetFaceplateAsync(string id, CancellationToken cancellationToken = default);
+
+    ValueTask<HmiFaceplateType?> GetFaceplateAsync(string name, string version, CancellationToken cancellationToken = default);
 }
 
 public interface IHmiTagProvider

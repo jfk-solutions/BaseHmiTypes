@@ -7,7 +7,7 @@ export interface IHmiProjectItemDescriptor {
   path: string;
   kind: HmiProjectItemKind;
   folderType: HmiProjectFolderType;
-  sourceType?: string;
+  sourceType?: string | undefined;
 }
 
 export class HmiProjectItemDescriptor implements IHmiProjectItemDescriptor {
@@ -16,5 +16,5 @@ export class HmiProjectItemDescriptor implements IHmiProjectItemDescriptor {
   path = "";
   kind: HmiProjectItemKind = HmiProjectItemKind.Unknown;
   folderType: HmiProjectFolderType = HmiProjectFolderType.Unknown;
-  sourceType?: string;
+  sourceType?: string | undefined;
 }

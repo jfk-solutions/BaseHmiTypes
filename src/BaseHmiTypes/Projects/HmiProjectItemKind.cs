@@ -12,5 +12,6 @@ public enum HmiProjectItemKind
     Image,
     Cycle,
     AlarmList,
-    ConnectionList
+    ConnectionList,
+    Faceplate
 }

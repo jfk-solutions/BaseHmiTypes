@@ -6,7 +6,7 @@ export class HmiProjectFolder implements IHmiProjectFolder {
   private readonly getFoldersCore: (signal?: AbortSignal) => Promise<readonly IHmiProjectFolder[]>;
   private readonly getItemsCore: (signal?: AbortSignal) => Promise<readonly IHmiProjectItemDescriptor[]>;
 
-  readonly id?: string;
+  readonly id?: string | undefined;
   readonly name: string;
   readonly path: string;
   readonly folderType: HmiProjectFolderType;

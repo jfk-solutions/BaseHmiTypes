@@ -2,6 +2,7 @@ import { HmiAlarmList } from "../alarms/HmiAlarm.js";
 import { HmiConnectionList } from "../connections/HmiConnectionList.js";
 import { HmiCycle } from "../cycles/HmiCycle.js";
 import { HmiImage } from "../images/HmiImage.js";
+import { HmiFaceplateType } from "../screens/base/HmiFaceplateType.js";
 import { HmiScreenBase } from "../screens/base/HmiScreenBase.js";
 import { HmiScript } from "../scripts/HmiScript.js";
 import { HmiTagTable } from "../tags/HmiTagTable.js";
@@ -45,6 +46,10 @@ export abstract class HmiProjectBase implements IHmiProject {
     return this.getFolder(HmiProjectFolderType.Screens);
   }
 
+  get faceplates(): IHmiProjectFolder | undefined {
+    return this.getFolder(HmiProjectFolderType.Faceplates);
+  }
+
   get tags(): IHmiProjectFolder | undefined {
     return this.getFolder(HmiProjectFolderType.Tags);
   }
@@ -86,6 +91,18 @@ export abstract class HmiProjectBase implements IHmiProject {
   }
 
   getScreen(_id: string, _signal?: AbortSignal): Promise<HmiScreenBase | undefined> {
+    return Promise.resolve(undefined);
+  }
+
+  getFaceplate(_id: string, _signal?: AbortSignal): Promise<HmiFaceplateType | undefined> {
+    return Promise.resolve(undefined);
+  }
+
+  getFaceplateByNameAndVersion(
+    _name: string,
+    _version: string,
+    _signal?: AbortSignal,
+  ): Promise<HmiFaceplateType | undefined> {
     return Promise.resolve(undefined);
   }
 
