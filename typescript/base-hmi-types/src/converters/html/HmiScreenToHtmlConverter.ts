@@ -637,7 +637,7 @@ function appendTextBlock(
   context: HmiHtmlConvertContext,
 ): void {
   html.push("<div");
-  appendCommonAttributes(html, item, context);
+  appendCommonAttributes(html, item, context, undefined, "overflow: hidden;");
   html.push(">");
   appendMultilingualText(html, getStaticValue(text), context);
   html.push("</div>");
@@ -1065,12 +1065,16 @@ function appendCommonAttributes(
   item: HmiScreenItemBase,
   context: HmiHtmlConvertContext,
   includePaintedStyle = true,
+  additionalStyle: string | null = null
 ): void {
   appendAttribute(html, "id", item.name);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
   if (includePaintedStyle && item instanceof HmiPaintedScreenItemBase) {
     appendStyle(html, item, context);
+  }
+  if (additionalStyle) {
+    html.push(additionalStyle);
   }
   appendItemTransform(html, item);
   html.push("\"");
