@@ -893,7 +893,7 @@ public class HmiScreenToHtmlConverter
     private static void AppendTextBlock(StringBuilder html, HmiScreenItemBase item, HmiProperty<HmiMultilingualText>? text, HmiHtmlConvertContext context)
     {
         html.Append("<div");
-        AppendCommonAttributes(html, item, context);
+        AppendCommonAttributes(html, item, context, additionalStyle: "overflow: hidden;");
         html.Append(">");
         AppendMultilingualText(html, ResolveStaticValue(text, context), context);
         html.Append("</div>");
@@ -1400,13 +1400,20 @@ public class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendCommonAttributes(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context, bool includePaintedStyle = true)
+    private static void AppendCommonAttributes(
+        StringBuilder html,
+        HmiScreenItemBase item,
+        HmiHtmlConvertContext context,
+        bool includePaintedStyle = true,
+        string? additionalStyle = null)
     {
         AppendAttribute(html, "id", item.Name);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, item, context);
         if (includePaintedStyle && item is HmiPaintedScreenItemBase paintedItem)
             AppendStyle(html, paintedItem, context);
+        if (!string.IsNullOrWhiteSpace(additionalStyle))
+            html.Append(additionalStyle);
         AppendItemTransform(html, item);
         html.Append("\"");
     }
