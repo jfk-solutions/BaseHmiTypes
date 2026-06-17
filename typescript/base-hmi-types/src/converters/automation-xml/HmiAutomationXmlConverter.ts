@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { IHmiObject } from "../../IHmiObject.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiCycle } from "../../cycles/HmiCycle.js";

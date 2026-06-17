@@ -11,5 +11,6 @@ public enum HmiProjectFolderType
     Images,
     Cycles,
     Alarms,
-    Connections
+    Connections,
+    Faceplates
 }

@@ -28,6 +28,8 @@ public abstract class HmiProjectBase : IHmiProject
 
     public virtual IHmiProjectFolder? Screens => GetFolder(HmiProjectFolderType.Screens);
 
+    public virtual IHmiProjectFolder? Faceplates => GetFolder(HmiProjectFolderType.Faceplates);
+
     public virtual IHmiProjectFolder? Tags => GetFolder(HmiProjectFolderType.Tags);
 
     public virtual IHmiProjectFolder? Scripts => GetFolder(HmiProjectFolderType.Scripts);
@@ -57,6 +59,16 @@ public abstract class HmiProjectBase : IHmiProject
     public virtual ValueTask<HmiScreenBase?> GetScreenAsync(string id, CancellationToken cancellationToken = default)
     {
         return new ValueTask<HmiScreenBase?>((HmiScreenBase?)null);
+    }
+
+    public virtual ValueTask<HmiFaceplateType?> GetFaceplateAsync(string id, CancellationToken cancellationToken = default)
+    {
+        return new ValueTask<HmiFaceplateType?>((HmiFaceplateType?)null);
+    }
+
+    public virtual ValueTask<HmiFaceplateType?> GetFaceplateAsync(string name, string version, CancellationToken cancellationToken = default)
+    {
+        return new ValueTask<HmiFaceplateType?>((HmiFaceplateType?)null);
     }
 
     public virtual ValueTask<HmiTagTable?> GetTagTableAsync(string id, CancellationToken cancellationToken = default)

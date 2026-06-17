@@ -10,4 +10,5 @@ export enum HmiProjectItemKind {
   Cycle = "Cycle",
   AlarmList = "AlarmList",
   ConnectionList = "ConnectionList",
+  Faceplate = "Faceplate",
 }

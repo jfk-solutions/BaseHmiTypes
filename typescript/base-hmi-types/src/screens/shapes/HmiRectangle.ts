@@ -8,10 +8,10 @@ export class HmiRectangle extends HmiSurfaceShapeBase {
     this.hmiObjectType = HmiObjectType.HmiRectangle;
   }
 
-  topLeftRadius?: HmiProperty<number>;
-  topRightRadius?: HmiProperty<number>;
-  bottomLeftRadius?: HmiProperty<number>;
-  bottomRightRadius?: HmiProperty<number>;
+  topLeftRadius?: HmiProperty<{ x: number; y: number }>;
+  topRightRadius?: HmiProperty<{ x: number; y: number }>;
+  bottomLeftRadius?: HmiProperty<{ x: number; y: number }>;
+  bottomRightRadius?: HmiProperty<{ x: number; y: number }>;
   cornerRadius?: HmiProperty<number>;
   cornerStyle?: HmiProperty<number>;
 }

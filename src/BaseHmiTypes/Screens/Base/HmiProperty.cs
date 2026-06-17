@@ -5,6 +5,7 @@ public enum HmiPropertyKind
     Static,
     Default,
     Tag,
+    FaceplateInterface,
     Script,
     Expression,
     Blink
@@ -143,6 +144,13 @@ public sealed class HmiTagProperty<T> : HmiDynamicProperty<T>
     public string? TagName { get; set; }
 }
 
+public sealed class HmiFaceplateInterfaceProperty<T> : HmiProperty<T>
+{
+    public override HmiPropertyKind Kind => HmiPropertyKind.FaceplateInterface;
+
+    public string? InterfaceName { get; set; }
+}
+
 public sealed class HmiScriptProperty<T> : HmiDynamicProperty<T>
 {
     public override HmiPropertyKind Kind => HmiPropertyKind.Script;
@@ -194,6 +202,11 @@ public static class HmiProperty
     public static HmiTagProperty<T> Tag<T>(string tagName, T? fallbackValue = default)
     {
         return new HmiTagProperty<T> { TagName = tagName, StaticValue = fallbackValue };
+    }
+
+    public static HmiFaceplateInterfaceProperty<T> FaceplateInterface<T>(string interfaceName, T? fallbackValue = default)
+    {
+        return new HmiFaceplateInterfaceProperty<T> { InterfaceName = interfaceName, StaticValue = fallbackValue };
     }
 
     public static HmiScriptProperty<T> Script<T>(string script, HmiScriptLanguage language, T? fallbackValue = default)

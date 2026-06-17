@@ -198,6 +198,9 @@ public class HmiScreenToHtmlConverter
             case HmiLayoutContainerBase layoutContainer:
                 await AppendContainerAsync(html, layoutContainer, layoutContainer.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
+            case HmiFaceplateContainer faceplateContainer:
+                await AppendFaceplateContainerAsync(html, faceplateContainer, project, context, screenStack, cancellationToken).ConfigureAwait(false);
+                break;
             case HmiContainerBase container:
                 await AppendContainerAsync(html, container, container.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
@@ -241,6 +244,50 @@ public class HmiScreenToHtmlConverter
             foreach (var child in items)
                 await AppendItemAsync(html, child, project, context, screenStack, cancellationToken).ConfigureAwait(false);
         }
+        html.Append("</div>");
+    }
+
+    private async ValueTask AppendFaceplateContainerAsync(
+        StringBuilder html,
+        HmiFaceplateContainer faceplateContainer,
+        IHmiProject? project,
+        HmiHtmlConvertContext context,
+        ISet<string> screenStack,
+        CancellationToken cancellationToken)
+    {
+        HmiFaceplateType? resolved = null;
+        if (project != null && !string.IsNullOrWhiteSpace(faceplateContainer.FaceplateId))
+            resolved = await project.GetFaceplateAsync(faceplateContainer.FaceplateId!, cancellationToken).ConfigureAwait(false);
+
+        if (resolved == null &&
+            project != null &&
+            !string.IsNullOrWhiteSpace(faceplateContainer.FaceplateName) &&
+            !string.IsNullOrWhiteSpace(faceplateContainer.FaceplateVersion))
+        {
+            resolved = await project.GetFaceplateAsync(
+                faceplateContainer.FaceplateName!,
+                faceplateContainer.FaceplateVersion!,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        html.Append("<div");
+        AppendCommonAttributes(html, faceplateContainer, context);
+        html.Append(">");
+
+        if (resolved == null)
+        {
+            html.Append("<div");
+            AppendAttribute(html, "class", context.Options.MissingScreenPlaceholderCssClass);
+            html.Append(">");
+            html.Append(WebUtility.HtmlEncode(faceplateContainer.FaceplateName ?? faceplateContainer.FaceplateId ?? "Missing faceplate"));
+            html.Append("</div>");
+        }
+        else
+        {
+            var childContext = context.WithFaceplateInterfaceValues(faceplateContainer.InterfaceValues);
+            html.Append(await ConvertCoreAsync(resolved, project, childContext, false, screenStack, cancellationToken).ConfigureAwait(false));
+        }
+
         html.Append("</div>");
     }
 
@@ -781,7 +828,7 @@ public class HmiScreenToHtmlConverter
         var imageUri = image?.Uri;
         if (!string.IsNullOrWhiteSpace(imageUri))
             AppendInnerImage(html, imageUri);
-        AppendMultilingualText(html, button.Text.GetStaticValue(), context);
+        AppendMultilingualText(html, ResolveStaticValue(button.Text, context), context);
         html.Append("</button>");
     }
 
@@ -848,7 +895,7 @@ public class HmiScreenToHtmlConverter
         html.Append("<div");
         AppendCommonAttributes(html, item, context);
         html.Append(">");
-        AppendMultilingualText(html, text.GetStaticValue(), context);
+        AppendMultilingualText(html, ResolveStaticValue(text, context), context);
         html.Append("</div>");
     }
 
@@ -1122,7 +1169,7 @@ public class HmiScreenToHtmlConverter
         HmiProperty<HmiMultilingualText>? property,
         HmiHtmlConvertContext context)
     {
-        var value = property.GetStaticValue();
+        var value = ResolveStaticValue(property, context);
         if (value == null)
             return;
 
@@ -1131,10 +1178,23 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendStaticAttribute<T>(StringBuilder html, string name, HmiProperty<T>? property)
     {
-        if (property == null || property.StaticValue == null)
+        AppendStaticAttribute(html, name, property, null);
+    }
+
+    private static void AppendStaticAttribute<T>(
+        StringBuilder html,
+        string name,
+        HmiProperty<T>? property,
+        HmiHtmlConvertContext? context)
+    {
+        if (property == null)
             return;
 
-        object value = property.StaticValue;
+        var resolvedValue = context.HasValue ? ResolveStaticValue(property, context.Value) : property.StaticValue;
+        if (resolvedValue == null)
+            return;
+
+        object value = resolvedValue;
         if (value is bool boolean)
         {
             AppendBooleanAttribute(html, name, boolean);
@@ -1142,6 +1202,54 @@ public class HmiScreenToHtmlConverter
         }
 
         AppendAttribute(html, name, FormatAttributeValue(value));
+    }
+
+    private static T? ResolveStaticValue<T>(HmiProperty<T>? property, HmiHtmlConvertContext context)
+    {
+        if (property is HmiFaceplateInterfaceProperty<T> faceplateInterfaceProperty &&
+            context.TryGetFaceplateInterfaceValue(faceplateInterfaceProperty.InterfaceName, out var interfaceValue) &&
+            TryConvertFaceplateInterfaceValue(interfaceValue, out T? converted))
+        {
+            return converted;
+        }
+
+        return property == null ? default : property.StaticValue;
+    }
+
+    private static bool TryConvertFaceplateInterfaceValue<T>(object? value, out T? converted)
+    {
+        if (value is T typed)
+        {
+            converted = typed;
+            return true;
+        }
+
+        if (typeof(T) == typeof(HmiMultilingualText) && value is string text)
+        {
+            converted = (T)(object)HmiMultilingualText.FromText(text);
+            return true;
+        }
+
+        if (typeof(T) == typeof(string) && value is HmiMultilingualText multilingualText)
+        {
+            converted = (T)(object)(multilingualText.GetDisplayText(null) ?? string.Empty);
+            return true;
+        }
+
+        try
+        {
+            if (value != null)
+            {
+                converted = (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture);
+                return true;
+            }
+        }
+        catch
+        {
+        }
+
+        converted = default;
+        return false;
     }
 
     private static string? FormatAttributeValue(object? value)
@@ -1576,12 +1684,14 @@ public class HmiScreenToHtmlConverter
             HmiHtmlConvertOptions options,
             HmiEffectivePropertyResolver effectiveProperties,
             double positionOffsetX = 0,
-            double positionOffsetY = 0)
+            double positionOffsetY = 0,
+            IReadOnlyDictionary<string, HmiFaceplateInterfaceValue>? faceplateInterfaceValues = null)
         {
             Options = options;
             EffectiveProperties = effectiveProperties;
             PositionOffsetX = positionOffsetX;
             PositionOffsetY = positionOffsetY;
+            FaceplateInterfaceValues = faceplateInterfaceValues ?? EmptyFaceplateInterfaceValues;
         }
 
         public HmiHtmlConvertOptions Options { get; }
@@ -1594,13 +1704,43 @@ public class HmiScreenToHtmlConverter
 
         public double PositionOffsetY { get; }
 
+        public IReadOnlyDictionary<string, HmiFaceplateInterfaceValue> FaceplateInterfaceValues { get; }
+
         public HmiHtmlConvertContext WithPositionOffset(double offsetX, double offsetY)
         {
             return new HmiHtmlConvertContext(
                 Options,
                 EffectiveProperties,
                 PositionOffsetX + offsetX,
-                PositionOffsetY + offsetY);
+                PositionOffsetY + offsetY,
+                FaceplateInterfaceValues);
+        }
+
+        public HmiHtmlConvertContext WithFaceplateInterfaceValues(IEnumerable<HmiFaceplateInterfaceValue> values)
+        {
+            var dictionary = values
+                .Where(value => !string.IsNullOrWhiteSpace(value.Name) && !value.IsTagBinding)
+                .GroupBy(value => value.Name!, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+
+            return new HmiHtmlConvertContext(
+                Options,
+                EffectiveProperties,
+                PositionOffsetX,
+                PositionOffsetY,
+                dictionary);
+        }
+
+        public bool TryGetFaceplateInterfaceValue(string? name, out object? value)
+        {
+            value = null;
+            if (string.IsNullOrWhiteSpace(name) ||
+                !FaceplateInterfaceValues.TryGetValue(name!, out var interfaceValue) ||
+                interfaceValue.Value == null)
+                return false;
+
+            value = interfaceValue.Value;
+            return true;
         }
 
         private static CultureInfo? GetCultureInfo(int? lcid)
@@ -1617,5 +1757,8 @@ public class HmiScreenToHtmlConverter
                 return null;
             }
         }
+
+        private static readonly IReadOnlyDictionary<string, HmiFaceplateInterfaceValue> EmptyFaceplateInterfaceValues =
+            new Dictionary<string, HmiFaceplateInterfaceValue>();
     }
 }

@@ -2,6 +2,7 @@ import { HmiAlarmList } from "../alarms/HmiAlarm.js";
 import { HmiConnectionList } from "../connections/HmiConnectionList.js";
 import { HmiCycle } from "../cycles/HmiCycle.js";
 import { HmiImage } from "../images/HmiImage.js";
+import { HmiFaceplateType } from "../screens/base/HmiFaceplateType.js";
 import { HmiScreenBase } from "../screens/base/HmiScreenBase.js";
 import { HmiScript } from "../scripts/HmiScript.js";
 import { HmiTagTable } from "../tags/HmiTagTable.js";
@@ -14,6 +15,7 @@ import { HmiProjectInfo } from "./HmiProjectInfo.js";
 export interface IHmiProject
   extends IHmiProjectFolder,
     IHmiScreenProvider,
+    IHmiFaceplateProvider,
     IHmiTagProvider,
     IHmiScriptProvider,
     IHmiTextListProvider,
@@ -26,7 +28,7 @@ export interface IHmiProject
 }
 
 export interface IHmiProjectFolder {
-  readonly id?: string;
+  readonly id?: string | undefined;
   readonly name: string;
   readonly path: string;
   readonly folderType: HmiProjectFolderType;
@@ -38,6 +40,11 @@ export interface IHmiProjectFolder {
 
 export interface IHmiScreenProvider {
   getScreen(id: string, signal?: AbortSignal): Promise<HmiScreenBase | undefined>;
+}
+
+export interface IHmiFaceplateProvider {
+  getFaceplate(id: string, signal?: AbortSignal): Promise<HmiFaceplateType | undefined>;
+  getFaceplateByNameAndVersion(name: string, version: string, signal?: AbortSignal): Promise<HmiFaceplateType | undefined>;
 }
 
 export interface IHmiTagProvider {

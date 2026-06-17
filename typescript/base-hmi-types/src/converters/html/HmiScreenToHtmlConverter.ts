@@ -866,7 +866,6 @@ function appendDynamicSvg(html: string[], dynamicSvg: HmiDynamicSvg, context: Hm
     "src",
     getStaticValue(dynamicSvg.image)?.uri,
   );
-  appendAttribute(html, "data-hmi-svg-type", getStaticValue(dynamicSvg.svgType));
   for (const property of dynamicSvg.properties) {
     appendAttribute(html, toDynamicSvgAttributeName(property.name), formatDynamicSvgPropertyValue(getStaticValue(property.value)));
   }
@@ -1579,7 +1578,7 @@ function escapeHtml(value: string): string {
         break;
       default: {
         const code = char.codePointAt(0) ?? 0;
-        result += code > 127 ? `&#${code};` : char;
+        result += code >= 160 && code <= 255 ? `&#${code};` : char;
         break;
       }
     }

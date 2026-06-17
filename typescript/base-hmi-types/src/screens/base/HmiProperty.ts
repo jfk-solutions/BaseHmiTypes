@@ -2,6 +2,7 @@ export enum HmiPropertyKind {
   Static = "Static",
   Default = "Default",
   Tag = "Tag",
+  FaceplateInterface = "FaceplateInterface",
   Script = "Script",
   Expression = "Expression",
   Blink = "Blink",
@@ -103,6 +104,11 @@ export interface HmiTagProperty<T> extends HmiDynamicProperty<T> {
   tagName?: string;
 }
 
+export interface HmiFaceplateInterfaceProperty<T> extends HmiProperty<T> {
+  readonly kind: HmiPropertyKind.FaceplateInterface;
+  interfaceName?: string;
+}
+
 export interface HmiScriptProperty<T> extends HmiDynamicProperty<T> {
   readonly kind: HmiPropertyKind.Script;
   language: HmiScriptLanguage;
@@ -133,6 +139,13 @@ export function defaultProperty<T>(value?: T, profileName?: string, propertyName
 
 export function tagProperty<T>(tagName: string, fallbackValue?: T): HmiTagProperty<T> {
   return { kind: HmiPropertyKind.Tag, tagName, staticValue: fallbackValue, triggers: [] };
+}
+
+export function faceplateInterfaceProperty<T>(
+  interfaceName: string,
+  fallbackValue?: T,
+): HmiFaceplateInterfaceProperty<T> {
+  return { kind: HmiPropertyKind.FaceplateInterface, interfaceName, staticValue: fallbackValue };
 }
 
 export function scriptProperty<T>(
