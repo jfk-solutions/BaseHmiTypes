@@ -208,9 +208,12 @@ async function inflateRaw(bytes: Uint8Array): Promise<Uint8Array> {
   if (!decompressionStreamCtor)
     throw new Error("ZIP deflate support requires DecompressionStream.");
 
-  const input = bytes.slice().buffer as ArrayBuffer;
-  const stream = new Blob([input]).stream().pipeThrough(new decompressionStreamCtor("deflate-raw"));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  const stream = new decompressionStreamCtor("deflate-raw");
+  const output = new Response(stream.readable).arrayBuffer();
+  const writer = stream.writable.getWriter();
+  await writer.write(bytes.slice());
+  await writer.close();
+  return new Uint8Array(await output);
 }
 
 async function readFileRange(
