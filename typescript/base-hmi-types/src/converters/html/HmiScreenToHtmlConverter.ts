@@ -63,6 +63,7 @@ import { HmiHtmlConvertOptions } from "./HmiHtmlConvertOptions.js";
 import { hmiHtmlCommonStyle } from "./HmiHtmlCommonStyle.generated.js";
 import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
 import { HmiTrendControl } from "../../screens/controls/HmiTrendControl.js";
+import { HmiInspectableScreenHtml, inspectHmiScreenAsync } from "./HmiScreenInspection.js";
 
 type ArcShape = HmiCircularArc | HmiEllipticalArc | HmiCircleSegment | HmiEllipseSegment;
 
@@ -85,7 +86,19 @@ export class HmiScreenToHtmlConverter {
     signal?: AbortSignal,
   ): Promise<string> {
     const context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(resolveDefaultProfile(project)));
-    return this.convertCoreAsync(screen, project, context, true, new Set<string>(), signal);
+    return this.convertCoreAsync(screen, project, context, true, new Set<string>(), "screen", false, signal);
+  }
+
+  async convertInspectableAsync(
+    screen: HmiScreenBase,
+    project?: IHmiProject,
+    options: HmiHtmlConvertOptions = new HmiHtmlConvertOptions(),
+    signal?: AbortSignal,
+  ): Promise<HmiInspectableScreenHtml> {
+    const inspection = await inspectHmiScreenAsync(screen, project, signal);
+    const context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(resolveDefaultProfile(project)));
+    const html = await this.convertCoreAsync(screen, project, context, true, new Set<string>(), "screen", true, signal);
+    return { html, inspection };
   }
 
   private async convertCoreAsync(
@@ -94,6 +107,8 @@ export class HmiScreenToHtmlConverter {
     context: HmiHtmlConvertContext,
     includeRuntime: boolean,
     screenStack: Set<string>,
+    key: string,
+    includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<string> {
     const currentKeys = getScreenReferenceKeys(screen);
@@ -115,6 +130,9 @@ export class HmiScreenToHtmlConverter {
 
       html.push("<div");
       appendAttribute(html, "id", screen.name);
+      if (includeInspectionAttributes) {
+        appendAttribute(html, "data-hmi-node-key", key);
+      }
       html.push(" style=\"position: relative; overflow: hidden;");
       appendSize(html, getStaticValueOrDefault(screen.width, 0), getStaticValueOrDefault(screen.height, 0));
       appendScreenStyle(html, screen);
@@ -122,23 +140,45 @@ export class HmiScreenToHtmlConverter {
 
       const template = await resolveTemplateAsync(screen, project, screenStack, signal);
       if (template !== undefined) {
-        html.push(await this.convertCoreAsync(template, project, context, false, screenStack, signal));
+        html.push(await this.convertCoreAsync(
+          template,
+          project,
+          context,
+          false,
+          screenStack,
+          `${key}/template`,
+          includeInspectionAttributes,
+          signal,
+        ));
       }
 
-      for (const layer of screen.layers) {
+      for (let layerIndex = 0; layerIndex < screen.layers.length; layerIndex++) {
+        const layer = screen.layers[layerIndex];
         if (!getStaticValueOrDefault(layer.visible, true)) {
           continue;
         }
 
         html.push("<div");
         appendAttribute(html, "id", layer.name);
+        if (includeInspectionAttributes) {
+          appendAttribute(html, "data-hmi-node-key", `${key}/layer:${layerIndex}`);
+        }
         html.push(" style=\"position: absolute; inset: 0;");
         if (layer.items.length === 0) {
           html.push(" pointer-events: none;");
         }
         html.push("\">");
-        for (const item of layer.items) {
-          await this.appendItemAsync(html, item, project, context, screenStack, signal);
+        for (let itemIndex = 0; itemIndex < layer.items.length; itemIndex++) {
+          await this.appendItemAsync(
+            html,
+            layer.items[itemIndex],
+            project,
+            context,
+            screenStack,
+            `${key}/layer:${layerIndex}/item:${itemIndex}`,
+            includeInspectionAttributes,
+            signal,
+          );
         }
         html.push("</div>");
       }
@@ -158,11 +198,14 @@ export class HmiScreenToHtmlConverter {
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
     screenStack: Set<string>,
+    key: string,
+    includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<void> {
     if (!getStaticValueOrDefault(item.visible, true)) {
       return;
     }
+    context = context.withNodeKey(includeInspectionAttributes ? key : undefined);
 
     if (item instanceof HmiToggleSwitch) {
       appendToggleSwitch(html, item, context);
@@ -205,21 +248,30 @@ export class HmiScreenToHtmlConverter {
     } else if (item instanceof HmiTrendControl) {
       appendTrendControl(html, item, context);
     } else if (item instanceof HmiSymbolContainer) {
-      await this.appendSymbolContainerAsync(html, item, project, context, screenStack, signal);
+      await this.appendSymbolContainerAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiSymbolLibraryControl) {
       appendSymbolLibraryControl(html, item, context);
     } else if (item instanceof HmiGroup) {
       if (item.isLogicGrouping) {
-        for (const child of item.items) {
-          await this.appendItemAsync(html, child, project, context, screenStack, signal);
+        for (let childIndex = 0; childIndex < item.items.length; childIndex++) {
+          await this.appendItemAsync(
+            html,
+            item.items[childIndex],
+            project,
+            context,
+            screenStack,
+            `${key}/item:${childIndex}`,
+            includeInspectionAttributes,
+            signal,
+          );
         }
       } else {
-        await this.appendContainerAsync(html, item, item.items, project, context, screenStack, signal);
+        await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
       }
     } else if (item instanceof HmiLayoutContainerBase || item instanceof HmiContainerBase) {
-      await this.appendContainerAsync(html, item, item.items, project, context, screenStack, signal);
+      await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiScreenWindow) {
-      await this.appendScreenWindowAsync(html, item, project, context, screenStack, signal);
+      await this.appendScreenWindowAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiAlarmControl) {
       appendDiv(html, item, context.options.unsupportedItemPlaceholderCssClass, "Alarm control", context);
     } else if (item instanceof HmiUnkown) {
@@ -235,6 +287,8 @@ export class HmiScreenToHtmlConverter {
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
     screenStack: Set<string>,
+    key: string,
+    includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<void> {
     const image = getStaticValue(symbolContainer.image);
@@ -245,8 +299,17 @@ export class HmiScreenToHtmlConverter {
     if (imageUri?.trim()) {
       appendSymbolImage(html, symbolContainer, image, imageUri);
     }
-    for (const child of symbolContainer.items) {
-      await this.appendItemAsync(html, child, project, context, screenStack, signal);
+    for (let childIndex = 0; childIndex < symbolContainer.items.length; childIndex++) {
+      await this.appendItemAsync(
+        html,
+        symbolContainer.items[childIndex],
+        project,
+        context,
+        screenStack,
+        `${key}/item:${childIndex}`,
+        includeInspectionAttributes,
+        signal,
+      );
     }
     html.push("</div>");
   }
@@ -275,6 +338,8 @@ export class HmiScreenToHtmlConverter {
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
     screenStack: Set<string>,
+    key: string,
+    includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<void> {
     html.push("<div");
@@ -282,12 +347,30 @@ export class HmiScreenToHtmlConverter {
     html.push(">");
     if (container instanceof HmiLayoutContainerBase && container.childCoordinateSpace === HmiChildCoordinateSpace.ScreenAbsolute) {
       const childContext = context.withPositionOffset(-getStaticValueOrDefault(container.x, 0), -getStaticValueOrDefault(container.y, 0));
-      for (const child of items) {
-        await this.appendItemAsync(html, child, project, childContext, screenStack, signal);
+      for (let childIndex = 0; childIndex < items.length; childIndex++) {
+        await this.appendItemAsync(
+          html,
+          items[childIndex],
+          project,
+          childContext,
+          screenStack,
+          `${key}/item:${childIndex}`,
+          includeInspectionAttributes,
+          signal,
+        );
       }
     } else {
-      for (const child of items) {
-        await this.appendItemAsync(html, child, project, context, screenStack, signal);
+      for (let childIndex = 0; childIndex < items.length; childIndex++) {
+        await this.appendItemAsync(
+          html,
+          items[childIndex],
+          project,
+          context,
+          screenStack,
+          `${key}/item:${childIndex}`,
+          includeInspectionAttributes,
+          signal,
+        );
       }
     }
     html.push("</div>");
@@ -299,11 +382,16 @@ export class HmiScreenToHtmlConverter {
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
     screenStack: Set<string>,
+    key: string,
+    includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<void> {
     const screenId = getStaticValue(screenWindow.screenId);
     const screenName = getStaticValue(screenWindow.screenName);
-    const resolved = project && screenId ? await project.getScreen(screenId, signal) : undefined;
+    let resolved = project && screenId ? await project.getScreen(screenId, signal) : undefined;
+    if (resolved === undefined && project && screenName) {
+      resolved = await project.getScreen(screenName, signal);
+    }
     html.push("<div");
     appendCommonAttributes(html, screenWindow, context);
     html.push(">");
@@ -313,8 +401,21 @@ export class HmiScreenToHtmlConverter {
       html.push(">");
       html.push(escapeHtml(screenName ?? screenId ?? "Missing screen"));
       html.push("</div>");
+    } else if (getScreenReferenceKeys(resolved).some(candidate => screenStack.has(candidate))) {
+      html.push("<div");
+      appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);
+      html.push(">Recursive screen reference</div>");
     } else {
-      html.push(await this.convertCoreAsync(resolved, project, context, false, screenStack, signal));
+      html.push(await this.convertCoreAsync(
+        resolved,
+        project,
+        context,
+        false,
+        screenStack,
+        `${key}/subscreen`,
+        includeInspectionAttributes,
+        signal,
+      ));
     }
     html.push("</div>");
   }
@@ -646,6 +747,7 @@ function appendTextBlock(
 function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHtmlConvertContext): void {
   html.push("<div");
   appendAttribute(html, "id", rectangle.name);
+  appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
   appendStyle(html, rectangle, context);
@@ -784,6 +886,7 @@ function appendSymbolLibraryAttributes(
   context: HmiHtmlConvertContext,
 ): void {
   appendAttribute(html, "id", symbolLibraryControl.name);
+  appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   appendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.symbolId);
   appendAttribute(html, "data-hmi-symbol-appearance", formatAttributeValue(getStaticValue(symbolLibraryControl.symbolAppearance)));
   appendAttribute(html, "data-hmi-fill-color-mode", formatAttributeValue(getStaticValue(symbolLibraryControl.fillColorMode)));
@@ -1068,6 +1171,7 @@ function appendCommonAttributes(
   additionalStyle: string | null = null
 ): void {
   appendAttribute(html, "id", item.name);
+  appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
   if (includePaintedStyle && item instanceof HmiPaintedScreenItemBase) {
@@ -1096,6 +1200,7 @@ function appendItemTransform(html: string[], item: HmiScreenItemBase): void {
 
 function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContainer, context: HmiHtmlConvertContext): void {
   appendAttribute(html, "id", symbolContainer.name);
+  appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   appendAttribute(html, "data-hmi-fill-color-mode", getStaticValue(symbolContainer.fillColorMode));
   appendAttribute(html, "data-hmi-flip", getStaticValue(symbolContainer.flip));
   html.push(" style=\"position: absolute; overflow: hidden;");
@@ -1596,6 +1701,7 @@ class HmiHtmlConvertContext {
     readonly effectiveProperties: HmiEffectivePropertyResolver,
     readonly positionOffsetX = 0,
     readonly positionOffsetY = 0,
+    readonly nodeKey?: string,
   ) {}
 
   withPositionOffset(offsetX: number, offsetY: number): HmiHtmlConvertContext {
@@ -1604,6 +1710,17 @@ class HmiHtmlConvertContext {
       this.effectiveProperties,
       this.positionOffsetX + offsetX,
       this.positionOffsetY + offsetY,
+      this.nodeKey,
+    );
+  }
+
+  withNodeKey(nodeKey: string | undefined): HmiHtmlConvertContext {
+    return new HmiHtmlConvertContext(
+      this.options,
+      this.effectiveProperties,
+      this.positionOffsetX,
+      this.positionOffsetY,
+      nodeKey,
     );
   }
 }
