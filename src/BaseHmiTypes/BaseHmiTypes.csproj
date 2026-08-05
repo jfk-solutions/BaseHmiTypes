@@ -5,6 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+
+    <AssemblyVersion>2026.8.5.1</AssemblyVersion>
+            <Version>2026.8.5.1</Version>
+        <FileVersion>2026.8.5.1</FileVersion>
+     <ProductVersion>2026.8.5.1</ProductVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
