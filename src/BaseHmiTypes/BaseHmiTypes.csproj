@@ -6,6 +6,14 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>BaseHmiTypes</PackageId>
+    <Title>BaseHmiTypes</Title>
+    <Authors>JFK Solutions</Authors>
+    <Description>A neutral HMI model assembly for Siemens visualization project readers and converters.</Description>
+    <PackageProjectUrl>https://github.com/jfk-solutions/BaseHmiTypes</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jfk-solutions/BaseHmiTypes.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>HMI;Siemens;WinCC;TIA Portal;ProTool</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
 

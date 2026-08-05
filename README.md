@@ -5,9 +5,23 @@ It intentionally does not use Siemens namespaces and contains only shared contai
 
 The goal is that readers for systems such as WinCC Advanced, WinCC Professional, ProTool, WinCC flexible, TIA Portal exports, or future importers can all return the same object structure. Conversion code can then work against this common model instead of against every source format directly.
 
+## Installation
+
+Install [BaseHmiTypes from NuGet](https://www.nuget.org/packages/BaseHmiTypes):
+
+```powershell
+dotnet add package BaseHmiTypes
+```
+
+Or add a package reference directly to your project:
+
+```xml
+<PackageReference Include="BaseHmiTypes" Version="2026.8.5.1" />
+```
+
 ## Projects
 
-- `src/BaseHmiTypes`: C# class library targeting `net8.0`.
+- `src/BaseHmiTypes`: C# class library targeting .NET Standard 2.0, .NET Standard 2.1, and .NET 8.
 - `src/BaseHmiTypes/Projects`: project base, lazy project interface, descriptors, and source metadata types.
 - `src/BaseHmiTypes/Screens`: UI and screen-related C# model types.
 - `typescript/base-hmi-types`: mirrored TypeScript package.
