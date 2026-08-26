@@ -14,5 +14,6 @@ public enum HmiProjectItemKind
     AlarmList,
     ConnectionList,
     Faceplate,
-    Recipe
+    Recipe,
+    DataLog
 }
