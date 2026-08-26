@@ -13,6 +13,7 @@ export class HmiText extends HmiSurfaceShapeBase {
   alternateText?: HmiProperty<HmiMultilingualText>;
   textWrapping?: HmiProperty<number>;
   textTrimming?: HmiProperty<number>;
+  sizeToFit?: HmiProperty<boolean>;
   font?: HmiFont;
   horizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   verticalAlignment?: HmiProperty<HmiVerticalAlignment>;
