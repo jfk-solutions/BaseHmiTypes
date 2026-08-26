@@ -13,5 +13,6 @@ export class HmiState {
   borderColor?: HmiColor;
   blink = false;
   captionBlink = false;
+  captionBackgroundTransparent?: boolean;
   imageBlink = false;
 }
