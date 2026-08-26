@@ -36,6 +36,8 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<int>? SubDivisionCount { get; set; }
 
+    public HmiProperty<HmiTickDirection>? TickDirection { get; set; }
+
     public HmiProperty<int>? BarMode { get; set; }
 
     public HmiProperty<int>? ScaleMode { get; set; }

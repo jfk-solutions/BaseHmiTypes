@@ -11,4 +11,6 @@ public class HmiGauge : HmiScaleWidgetBase
 
     public HmiProperty<double>? NeedleWidth { get; set; }
 
+    public HmiProperty<HmiGaugeSweepStyle>? SweepStyle { get; set; }
+
 }
