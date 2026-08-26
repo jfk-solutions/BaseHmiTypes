@@ -24,6 +24,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   styleSettings?: HmiProperty<number>;
   windowsStyle?: HmiProperty<boolean>;
   touchEnabled?: HmiProperty<boolean>;
+  audioEnabled?: HmiProperty<boolean>;
   autoRepeatDelaySeconds?: HmiProperty<number>;
   autoRepeatRatePerSecond?: HmiProperty<number>;
   holdTimeSeconds?: HmiProperty<number>;
