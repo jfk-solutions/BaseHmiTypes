@@ -16,6 +16,8 @@ public abstract class HmiWidgetBase : HmiSimpleScreenItemBase
 
     public HmiProperty<bool>? CaptionBlink { get; set; }
 
+    public HmiProperty<bool>? CaptionBackgroundTransparent { get; set; }
+
     public HmiProperty<HmiColor>? FocusColor { get; set; }
 
     public HmiProperty<double>? FocusWidth { get; set; }
