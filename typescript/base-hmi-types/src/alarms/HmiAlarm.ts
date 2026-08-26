@@ -1,5 +1,6 @@
 import { IHmiObject } from "../IHmiObject.js";
 import { HmiMultilingualText } from "../common/HmiMultilingualText.js";
+import { HmiColor } from "../screens/base/HmiColor.js";
 
 export abstract class HmiAlarm implements IHmiObject {
   lastModified?: Date;
@@ -54,6 +55,23 @@ export class HmiDiscreteAlarm extends HmiBaseAlarm {
   acknowledgementBitNumber = 0;
   plcAcknowledgementTag?: string;
   plcAcknowledgementBitNumber = 0;
+  triggerValue?: number;
+  triggerReference?: string;
+  triggerLabel?: string;
+  useAcknowledgeAll?: boolean;
+  acknowledgeAllValue?: number;
+  handshakeTag?: string;
+  remoteAcknowledgeExpression?: string;
+  remoteAcknowledgeHandshakeTag?: string;
+  messageTag?: string;
+  messageNotificationTag?: string;
+  messageHandshakeExpression?: string;
+  backgroundColor?: HmiColor;
+  foregroundColor?: HmiColor;
+  audioEnabled?: boolean;
+  displayEnabled?: boolean;
+  printEnabled?: boolean;
+  writeMessageToTag?: boolean;
 }
 
 export class HmiAnalogAlarm extends HmiBaseAlarm {
@@ -81,6 +99,17 @@ export class HmiAlarmList implements IHmiObject {
   name?: string;
   hmiAlarmListType: HmiAlarmListType = HmiAlarmListType.Discrete;
   readonly alarms: HmiAlarm[] = [];
+  historySize?: number;
+  holdTimeMilliseconds?: number;
+  maximumUpdateRateSeconds?: number;
+  silenceTag?: string;
+  remoteSilenceExpression?: string;
+  remoteAcknowledgeAllExpression?: string;
+  statusResetTag?: string;
+  remoteStatusResetExpression?: string;
+  closeDisplayTag?: string;
+  remoteCloseDisplayExpression?: string;
+  useAlarmIdentifier?: boolean;
 }
 
 export enum HmiAlarmListType {
