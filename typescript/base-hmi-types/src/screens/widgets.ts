@@ -1,5 +1,6 @@
 export * from "./widgets/HmiTouchArea.js";
 export * from "./widgets/HmiState.js";
+export * from "./widgets/HmiDisplayParameterSource.js";
 export * from "./widgets/HmiWidgetBase.js";
 export * from "./widgets/HmiButtonBase.js";
 export * from "./widgets/HmiButtonAction.js";
