@@ -14,6 +14,8 @@ public abstract class HmiSelectionGroupBase : HmiWidgetBase
 
     public HmiProperty<int>? SelectionMode { get; set; }
 
+    public HmiProperty<bool>? WrapAround { get; set; }
+
     public HmiProperty<double>? SelectionItemHeight { get; set; }
 
     public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
