@@ -7,6 +7,8 @@ export abstract class HmiWidgetBase extends HmiSimpleScreenItemBase {
   font?: HmiFont;
   horizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   verticalAlignment?: HmiProperty<HmiVerticalAlignment>;
+  textWrapping?: HmiProperty<number>;
+  textTrimming?: HmiProperty<number>;
   focusColor?: HmiProperty<HmiColor>;
   focusWidth?: HmiProperty<number>;
   backFillPattern?: HmiProperty<number>;

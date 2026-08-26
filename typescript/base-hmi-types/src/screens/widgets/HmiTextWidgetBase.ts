@@ -6,8 +6,6 @@ export abstract class HmiTextWidgetBase extends HmiWidgetBase {
   text?: HmiProperty<HmiMultilingualText>;
   alternateText?: HmiProperty<HmiMultilingualText>;
   readOnly?: HmiProperty<boolean>;
-  textWrapping?: HmiProperty<number>;
-  textTrimming?: HmiProperty<number>;
   outputFormat?: HmiProperty<string>;
   formatPattern?: HmiProperty<string>;
   fieldLength?: HmiProperty<number>;
