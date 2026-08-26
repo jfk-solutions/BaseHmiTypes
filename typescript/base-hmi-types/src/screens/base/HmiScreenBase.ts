@@ -12,6 +12,13 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   width: HmiProperty<number> = staticProperty(0);
   height: HmiProperty<number> = staticProperty(0);
   backgroundColor?: HmiProperty<HmiColor>;
+  firstGradientColor?: HmiProperty<HmiColor>;
+  firstGradientOffset?: HmiProperty<number>;
+  middleGradientColor?: HmiProperty<HmiColor>;
+  secondGradientColor?: HmiProperty<HmiColor>;
+  secondGradientOffset?: HmiProperty<number>;
+  useFirstGradient?: HmiProperty<boolean>;
+  useSecondGradient?: HmiProperty<boolean>;
   rasterColor?: HmiProperty<HmiColor>;
   templateId?: HmiProperty<string>;
   templateName?: HmiProperty<string>;
