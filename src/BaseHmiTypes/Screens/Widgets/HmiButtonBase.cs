@@ -51,6 +51,10 @@ public abstract class HmiButtonBase : HmiWidgetBase
     /// </summary>
     public HmiProperty<double>? HoldTimeSeconds { get; set; }
 
+    public HmiProperty<HmiButtonAction>? ButtonAction { get; set; }
+
+    public HmiProperty<double>? ButtonValue { get; set; }
+
     public HmiProperty<HmiColor>? CaptionColor { get; set; }
 
     public HmiProperty<HmiColor>? CaptionBackgroundColor { get; set; }
