@@ -17,6 +17,12 @@ public sealed class HmiState
 
     public bool? ImageScaled { get; set; }
 
+    public HmiColor? ImageColor { get; set; }
+
+    public HmiColor? ImageBackgroundColor { get; set; }
+
+    public bool? ImageBackgroundTransparent { get; set; }
+
     public HmiColor? ForegroundColor { get; set; }
 
     public HmiColor? BackgroundColor { get; set; }

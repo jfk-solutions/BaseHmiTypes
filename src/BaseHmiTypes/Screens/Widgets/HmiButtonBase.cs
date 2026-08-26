@@ -21,6 +21,12 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<bool>? ImageBlink { get; set; }
 
+    public HmiProperty<HmiColor>? ImageColor { get; set; }
+
+    public HmiProperty<HmiColor>? ImageBackgroundColor { get; set; }
+
+    public HmiProperty<bool>? ImageBackgroundTransparent { get; set; }
+
     public HmiProperty<int>? GraphicStretchMode { get; set; }
 
     public HmiProperty<string>? HotKey { get; set; }

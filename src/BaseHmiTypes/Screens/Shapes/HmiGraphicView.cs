@@ -20,5 +20,11 @@ public class HmiGraphicView : HmiSurfaceShapeBase
 
     public HmiProperty<bool>? ImageBlink { get; set; }
 
+    public HmiProperty<HmiColor>? ImageColor { get; set; }
+
+    public HmiProperty<HmiColor>? ImageBackgroundColor { get; set; }
+
+    public HmiProperty<bool>? ImageBackgroundTransparent { get; set; }
+
     public HmiProperty<int>? GraphicStretchMode { get; set; }
 }
