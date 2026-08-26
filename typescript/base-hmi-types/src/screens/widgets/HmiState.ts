@@ -5,6 +5,8 @@ export class HmiState {
   name?: string;
   value?: number;
   text?: HmiMultilingualText;
+  targetDisplay?: string;
+  captionUsesDisplayName?: boolean;
   imageName?: string;
   image?: HmiImageSource;
   imageScaled?: boolean;
