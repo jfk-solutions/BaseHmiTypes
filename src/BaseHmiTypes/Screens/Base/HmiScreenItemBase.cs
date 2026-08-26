@@ -27,6 +27,8 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiProperty<int>? TabIndex { get; set; }
 
+    public HmiProperty<bool>? KeyNavigation { get; set; }
+
     public HmiProperty<HmiMultilingualText>? ToolTipText { get; set; }
 
     public HmiProperty<bool>? CanBeGrouped { get; set; }
