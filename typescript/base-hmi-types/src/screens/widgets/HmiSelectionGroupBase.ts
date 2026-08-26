@@ -10,6 +10,7 @@ export interface HmiSelectionGroupItem {
 
 export abstract class HmiSelectionGroupBase extends HmiWidgetBase {
   readonly states: HmiState[] = [];
+  configuredStateCount?: HmiProperty<number>;
   value?: HmiProperty<number>;
   readonly items: HmiSelectionGroupItem[] = [];
   selectedIndex?: HmiProperty<number>;
