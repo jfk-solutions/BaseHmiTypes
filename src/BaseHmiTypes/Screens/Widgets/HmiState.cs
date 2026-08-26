@@ -27,5 +27,7 @@ public sealed class HmiState
 
     public bool CaptionBlink { get; set; }
 
+    public bool? CaptionBackgroundTransparent { get; set; }
+
     public bool ImageBlink { get; set; }
 }
