@@ -9,4 +9,5 @@ public class HmiIOField : HmiTextWidgetBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiIOField;
     }
 
+    public HmiProperty<string>? HotKey { get; set; }
 }
