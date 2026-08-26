@@ -11,4 +11,5 @@ export enum HmiProjectFolderType {
   Connections = "Connections",
   Faceplates = "Faceplates",
   Recipes = "Recipes",
+  DataLogs = "DataLogs",
 }

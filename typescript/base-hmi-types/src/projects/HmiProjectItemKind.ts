@@ -12,4 +12,5 @@ export enum HmiProjectItemKind {
   ConnectionList = "ConnectionList",
   Faceplate = "Faceplate",
   Recipe = "Recipe",
+  DataLog = "DataLog",
 }
