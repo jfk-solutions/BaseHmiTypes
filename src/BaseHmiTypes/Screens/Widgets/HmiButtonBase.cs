@@ -47,6 +47,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<bool>? TouchEnabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether activation requests operator audio feedback.
+    /// </summary>
+    public HmiProperty<bool>? AudioEnabled { get; set; }
+
+    /// <summary>
     /// Gets or sets how long the button must remain pressed before automatic repetition starts.
     /// </summary>
     public HmiProperty<double>? AutoRepeatDelaySeconds { get; set; }
