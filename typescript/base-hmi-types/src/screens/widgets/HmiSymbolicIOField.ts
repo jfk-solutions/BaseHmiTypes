@@ -1,8 +1,12 @@
 import { HmiProperty } from "../base.js";
 import { HmiTextWidgetBase } from "./HmiTextWidgetBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
+import { HmiState } from "./HmiState.js";
 
 export class HmiSymbolicIOField extends HmiTextWidgetBase {
+  readonly states: HmiState[] = [];
+  value?: HmiProperty<number>;
+
   constructor() {
     super();
     this.hmiObjectType = HmiObjectType.HmiSymbolicIOField;

@@ -5,6 +5,10 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public abstract class HmiButtonBase : HmiWidgetBase
 {
+    public IList<HmiState> States { get; } = new List<HmiState>();
+
+    public HmiProperty<double>? State { get; set; }
+
     public HmiProperty<HmiMultilingualText>? Text { get; set; }
 
     public HmiProperty<HmiMultilingualText>? AlternateText { get; set; }

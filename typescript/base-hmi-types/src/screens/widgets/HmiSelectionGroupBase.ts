@@ -1,5 +1,6 @@
 import { HmiColor, HmiImageSource, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
+import { HmiState } from "./HmiState.js";
 
 export interface HmiSelectionGroupItem {
   text?: string;
@@ -8,6 +9,8 @@ export interface HmiSelectionGroupItem {
 }
 
 export abstract class HmiSelectionGroupBase extends HmiWidgetBase {
+  readonly states: HmiState[] = [];
+  value?: HmiProperty<number>;
   readonly items: HmiSelectionGroupItem[] = [];
   selectedIndex?: HmiProperty<number>;
   selectionMode?: HmiProperty<number>;

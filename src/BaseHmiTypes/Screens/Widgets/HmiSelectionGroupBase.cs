@@ -4,6 +4,10 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public abstract class HmiSelectionGroupBase : HmiWidgetBase
 {
+    public IList<HmiState> States { get; } = new List<HmiState>();
+
+    public HmiProperty<double>? Value { get; set; }
+
     public IList<HmiSelectionGroupItem> Items { get; } = new List<HmiSelectionGroupItem>();
 
     public HmiProperty<int>? SelectedIndex { get; set; }
