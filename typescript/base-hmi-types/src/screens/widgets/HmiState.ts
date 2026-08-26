@@ -11,6 +11,8 @@ export class HmiState {
   imageColor?: HmiColor;
   imageBackgroundColor?: HmiColor;
   imageBackgroundTransparent?: boolean;
+  captionColor?: HmiColor;
+  captionBackgroundColor?: HmiColor;
   foregroundColor?: HmiColor;
   backgroundColor?: HmiColor;
   borderColor?: HmiColor;
