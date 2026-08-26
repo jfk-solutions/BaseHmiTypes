@@ -15,6 +15,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   pressedStateTags?: HmiProperty<string>;
   styleSettings?: HmiProperty<number>;
   windowsStyle?: HmiProperty<boolean>;
+  touchEnabled?: HmiProperty<boolean>;
   captionColor?: HmiProperty<HmiColor>;
   captionBackgroundColor?: HmiProperty<HmiColor>;
   touchMargin?: HmiThickness;
