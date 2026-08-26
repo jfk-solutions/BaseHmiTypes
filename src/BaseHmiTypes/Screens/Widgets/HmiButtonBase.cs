@@ -27,6 +27,10 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<bool>? ImageBackgroundTransparent { get; set; }
 
+    public HmiProperty<HmiHorizontalAlignment>? ImageHorizontalAlignment { get; set; }
+
+    public HmiProperty<HmiVerticalAlignment>? ImageVerticalAlignment { get; set; }
+
     public HmiProperty<int>? GraphicStretchMode { get; set; }
 
     public HmiProperty<string>? HotKey { get; set; }

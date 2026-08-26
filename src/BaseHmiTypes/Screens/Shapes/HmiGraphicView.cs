@@ -26,5 +26,9 @@ public class HmiGraphicView : HmiSurfaceShapeBase
 
     public HmiProperty<bool>? ImageBackgroundTransparent { get; set; }
 
+    public HmiProperty<HmiHorizontalAlignment>? ImageHorizontalAlignment { get; set; }
+
+    public HmiProperty<HmiVerticalAlignment>? ImageVerticalAlignment { get; set; }
+
     public HmiProperty<int>? GraphicStretchMode { get; set; }
 }
