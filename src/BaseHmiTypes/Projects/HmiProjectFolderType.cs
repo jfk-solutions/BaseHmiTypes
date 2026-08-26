@@ -13,5 +13,6 @@ public enum HmiProjectFolderType
     Alarms,
     Connections,
     Faceplates,
-    Recipes
+    Recipes,
+    DataLogs
 }
