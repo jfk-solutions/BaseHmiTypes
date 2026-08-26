@@ -10,6 +10,10 @@ public abstract class HmiWidgetBase : HmiSimpleScreenItemBase
 
     public HmiProperty<HmiVerticalAlignment>? VerticalAlignment { get; set; }
 
+    public HmiProperty<int>? TextWrapping { get; set; }
+
+    public HmiProperty<int>? TextTrimming { get; set; }
+
     public HmiProperty<HmiColor>? FocusColor { get; set; }
 
     public HmiProperty<double>? FocusWidth { get; set; }
