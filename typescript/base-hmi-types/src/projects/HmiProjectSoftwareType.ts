@@ -6,4 +6,6 @@ export enum HmiProjectSoftwareType {
   WinCCAdvanced = "WinCCAdvanced",
   WinCCProfessional = "WinCCProfessional",
   WinCCUnified = "WinCCUnified",
+  FactoryTalkViewMachineEdition = "FactoryTalkViewMachineEdition",
+  FactoryTalkViewSiteEdition = "FactoryTalkViewSiteEdition",
 }

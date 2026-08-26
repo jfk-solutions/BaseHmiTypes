@@ -11,4 +11,5 @@ export enum HmiProjectItemKind {
   AlarmList = "AlarmList",
   ConnectionList = "ConnectionList",
   Faceplate = "Faceplate",
+  Recipe = "Recipe",
 }

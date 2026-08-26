@@ -7,6 +7,7 @@ export * from "./database.js";
 export * from "./images.js";
 export * from "./IHmiObject.js";
 export * from "./projects.js";
+export * from "./recipes.js";
 export * from "./screens/base.js";
 export * from "./screens/controls.js";
 export * from "./screens/defaults.js";

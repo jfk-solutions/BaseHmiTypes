@@ -2,6 +2,7 @@ using BaseHmiTypes.Alarms;
 using BaseHmiTypes.Connections;
 using BaseHmiTypes.Cycles;
 using BaseHmiTypes.Images;
+using BaseHmiTypes.Recipes;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
 using BaseHmiTypes.Scripts;
@@ -45,6 +46,8 @@ public abstract class HmiProjectBase : IHmiProject
     public virtual IHmiProjectFolder? Alarms => GetFolder(HmiProjectFolderType.Alarms);
 
     public virtual IHmiProjectFolder? Connections => GetFolder(HmiProjectFolderType.Connections);
+
+    public virtual IHmiProjectFolder? Recipes => GetFolder(HmiProjectFolderType.Recipes);
 
     public virtual ValueTask<IReadOnlyList<IHmiProjectFolder>> GetFoldersAsync(CancellationToken cancellationToken = default)
     {
@@ -109,6 +112,11 @@ public abstract class HmiProjectBase : IHmiProject
     public virtual ValueTask<HmiConnectionList?> GetConnectionListAsync(string id, CancellationToken cancellationToken = default)
     {
         return new ValueTask<HmiConnectionList?>((HmiConnectionList?)null);
+    }
+
+    public virtual ValueTask<HmiRecipe?> GetRecipeAsync(string id, CancellationToken cancellationToken = default)
+    {
+        return new ValueTask<HmiRecipe?>((HmiRecipe?)null);
     }
 
     public virtual async ValueTask<IReadOnlyList<HmiScreenDescriptor>> GetScreensAsync(CancellationToken cancellationToken = default)

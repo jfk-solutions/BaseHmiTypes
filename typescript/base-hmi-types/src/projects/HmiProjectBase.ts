@@ -2,6 +2,7 @@ import { HmiAlarmList } from "../alarms/HmiAlarm.js";
 import { HmiConnectionList } from "../connections/HmiConnectionList.js";
 import { HmiCycle } from "../cycles/HmiCycle.js";
 import { HmiImage } from "../images/HmiImage.js";
+import { HmiRecipe } from "../recipes/HmiRecipe.js";
 import { HmiFaceplateType } from "../screens/base/HmiFaceplateType.js";
 import { HmiScreenBase } from "../screens/base/HmiScreenBase.js";
 import { HmiScript } from "../scripts/HmiScript.js";
@@ -82,6 +83,10 @@ export abstract class HmiProjectBase implements IHmiProject {
     return this.getFolder(HmiProjectFolderType.Connections);
   }
 
+  get recipes(): IHmiProjectFolder | undefined {
+    return this.getFolder(HmiProjectFolderType.Recipes);
+  }
+
   getFolders(_signal?: AbortSignal): Promise<readonly IHmiProjectFolder[]> {
     return Promise.resolve([]);
   }
@@ -135,6 +140,10 @@ export abstract class HmiProjectBase implements IHmiProject {
   }
 
   getConnectionList(_id: string, _signal?: AbortSignal): Promise<HmiConnectionList | undefined> {
+    return Promise.resolve(undefined);
+  }
+
+  getRecipe(_id: string, _signal?: AbortSignal): Promise<HmiRecipe | undefined> {
     return Promise.resolve(undefined);
   }
 

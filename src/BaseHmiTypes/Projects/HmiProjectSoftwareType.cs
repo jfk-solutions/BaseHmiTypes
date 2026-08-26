@@ -8,6 +8,8 @@
         WinCC,
         WinCCAdvanced,
         WinCCProfessional,
-        WinCCUnified
+        WinCCUnified,
+        FactoryTalkViewMachineEdition,
+        FactoryTalkViewSiteEdition
     }
 }

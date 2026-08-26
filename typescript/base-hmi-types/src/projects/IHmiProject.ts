@@ -2,6 +2,7 @@ import { HmiAlarmList } from "../alarms/HmiAlarm.js";
 import { HmiConnectionList } from "../connections/HmiConnectionList.js";
 import { HmiCycle } from "../cycles/HmiCycle.js";
 import { HmiImage } from "../images/HmiImage.js";
+import { HmiRecipe } from "../recipes/HmiRecipe.js";
 import { HmiFaceplateType } from "../screens/base/HmiFaceplateType.js";
 import { HmiScreenBase } from "../screens/base/HmiScreenBase.js";
 import { HmiScript } from "../scripts/HmiScript.js";
@@ -23,7 +24,8 @@ export interface IHmiProject
     IHmiImageProvider,
     IHmiCycleProvider,
     IHmiAlarmProvider,
-    IHmiConnectionProvider {
+    IHmiConnectionProvider,
+    IHmiRecipeProvider {
   readonly info: HmiProjectInfo;
 }
 
@@ -77,4 +79,8 @@ export interface IHmiAlarmProvider {
 
 export interface IHmiConnectionProvider {
   getConnectionList(id: string, signal?: AbortSignal): Promise<HmiConnectionList | undefined>;
+}
+
+export interface IHmiRecipeProvider {
+  getRecipe(id: string, signal?: AbortSignal): Promise<HmiRecipe | undefined>;
 }
