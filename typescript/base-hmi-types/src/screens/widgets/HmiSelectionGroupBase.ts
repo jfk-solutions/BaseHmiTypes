@@ -1,6 +1,7 @@
 import { HmiColor, HmiImageSource, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiState } from "./HmiState.js";
+import { HmiEnterHandshakeSettings } from "./HmiEnterHandshakeSettings.js";
 
 export interface HmiSelectionGroupItem {
   text?: string;
@@ -17,6 +18,7 @@ export abstract class HmiSelectionGroupBase extends HmiWidgetBase {
   selectionMode?: HmiProperty<number>;
   wrapAround?: HmiProperty<boolean>;
   writeOnEnter?: HmiProperty<boolean>;
+  enterHandshake?: HmiEnterHandshakeSettings;
   selectionItemHeight?: HmiProperty<number>;
   selectionBackgroundColor?: HmiProperty<HmiColor>;
   selectionForegroundColor?: HmiProperty<HmiColor>;
