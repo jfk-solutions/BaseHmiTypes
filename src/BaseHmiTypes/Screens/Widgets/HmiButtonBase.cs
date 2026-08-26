@@ -27,6 +27,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<bool>? WindowsStyle { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the operator can activate the button with a pointer or touch screen.
+    /// </summary>
+    public HmiProperty<bool>? TouchEnabled { get; set; }
+
     public HmiProperty<HmiColor>? CaptionColor { get; set; }
 
     public HmiProperty<HmiColor>? CaptionBackgroundColor { get; set; }
