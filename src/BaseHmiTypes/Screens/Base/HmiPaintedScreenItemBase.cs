@@ -14,6 +14,11 @@ public abstract class HmiPaintedScreenItemBase : HmiScreenItemBase
 
     public HmiProperty<HmiColor>? BorderBackgroundColor { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the background color is also used for the object's border.
+    /// </summary>
+    public HmiProperty<bool>? BorderUsesBackgroundColor { get; set; }
+
     public HmiProperty<HmiColor>? AlternateBorderColor { get; set; }
 
     public HmiProperty<double>? BorderWidth { get; set; }
