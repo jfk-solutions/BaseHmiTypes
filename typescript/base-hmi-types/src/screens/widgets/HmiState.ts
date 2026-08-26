@@ -1,5 +1,5 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
-import { HmiColor, HmiImageSource } from "../base.js";
+import { HmiColor, HmiHorizontalAlignment, HmiImageSource, HmiVerticalAlignment } from "../base.js";
 
 export class HmiState {
   name?: string;
@@ -11,6 +11,8 @@ export class HmiState {
   imageColor?: HmiColor;
   imageBackgroundColor?: HmiColor;
   imageBackgroundTransparent?: boolean;
+  imageHorizontalAlignment?: HmiHorizontalAlignment;
+  imageVerticalAlignment?: HmiVerticalAlignment;
   captionColor?: HmiColor;
   captionBackgroundColor?: HmiColor;
   foregroundColor?: HmiColor;
