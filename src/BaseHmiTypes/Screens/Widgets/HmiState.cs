@@ -31,6 +31,10 @@ public sealed class HmiState
 
     public HmiColor? CaptionBackgroundColor { get; set; }
 
+    public HmiHorizontalAlignment? CaptionHorizontalAlignment { get; set; }
+
+    public HmiVerticalAlignment? CaptionVerticalAlignment { get; set; }
+
     public HmiColor? ForegroundColor { get; set; }
 
     public HmiColor? BackgroundColor { get; set; }
