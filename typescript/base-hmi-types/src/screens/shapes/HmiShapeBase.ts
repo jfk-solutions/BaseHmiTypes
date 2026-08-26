@@ -1,5 +1,6 @@
 import { HmiColor, HmiProperty } from "../base.js";
 import { HmiFillPattern } from "../base/HmiFillPattern.js";
+import { HmiGradientDirection } from "../base/HmiGradientDirection.js";
 import { HmiSimpleScreenItemBase } from "../base/HmiSimpleScreenItemBase.js";
 
 export abstract class HmiShapeBase extends HmiSimpleScreenItemBase {
@@ -18,6 +19,7 @@ export abstract class HmiShapeBase extends HmiSimpleScreenItemBase {
   secondGradientOffset?: HmiProperty<number>;
   useFirstGradient?: HmiProperty<boolean>;
   useSecondGradient?: HmiProperty<boolean>;
+  gradientDirection?: HmiProperty<HmiGradientDirection>;
   useDesignColorSchema?: HmiProperty<boolean>;
   useDesignShadowSettings?: HmiProperty<boolean>;
 }
