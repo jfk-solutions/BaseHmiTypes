@@ -4,6 +4,7 @@ export * from "./connections.js";
 export * from "./converters.js";
 export * from "./cycles.js";
 export * from "./database.js";
+export * from "./data-logging.js";
 export * from "./images.js";
 export * from "./IHmiObject.js";
 export * from "./projects.js";
