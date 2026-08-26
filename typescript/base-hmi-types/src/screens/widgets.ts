@@ -9,6 +9,8 @@ export * from "./widgets/HmiHandshakeResetMode.js";
 export * from "./widgets/HmiEnterHandshakeSettings.js";
 export * from "./widgets/HmiInputPopupMode.js";
 export * from "./widgets/HmiThreshold.js";
+export * from "./widgets/HmiTickDirection.js";
+export * from "./widgets/HmiGaugeSweepStyle.js";
 export * from "./widgets/HmiDecimalPointMode.js";
 export * from "./widgets/HmiButtonType.js";
 export * from "./widgets/HmiSwitchType.js";

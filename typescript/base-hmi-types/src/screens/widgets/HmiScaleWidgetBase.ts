@@ -1,6 +1,7 @@
 import { HmiColor, HmiFont, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiThreshold, HmiThresholdValueMode } from "./HmiThreshold.js";
+import { HmiTickDirection } from "./HmiTickDirection.js";
 
 export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   configuredThresholdCount?: HmiProperty<number>;
@@ -19,6 +20,7 @@ export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   originValue?: HmiProperty<number>;
   divisionCount?: HmiProperty<number>;
   subDivisionCount?: HmiProperty<number>;
+  tickDirection?: HmiProperty<HmiTickDirection>;
   barMode?: HmiProperty<number>;
   scaleMode?: HmiProperty<number>;
   orientation?: HmiProperty<number>;
