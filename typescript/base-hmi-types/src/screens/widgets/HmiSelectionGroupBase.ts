@@ -14,6 +14,7 @@ export abstract class HmiSelectionGroupBase extends HmiWidgetBase {
   readonly items: HmiSelectionGroupItem[] = [];
   selectedIndex?: HmiProperty<number>;
   selectionMode?: HmiProperty<number>;
+  wrapAround?: HmiProperty<boolean>;
   selectionItemHeight?: HmiProperty<number>;
   selectionBackgroundColor?: HmiProperty<HmiColor>;
   selectionForegroundColor?: HmiProperty<HmiColor>;
