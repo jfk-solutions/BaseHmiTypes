@@ -16,4 +16,6 @@ public class HmiIOField : HmiTextWidgetBase
     public HmiProperty<string>? FillCharacters { get; set; }
 
     public HmiProperty<HmiDecimalPointMode>? DecimalPointMode { get; set; }
+
+    public HmiEnterHandshakeSettings? EnterHandshake { get; set; }
 }
