@@ -36,6 +36,21 @@ public abstract class HmiButtonBase : HmiWidgetBase
     /// </summary>
     public HmiProperty<bool>? TouchEnabled { get; set; }
 
+    /// <summary>
+    /// Gets or sets how long the button must remain pressed before automatic repetition starts.
+    /// </summary>
+    public HmiProperty<double>? AutoRepeatDelaySeconds { get; set; }
+
+    /// <summary>
+    /// Gets or sets how many button presses are registered per second while automatic repetition is active.
+    /// </summary>
+    public HmiProperty<double>? AutoRepeatRatePerSecond { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum duration for which the button remains pressed.
+    /// </summary>
+    public HmiProperty<double>? HoldTimeSeconds { get; set; }
+
     public HmiProperty<HmiColor>? CaptionColor { get; set; }
 
     public HmiProperty<HmiColor>? CaptionBackgroundColor { get; set; }
