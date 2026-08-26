@@ -22,6 +22,8 @@ public abstract class HmiPaintedScreenItemBase : HmiScreenItemBase
 
     public HmiProperty<bool>? FocusHighlight { get; set; }
 
+    public HmiProperty<bool>? PointerHighlight { get; set; }
+
     public HmiThickness? Margin { get; set; }
 
     public HmiThickness? Padding { get; set; }
