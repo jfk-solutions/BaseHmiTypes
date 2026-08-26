@@ -7,6 +7,7 @@ import { HmiState } from "./HmiState.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
   readonly states: HmiState[] = [];
+  configuredStateCount?: HmiProperty<number>;
   state?: HmiProperty<number>;
   text?: HmiProperty<HmiMultilingualText>;
   alternateText?: HmiProperty<HmiMultilingualText>;

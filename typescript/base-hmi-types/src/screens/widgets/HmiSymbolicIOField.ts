@@ -5,6 +5,7 @@ import { HmiState } from "./HmiState.js";
 
 export class HmiSymbolicIOField extends HmiTextWidgetBase {
   readonly states: HmiState[] = [];
+  configuredStateCount?: HmiProperty<number>;
   value?: HmiProperty<number>;
 
   constructor() {
