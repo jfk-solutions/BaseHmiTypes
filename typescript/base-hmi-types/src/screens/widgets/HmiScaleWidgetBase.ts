@@ -1,7 +1,11 @@
 import { HmiColor, HmiFont, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
+import { HmiThreshold, HmiThresholdValueMode } from "./HmiThreshold.js";
 
 export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
+  configuredThresholdCount?: HmiProperty<number>;
+  thresholdValueMode?: HmiProperty<HmiThresholdValueMode>;
+  readonly thresholds: HmiThreshold[] = [];
   value?: HmiProperty<number>;
   fillLevel?: HmiProperty<number>;
   showFillLevel?: HmiProperty<boolean>;
