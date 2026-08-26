@@ -13,6 +13,12 @@ public sealed class HmiState
 
     public string? TargetDisplay { get; set; }
 
+    public string? ParameterFile { get; set; }
+
+    public string? ParameterList { get; set; }
+
+    public HmiDisplayParameterSource? ParameterSource { get; set; }
+
     public bool? CaptionUsesDisplayName { get; set; }
 
     public string? ImageName { get; set; }
