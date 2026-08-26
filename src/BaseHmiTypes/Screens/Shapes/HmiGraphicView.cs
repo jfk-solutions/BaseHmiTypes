@@ -16,5 +16,7 @@ public class HmiGraphicView : HmiSurfaceShapeBase
 
     public HmiProperty<HmiImageSource>? AlternateImage { get; set; }
 
+    public HmiProperty<bool>? ImageScaled { get; set; }
+
     public HmiProperty<int>? GraphicStretchMode { get; set; }
 }

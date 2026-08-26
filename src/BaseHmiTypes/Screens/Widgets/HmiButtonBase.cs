@@ -17,6 +17,8 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<HmiImageSource>? AlternateImage { get; set; }
 
+    public HmiProperty<bool>? ImageScaled { get; set; }
+
     public HmiProperty<int>? GraphicStretchMode { get; set; }
 
     public HmiProperty<string>? HotKey { get; set; }
