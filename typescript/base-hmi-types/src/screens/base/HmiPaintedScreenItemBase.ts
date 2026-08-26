@@ -10,6 +10,7 @@ export abstract class HmiPaintedScreenItemBase extends HmiScreenItemBase {
   alternateBackgroundColor?: HmiProperty<HmiColor>;
   borderColor?: HmiProperty<HmiColor>;
   borderBackgroundColor?: HmiProperty<HmiColor>;
+  borderUsesBackgroundColor?: HmiProperty<boolean>;
   alternateBorderColor?: HmiProperty<HmiColor>;
   borderWidth?: HmiProperty<number>;
   borderStyle?: HmiProperty<number>;
