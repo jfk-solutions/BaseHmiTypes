@@ -1,0 +1,5 @@
+export enum HmiButtonAction {
+  NormallyOpen = 0,
+  NormallyClosed = 1,
+  StateValues = 2,
+}
