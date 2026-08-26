@@ -18,6 +18,11 @@ public abstract class HmiWidgetBase : HmiSimpleScreenItemBase
 
     public HmiProperty<bool>? CaptionBackgroundTransparent { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the caption may overlap the widget border.
+    /// </summary>
+    public HmiProperty<bool>? CaptionOnBorder { get; set; }
+
     public HmiProperty<HmiColor>? FocusColor { get; set; }
 
     public HmiProperty<double>? FocusWidth { get; set; }
