@@ -12,5 +12,6 @@ export class HmiGraphicView extends HmiSurfaceShapeBase {
   image?: HmiProperty<HmiImageSource>;
   alternateImage?: HmiProperty<HmiImageSource>;
   imageScaled?: HmiProperty<boolean>;
+  imageBlink?: HmiProperty<boolean>;
   graphicStretchMode?: HmiProperty<number>;
 }
