@@ -87,6 +87,16 @@ public abstract class HmiButtonBase : HmiWidgetBase
     /// </summary>
     public HmiProperty<HmiHandshakeResetMode>? LatchResetMode { get; set; }
 
+    public HmiProperty<HmiRampDirection>? RampDirection { get; set; }
+
+    public HmiProperty<double>? RampIncrement { get; set; }
+
+    public HmiProperty<double>? RampLimit { get; set; }
+
+    public HmiProperty<bool>? UseVariableRamp { get; set; }
+
+    public HmiProperty<bool>? UseVariableLimit { get; set; }
+
     public HmiProperty<HmiColor>? CaptionColor { get; set; }
 
     public HmiProperty<HmiColor>? CaptionBackgroundColor { get; set; }
