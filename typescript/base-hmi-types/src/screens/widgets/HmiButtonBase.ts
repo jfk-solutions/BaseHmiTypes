@@ -1,5 +1,5 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
-import { HmiColor, HmiImageSource, HmiProperty } from "../base.js";
+import { HmiColor, HmiImageSource, HmiProperty, HmiThickness } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiState } from "./HmiState.js";
 
@@ -17,4 +17,5 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   windowsStyle?: HmiProperty<boolean>;
   captionColor?: HmiProperty<HmiColor>;
   captionBackgroundColor?: HmiProperty<HmiColor>;
+  touchMargin?: HmiThickness;
 }
