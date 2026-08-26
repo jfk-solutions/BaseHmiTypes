@@ -12,6 +12,20 @@ public abstract class HmiScreenBase : HmiScreenModelBase
 
     public HmiProperty<HmiColor>? BackgroundColor { get; set; }
 
+    public HmiProperty<HmiColor>? FirstGradientColor { get; set; }
+
+    public HmiProperty<double>? FirstGradientOffset { get; set; }
+
+    public HmiProperty<HmiColor>? MiddleGradientColor { get; set; }
+
+    public HmiProperty<HmiColor>? SecondGradientColor { get; set; }
+
+    public HmiProperty<double>? SecondGradientOffset { get; set; }
+
+    public HmiProperty<bool>? UseFirstGradient { get; set; }
+
+    public HmiProperty<bool>? UseSecondGradient { get; set; }
+
     public HmiProperty<HmiColor>? RasterColor { get; set; }
 
     public HmiProperty<string>? TemplateId { get; set; }
