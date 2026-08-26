@@ -3,6 +3,7 @@ export * from "./widgets/HmiState.js";
 export * from "./widgets/HmiWidgetBase.js";
 export * from "./widgets/HmiButtonBase.js";
 export * from "./widgets/HmiButtonAction.js";
+export * from "./widgets/HmiDecimalPointMode.js";
 export * from "./widgets/HmiButtonType.js";
 export * from "./widgets/HmiSwitchType.js";
 export * from "./widgets/HmiButton.js";
