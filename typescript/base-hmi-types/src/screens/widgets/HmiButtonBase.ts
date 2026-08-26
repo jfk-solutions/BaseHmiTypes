@@ -10,6 +10,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   alternateText?: HmiProperty<HmiMultilingualText>;
   image?: HmiProperty<HmiImageSource>;
   alternateImage?: HmiProperty<HmiImageSource>;
+  imageScaled?: HmiProperty<boolean>;
   graphicStretchMode?: HmiProperty<number>;
   hotKey?: HmiProperty<string>;
   pressedStateTags?: HmiProperty<string>;

@@ -7,6 +7,7 @@ export class HmiState {
   text?: HmiMultilingualText;
   imageName?: string;
   image?: HmiImageSource;
+  imageScaled?: boolean;
   foregroundColor?: HmiColor;
   backgroundColor?: HmiColor;
   borderColor?: HmiColor;
