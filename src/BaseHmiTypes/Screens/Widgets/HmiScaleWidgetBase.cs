@@ -4,6 +4,12 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public abstract class HmiScaleWidgetBase : HmiWidgetBase
 {
+    public HmiProperty<int>? ConfiguredThresholdCount { get; set; }
+
+    public HmiProperty<HmiThresholdValueMode>? ThresholdValueMode { get; set; }
+
+    public IList<HmiThreshold> Thresholds { get; } = new List<HmiThreshold>();
+
     public HmiProperty<double>? Value { get; set; }
 
     public HmiProperty<double>? FillLevel { get; set; }
