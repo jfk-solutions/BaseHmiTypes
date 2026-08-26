@@ -9,4 +9,6 @@ public class HmiGauge : HmiScaleWidgetBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiGauge;
     }
 
+    public HmiProperty<double>? NeedleWidth { get; set; }
+
 }
