@@ -10,4 +10,8 @@ public class HmiIOField : HmiTextWidgetBase
     }
 
     public HmiProperty<string>? HotKey { get; set; }
+
+    public HmiProperty<bool>? MaskInput { get; set; }
+
+    public HmiProperty<string>? FillCharacters { get; set; }
 }
