@@ -2,6 +2,7 @@ import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiColor, HmiHorizontalAlignment, HmiImageSource, HmiProperty, HmiThickness, HmiVerticalAlignment } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiButtonAction } from "./HmiButtonAction.js";
+import { HmiButtonNextStateMode } from "./HmiButtonNextStateMode.js";
 import { HmiState } from "./HmiState.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
@@ -30,6 +31,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   holdTimeSeconds?: HmiProperty<number>;
   buttonAction?: HmiProperty<HmiButtonAction>;
   buttonValue?: HmiProperty<number>;
+  nextStateMode?: HmiProperty<HmiButtonNextStateMode>;
   captionColor?: HmiProperty<HmiColor>;
   captionBackgroundColor?: HmiProperty<HmiColor>;
   touchMargin?: HmiThickness;
