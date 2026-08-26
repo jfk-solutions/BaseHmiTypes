@@ -26,6 +26,8 @@ public abstract class HmiScreenBase : HmiScreenModelBase
 
     public HmiProperty<bool>? UseSecondGradient { get; set; }
 
+    public HmiProperty<HmiGradientDirection>? GradientDirection { get; set; }
+
     public HmiProperty<HmiColor>? RasterColor { get; set; }
 
     public HmiProperty<string>? TemplateId { get; set; }
