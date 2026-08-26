@@ -13,6 +13,9 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   alternateImage?: HmiProperty<HmiImageSource>;
   imageScaled?: HmiProperty<boolean>;
   imageBlink?: HmiProperty<boolean>;
+  imageColor?: HmiProperty<HmiColor>;
+  imageBackgroundColor?: HmiProperty<HmiColor>;
+  imageBackgroundTransparent?: HmiProperty<boolean>;
   graphicStretchMode?: HmiProperty<number>;
   hotKey?: HmiProperty<string>;
   pressedStateTags?: HmiProperty<string>;

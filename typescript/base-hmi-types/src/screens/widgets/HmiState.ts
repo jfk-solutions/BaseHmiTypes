@@ -8,6 +8,9 @@ export class HmiState {
   imageName?: string;
   image?: HmiImageSource;
   imageScaled?: boolean;
+  imageColor?: HmiColor;
+  imageBackgroundColor?: HmiColor;
+  imageBackgroundTransparent?: boolean;
   foregroundColor?: HmiColor;
   backgroundColor?: HmiColor;
   borderColor?: HmiColor;
