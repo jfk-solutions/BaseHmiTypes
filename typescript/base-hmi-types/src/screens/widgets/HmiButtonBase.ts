@@ -1,6 +1,7 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiColor, HmiImageSource, HmiProperty, HmiThickness } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
+import { HmiButtonAction } from "./HmiButtonAction.js";
 import { HmiState } from "./HmiState.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
@@ -21,6 +22,8 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   autoRepeatDelaySeconds?: HmiProperty<number>;
   autoRepeatRatePerSecond?: HmiProperty<number>;
   holdTimeSeconds?: HmiProperty<number>;
+  buttonAction?: HmiProperty<HmiButtonAction>;
+  buttonValue?: HmiProperty<number>;
   captionColor?: HmiProperty<HmiColor>;
   captionBackgroundColor?: HmiProperty<HmiColor>;
   touchMargin?: HmiThickness;
