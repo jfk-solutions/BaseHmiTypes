@@ -19,6 +19,7 @@ export class HmiState {
   captionBackgroundColor?: HmiColor;
   captionHorizontalAlignment?: HmiHorizontalAlignment;
   captionVerticalAlignment?: HmiVerticalAlignment;
+  captionWordWrap?: boolean;
   foregroundColor?: HmiColor;
   backgroundColor?: HmiColor;
   borderColor?: HmiColor;
