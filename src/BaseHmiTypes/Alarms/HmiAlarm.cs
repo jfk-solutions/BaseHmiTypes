@@ -1,4 +1,5 @@
 using BaseHmiTypes.Common;
+using BaseHmiTypes.Screens.Base;
 
 namespace BaseHmiTypes.Alarms;
 
@@ -78,6 +79,40 @@ public sealed class HmiDiscreteAlarm : HmiBaseAlarm
     public string? PlcAcknowledgementTag { get; set; }
 
     public int PlcAcknowledgementBitNumber { get; set; }
+
+    public int? TriggerValue { get; set; }
+
+    public string? TriggerReference { get; set; }
+
+    public string? TriggerLabel { get; set; }
+
+    public bool? UseAcknowledgeAll { get; set; }
+
+    public int? AcknowledgeAllValue { get; set; }
+
+    public string? HandshakeTag { get; set; }
+
+    public string? RemoteAcknowledgeExpression { get; set; }
+
+    public string? RemoteAcknowledgeHandshakeTag { get; set; }
+
+    public string? MessageTag { get; set; }
+
+    public string? MessageNotificationTag { get; set; }
+
+    public string? MessageHandshakeExpression { get; set; }
+
+    public HmiColor? BackgroundColor { get; set; }
+
+    public HmiColor? ForegroundColor { get; set; }
+
+    public bool? AudioEnabled { get; set; }
+
+    public bool? DisplayEnabled { get; set; }
+
+    public bool? PrintEnabled { get; set; }
+
+    public bool? WriteMessageToTag { get; set; }
 }
 
 public sealed class HmiAnalogAlarm : HmiBaseAlarm
@@ -120,6 +155,28 @@ public sealed class HmiAlarmList : IHmiObject
     public HmiAlarmListType HmiAlarmListType { get; set; }
 
     public IList<HmiAlarm> Alarms { get; } = new List<HmiAlarm>();
+
+    public int? HistorySize { get; set; }
+
+    public int? HoldTimeMilliseconds { get; set; }
+
+    public double? MaximumUpdateRateSeconds { get; set; }
+
+    public string? SilenceTag { get; set; }
+
+    public string? RemoteSilenceExpression { get; set; }
+
+    public string? RemoteAcknowledgeAllExpression { get; set; }
+
+    public string? StatusResetTag { get; set; }
+
+    public string? RemoteStatusResetExpression { get; set; }
+
+    public string? CloseDisplayTag { get; set; }
+
+    public string? RemoteCloseDisplayExpression { get; set; }
+
+    public bool? UseAlarmIdentifier { get; set; }
 }
 
 public enum HmiAlarmListType
