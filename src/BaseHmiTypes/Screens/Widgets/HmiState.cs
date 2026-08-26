@@ -45,6 +45,10 @@ public sealed class HmiState
 
     public HmiColor? BackgroundColor { get; set; }
 
+    public HmiFillPattern? FillPattern { get; set; }
+
+    public HmiColor? PatternColor { get; set; }
+
     public HmiColor? BorderColor { get; set; }
 
     public bool Blink { get; set; }
