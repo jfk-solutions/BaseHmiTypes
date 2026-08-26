@@ -1,4 +1,4 @@
-import { HmiColor, HmiImageSource, HmiProperty } from "../base.js";
+import { HmiColor, HmiHorizontalAlignment, HmiImageSource, HmiProperty, HmiVerticalAlignment } from "../base.js";
 import { HmiSurfaceShapeBase } from "./HmiSurfaceShapeBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 
@@ -16,5 +16,7 @@ export class HmiGraphicView extends HmiSurfaceShapeBase {
   imageColor?: HmiProperty<HmiColor>;
   imageBackgroundColor?: HmiProperty<HmiColor>;
   imageBackgroundTransparent?: HmiProperty<boolean>;
+  imageHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  imageVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   graphicStretchMode?: HmiProperty<number>;
 }

@@ -1,5 +1,5 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
-import { HmiColor, HmiImageSource, HmiProperty, HmiThickness } from "../base.js";
+import { HmiColor, HmiHorizontalAlignment, HmiImageSource, HmiProperty, HmiThickness, HmiVerticalAlignment } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiButtonAction } from "./HmiButtonAction.js";
 import { HmiState } from "./HmiState.js";
@@ -16,6 +16,8 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   imageColor?: HmiProperty<HmiColor>;
   imageBackgroundColor?: HmiProperty<HmiColor>;
   imageBackgroundTransparent?: HmiProperty<boolean>;
+  imageHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  imageVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   graphicStretchMode?: HmiProperty<number>;
   hotKey?: HmiProperty<string>;
   pressedStateTags?: HmiProperty<string>;
