@@ -18,6 +18,11 @@ public class HmiText : HmiSurfaceShapeBase
 
     public HmiProperty<int>? TextTrimming { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether text stretches or shrinks when the object is resized.
+    /// </summary>
+    public HmiProperty<bool>? SizeToFit { get; set; }
+
     public HmiFont? Font { get; set; }
 
     public HmiProperty<HmiHorizontalAlignment>? HorizontalAlignment { get; set; }
