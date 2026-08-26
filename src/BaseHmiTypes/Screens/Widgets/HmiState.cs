@@ -11,6 +11,10 @@ public sealed class HmiState
 
     public HmiMultilingualText? Text { get; set; }
 
+    public string? TargetDisplay { get; set; }
+
+    public bool? CaptionUsesDisplayName { get; set; }
+
     public string? ImageName { get; set; }
 
     public HmiImageSource? Image { get; set; }
