@@ -24,4 +24,8 @@ public sealed class HmiState
     public HmiColor? BorderColor { get; set; }
 
     public bool Blink { get; set; }
+
+    public bool CaptionBlink { get; set; }
+
+    public bool ImageBlink { get; set; }
 }
