@@ -4,6 +4,7 @@ import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiButtonAction } from "./HmiButtonAction.js";
 import { HmiButtonNextStateMode } from "./HmiButtonNextStateMode.js";
 import { HmiHandshakeResetMode } from "./HmiHandshakeResetMode.js";
+import { HmiRampDirection } from "./HmiRampDirection.js";
 import { HmiState } from "./HmiState.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
@@ -34,6 +35,11 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   buttonAction?: HmiProperty<HmiButtonAction>;
   buttonValue?: HmiProperty<number>;
   nextStateMode?: HmiProperty<HmiButtonNextStateMode>;
+  rampDirection?: HmiProperty<HmiRampDirection>;
+  rampIncrement?: HmiProperty<number>;
+  rampLimit?: HmiProperty<number>;
+  useVariableRamp?: HmiProperty<boolean>;
+  useVariableLimit?: HmiProperty<boolean>;
   handshake?: HmiProperty<number>;
   latchResetMode?: HmiProperty<HmiHandshakeResetMode>;
   captionColor?: HmiProperty<HmiColor>;
