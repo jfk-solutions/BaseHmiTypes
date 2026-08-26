@@ -38,6 +38,8 @@ public abstract class HmiWidgetBase : HmiSimpleScreenItemBase
 
     public HmiProperty<bool>? UseSecondGradient { get; set; }
 
+    public HmiProperty<HmiGradientDirection>? GradientDirection { get; set; }
+
     public HmiProperty<bool>? UseDesignColorSchema { get; set; }
 
     public HmiProperty<bool>? UseDesignShadowSettings { get; set; }
