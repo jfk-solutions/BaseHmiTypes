@@ -39,6 +39,8 @@ public sealed class HmiState
 
     public HmiVerticalAlignment? CaptionVerticalAlignment { get; set; }
 
+    public bool? CaptionWordWrap { get; set; }
+
     public HmiColor? ForegroundColor { get; set; }
 
     public HmiColor? BackgroundColor { get; set; }
