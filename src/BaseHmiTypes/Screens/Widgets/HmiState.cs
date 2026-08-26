@@ -23,6 +23,10 @@ public sealed class HmiState
 
     public bool? ImageBackgroundTransparent { get; set; }
 
+    public HmiColor? CaptionColor { get; set; }
+
+    public HmiColor? CaptionBackgroundColor { get; set; }
+
     public HmiColor? ForegroundColor { get; set; }
 
     public HmiColor? BackgroundColor { get; set; }
