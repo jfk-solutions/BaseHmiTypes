@@ -30,4 +30,9 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<HmiColor>? CaptionColor { get; set; }
 
     public HmiProperty<HmiColor>? CaptionBackgroundColor { get; set; }
+
+    /// <summary>
+    /// Gets or sets the touch-insensitive area inside the button bounds.
+    /// </summary>
+    public HmiThickness? TouchMargin { get; set; }
 }
