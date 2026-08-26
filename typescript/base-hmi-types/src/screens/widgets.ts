@@ -4,6 +4,7 @@ export * from "./widgets/HmiWidgetBase.js";
 export * from "./widgets/HmiButtonBase.js";
 export * from "./widgets/HmiButtonAction.js";
 export * from "./widgets/HmiButtonNextStateMode.js";
+export * from "./widgets/HmiHandshakeResetMode.js";
 export * from "./widgets/HmiDecimalPointMode.js";
 export * from "./widgets/HmiButtonType.js";
 export * from "./widgets/HmiSwitchType.js";
