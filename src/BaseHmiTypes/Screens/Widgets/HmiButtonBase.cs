@@ -77,6 +77,16 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<HmiButtonNextStateMode>? NextStateMode { get; set; }
 
+    /// <summary>
+    /// Gets or sets the acknowledgement signal used to release a latched button.
+    /// </summary>
+    public HmiProperty<double>? Handshake { get; set; }
+
+    /// <summary>
+    /// Gets or sets how the acknowledgement signal releases a latched button.
+    /// </summary>
+    public HmiProperty<HmiHandshakeResetMode>? LatchResetMode { get; set; }
+
     public HmiProperty<HmiColor>? CaptionColor { get; set; }
 
     public HmiProperty<HmiColor>? CaptionBackgroundColor { get; set; }
