@@ -14,6 +14,7 @@ export * from "./base/HmiImageSource.js";
 export * from "./base/HmiScreenModelBase.js";
 export * from "./base/HmiScreenKind.js";
 export * from "./base/HmiScreenBase.js";
+export * from "./base/HmiScreenParameter.js";
 export * from "./base/HmiLayer.js";
 export * from "./base/HmiScreenItemBase.js";
 export * from "./base/HmiPaintedScreenItemBase.js";
