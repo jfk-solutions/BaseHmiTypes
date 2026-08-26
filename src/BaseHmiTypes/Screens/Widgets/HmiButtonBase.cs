@@ -7,6 +7,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
 {
     public IList<HmiState> States { get; } = new List<HmiState>();
 
+    /// <summary>
+    /// Gets or sets the number of configured states, excluding any error state.
+    /// </summary>
+    public HmiProperty<int>? ConfiguredStateCount { get; set; }
+
     public HmiProperty<double>? State { get; set; }
 
     public HmiProperty<HmiMultilingualText>? Text { get; set; }

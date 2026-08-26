@@ -6,6 +6,11 @@ public abstract class HmiSelectionGroupBase : HmiWidgetBase
 {
     public IList<HmiState> States { get; } = new List<HmiState>();
 
+    /// <summary>
+    /// Gets or sets the number of configured states, excluding any error state.
+    /// </summary>
+    public HmiProperty<int>? ConfiguredStateCount { get; set; }
+
     public HmiProperty<double>? Value { get; set; }
 
     public IList<HmiSelectionGroupItem> Items { get; } = new List<HmiSelectionGroupItem>();
