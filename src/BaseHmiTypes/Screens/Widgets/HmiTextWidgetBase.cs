@@ -11,10 +11,6 @@ public abstract class HmiTextWidgetBase : HmiWidgetBase
 
     public HmiProperty<bool>? ReadOnly { get; set; }
 
-    public HmiProperty<int>? TextWrapping { get; set; }
-
-    public HmiProperty<int>? TextTrimming { get; set; }
-
     public HmiProperty<string>? OutputFormat { get; set; }
 
     public HmiProperty<string>? FormatPattern { get; set; }
