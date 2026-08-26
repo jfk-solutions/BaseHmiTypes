@@ -10,4 +10,5 @@ export enum HmiProjectFolderType {
   Alarms = "Alarms",
   Connections = "Connections",
   Faceplates = "Faceplates",
+  Recipes = "Recipes",
 }

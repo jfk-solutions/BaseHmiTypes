@@ -2,6 +2,7 @@ using BaseHmiTypes.Alarms;
 using BaseHmiTypes.Connections;
 using BaseHmiTypes.Cycles;
 using BaseHmiTypes.Images;
+using BaseHmiTypes.Recipes;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
 using BaseHmiTypes.Scripts;
@@ -21,7 +22,8 @@ public interface IHmiProject :
     IHmiImageProvider,
     IHmiCycleProvider,
     IHmiAlarmProvider,
-    IHmiConnectionProvider
+    IHmiConnectionProvider,
+    IHmiRecipeProvider
 {
     HmiProjectInfo Info { get; }
 }
@@ -112,4 +114,9 @@ public interface IHmiAlarmProvider
 public interface IHmiConnectionProvider
 {
     ValueTask<HmiConnectionList?> GetConnectionListAsync(string id, CancellationToken cancellationToken = default);
+}
+
+public interface IHmiRecipeProvider
+{
+    ValueTask<HmiRecipe?> GetRecipeAsync(string id, CancellationToken cancellationToken = default);
 }
