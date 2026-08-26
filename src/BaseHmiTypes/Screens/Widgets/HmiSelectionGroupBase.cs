@@ -23,6 +23,8 @@ public abstract class HmiSelectionGroupBase : HmiWidgetBase
 
     public HmiProperty<bool>? WriteOnEnter { get; set; }
 
+    public HmiEnterHandshakeSettings? EnterHandshake { get; set; }
+
     public HmiProperty<double>? SelectionItemHeight { get; set; }
 
     public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
