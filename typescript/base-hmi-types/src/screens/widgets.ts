@@ -4,6 +4,7 @@ export * from "./widgets/HmiWidgetBase.js";
 export * from "./widgets/HmiButtonBase.js";
 export * from "./widgets/HmiButtonAction.js";
 export * from "./widgets/HmiButtonNextStateMode.js";
+export * from "./widgets/HmiRampDirection.js";
 export * from "./widgets/HmiHandshakeResetMode.js";
 export * from "./widgets/HmiEnterHandshakeSettings.js";
 export * from "./widgets/HmiInputPopupMode.js";
