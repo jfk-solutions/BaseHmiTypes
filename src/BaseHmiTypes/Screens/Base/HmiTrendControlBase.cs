@@ -156,4 +156,12 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? SingleTraceMode { get; set; }
 
     public HmiProperty<bool>? RubberBandZoomEnabled { get; set; }
+
+    public HmiProperty<bool>? TimePeriodAbsoluteMode { get; set; }
+
+    public HmiProperty<string>? TimePeriodDuration { get; set; }
+
+    public HmiProperty<string>? TimePeriodStart { get; set; }
+
+    public HmiProperty<string>? TimePeriodEnd { get; set; }
 }
