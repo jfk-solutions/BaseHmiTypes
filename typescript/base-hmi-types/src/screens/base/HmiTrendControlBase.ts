@@ -93,4 +93,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   showYAxisCursors?: HmiProperty<boolean>;
   singleTraceMode?: HmiProperty<boolean>;
   rubberBandZoomEnabled?: HmiProperty<boolean>;
+  timePeriodAbsoluteMode?: HmiProperty<boolean>;
+  timePeriodDuration?: HmiProperty<string>;
+  timePeriodStart?: HmiProperty<string>;
+  timePeriodEnd?: HmiProperty<string>;
 }
