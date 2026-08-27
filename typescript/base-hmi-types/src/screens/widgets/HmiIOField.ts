@@ -4,6 +4,7 @@ import { HmiDecimalPointMode } from "./HmiDecimalPointMode.js";
 import { HmiEnterHandshakeSettings } from "./HmiEnterHandshakeSettings.js";
 import { HmiInputPopupMode } from "./HmiInputPopupMode.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
+import { HmiConfirmationMode } from "./HmiConfirmationMode.js";
 
 export class HmiIOField extends HmiTextWidgetBase {
   hotKey?: HmiProperty<string>;
@@ -20,6 +21,7 @@ export class HmiIOField extends HmiTextWidgetBase {
   continuouslyUpdate?: HmiProperty<boolean>;
   discardInputOnFocusLost?: HmiProperty<boolean>;
   remark?: HmiProperty<HmiMultilingualText>;
+  confirmationMode?: HmiProperty<HmiConfirmationMode>;
 
   constructor() {
     super();
