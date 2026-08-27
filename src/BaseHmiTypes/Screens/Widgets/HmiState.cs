@@ -11,6 +11,8 @@ public sealed class HmiState
 
     public HmiMultilingualText? Text { get; set; }
 
+    public HmiFont? Font { get; set; }
+
     public string? TargetDisplay { get; set; }
 
     public string? ParameterFile { get; set; }
