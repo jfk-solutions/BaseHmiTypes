@@ -19,6 +19,12 @@ public sealed class HmiState
 
     public HmiDisplayParameterSource? ParameterSource { get; set; }
 
+    public bool? PositionEnabled { get; set; }
+
+    public double? PositionX { get; set; }
+
+    public double? PositionY { get; set; }
+
     public bool? CaptionUsesDisplayName { get; set; }
 
     public string? ImageName { get; set; }
