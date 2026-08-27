@@ -201,6 +201,42 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? ActiveMarkerVisible { get; set; }
 
+    public HmiProperty<HmiColor>? ActiveXAxisColor { get; set; }
+
+    public HmiProperty<bool>? ActiveXAxisGridLinesVisible { get; set; }
+
+    public HmiProperty<int>? ActiveXAxisLineWidth { get; set; }
+
+    public HmiProperty<double>? ActiveXAxisMajorTickScale { get; set; }
+
+    public HmiProperty<double>? ActiveXAxisMaximumValue { get; set; }
+
+    public HmiProperty<double>? ActiveXAxisMinorTickMarks { get; set; }
+
+    public HmiProperty<double>? ActiveXAxisMinimumValue { get; set; }
+
+    public HmiProperty<HmiTrendAxisScalingMode>? ActiveXAxisScalingMode { get; set; }
+
+    public HmiProperty<bool>? ActiveXAxisVisible { get; set; }
+
+    public HmiProperty<HmiColor>? ActiveYAxisColor { get; set; }
+
+    public HmiProperty<bool>? ActiveYAxisGridLinesVisible { get; set; }
+
+    public HmiProperty<int>? ActiveYAxisLineWidth { get; set; }
+
+    public HmiProperty<double>? ActiveYAxisMajorTickScale { get; set; }
+
+    public HmiProperty<double>? ActiveYAxisMaximumValue { get; set; }
+
+    public HmiProperty<double>? ActiveYAxisMinorTickMarks { get; set; }
+
+    public HmiProperty<double>? ActiveYAxisMinimumValue { get; set; }
+
+    public HmiProperty<HmiTrendAxisScalingMode>? ActiveYAxisScalingMode { get; set; }
+
+    public HmiProperty<bool>? ActiveYAxisVisible { get; set; }
+
     public string? ControlType { get; set; }
 
     public string? CurrentTagName { get; set; }
