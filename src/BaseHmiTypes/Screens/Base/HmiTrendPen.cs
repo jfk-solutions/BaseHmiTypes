@@ -33,4 +33,20 @@ public sealed class HmiTrendPen
     public HmiProperty<bool>? LinkData { get; set; }
 
     public string? DataLogModelName { get; set; }
+
+    public string? Description { get; set; }
+
+    public string? EngineeringUnit { get; set; }
+
+    public HmiProperty<bool>? LogarithmicScale { get; set; }
+
+    /// <summary>
+    /// FactoryTalk pen index used as the lower boundary of a shaded range.
+    /// </summary>
+    public HmiProperty<int>? LowerBoundPenIndex { get; set; }
+
+    /// <summary>
+    /// FactoryTalk pen index used as the upper boundary of a shaded range.
+    /// </summary>
+    public HmiProperty<int>? UpperBoundPenIndex { get; set; }
 }
