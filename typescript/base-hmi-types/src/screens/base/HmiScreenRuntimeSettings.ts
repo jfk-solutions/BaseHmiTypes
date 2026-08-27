@@ -26,6 +26,8 @@ export enum HmiScreenResizeMode {
 export class HmiScreenRuntimeSettings {
   displayType?: HmiScreenDisplayType;
   positionMode?: HmiScreenPositionMode;
+  positionX?: number;
+  positionY?: number;
   sizeMode?: HmiScreenSizeMode;
   securityCode?: string;
   titleBarVisible?: boolean;
