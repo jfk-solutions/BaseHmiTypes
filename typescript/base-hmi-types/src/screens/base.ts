@@ -49,4 +49,6 @@ export * from "./base/HmiSwacContainer.js";
 export * from "./base/HmiFaceplateType.js";
 export * from "./base/HmiCompanionBase.js";
 export * from "./base/HmiTrendControlBase.js";
+export * from "./base/HmiTrendChartStyle.js";
 export * from "./base/HmiTrendPen.js";
+export * from "./base/HmiTrendUpdateMode.js";
