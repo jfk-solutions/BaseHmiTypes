@@ -35,6 +35,8 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiProperty<double>? RotationCenterY { get; set; }
 
+    public HmiAffineTransform? Transform { get; set; }
+
     public HmiProperty<int>? TabIndex { get; set; }
 
     public string? SecurityCode { get; set; }
