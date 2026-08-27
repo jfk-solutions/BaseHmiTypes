@@ -1,6 +1,9 @@
 import { HmiColor, HmiLineStyle, HmiProperty } from "../base.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
+import { HmiAlarmColumn } from "./HmiAlarmColumn.js";
+import { HmiAlarmConditionPresentation } from "./HmiAlarmConditionPresentation.js";
+import { HmiAlarmSelectedIndicator } from "./HmiAlarmSelectedIndicator.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -13,6 +16,14 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   resetFlashingRate?: HmiProperty<number>;
   numberOfRows?: HmiProperty<number>;
   wrapAround?: HmiProperty<boolean>;
+  linesPerAlarm?: HmiProperty<number>;
+  selectedAlarmIndicator?: HmiProperty<HmiAlarmSelectedIndicator>;
+  wordWrap?: HmiProperty<boolean>;
+  readonly filteredTriggers: string[] = [];
+  useAlarmIdentifier?: HmiProperty<boolean>;
+  alarmIdentifier?: HmiProperty<number>;
+  readonly conditions: HmiAlarmConditionPresentation[] = [];
+  readonly columnDefinitions: HmiAlarmColumn[] = [];
   showHeader?: HmiProperty<boolean>;
   showAlarmTime?: HmiProperty<boolean>;
   showAcknowledgmentTime?: HmiProperty<boolean>;
