@@ -19,6 +19,22 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? WrapAround { get; set; }
 
+    public HmiProperty<int>? LinesPerAlarm { get; set; }
+
+    public HmiProperty<HmiAlarmSelectedIndicator>? SelectedAlarmIndicator { get; set; }
+
+    public HmiProperty<bool>? WordWrap { get; set; }
+
+    public IList<string> FilteredTriggers { get; } = new List<string>();
+
+    public HmiProperty<bool>? UseAlarmIdentifier { get; set; }
+
+    public HmiProperty<double>? AlarmIdentifier { get; set; }
+
+    public IList<HmiAlarmConditionPresentation> Conditions { get; } = new List<HmiAlarmConditionPresentation>();
+
+    public IList<HmiAlarmColumn> ColumnDefinitions { get; } = new List<HmiAlarmColumn>();
+
     public HmiProperty<bool>? ShowHeader { get; set; }
 
     public HmiProperty<bool>? ShowAlarmTime { get; set; }
