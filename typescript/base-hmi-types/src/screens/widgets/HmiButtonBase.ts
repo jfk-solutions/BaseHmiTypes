@@ -6,10 +6,12 @@ import { HmiButtonNextStateMode } from "./HmiButtonNextStateMode.js";
 import { HmiHandshakeResetMode } from "./HmiHandshakeResetMode.js";
 import { HmiRampDirection } from "./HmiRampDirection.js";
 import { HmiState } from "./HmiState.js";
+import { HmiStateTriggerMode } from "./HmiStateTriggerMode.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
   readonly states: HmiState[] = [];
   configuredStateCount?: HmiProperty<number>;
+  stateTriggerMode?: HmiProperty<HmiStateTriggerMode>;
   state?: HmiProperty<number>;
   text?: HmiProperty<HmiMultilingualText>;
   alternateText?: HmiProperty<HmiMultilingualText>;
