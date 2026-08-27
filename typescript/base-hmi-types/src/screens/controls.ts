@@ -5,6 +5,7 @@ export * from "./controls/HmiAlarmColumnType.js";
 export * from "./controls/HmiAlarmCondition.js";
 export * from "./controls/HmiAlarmConditionPresentation.js";
 export * from "./controls/HmiAlarmSelectedIndicator.js";
+export * from "./controls/HmiAlarmListMode.js";
 export * from "./controls/HmiDataGridControl.js";
 export * from "./controls/HmiDetailedParameterControl.js";
 export * from "./controls/HmiMediaControl.js";
