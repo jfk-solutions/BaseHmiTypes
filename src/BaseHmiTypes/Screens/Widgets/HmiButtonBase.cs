@@ -93,6 +93,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<bool>? UseVariableMacro { get; set; }
 
     /// <summary>
+    /// Gets or sets the application language selected when the button is activated.
+    /// </summary>
+    public HmiProperty<string>? TargetLanguage { get; set; }
+
+    /// <summary>
     /// Gets or sets the acknowledgement signal used to release a latched button.
     /// </summary>
     public HmiProperty<double>? Handshake { get; set; }
