@@ -31,5 +31,15 @@ public enum HmiButtonOperation
     RecipeSave,
     RecipeRestore,
     RecipeDelete,
-    RecipeRename
+    RecipeRename,
+    KeyMoveLeft,
+    KeyMoveRight,
+    KeyMoveUp,
+    KeyMoveDown,
+    KeyPageUp,
+    KeyPageDown,
+    KeyHome,
+    KeyEnd,
+    KeyBackspace,
+    KeyEnter
 }
