@@ -76,3 +76,4 @@ export * from "./base/HmiTrendTemplateOption.js";
 export * from "./base/HmiTrendUpdateMode.js";
 export * from "./base/HmiTrendYAxisRangeMode.js";
 export * from "./base/HmiTrendYAxisScaleMode.js";
+export * from "./base/HmiTouchAreaShape.js";
