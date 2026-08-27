@@ -50,6 +50,14 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<bool>? WindowsStyle { get; set; }
 
+    public HmiProperty<HmiButtonVisualStyle>? VisualStyle { get; set; }
+
+    public HmiProperty<bool>? CaptureCursor { get; set; }
+
+    public HmiProperty<bool>? HighlightOnFocus { get; set; }
+
+    public HmiProperty<bool>? DownStateSameAsUp { get; set; }
+
     /// <summary>
     /// Gets or sets whether the operator can activate the button with a pointer or touch screen.
     /// </summary>
