@@ -10,6 +10,11 @@ export class HmiIOField extends HmiTextWidgetBase {
   hotKey?: HmiProperty<string>;
   maskInput?: HmiProperty<boolean>;
   fillCharacters?: HmiProperty<string>;
+  characterColumns?: HmiProperty<number>;
+  characterRows?: HmiProperty<number>;
+  characterOffset?: HmiProperty<number>;
+  showDigitGrouping?: HmiProperty<boolean>;
+  overflowMode?: HmiProperty<string>;
   decimalPointMode?: HmiProperty<HmiDecimalPointMode>;
   polaritySignal?: HmiProperty<number>;
   enterHandshake?: HmiEnterHandshakeSettings;
