@@ -15,6 +15,7 @@ export * from "./base/HmiScreenModelBase.js";
 export * from "./base/HmiScreenKind.js";
 export * from "./base/HmiElectronicSignatureSettings.js";
 export * from "./base/HmiScreenRuntimeSettings.js";
+export * from "./base/HmiScreenCacheMode.js";
 export * from "./base/HmiScreenBase.js";
 export * from "./base/HmiScreenParameter.js";
 export * from "./base/HmiLayer.js";
