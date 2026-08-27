@@ -4,11 +4,13 @@ import { HmiProperty, staticProperty } from "./HmiProperty.js";
 import { HmiEventBinding } from "../../scripts/HmiEventBinding.js";
 import { HmiElectronicSignatureSettings } from "./HmiElectronicSignatureSettings.js";
 import { HmiScriptExposureMode } from "./HmiScriptExposureMode.js";
+import { HmiReferenceObjectSettings } from "./HmiReferenceObjectSettings.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   description?: string;
   isWallpaper?: boolean;
   isReferenceObject?: boolean;
+  referenceObject?: HmiReferenceObjectSettings;
   scriptExposureMode?: HmiScriptExposureMode;
   x: HmiProperty<number> = staticProperty(0);
   y: HmiProperty<number> = staticProperty(0);
