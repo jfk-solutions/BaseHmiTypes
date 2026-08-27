@@ -57,6 +57,14 @@ public sealed class HmiState
 
     public HmiColor? BackgroundColor { get; set; }
 
+    public HmiColor? EndColor { get; set; }
+
+    public double? GradientStop { get; set; }
+
+    public string? GradientAxis { get; set; }
+
+    public HmiGradientDirection? GradientDirection { get; set; }
+
     public HmiFillPattern? FillPattern { get; set; }
 
     public HmiColor? PatternColor { get; set; }
