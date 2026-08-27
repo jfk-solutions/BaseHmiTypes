@@ -7,4 +7,16 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<double>? MinimumValue { get; set; }
 
     public HmiProperty<double>? MaximumValue { get; set; }
+
+    public HmiProperty<HmiTrendChartStyle>? ChartStyle { get; set; }
+
+    public HmiProperty<int>? XAxisPenNumber { get; set; }
+
+    public HmiProperty<HmiTrendUpdateMode>? UpdateMode { get; set; }
+
+    public HmiProperty<double>? RefreshRateMilliseconds { get; set; }
+
+    public HmiProperty<double>? HeartbeatMilliseconds { get; set; }
+
+    public HmiProperty<double>? DeadbandPercent { get; set; }
 }
