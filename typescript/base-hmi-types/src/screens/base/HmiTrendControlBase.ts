@@ -8,6 +8,8 @@ import { HmiTrendPen } from "./HmiTrendPen.js";
 import { HmiTrendScrollMode } from "./HmiTrendScrollMode.js";
 import { HmiTrendTimeFormat } from "./HmiTrendTimeFormat.js";
 import { HmiTrendUpdateMode } from "./HmiTrendUpdateMode.js";
+import { HmiTrendYAxisRangeMode } from "./HmiTrendYAxisRangeMode.js";
+import { HmiTrendYAxisScaleMode } from "./HmiTrendYAxisScaleMode.js";
 
 export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   readonly pens: HmiTrendPen[] = [];
@@ -33,4 +35,15 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   xAxisMajorGridLineCount?: HmiProperty<number>;
   xAxisMinorGridLineCount?: HmiProperty<number>;
   xAxisGridColor?: HmiProperty<HmiColor>;
+  yAxisRangeMode?: HmiProperty<HmiTrendYAxisRangeMode>;
+  yAxisIsolatedGraphing?: HmiProperty<boolean>;
+  yAxisIsolationPercent?: HmiProperty<number>;
+  yAxisScaleVisible?: HmiProperty<boolean>;
+  yAxisDecimalPlaces?: HmiProperty<number>;
+  yAxisGridVisible?: HmiProperty<boolean>;
+  yAxisMajorGridLineCount?: HmiProperty<number>;
+  yAxisMinorGridLineCount?: HmiProperty<number>;
+  yAxisGridColor?: HmiProperty<HmiColor>;
+  yAxisScaleMode?: HmiProperty<HmiTrendYAxisScaleMode>;
+  yAxisScalePenNumber?: HmiProperty<number>;
 }
