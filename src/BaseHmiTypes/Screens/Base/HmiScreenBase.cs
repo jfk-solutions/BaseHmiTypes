@@ -38,6 +38,8 @@ public abstract class HmiScreenBase : HmiScreenModelBase
 
     public HmiProperty<HmiUpdateCycle>? UpdateCycle { get; set; }
 
+    public HmiScreenRuntimeSettings? RuntimeSettings { get; set; }
+
     public IList<HmiScreenParameter> Parameters { get; } = new List<HmiScreenParameter>();
 
     public IList<HmiLayer> Layers { get; } = new List<HmiLayer>();
