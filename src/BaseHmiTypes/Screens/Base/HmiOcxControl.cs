@@ -13,6 +13,14 @@ public class HmiOcxControl : HmiCustomWidgetContainer
 
     public string? OcxProgramId { get; set; }
 
+    public string? OcxFileName { get; set; }
+
+    public string? OcxFileVersion { get; set; }
+
+    public string? OcxTypeLibrary { get; set; }
+
+    public string? OcxTypeLibraryVersion { get; set; }
+
     public byte[]? OcxState { get; set; }
 
     public string? OcxStateFormat { get; set; }
