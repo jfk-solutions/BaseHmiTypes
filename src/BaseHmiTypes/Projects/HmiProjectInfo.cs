@@ -17,4 +17,6 @@ public class HmiProjectInfo
     public string? EngineeringSoftwareVersionString { get; set; }
 
     public string? OriginalDateString { get; set; }
+
+    public string? LastModifiedDateString { get; set; }
 }
