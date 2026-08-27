@@ -10,6 +10,7 @@ import { HmiRampDirection } from "./HmiRampDirection.js";
 import { HmiState } from "./HmiState.js";
 import { HmiStateTriggerMode } from "./HmiStateTriggerMode.js";
 import { HmiScreenNavigationSettings } from "./HmiScreenNavigationSettings.js";
+import { HmiDisabledImageMode } from "./HmiDisabledImageMode.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
   readonly states: HmiState[] = [];
@@ -35,6 +36,8 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   windowsStyle?: HmiProperty<boolean>;
   touchEnabled?: HmiProperty<boolean>;
   audioEnabled?: HmiProperty<boolean>;
+  showDisabledState?: HmiProperty<boolean>;
+  disabledImageMode?: HmiProperty<HmiDisabledImageMode>;
   autoRepeatDelaySeconds?: HmiProperty<number>;
   autoRepeatRatePerSecond?: HmiProperty<number>;
   holdTimeSeconds?: HmiProperty<number>;
