@@ -1289,10 +1289,18 @@ public class HmiScreenToHtmlConverter
         AddFontValue(values, "name", font.Name);
         AddFontValue(values, "size", font.Size);
         AddFontValue(values, "characterWidth", font.CharacterWidth);
+        AddFontValue(values, "escapementAngle", font.EscapementAngle);
+        AddFontValue(values, "orientationAngle", font.OrientationAngle);
+        AddFontValue(values, "weight", font.Weight);
         AddFontValue(values, "bold", font.Bold);
         AddFontValue(values, "italic", font.Italic);
         AddFontValue(values, "underline", font.Underline);
         AddFontValue(values, "strikethrough", font.Strikethrough);
+        AddFontValue(values, "characterSet", font.CharacterSet);
+        AddFontValue(values, "outputPrecision", font.OutputPrecision);
+        AddFontValue(values, "clippingPrecision", font.ClippingPrecision);
+        AddFontValue(values, "quality", font.Quality);
+        AddFontValue(values, "pitchAndFamily", font.PitchAndFamily);
 
         return values.Count == 0 ? null : "{" + string.Join(",", values) + "}";
     }
