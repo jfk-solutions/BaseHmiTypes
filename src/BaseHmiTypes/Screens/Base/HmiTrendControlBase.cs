@@ -35,4 +35,16 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<HmiTrendScrollMode>? ScrollMode { get; set; }
 
     public HmiProperty<int>? BufferSizePerPen { get; set; }
+
+    public HmiProperty<bool>? XAxisScaleVisible { get; set; }
+
+    public HmiProperty<bool>? XAxisDateVisible { get; set; }
+
+    public HmiProperty<bool>? XAxisGridVisible { get; set; }
+
+    public HmiProperty<int>? XAxisMajorGridLineCount { get; set; }
+
+    public HmiProperty<int>? XAxisMinorGridLineCount { get; set; }
+
+    public HmiProperty<HmiColor>? XAxisGridColor { get; set; }
 }
