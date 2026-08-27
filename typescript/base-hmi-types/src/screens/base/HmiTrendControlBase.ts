@@ -29,6 +29,10 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   allowScrolling?: HmiProperty<boolean>;
   scrollMode?: HmiProperty<HmiTrendScrollMode>;
   bufferSizePerPen?: HmiProperty<number>;
+  chartTitle?: string;
+  displayChartTitle?: HmiProperty<boolean>;
+  dataServerName?: string;
+  displayHistoricalLoadProgress?: HmiProperty<boolean>;
   xAxisScaleVisible?: HmiProperty<boolean>;
   xAxisDateVisible?: HmiProperty<boolean>;
   xAxisGridVisible?: HmiProperty<boolean>;
