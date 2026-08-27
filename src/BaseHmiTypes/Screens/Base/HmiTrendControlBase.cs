@@ -48,6 +48,20 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? XAxisGridColor { get; set; }
 
+    /// <summary>
+    /// Engineering-system date text used at the left edge when scrolling is disabled.
+    /// </summary>
+    public string? XAxisStartDate { get; set; }
+
+    /// <summary>
+    /// Engineering-system time text used at the left edge when scrolling is disabled.
+    /// </summary>
+    public string? XAxisStartTime { get; set; }
+
+    public HmiProperty<double>? XAxisTimeSpan { get; set; }
+
+    public string? XAxisTimeSpanUnit { get; set; }
+
     public HmiProperty<HmiTrendYAxisRangeMode>? YAxisRangeMode { get; set; }
 
     public HmiProperty<bool>? YAxisIsolatedGraphing { get; set; }
