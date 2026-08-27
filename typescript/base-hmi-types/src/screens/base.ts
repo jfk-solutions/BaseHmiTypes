@@ -53,6 +53,8 @@ export * from "./base/HmiTrendChartStyle.js";
 export * from "./base/HmiTrendDataPointConnection.js";
 export * from "./base/HmiTrendNumericRadix.js";
 export * from "./base/HmiTrendLegendPosition.js";
+export * from "./base/HmiTrendOverlay.js";
+export * from "./base/HmiTrendOverlayAnchorType.js";
 export * from "./base/HmiTrendPen.js";
 export * from "./base/HmiTrendPenCaptionMode.js";
 export * from "./base/HmiTrendPenType.js";
