@@ -69,6 +69,12 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? TableForegroundColor { get; set; }
 
+    public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
+
+    public HmiProperty<bool>? UseAlarmColors { get; set; }
+
     public HmiProperty<HmiColor>? TableHeaderBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? TableHeaderForegroundColor { get; set; }
