@@ -3,6 +3,7 @@ export * from "./base/HmiModelBase.js";
 export * from "./base/HmiProperty.js";
 export * from "./base/HmiColor.js";
 export * from "./base/HmiChildCoordinateSpace.js";
+export * from "./base/HmiAffineTransform.js";
 export * from "./base/HmiThickness.js";
 export * from "./base/HmiLineStyle.js";
 export * from "./base/HmiFillPattern.js";

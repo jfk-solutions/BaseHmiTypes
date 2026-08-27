@@ -6,6 +6,7 @@ import { HmiElectronicSignatureSettings } from "./HmiElectronicSignatureSettings
 import { HmiScriptExposureMode } from "./HmiScriptExposureMode.js";
 import { HmiReferenceObjectSettings } from "./HmiReferenceObjectSettings.js";
 import { HmiVariableConfirmationSettings } from "./HmiVariableConfirmationSettings.js";
+import { HmiAffineTransform } from "./HmiAffineTransform.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   description?: string;
@@ -23,6 +24,7 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   rotationAngle?: HmiProperty<number>;
   rotationCenterX?: HmiProperty<number>;
   rotationCenterY?: HmiProperty<number>;
+  transform?: HmiAffineTransform;
   tabIndex?: HmiProperty<number>;
   securityCode?: string;
   keyNavigation?: HmiProperty<boolean>;
