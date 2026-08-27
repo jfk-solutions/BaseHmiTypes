@@ -45,6 +45,18 @@ export abstract class HmiBaseAlarm extends HmiAlarm {
   processValueTag10?: string;
   area?: string;
   origin?: string;
+  triggerLabel?: string;
+  messageSource?: string;
+  fileMessage?: HmiMultilingualText;
+  printerMessage?: HmiMultilingualText;
+  outOfAlarmLabel?: string;
+  outOfAlarmMessageSource?: string;
+  outOfAlarmFileMessage?: HmiMultilingualText;
+  outOfAlarmPrinterMessage?: HmiMultilingualText;
+  acknowledgeMessageSource?: string;
+  acknowledgeFileMessage?: HmiMultilingualText;
+  acknowledgePrinterMessage?: HmiMultilingualText;
+  alarmIdentification?: string;
 }
 
 export class HmiDiscreteAlarm extends HmiBaseAlarm {
@@ -57,7 +69,6 @@ export class HmiDiscreteAlarm extends HmiBaseAlarm {
   plcAcknowledgementBitNumber = 0;
   triggerValue?: number;
   triggerReference?: string;
-  triggerLabel?: string;
   useAcknowledgeAll?: boolean;
   acknowledgeAllValue?: number;
   handshakeTag?: string;
@@ -72,11 +83,21 @@ export class HmiDiscreteAlarm extends HmiBaseAlarm {
   displayEnabled?: boolean;
   printEnabled?: boolean;
   writeMessageToTag?: boolean;
+  acknowledgementAutoReset?: boolean;
+  handshakeAutoReset?: boolean;
 }
 
 export class HmiAnalogAlarm extends HmiBaseAlarm {
+  triggerTag?: string;
   limitMode?: string;
   limitValueConstant?: string;
+  limitValueTag?: string;
+  deadbandValue?: number;
+  deadbandPercentage?: boolean;
+  acknowledgementTag?: string;
+  acknowledgementAutoReset?: boolean;
+  handshakeTag?: string;
+  handshakeAutoReset?: boolean;
 }
 
 export class HmiOpcUaAlarm extends HmiAlarm {
