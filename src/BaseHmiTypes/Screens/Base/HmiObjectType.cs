@@ -47,6 +47,7 @@ public static class HmiObjectType
     public const string HmiProcessDiagnosisOverviewControl = nameof(HmiProcessDiagnosisOverviewControl);
     public const string HmiProcessDiagnosisPlcCodeViewerControl = nameof(HmiProcessDiagnosisPlcCodeViewerControl);
     public const string HmiRadioButtonGroup = nameof(HmiRadioButtonGroup);
+    public const string HmiRecipeControl = nameof(HmiRecipeControl);
     public const string HmiRectangle = nameof(HmiRectangle);
     public const string HmiScreen = nameof(HmiScreen);
     public const string HmiScreenMaster = nameof(HmiScreenMaster);
