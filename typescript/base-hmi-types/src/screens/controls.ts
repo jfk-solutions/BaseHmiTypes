@@ -6,6 +6,7 @@ export * from "./controls/HmiAlarmCondition.js";
 export * from "./controls/HmiAlarmConditionPresentation.js";
 export * from "./controls/HmiAlarmSelectedIndicator.js";
 export * from "./controls/HmiAlarmListMode.js";
+export * from "./controls/HmiBorderStyle.js";
 export * from "./controls/HmiAuditTrailControl.js";
 export * from "./controls/HmiAuditTrailField.js";
 export * from "./controls/HmiAuditTrailFieldPresentation.js";
