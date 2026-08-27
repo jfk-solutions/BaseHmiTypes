@@ -45,6 +45,14 @@ export class HmiScreenRuntimeSettings {
   beepOnPress?: boolean;
   highlightWhenPointerPassesOver?: boolean;
   interactiveHighlightColor?: HmiColor;
+  fieldNotSelectedTextColor?: HmiColor;
+  fieldNotSelectedFillColor?: HmiColor;
+  fieldSelectedTextColor?: HmiColor;
+  fieldSelectedFillColor?: HmiColor;
+  fieldInErrorNotSelectedTextColor?: HmiColor;
+  fieldInErrorNotSelectedFillColor?: HmiColor;
+  fieldInErrorSelectedTextColor?: HmiColor;
+  fieldInErrorSelectedFillColor?: HmiColor;
   displayOnScreenKeyboard?: boolean;
   allowButtonActionOnError?: boolean;
   startupCommand?: string;
