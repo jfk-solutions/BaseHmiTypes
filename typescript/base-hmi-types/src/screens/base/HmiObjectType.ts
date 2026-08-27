@@ -3,6 +3,7 @@ export enum HmiObjectType {
   HmiAlarmControl = "HmiAlarmControl",
   HmiAlarmIndicator = "HmiAlarmIndicator",
   HmiAlarmLineControl = "HmiAlarmLineControl",
+  HmiAuditTrailControl = "HmiAuditTrailControl",
   HmiBar = "HmiBar",
   HmiButton = "HmiButton",
   HmiCheckBoxGroup = "HmiCheckBoxGroup",
