@@ -62,6 +62,30 @@ public abstract class HmiBaseAlarm : HmiAlarm
     public string? Area { get; set; }
 
     public string? Origin { get; set; }
+
+    public string? TriggerLabel { get; set; }
+
+    public string? MessageSource { get; set; }
+
+    public HmiMultilingualText? FileMessage { get; set; }
+
+    public HmiMultilingualText? PrinterMessage { get; set; }
+
+    public string? OutOfAlarmLabel { get; set; }
+
+    public string? OutOfAlarmMessageSource { get; set; }
+
+    public HmiMultilingualText? OutOfAlarmFileMessage { get; set; }
+
+    public HmiMultilingualText? OutOfAlarmPrinterMessage { get; set; }
+
+    public string? AcknowledgeMessageSource { get; set; }
+
+    public HmiMultilingualText? AcknowledgeFileMessage { get; set; }
+
+    public HmiMultilingualText? AcknowledgePrinterMessage { get; set; }
+
+    public string? AlarmIdentification { get; set; }
 }
 
 public sealed class HmiDiscreteAlarm : HmiBaseAlarm
@@ -83,8 +107,6 @@ public sealed class HmiDiscreteAlarm : HmiBaseAlarm
     public int? TriggerValue { get; set; }
 
     public string? TriggerReference { get; set; }
-
-    public string? TriggerLabel { get; set; }
 
     public bool? UseAcknowledgeAll { get; set; }
 
@@ -113,13 +135,33 @@ public sealed class HmiDiscreteAlarm : HmiBaseAlarm
     public bool? PrintEnabled { get; set; }
 
     public bool? WriteMessageToTag { get; set; }
+
+    public bool? AcknowledgementAutoReset { get; set; }
+
+    public bool? HandshakeAutoReset { get; set; }
 }
 
 public sealed class HmiAnalogAlarm : HmiBaseAlarm
 {
+    public string? TriggerTag { get; set; }
+
     public string? LimitMode { get; set; }
 
     public string? LimitValueConstant { get; set; }
+
+    public string? LimitValueTag { get; set; }
+
+    public double? DeadbandValue { get; set; }
+
+    public bool? DeadbandPercentage { get; set; }
+
+    public string? AcknowledgementTag { get; set; }
+
+    public bool? AcknowledgementAutoReset { get; set; }
+
+    public string? HandshakeTag { get; set; }
+
+    public bool? HandshakeAutoReset { get; set; }
 }
 
 public sealed class HmiOpcUaAlarm : HmiAlarm
