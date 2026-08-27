@@ -12,6 +12,8 @@ public abstract class HmiButtonBase : HmiWidgetBase
     /// </summary>
     public HmiProperty<int>? ConfiguredStateCount { get; set; }
 
+    public HmiProperty<HmiStateTriggerMode>? StateTriggerMode { get; set; }
+
     public HmiProperty<double>? State { get; set; }
 
     public HmiProperty<HmiMultilingualText>? Text { get; set; }

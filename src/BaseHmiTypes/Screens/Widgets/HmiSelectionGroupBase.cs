@@ -11,6 +11,8 @@ public abstract class HmiSelectionGroupBase : HmiWidgetBase
     /// </summary>
     public HmiProperty<int>? ConfiguredStateCount { get; set; }
 
+    public HmiProperty<HmiStateTriggerMode>? StateTriggerMode { get; set; }
+
     public HmiProperty<double>? Value { get; set; }
 
     public IList<HmiSelectionGroupItem> Items { get; } = new List<HmiSelectionGroupItem>();
