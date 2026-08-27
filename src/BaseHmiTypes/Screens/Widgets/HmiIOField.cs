@@ -37,4 +37,6 @@ public class HmiIOField : HmiTextWidgetBase
     public HmiProperty<bool>? DiscardInputOnFocusLost { get; set; }
 
     public HmiProperty<HmiMultilingualText>? Remark { get; set; }
+
+    public HmiProperty<HmiConfirmationMode>? ConfirmationMode { get; set; }
 }
