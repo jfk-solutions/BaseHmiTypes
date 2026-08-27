@@ -41,6 +41,8 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   buttonValue?: HmiProperty<number>;
   nextStateMode?: HmiProperty<HmiButtonNextStateMode>;
   operation?: HmiProperty<HmiButtonOperation>;
+  readonly alarmFilteredTriggers: string[] = [];
+  resetAlarmStatusOnClearHistory?: HmiProperty<boolean>;
   macro?: HmiProperty<string>;
   useVariableMacro?: HmiProperty<boolean>;
   targetLanguage?: HmiProperty<string>;
