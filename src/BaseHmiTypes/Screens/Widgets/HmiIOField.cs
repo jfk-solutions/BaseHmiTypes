@@ -16,6 +16,16 @@ public class HmiIOField : HmiTextWidgetBase
 
     public HmiProperty<string>? FillCharacters { get; set; }
 
+    public HmiProperty<int>? CharacterColumns { get; set; }
+
+    public HmiProperty<int>? CharacterRows { get; set; }
+
+    public HmiProperty<int>? CharacterOffset { get; set; }
+
+    public HmiProperty<bool>? ShowDigitGrouping { get; set; }
+
+    public HmiProperty<string>? OverflowMode { get; set; }
+
     public HmiProperty<HmiDecimalPointMode>? DecimalPointMode { get; set; }
 
     public HmiProperty<double>? PolaritySignal { get; set; }
