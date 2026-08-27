@@ -4,6 +4,7 @@ export * from "./widgets/HmiStateTriggerMode.js";
 export * from "./widgets/HmiDisplayParameterSource.js";
 export * from "./widgets/HmiWidgetBase.js";
 export * from "./widgets/HmiButtonBase.js";
+export * from "./widgets/HmiButtonVisualStyle.js";
 export * from "./widgets/HmiDisabledImageMode.js";
 export * from "./widgets/HmiConfirmationButtons.js";
 export * from "./widgets/HmiConfirmationDialogSettings.js";

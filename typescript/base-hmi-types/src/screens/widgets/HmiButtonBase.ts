@@ -12,6 +12,7 @@ import { HmiStateTriggerMode } from "./HmiStateTriggerMode.js";
 import { HmiScreenNavigationSettings } from "./HmiScreenNavigationSettings.js";
 import { HmiDisabledImageMode } from "./HmiDisabledImageMode.js";
 import { HmiConfirmationDialogSettings } from "./HmiConfirmationDialogSettings.js";
+import { HmiButtonVisualStyle } from "./HmiButtonVisualStyle.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
   readonly states: HmiState[] = [];
@@ -35,6 +36,10 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   pressedStateTags?: HmiProperty<string>;
   styleSettings?: HmiProperty<number>;
   windowsStyle?: HmiProperty<boolean>;
+  visualStyle?: HmiProperty<HmiButtonVisualStyle>;
+  captureCursor?: HmiProperty<boolean>;
+  highlightOnFocus?: HmiProperty<boolean>;
+  downStateSameAsUp?: HmiProperty<boolean>;
   touchEnabled?: HmiProperty<boolean>;
   audioEnabled?: HmiProperty<boolean>;
   showDisabledState?: HmiProperty<boolean>;
