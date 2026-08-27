@@ -11,6 +11,14 @@ public sealed class HmiRecipeControl : HmiControlWindowBase
 
     public HmiRecipeViewKind ViewKind { get; set; }
 
+    public HmiProperty<string>? DefaultRecipeName { get; set; }
+
+    public HmiProperty<int>? FieldLength { get; set; }
+
+    public HmiProperty<HmiHorizontalAlignment>? HorizontalAlignment { get; set; }
+
+    public HmiProperty<bool>? EnableRecipeDialog { get; set; }
+
     public HmiProperty<bool>? ShowHeader { get; set; }
 
     public HmiProperty<bool>? ShowFooter { get; set; }
