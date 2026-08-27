@@ -5,6 +5,9 @@ import { HmiEventBinding } from "../../scripts/HmiEventBinding.js";
 import { HmiElectronicSignatureSettings } from "./HmiElectronicSignatureSettings.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
+  description?: string;
+  isWallpaper?: boolean;
+  isReferenceObject?: boolean;
   x: HmiProperty<number> = staticProperty(0);
   y: HmiProperty<number> = staticProperty(0);
   width: HmiProperty<number> = staticProperty(0);
