@@ -23,5 +23,6 @@ public enum HmiButtonOperation
     PrintAlarmStatus,
     ResetAlarmStatus,
     SortAlarms,
-    AcknowledgeInformation
+    AcknowledgeInformation,
+    ClearAuditTrail
 }
