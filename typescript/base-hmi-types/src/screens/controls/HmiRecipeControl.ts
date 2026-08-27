@@ -1,4 +1,4 @@
-import { HmiColor, HmiProperty } from "../base.js";
+import { HmiColor, HmiHorizontalAlignment, HmiProperty } from "../base.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiRecipeColumn } from "./HmiRecipeColumn.js";
@@ -11,6 +11,10 @@ export class HmiRecipeControl extends HmiControlWindowBase {
   }
 
   viewKind = HmiRecipeViewKind.Selector;
+  defaultRecipeName?: HmiProperty<string>;
+  fieldLength?: HmiProperty<number>;
+  horizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  enableRecipeDialog?: HmiProperty<boolean>;
   showHeader?: HmiProperty<boolean>;
   showFooter?: HmiProperty<boolean>;
   linesPerItem?: HmiProperty<number>;
