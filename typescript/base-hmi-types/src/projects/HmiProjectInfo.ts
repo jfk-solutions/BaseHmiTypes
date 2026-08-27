@@ -9,4 +9,5 @@ export class HmiProjectInfo {
   author?: string;
   engineeringSoftwareVersionString?: string;
   originalDateString?: string;
+  lastModifiedDateString?: string;
 }
