@@ -17,6 +17,8 @@ public class HmiIOField : HmiTextWidgetBase
 
     public HmiProperty<HmiDecimalPointMode>? DecimalPointMode { get; set; }
 
+    public HmiProperty<double>? PolaritySignal { get; set; }
+
     public HmiEnterHandshakeSettings? EnterHandshake { get; set; }
 
     public HmiProperty<HmiInputPopupMode>? PopupMode { get; set; }
