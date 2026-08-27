@@ -35,10 +35,13 @@ export class HmiScreenRuntimeSettings {
   focusHighlightEnabled?: boolean;
   focusHighlightColor?: HmiColor;
   allowMultipleRunningCopies?: boolean;
+  keepAtBack?: boolean;
+  cannotBeReplaced?: boolean;
   cacheAfterDisplaying?: boolean;
   cacheMode?: HmiScreenCacheMode;
   systemMenuVisible?: boolean;
   minimizeButtonVisible?: boolean;
+  pinButtonVisible?: boolean;
   sizeToMainWindow?: boolean;
   resizeMode?: HmiScreenResizeMode;
   showLastAcquiredValue?: boolean;
