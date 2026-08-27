@@ -33,5 +33,7 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiProperty<bool>? CanBeGrouped { get; set; }
 
+    public HmiElectronicSignatureSettings? ElectronicSignature { get; set; }
+
     public IList<HmiEventBinding> Events { get; } = new List<HmiEventBinding>();
 }
