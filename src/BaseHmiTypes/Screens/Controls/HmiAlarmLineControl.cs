@@ -16,4 +16,20 @@ public class HmiAlarmLineControl : HmiSimpleScreenItemBase
     public HmiProperty<int>? ResetFlashingRate { get; set; }
 
     public HmiProperty<int>? NumberOfRows { get; set; }
+
+    public HmiProperty<bool>? QueueNewAlarms { get; set; }
+
+    public HmiProperty<bool>? ShowTriggerValue { get; set; }
+
+    public HmiProperty<bool>? ShowTriggerLabel { get; set; }
+
+    public HmiProperty<bool>? ShowInactiveAlarms { get; set; }
+
+    public HmiProperty<bool>? ShowAlarmState { get; set; }
+
+    public HmiProperty<bool>? ShowAlarmTime { get; set; }
+
+    public string? AlarmTimeFormat { get; set; }
+
+    public IList<string> FilteredTriggers { get; } = new List<string>();
 }
