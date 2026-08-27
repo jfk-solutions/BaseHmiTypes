@@ -94,6 +94,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<HmiButtonAction>? ButtonAction { get; set; }
 
+    /// <summary>
+    /// Gets or sets the tag that receives a direct button write action.
+    /// </summary>
+    public HmiProperty<string>? ActionTag { get; set; }
+
     public HmiProperty<double>? ButtonValue { get; set; }
 
     public HmiProperty<HmiButtonNextStateMode>? NextStateMode { get; set; }
