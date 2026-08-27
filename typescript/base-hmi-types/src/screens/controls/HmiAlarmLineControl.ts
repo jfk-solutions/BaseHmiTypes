@@ -1,4 +1,4 @@
-import { HmiProperty } from "../base.js";
+import { HmiFont, HmiHorizontalAlignment, HmiProperty } from "../base.js";
 import { HmiSimpleScreenItemBase } from "../base/HmiSimpleScreenItemBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 
@@ -12,6 +12,13 @@ export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   acknowledgmentFlashingRate?: HmiProperty<number>;
   resetFlashingRate?: HmiProperty<number>;
   numberOfRows?: HmiProperty<number>;
+  font?: HmiFont;
+  wordWrap?: HmiProperty<boolean>;
+  horizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  useAlarmColors?: HmiProperty<boolean>;
+  messageBlink?: HmiProperty<boolean>;
+  useAlarmIdentifier?: HmiProperty<boolean>;
+  alarmIdentifier?: HmiProperty<number>;
   queueNewAlarms?: HmiProperty<boolean>;
   showTriggerValue?: HmiProperty<boolean>;
   showTriggerLabel?: HmiProperty<boolean>;
