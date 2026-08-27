@@ -50,5 +50,8 @@ export * from "./base/HmiFaceplateType.js";
 export * from "./base/HmiCompanionBase.js";
 export * from "./base/HmiTrendControlBase.js";
 export * from "./base/HmiTrendChartStyle.js";
+export * from "./base/HmiTrendDataPointConnection.js";
+export * from "./base/HmiTrendNumericRadix.js";
 export * from "./base/HmiTrendPen.js";
+export * from "./base/HmiTrendTimeFormat.js";
 export * from "./base/HmiTrendUpdateMode.js";
