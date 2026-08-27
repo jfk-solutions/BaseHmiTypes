@@ -83,4 +83,26 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<HmiTrendYAxisScaleMode>? YAxisScaleMode { get; set; }
 
     public HmiProperty<int>? YAxisScalePenNumber { get; set; }
+
+    public IList<string> RuntimePropertyTabs { get; } = new List<string>();
+
+    public HmiProperty<bool>? AllowEditingLegendProperties { get; set; }
+
+    public HmiProperty<bool>? AllowPanZoom { get; set; }
+
+    public HmiProperty<bool>? AllowPauseResumeScrolling { get; set; }
+
+    public HmiProperty<bool>? AllowShowHideValueBar { get; set; }
+
+    public HmiProperty<bool>? AllowSnapshotCreation { get; set; }
+
+    public HmiProperty<bool>? AllowOverlayOptions { get; set; }
+
+    public HmiProperty<bool>? AllowPrint { get; set; }
+
+    public HmiProperty<bool>? AllowDeltaValueBar { get; set; }
+
+    public HmiProperty<bool>? AllowExportTrendData { get; set; }
+
+    public HmiProperty<bool>? AllowExportDataLogModelData { get; set; }
 }
