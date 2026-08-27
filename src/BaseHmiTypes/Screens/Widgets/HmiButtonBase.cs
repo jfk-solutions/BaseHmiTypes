@@ -20,6 +20,8 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<HmiMultilingualText>? AlternateText { get; set; }
 
+    public HmiScreenNavigationSettings? Navigation { get; set; }
+
     public HmiProperty<HmiImageSource>? Image { get; set; }
 
     public HmiProperty<HmiImageSource>? AlternateImage { get; set; }
