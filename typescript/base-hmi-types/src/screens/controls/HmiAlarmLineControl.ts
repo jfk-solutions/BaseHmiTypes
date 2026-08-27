@@ -12,4 +12,12 @@ export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   acknowledgmentFlashingRate?: HmiProperty<number>;
   resetFlashingRate?: HmiProperty<number>;
   numberOfRows?: HmiProperty<number>;
+  queueNewAlarms?: HmiProperty<boolean>;
+  showTriggerValue?: HmiProperty<boolean>;
+  showTriggerLabel?: HmiProperty<boolean>;
+  showInactiveAlarms?: HmiProperty<boolean>;
+  showAlarmState?: HmiProperty<boolean>;
+  showAlarmTime?: HmiProperty<boolean>;
+  alarmTimeFormat?: string;
+  readonly filteredTriggers: string[] = [];
 }
