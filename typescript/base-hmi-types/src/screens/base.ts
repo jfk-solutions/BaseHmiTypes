@@ -60,6 +60,7 @@ export * from "./base/HmiTrendPenCaptionMode.js";
 export * from "./base/HmiTrendPenType.js";
 export * from "./base/HmiTrendScrollMode.js";
 export * from "./base/HmiTrendTimeFormat.js";
+export * from "./base/HmiTrendTemplateOption.js";
 export * from "./base/HmiTrendUpdateMode.js";
 export * from "./base/HmiTrendYAxisRangeMode.js";
 export * from "./base/HmiTrendYAxisScaleMode.js";
