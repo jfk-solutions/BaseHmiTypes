@@ -47,5 +47,7 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiElectronicSignatureSettings? ElectronicSignature { get; set; }
 
+    public HmiVariableConfirmationSettings? VariableConfirmation { get; set; }
+
     public IList<HmiEventBinding> Events { get; } = new List<HmiEventBinding>();
 }
