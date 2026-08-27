@@ -2,6 +2,7 @@ import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiScreenModelBase } from "./HmiScreenModelBase.js";
 import { HmiProperty, staticProperty } from "./HmiProperty.js";
 import { HmiEventBinding } from "../../scripts/HmiEventBinding.js";
+import { HmiElectronicSignatureSettings } from "./HmiElectronicSignatureSettings.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   x: HmiProperty<number> = staticProperty(0);
@@ -18,5 +19,6 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   keyNavigation?: HmiProperty<boolean>;
   toolTipText?: HmiProperty<HmiMultilingualText>;
   canBeGrouped?: HmiProperty<boolean>;
+  electronicSignature?: HmiElectronicSignatureSettings;
   readonly events: HmiEventBinding[] = [];
 }
