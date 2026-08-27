@@ -6,11 +6,39 @@ public sealed class HmiTag : IHmiObject
 
     public string? DataType { get; set; }
 
+    public string? NativeDataType { get; set; }
+
+    public string? SourceType { get; set; }
+
     public string? Connection { get; set; }
 
     public string? PlcTag { get; set; }
 
     public string? Address { get; set; }
+
+    public bool? ReadOnly { get; set; }
+
+    public bool? Retentive { get; set; }
+
+    public string? SecurityCode { get; set; }
+
+    public string? InitialValue { get; set; }
+
+    public double? MinimumValue { get; set; }
+
+    public double? MaximumValue { get; set; }
+
+    public double? Scale { get; set; }
+
+    public double? Offset { get; set; }
+
+    public string? Unit { get; set; }
+
+    public string? OffLabel { get; set; }
+
+    public string? OnLabel { get; set; }
+
+    public int? StringLength { get; set; }
 
     public string? RefreshType { get; set; }
 
