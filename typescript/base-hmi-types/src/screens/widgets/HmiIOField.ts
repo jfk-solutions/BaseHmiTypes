@@ -3,6 +3,7 @@ import { HmiObjectType, HmiProperty } from "../base.js";
 import { HmiDecimalPointMode } from "./HmiDecimalPointMode.js";
 import { HmiEnterHandshakeSettings } from "./HmiEnterHandshakeSettings.js";
 import { HmiInputPopupMode } from "./HmiInputPopupMode.js";
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 
 export class HmiIOField extends HmiTextWidgetBase {
   hotKey?: HmiProperty<string>;
@@ -13,6 +14,12 @@ export class HmiIOField extends HmiTextWidgetBase {
   enterHandshake?: HmiEnterHandshakeSettings;
   popupMode?: HmiProperty<HmiInputPopupMode>;
   takeFocusOnPress?: HmiProperty<boolean>;
+  defaultData?: HmiProperty<string>;
+  displayOnScreenKeyboard?: HmiProperty<boolean>;
+  onScreenKeyboardCaption?: HmiProperty<HmiMultilingualText>;
+  continuouslyUpdate?: HmiProperty<boolean>;
+  discardInputOnFocusLost?: HmiProperty<boolean>;
+  remark?: HmiProperty<HmiMultilingualText>;
 
   constructor() {
     super();
