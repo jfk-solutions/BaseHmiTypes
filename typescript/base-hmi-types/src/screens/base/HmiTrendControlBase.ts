@@ -83,4 +83,14 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   allowDeltaValueBar?: HmiProperty<boolean>;
   allowExportTrendData?: HmiProperty<boolean>;
   allowExportDataLogModelData?: HmiProperty<boolean>;
+  showToolbar?: HmiProperty<boolean>;
+  showTimePeriodBar?: HmiProperty<boolean>;
+  showTagExplorer?: HmiProperty<boolean>;
+  collapseTagExplorer?: HmiProperty<boolean>;
+  showTagList?: HmiProperty<boolean>;
+  collapseTagList?: HmiProperty<boolean>;
+  showXAxisCursors?: HmiProperty<boolean>;
+  showYAxisCursors?: HmiProperty<boolean>;
+  singleTraceMode?: HmiProperty<boolean>;
+  rubberBandZoomEnabled?: HmiProperty<boolean>;
 }
