@@ -13,6 +13,9 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   resetFlashingRate?: HmiProperty<number>;
   numberOfRows?: HmiProperty<number>;
   wrapAround?: HmiProperty<boolean>;
+  showHeader?: HmiProperty<boolean>;
+  showAlarmTime?: HmiProperty<boolean>;
+  showAcknowledgmentTime?: HmiProperty<boolean>;
   showAcknowledgeButton?: HmiProperty<boolean>;
   showHelpButton?: HmiProperty<boolean>;
   showPendingAlarms?: HmiProperty<boolean>;
