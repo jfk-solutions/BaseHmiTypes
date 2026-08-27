@@ -1,4 +1,5 @@
 import { HmiControlWindowBase } from "./HmiControlWindowBase.js";
+import { HmiColor } from "./HmiColor.js";
 import { HmiProperty } from "./HmiProperty.js";
 import { HmiTrendChartStyle } from "./HmiTrendChartStyle.js";
 import { HmiTrendDataPointConnection } from "./HmiTrendDataPointConnection.js";
@@ -26,4 +27,10 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   allowScrolling?: HmiProperty<boolean>;
   scrollMode?: HmiProperty<HmiTrendScrollMode>;
   bufferSizePerPen?: HmiProperty<number>;
+  xAxisScaleVisible?: HmiProperty<boolean>;
+  xAxisDateVisible?: HmiProperty<boolean>;
+  xAxisGridVisible?: HmiProperty<boolean>;
+  xAxisMajorGridLineCount?: HmiProperty<number>;
+  xAxisMinorGridLineCount?: HmiProperty<number>;
+  xAxisGridColor?: HmiProperty<HmiColor>;
 }
