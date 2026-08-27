@@ -36,6 +36,14 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<int>? BufferSizePerPen { get; set; }
 
+    public string? ChartTitle { get; set; }
+
+    public HmiProperty<bool>? DisplayChartTitle { get; set; }
+
+    public string? DataServerName { get; set; }
+
+    public HmiProperty<bool>? DisplayHistoricalLoadProgress { get; set; }
+
     public HmiProperty<bool>? XAxisScaleVisible { get; set; }
 
     public HmiProperty<bool>? XAxisDateVisible { get; set; }
