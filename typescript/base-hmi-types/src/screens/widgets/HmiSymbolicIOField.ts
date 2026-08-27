@@ -9,6 +9,10 @@ export class HmiSymbolicIOField extends HmiTextWidgetBase {
   configuredStateCount?: HmiProperty<number>;
   stateTriggerMode?: HmiProperty<HmiStateTriggerMode>;
   value?: HmiProperty<number>;
+  messageFile?: HmiProperty<string>;
+  useVariableMessageFile?: HmiProperty<boolean>;
+  useEchoMessage?: HmiProperty<boolean>;
+  echoMessage?: HmiProperty<string>;
 
   constructor() {
     super();
