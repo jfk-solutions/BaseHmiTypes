@@ -33,6 +33,8 @@ public abstract class HmiPaintedScreenItemBase : HmiScreenItemBase
 
     public HmiFillAnimation? FillAnimation { get; set; }
 
+    public HmiColorAnimation? ColorAnimation { get; set; }
+
     public HmiThickness? Margin { get; set; }
 
     public HmiThickness? Padding { get; set; }
