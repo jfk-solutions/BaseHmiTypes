@@ -8,6 +8,7 @@ import { HmiReferenceObjectSettings } from "./HmiReferenceObjectSettings.js";
 import { HmiVariableConfirmationSettings } from "./HmiVariableConfirmationSettings.js";
 import { HmiAffineTransform } from "./HmiAffineTransform.js";
 import { HmiTouchAreaShape } from "./HmiTouchAreaShape.js";
+import { HmiConfirmationDialogSettings } from "../widgets/HmiConfirmationDialogSettings.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   description?: string;
@@ -34,5 +35,6 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   electronicSignature?: HmiElectronicSignatureSettings;
   variableConfirmation?: HmiVariableConfirmationSettings;
   touchAreaShape?: HmiTouchAreaShape;
+  touchConfirmationDialog?: HmiConfirmationDialogSettings;
   readonly events: HmiEventBinding[] = [];
 }
