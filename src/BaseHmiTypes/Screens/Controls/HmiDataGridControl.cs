@@ -9,4 +9,19 @@ public class HmiDataGridControl : HmiControlWindowBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiDataGridControl;
     }
 
+    public HmiProperty<bool>? ShowExportCsv { get; set; }
+
+    public HmiProperty<bool>? ShowProperties { get; set; }
+
+    public HmiProperty<bool>? ShowStatusBar { get; set; }
+
+    public HmiProperty<bool>? ShowToolbar { get; set; }
+
+    public HmiProperty<bool>? TimePeriodAbsoluteMode { get; set; }
+
+    public HmiProperty<string>? TimePeriodDuration { get; set; }
+
+    public HmiProperty<string>? TimePeriodStart { get; set; }
+
+    public HmiProperty<string>? TimePeriodEnd { get; set; }
 }
