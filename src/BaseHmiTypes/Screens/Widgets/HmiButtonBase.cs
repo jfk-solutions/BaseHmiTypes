@@ -87,6 +87,16 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<HmiButtonOperation>? Operation { get; set; }
 
     /// <summary>
+    /// Gets the alarm trigger labels affected by an alarm operation. An empty list means all triggers.
+    /// </summary>
+    public IList<string> AlarmFilteredTriggers { get; } = new List<string>();
+
+    /// <summary>
+    /// Gets or sets whether clearing alarm history also requests an alarm-status reset.
+    /// </summary>
+    public HmiProperty<bool>? ResetAlarmStatusOnClearHistory { get; set; }
+
+    /// <summary>
     /// Gets or sets the macro or script component invoked when the button is activated.
     /// An expression-backed property represents products that select the macro name at runtime.
     /// </summary>
