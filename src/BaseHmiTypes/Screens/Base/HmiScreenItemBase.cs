@@ -2,6 +2,7 @@ namespace BaseHmiTypes.Screens.Base;
 
 using BaseHmiTypes.Common;
 using BaseHmiTypes.Scripts;
+using BaseHmiTypes.Screens.Widgets;
 
 public abstract class HmiScreenItemBase : HmiScreenModelBase
 {
@@ -52,6 +53,8 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
     public HmiVariableConfirmationSettings? VariableConfirmation { get; set; }
 
     public HmiTouchAreaShape? TouchAreaShape { get; set; }
+
+    public HmiConfirmationDialogSettings? TouchConfirmationDialog { get; set; }
 
     public IList<HmiEventBinding> Events { get; } = new List<HmiEventBinding>();
 }
