@@ -11,6 +11,7 @@ export * from "./widgets/HmiRampDirection.js";
 export * from "./widgets/HmiHandshakeResetMode.js";
 export * from "./widgets/HmiEnterHandshakeSettings.js";
 export * from "./widgets/HmiInputPopupMode.js";
+export * from "./widgets/HmiConfirmationMode.js";
 export * from "./widgets/HmiThreshold.js";
 export * from "./widgets/HmiTickDirection.js";
 export * from "./widgets/HmiGaugeSweepStyle.js";
