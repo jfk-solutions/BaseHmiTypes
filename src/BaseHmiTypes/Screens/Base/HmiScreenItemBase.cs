@@ -51,5 +51,7 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiVariableConfirmationSettings? VariableConfirmation { get; set; }
 
+    public HmiTouchAreaShape? TouchAreaShape { get; set; }
+
     public IList<HmiEventBinding> Events { get; } = new List<HmiEventBinding>();
 }
