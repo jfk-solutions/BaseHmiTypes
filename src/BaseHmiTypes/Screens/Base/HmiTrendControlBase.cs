@@ -19,4 +19,14 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<double>? HeartbeatMilliseconds { get; set; }
 
     public HmiProperty<double>? DeadbandPercent { get; set; }
+
+    public HmiProperty<HmiTrendTimeFormat>? TimeFormat { get; set; }
+
+    public HmiProperty<HmiTrendNumericRadix>? NumericRadix { get; set; }
+
+    public HmiProperty<HmiTrendDataPointConnection>? DataPointConnection { get; set; }
+
+    public HmiProperty<bool>? DisplayMilliseconds { get; set; }
+
+    public HmiProperty<bool>? DisplayPenIcons { get; set; }
 }
