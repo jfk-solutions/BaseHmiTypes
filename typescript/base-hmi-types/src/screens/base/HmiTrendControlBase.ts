@@ -35,6 +35,12 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   xAxisMajorGridLineCount?: HmiProperty<number>;
   xAxisMinorGridLineCount?: HmiProperty<number>;
   xAxisGridColor?: HmiProperty<HmiColor>;
+  /** Engineering-system date text used at the left edge when scrolling is disabled. */
+  xAxisStartDate?: string;
+  /** Engineering-system time text used at the left edge when scrolling is disabled. */
+  xAxisStartTime?: string;
+  xAxisTimeSpan?: HmiProperty<number>;
+  xAxisTimeSpanUnit?: string;
   yAxisRangeMode?: HmiProperty<HmiTrendYAxisRangeMode>;
   yAxisIsolatedGraphing?: HmiProperty<boolean>;
   yAxisIsolationPercent?: HmiProperty<number>;
