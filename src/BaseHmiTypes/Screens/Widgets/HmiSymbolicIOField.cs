@@ -20,6 +20,14 @@ public class HmiSymbolicIOField : HmiTextWidgetBase
 
     public HmiProperty<double>? Value { get; set; }
 
+    public HmiProperty<string>? MessageFile { get; set; }
+
+    public HmiProperty<bool>? UseVariableMessageFile { get; set; }
+
+    public HmiProperty<bool>? UseEchoMessage { get; set; }
+
+    public HmiProperty<string>? EchoMessage { get; set; }
+
     public HmiProperty<int>? Mode { get; set; }
 
     public HmiProperty<bool>? ShowDropDownButton { get; set; }
