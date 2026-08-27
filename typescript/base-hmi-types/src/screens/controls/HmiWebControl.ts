@@ -10,4 +10,10 @@ export class HmiWebControl extends HmiControlWindowBase {
 
   url?: HmiProperty<string>;
   homeUrl?: HmiProperty<string>;
+  showAddressBar?: HmiProperty<boolean>;
+  useParameterPlaceholders?: HmiProperty<boolean>;
+  navigateBack?: HmiProperty<boolean>;
+  navigateForward?: HmiProperty<boolean>;
+  stop?: HmiProperty<boolean>;
+  refresh?: HmiProperty<boolean>;
 }
