@@ -1,5 +1,6 @@
 export enum HmiAlarmListMode {
   All = "All",
   Active = "Active",
-  Past = "Past"
+  Past = "Past",
+  Unacknowledged = "Unacknowledged"
 }
