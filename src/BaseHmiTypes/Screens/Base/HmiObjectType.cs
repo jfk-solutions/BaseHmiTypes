@@ -6,6 +6,7 @@ public static class HmiObjectType
     public const string HmiAlarmControl = nameof(HmiAlarmControl);
     public const string HmiAlarmIndicator = nameof(HmiAlarmIndicator);
     public const string HmiAlarmLineControl = nameof(HmiAlarmLineControl);
+    public const string HmiAuditTrailControl = nameof(HmiAuditTrailControl);
     public const string HmiBar = nameof(HmiBar);
     public const string HmiButton = nameof(HmiButton);
     public const string HmiCheckBoxGroup = nameof(HmiCheckBoxGroup);
