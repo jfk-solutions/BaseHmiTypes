@@ -7,6 +7,7 @@ export class HmiRecipe {
 }
 
 export class HmiRecipeParameter {
+  sourceIndex?: number;
   name?: string;
   tag?: string;
   dataType?: string;
