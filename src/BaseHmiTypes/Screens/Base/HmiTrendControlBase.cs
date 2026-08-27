@@ -164,4 +164,14 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<string>? TimePeriodStart { get; set; }
 
     public HmiProperty<string>? TimePeriodEnd { get; set; }
+
+    public HmiProperty<bool>? ShowAlarmCursor { get; set; }
+
+    public HmiProperty<bool>? ShowEventList { get; set; }
+
+    public HmiProperty<bool>? CollapseEventList { get; set; }
+
+    public HmiProperty<bool>? LegacyShowAlarmEventList { get; set; }
+
+    public HmiProperty<bool>? LegacyCollapseAlarmEventList { get; set; }
 }
