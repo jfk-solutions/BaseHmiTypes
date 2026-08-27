@@ -6,6 +6,7 @@ export class HmiAlarmColumn {
   type = HmiAlarmColumnType.Unknown;
   sourceType?: string;
   visible?: HmiProperty<boolean>;
+  width?: HmiProperty<number>;
   timeAndDateFormat?: string;
   headerText?: HmiMultilingualText;
   symbol?: string;

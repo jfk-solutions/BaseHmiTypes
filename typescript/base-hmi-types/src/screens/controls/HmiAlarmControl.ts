@@ -1,9 +1,11 @@
 import { HmiColor, HmiLineStyle, HmiProperty } from "../base.js";
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiAlarmColumn } from "./HmiAlarmColumn.js";
 import { HmiAlarmConditionPresentation } from "./HmiAlarmConditionPresentation.js";
 import { HmiAlarmSelectedIndicator } from "./HmiAlarmSelectedIndicator.js";
+import { HmiAlarmListMode } from "./HmiAlarmListMode.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -25,6 +27,9 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   readonly conditions: HmiAlarmConditionPresentation[] = [];
   readonly columnDefinitions: HmiAlarmColumn[] = [];
   showHeader?: HmiProperty<boolean>;
+  showTitle?: HmiProperty<boolean>;
+  listMode?: HmiProperty<HmiAlarmListMode>;
+  title?: HmiMultilingualText;
   showAlarmTime?: HmiProperty<boolean>;
   showAcknowledgmentTime?: HmiProperty<boolean>;
   showAcknowledgeButton?: HmiProperty<boolean>;

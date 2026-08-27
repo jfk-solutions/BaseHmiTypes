@@ -4,5 +4,10 @@ export enum HmiAlarmColumnType {
   ActiveSymbol = "ActiveSymbol",
   AlarmTime = "AlarmTime",
   AcknowledgmentTime = "AcknowledgmentTime",
-  Message = "Message"
+  Message = "Message",
+  TriggerLabel = "TriggerLabel",
+  TriggerValue = "TriggerValue",
+  AlarmQuantity = "AlarmQuantity",
+  AccumulatedTime = "AccumulatedTime",
+  AlarmState = "AlarmState"
 }
