@@ -92,6 +92,7 @@ export class HmiAnalogAlarm extends HmiBaseAlarm {
   limitMode?: string;
   limitValueConstant?: string;
   limitValueTag?: string;
+  limitValueType?: string;
   deadbandValue?: number;
   deadbandPercentage?: boolean;
   acknowledgementTag?: string;
