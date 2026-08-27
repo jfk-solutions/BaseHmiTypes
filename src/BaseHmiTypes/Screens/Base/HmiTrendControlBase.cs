@@ -136,4 +136,24 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? AllowExportTrendData { get; set; }
 
     public HmiProperty<bool>? AllowExportDataLogModelData { get; set; }
+
+    public HmiProperty<bool>? ShowToolbar { get; set; }
+
+    public HmiProperty<bool>? ShowTimePeriodBar { get; set; }
+
+    public HmiProperty<bool>? ShowTagExplorer { get; set; }
+
+    public HmiProperty<bool>? CollapseTagExplorer { get; set; }
+
+    public HmiProperty<bool>? ShowTagList { get; set; }
+
+    public HmiProperty<bool>? CollapseTagList { get; set; }
+
+    public HmiProperty<bool>? ShowXAxisCursors { get; set; }
+
+    public HmiProperty<bool>? ShowYAxisCursors { get; set; }
+
+    public HmiProperty<bool>? SingleTraceMode { get; set; }
+
+    public HmiProperty<bool>? RubberBandZoomEnabled { get; set; }
 }
