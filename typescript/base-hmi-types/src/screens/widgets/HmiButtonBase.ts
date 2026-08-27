@@ -49,6 +49,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   autoRepeatRatePerSecond?: HmiProperty<number>;
   holdTimeSeconds?: HmiProperty<number>;
   buttonAction?: HmiProperty<HmiButtonAction>;
+  actionTag?: HmiProperty<string>;
   buttonValue?: HmiProperty<number>;
   nextStateMode?: HmiProperty<HmiButtonNextStateMode>;
   operation?: HmiProperty<HmiButtonOperation>;
