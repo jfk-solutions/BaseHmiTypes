@@ -31,6 +31,8 @@ public abstract class HmiPaintedScreenItemBase : HmiScreenItemBase
 
     public HmiProperty<bool>? BackgroundBlink { get; set; }
 
+    public HmiFillAnimation? FillAnimation { get; set; }
+
     public HmiThickness? Margin { get; set; }
 
     public HmiThickness? Padding { get; set; }
