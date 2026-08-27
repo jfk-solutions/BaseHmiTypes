@@ -1,4 +1,5 @@
 using BaseHmiTypes.Screens.Base;
+using BaseHmiTypes.Common;
 
 namespace BaseHmiTypes.Screens.Widgets;
 
@@ -24,4 +25,16 @@ public class HmiIOField : HmiTextWidgetBase
     public HmiProperty<HmiInputPopupMode>? PopupMode { get; set; }
 
     public HmiProperty<bool>? TakeFocusOnPress { get; set; }
+
+    public HmiProperty<string>? DefaultData { get; set; }
+
+    public HmiProperty<bool>? DisplayOnScreenKeyboard { get; set; }
+
+    public HmiProperty<HmiMultilingualText>? OnScreenKeyboardCaption { get; set; }
+
+    public HmiProperty<bool>? ContinuouslyUpdate { get; set; }
+
+    public HmiProperty<bool>? DiscardInputOnFocusLost { get; set; }
+
+    public HmiProperty<HmiMultilingualText>? Remark { get; set; }
 }
