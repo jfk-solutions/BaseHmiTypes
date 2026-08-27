@@ -15,4 +15,6 @@ public class HmiToggleSwitch : HmiButtonBase
     public HmiProperty<bool>? Header { get; set; }
 
     public HmiProperty<HmiMultilingualText>? HeaderText { get; set; }
+
+    public HmiProperty<HmiMultilingualText>? Remark { get; set; }
 }
