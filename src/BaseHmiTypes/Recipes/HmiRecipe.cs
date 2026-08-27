@@ -15,6 +15,8 @@ public sealed class HmiRecipe : IHmiObject
 
 public sealed class HmiRecipeParameter : IHmiObject
 {
+    public int? SourceIndex { get; set; }
+
     public string? Name { get; set; }
 
     public string? Tag { get; set; }
