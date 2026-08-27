@@ -21,6 +21,7 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   rotationCenterX?: HmiProperty<number>;
   rotationCenterY?: HmiProperty<number>;
   tabIndex?: HmiProperty<number>;
+  securityCode?: string;
   keyNavigation?: HmiProperty<boolean>;
   toolTipText?: HmiProperty<HmiMultilingualText>;
   canBeGrouped?: HmiProperty<boolean>;
