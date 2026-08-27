@@ -45,4 +45,6 @@ export enum HmiButtonOperation {
   UserLogout,
   UserChangePassword,
   UserChangeProperties,
+  TrendTogglePause,
+  TrendSelectNextPen,
 }
