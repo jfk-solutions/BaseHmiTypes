@@ -32,6 +32,10 @@ public sealed class HmiScreenRuntimeSettings
 
     public HmiScreenPositionMode? PositionMode { get; set; }
 
+    public double? PositionX { get; set; }
+
+    public double? PositionY { get; set; }
+
     public HmiScreenSizeMode? SizeMode { get; set; }
 
     public string? SecurityCode { get; set; }
