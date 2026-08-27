@@ -1,5 +1,6 @@
 import { HmiControlWindowBase } from "./HmiControlWindowBase.js";
 import { HmiColor } from "./HmiColor.js";
+import { HmiLineStyle } from "./HmiLineStyle.js";
 import { HmiProperty } from "./HmiProperty.js";
 import { HmiTrendChartStyle } from "./HmiTrendChartStyle.js";
 import { HmiTrendDataPointConnection } from "./HmiTrendDataPointConnection.js";
@@ -102,4 +103,17 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   collapseEventList?: HmiProperty<boolean>;
   legacyShowAlarmEventList?: HmiProperty<boolean>;
   legacyCollapseAlarmEventList?: HmiProperty<boolean>;
+  activeTraceIndex?: HmiProperty<number>;
+  activeTraceVisible?: HmiProperty<boolean>;
+  activeTraceJoinPoints?: HmiProperty<boolean>;
+  activeTraceLineColor?: HmiProperty<HmiColor>;
+  activeTraceLineStyle?: HmiProperty<HmiLineStyle>;
+  activeTraceLineWidth?: HmiProperty<number>;
+  activeTraceDecimalFormat?: HmiProperty<boolean>;
+  activeTraceNumericPrecision?: HmiProperty<number>;
+  activePlottingAlgorithmLinear?: HmiProperty<boolean>;
+  activeMarkerColor?: HmiProperty<HmiColor>;
+  activeMarkerShape?: HmiProperty<number>;
+  activeMarkerSize?: HmiProperty<number>;
+  activeMarkerVisible?: HmiProperty<boolean>;
 }
