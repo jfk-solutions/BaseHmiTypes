@@ -2,6 +2,8 @@ namespace BaseHmiTypes.Tags;
 
 public sealed class HmiTag : IHmiObject
 {
+    public DateTime? LastModified { get; set; }
+
     public string? Name { get; set; }
 
     public string? DataType { get; set; }
@@ -22,6 +24,12 @@ public sealed class HmiTag : IHmiObject
 
     public string? SecurityCode { get; set; }
 
+    public int? ExternalReferenceCount { get; set; }
+
+    public string? ParentId { get; set; }
+
+    public int? ParentType { get; set; }
+
     public string? InitialValue { get; set; }
 
     public double? MinimumValue { get; set; }
@@ -39,6 +47,12 @@ public sealed class HmiTag : IHmiObject
     public string? OnLabel { get; set; }
 
     public int? StringLength { get; set; }
+
+    public int? NativeValueType { get; set; }
+
+    public int? ElementSize { get; set; }
+
+    public int? ElementCount { get; set; }
 
     public string? RefreshType { get; set; }
 
