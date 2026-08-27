@@ -151,6 +151,8 @@ public sealed class HmiAnalogAlarm : HmiBaseAlarm
 
     public string? LimitValueTag { get; set; }
 
+    public string? LimitValueType { get; set; }
+
     public double? DeadbandValue { get; set; }
 
     public bool? DeadbandPercentage { get; set; }
