@@ -7,6 +7,7 @@ import { HmiScriptExposureMode } from "./HmiScriptExposureMode.js";
 import { HmiReferenceObjectSettings } from "./HmiReferenceObjectSettings.js";
 import { HmiVariableConfirmationSettings } from "./HmiVariableConfirmationSettings.js";
 import { HmiAffineTransform } from "./HmiAffineTransform.js";
+import { HmiTouchAreaShape } from "./HmiTouchAreaShape.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   description?: string;
@@ -32,5 +33,6 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   canBeGrouped?: HmiProperty<boolean>;
   electronicSignature?: HmiElectronicSignatureSettings;
   variableConfirmation?: HmiVariableConfirmationSettings;
+  touchAreaShape?: HmiTouchAreaShape;
   readonly events: HmiEventBinding[] = [];
 }
