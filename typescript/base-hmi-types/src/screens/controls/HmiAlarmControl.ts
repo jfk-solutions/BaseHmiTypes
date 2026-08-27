@@ -41,6 +41,9 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   minimumColumnWidth?: HmiProperty<number[]>;
   tableBackgroundColor?: HmiProperty<HmiColor>;
   tableForegroundColor?: HmiProperty<HmiColor>;
+  selectionBackgroundColor?: HmiProperty<HmiColor>;
+  selectionForegroundColor?: HmiProperty<HmiColor>;
+  useAlarmColors?: HmiProperty<boolean>;
   tableHeaderBackgroundColor?: HmiProperty<HmiColor>;
   tableHeaderForegroundColor?: HmiProperty<HmiColor>;
   tableHeaderBorderBackgroundColor?: HmiProperty<HmiColor>;
