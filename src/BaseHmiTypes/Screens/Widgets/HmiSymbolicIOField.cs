@@ -16,6 +16,8 @@ public class HmiSymbolicIOField : HmiTextWidgetBase
     /// </summary>
     public HmiProperty<int>? ConfiguredStateCount { get; set; }
 
+    public HmiProperty<HmiStateTriggerMode>? StateTriggerMode { get; set; }
+
     public HmiProperty<double>? Value { get; set; }
 
     public HmiProperty<int>? Mode { get; set; }
