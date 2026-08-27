@@ -4,5 +4,6 @@ public enum HmiAlarmListMode
 {
     All,
     Active,
-    Past
+    Past,
+    Unacknowledged
 }
