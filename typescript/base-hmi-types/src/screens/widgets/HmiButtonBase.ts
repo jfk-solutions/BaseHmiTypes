@@ -3,6 +3,7 @@ import { HmiColor, HmiHorizontalAlignment, HmiImageSource, HmiProperty, HmiThick
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiButtonAction } from "./HmiButtonAction.js";
 import { HmiButtonNextStateMode } from "./HmiButtonNextStateMode.js";
+import { HmiButtonOperation } from "./HmiButtonOperation.js";
 import { HmiHandshakeResetMode } from "./HmiHandshakeResetMode.js";
 import { HmiRampDirection } from "./HmiRampDirection.js";
 import { HmiState } from "./HmiState.js";
@@ -39,6 +40,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   buttonAction?: HmiProperty<HmiButtonAction>;
   buttonValue?: HmiProperty<number>;
   nextStateMode?: HmiProperty<HmiButtonNextStateMode>;
+  operation?: HmiProperty<HmiButtonOperation>;
   macro?: HmiProperty<string>;
   useVariableMacro?: HmiProperty<boolean>;
   targetLanguage?: HmiProperty<string>;
