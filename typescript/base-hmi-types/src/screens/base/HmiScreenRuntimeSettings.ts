@@ -1,4 +1,5 @@
 import { HmiColor } from "./HmiColor.js";
+import { HmiScreenCacheMode } from "./HmiScreenCacheMode.js";
 
 export enum HmiScreenDisplayType {
   Replace = "Replace",
@@ -35,6 +36,7 @@ export class HmiScreenRuntimeSettings {
   focusHighlightColor?: HmiColor;
   allowMultipleRunningCopies?: boolean;
   cacheAfterDisplaying?: boolean;
+  cacheMode?: HmiScreenCacheMode;
   systemMenuVisible?: boolean;
   minimizeButtonVisible?: boolean;
   sizeToMainWindow?: boolean;
