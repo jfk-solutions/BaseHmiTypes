@@ -200,4 +200,14 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<int>? ActiveMarkerSize { get; set; }
 
     public HmiProperty<bool>? ActiveMarkerVisible { get; set; }
+
+    public string? ControlType { get; set; }
+
+    public string? CurrentTagName { get; set; }
+
+    public string? CurrentXTagName { get; set; }
+
+    public string? CurrentYTagName { get; set; }
+
+    public HmiProperty<bool>? UseCustomFileExplorer { get; set; }
 }
