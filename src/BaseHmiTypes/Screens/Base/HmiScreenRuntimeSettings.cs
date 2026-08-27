@@ -52,6 +52,11 @@ public sealed class HmiScreenRuntimeSettings
 
     public bool? CacheAfterDisplaying { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the screen is cached and whether it keeps updating while cached.
+    /// </summary>
+    public HmiScreenCacheMode? CacheMode { get; set; }
+
     public bool? SystemMenuVisible { get; set; }
 
     public bool? MinimizeButtonVisible { get; set; }
