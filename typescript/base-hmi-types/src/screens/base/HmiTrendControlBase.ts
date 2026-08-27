@@ -52,4 +52,15 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   yAxisGridColor?: HmiProperty<HmiColor>;
   yAxisScaleMode?: HmiProperty<HmiTrendYAxisScaleMode>;
   yAxisScalePenNumber?: HmiProperty<number>;
+  readonly runtimePropertyTabs: string[] = [];
+  allowEditingLegendProperties?: HmiProperty<boolean>;
+  allowPanZoom?: HmiProperty<boolean>;
+  allowPauseResumeScrolling?: HmiProperty<boolean>;
+  allowShowHideValueBar?: HmiProperty<boolean>;
+  allowSnapshotCreation?: HmiProperty<boolean>;
+  allowOverlayOptions?: HmiProperty<boolean>;
+  allowPrint?: HmiProperty<boolean>;
+  allowDeltaValueBar?: HmiProperty<boolean>;
+  allowExportTrendData?: HmiProperty<boolean>;
+  allowExportDataLogModelData?: HmiProperty<boolean>;
 }
