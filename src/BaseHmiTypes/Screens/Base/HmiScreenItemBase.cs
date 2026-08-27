@@ -36,6 +36,16 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiProperty<double>? RotationCenterY { get; set; }
 
+    public HmiRangeAnimation? HorizontalPositionAnimation { get; set; }
+
+    public HmiRangeAnimation? VerticalPositionAnimation { get; set; }
+
+    public HmiRangeAnimation? WidthAnimation { get; set; }
+
+    public HmiRangeAnimation? HeightAnimation { get; set; }
+
+    public HmiRangeAnimation? RotationAnimation { get; set; }
+
     public HmiAffineTransform? Transform { get; set; }
 
     public HmiProperty<int>? TabIndex { get; set; }
