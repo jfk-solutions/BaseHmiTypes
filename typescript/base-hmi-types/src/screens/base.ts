@@ -13,6 +13,7 @@ export * from "./base/HmiVerticalAlignment.js";
 export * from "./base/HmiImageSource.js";
 export * from "./base/HmiScreenModelBase.js";
 export * from "./base/HmiScreenKind.js";
+export * from "./base/HmiScreenRuntimeSettings.js";
 export * from "./base/HmiScreenBase.js";
 export * from "./base/HmiScreenParameter.js";
 export * from "./base/HmiLayer.js";
