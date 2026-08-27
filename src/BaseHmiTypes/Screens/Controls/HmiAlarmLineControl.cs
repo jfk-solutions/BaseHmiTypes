@@ -17,6 +17,20 @@ public class HmiAlarmLineControl : HmiSimpleScreenItemBase
 
     public HmiProperty<int>? NumberOfRows { get; set; }
 
+    public HmiFont? Font { get; set; }
+
+    public HmiProperty<bool>? WordWrap { get; set; }
+
+    public HmiProperty<HmiHorizontalAlignment>? HorizontalAlignment { get; set; }
+
+    public HmiProperty<bool>? UseAlarmColors { get; set; }
+
+    public HmiProperty<bool>? MessageBlink { get; set; }
+
+    public HmiProperty<bool>? UseAlarmIdentifier { get; set; }
+
+    public HmiProperty<double>? AlarmIdentifier { get; set; }
+
     public HmiProperty<bool>? QueueNewAlarms { get; set; }
 
     public HmiProperty<bool>? ShowTriggerValue { get; set; }
