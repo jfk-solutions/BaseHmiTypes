@@ -97,4 +97,9 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   timePeriodDuration?: HmiProperty<string>;
   timePeriodStart?: HmiProperty<string>;
   timePeriodEnd?: HmiProperty<string>;
+  showAlarmCursor?: HmiProperty<boolean>;
+  showEventList?: HmiProperty<boolean>;
+  collapseEventList?: HmiProperty<boolean>;
+  legacyShowAlarmEventList?: HmiProperty<boolean>;
+  legacyCollapseAlarmEventList?: HmiProperty<boolean>;
 }
