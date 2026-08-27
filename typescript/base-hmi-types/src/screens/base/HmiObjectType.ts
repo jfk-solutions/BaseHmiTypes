@@ -44,6 +44,7 @@ export enum HmiObjectType {
   HmiProcessDiagnosisOverviewControl = "HmiProcessDiagnosisOverviewControl",
   HmiProcessDiagnosisPlcCodeViewerControl = "HmiProcessDiagnosisPlcCodeViewerControl",
   HmiRadioButtonGroup = "HmiRadioButtonGroup",
+  HmiRecipeControl = "HmiRecipeControl",
   HmiRectangle = "HmiRectangle",
   HmiScreen = "HmiScreen",
   HmiScreenMaster = "HmiScreenMaster",
