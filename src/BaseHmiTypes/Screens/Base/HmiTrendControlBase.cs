@@ -29,4 +29,10 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? DisplayMilliseconds { get; set; }
 
     public HmiProperty<bool>? DisplayPenIcons { get; set; }
+
+    public HmiProperty<bool>? AllowScrolling { get; set; }
+
+    public HmiProperty<HmiTrendScrollMode>? ScrollMode { get; set; }
+
+    public HmiProperty<int>? BufferSizePerPen { get; set; }
 }
