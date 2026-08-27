@@ -1088,10 +1088,18 @@ function formatFont(font: HmiFont | undefined): string | undefined {
   addFontValue(values, "name", font.name);
   addFontValue(values, "size", font.size);
   addFontValue(values, "characterWidth", font.characterWidth);
+  addFontValue(values, "escapementAngle", font.escapementAngle);
+  addFontValue(values, "orientationAngle", font.orientationAngle);
+  addFontValue(values, "weight", font.weight);
   addFontValue(values, "bold", font.bold);
   addFontValue(values, "italic", font.italic);
   addFontValue(values, "underline", font.underline);
   addFontValue(values, "strikethrough", font.strikethrough);
+  addFontValue(values, "characterSet", font.characterSet);
+  addFontValue(values, "outputPrecision", font.outputPrecision);
+  addFontValue(values, "clippingPrecision", font.clippingPrecision);
+  addFontValue(values, "quality", font.quality);
+  addFontValue(values, "pitchAndFamily", font.pitchAndFamily);
 
   return Object.keys(values).length === 0 ? undefined : JSON.stringify(values);
 }
