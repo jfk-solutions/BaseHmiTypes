@@ -10,6 +10,9 @@ export class HmiState {
   parameterFile?: string;
   parameterList?: string;
   parameterSource?: HmiDisplayParameterSource;
+  positionEnabled?: boolean;
+  positionX?: number;
+  positionY?: number;
   captionUsesDisplayName?: boolean;
   imageName?: string;
   image?: HmiImageSource;
