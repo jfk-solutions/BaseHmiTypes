@@ -24,5 +24,12 @@ public enum HmiButtonOperation
     ResetAlarmStatus,
     SortAlarms,
     AcknowledgeInformation,
-    ClearAuditTrail
+    ClearAuditTrail,
+    RecipeDownload,
+    RecipeUpload,
+    RecipeUploadAndCreate,
+    RecipeSave,
+    RecipeRestore,
+    RecipeDelete,
+    RecipeRename
 }
