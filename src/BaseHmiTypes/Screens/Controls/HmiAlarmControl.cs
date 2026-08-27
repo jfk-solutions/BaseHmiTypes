@@ -1,3 +1,4 @@
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Screens.Base;
 
 namespace BaseHmiTypes.Screens.Controls;
@@ -36,6 +37,12 @@ public class HmiAlarmControl : HmiControlWindowBase
     public IList<HmiAlarmColumn> ColumnDefinitions { get; } = new List<HmiAlarmColumn>();
 
     public HmiProperty<bool>? ShowHeader { get; set; }
+
+    public HmiProperty<bool>? ShowTitle { get; set; }
+
+    public HmiProperty<HmiAlarmListMode>? ListMode { get; set; }
+
+    public HmiMultilingualText? Title { get; set; }
 
     public HmiProperty<bool>? ShowAlarmTime { get; set; }
 

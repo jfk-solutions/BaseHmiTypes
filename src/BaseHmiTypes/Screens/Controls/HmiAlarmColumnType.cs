@@ -7,5 +7,10 @@ public enum HmiAlarmColumnType
     ActiveSymbol,
     AlarmTime,
     AcknowledgmentTime,
-    Message
+    Message,
+    TriggerLabel,
+    TriggerValue,
+    AlarmQuantity,
+    AccumulatedTime,
+    AlarmState
 }
