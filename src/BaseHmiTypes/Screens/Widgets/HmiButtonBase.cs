@@ -61,6 +61,13 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<bool>? AudioEnabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the button uses a distinct visual presentation while disabled.
+    /// </summary>
+    public HmiProperty<bool>? ShowDisabledState { get; set; }
+
+    public HmiProperty<HmiDisabledImageMode>? DisabledImageMode { get; set; }
+
+    /// <summary>
     /// Gets or sets how long the button must remain pressed before automatic repetition starts.
     /// </summary>
     public HmiProperty<double>? AutoRepeatDelaySeconds { get; set; }
