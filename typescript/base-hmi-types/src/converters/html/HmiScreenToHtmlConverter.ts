@@ -1087,6 +1087,7 @@ function formatFont(font: HmiFont | undefined): string | undefined {
   const values: Record<string, string | number | boolean> = {};
   addFontValue(values, "name", font.name);
   addFontValue(values, "size", font.size);
+  addFontValue(values, "characterWidth", font.characterWidth);
   addFontValue(values, "bold", font.bold);
   addFontValue(values, "italic", font.italic);
   addFontValue(values, "underline", font.underline);
