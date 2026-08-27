@@ -19,6 +19,12 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? WrapAround { get; set; }
 
+    public HmiProperty<bool>? ShowHeader { get; set; }
+
+    public HmiProperty<bool>? ShowAlarmTime { get; set; }
+
+    public HmiProperty<bool>? ShowAcknowledgmentTime { get; set; }
+
     public HmiProperty<bool>? ShowAcknowledgeButton { get; set; }
 
     public HmiProperty<bool>? ShowHelpButton { get; set; }
