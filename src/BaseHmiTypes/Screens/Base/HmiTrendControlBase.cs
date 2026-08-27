@@ -47,4 +47,26 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<int>? XAxisMinorGridLineCount { get; set; }
 
     public HmiProperty<HmiColor>? XAxisGridColor { get; set; }
+
+    public HmiProperty<HmiTrendYAxisRangeMode>? YAxisRangeMode { get; set; }
+
+    public HmiProperty<bool>? YAxisIsolatedGraphing { get; set; }
+
+    public HmiProperty<double>? YAxisIsolationPercent { get; set; }
+
+    public HmiProperty<bool>? YAxisScaleVisible { get; set; }
+
+    public HmiProperty<int>? YAxisDecimalPlaces { get; set; }
+
+    public HmiProperty<bool>? YAxisGridVisible { get; set; }
+
+    public HmiProperty<int>? YAxisMajorGridLineCount { get; set; }
+
+    public HmiProperty<int>? YAxisMinorGridLineCount { get; set; }
+
+    public HmiProperty<HmiColor>? YAxisGridColor { get; set; }
+
+    public HmiProperty<HmiTrendYAxisScaleMode>? YAxisScaleMode { get; set; }
+
+    public HmiProperty<int>? YAxisScalePenNumber { get; set; }
 }
