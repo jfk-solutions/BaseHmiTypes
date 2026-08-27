@@ -1,6 +1,7 @@
 import { IHmiObject } from "../IHmiObject.js";
 
 export class HmiTag implements IHmiObject {
+  lastModified?: Date;
   name?: string;
   dataType?: string;
   nativeDataType?: string;
@@ -11,6 +12,9 @@ export class HmiTag implements IHmiObject {
   readOnly?: boolean;
   retentive?: boolean;
   securityCode?: string;
+  externalReferenceCount?: number;
+  parentId?: string;
+  parentType?: number;
   initialValue?: string;
   minimumValue?: number;
   maximumValue?: number;
@@ -20,6 +24,9 @@ export class HmiTag implements IHmiObject {
   offLabel?: string;
   onLabel?: string;
   stringLength?: number;
+  nativeValueType?: number;
+  elementSize?: number;
+  elementCount?: number;
   refreshType?: string;
   refreshTime?: string;
   multiplexing = false;
