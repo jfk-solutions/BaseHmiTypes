@@ -1,5 +1,5 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
-import { HmiColor, HmiFillPattern, HmiHorizontalAlignment, HmiImageSource, HmiVerticalAlignment } from "../base.js";
+import { HmiColor, HmiFillPattern, HmiGradientDirection, HmiHorizontalAlignment, HmiImageSource, HmiVerticalAlignment } from "../base.js";
 import { HmiDisplayParameterSource } from "./HmiDisplayParameterSource.js";
 
 export class HmiState {
@@ -29,6 +29,10 @@ export class HmiState {
   captionWordWrap?: boolean;
   foregroundColor?: HmiColor;
   backgroundColor?: HmiColor;
+  endColor?: HmiColor;
+  gradientStop?: number;
+  gradientAxis?: string;
+  gradientDirection?: HmiGradientDirection;
   fillPattern?: HmiFillPattern;
   patternColor?: HmiColor;
   borderColor?: HmiColor;
