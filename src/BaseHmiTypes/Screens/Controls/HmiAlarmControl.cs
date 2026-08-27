@@ -114,6 +114,10 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<double>? ButtonBorderWidth { get; set; }
 
+    public HmiProperty<HmiBorderStyle>? ButtonBorderStyle { get; set; }
+
+    public HmiProperty<double>? ButtonWidth { get; set; }
+
     public HmiProperty<int>? ButtonBackFillStyle { get; set; }
 
     public HmiProperty<int>? ButtonCornerRadius { get; set; }
@@ -131,4 +135,8 @@ public class HmiAlarmControl : HmiControlWindowBase
     public HmiProperty<double>? ButtonSecondGradientOffset { get; set; }
 
     public HmiProperty<IList<byte>>? ButtonPositions { get; set; }
+
+    public HmiProperty<double>? ListBorderWidth { get; set; }
+
+    public HmiProperty<HmiBorderStyle>? ListBorderStyle { get; set; }
 }
