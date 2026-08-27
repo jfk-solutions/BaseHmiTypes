@@ -210,4 +210,14 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public string? CurrentYTagName { get; set; }
 
     public HmiProperty<bool>? UseCustomFileExplorer { get; set; }
+
+    public HmiProperty<bool>? AutoScale { get; set; }
+
+    public HmiProperty<bool>? ChartLiveMode { get; set; }
+
+    public HmiProperty<double>? ChartZoomPercent { get; set; }
+
+    public HmiProperty<HmiTrendStackAxesMode>? StackAxesMode { get; set; }
+
+    public HmiProperty<HmiColor>? WindowBackgroundColor { get; set; }
 }
