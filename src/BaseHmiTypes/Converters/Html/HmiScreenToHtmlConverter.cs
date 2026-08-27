@@ -1288,6 +1288,7 @@ public class HmiScreenToHtmlConverter
         var values = new List<string>();
         AddFontValue(values, "name", font.Name);
         AddFontValue(values, "size", font.Size);
+        AddFontValue(values, "characterWidth", font.CharacterWidth);
         AddFontValue(values, "bold", font.Bold);
         AddFontValue(values, "italic", font.Italic);
         AddFontValue(values, "underline", font.Underline);
