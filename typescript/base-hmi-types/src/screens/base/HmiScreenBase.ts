@@ -7,6 +7,7 @@ import { HmiScreenModelBase } from "./HmiScreenModelBase.js";
 import { HmiScreenKind } from "./HmiScreenKind.js";
 import { HmiUpdateCycle } from "./HmiUpdateCycle.js";
 import { HmiScreenParameter } from "./HmiScreenParameter.js";
+import { HmiScreenRuntimeSettings } from "./HmiScreenRuntimeSettings.js";
 
 export abstract class HmiScreenBase extends HmiScreenModelBase {
   kind: HmiScreenKind = HmiScreenKind.Screen;
@@ -27,6 +28,7 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   templateName?: HmiProperty<string>;
   cursorMode?: HmiProperty<HmiCursorMode>;
   updateCycle?: HmiProperty<HmiUpdateCycle>;
+  runtimeSettings?: HmiScreenRuntimeSettings;
   readonly parameters: HmiScreenParameter[] = [];
   readonly layers: HmiLayer[] = [];
 }

@@ -1,0 +1,52 @@
+import { HmiColor } from "./HmiColor.js";
+
+export enum HmiScreenDisplayType {
+  Replace = "Replace",
+  Overlay = "Overlay",
+  OnTop = "OnTop",
+}
+
+export enum HmiScreenPositionMode {
+  CurrentPosition = "CurrentPosition",
+  SpecifiedPixels = "SpecifiedPixels",
+}
+
+export enum HmiScreenSizeMode {
+  CurrentSize = "CurrentSize",
+  SpecifiedPixels = "SpecifiedPixels",
+}
+
+export enum HmiScreenResizeMode {
+  None = "None",
+  Pan = "Pan",
+  Scale = "Scale",
+}
+
+export class HmiScreenRuntimeSettings {
+  displayType?: HmiScreenDisplayType;
+  positionMode?: HmiScreenPositionMode;
+  sizeMode?: HmiScreenSizeMode;
+  securityCode?: string;
+  titleBarVisible?: boolean;
+  titleBarText?: string;
+  maximumTagUpdateRateSeconds?: number;
+  initialInputFocusEnabled?: boolean;
+  focusHighlightEnabled?: boolean;
+  focusHighlightColor?: HmiColor;
+  allowMultipleRunningCopies?: boolean;
+  cacheAfterDisplaying?: boolean;
+  systemMenuVisible?: boolean;
+  minimizeButtonVisible?: boolean;
+  sizeToMainWindow?: boolean;
+  resizeMode?: HmiScreenResizeMode;
+  showLastAcquiredValue?: boolean;
+  trackForNavigation?: boolean;
+  navigationHistoryName?: string;
+  beepOnPress?: boolean;
+  highlightWhenPointerPassesOver?: boolean;
+  interactiveHighlightColor?: HmiColor;
+  displayOnScreenKeyboard?: boolean;
+  allowButtonActionOnError?: boolean;
+  startupCommand?: string;
+  shutdownCommand?: string;
+}
