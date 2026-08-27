@@ -4,6 +4,7 @@ import { HmiTrendChartStyle } from "./HmiTrendChartStyle.js";
 import { HmiTrendDataPointConnection } from "./HmiTrendDataPointConnection.js";
 import { HmiTrendNumericRadix } from "./HmiTrendNumericRadix.js";
 import { HmiTrendPen } from "./HmiTrendPen.js";
+import { HmiTrendScrollMode } from "./HmiTrendScrollMode.js";
 import { HmiTrendTimeFormat } from "./HmiTrendTimeFormat.js";
 import { HmiTrendUpdateMode } from "./HmiTrendUpdateMode.js";
 
@@ -22,4 +23,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   dataPointConnection?: HmiProperty<HmiTrendDataPointConnection>;
   displayMilliseconds?: HmiProperty<boolean>;
   displayPenIcons?: HmiProperty<boolean>;
+  allowScrolling?: HmiProperty<boolean>;
+  scrollMode?: HmiProperty<HmiTrendScrollMode>;
+  bufferSizePerPen?: HmiProperty<number>;
 }
