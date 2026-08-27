@@ -11,6 +11,8 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public bool? IsReferenceObject { get; set; }
 
+    public HmiScriptExposureMode? ScriptExposureMode { get; set; }
+
     public HmiProperty<double> X { get; set; } = 0;
 
     public HmiProperty<double> Y { get; set; } = 0;
