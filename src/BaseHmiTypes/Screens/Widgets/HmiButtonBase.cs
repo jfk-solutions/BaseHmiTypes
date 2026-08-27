@@ -67,6 +67,8 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<HmiDisabledImageMode>? DisabledImageMode { get; set; }
 
+    public HmiConfirmationDialogSettings? ConfirmationDialog { get; set; }
+
     /// <summary>
     /// Gets or sets how long the button must remain pressed before automatic repetition starts.
     /// </summary>
