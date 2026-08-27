@@ -5,6 +5,12 @@ using BaseHmiTypes.Scripts;
 
 public abstract class HmiScreenItemBase : HmiScreenModelBase
 {
+    public string? Description { get; set; }
+
+    public bool? IsWallpaper { get; set; }
+
+    public bool? IsReferenceObject { get; set; }
+
     public HmiProperty<double> X { get; set; } = 0;
 
     public HmiProperty<double> Y { get; set; } = 0;
