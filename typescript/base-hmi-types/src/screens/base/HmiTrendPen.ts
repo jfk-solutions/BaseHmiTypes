@@ -19,4 +19,11 @@ export class HmiTrendPen {
   maximumValue?: HmiProperty<number>;
   linkData?: HmiProperty<boolean>;
   dataLogModelName?: string;
+  description?: string;
+  engineeringUnit?: string;
+  logarithmicScale?: HmiProperty<boolean>;
+  /** FactoryTalk pen index used as the lower boundary of a shaded range. */
+  lowerBoundPenIndex?: HmiProperty<number>;
+  /** FactoryTalk pen index used as the upper boundary of a shaded range. */
+  upperBoundPenIndex?: HmiProperty<number>;
 }
