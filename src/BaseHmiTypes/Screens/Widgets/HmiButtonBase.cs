@@ -82,6 +82,17 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<HmiButtonNextStateMode>? NextStateMode { get; set; }
 
     /// <summary>
+    /// Gets or sets the macro or script component invoked when the button is activated.
+    /// An expression-backed property represents products that select the macro name at runtime.
+    /// </summary>
+    public HmiProperty<string>? Macro { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the macro name is selected from a runtime expression.
+    /// </summary>
+    public HmiProperty<bool>? UseVariableMacro { get; set; }
+
+    /// <summary>
     /// Gets or sets the acknowledgement signal used to release a latched button.
     /// </summary>
     public HmiProperty<double>? Handshake { get; set; }
