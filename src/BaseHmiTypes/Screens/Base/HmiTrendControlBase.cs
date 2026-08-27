@@ -44,6 +44,18 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? DisplayHistoricalLoadProgress { get; set; }
 
+    public HmiProperty<bool>? DisplayLineLegend { get; set; }
+
+    public HmiProperty<bool>? DisplayLineLegendMinimumMaximum { get; set; }
+
+    public HmiProperty<HmiTrendPenCaptionMode>? LineLegendPenCaptionMode { get; set; }
+
+    public HmiProperty<int>? LineLegendMaximumCaptionLength { get; set; }
+
+    public HmiProperty<HmiTrendLegendPosition>? LineLegendPosition { get; set; }
+
+    public HmiProperty<int>? LineLegendMaximumVisiblePens { get; set; }
+
     public HmiProperty<bool>? XAxisScaleVisible { get; set; }
 
     public HmiProperty<bool>? XAxisDateVisible { get; set; }
