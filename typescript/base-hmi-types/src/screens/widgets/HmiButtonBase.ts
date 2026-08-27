@@ -4,6 +4,7 @@ import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiButtonAction } from "./HmiButtonAction.js";
 import { HmiButtonNextStateMode } from "./HmiButtonNextStateMode.js";
 import { HmiButtonOperation } from "./HmiButtonOperation.js";
+import { HmiButtonPressTarget } from "./HmiButtonPressTarget.js";
 import { HmiHandshakeResetMode } from "./HmiHandshakeResetMode.js";
 import { HmiRampDirection } from "./HmiRampDirection.js";
 import { HmiState } from "./HmiState.js";
@@ -43,6 +44,8 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   operation?: HmiProperty<HmiButtonOperation>;
   readonly alarmFilteredTriggers: string[] = [];
   resetAlarmStatusOnClearHistory?: HmiProperty<boolean>;
+  pressTarget?: HmiProperty<HmiButtonPressTarget>;
+  linkedObject?: HmiProperty<string>;
   macro?: HmiProperty<string>;
   useVariableMacro?: HmiProperty<boolean>;
   targetLanguage?: HmiProperty<string>;
