@@ -4,6 +4,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 {
     public IList<HmiTrendPen> Pens { get; } = new List<HmiTrendPen>();
 
+    public IList<HmiTrendOverlay> Overlays { get; } = new List<HmiTrendOverlay>();
+
     public HmiProperty<double>? MinimumValue { get; set; }
 
     public HmiProperty<double>? MaximumValue { get; set; }
