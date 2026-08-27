@@ -56,6 +56,14 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<int>? LineLegendMaximumVisiblePens { get; set; }
 
+    public HmiProperty<bool>? DisplayCurrentValueLegend { get; set; }
+
+    public HmiProperty<bool>? CurrentValueLegendDisplayPenIcons { get; set; }
+
+    public HmiProperty<bool>? CurrentValueLegendDisplayValues { get; set; }
+
+    public HmiProperty<bool>? CurrentValueLegendDisplayTime { get; set; }
+
     public HmiProperty<bool>? XAxisScaleVisible { get; set; }
 
     public HmiProperty<bool>? XAxisDateVisible { get; set; }
