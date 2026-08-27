@@ -9,6 +9,7 @@ export class HmiIOField extends HmiTextWidgetBase {
   maskInput?: HmiProperty<boolean>;
   fillCharacters?: HmiProperty<string>;
   decimalPointMode?: HmiProperty<HmiDecimalPointMode>;
+  polaritySignal?: HmiProperty<number>;
   enterHandshake?: HmiEnterHandshakeSettings;
   popupMode?: HmiProperty<HmiInputPopupMode>;
   takeFocusOnPress?: HmiProperty<boolean>;
