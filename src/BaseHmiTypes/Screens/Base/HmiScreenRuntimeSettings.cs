@@ -72,6 +72,22 @@ public sealed class HmiScreenRuntimeSettings
 
     public HmiColor? InteractiveHighlightColor { get; set; }
 
+    public HmiColor? FieldNotSelectedTextColor { get; set; }
+
+    public HmiColor? FieldNotSelectedFillColor { get; set; }
+
+    public HmiColor? FieldSelectedTextColor { get; set; }
+
+    public HmiColor? FieldSelectedFillColor { get; set; }
+
+    public HmiColor? FieldInErrorNotSelectedTextColor { get; set; }
+
+    public HmiColor? FieldInErrorNotSelectedFillColor { get; set; }
+
+    public HmiColor? FieldInErrorSelectedTextColor { get; set; }
+
+    public HmiColor? FieldInErrorSelectedFillColor { get; set; }
+
     public bool? DisplayOnScreenKeyboard { get; set; }
 
     public bool? AllowButtonActionOnError { get; set; }
