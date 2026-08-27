@@ -17,4 +17,5 @@ export enum HmiButtonOperation {
   ResetAlarmStatus,
   SortAlarms,
   AcknowledgeInformation,
+  ClearAuditTrail,
 }
