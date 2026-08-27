@@ -10,6 +10,7 @@ import { HmiTrendOverlay } from "./HmiTrendOverlay.js";
 import { HmiTrendPen } from "./HmiTrendPen.js";
 import { HmiTrendPenCaptionMode } from "./HmiTrendPenCaptionMode.js";
 import { HmiTrendScrollMode } from "./HmiTrendScrollMode.js";
+import { HmiTrendStackAxesMode } from "./HmiTrendStackAxesMode.js";
 import { HmiTrendTimeFormat } from "./HmiTrendTimeFormat.js";
 import { HmiTrendTemplateOption } from "./HmiTrendTemplateOption.js";
 import { HmiTrendUpdateMode } from "./HmiTrendUpdateMode.js";
@@ -121,4 +122,9 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   currentXTagName?: string;
   currentYTagName?: string;
   useCustomFileExplorer?: HmiProperty<boolean>;
+  autoScale?: HmiProperty<boolean>;
+  chartLiveMode?: HmiProperty<boolean>;
+  chartZoomPercent?: HmiProperty<number>;
+  stackAxesMode?: HmiProperty<HmiTrendStackAxesMode>;
+  windowBackgroundColor?: HmiProperty<HmiColor>;
 }
