@@ -6,6 +6,7 @@ import { HmiAlarmColumn } from "./HmiAlarmColumn.js";
 import { HmiAlarmConditionPresentation } from "./HmiAlarmConditionPresentation.js";
 import { HmiAlarmSelectedIndicator } from "./HmiAlarmSelectedIndicator.js";
 import { HmiAlarmListMode } from "./HmiAlarmListMode.js";
+import { HmiBorderStyle } from "./HmiBorderStyle.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -65,6 +66,8 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   buttonBorderBackgroundColor?: HmiProperty<HmiColor>;
   buttonBorderColor?: HmiProperty<HmiColor>;
   buttonBorderWidth?: HmiProperty<number>;
+  buttonBorderStyle?: HmiProperty<HmiBorderStyle>;
+  buttonWidth?: HmiProperty<number>;
   buttonBackFillStyle?: HmiProperty<number>;
   buttonCornerRadius?: HmiProperty<number>;
   buttonEdgeStyle?: HmiProperty<HmiLineStyle>;
@@ -74,4 +77,6 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   buttonSecondGradientColor?: HmiProperty<HmiColor>;
   buttonSecondGradientOffset?: HmiProperty<number>;
   buttonPositions?: HmiProperty<number[]>;
+  listBorderWidth?: HmiProperty<number>;
+  listBorderStyle?: HmiProperty<HmiBorderStyle>;
 }
