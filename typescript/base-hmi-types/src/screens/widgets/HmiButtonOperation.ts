@@ -18,4 +18,11 @@ export enum HmiButtonOperation {
   SortAlarms,
   AcknowledgeInformation,
   ClearAuditTrail,
+  RecipeDownload,
+  RecipeUpload,
+  RecipeUploadAndCreate,
+  RecipeSave,
+  RecipeRestore,
+  RecipeDelete,
+  RecipeRename,
 }
