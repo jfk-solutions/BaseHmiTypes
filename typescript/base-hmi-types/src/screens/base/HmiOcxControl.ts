@@ -11,6 +11,10 @@ export class HmiOcxControl extends HmiCustomWidgetContainer {
   ocxGuid?: string;
   ocxName?: string;
   ocxProgramId?: string;
+  ocxFileName?: string;
+  ocxFileVersion?: string;
+  ocxTypeLibrary?: string;
+  ocxTypeLibraryVersion?: string;
   ocxState?: Uint8Array;
   ocxStateFormat?: string;
   axHostState?: HmiAxHostState;
