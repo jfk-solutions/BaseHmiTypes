@@ -174,4 +174,30 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? LegacyShowAlarmEventList { get; set; }
 
     public HmiProperty<bool>? LegacyCollapseAlarmEventList { get; set; }
+
+    public HmiProperty<int>? ActiveTraceIndex { get; set; }
+
+    public HmiProperty<bool>? ActiveTraceVisible { get; set; }
+
+    public HmiProperty<bool>? ActiveTraceJoinPoints { get; set; }
+
+    public HmiProperty<HmiColor>? ActiveTraceLineColor { get; set; }
+
+    public HmiProperty<HmiLineStyle>? ActiveTraceLineStyle { get; set; }
+
+    public HmiProperty<double>? ActiveTraceLineWidth { get; set; }
+
+    public HmiProperty<bool>? ActiveTraceDecimalFormat { get; set; }
+
+    public HmiProperty<int>? ActiveTraceNumericPrecision { get; set; }
+
+    public HmiProperty<bool>? ActivePlottingAlgorithmLinear { get; set; }
+
+    public HmiProperty<HmiColor>? ActiveMarkerColor { get; set; }
+
+    public HmiProperty<int>? ActiveMarkerShape { get; set; }
+
+    public HmiProperty<int>? ActiveMarkerSize { get; set; }
+
+    public HmiProperty<bool>? ActiveMarkerVisible { get; set; }
 }
