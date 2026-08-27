@@ -82,6 +82,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<HmiButtonNextStateMode>? NextStateMode { get; set; }
 
     /// <summary>
+    /// Gets or sets the predefined runtime operation requested by the button.
+    /// </summary>
+    public HmiProperty<HmiButtonOperation>? Operation { get; set; }
+
+    /// <summary>
     /// Gets or sets the macro or script component invoked when the button is activated.
     /// An expression-backed property represents products that select the macro name at runtime.
     /// </summary>
