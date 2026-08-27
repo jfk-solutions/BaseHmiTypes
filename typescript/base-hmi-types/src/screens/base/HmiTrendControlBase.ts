@@ -116,4 +116,9 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   activeMarkerShape?: HmiProperty<number>;
   activeMarkerSize?: HmiProperty<number>;
   activeMarkerVisible?: HmiProperty<boolean>;
+  controlType?: string;
+  currentTagName?: string;
+  currentXTagName?: string;
+  currentYTagName?: string;
+  useCustomFileExplorer?: HmiProperty<boolean>;
 }
