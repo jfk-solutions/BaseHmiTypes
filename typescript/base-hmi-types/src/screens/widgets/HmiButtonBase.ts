@@ -39,6 +39,8 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   buttonAction?: HmiProperty<HmiButtonAction>;
   buttonValue?: HmiProperty<number>;
   nextStateMode?: HmiProperty<HmiButtonNextStateMode>;
+  macro?: HmiProperty<string>;
+  useVariableMacro?: HmiProperty<boolean>;
   rampDirection?: HmiProperty<HmiRampDirection>;
   rampIncrement?: HmiProperty<number>;
   rampLimit?: HmiProperty<number>;
