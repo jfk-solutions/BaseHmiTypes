@@ -41,5 +41,15 @@ public enum HmiButtonOperation
     KeyHome,
     KeyEnd,
     KeyBackspace,
-    KeyEnter
+    KeyEnter,
+    UserAddUserOrGroup,
+    UserDeleteUserOrGroup,
+    UserModifyGroupMembership,
+    UserUnlock,
+    UserEnable,
+    UserDisable,
+    UserLogin,
+    UserLogout,
+    UserChangePassword,
+    UserChangeProperties
 }
