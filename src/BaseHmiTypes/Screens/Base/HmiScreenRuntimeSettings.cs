@@ -50,6 +50,10 @@ public sealed class HmiScreenRuntimeSettings
 
     public bool? AllowMultipleRunningCopies { get; set; }
 
+    public bool? KeepAtBack { get; set; }
+
+    public bool? CannotBeReplaced { get; set; }
+
     public bool? CacheAfterDisplaying { get; set; }
 
     /// <summary>
@@ -60,6 +64,8 @@ public sealed class HmiScreenRuntimeSettings
     public bool? SystemMenuVisible { get; set; }
 
     public bool? MinimizeButtonVisible { get; set; }
+
+    public bool? PinButtonVisible { get; set; }
 
     public bool? SizeToMainWindow { get; set; }
 
