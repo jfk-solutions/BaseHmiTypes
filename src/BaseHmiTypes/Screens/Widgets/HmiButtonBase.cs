@@ -97,6 +97,16 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<bool>? ResetAlarmStatusOnClearHistory { get; set; }
 
     /// <summary>
+    /// Gets or sets whether a specialized button sends its press to the focused or linked object.
+    /// </summary>
+    public HmiProperty<HmiButtonPressTarget>? PressTarget { get; set; }
+
+    /// <summary>
+    /// Gets or sets the name of the object that receives the press when <see cref="PressTarget"/> is linked.
+    /// </summary>
+    public HmiProperty<string>? LinkedObject { get; set; }
+
+    /// <summary>
     /// Gets or sets the macro or script component invoked when the button is activated.
     /// An expression-backed property represents products that select the macro name at runtime.
     /// </summary>
