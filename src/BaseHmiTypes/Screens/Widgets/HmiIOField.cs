@@ -54,6 +54,13 @@ public class HmiIOField : HmiTextWidgetBase
     /// </summary>
     public HmiProperty<double>? RampIncrement { get; set; }
 
+    /// <summary>
+    /// Gets or sets the source expression used to transform operator input
+    /// before it is written. Parsers preserve this expression without
+    /// evaluating it.
+    /// </summary>
+    public string? OptionalWriteExpression { get; set; }
+
     public HmiProperty<double>? PolaritySignal { get; set; }
 
     public HmiEnterHandshakeSettings? EnterHandshake { get; set; }
