@@ -34,6 +34,12 @@ public sealed class HmiTrendPen
 
     public string? DataLogModelName { get; set; }
 
+    public string? DataSourceName { get; set; }
+
+    public string? DataSourcePath { get; set; }
+
+    public string? DataSourceApplication { get; set; }
+
     public string? Description { get; set; }
 
     public string? EngineeringUnit { get; set; }
