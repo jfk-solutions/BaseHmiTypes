@@ -12,6 +12,7 @@ export * from "./widgets/HmiSignatureButtonSettings.js";
 export * from "./widgets/HmiButtonAction.js";
 export * from "./widgets/HmiButtonNextStateMode.js";
 export * from "./widgets/HmiButtonOperation.js";
+export * from "./widgets/HmiPasswordChangeMode.js";
 export * from "./widgets/HmiButtonPressTarget.js";
 export * from "./widgets/HmiRampDirection.js";
 export * from "./widgets/HmiHandshakeResetMode.js";
