@@ -46,6 +46,10 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiRangeAnimation? RotationAnimation { get; set; }
 
+    public HmiSliderAnimation? HorizontalSliderAnimation { get; set; }
+
+    public HmiSliderAnimation? VerticalSliderAnimation { get; set; }
+
     public HmiAffineTransform? Transform { get; set; }
 
     public HmiProperty<int>? TabIndex { get; set; }
