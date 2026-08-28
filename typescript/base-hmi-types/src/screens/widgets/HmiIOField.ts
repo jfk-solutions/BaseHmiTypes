@@ -1,6 +1,7 @@
 import { HmiTextWidgetBase } from "./HmiTextWidgetBase.js";
 import { HmiObjectType, HmiProperty } from "../base.js";
 import { HmiDecimalPointMode } from "./HmiDecimalPointMode.js";
+import { HmiFixedPositionOutputMode } from "./HmiFixedPositionOutputMode.js";
 import { HmiEnterHandshakeSettings } from "./HmiEnterHandshakeSettings.js";
 import { HmiInputPopupMode } from "./HmiInputPopupMode.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
@@ -16,6 +17,7 @@ export class HmiIOField extends HmiTextWidgetBase {
   showDigitGrouping?: HmiProperty<boolean>;
   overflowMode?: HmiProperty<string>;
   decimalPointMode?: HmiProperty<HmiDecimalPointMode>;
+  fixedPositionOutputMode?: HmiProperty<HmiFixedPositionOutputMode>;
   digitsAfterDecimal?: HmiProperty<number>;
   minimumValue?: HmiProperty<number>;
   maximumValue?: HmiProperty<number>;
