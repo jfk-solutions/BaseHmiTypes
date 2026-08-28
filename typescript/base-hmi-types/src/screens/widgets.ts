@@ -8,6 +8,7 @@ export * from "./widgets/HmiButtonVisualStyle.js";
 export * from "./widgets/HmiDisabledImageMode.js";
 export * from "./widgets/HmiConfirmationButtons.js";
 export * from "./widgets/HmiConfirmationDialogSettings.js";
+export * from "./widgets/HmiSignatureButtonSettings.js";
 export * from "./widgets/HmiButtonAction.js";
 export * from "./widgets/HmiButtonNextStateMode.js";
 export * from "./widgets/HmiButtonOperation.js";

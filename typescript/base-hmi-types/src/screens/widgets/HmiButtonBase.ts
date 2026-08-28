@@ -13,6 +13,7 @@ import { HmiScreenNavigationSettings } from "./HmiScreenNavigationSettings.js";
 import { HmiDisabledImageMode } from "./HmiDisabledImageMode.js";
 import { HmiConfirmationDialogSettings } from "./HmiConfirmationDialogSettings.js";
 import { HmiButtonVisualStyle } from "./HmiButtonVisualStyle.js";
+import { HmiSignatureButtonSettings } from "./HmiSignatureButtonSettings.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
   readonly states: HmiState[] = [];
@@ -45,6 +46,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   showDisabledState?: HmiProperty<boolean>;
   disabledImageMode?: HmiProperty<HmiDisabledImageMode>;
   confirmationDialog?: HmiConfirmationDialogSettings;
+  signatureSettings?: HmiSignatureButtonSettings;
   autoRepeatDelaySeconds?: HmiProperty<number>;
   autoRepeatRatePerSecond?: HmiProperty<number>;
   holdTimeSeconds?: HmiProperty<number>;
