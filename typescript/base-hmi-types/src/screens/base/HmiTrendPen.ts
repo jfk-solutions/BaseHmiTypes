@@ -19,6 +19,9 @@ export class HmiTrendPen {
   maximumValue?: HmiProperty<number>;
   linkData?: HmiProperty<boolean>;
   dataLogModelName?: string;
+  dataSourceName?: string;
+  dataSourcePath?: string;
+  dataSourceApplication?: string;
   description?: string;
   engineeringUnit?: string;
   logarithmicScale?: HmiProperty<boolean>;
