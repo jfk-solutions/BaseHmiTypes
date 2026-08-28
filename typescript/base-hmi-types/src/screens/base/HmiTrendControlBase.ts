@@ -164,4 +164,20 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   activePlotAsTitle?: HmiProperty<boolean>;
   plotScalingMethod?: string;
   defaultScalingMode?: string;
+  axesPosition?: string;
+  timeAlignment?: string;
+  showCursorTimeDifference?: HmiProperty<boolean>;
+  showCursorValueDifference?: HmiProperty<boolean>;
+  displayQualifiedTagNames?: HmiProperty<boolean>;
+  highlightActive?: HmiProperty<boolean>;
+  highlightLineColor?: HmiProperty<HmiColor>;
+  highlightLineStyle?: HmiProperty<HmiLineStyle>;
+  highlightLineWidth?: HmiProperty<number>;
+  traceDimmingMode?: string;
+  meanLineColor?: HmiProperty<HmiColor>;
+  zone1Color?: HmiProperty<HmiColor>;
+  zone2Color?: HmiProperty<HmiColor>;
+  zone3Color?: HmiProperty<HmiColor>;
+  showZoneLines?: HmiProperty<boolean>;
+  showZones?: HmiProperty<boolean>;
 }
