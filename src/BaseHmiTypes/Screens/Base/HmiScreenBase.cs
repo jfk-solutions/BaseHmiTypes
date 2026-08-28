@@ -4,6 +4,12 @@ public abstract class HmiScreenBase : HmiScreenModelBase
 {
     public HmiScreenKind Kind { get; set; } = HmiScreenKind.Screen;
 
+    public string? SourceFormat { get; set; }
+
+    public byte[]? SourceData { get; set; }
+
+    public Dictionary<string, string> SourceProperties { get; } = [];
+
     public int? Number { get; set; }
 
     public HmiProperty<double> Width { get; set; } = 0;
