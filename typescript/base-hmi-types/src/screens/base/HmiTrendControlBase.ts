@@ -22,6 +22,7 @@ import { HmiTrendYAxisRangeMode } from "./HmiTrendYAxisRangeMode.js";
 import { HmiTrendYAxisScaleMode } from "./HmiTrendYAxisScaleMode.js";
 
 export abstract class HmiTrendControlBase extends HmiControlWindowBase {
+  definitionVersion?: number;
   readonly pens: HmiTrendPen[] = [];
   readonly overlays: HmiTrendOverlay[] = [];
   readonly templateOptions: HmiTrendTemplateOption[] = [];
