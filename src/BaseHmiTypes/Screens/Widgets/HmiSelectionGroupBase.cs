@@ -25,6 +25,12 @@ public abstract class HmiSelectionGroupBase : HmiWidgetBase
 
     public HmiProperty<bool>? WriteOnEnter { get; set; }
 
+    /// <summary>
+    /// Gets or sets the read-only runtime connection that selects remote control.
+    /// A nonzero value enables remote control; zero leaves control with the operator.
+    /// </summary>
+    public HmiProperty<double>? RemoteAccess { get; set; }
+
     public HmiEnterHandshakeSettings? EnterHandshake { get; set; }
 
     public HmiProperty<double>? SelectionItemHeight { get; set; }
