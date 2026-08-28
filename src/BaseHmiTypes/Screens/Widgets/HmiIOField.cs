@@ -63,6 +63,18 @@ public class HmiIOField : HmiTextWidgetBase
     /// </summary>
     public string? OptionalWriteExpression { get; set; }
 
+    /// <summary>
+    /// Gets or sets the source expression identifying the value connection
+    /// written by an input field. The parser does not perform the write.
+    /// </summary>
+    public string? WriteValueExpression { get; set; }
+
+    /// <summary>
+    /// Gets or sets the independent feedback value displayed by input fields
+    /// that expose a separate indicator connection.
+    /// </summary>
+    public HmiProperty<double>? IndicatorValue { get; set; }
+
     public HmiProperty<double>? PolaritySignal { get; set; }
 
     public HmiEnterHandshakeSettings? EnterHandshake { get; set; }
