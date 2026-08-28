@@ -39,6 +39,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   numericRadix?: HmiProperty<HmiTrendNumericRadix>;
   dataPointConnection?: HmiProperty<HmiTrendDataPointConnection>;
   displayMilliseconds?: HmiProperty<boolean>;
+  /** Whether the chart time label shows elapsed time instead of clock time. */
+  displayElapsedTime?: HmiProperty<boolean>;
   displayPenIcons?: HmiProperty<boolean>;
   allowScrolling?: HmiProperty<boolean>;
   scrollMode?: HmiProperty<HmiTrendScrollMode>;
