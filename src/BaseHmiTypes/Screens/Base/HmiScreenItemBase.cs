@@ -16,6 +16,12 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiScriptExposureMode? ScriptExposureMode { get; set; }
 
+    public string? SourceFormat { get; set; }
+
+    public byte[]? SourceData { get; set; }
+
+    public Dictionary<string, string> SourceProperties { get; } = [];
+
     public HmiProperty<double> X { get; set; } = 0;
 
     public HmiProperty<double> Y { get; set; } = 0;
