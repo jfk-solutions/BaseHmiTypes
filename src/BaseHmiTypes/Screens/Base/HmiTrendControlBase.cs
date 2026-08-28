@@ -70,6 +70,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiTrendLegendPosition>? LineLegendPosition { get; set; }
 
+    public HmiProperty<int>? LineLegendFirstVisibleRow { get; set; }
+
     public HmiProperty<int>? LineLegendMaximumVisiblePens { get; set; }
 
     public HmiProperty<bool>? DisplayCurrentValueLegend { get; set; }
