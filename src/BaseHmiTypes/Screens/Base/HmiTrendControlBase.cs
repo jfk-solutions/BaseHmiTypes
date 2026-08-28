@@ -256,4 +256,24 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<HmiTrendStackAxesMode>? StackAxesMode { get; set; }
 
     public HmiProperty<HmiColor>? WindowBackgroundColor { get; set; }
+
+    public HmiProperty<bool>? LayoutLocked { get; set; }
+
+    public HmiProperty<bool>? XAxisFlipped { get; set; }
+
+    public HmiProperty<bool>? YAxisFlipped { get; set; }
+
+    public HmiProperty<bool>? AxesLocked { get; set; }
+
+    public HmiProperty<bool>? DisplayOverlayZoomPanel { get; set; }
+
+    public HmiProperty<bool>? ShowOutsidePoints { get; set; }
+
+    public HmiProperty<bool>? ShowToolTip { get; set; }
+
+    public HmiProperty<bool>? ToolTipShowValue { get; set; }
+
+    public HmiProperty<bool>? ToolTipShowTime { get; set; }
+
+    public HmiProperty<bool>? ToolTipShowQuality { get; set; }
 }
