@@ -9,6 +9,12 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public IList<HmiTrendOverlay> Overlays { get; } = new List<HmiTrendOverlay>();
     public IList<HmiTrendTemplateOption> TemplateOptions { get; } = new List<HmiTrendTemplateOption>();
 
+    public HmiProperty<long>? TemplateLoadOptions1Mask { get; set; }
+
+    public HmiProperty<long>? TemplateLoadOptions2Mask { get; set; }
+
+    public HmiProperty<long>? TemplateLoadOptions3Mask { get; set; }
+
     public IList<HmiTrendBatch> Batches { get; } = new List<HmiTrendBatch>();
 
     public HmiProperty<double>? MinimumValue { get; set; }
