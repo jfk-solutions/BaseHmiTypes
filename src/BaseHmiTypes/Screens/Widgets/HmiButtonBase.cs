@@ -116,6 +116,16 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<HmiButtonOperation>? Operation { get; set; }
 
     /// <summary>
+    /// Gets or sets whether a user-login dialog conceals the user-name entry at runtime.
+    /// </summary>
+    public HmiProperty<bool>? HideUserNameEntry { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether a user-logout operation opens the configured navigation target.
+    /// </summary>
+    public HmiProperty<bool>? ShowDisplayOnLogout { get; set; }
+
+    /// <summary>
     /// Gets the alarm trigger labels affected by an alarm operation. An empty list means all triggers.
     /// </summary>
     public IList<string> AlarmFilteredTriggers { get; } = new List<string>();
