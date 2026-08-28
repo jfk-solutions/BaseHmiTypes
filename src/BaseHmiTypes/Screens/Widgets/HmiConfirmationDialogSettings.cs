@@ -20,4 +20,12 @@ public class HmiConfirmationDialogSettings
     public HmiFont? MessageFont { get; set; }
 
     public string? ImageReference { get; set; }
+
+    public bool? ImageScaled { get; set; }
+
+    public HmiColor? ImageColor { get; set; }
+
+    public HmiColor? ImageBackgroundColor { get; set; }
+
+    public bool? ImageBackgroundTransparent { get; set; }
 }
