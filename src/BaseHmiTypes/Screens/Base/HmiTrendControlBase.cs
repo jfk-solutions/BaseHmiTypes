@@ -7,6 +7,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public IList<HmiTrendOverlay> Overlays { get; } = new List<HmiTrendOverlay>();
     public IList<HmiTrendTemplateOption> TemplateOptions { get; } = new List<HmiTrendTemplateOption>();
 
+    public IList<HmiTrendBatch> Batches { get; } = new List<HmiTrendBatch>();
+
     public HmiProperty<double>? MinimumValue { get; set; }
 
     public HmiProperty<double>? MaximumValue { get; set; }
@@ -176,6 +178,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? LegacyCollapseAlarmEventList { get; set; }
 
     public HmiProperty<int>? ActiveTraceIndex { get; set; }
+
+    public HmiProperty<int>? ActiveBatchIndex { get; set; }
 
     public HmiProperty<bool>? ActiveTraceVisible { get; set; }
 
