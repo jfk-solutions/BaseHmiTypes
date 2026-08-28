@@ -46,6 +46,10 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiTrendScrollMode>? ScrollMode { get; set; }
 
+    public HmiProperty<bool>? DisplayScrollMechanism { get; set; }
+
+    public HmiProperty<HmiTrendScrollMechanism>? ScrollMechanism { get; set; }
+
     public HmiProperty<int>? BufferSizePerPen { get; set; }
 
     public string? ChartTitle { get; set; }
