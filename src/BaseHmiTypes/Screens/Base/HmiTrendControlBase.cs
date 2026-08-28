@@ -288,4 +288,36 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public string? PlotScalingMethod { get; set; }
 
     public string? DefaultScalingMode { get; set; }
+
+    public string? AxesPosition { get; set; }
+
+    public string? TimeAlignment { get; set; }
+
+    public HmiProperty<bool>? ShowCursorTimeDifference { get; set; }
+
+    public HmiProperty<bool>? ShowCursorValueDifference { get; set; }
+
+    public HmiProperty<bool>? DisplayQualifiedTagNames { get; set; }
+
+    public HmiProperty<bool>? HighlightActive { get; set; }
+
+    public HmiProperty<HmiColor>? HighlightLineColor { get; set; }
+
+    public HmiProperty<HmiLineStyle>? HighlightLineStyle { get; set; }
+
+    public HmiProperty<double>? HighlightLineWidth { get; set; }
+
+    public string? TraceDimmingMode { get; set; }
+
+    public HmiProperty<HmiColor>? MeanLineColor { get; set; }
+
+    public HmiProperty<HmiColor>? Zone1Color { get; set; }
+
+    public HmiProperty<HmiColor>? Zone2Color { get; set; }
+
+    public HmiProperty<HmiColor>? Zone3Color { get; set; }
+
+    public HmiProperty<bool>? ShowZoneLines { get; set; }
+
+    public HmiProperty<bool>? ShowZones { get; set; }
 }
