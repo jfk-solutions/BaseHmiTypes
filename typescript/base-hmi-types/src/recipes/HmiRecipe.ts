@@ -12,6 +12,8 @@ export class HmiRecipeParameter {
   tag?: string;
   dataType?: string;
   unit?: string;
+  minimumValue?: string;
+  maximumValue?: string;
   comment?: string;
 }
 
