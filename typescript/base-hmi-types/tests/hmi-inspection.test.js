@@ -112,6 +112,14 @@ test("property inspection separates fallback values and dynamic bindings", () =>
   assert.equal(properties.some(property => property.name === "items"), false);
 });
 
+test("tag binding retains selected metadata property", () => {
+  const property = tagProperty("Tank.Level", undefined, "EngineeringUnits");
+
+  assert.equal(property.kind, HmiPropertyKind.Tag);
+  assert.equal(property.tagName, "Tank.Level");
+  assert.equal(property.propertyName, "EngineeringUnits");
+});
+
 function createScreen(id, name) {
   const screen = new HmiScreen();
   screen.id = id;

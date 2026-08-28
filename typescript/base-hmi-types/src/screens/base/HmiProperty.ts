@@ -102,6 +102,8 @@ export interface HmiDefaultProperty<T> extends HmiProperty<T> {
 export interface HmiTagProperty<T> extends HmiDynamicProperty<T> {
   readonly kind: HmiPropertyKind.Tag;
   tagName?: string;
+  /** Metadata property selected from the tag instead of its runtime value. */
+  propertyName?: string;
 }
 
 export interface HmiFaceplateInterfaceProperty<T> extends HmiProperty<T> {
@@ -137,8 +139,8 @@ export function defaultProperty<T>(value?: T, profileName?: string, propertyName
   return { kind: HmiPropertyKind.Default, staticValue: value, profileName, propertyName };
 }
 
-export function tagProperty<T>(tagName: string, fallbackValue?: T): HmiTagProperty<T> {
-  return { kind: HmiPropertyKind.Tag, tagName, staticValue: fallbackValue, triggers: [] };
+export function tagProperty<T>(tagName: string, fallbackValue?: T, propertyName?: string): HmiTagProperty<T> {
+  return { kind: HmiPropertyKind.Tag, tagName, propertyName, staticValue: fallbackValue, triggers: [] };
 }
 
 export function faceplateInterfaceProperty<T>(
