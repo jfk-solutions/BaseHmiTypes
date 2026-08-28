@@ -20,6 +20,8 @@ public sealed class HmiTag : IHmiObject
 
     public bool? ReadOnly { get; set; }
 
+    public bool? Alarmed { get; set; }
+
     public bool? Retentive { get; set; }
 
     public string? SecurityCode { get; set; }
@@ -49,6 +51,8 @@ public sealed class HmiTag : IHmiObject
     public int? StringLength { get; set; }
 
     public int? NativeValueType { get; set; }
+
+    public string? ValueType { get; set; }
 
     public int? ElementSize { get; set; }
 
