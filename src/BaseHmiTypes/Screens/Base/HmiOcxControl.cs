@@ -25,5 +25,11 @@ public class HmiOcxControl : HmiCustomWidgetContainer
 
     public string? OcxStateFormat { get; set; }
 
+    /// <summary>
+    /// XML document embedded in <see cref="OcxState"/>, when the source format exposes one.
+    /// The original state bytes remain authoritative and are preserved unchanged.
+    /// </summary>
+    public string? OcxStateXml { get; set; }
+
     public HmiAxHostState? AxHostState { get; set; }
 }
