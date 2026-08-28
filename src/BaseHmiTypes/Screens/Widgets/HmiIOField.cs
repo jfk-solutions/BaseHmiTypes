@@ -30,6 +30,24 @@ public class HmiIOField : HmiTextWidgetBase
 
     public HmiProperty<int>? DigitsAfterDecimal { get; set; }
 
+    /// <summary>
+    /// Gets or sets the lowest value accepted by a numeric input field. The
+    /// property can contain a static limit or a runtime expression.
+    /// </summary>
+    public HmiProperty<double>? MinimumValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets the highest value accepted by a numeric input field. The
+    /// property can contain a static limit or a runtime expression.
+    /// </summary>
+    public HmiProperty<double>? MaximumValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the source application enables expression-driven
+    /// minimum and maximum limits.
+    /// </summary>
+    public HmiProperty<bool>? UseVariableMinimumMaximum { get; set; }
+
     public HmiProperty<double>? PolaritySignal { get; set; }
 
     public HmiEnterHandshakeSettings? EnterHandshake { get; set; }
