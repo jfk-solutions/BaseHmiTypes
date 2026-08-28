@@ -58,6 +58,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   lineLegendPenCaptionMode?: HmiProperty<HmiTrendPenCaptionMode>;
   lineLegendMaximumCaptionLength?: HmiProperty<number>;
   lineLegendPosition?: HmiProperty<HmiTrendLegendPosition>;
+  lineLegendFirstVisibleRow?: HmiProperty<number>;
   lineLegendMaximumVisiblePens?: HmiProperty<number>;
   displayCurrentValueLegend?: HmiProperty<boolean>;
   currentValueLegendDisplayPenIcons?: HmiProperty<boolean>;
