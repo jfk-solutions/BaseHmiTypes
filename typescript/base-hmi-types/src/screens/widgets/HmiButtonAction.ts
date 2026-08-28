@@ -4,4 +4,6 @@ export enum HmiButtonAction {
   StateValues = 2,
   SetToOne = 3,
   ButtonValue = 4,
+  SetToZero = 5,
+  ToggleTagValue = 6,
 }
