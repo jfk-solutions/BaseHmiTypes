@@ -1,9 +1,13 @@
-import { HmiScriptLanguage } from "../screens/base/HmiProperty.js";
+import {
+  HmiScriptLanguage,
+  type HmiProperty,
+} from "../screens/base/HmiProperty.js";
 import { HmiScriptCommand } from "./HmiScriptCommand.js";
 
 export enum HmiActionKind {
   CommandList = "CommandList",
   TextScript = "TextScript",
+  OpenResource = "OpenResource",
 }
 
 export abstract class HmiAction {
@@ -19,4 +23,10 @@ export class HmiTextScriptAction extends HmiAction {
   readonly kind = HmiActionKind.TextScript;
   language: HmiScriptLanguage = HmiScriptLanguage.Unknown;
   sourceCode?: string;
+}
+
+/** Describes an inert request to open a URL or file resource. */
+export class HmiOpenResourceAction extends HmiAction {
+  readonly kind = HmiActionKind.OpenResource;
+  address?: HmiProperty<string>;
 }
