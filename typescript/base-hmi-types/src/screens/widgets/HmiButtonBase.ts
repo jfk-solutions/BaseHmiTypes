@@ -67,7 +67,9 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   printAlarmTime?: HmiProperty<boolean>;
   printAcknowledgeTime?: HmiProperty<boolean>;
   printTriggerLabel?: HmiProperty<boolean>;
+  printTriggerLabelWidth?: HmiProperty<number>;
   printTriggerValue?: HmiProperty<boolean>;
+  printTriggerValueWidth?: HmiProperty<number>;
   printMessage?: HmiProperty<boolean>;
   printAlarmQuantity?: HmiProperty<boolean>;
   printAccumulatedTime?: HmiProperty<boolean>;
