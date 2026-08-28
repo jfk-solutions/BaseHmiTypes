@@ -10,6 +10,7 @@ import { HmiAffineTransform } from "./HmiAffineTransform.js";
 import { HmiTouchAreaShape } from "./HmiTouchAreaShape.js";
 import { HmiConfirmationDialogSettings } from "../widgets/HmiConfirmationDialogSettings.js";
 import { HmiRangeAnimation } from "./HmiRangeAnimation.js";
+import { HmiSliderAnimation } from "./HmiSliderAnimation.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   description?: string;
@@ -32,6 +33,8 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   widthAnimation?: HmiRangeAnimation;
   heightAnimation?: HmiRangeAnimation;
   rotationAnimation?: HmiRangeAnimation;
+  horizontalSliderAnimation?: HmiSliderAnimation;
+  verticalSliderAnimation?: HmiSliderAnimation;
   transform?: HmiAffineTransform;
   tabIndex?: HmiProperty<number>;
   securityCode?: string;
