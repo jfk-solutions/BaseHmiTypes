@@ -21,6 +21,7 @@ export class HmiIOField extends HmiTextWidgetBase {
   maximumValue?: HmiProperty<number>;
   useVariableMinimumMaximum?: HmiProperty<boolean>;
   rampIncrement?: HmiProperty<number>;
+  optionalWriteExpression?: string;
   polaritySignal?: HmiProperty<number>;
   enterHandshake?: HmiEnterHandshakeSettings;
   popupMode?: HmiProperty<HmiInputPopupMode>;
