@@ -268,6 +268,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? WindowBackgroundColor { get; set; }
 
+    public HmiProperty<HmiTrendWindowStyle>? WindowStyle { get; set; }
+
     public HmiProperty<bool>? LayoutLocked { get; set; }
 
     public HmiProperty<bool>? XAxisFlipped { get; set; }
