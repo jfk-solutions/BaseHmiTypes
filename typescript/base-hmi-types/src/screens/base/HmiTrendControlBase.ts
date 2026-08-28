@@ -13,6 +13,7 @@ import { HmiTrendLegendPosition } from "./HmiTrendLegendPosition.js";
 import { HmiTrendOverlay } from "./HmiTrendOverlay.js";
 import { HmiTrendPen } from "./HmiTrendPen.js";
 import { HmiTrendPenCaptionMode } from "./HmiTrendPenCaptionMode.js";
+import { HmiTrendScrollMechanism } from "./HmiTrendScrollMechanism.js";
 import { HmiTrendScrollMode } from "./HmiTrendScrollMode.js";
 import { HmiTrendStackAxesMode } from "./HmiTrendStackAxesMode.js";
 import { HmiTrendTimeFormat } from "./HmiTrendTimeFormat.js";
@@ -45,6 +46,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   displayPenIcons?: HmiProperty<boolean>;
   allowScrolling?: HmiProperty<boolean>;
   scrollMode?: HmiProperty<HmiTrendScrollMode>;
+  displayScrollMechanism?: HmiProperty<boolean>;
+  scrollMechanism?: HmiProperty<HmiTrendScrollMechanism>;
   bufferSizePerPen?: HmiProperty<number>;
   chartTitle?: string;
   displayChartTitle?: HmiProperty<boolean>;
