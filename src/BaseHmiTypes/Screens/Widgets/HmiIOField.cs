@@ -48,6 +48,12 @@ public class HmiIOField : HmiTextWidgetBase
     /// </summary>
     public HmiProperty<bool>? UseVariableMinimumMaximum { get; set; }
 
+    /// <summary>
+    /// Gets or sets the amount by which a focused numeric input changes when
+    /// its increment or decrement action is invoked.
+    /// </summary>
+    public HmiProperty<double>? RampIncrement { get; set; }
+
     public HmiProperty<double>? PolaritySignal { get; set; }
 
     public HmiEnterHandshakeSettings? EnterHandshake { get; set; }
