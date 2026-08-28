@@ -109,6 +109,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<double>? ButtonValue { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether closing a display also writes the configured button value to its action tag.
+    /// </summary>
+    public HmiProperty<bool>? WriteValueOnClose { get; set; }
+
     public HmiProperty<HmiButtonNextStateMode>? NextStateMode { get; set; }
 
     /// <summary>
