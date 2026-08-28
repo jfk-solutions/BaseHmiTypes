@@ -27,6 +27,7 @@ export * from "./widgets/HmiButton.js";
 export * from "./widgets/HmiToggleSwitch.js";
 export * from "./widgets/HmiToggleSwitchShapeType.js";
 export * from "./widgets/HmiClock.js";
+export * from "./widgets/HmiArrowIndicator.js";
 export * from "./widgets/HmiScaleWidgetBase.js";
 export * from "./widgets/HmiSelectionGroupBase.js";
 export * from "./widgets/HmiScreenNavigationSettings.js";
