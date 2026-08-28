@@ -146,4 +146,14 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   chartZoomPercent?: HmiProperty<number>;
   stackAxesMode?: HmiProperty<HmiTrendStackAxesMode>;
   windowBackgroundColor?: HmiProperty<HmiColor>;
+  layoutLocked?: HmiProperty<boolean>;
+  xAxisFlipped?: HmiProperty<boolean>;
+  yAxisFlipped?: HmiProperty<boolean>;
+  axesLocked?: HmiProperty<boolean>;
+  displayOverlayZoomPanel?: HmiProperty<boolean>;
+  showOutsidePoints?: HmiProperty<boolean>;
+  showToolTip?: HmiProperty<boolean>;
+  toolTipShowValue?: HmiProperty<boolean>;
+  toolTipShowTime?: HmiProperty<boolean>;
+  toolTipShowQuality?: HmiProperty<boolean>;
 }
