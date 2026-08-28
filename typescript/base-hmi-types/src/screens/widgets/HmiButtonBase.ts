@@ -56,6 +56,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   actionTag?: HmiProperty<string>;
   actionRemark?: HmiProperty<HmiMultilingualText>;
   buttonValue?: HmiProperty<number>;
+  writeValueOnClose?: HmiProperty<boolean>;
   nextStateMode?: HmiProperty<HmiButtonNextStateMode>;
   operation?: HmiProperty<HmiButtonOperation>;
   hideUserNameEntry?: HmiProperty<boolean>;
