@@ -1,3 +1,5 @@
+using BaseHmiTypes.Common;
+
 namespace BaseHmiTypes.Screens.Base;
 
 public enum HmiElectronicSignatureDomainSource
@@ -11,6 +13,10 @@ public sealed class HmiElectronicSignatureSettings
     public bool? Required { get; set; }
 
     public bool? AllowBlankComment { get; set; }
+
+    public bool? ShowConfirmationMessage { get; set; }
+
+    public HmiMultilingualText? ConfirmationMessage { get; set; }
 
     public bool? RequireReAuthentication { get; set; }
 
