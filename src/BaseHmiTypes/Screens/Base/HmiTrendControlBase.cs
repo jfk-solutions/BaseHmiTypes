@@ -76,6 +76,11 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? CurrentValueLegendDisplayTime { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the interactive value bar is displayed on the chart.
+    /// </summary>
+    public HmiProperty<bool>? DisplayValueBar { get; set; }
+
     public HmiProperty<bool>? XAxisScaleVisible { get; set; }
 
     public HmiProperty<bool>? XAxisDateVisible { get; set; }
