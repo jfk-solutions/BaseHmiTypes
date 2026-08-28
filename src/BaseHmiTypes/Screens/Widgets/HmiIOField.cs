@@ -28,6 +28,8 @@ public class HmiIOField : HmiTextWidgetBase
 
     public HmiProperty<HmiDecimalPointMode>? DecimalPointMode { get; set; }
 
+    public HmiProperty<HmiFixedPositionOutputMode>? FixedPositionOutputMode { get; set; }
+
     public HmiProperty<int>? DigitsAfterDecimal { get; set; }
 
     /// <summary>
