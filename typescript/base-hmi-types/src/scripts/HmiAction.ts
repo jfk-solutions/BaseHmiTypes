@@ -8,6 +8,7 @@ export enum HmiActionKind {
   CommandList = "CommandList",
   TextScript = "TextScript",
   OpenResource = "OpenResource",
+  OleVerb = "OleVerb",
 }
 
 export abstract class HmiAction {
@@ -29,4 +30,11 @@ export class HmiTextScriptAction extends HmiAction {
 export class HmiOpenResourceAction extends HmiAction {
   readonly kind = HmiActionKind.OpenResource;
   address?: HmiProperty<string>;
+}
+
+/** Describes an inert request to invoke a verb on an embedded OLE object. */
+export class HmiOleVerbAction extends HmiAction {
+  readonly kind = HmiActionKind.OleVerb;
+  verb?: string;
+  securityCode?: string;
 }
