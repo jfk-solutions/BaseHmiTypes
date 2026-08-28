@@ -56,6 +56,8 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   buttonValue?: HmiProperty<number>;
   nextStateMode?: HmiProperty<HmiButtonNextStateMode>;
   operation?: HmiProperty<HmiButtonOperation>;
+  hideUserNameEntry?: HmiProperty<boolean>;
+  showDisplayOnLogout?: HmiProperty<boolean>;
   readonly alarmFilteredTriggers: string[] = [];
   resetAlarmStatusOnClearHistory?: HmiProperty<boolean>;
   pressTarget?: HmiProperty<HmiButtonPressTarget>;
