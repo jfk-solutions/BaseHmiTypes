@@ -9,6 +9,8 @@ public sealed class HmiState
 
     public double? Value { get; set; }
 
+    public HmiStateAccess? Access { get; set; }
+
     public HmiMultilingualText? Text { get; set; }
 
     public HmiFont? Font { get; set; }
