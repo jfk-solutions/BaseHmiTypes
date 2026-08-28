@@ -11,4 +11,6 @@ public class HmiReferenceObjectSettings
     public bool? SizeLinked { get; set; }
 
     public bool? ToolTipLinked { get; set; }
+
+    public IList<HmiReferenceParameter> Parameters { get; } = new List<HmiReferenceParameter>();
 }
