@@ -15,6 +15,7 @@ import { HmiConfirmationDialogSettings } from "./HmiConfirmationDialogSettings.j
 import { HmiButtonVisualStyle } from "./HmiButtonVisualStyle.js";
 import { HmiSignatureButtonSettings } from "./HmiSignatureButtonSettings.js";
 import { HmiAlarmListMode } from "../controls/HmiAlarmListMode.js";
+import { HmiPasswordChangeMode } from "./HmiPasswordChangeMode.js";
 
 export abstract class HmiButtonBase extends HmiWidgetBase {
   readonly states: HmiState[] = [];
@@ -59,6 +60,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   operation?: HmiProperty<HmiButtonOperation>;
   hideUserNameEntry?: HmiProperty<boolean>;
   showDisplayOnLogout?: HmiProperty<boolean>;
+  passwordChangeMode?: HmiProperty<HmiPasswordChangeMode>;
   readonly alarmFilteredTriggers: string[] = [];
   alarmPrintListMode?: HmiProperty<HmiAlarmListMode>;
   printAlarmTime?: HmiProperty<boolean>;
