@@ -16,6 +16,7 @@ export * from "./controls/HmiRecipeColumn.js";
 export * from "./controls/HmiRecipeColumnType.js";
 export * from "./controls/HmiRecipeViewKind.js";
 export * from "./controls/HmiDataGridControl.js";
+export * from "./controls/HmiRadarChartControl.js";
 export * from "./controls/HmiDetailedParameterControl.js";
 export * from "./controls/HmiMediaControl.js";
 export * from "./controls/HmiObjectExplorerControl.js";
