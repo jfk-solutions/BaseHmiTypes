@@ -320,4 +320,18 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? ShowZoneLines { get; set; }
 
     public HmiProperty<bool>? ShowZones { get; set; }
+
+    public HmiProperty<bool>? DisplayRetrievedDataOnTrend { get; set; }
+
+    public string? RetrievalTimeZoneId { get; set; }
+
+    public HmiProperty<double>? LiveDataTimeDeadbandTicks { get; set; }
+
+    public HmiProperty<double>? LiveDataMaximumAgeTicks { get; set; }
+
+    public HmiProperty<int>? LiveDataMaximumElements { get; set; }
+
+    public HmiProperty<bool>? LiveDataStopWhenFull { get; set; }
+
+    public HmiProperty<int>? LiveDataCollectorSizeType { get; set; }
 }
