@@ -10,6 +10,7 @@ export class HmiTag implements IHmiObject {
   plcTag?: string;
   address?: string;
   readOnly?: boolean;
+  alarmed?: boolean;
   retentive?: boolean;
   securityCode?: string;
   externalReferenceCount?: number;
@@ -25,6 +26,7 @@ export class HmiTag implements IHmiObject {
   onLabel?: string;
   stringLength?: number;
   nativeValueType?: number;
+  valueType?: string;
   elementSize?: number;
   elementCount?: number;
   refreshType?: string;
