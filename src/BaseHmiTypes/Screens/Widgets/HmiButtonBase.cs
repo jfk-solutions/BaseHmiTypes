@@ -127,6 +127,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<bool>? ShowDisplayOnLogout { get; set; }
 
     /// <summary>
+    /// Gets or sets whether a password operation targets the current user or an administrator-selected user.
+    /// </summary>
+    public HmiProperty<HmiPasswordChangeMode>? PasswordChangeMode { get; set; }
+
+    /// <summary>
     /// Gets the alarm trigger labels affected by an alarm operation. An empty list means all triggers.
     /// </summary>
     public IList<string> AlarmFilteredTriggers { get; } = new List<string>();
