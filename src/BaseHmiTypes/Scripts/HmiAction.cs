@@ -5,7 +5,8 @@ namespace BaseHmiTypes.Scripts;
 public enum HmiActionKind
 {
     CommandList,
-    TextScript
+    TextScript,
+    OpenResource
 }
 
 public abstract class HmiAction
@@ -29,3 +30,12 @@ public sealed class HmiTextScriptAction : HmiAction
     public string? SourceCode { get; set; }
 }
 
+/// <summary>
+/// Describes an inert request to open a URL or file resource.
+/// </summary>
+public sealed class HmiOpenResourceAction : HmiAction
+{
+    public override HmiActionKind Kind => HmiActionKind.OpenResource;
+
+    public HmiProperty<string>? Address { get; set; }
+}
