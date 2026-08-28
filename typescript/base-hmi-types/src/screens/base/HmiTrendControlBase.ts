@@ -6,6 +6,7 @@ import { HmiProperty } from "./HmiProperty.js";
 import { HmiThickness } from "./HmiThickness.js";
 import { HmiTrendChartStyle } from "./HmiTrendChartStyle.js";
 import { HmiTrendAxisScalingMode } from "./HmiTrendAxisScalingMode.js";
+import { HmiTrendBatch } from "./HmiTrendBatch.js";
 import { HmiTrendDataPointConnection } from "./HmiTrendDataPointConnection.js";
 import { HmiTrendNumericRadix } from "./HmiTrendNumericRadix.js";
 import { HmiTrendLegendPosition } from "./HmiTrendLegendPosition.js";
@@ -24,6 +25,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   readonly pens: HmiTrendPen[] = [];
   readonly overlays: HmiTrendOverlay[] = [];
   readonly templateOptions: HmiTrendTemplateOption[] = [];
+  readonly batches: HmiTrendBatch[] = [];
   minimumValue?: HmiProperty<number>;
   maximumValue?: HmiProperty<number>;
   chartStyle?: HmiProperty<HmiTrendChartStyle>;
@@ -108,6 +110,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   legacyShowAlarmEventList?: HmiProperty<boolean>;
   legacyCollapseAlarmEventList?: HmiProperty<boolean>;
   activeTraceIndex?: HmiProperty<number>;
+  activeBatchIndex?: HmiProperty<number>;
   activeTraceVisible?: HmiProperty<boolean>;
   activeTraceJoinPoints?: HmiProperty<boolean>;
   activeTraceLineColor?: HmiProperty<HmiColor>;
