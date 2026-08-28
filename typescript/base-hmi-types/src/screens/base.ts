@@ -24,6 +24,7 @@ export * from "./base/HmiLayer.js";
 export * from "./base/HmiScreenItemBase.js";
 export * from "./base/HmiReferenceAnimationMode.js";
 export * from "./base/HmiReferenceObjectSettings.js";
+export * from "./base/HmiReferenceParameter.js";
 export * from "./base/HmiScriptExposureMode.js";
 export * from "./base/HmiPaintedScreenItemBase.js";
 export * from "./base/HmiAnimationRangeSource.js";

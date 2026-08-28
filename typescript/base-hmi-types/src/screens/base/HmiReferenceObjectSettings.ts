@@ -1,4 +1,5 @@
 import { HmiReferenceAnimationMode } from "./HmiReferenceAnimationMode.js";
+import { HmiReferenceParameter } from "./HmiReferenceParameter.js";
 
 export class HmiReferenceObjectSettings {
   source?: string;
@@ -6,4 +7,5 @@ export class HmiReferenceObjectSettings {
   connectionsLinked?: boolean;
   sizeLinked?: boolean;
   toolTipLinked?: boolean;
+  readonly parameters: HmiReferenceParameter[] = [];
 }
