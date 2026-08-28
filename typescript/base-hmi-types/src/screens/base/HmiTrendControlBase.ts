@@ -20,6 +20,7 @@ import { HmiTrendTemplateOption } from "./HmiTrendTemplateOption.js";
 import { HmiTrendUpdateMode } from "./HmiTrendUpdateMode.js";
 import { HmiTrendYAxisRangeMode } from "./HmiTrendYAxisRangeMode.js";
 import { HmiTrendYAxisScaleMode } from "./HmiTrendYAxisScaleMode.js";
+import { HmiTrendWindowStyle } from "./HmiTrendWindowStyle.js";
 
 export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   definitionVersion?: number;
@@ -154,6 +155,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   chartZoomPercent?: HmiProperty<number>;
   stackAxesMode?: HmiProperty<HmiTrendStackAxesMode>;
   windowBackgroundColor?: HmiProperty<HmiColor>;
+  windowStyle?: HmiProperty<HmiTrendWindowStyle>;
   layoutLocked?: HmiProperty<boolean>;
   xAxisFlipped?: HmiProperty<boolean>;
   yAxisFlipped?: HmiProperty<boolean>;
