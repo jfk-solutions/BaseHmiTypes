@@ -25,4 +25,16 @@ public class HmiObjectTypeTests
 
         StringAssert.Contains(json, "\"HmiObjectType\":\"HmiButton\"");
     }
+
+    [TestMethod]
+    public void ReferenceObjectSettings_RetainParameterAssignments()
+    {
+        var settings = new HmiReferenceObjectSettings { Source = "Library.Motor" };
+        settings.Parameters.Add(new HmiReferenceParameter { Name = "#1", Description = "Motor tag", Value = "[PLC]Motor1" });
+
+        var parameter = settings.Parameters.Single();
+        Assert.AreEqual("#1", parameter.Name);
+        Assert.AreEqual("Motor tag", parameter.Description);
+        Assert.AreEqual("[PLC]Motor1", parameter.Value);
+    }
 }
