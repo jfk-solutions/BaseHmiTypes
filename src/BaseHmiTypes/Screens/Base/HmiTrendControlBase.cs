@@ -35,6 +35,11 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? DisplayMilliseconds { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the chart time label shows elapsed time instead of clock time.
+    /// </summary>
+    public HmiProperty<bool>? DisplayElapsedTime { get; set; }
+
     public HmiProperty<bool>? DisplayPenIcons { get; set; }
 
     public HmiProperty<bool>? AllowScrolling { get; set; }
