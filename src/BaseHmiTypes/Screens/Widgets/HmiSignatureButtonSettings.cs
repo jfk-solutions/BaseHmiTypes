@@ -28,6 +28,14 @@ public sealed class HmiSignatureButtonSettings
 
     public string? Command { get; set; }
 
+    public string? ValueExpression { get; set; }
+
+    public string? DatePartExpression { get; set; }
+
+    public string? TimePartExpression { get; set; }
+
+    public string? DateTimeStringExpression { get; set; }
+
     public bool? PerformerAuthenticationEnabled { get; set; }
 
     public string? PerformerGroup { get; set; }
