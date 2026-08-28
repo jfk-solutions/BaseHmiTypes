@@ -8,7 +8,4 @@ export class HmiUnkown extends HmiSurfaceShapeBase {
   }
 
   type?: string;
-  sourceFormat?: string;
-  sourceData?: Uint8Array;
-  readonly sourceProperties: Record<string, string> = {};
 }

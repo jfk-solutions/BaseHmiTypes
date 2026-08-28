@@ -18,6 +18,9 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   isReferenceObject?: boolean;
   referenceObject?: HmiReferenceObjectSettings;
   scriptExposureMode?: HmiScriptExposureMode;
+  sourceFormat?: string;
+  sourceData?: Uint8Array;
+  readonly sourceProperties: Record<string, string> = {};
   x: HmiProperty<number> = staticProperty(0);
   y: HmiProperty<number> = staticProperty(0);
   width: HmiProperty<number> = staticProperty(0);
