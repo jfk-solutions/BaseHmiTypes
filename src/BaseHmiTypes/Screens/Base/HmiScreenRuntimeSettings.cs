@@ -69,8 +69,6 @@ public sealed class HmiScreenRuntimeSettings
 
     public bool? MinimizeButtonVisible { get; set; }
 
-    public bool? MaximizeButtonVisible { get; set; }
-
     public bool? PinButtonVisible { get; set; }
 
     public bool? SizeToMainWindow { get; set; }
