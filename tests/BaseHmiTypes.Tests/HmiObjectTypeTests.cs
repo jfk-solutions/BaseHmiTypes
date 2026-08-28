@@ -57,7 +57,11 @@ public class HmiObjectTypeTests
         var names = Enum.GetNames<HmiButtonAction>();
 
         CollectionAssert.Contains(names, "ButtonValue");
+        CollectionAssert.Contains(names, "SetToZero");
+        CollectionAssert.Contains(names, "ToggleTagValue");
         Assert.AreEqual(3, Convert.ToInt32(Enum.Parse<HmiButtonAction>("SetToOne")));
         Assert.AreEqual(4, Convert.ToInt32(Enum.Parse<HmiButtonAction>("ButtonValue")));
+        Assert.AreEqual(5, Convert.ToInt32(Enum.Parse<HmiButtonAction>("SetToZero")));
+        Assert.AreEqual(6, Convert.ToInt32(Enum.Parse<HmiButtonAction>("ToggleTagValue")));
     }
 }
