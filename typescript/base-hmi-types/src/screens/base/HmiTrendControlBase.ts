@@ -29,6 +29,9 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   readonly pens: HmiTrendPen[] = [];
   readonly overlays: HmiTrendOverlay[] = [];
   readonly templateOptions: HmiTrendTemplateOption[] = [];
+  templateLoadOptions1Mask?: HmiProperty<number>;
+  templateLoadOptions2Mask?: HmiProperty<number>;
+  templateLoadOptions3Mask?: HmiProperty<number>;
   readonly batches: HmiTrendBatch[] = [];
   minimumValue?: HmiProperty<number>;
   maximumValue?: HmiProperty<number>;
