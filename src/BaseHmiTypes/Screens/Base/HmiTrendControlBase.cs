@@ -2,6 +2,8 @@ namespace BaseHmiTypes.Screens.Base;
 
 public abstract class HmiTrendControlBase : HmiControlWindowBase
 {
+    public int? DefinitionVersion { get; set; }
+
     public IList<HmiTrendPen> Pens { get; } = new List<HmiTrendPen>();
 
     public IList<HmiTrendOverlay> Overlays { get; } = new List<HmiTrendOverlay>();
