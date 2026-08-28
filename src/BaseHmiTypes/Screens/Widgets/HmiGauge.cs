@@ -13,4 +13,30 @@ public class HmiGauge : HmiScaleWidgetBase
 
     public HmiProperty<HmiGaugeSweepStyle>? SweepStyle { get; set; }
 
+    public HmiProperty<string>? EngineeringUnit { get; set; }
+
+    public HmiProperty<double>? TargetValue { get; set; }
+
+    public HmiProperty<double>? TargetHighDeviation { get; set; }
+
+    public HmiProperty<double>? TargetLowDeviation { get; set; }
+
+    public HmiProperty<double>? SetpointValue { get; set; }
+
+    public HmiProperty<double>? ThresholdHighHigh { get; set; }
+
+    public HmiProperty<double>? ThresholdHigh { get; set; }
+
+    public HmiProperty<double>? ThresholdLow { get; set; }
+
+    public HmiProperty<double>? ThresholdLowLow { get; set; }
+
+    public HmiProperty<double>? ControlLimitHighHigh { get; set; }
+
+    public HmiProperty<double>? ControlLimitHigh { get; set; }
+
+    public HmiProperty<double>? ControlLimitLow { get; set; }
+
+    public HmiProperty<double>? ControlLimitLowLow { get; set; }
+
 }
