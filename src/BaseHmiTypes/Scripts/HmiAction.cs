@@ -6,7 +6,8 @@ public enum HmiActionKind
 {
     CommandList,
     TextScript,
-    OpenResource
+    OpenResource,
+    OleVerb
 }
 
 public abstract class HmiAction
@@ -38,4 +39,16 @@ public sealed class HmiOpenResourceAction : HmiAction
     public override HmiActionKind Kind => HmiActionKind.OpenResource;
 
     public HmiProperty<string>? Address { get; set; }
+}
+
+/// <summary>
+/// Describes an inert request to invoke a verb on an embedded OLE object.
+/// </summary>
+public sealed class HmiOleVerbAction : HmiAction
+{
+    public override HmiActionKind Kind => HmiActionKind.OleVerb;
+
+    public string? Verb { get; set; }
+
+    public string? SecurityCode { get; set; }
 }
