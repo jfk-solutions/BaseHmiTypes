@@ -50,6 +50,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   holdTimeSeconds?: HmiProperty<number>;
   buttonAction?: HmiProperty<HmiButtonAction>;
   actionTag?: HmiProperty<string>;
+  actionRemark?: HmiProperty<HmiMultilingualText>;
   buttonValue?: HmiProperty<number>;
   nextStateMode?: HmiProperty<HmiButtonNextStateMode>;
   operation?: HmiProperty<HmiButtonOperation>;
