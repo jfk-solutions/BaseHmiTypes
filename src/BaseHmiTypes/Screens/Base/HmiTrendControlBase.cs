@@ -137,7 +137,15 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public IList<string> RuntimePropertyTabs { get; } = new List<string>();
 
+    public HmiProperty<long>? RuntimeAttributesEnabledMask { get; set; }
+
     public HmiProperty<bool>? AllowEditingLegendProperties { get; set; }
+
+    public HmiProperty<bool>? AllowRuntimeContextMenu { get; set; }
+
+    public HmiProperty<bool>? AllowRuntimePenDragDrop { get; set; }
+
+    public HmiProperty<bool>? RuntimeTrendEnabled { get; set; }
 
     public HmiProperty<bool>? AllowPanZoom { get; set; }
 
@@ -148,6 +156,10 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? AllowSnapshotCreation { get; set; }
 
     public HmiProperty<bool>? AllowOverlayOptions { get; set; }
+
+    public HmiProperty<bool>? AllowOverlayPropertyPage { get; set; }
+
+    public HmiProperty<bool>? AllowOverlayContextMenu { get; set; }
 
     public HmiProperty<bool>? AllowPrint { get; set; }
 
