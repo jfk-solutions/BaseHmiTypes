@@ -39,4 +39,20 @@ public class HmiGauge : HmiScaleWidgetBase
 
     public HmiProperty<double>? ControlLimitLowLow { get; set; }
 
+    public HmiProperty<bool>? SparklineEnabled { get; set; }
+
+    public HmiProperty<double>? GaugeBarSize { get; set; }
+
+    public HmiProperty<double>? SparklineLineWidth { get; set; }
+
+    public HmiProperty<double>? SparklineDurationSeconds { get; set; }
+
+    public HmiProperty<HmiLineStyle>? SparklineGridLineStyle { get; set; }
+
+    public HmiProperty<int>? SparklineGridLineCount { get; set; }
+
+    public HmiProperty<HmiColor>? SparklineGridLineColor { get; set; }
+
+    public HmiProperty<bool>? SparklineThresholdLinesVisible { get; set; }
+
 }
