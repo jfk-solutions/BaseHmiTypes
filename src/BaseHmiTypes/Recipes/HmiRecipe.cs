@@ -25,6 +25,10 @@ public sealed class HmiRecipeParameter : IHmiObject
 
     public string? Unit { get; set; }
 
+    public string? MinimumValue { get; set; }
+
+    public string? MaximumValue { get; set; }
+
     public string? Comment { get; set; }
 }
 
