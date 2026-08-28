@@ -29,6 +29,7 @@ export * from "./base/HmiPaintedScreenItemBase.js";
 export * from "./base/HmiAnimationRangeSource.js";
 export * from "./base/HmiRangeAnimation.js";
 export * from "./base/HmiRangeAnimationOutputUnit.js";
+export * from "./base/HmiSliderAnimation.js";
 export * from "./base/HmiFillAnimation.js";
 export * from "./base/HmiFillDirection.js";
 export * from "./base/HmiColorAnimation.js";
