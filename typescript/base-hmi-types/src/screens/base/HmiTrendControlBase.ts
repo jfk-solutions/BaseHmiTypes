@@ -1,7 +1,9 @@
 import { HmiControlWindowBase } from "./HmiControlWindowBase.js";
 import { HmiColor } from "./HmiColor.js";
+import { HmiFont } from "./HmiFont.js";
 import { HmiLineStyle } from "./HmiLineStyle.js";
 import { HmiProperty } from "./HmiProperty.js";
+import { HmiThickness } from "./HmiThickness.js";
 import { HmiTrendChartStyle } from "./HmiTrendChartStyle.js";
 import { HmiTrendAxisScalingMode } from "./HmiTrendAxisScalingMode.js";
 import { HmiTrendDataPointConnection } from "./HmiTrendDataPointConnection.js";
@@ -156,4 +158,10 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   toolTipShowValue?: HmiProperty<boolean>;
   toolTipShowTime?: HmiProperty<boolean>;
   toolTipShowQuality?: HmiProperty<boolean>;
+  chartTitleFont?: HmiFont;
+  plotAreaMargin?: HmiThickness;
+  backgroundPicturePath?: string;
+  activePlotAsTitle?: HmiProperty<boolean>;
+  plotScalingMethod?: string;
+  defaultScalingMode?: string;
 }
