@@ -1,5 +1,6 @@
 using BaseHmiTypes.Common;
 using BaseHmiTypes.Screens.Base;
+using BaseHmiTypes.Screens.Controls;
 
 namespace BaseHmiTypes.Screens.Widgets;
 
@@ -129,6 +130,27 @@ public abstract class HmiButtonBase : HmiWidgetBase
     /// Gets the alarm trigger labels affected by an alarm operation. An empty list means all triggers.
     /// </summary>
     public IList<string> AlarmFilteredTriggers { get; } = new List<string>();
+
+    /// <summary>
+    /// Gets or sets the alarm-status view printed by an alarm-status print operation.
+    /// </summary>
+    public HmiProperty<HmiAlarmListMode>? AlarmPrintListMode { get; set; }
+
+    public HmiProperty<bool>? PrintAlarmTime { get; set; }
+
+    public HmiProperty<bool>? PrintAcknowledgeTime { get; set; }
+
+    public HmiProperty<bool>? PrintTriggerLabel { get; set; }
+
+    public HmiProperty<bool>? PrintTriggerValue { get; set; }
+
+    public HmiProperty<bool>? PrintMessage { get; set; }
+
+    public HmiProperty<bool>? PrintAlarmQuantity { get; set; }
+
+    public HmiProperty<bool>? PrintAccumulatedTime { get; set; }
+
+    public HmiProperty<bool>? PrintAlarmState { get; set; }
 
     /// <summary>
     /// Gets or sets whether clearing alarm history also requests an alarm-status reset.
