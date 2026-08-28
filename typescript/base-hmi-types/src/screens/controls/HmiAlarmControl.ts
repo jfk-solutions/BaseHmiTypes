@@ -31,6 +31,9 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showTitle?: HmiProperty<boolean>;
   listMode?: HmiProperty<HmiAlarmListMode>;
   title?: HmiMultilingualText;
+  allAlarmsTitle?: HmiMultilingualText;
+  activeAlarmsTitle?: HmiMultilingualText;
+  pastAlarmsTitle?: HmiMultilingualText;
   showAlarmTime?: HmiProperty<boolean>;
   showAcknowledgmentTime?: HmiProperty<boolean>;
   showAcknowledgeButton?: HmiProperty<boolean>;
