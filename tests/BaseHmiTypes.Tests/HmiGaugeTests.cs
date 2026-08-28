@@ -31,4 +31,29 @@ public class HmiGaugeTests
         Assert.AreEqual("{Target}", Assert.IsInstanceOfType<HmiExpressionProperty<double>>(gauge.TargetValue).Expression);
         Assert.AreEqual("{ControlLowLow}", Assert.IsInstanceOfType<HmiExpressionProperty<double>>(gauge.ControlLimitLowLow).Expression);
     }
+
+    [TestMethod]
+    public void LinearGauge_RetainsSparklinePresentation()
+    {
+        var gauge = new HmiGauge
+        {
+            SparklineEnabled = true,
+            GaugeBarSize = 18,
+            SparklineLineWidth = 3,
+            SparklineDurationSeconds = 120,
+            SparklineGridLineStyle = HmiLineStyle.Dash,
+            SparklineGridLineCount = 6,
+            SparklineGridLineColor = HmiColor.FromArgb(0xff, 0x12, 0x34, 0x56),
+            SparklineThresholdLinesVisible = true
+        };
+
+        Assert.IsTrue(gauge.SparklineEnabled.StaticValue);
+        Assert.AreEqual(18, gauge.GaugeBarSize.StaticValue);
+        Assert.AreEqual(3, gauge.SparklineLineWidth.StaticValue);
+        Assert.AreEqual(120, gauge.SparklineDurationSeconds.StaticValue);
+        Assert.AreEqual(HmiLineStyle.Dash, gauge.SparklineGridLineStyle.StaticValue);
+        Assert.AreEqual(6, gauge.SparklineGridLineCount.StaticValue);
+        Assert.AreEqual((byte)0x12, gauge.SparklineGridLineColor.StaticValue.Red);
+        Assert.IsTrue(gauge.SparklineThresholdLinesVisible.StaticValue);
+    }
 }
