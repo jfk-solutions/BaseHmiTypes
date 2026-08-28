@@ -276,4 +276,16 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? ToolTipShowTime { get; set; }
 
     public HmiProperty<bool>? ToolTipShowQuality { get; set; }
+
+    public HmiFont? ChartTitleFont { get; set; }
+
+    public HmiThickness? PlotAreaMargin { get; set; }
+
+    public string? BackgroundPicturePath { get; set; }
+
+    public HmiProperty<bool>? ActivePlotAsTitle { get; set; }
+
+    public string? PlotScalingMethod { get; set; }
+
+    public string? DefaultScalingMode { get; set; }
 }
