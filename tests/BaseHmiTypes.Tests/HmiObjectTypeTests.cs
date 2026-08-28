@@ -37,4 +37,14 @@ public class HmiObjectTypeTests
         Assert.AreEqual("Motor tag", parameter.Description);
         Assert.AreEqual("[PLC]Motor1", parameter.Value);
     }
+
+    [TestMethod]
+    public void ButtonOperations_ExposeNavigationHistoryActions()
+    {
+        var names = Enum.GetNames<HmiButtonOperation>();
+
+        CollectionAssert.IsSubsetOf(
+            new[] { "NavigateToPreviousScreen", "NavigateToNextScreen", "ShowNavigationHistory" },
+            names);
+    }
 }
