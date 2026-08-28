@@ -142,6 +142,12 @@ public sealed class HmiTagProperty<T> : HmiDynamicProperty<T>
     public override HmiPropertyKind Kind => HmiPropertyKind.Tag;
 
     public string? TagName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the metadata property selected from the tag, when the binding targets
+    /// a tag attribute rather than its runtime value.
+    /// </summary>
+    public string? PropertyName { get; set; }
 }
 
 public sealed class HmiFaceplateInterfaceProperty<T> : HmiProperty<T>
@@ -199,9 +205,9 @@ public static class HmiProperty
         };
     }
 
-    public static HmiTagProperty<T> Tag<T>(string tagName, T? fallbackValue = default)
+    public static HmiTagProperty<T> Tag<T>(string tagName, T? fallbackValue = default, string? propertyName = null)
     {
-        return new HmiTagProperty<T> { TagName = tagName, StaticValue = fallbackValue };
+        return new HmiTagProperty<T> { TagName = tagName, StaticValue = fallbackValue, PropertyName = propertyName };
     }
 
     public static HmiFaceplateInterfaceProperty<T> FaceplateInterface<T>(string interfaceName, T? fallbackValue = default)

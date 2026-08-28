@@ -64,6 +64,16 @@ public class HmiPropertyTests
     }
 
     [TestMethod]
+    public void TagProperty_RetainsSelectedMetadataProperty()
+    {
+        var property = HmiProperty.Tag<string>("Tank.Level", propertyName: "EngineeringUnits");
+
+        Assert.AreEqual(HmiPropertyKind.Tag, property.Kind);
+        Assert.AreEqual("Tank.Level", property.TagName);
+        Assert.AreEqual("EngineeringUnits", property.PropertyName);
+    }
+
+    [TestMethod]
     public void Thickness_AllowsDynamicValuesPerSide()
     {
         var thickness = new HmiThickness
