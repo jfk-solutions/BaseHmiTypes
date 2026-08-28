@@ -9,4 +9,5 @@ public class HmiLabel : HmiTextWidgetBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiLabel;
     }
 
+    public HmiProperty<int>? FieldLength { get; set; }
 }
