@@ -180,4 +180,11 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   zone3Color?: HmiProperty<HmiColor>;
   showZoneLines?: HmiProperty<boolean>;
   showZones?: HmiProperty<boolean>;
+  displayRetrievedDataOnTrend?: HmiProperty<boolean>;
+  retrievalTimeZoneId?: string;
+  liveDataTimeDeadbandTicks?: HmiProperty<number>;
+  liveDataMaximumAgeTicks?: HmiProperty<number>;
+  liveDataMaximumElements?: HmiProperty<number>;
+  liveDataStopWhenFull?: HmiProperty<boolean>;
+  liveDataCollectorSizeType?: HmiProperty<number>;
 }
