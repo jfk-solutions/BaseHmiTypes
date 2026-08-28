@@ -20,6 +20,8 @@ export abstract class HmiSelectionGroupBase extends HmiWidgetBase {
   selectionMode?: HmiProperty<number>;
   wrapAround?: HmiProperty<boolean>;
   writeOnEnter?: HmiProperty<boolean>;
+  /** A nonzero read-only runtime value enables remote control; zero leaves operator control. */
+  remoteAccess?: HmiProperty<number>;
   enterHandshake?: HmiEnterHandshakeSettings;
   selectionItemHeight?: HmiProperty<number>;
   selectionBackgroundColor?: HmiProperty<HmiColor>;
