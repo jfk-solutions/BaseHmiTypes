@@ -16,6 +16,7 @@ public class HmiObjectTypeTests
         Assert.AreEqual(HmiObjectType.HmiScreen, new HmiScreen().HmiObjectType);
         Assert.AreEqual(HmiObjectType.HmiButton, new HmiButton().HmiObjectType);
         Assert.AreEqual(HmiObjectType.HmiToggleSwitch, new HmiToggleSwitch().HmiObjectType);
+        Assert.AreEqual(HmiObjectType.HmiArrowIndicator, new HmiArrowIndicator().HmiObjectType);
         Assert.AreEqual(HmiObjectType.HmiDynamicSvg, new HmiDynamicSvg().HmiObjectType);
         Assert.AreEqual(HmiObjectType.HmiRadarChartControl, new HmiRadarChartControl().HmiObjectType);
     }
