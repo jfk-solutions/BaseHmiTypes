@@ -17,5 +17,7 @@ export class HmiOcxControl extends HmiCustomWidgetContainer {
   ocxTypeLibraryVersion?: string;
   ocxState?: Uint8Array;
   ocxStateFormat?: string;
+  /** XML embedded in ocxState, while the original state bytes remain authoritative. */
+  ocxStateXml?: string;
   axHostState?: HmiAxHostState;
 }
