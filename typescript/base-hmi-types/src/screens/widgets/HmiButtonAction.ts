@@ -3,4 +3,5 @@ export enum HmiButtonAction {
   NormallyClosed = 1,
   StateValues = 2,
   SetToOne = 3,
+  ButtonValue = 4,
 }
