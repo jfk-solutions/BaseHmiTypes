@@ -44,6 +44,12 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiMultilingualText? Title { get; set; }
 
+    public HmiMultilingualText? AllAlarmsTitle { get; set; }
+
+    public HmiMultilingualText? ActiveAlarmsTitle { get; set; }
+
+    public HmiMultilingualText? PastAlarmsTitle { get; set; }
+
     public HmiProperty<bool>? ShowAlarmTime { get; set; }
 
     public HmiProperty<bool>? ShowAcknowledgmentTime { get; set; }
