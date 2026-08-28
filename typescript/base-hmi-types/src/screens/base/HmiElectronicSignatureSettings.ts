@@ -1,3 +1,5 @@
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
+
 export enum HmiElectronicSignatureDomainSource {
   Constant = "Constant",
   Variable = "Variable",
@@ -6,6 +8,8 @@ export enum HmiElectronicSignatureDomainSource {
 export class HmiElectronicSignatureSettings {
   required?: boolean;
   allowBlankComment?: boolean;
+  showConfirmationMessage?: boolean;
+  confirmationMessage?: HmiMultilingualText;
   requireReAuthentication?: boolean;
   requireCounterSignature?: boolean;
   authorizedGroup?: string;
