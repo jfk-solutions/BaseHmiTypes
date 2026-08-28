@@ -152,7 +152,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<bool>? PrintTriggerLabel { get; set; }
 
+    public HmiProperty<int>? PrintTriggerLabelWidth { get; set; }
+
     public HmiProperty<bool>? PrintTriggerValue { get; set; }
+
+    public HmiProperty<int>? PrintTriggerValueWidth { get; set; }
 
     public HmiProperty<bool>? PrintMessage { get; set; }
 
