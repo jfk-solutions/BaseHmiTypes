@@ -50,4 +50,14 @@ public class HmiObjectTypeTests
             new[] { "NavigateToPreviousScreen", "NavigateToNextScreen", "ShowNavigationHistory" },
             names);
     }
+
+    [TestMethod]
+    public void ButtonActions_ExposeConfiguredButtonValueWriteWithoutRenumberingExistingActions()
+    {
+        var names = Enum.GetNames<HmiButtonAction>();
+
+        CollectionAssert.Contains(names, "ButtonValue");
+        Assert.AreEqual(3, Convert.ToInt32(Enum.Parse<HmiButtonAction>("SetToOne")));
+        Assert.AreEqual(4, Convert.ToInt32(Enum.Parse<HmiButtonAction>("ButtonValue")));
+    }
 }

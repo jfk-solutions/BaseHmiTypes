@@ -8,5 +8,10 @@ public enum HmiButtonAction
     NormallyOpen,
     NormallyClosed,
     StateValues,
-    SetToOne
+    SetToOne,
+
+    /// <summary>
+    /// Writes the button's configured <see cref="HmiButtonBase.ButtonValue"/> when activated.
+    /// </summary>
+    ButtonValue
 }
