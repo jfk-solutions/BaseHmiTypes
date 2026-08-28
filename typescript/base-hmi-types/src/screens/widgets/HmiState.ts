@@ -1,10 +1,12 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiColor, HmiFillPattern, HmiFont, HmiGradientDirection, HmiHorizontalAlignment, HmiImageSource, HmiVerticalAlignment } from "../base.js";
 import { HmiDisplayParameterSource } from "./HmiDisplayParameterSource.js";
+import { HmiStateAccess } from "./HmiStateAccess.js";
 
 export class HmiState {
   name?: string;
   value?: number;
+  access?: HmiStateAccess;
   text?: HmiMultilingualText;
   font?: HmiFont;
   targetDisplay?: string;
