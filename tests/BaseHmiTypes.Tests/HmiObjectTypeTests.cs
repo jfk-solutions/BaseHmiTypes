@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
 using BaseHmiTypes.Screens.Controls;
@@ -63,5 +64,16 @@ public class HmiObjectTypeTests
         Assert.AreEqual(4, Convert.ToInt32(Enum.Parse<HmiButtonAction>("ButtonValue")));
         Assert.AreEqual(5, Convert.ToInt32(Enum.Parse<HmiButtonAction>("SetToZero")));
         Assert.AreEqual(6, Convert.ToInt32(Enum.Parse<HmiButtonAction>("ToggleTagValue")));
+    }
+
+    [TestMethod]
+    public void ButtonActions_RetainDiagnosticRemark()
+    {
+        var button = new HmiButton
+        {
+            ActionRemark = HmiMultilingualText.FromText("Changed mode from /C to /N")
+        };
+
+        Assert.AreEqual("Changed mode from /C to /N", button.ActionRemark.StaticValue?.GetText(null));
     }
 }

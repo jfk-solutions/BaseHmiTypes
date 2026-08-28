@@ -99,6 +99,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
     /// </summary>
     public HmiProperty<string>? ActionTag { get; set; }
 
+    /// <summary>
+    /// Gets or sets the diagnostic or audit message associated with the configured action.
+    /// </summary>
+    public HmiProperty<HmiMultilingualText>? ActionRemark { get; set; }
+
     public HmiProperty<double>? ButtonValue { get; set; }
 
     public HmiProperty<HmiButtonNextStateMode>? NextStateMode { get; set; }
