@@ -53,5 +53,8 @@ public enum HmiButtonOperation
     UserChangePassword,
     UserChangeProperties,
     TrendTogglePause,
-    TrendSelectNextPen
+    TrendSelectNextPen,
+    NavigateToPreviousScreen,
+    NavigateToNextScreen,
+    ShowNavigationHistory
 }
