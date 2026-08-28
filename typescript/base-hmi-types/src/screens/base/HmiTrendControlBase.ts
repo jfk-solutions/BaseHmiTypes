@@ -5,6 +5,7 @@ import { HmiLineStyle } from "./HmiLineStyle.js";
 import { HmiProperty } from "./HmiProperty.js";
 import { HmiThickness } from "./HmiThickness.js";
 import { HmiTrendChartStyle } from "./HmiTrendChartStyle.js";
+import { HmiTrendContainerType } from "./HmiTrendContainerType.js";
 import { HmiTrendAxisScalingMode } from "./HmiTrendAxisScalingMode.js";
 import { HmiTrendBatch } from "./HmiTrendBatch.js";
 import { HmiTrendDataPointConnection } from "./HmiTrendDataPointConnection.js";
@@ -32,6 +33,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   minimumValue?: HmiProperty<number>;
   maximumValue?: HmiProperty<number>;
   chartStyle?: HmiProperty<HmiTrendChartStyle>;
+  containerType?: HmiProperty<HmiTrendContainerType>;
   xAxisPenNumber?: HmiProperty<number>;
   updateMode?: HmiProperty<HmiTrendUpdateMode>;
   refreshRateMilliseconds?: HmiProperty<number>;
