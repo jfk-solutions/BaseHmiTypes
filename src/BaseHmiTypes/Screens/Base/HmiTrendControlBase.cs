@@ -17,6 +17,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiTrendChartStyle>? ChartStyle { get; set; }
 
+    public HmiProperty<HmiTrendContainerType>? ContainerType { get; set; }
+
     public HmiProperty<int>? XAxisPenNumber { get; set; }
 
     public HmiProperty<HmiTrendUpdateMode>? UpdateMode { get; set; }
