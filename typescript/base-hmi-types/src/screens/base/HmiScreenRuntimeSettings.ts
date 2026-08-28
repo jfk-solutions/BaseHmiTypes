@@ -43,7 +43,6 @@ export class HmiScreenRuntimeSettings {
   cacheMode?: HmiScreenCacheMode;
   systemMenuVisible?: boolean;
   minimizeButtonVisible?: boolean;
-  maximizeButtonVisible?: boolean;
   pinButtonVisible?: boolean;
   sizeToMainWindow?: boolean;
   resizeMode?: HmiScreenResizeMode;
