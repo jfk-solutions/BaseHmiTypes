@@ -6,4 +6,6 @@ import { HmiButtonAction } from "../dist/index.js";
 test("button actions expose configured button value without renumbering existing actions", () => {
   assert.equal(HmiButtonAction.SetToOne, 3);
   assert.equal(HmiButtonAction.ButtonValue, 4);
+  assert.equal(HmiButtonAction.SetToZero, 5);
+  assert.equal(HmiButtonAction.ToggleTagValue, 6);
 });
