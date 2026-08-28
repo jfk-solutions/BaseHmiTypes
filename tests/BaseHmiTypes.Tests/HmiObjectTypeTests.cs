@@ -1,6 +1,7 @@
 using System.Text.Json;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
+using BaseHmiTypes.Screens.Controls;
 using BaseHmiTypes.Screens.Widgets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -16,6 +17,7 @@ public class HmiObjectTypeTests
         Assert.AreEqual(HmiObjectType.HmiButton, new HmiButton().HmiObjectType);
         Assert.AreEqual(HmiObjectType.HmiToggleSwitch, new HmiToggleSwitch().HmiObjectType);
         Assert.AreEqual(HmiObjectType.HmiDynamicSvg, new HmiDynamicSvg().HmiObjectType);
+        Assert.AreEqual(HmiObjectType.HmiRadarChartControl, new HmiRadarChartControl().HmiObjectType);
     }
 
     [TestMethod]
