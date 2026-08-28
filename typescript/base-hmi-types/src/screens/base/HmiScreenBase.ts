@@ -11,6 +11,9 @@ import { HmiScreenRuntimeSettings } from "./HmiScreenRuntimeSettings.js";
 
 export abstract class HmiScreenBase extends HmiScreenModelBase {
   kind: HmiScreenKind = HmiScreenKind.Screen;
+  sourceFormat?: string;
+  sourceData?: Uint8Array;
+  readonly sourceProperties: Record<string, string> = {};
   number?: number;
   width: HmiProperty<number> = staticProperty(0);
   height: HmiProperty<number> = staticProperty(0);
