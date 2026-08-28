@@ -15,6 +15,11 @@ public abstract class HmiSelectionGroupBase : HmiWidgetBase
 
     public HmiProperty<double>? Value { get; set; }
 
+    /// <summary>
+    /// Gets or sets the read-only runtime value that selects a state while the control is remotely operated.
+    /// </summary>
+    public HmiProperty<double>? Indicator { get; set; }
+
     public IList<HmiSelectionGroupItem> Items { get; } = new List<HmiSelectionGroupItem>();
 
     public HmiProperty<int>? SelectedIndex { get; set; }
@@ -30,6 +35,16 @@ public abstract class HmiSelectionGroupBase : HmiWidgetBase
     /// A nonzero value enables remote control; zero leaves control with the operator.
     /// </summary>
     public HmiProperty<double>? RemoteAccess { get; set; }
+
+    /// <summary>
+    /// Gets or sets the write target that receives the value of the first visible state when the list scrolls.
+    /// </summary>
+    public HmiProperty<double>? TopPosition { get; set; }
+
+    /// <summary>
+    /// Gets or sets the array write target that receives the values of all visible states when the list scrolls.
+    /// </summary>
+    public HmiProperty<IReadOnlyList<double>>? VisibleStates { get; set; }
 
     public HmiEnterHandshakeSettings? EnterHandshake { get; set; }
 
