@@ -47,4 +47,7 @@ export enum HmiButtonOperation {
   UserChangeProperties,
   TrendTogglePause,
   TrendSelectNextPen,
+  NavigateToPreviousScreen,
+  NavigateToNextScreen,
+  ShowNavigationHistory,
 }
