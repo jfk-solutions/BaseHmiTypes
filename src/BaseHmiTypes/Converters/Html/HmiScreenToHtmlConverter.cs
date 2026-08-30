@@ -248,6 +248,9 @@ public class HmiScreenToHtmlConverter
             case HmiDataGridControl dataGridControl:
                 AppendDataGridControl(html, dataGridControl, context);
                 break;
+            case HmiRecipeControl recipeControl:
+                AppendRecipeControl(html, recipeControl, context);
+                break;
             case HmiWebControl webControl:
                 AppendWebControl(html, webControl, context);
                 break;
@@ -1093,6 +1096,62 @@ public class HmiScreenToHtmlConverter
 
         if (showStatusBar)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Status</div>");
+        html.Append("</div>");
+    }
+
+    private static void AppendRecipeControl(StringBuilder html, HmiRecipeControl recipeControl, HmiHtmlConvertContext context)
+    {
+        var showHeader = recipeControl.ShowHeader is null || ResolveStaticValue(recipeControl.ShowHeader, context);
+        var showFooter = recipeControl.ShowFooter is not null && ResolveStaticValue(recipeControl.ShowFooter, context);
+        var defaultRecipeName = ResolveStaticValue(recipeControl.DefaultRecipeName, context) ?? string.Empty;
+
+        html.Append("<div");
+        AppendCommonAttributes(
+            html,
+            recipeControl,
+            context,
+            additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-view-kind", recipeControl.ViewKind.ToString());
+        AppendAttribute(html, "data-default-recipe", ResolvePropertyPreview(recipeControl.DefaultRecipeName, context));
+        AppendAttribute(html, "data-view-only", ResolvePropertyPreview(recipeControl.ViewOnly, context));
+        AppendAttribute(html, "data-wrap-around", ResolvePropertyPreview(recipeControl.WrapAround, context));
+        AppendAttribute(html, "data-lines-per-item", ResolvePropertyPreview(recipeControl.LinesPerItem, context));
+        html.Append('>');
+
+        if (recipeControl.ViewKind == HmiRecipeViewKind.Selector)
+        {
+            if (showHeader)
+                html.Append("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px;\">Recipe selector</div>");
+            html.Append("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">")
+                .Append(WebUtility.HtmlEncode(defaultRecipeName))
+                .Append("</div>");
+        }
+        else
+        {
+            var visibleColumns = recipeControl.ColumnDefinitions
+                .Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context))
+                .ToArray();
+            html.Append("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
+            if (showHeader)
+            {
+                html.Append("<thead><tr>");
+                foreach (var column in visibleColumns)
+                {
+                    html.Append("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
+                    AppendAttribute(html, "data-column-type", column.Type.ToString());
+                    html.Append('>')
+                        .Append(WebUtility.HtmlEncode(column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.Type.ToString()))
+                        .Append("</th>");
+                }
+                html.Append("</tr></thead>");
+            }
+            html.Append("<tbody><tr><td");
+            AppendAttribute(html, "colspan", Math.Max(visibleColumns.Length, 1).ToString(CultureInfo.InvariantCulture));
+            html.Append(" style=\"text-align: center;\">Recipe data not loaded</td></tr></tbody></table>");
+        }
+
+        if (showFooter)
+            html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
         html.Append("</div>");
     }
 

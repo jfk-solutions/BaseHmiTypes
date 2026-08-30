@@ -496,6 +496,54 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersInertRecipeTablePreview()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        var recipe = new HmiRecipeControl
+        {
+            Name = "RecipeTable",
+            Width = 300,
+            Height = 180,
+            ViewKind = HmiRecipeViewKind.Table,
+            DefaultRecipeName = "Batch A",
+            ShowHeader = true,
+            ShowFooter = true,
+            ViewOnly = true,
+            LinesPerItem = 2
+        };
+        recipe.ColumnDefinitions.Add(new HmiRecipeColumn
+        {
+            Type = HmiRecipeColumnType.IngredientName,
+            HeaderText = HmiMultilingualText.FromText("Ingredient")
+        });
+        recipe.ColumnDefinitions.Add(new HmiRecipeColumn
+        {
+            Type = HmiRecipeColumnType.RecipeValue,
+            HeaderText = HmiMultilingualText.FromText("Setpoint")
+        });
+        recipe.ColumnDefinitions.Add(new HmiRecipeColumn
+        {
+            Type = HmiRecipeColumnType.TagName,
+            Visible = false
+        });
+        layer.Items.Add(recipe);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"RecipeTable\"");
+        StringAssert.Contains(html, "data-view-kind=\"Table\"");
+        StringAssert.Contains(html, "data-default-recipe=\"Batch A\"");
+        StringAssert.Contains(html, "data-view-only=\"true\"");
+        StringAssert.Contains(html, "data-column-type=\"IngredientName\">Ingredient</th>");
+        StringAssert.Contains(html, "data-column-type=\"RecipeValue\">Setpoint</th>");
+        Assert.IsFalse(html.Contains("data-column-type=\"TagName\"", StringComparison.Ordinal));
+        StringAssert.Contains(html, "colspan=\"2\" style=\"text-align: center;\">Recipe data not loaded</td>");
+        StringAssert.Contains(html, ">Recipe control</div>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen
