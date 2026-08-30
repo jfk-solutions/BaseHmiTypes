@@ -698,12 +698,15 @@ async function appendButton(
   html.push("<button");
   appendCommonAttributes(html, button, context);
   html.push(">");
-  const image = getStaticValue(button.image);
+  const stateValue = getStaticValue(button.state);
+  const state = button.states.find(candidate => candidate.value === stateValue)
+    ?? button.states[0];
+  const image = state?.image ?? getStaticValue(button.image);
   const imageUri = await resolveImageUri(image, project, signal);
   if (imageUri) {
     appendInnerImage(html, imageUri);
   }
-  appendMultilingualText(html, getStaticValue(button.text), context);
+  appendMultilingualText(html, state?.text ?? getStaticValue(button.text), context);
   html.push("</button>");
 }
 
