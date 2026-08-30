@@ -67,6 +67,10 @@ public class HmiAlarmLineControl : HmiSimpleScreenItemBase
 
     public HmiProperty<HmiAlarmTimePrecision>? TimePrecision { get; set; }
 
+    public HmiProperty<string>? SortOrder { get; set; }
+
+    public IList<HmiAlarmSortCriterion> SortCriteria { get; } = new List<HmiAlarmSortCriterion>();
+
     public HmiProperty<bool>? ShowTriggerValue { get; set; }
 
     public HmiProperty<bool>? ShowTriggerLabel { get; set; }
