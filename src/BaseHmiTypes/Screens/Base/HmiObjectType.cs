@@ -51,6 +51,7 @@ public static class HmiObjectType
     public const string HmiRadarChartControl = nameof(HmiRadarChartControl);
     public const string HmiRecipeControl = nameof(HmiRecipeControl);
     public const string HmiRectangle = nameof(HmiRectangle);
+    public const string HmiScale = nameof(HmiScale);
     public const string HmiScreen = nameof(HmiScreen);
     public const string HmiScreenMaster = nameof(HmiScreenMaster);
     public const string HmiScreenWindow = nameof(HmiScreenWindow);
