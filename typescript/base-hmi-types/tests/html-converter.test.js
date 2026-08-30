@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   hmiColorFromArgb,
+  HmiArrowIndicator,
   HmiBar,
   HmiClock,
   HmiImage,
@@ -205,4 +206,31 @@ test("HTML converter renders a clock preview", async () => {
   assert.match(html, /datetime="2000-01-01T12:34:56"/);
   assert.match(html, /data-format="dateAndTime" data-time-zone="UTC"/);
   assert.match(html, />2000-01-01 12:34<\/time>/);
+});
+
+test("HTML converter renders an arrow indicator preview", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  const arrow = new HmiArrowIndicator();
+  arrow.name = "LevelArrow";
+  arrow.width = staticProperty(30);
+  arrow.height = staticProperty(120);
+  arrow.beginValue = staticProperty(0);
+  arrow.endValue = staticProperty(100);
+  arrow.value = staticProperty(25);
+  arrow.orientation = staticProperty(1);
+  layer.items.push(arrow);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="LevelArrow"/);
+  assert.match(html, /data-min="0" data-max="100" data-value="25" data-orientation="vertical"/);
+  assert.match(html, /bottom: 25%; transform: translate\(-50%, 50%\);">▲<\/span>/);
 });
