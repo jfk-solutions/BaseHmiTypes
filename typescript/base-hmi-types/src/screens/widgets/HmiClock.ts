@@ -15,5 +15,7 @@ export class HmiClock extends HmiWidgetBase {
   showHours?: HmiProperty<boolean>;
   showMinutes?: HmiProperty<boolean>;
   showSeconds?: HmiProperty<boolean>;
+  /** Product-specific date/time format retained without locale-dependent conversion. */
+  format?: HmiProperty<string>;
   timeZone?: HmiProperty<string>;
 }
