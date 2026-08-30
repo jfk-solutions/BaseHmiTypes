@@ -592,6 +592,74 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersInertAlarmPreviews()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        var alarms = new HmiAlarmControl
+        {
+            Name = "ActiveAlarms",
+            Width = 300,
+            Height = 160,
+            ShowHeader = true,
+            ShowTitle = true,
+            ListMode = HmiAlarmListMode.Active,
+            ActiveAlarmsTitle = HmiMultilingualText.FromText("Active process alarms"),
+            NumberOfRows = 8,
+            ShowAcknowledgeButton = true,
+            ShowHelpButton = true
+        };
+        alarms.FilteredTriggers.Add("Motor*");
+        alarms.ColumnDefinitions.Add(new HmiAlarmColumn
+        {
+            Type = HmiAlarmColumnType.AlarmTime,
+            HeaderText = HmiMultilingualText.FromText("Time"),
+            TimeAndDateFormat = "HH:mm:ss"
+        });
+        alarms.ColumnDefinitions.Add(new HmiAlarmColumn
+        {
+            Type = HmiAlarmColumnType.Message,
+            HeaderText = HmiMultilingualText.FromText("Message")
+        });
+        alarms.ColumnDefinitions.Add(new HmiAlarmColumn
+        {
+            Type = HmiAlarmColumnType.AlarmState,
+            Visible = false
+        });
+        layer.Items.Add(alarms);
+        layer.Items.Add(new HmiAlarmLineControl
+        {
+            Name = "AlarmBanner",
+            Y = 170,
+            Width = 300,
+            Height = 30,
+            QueueNewAlarms = true,
+            ShowAlarmTime = true,
+            AlarmTimeFormat = "HH:mm",
+            ShowAlarmState = true
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"ActiveAlarms\"");
+        StringAssert.Contains(html, "data-list-mode=\"Active\"");
+        StringAssert.Contains(html, "data-number-of-rows=\"8\"");
+        StringAssert.Contains(html, "data-filtered-triggers=\"Motor*\"");
+        StringAssert.Contains(html, ">Active process alarms</div>");
+        StringAssert.Contains(html, "data-column-type=\"AlarmTime\" data-time-format=\"HH:mm:ss\">Time</th>");
+        StringAssert.Contains(html, "data-column-type=\"Message\">Message</th>");
+        Assert.IsFalse(html.Contains("data-column-type=\"AlarmState\"", StringComparison.Ordinal));
+        StringAssert.Contains(html, ">Alarm data not loaded</td>");
+        StringAssert.Contains(html, ">Acknowledge · Help</div>");
+        StringAssert.Contains(html, "<div id=\"AlarmBanner\"");
+        StringAssert.Contains(html, "data-queue-new-alarms=\"true\"");
+        StringAssert.Contains(html, "data-show-alarm-state=\"true\"");
+        StringAssert.Contains(html, "data-show-alarm-time=\"true\" data-time-format=\"HH:mm\"");
+        StringAssert.Contains(html, ">Alarm data not loaded</div>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen

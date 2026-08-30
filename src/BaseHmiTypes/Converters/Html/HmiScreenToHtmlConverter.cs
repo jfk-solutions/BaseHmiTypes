@@ -257,8 +257,11 @@ public class HmiScreenToHtmlConverter
             case HmiWebControl webControl:
                 AppendWebControl(html, webControl, context);
                 break;
+            case HmiAlarmLineControl alarmLineControl:
+                AppendAlarmLineControl(html, alarmLineControl, context);
+                break;
             case HmiAlarmControl alarmControl:
-                AppendDiv(html, alarmControl, context.Options.UnsupportedItemPlaceholderCssClass, "Alarm control", context);
+                AppendAlarmControl(html, alarmControl, context);
                 break;
             case HmiUnkown unkown:
                 AppendDiv(html, unkown, null, "Unkown:" + (unkown.Type ?? ""), context);
@@ -1216,6 +1219,108 @@ public class HmiScreenToHtmlConverter
         }
 
         html.Append("</div>");
+    }
+
+    private static void AppendAlarmControl(StringBuilder html, HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
+    {
+        var showHeader = alarmControl.ShowHeader is null || ResolveStaticValue(alarmControl.ShowHeader, context);
+        var showTitle = alarmControl.ShowTitle is not null && ResolveStaticValue(alarmControl.ShowTitle, context);
+        var listMode = ResolveStaticValue(alarmControl.ListMode, context);
+        var visibleColumns = alarmControl.ColumnDefinitions
+            .Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context))
+            .ToArray();
+
+        html.Append("<div");
+        AppendCommonAttributes(
+            html,
+            alarmControl,
+            context,
+            additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-list-mode", listMode.ToString());
+        AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmControl.NumberOfRows, context));
+        AppendAttribute(html, "data-lines-per-alarm", ResolvePropertyPreview(alarmControl.LinesPerAlarm, context));
+        AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(alarmControl.WordWrap, context));
+        AppendAttribute(html, "data-wrap-around", ResolvePropertyPreview(alarmControl.WrapAround, context));
+        AppendAttribute(html, "data-filtered-triggers", alarmControl.FilteredTriggers.Count == 0 ? null : string.Join(",", alarmControl.FilteredTriggers));
+        AppendAttribute(html, "data-alarm-identifier", ResolvePropertyPreview(alarmControl.AlarmIdentifier, context));
+        html.Append('>');
+
+        if (showTitle)
+        {
+            var title = ResolveAlarmTitle(alarmControl, listMode, context);
+            html.Append("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;\">")
+                .Append(WebUtility.HtmlEncode(title))
+                .Append("</div>");
+        }
+
+        html.Append("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
+        if (showHeader)
+        {
+            html.Append("<thead><tr>");
+            if (visibleColumns.Length == 0)
+                html.Append("<th style=\"border: 1px solid currentColor;\">Alarm</th>");
+            foreach (var column in visibleColumns)
+            {
+                html.Append("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
+                AppendAttribute(html, "data-column-type", column.Type.ToString());
+                AppendAttribute(html, "data-time-format", column.TimeAndDateFormat);
+                AppendAttribute(html, "data-symbol", column.Symbol);
+                html.Append('>')
+                    .Append(WebUtility.HtmlEncode(column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.Type.ToString()))
+                    .Append("</th>");
+            }
+            html.Append("</tr></thead>");
+        }
+        html.Append("<tbody><tr><td");
+        AppendAttribute(html, "colspan", Math.Max(visibleColumns.Length, 1).ToString(CultureInfo.InvariantCulture));
+        html.Append(" style=\"text-align: center;\">Alarm data not loaded</td></tr></tbody></table>");
+
+        var showAcknowledgeButton = alarmControl.ShowAcknowledgeButton is not null && ResolveStaticValue(alarmControl.ShowAcknowledgeButton, context);
+        var showHelpButton = alarmControl.ShowHelpButton is not null && ResolveStaticValue(alarmControl.ShowHelpButton, context);
+        if (showAcknowledgeButton || showHelpButton)
+        {
+            html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">");
+            if (showAcknowledgeButton)
+                html.Append("Acknowledge");
+            if (showAcknowledgeButton && showHelpButton)
+                html.Append(" · ");
+            if (showHelpButton)
+                html.Append("Help");
+            html.Append("</div>");
+        }
+        html.Append("</div>");
+    }
+
+    private static void AppendAlarmLineControl(StringBuilder html, HmiAlarmLineControl alarmLineControl, HmiHtmlConvertContext context)
+    {
+        html.Append("<div");
+        AppendCommonAttributes(html, alarmLineControl, context, additionalStyle: "display: flex; align-items: center; overflow: hidden;");
+        AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmLineControl.NumberOfRows, context));
+        AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(alarmLineControl.WordWrap, context));
+        AppendAttribute(html, "data-queue-new-alarms", ResolvePropertyPreview(alarmLineControl.QueueNewAlarms, context));
+        AppendAttribute(html, "data-show-trigger-value", ResolvePropertyPreview(alarmLineControl.ShowTriggerValue, context));
+        AppendAttribute(html, "data-show-trigger-label", ResolvePropertyPreview(alarmLineControl.ShowTriggerLabel, context));
+        AppendAttribute(html, "data-show-inactive-alarms", ResolvePropertyPreview(alarmLineControl.ShowInactiveAlarms, context));
+        AppendAttribute(html, "data-show-alarm-state", ResolvePropertyPreview(alarmLineControl.ShowAlarmState, context));
+        AppendAttribute(html, "data-show-alarm-time", ResolvePropertyPreview(alarmLineControl.ShowAlarmTime, context));
+        AppendAttribute(html, "data-time-format", alarmLineControl.AlarmTimeFormat);
+        AppendAttribute(html, "data-filtered-triggers", alarmLineControl.FilteredTriggers.Count == 0 ? null : string.Join(",", alarmLineControl.FilteredTriggers));
+        html.Append(">Alarm data not loaded</div>");
+    }
+
+    private static string ResolveAlarmTitle(HmiAlarmControl alarmControl, HmiAlarmListMode listMode, HmiHtmlConvertContext context)
+    {
+        var title = alarmControl.Title?.GetDisplayText(context.CultureInfo);
+        if (!string.IsNullOrWhiteSpace(title))
+            return title;
+        var modeTitle = listMode switch
+        {
+            HmiAlarmListMode.Active => alarmControl.ActiveAlarmsTitle,
+            HmiAlarmListMode.Past => alarmControl.PastAlarmsTitle,
+            _ => alarmControl.AllAlarmsTitle
+        };
+        title = modeTitle?.GetDisplayText(context.CultureInfo);
+        return string.IsNullOrWhiteSpace(title) ? $"{listMode} alarms" : title;
     }
 
     private static string? ResolvePropertyPreview<T>(HmiProperty<T>? property, HmiHtmlConvertContext context)
