@@ -97,6 +97,7 @@ public static class HmiDefaultProfiles
         SetPainted<HmiLabel>(profile, foregroundColor: 4280363308u, backgroundColor: 15922431u, borderColor: 4284769386u, borderWidth: 0d);
         SetPainted<HmiListBox>(profile, foregroundColor: 4280363308u, backgroundColor: 4294967295u, borderColor: 4288393150u);
         SetPainted<HmiRadioButtonGroup>(profile, backgroundColor: 16777215u, borderColor: 0u);
+        SetPainted<HmiScale>(profile, backgroundColor: 16777215u, borderColor: 4278190080u, borderWidth: 0d);
         SetPainted<HmiSlider>(profile, backgroundColor: 16777215u, borderColor: 0u);
         SetPainted<HmiSymbolicIOField>(profile, foregroundColor: 4280363308u, backgroundColor: 4294967295u, borderColor: 4286288546u, borderWidth: 2d);
         SetPainted<HmiTextBox>(profile, foregroundColor: 4280363308u, backgroundColor: 15922431u, borderColor: 4284769386u, borderWidth: 0d);
