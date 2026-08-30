@@ -1312,7 +1312,7 @@ public class HmiScreenToHtmlConverter
     {
         var title = alarmControl.Title?.GetDisplayText(context.CultureInfo);
         if (!string.IsNullOrWhiteSpace(title))
-            return title;
+            return title!;
         var modeTitle = listMode switch
         {
             HmiAlarmListMode.Active => alarmControl.ActiveAlarmsTitle,
@@ -1320,7 +1320,7 @@ public class HmiScreenToHtmlConverter
             _ => alarmControl.AllAlarmsTitle
         };
         title = modeTitle?.GetDisplayText(context.CultureInfo);
-        return string.IsNullOrWhiteSpace(title) ? $"{listMode} alarms" : title;
+        return string.IsNullOrWhiteSpace(title) ? $"{listMode} alarms" : title!;
     }
 
     private static string? ResolvePropertyPreview<T>(HmiProperty<T>? property, HmiHtmlConvertContext context)
