@@ -963,7 +963,7 @@ public class HmiScreenToHtmlConverter
         var value = scale.ShowFillLevel is not null && ResolveStaticValue(scale.ShowFillLevel, context)
             ? ResolveStaticValue(scale.FillLevel, context)
             : ResolveStaticValue(scale.Value, context);
-        return Math.Clamp(value, minimum, maximum);
+        return Math.Min(Math.Max(value, minimum), maximum);
     }
 
     private static void AppendSymbolicInput(StringBuilder html, HmiSymbolicIOField symbolicIoField, HmiHtmlConvertContext context)
