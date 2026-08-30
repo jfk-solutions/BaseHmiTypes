@@ -351,6 +351,38 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersBarSliderAndScalePreviews()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiBar
+        {
+            Name = "LevelBar", Width = 100, Height = 20,
+            BeginValue = 0, EndValue = 100, Value = 35
+        });
+        layer.Items.Add(new HmiSlider
+        {
+            Name = "SetpointSlider", Y = 30, Width = 100, Height = 20,
+            BeginValue = -10, EndValue = 10, Value = 4
+        });
+        layer.Items.Add(new HmiScale
+        {
+            Name = "LevelScale", Y = 60, Width = 100, Height = 20,
+            BeginValue = 100, EndValue = 0
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<meter id=\"LevelBar\"");
+        StringAssert.Contains(html, "min=\"0\" max=\"100\" value=\"35\">35</meter>");
+        StringAssert.Contains(html, "<input id=\"SetpointSlider\"");
+        StringAssert.Contains(html, "type=\"range\" min=\"-10\" max=\"10\" value=\"4\" disabled=\"disabled\"");
+        StringAssert.Contains(html, "<div id=\"LevelScale\"");
+        StringAssert.Contains(html, "><span>0</span><span>100</span></div>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen
