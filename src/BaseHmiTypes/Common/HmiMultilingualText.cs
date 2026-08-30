@@ -10,6 +10,8 @@ public sealed class HmiMultilingualText
 
     public IDictionary<int, string> FormattedTexts { get; } = new Dictionary<int, string>();
 
+    public IDictionary<int, IList<HmiTextPart>> Parts { get; } = new Dictionary<int, IList<HmiTextPart>>();
+
     public int CategoryTypeId { get; set; }
 
     public string? CategorySubtype { get; set; }
@@ -43,6 +45,24 @@ public sealed class HmiMultilingualText
     public string GetFormattedTextBody(CultureInfo? cultureInfo)
     {
         return ExtractFormattedTextBody(GetFormattedText(cultureInfo));
+    }
+
+    public IReadOnlyList<HmiTextPart> GetParts(CultureInfo? cultureInfo)
+    {
+        if (Parts.Count == 0)
+            return Array.Empty<HmiTextPart>();
+
+        if (cultureInfo != null && Parts.TryGetValue(cultureInfo.LCID, out var cultureParts))
+            return cultureParts as IReadOnlyList<HmiTextPart> ?? cultureParts.ToArray();
+
+        if (Parts.TryGetValue(-1, out var invariantParts))
+            return invariantParts as IReadOnlyList<HmiTextPart> ?? invariantParts.ToArray();
+
+        if (Parts.TryGetValue(0, out var defaultParts))
+            return defaultParts as IReadOnlyList<HmiTextPart> ?? defaultParts.ToArray();
+
+        var first = Parts.First().Value;
+        return first as IReadOnlyList<HmiTextPart> ?? first.ToArray();
     }
 
     public string GetDefaultText()
