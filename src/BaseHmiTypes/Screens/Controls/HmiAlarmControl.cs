@@ -138,6 +138,10 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowStatusBar { get; set; }
 
+    public HmiProperty<int>? RecordLimit { get; set; }
+
+    public HmiProperty<string>? WhereClause { get; set; }
+
     public HmiProperty<bool>? ShowPendingAlarms { get; set; }
 
     public HmiProperty<bool>? ShowAlarmsToAcknowledge { get; set; }
