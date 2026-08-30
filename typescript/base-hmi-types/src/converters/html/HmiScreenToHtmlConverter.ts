@@ -74,6 +74,8 @@ import { hmiHtmlCommonStyle } from "./HmiHtmlCommonStyle.generated.js";
 import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
 import { HmiTrendControl } from "../../screens/controls/HmiTrendControl.js";
 import { HmiDataGridControl } from "../../screens/controls/HmiDataGridControl.js";
+import { HmiAuditTrailControl } from "../../screens/controls/HmiAuditTrailControl.js";
+import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewKind.js";
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
 import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
 import { HmiWebControl } from "../../screens/controls/HmiWebControl.js";
@@ -329,6 +331,8 @@ export class HmiScreenToHtmlConverter {
       appendDataGridControl(html, item, context);
     } else if (item instanceof HmiRecipeControl) {
       appendRecipeControl(html, item, context);
+    } else if (item instanceof HmiAuditTrailControl) {
+      appendAuditTrailControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
       appendWebControl(html, item, context);
     } else if (item instanceof HmiAlarmControl) {
@@ -1021,6 +1025,57 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
 
   if (showFooter)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
+  html.push("</div>");
+}
+
+function appendAuditTrailControl(html: string[], auditTrailControl: HmiAuditTrailControl, context: HmiHtmlConvertContext): void {
+  const showHeader = auditTrailControl.showHeader === undefined || getStaticValue(auditTrailControl.showHeader) === true;
+  const visibleFields = auditTrailControl.fields.filter(
+    (field) => field.visible === undefined || getStaticValue(field.visible) === true,
+  );
+
+  html.push("<div");
+  appendCommonAttributes(
+    html,
+    auditTrailControl,
+    context,
+    true,
+    "display: flex; flex-direction: column; overflow: hidden;",
+  );
+  appendAttribute(html, "data-view-kind", auditTrailControl.viewKind);
+  appendAttribute(html, "data-lines-per-entry", resolvePropertyPreview(auditTrailControl.linesPerEntry));
+  appendAttribute(html, "data-word-wrap", resolvePropertyPreview(auditTrailControl.wordWrap));
+  appendAttribute(html, "data-wrap-around", resolvePropertyPreview(auditTrailControl.wrapAround));
+  appendAttribute(html, "data-receive-selection-from", auditTrailControl.receiveSelectionFrom);
+  html.push(">");
+
+  if (auditTrailControl.viewKind === HmiAuditTrailViewKind.Detail) {
+    if (showHeader)
+      html.push("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px;\">Audit trail detail</div>");
+    html.push("<dl style=\"margin: 0; padding: 2px 4px; overflow: hidden;\">");
+    for (const field of visibleFields) {
+      html.push("<dt");
+      appendAttribute(html, "data-field", field.field);
+      html.push(">", escapeHtml(field.headerText?.getDisplayText(context.options.cultureLcid) ?? field.field), "</dt><dd>—</dd>");
+    }
+    html.push("</dl>");
+  } else {
+    html.push("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
+    if (showHeader) {
+      html.push("<thead><tr>");
+      for (const field of visibleFields) {
+        html.push("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
+        appendAttribute(html, "data-field", field.field);
+        appendAttribute(html, "data-time-format", field.timeAndDateFormat);
+        html.push(">", escapeHtml(field.headerText?.getDisplayText(context.options.cultureLcid) ?? field.field), "</th>");
+      }
+      html.push("</tr></thead>");
+    }
+    html.push("<tbody><tr><td");
+    appendAttribute(html, "colspan", Math.max(visibleFields.length, 1).toString());
+    html.push(" style=\"text-align: center;\">Audit data not loaded</td></tr></tbody></table>");
+  }
+
   html.push("</div>");
 }
 
