@@ -116,6 +116,12 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? DisplayEventContextMenu { get; set; }
 
+    public HmiProperty<bool>? AllowColumnResize { get; set; }
+
+    public HmiProperty<bool>? AllowSortByColumn { get; set; }
+
+    public HmiProperty<HmiAlarmRowDoubleClickAction>? RowDoubleClickAction { get; set; }
+
     public HmiProperty<string>? DefaultFilter { get; set; }
 
     public HmiProperty<string>? FilterDefinition { get; set; }
