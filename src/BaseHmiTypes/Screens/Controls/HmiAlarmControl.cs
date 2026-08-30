@@ -88,6 +88,20 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<HmiAlarmTimePrecision>? TimePrecision { get; set; }
 
+    public HmiProperty<string>? Context { get; set; }
+
+    public HmiProperty<HmiColor>? ListBackgroundColor { get; set; }
+
+    public HmiProperty<double>? DisabledColumnWidth { get; set; }
+
+    public HmiProperty<double>? NameColumnWidth { get; set; }
+
+    public HmiProperty<double>? PathColumnWidth { get; set; }
+
+    public HmiProperty<double>? ShelvedColumnWidth { get; set; }
+
+    public HmiProperty<double>? SuppressedColumnWidth { get; set; }
+
     public HmiProperty<bool>? ShowPendingAlarms { get; set; }
 
     public HmiProperty<bool>? ShowAlarmsToAcknowledge { get; set; }
