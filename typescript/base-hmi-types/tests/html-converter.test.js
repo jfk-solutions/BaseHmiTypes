@@ -13,6 +13,10 @@ import {
   HmiListBox,
   HmiMultilingualText,
   HmiProjectBase,
+  HmiRecipeColumn,
+  HmiRecipeColumnType,
+  HmiRecipeControl,
+  HmiRecipeViewKind,
   HmiScale,
   HmiScreen,
   HmiScreenToHtmlConverter,
@@ -304,4 +308,51 @@ test("HTML converter renders an inert data grid preview", async () => {
   assert.match(html, />Time: 2026-08-30T08:00:00 – 2026-08-30T12:00:00<\/div>/);
   assert.match(html, />Data binding not decoded<\/div>/);
   assert.match(html, />Status<\/div>/);
+});
+
+test("HTML converter renders an inert recipe table preview", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  const recipe = new HmiRecipeControl();
+  recipe.name = "RecipeTable";
+  recipe.width = staticProperty(300);
+  recipe.height = staticProperty(180);
+  recipe.viewKind = HmiRecipeViewKind.Table;
+  recipe.defaultRecipeName = staticProperty("Batch A");
+  recipe.showHeader = staticProperty(true);
+  recipe.showFooter = staticProperty(true);
+  recipe.viewOnly = staticProperty(true);
+  recipe.linesPerItem = staticProperty(2);
+  const ingredient = new HmiRecipeColumn();
+  ingredient.type = HmiRecipeColumnType.IngredientName;
+  ingredient.headerText = HmiMultilingualText.fromText("Ingredient");
+  recipe.columnDefinitions.push(ingredient);
+  const value = new HmiRecipeColumn();
+  value.type = HmiRecipeColumnType.RecipeValue;
+  value.headerText = HmiMultilingualText.fromText("Setpoint");
+  recipe.columnDefinitions.push(value);
+  const hidden = new HmiRecipeColumn();
+  hidden.type = HmiRecipeColumnType.TagName;
+  hidden.visible = staticProperty(false);
+  recipe.columnDefinitions.push(hidden);
+  layer.items.push(recipe);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="RecipeTable"/);
+  assert.match(html, /data-view-kind="Table"/);
+  assert.match(html, /data-default-recipe="Batch A"/);
+  assert.match(html, /data-view-only="true"/);
+  assert.match(html, /data-column-type="IngredientName">Ingredient<\/th>/);
+  assert.match(html, /data-column-type="RecipeValue">Setpoint<\/th>/);
+  assert.doesNotMatch(html, /data-column-type="TagName"/);
+  assert.match(html, /colspan="2" style="text-align: center;">Recipe data not loaded<\/td>/);
+  assert.match(html, />Recipe control<\/div>/);
 });

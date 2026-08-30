@@ -74,6 +74,8 @@ import { hmiHtmlCommonStyle } from "./HmiHtmlCommonStyle.generated.js";
 import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
 import { HmiTrendControl } from "../../screens/controls/HmiTrendControl.js";
 import { HmiDataGridControl } from "../../screens/controls/HmiDataGridControl.js";
+import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
+import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
 import { HmiWebControl } from "../../screens/controls/HmiWebControl.js";
 import { HmiInspectableScreenHtml, inspectHmiScreenAsync } from "./HmiScreenInspection.js";
 
@@ -325,6 +327,8 @@ export class HmiScreenToHtmlConverter {
       await this.appendScreenWindowAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiDataGridControl) {
       appendDataGridControl(html, item, context);
+    } else if (item instanceof HmiRecipeControl) {
+      appendRecipeControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
       appendWebControl(html, item, context);
     } else if (item instanceof HmiAlarmControl) {
@@ -965,6 +969,58 @@ function appendDataGridControl(html: string[], dataGridControl: HmiDataGridContr
 
   if (showStatusBar)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Status</div>");
+  html.push("</div>");
+}
+
+function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, context: HmiHtmlConvertContext): void {
+  const showHeader = recipeControl.showHeader === undefined || getStaticValue(recipeControl.showHeader) === true;
+  const showFooter = getStaticValue(recipeControl.showFooter) === true;
+  const defaultRecipeName = getStaticValue(recipeControl.defaultRecipeName) ?? "";
+
+  html.push("<div");
+  appendCommonAttributes(
+    html,
+    recipeControl,
+    context,
+    true,
+    "display: flex; flex-direction: column; overflow: hidden;",
+  );
+  appendAttribute(html, "data-view-kind", recipeControl.viewKind);
+  appendAttribute(html, "data-default-recipe", resolvePropertyPreview(recipeControl.defaultRecipeName));
+  appendAttribute(html, "data-view-only", resolvePropertyPreview(recipeControl.viewOnly));
+  appendAttribute(html, "data-wrap-around", resolvePropertyPreview(recipeControl.wrapAround));
+  appendAttribute(html, "data-lines-per-item", resolvePropertyPreview(recipeControl.linesPerItem));
+  html.push(">");
+
+  if (recipeControl.viewKind === HmiRecipeViewKind.Selector) {
+    if (showHeader)
+      html.push("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px;\">Recipe selector</div>");
+    html.push(
+      "<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">",
+      escapeHtml(defaultRecipeName),
+      "</div>",
+    );
+  } else {
+    const visibleColumns = recipeControl.columnDefinitions.filter(
+      (column) => column.visible === undefined || getStaticValue(column.visible) === true,
+    );
+    html.push("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
+    if (showHeader) {
+      html.push("<thead><tr>");
+      for (const column of visibleColumns) {
+        html.push("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
+        appendAttribute(html, "data-column-type", column.type);
+        html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.type), "</th>");
+      }
+      html.push("</tr></thead>");
+    }
+    html.push("<tbody><tr><td");
+    appendAttribute(html, "colspan", Math.max(visibleColumns.length, 1).toString());
+    html.push(" style=\"text-align: center;\">Recipe data not loaded</td></tr></tbody></table>");
+  }
+
+  if (showFooter)
+    html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
   html.push("</div>");
 }
 
