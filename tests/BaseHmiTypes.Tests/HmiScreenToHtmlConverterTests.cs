@@ -1051,6 +1051,33 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersButtonProjectImage()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiButton
+        {
+            Name = "Start",
+            Image = new HmiImageSource { ImageId = "start-image" }
+        });
+        screen.Layers.Add(layer);
+        var project = new FakeProject(screen);
+        project.AddImage(new HmiImage
+        {
+            Id = "start-image",
+            Name = "start.png",
+            ImageType = HmiImageType.Png,
+            MimeType = "image/png",
+            Data = [1, 2, 3]
+        });
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen, project);
+
+        StringAssert.Contains(html, "<button id=\"Start\"");
+        StringAssert.Contains(html, "<img src=\"data:image/png;base64,AQID\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSymbolLibraryControlMetafileSymbol()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
