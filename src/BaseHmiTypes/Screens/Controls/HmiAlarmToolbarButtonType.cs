@@ -24,6 +24,9 @@ public enum HmiAlarmToolbarButtonType
     Find,
     ShowHideDetails,
     RefreshAlarmList,
+    SilenceAll,
+    ToggleAlarmBell,
+    RunAlarmAndEventSummary,
     ToggleEvents,
     RunLogixPinpoint,
     ExportCsv
