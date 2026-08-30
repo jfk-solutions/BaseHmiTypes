@@ -848,14 +848,21 @@ public class HmiScreenToHtmlConverter
     {
         html.Append("<button");
         AppendCommonAttributes(html, button, context);
+        var enabled = button.Enabled is null || ResolveStaticValue(button.Enabled, context);
+        if (!enabled)
+            AppendAttribute(html, "disabled", "disabled");
         html.Append(">");
         var stateValue = ResolveStaticValue(button.State, context);
         var state = button.States.FirstOrDefault(candidate => candidate.Value == stateValue)
             ?? button.States.FirstOrDefault();
         var image = state?.Image ?? button.Image.GetStaticValue();
+        var disabledImageMode = ResolveStaticValue(button.DisabledImageMode, context);
+        var showDisabledAppearance = !enabled && button.ShowDisabledState is not null && ResolveStaticValue(button.ShowDisabledState, context);
+        if (showDisabledAppearance && disabledImageMode is HmiDisabledImageMode.Reference or HmiDisabledImageMode.Imported)
+            image = ResolveStaticValue(button.DisabledImage, context) ?? image;
         var imageUri = await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
         if (!string.IsNullOrWhiteSpace(imageUri))
-            AppendInnerImage(html, imageUri);
+            AppendInnerImage(html, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale);
         AppendMultilingualText(html, state?.Text ?? ResolveStaticValue(button.Text, context), context);
         html.Append("</button>");
     }
@@ -1136,14 +1143,17 @@ public class HmiScreenToHtmlConverter
             html.Append("transform: ").Append(string.Join(" ", transforms)).Append(";transform-origin: center;");
     }
 
-    private static void AppendInnerImage(StringBuilder html, string? uri)
+    private static void AppendInnerImage(StringBuilder html, string? uri, bool grayscale = false)
     {
         if (string.IsNullOrWhiteSpace(uri))
             return;
 
         html.Append("<img");
         AppendAttribute(html, "src", uri);
-        html.Append(" style=\"width: 100%; height: 100%;\">");
+        html.Append(" style=\"width: 100%; height: 100%;");
+        if (grayscale)
+            html.Append(" filter: grayscale(1);");
+        html.Append("\">");
     }
 
     private static void AppendSymbolImage(StringBuilder html, HmiSymbolContainer symbolContainer, HmiImageSource image, string uri)
