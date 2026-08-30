@@ -53,6 +53,7 @@ import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
 import { HmiRadioButtonGroup } from "../../screens/widgets/HmiRadioButtonGroup.js";
 import { HmiSelectionGroupBase, HmiSelectionGroupItem } from "../../screens/widgets/HmiSelectionGroupBase.js";
 import { HmiSwitchType } from "../../screens/widgets/HmiSwitchType.js";
+import { HmiSymbolicIOField } from "../../screens/widgets/HmiSymbolicIOField.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiToggleSwitch } from "../../screens/widgets/HmiToggleSwitch.js";
 import { HmiWidgetBase } from "../../screens/widgets/HmiWidgetBase.js";
@@ -242,6 +243,8 @@ export class HmiScreenToHtmlConverter {
       appendButton(html, item, context);
     } else if (item instanceof HmiIOField) {
       appendInput(html, item, context);
+    } else if (item instanceof HmiSymbolicIOField) {
+      appendSymbolicInput(html, item, context);
     } else if (item instanceof HmiTextBox || item instanceof HmiLabel || item instanceof HmiText) {
       appendTextBlock(html, item, item.text, context);
     } else if (item instanceof HmiGraphicView) {
@@ -701,6 +704,24 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
   html.push("<input");
   appendCommonAttributes(html, ioField, context);
   html.push(">");
+}
+
+function appendSymbolicInput(html: string[], symbolicIoField: HmiSymbolicIOField, context: HmiHtmlConvertContext): void {
+  html.push("<select");
+  appendCommonAttributes(html, symbolicIoField, context);
+  html.push(">");
+  const selectedValue = getStaticValue(symbolicIoField.value);
+  for (const state of symbolicIoField.states) {
+    html.push("<option");
+    if (state.value !== undefined)
+      appendAttribute(html, "value", toCss(state.value));
+    if (selectedValue !== undefined && state.value === selectedValue)
+      appendAttribute(html, "selected", "selected");
+    html.push(">");
+    appendMultilingualText(html, state.text, context);
+    html.push("</option>");
+  }
+  html.push("</select>");
 }
 
 function appendToggleSwitch(html: string[], toggleSwitch: HmiToggleSwitch, context: HmiHtmlConvertContext): void {

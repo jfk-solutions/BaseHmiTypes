@@ -4,12 +4,15 @@ import test from "node:test";
 import {
   HmiGroup,
   HmiLayer,
+  HmiMultilingualText,
   HmiPropertyKind,
   HmiRectangle,
   HmiReferenceObjectSettings,
   HmiScreen,
   HmiScreenToHtmlConverter,
   HmiScreenWindow,
+  HmiState,
+  HmiSymbolicIOField,
   HmiTagTriggerMode,
   HmiTriggerKind,
   expressionProperty,
@@ -17,6 +20,35 @@ import {
   staticProperty,
   tagProperty,
 } from "../dist/index.js";
+
+test("HTML conversion renders symbolic IO field states", async () => {
+  const symbolicIoField = new HmiSymbolicIOField();
+  symbolicIoField.name = "MotorState";
+  symbolicIoField.x = staticProperty(10);
+  symbolicIoField.y = staticProperty(20);
+  symbolicIoField.width = staticProperty(120);
+  symbolicIoField.height = staticProperty(30);
+  symbolicIoField.value = staticProperty(2);
+  const stopped = new HmiState();
+  stopped.name = "Stopped";
+  stopped.value = 0;
+  stopped.text = HmiMultilingualText.fromText("Stopped");
+  symbolicIoField.states.push(stopped);
+  const running = new HmiState();
+  running.name = "Running";
+  running.value = 2;
+  running.text = HmiMultilingualText.fromText("Running");
+  symbolicIoField.states.push(running);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(symbolicIoField);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<select id="MotorState"/);
+  assert.match(html, /<option value="0">Stopped<\/option>/);
+  assert.match(html, /<option value="2" selected="selected">Running<\/option>/);
+  assert.doesNotMatch(html, /HmiSymbolicIOField/);
+});
 
 test("HTML conversion renders materialized reference objects", async () => {
   const materialized = new HmiGroup();
