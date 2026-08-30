@@ -10,6 +10,7 @@ import { HmiBorderStyle } from "./HmiBorderStyle.js";
 import { HmiAlarmViewKind } from "./HmiAlarmViewKind.js";
 import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
 import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js";
+import { HmiAlarmToolbarButton } from "./HmiAlarmToolbarButton.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -31,6 +32,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   alarmIdentifier?: HmiProperty<number>;
   readonly conditions: HmiAlarmConditionPresentation[] = [];
   readonly columnDefinitions: HmiAlarmColumn[] = [];
+  readonly toolbarButtons: HmiAlarmToolbarButton[] = [];
   showHeader?: HmiProperty<boolean>;
   showTitle?: HmiProperty<boolean>;
   listMode?: HmiProperty<HmiAlarmListMode>;
