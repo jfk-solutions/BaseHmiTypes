@@ -86,6 +86,7 @@ function createWinCcUnifiedV21(): HmiDefaultProfile {
   setPainted(profile, "HmiLabel", 4280363308, 15922431, 4284769386, 0);
   setPainted(profile, "HmiListBox", 4280363308, 4294967295, 4288393150);
   setPainted(profile, "HmiRadioButtonGroup", undefined, 16777215, 0);
+  setPainted(profile, "HmiScale", undefined, 16777215, 4278190080, 0);
   setPainted(profile, "HmiSlider", undefined, 16777215, 0);
   setPainted(profile, "HmiSymbolicIOField", 4280363308, 4294967295, 4286288546, 2);
   setPainted(profile, "HmiTextBox", 4280363308, 15922431, 4284769386, 0);
