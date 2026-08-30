@@ -102,6 +102,42 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<double>? SuppressedColumnWidth { get; set; }
 
+    public HmiProperty<bool>? DetailsPaneAllowResize { get; set; }
+
+    public HmiProperty<HmiColor>? DetailsPaneBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? DetailsPaneForegroundColor { get; set; }
+
+    public HmiFont? DetailsPaneFont { get; set; }
+
+    public HmiProperty<double>? DetailsPaneHeight { get; set; }
+
+    public HmiProperty<bool>? DetailsPaneVisible { get; set; }
+
+    public HmiProperty<bool>? DisplayEventContextMenu { get; set; }
+
+    public HmiProperty<string>? DefaultFilter { get; set; }
+
+    public HmiProperty<string>? FilterDefinition { get; set; }
+
+    public HmiProperty<string>? FilterName { get; set; }
+
+    public HmiProperty<HmiColor>? GridBackgroundColor { get; set; }
+
+    public HmiProperty<bool>? ShowHorizontalGridLines { get; set; }
+
+    public HmiProperty<bool>? ShowVerticalGridLines { get; set; }
+
+    public HmiProperty<bool>? ShowHorizontalScrollbar { get; set; }
+
+    public HmiProperty<bool>? ShowVerticalScrollbar { get; set; }
+
+    public HmiProperty<bool>? ShowOutOfServiceAlarms { get; set; }
+
+    public HmiProperty<string>? SortOrder { get; set; }
+
+    public HmiProperty<bool>? ShowStatusBar { get; set; }
+
     public HmiProperty<bool>? ShowPendingAlarms { get; set; }
 
     public HmiProperty<bool>? ShowAlarmsToAcknowledge { get; set; }
