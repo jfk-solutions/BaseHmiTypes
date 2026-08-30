@@ -138,6 +138,9 @@ test("HTML conversion renders the selected button state caption and project imag
     imageId: "running-image",
     kind: HmiImageSourceKind.Uri,
   };
+  running.backgroundColor = hmiColorFromArgb(255, 10, 20, 30);
+  running.captionColor = hmiColorFromArgb(255, 240, 241, 242);
+  running.borderColor = hmiColorFromArgb(255, 100, 101, 102);
   button.states.push(stopped, running);
   const image = new HmiImage();
   image.id = "running-image";
@@ -157,6 +160,9 @@ test("HTML conversion renders the selected button state caption and project imag
   assert.match(html, /<button id="Motor"/);
   assert.match(html, /<img src="data:image\/png;base64,BAUG"/);
   assert.match(html, /Running<\/button>/);
+  assert.match(html, /background-color: #0A141E;/);
+  assert.match(html, /color: #F0F1F2;/);
+  assert.match(html, /border-color: #646566;/);
   assert.doesNotMatch(html, />Default<\/button>/);
 });
 
