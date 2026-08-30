@@ -8,6 +8,8 @@ export * from "./controls/HmiAlarmToolbarButton.js";
 export * from "./controls/HmiAlarmToolbarButtonType.js";
 export * from "./controls/HmiAlarmStatusBarPanel.js";
 export * from "./controls/HmiAlarmStatusBarPanelType.js";
+export * from "./controls/HmiAlarmEventPriority.js";
+export * from "./controls/HmiAlarmEventSubscription.js";
 export * from "./controls/HmiAlarmCondition.js";
 export * from "./controls/HmiAlarmConditionPresentation.js";
 export * from "./controls/HmiAlarmSelectedIndicator.js";
