@@ -60,6 +60,34 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowHelpButton { get; set; }
 
+    public HmiProperty<bool>? ShowToolbar { get; set; }
+
+    public HmiProperty<bool>? ShowDetailsButton { get; set; }
+
+    public HmiProperty<bool>? ShowEnableDisableButtons { get; set; }
+
+    public HmiProperty<bool>? ShowSuppressUnsuppressButtons { get; set; }
+
+    public HmiProperty<bool>? ShowShelveUnshelveButtons { get; set; }
+
+    public HmiProperty<bool>? ShowAreaTree { get; set; }
+
+    public HmiProperty<double>? AreaTreeWidth { get; set; }
+
+    public HmiProperty<string>? RootArea { get; set; }
+
+    public HmiProperty<string>? NameFilter { get; set; }
+
+    public HmiProperty<string>? StatusFilter { get; set; }
+
+    public HmiProperty<bool>? ReadOnlyMode { get; set; }
+
+    public HmiProperty<bool>? DisplayErrorsInDialog { get; set; }
+
+    public HmiProperty<bool>? DisplayMilliseconds { get; set; }
+
+    public HmiProperty<HmiAlarmTimePrecision>? TimePrecision { get; set; }
+
     public HmiProperty<bool>? ShowPendingAlarms { get; set; }
 
     public HmiProperty<bool>? ShowAlarmsToAcknowledge { get; set; }
