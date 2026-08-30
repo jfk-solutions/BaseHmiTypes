@@ -110,6 +110,23 @@ public class HmiScreenToHtmlConverter
         if (!item.Visible.GetStaticValueOrDefault(true))
             return;
 
+        var materializedReference = item.ReferenceObject?.MaterializedObject;
+        if (materializedReference is not null && !ReferenceEquals(materializedReference, item))
+        {
+            html.Append("<div");
+            AppendCommonAttributes(html, item, context, additionalStyle: "overflow: hidden;");
+            AppendAttribute(html, "class", "hmi-reference-object");
+            AppendAttribute(html, "data-hmi-reference-source", item.ReferenceObject?.Source);
+            html.Append(">");
+            var childContext = context.WithPositionOffset(
+                -materializedReference.X.GetStaticValueOrDefault() - context.PositionOffsetX,
+                -materializedReference.Y.GetStaticValueOrDefault() - context.PositionOffsetY);
+            await AppendItemAsync(
+                html, materializedReference, project, childContext, screenStack, cancellationToken).ConfigureAwait(false);
+            html.Append("</div>");
+            return;
+        }
+
         switch (item)
         {
             case HmiToggleSwitch toggleSwitch:

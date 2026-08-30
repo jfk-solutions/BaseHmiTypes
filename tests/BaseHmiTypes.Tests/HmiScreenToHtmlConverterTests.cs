@@ -15,6 +15,39 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    public async Task ConvertAsync_RendersMaterializedReferenceObject()
+    {
+        var materialized = new HmiGroup { Name = "PumpFaceplate", X = 5, Y = 6, Width = 100, Height = 50 };
+        materialized.Items.Add(new HmiRectangle { Name = "PumpBody", X = 7, Y = 8, Width = 80, Height = 30 });
+        var reference = new HmiGroup
+        {
+            Name = "Pump101",
+            X = 10,
+            Y = 20,
+            Width = 100,
+            Height = 50,
+            IsReferenceObject = true,
+            ReferenceObject = new HmiReferenceObjectSettings
+            {
+                Source = "Pumps.PumpFaceplate",
+                MaterializedObject = materialized
+            }
+        };
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(reference);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "class=\"hmi-reference-object\"");
+        StringAssert.Contains(html, "data-hmi-reference-source=\"Pumps.PumpFaceplate\"");
+        StringAssert.Contains(html, "id=\"Pump101\"");
+        StringAssert.Contains(html, "id=\"PumpFaceplate\"");
+        StringAssert.Contains(html, "id=\"PumpBody\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersBasicScreenItems()
     {
         var screen = new HmiScreen
