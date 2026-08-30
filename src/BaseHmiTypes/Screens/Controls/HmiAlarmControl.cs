@@ -150,6 +150,12 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowStatusBar { get; set; }
 
+    public IList<HmiAlarmStatusBarPanel> StatusBarPanels { get; } = new List<HmiAlarmStatusBarPanel>();
+
+    public HmiFont? StatusBarFont { get; set; }
+
+    public HmiProperty<string>? StatusBarIconSize { get; set; }
+
     public HmiProperty<int>? RecordLimit { get; set; }
 
     public HmiProperty<string>? WhereClause { get; set; }
