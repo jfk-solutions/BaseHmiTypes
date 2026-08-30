@@ -58,6 +58,31 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersIoFieldPreviewAndInputSettings()
+    {
+        var field = new HmiIOField
+        {
+            Name = "Speed",
+            Text = HmiProperty.Expression<HmiMultilingualText>("{[PLC]Speed}"),
+            ReadOnly = true,
+            MaskInput = true,
+            FieldLength = 12
+        };
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(field);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<input id=\"Speed\"");
+        StringAssert.Contains(html, "value=\"{[PLC]Speed}\"");
+        StringAssert.Contains(html, "readonly=\"readonly\"");
+        StringAssert.Contains(html, "type=\"password\"");
+        StringAssert.Contains(html, "maxlength=\"12\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersMaterializedReferenceObject()
     {
         var materialized = new HmiGroup { Name = "PumpFaceplate", X = 5, Y = 6, Width = 100, Height = 50 };

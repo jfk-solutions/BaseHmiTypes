@@ -886,6 +886,16 @@ public class HmiScreenToHtmlConverter
     {
         html.Append("<input");
         AppendCommonAttributes(html, ioField, context);
+        var text = ResolveStaticValue(ioField.Text, context)?.GetDisplayText(context.CultureInfo);
+        if (string.IsNullOrWhiteSpace(text) && ioField.Text is HmiExpressionProperty<HmiMultilingualText> expression)
+            text = expression.Expression;
+        AppendAttribute(html, "value", text);
+        if (ioField.ReadOnly is not null && ResolveStaticValue(ioField.ReadOnly, context))
+            AppendAttribute(html, "readonly", "readonly");
+        if (ioField.MaskInput is not null && ResolveStaticValue(ioField.MaskInput, context))
+            AppendAttribute(html, "type", "password");
+        if (ioField.FieldLength is not null)
+            AppendAttribute(html, "maxlength", ResolveStaticValue(ioField.FieldLength, context).ToString(CultureInfo.InvariantCulture));
         html.Append(">");
     }
 
