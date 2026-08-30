@@ -1116,6 +1116,57 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersStaticDisabledButtonAppearance()
+    {
+        var disabled = new HmiButton
+        {
+            Name = "Disabled",
+            Enabled = false,
+            ShowDisabledState = true,
+            DisabledImageMode = HmiDisabledImageMode.Reference,
+            Image = new HmiImageSource { ImageId = "normal-image" },
+            DisabledImage = new HmiImageSource { ImageId = "disabled-image" }
+        };
+        var grayscale = new HmiButton
+        {
+            Name = "Grayscale",
+            Enabled = false,
+            ShowDisabledState = true,
+            DisabledImageMode = HmiDisabledImageMode.Grayscale,
+            Image = new HmiImageSource { ImageId = "normal-image" }
+        };
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(disabled);
+        layer.Items.Add(grayscale);
+        screen.Layers.Add(layer);
+        var project = new FakeProject(screen);
+        project.AddImage(new HmiImage
+        {
+            Id = "normal-image",
+            Name = "normal.png",
+            ImageType = HmiImageType.Png,
+            MimeType = "image/png",
+            Data = [1]
+        });
+        project.AddImage(new HmiImage
+        {
+            Id = "disabled-image",
+            Name = "disabled.png",
+            ImageType = HmiImageType.Png,
+            MimeType = "image/png",
+            Data = [2]
+        });
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen, project);
+
+        StringAssert.Contains(html, "<button id=\"Disabled\"");
+        StringAssert.Contains(html, "disabled=\"disabled\"><img src=\"data:image/png;base64,Ag==\"");
+        StringAssert.Contains(html, "<button id=\"Grayscale\"");
+        StringAssert.Contains(html, "src=\"data:image/png;base64,AQ==\" style=\"width: 100%; height: 100%; filter: grayscale(1);\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSymbolLibraryControlMetafileSymbol()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
