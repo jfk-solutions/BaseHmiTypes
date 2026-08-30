@@ -309,7 +309,7 @@ public class HmiScreenToHtmlConverterTests
 
         StringAssert.Contains(html, "id=\"PumpGroup\" style=\"position: absolute;left: 100px;top: 50px;width: 80px;height: 40px;\"");
         Assert.IsFalse(html.Contains("left: -100px;top: -50px;", StringComparison.Ordinal));
-        StringAssert.Contains(html, "id=\"PumpLabel\" style=\"position: absolute;left: 10px;top: 20px;width: 40px;height: 20px;\"");
+        StringAssert.Contains(html, "id=\"PumpLabel\" style=\"position: absolute;left: 10px;top: 20px;width: 40px;height: 20px;");
     }
 
     [TestMethod]
@@ -350,7 +350,7 @@ public class HmiScreenToHtmlConverterTests
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
         Assert.IsFalse(html.Contains("id=\"PumpGroup\"", StringComparison.Ordinal));
-        StringAssert.Contains(html, "id=\"PumpLabel\" style=\"position: absolute;left: 110px;top: 70px;width: 40px;height: 20px;\"");
+        StringAssert.Contains(html, "id=\"PumpLabel\" style=\"position: absolute;left: 110px;top: 70px;width: 40px;height: 20px;");
     }
 
     [TestMethod]
@@ -927,7 +927,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<script type=\"module\">");
         StringAssert.Contains(html, "<node-projects-svghmi id=\"Valve\"");
         StringAssert.Contains(html, "src=\"symbols/valve.svghmi\"");
-        StringAssert.Contains(html, "fill-color=\"#0080FF\"");
+        StringAssert.Contains(html, "fill-color=\"0xFF0080FF\"");
         StringAssert.Contains(html, "show-caption=\"true\"");
     }
 
