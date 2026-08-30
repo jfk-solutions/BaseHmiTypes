@@ -9,4 +9,5 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiSystemDiagnosisControl;
     }
 
+    public HmiSystemDiagnosisViewKind ViewKind { get; set; }
 }

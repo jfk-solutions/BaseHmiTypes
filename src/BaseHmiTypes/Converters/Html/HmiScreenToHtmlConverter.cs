@@ -263,6 +263,9 @@ public class HmiScreenToHtmlConverter
             case HmiRadarChartControl radarChartControl:
                 AppendRadarChartControl(html, radarChartControl, context);
                 break;
+            case HmiSystemDiagnosisControl systemDiagnosisControl:
+                AppendSystemDiagnosisControl(html, systemDiagnosisControl, context);
+                break;
             case HmiWebControl webControl:
                 AppendWebControl(html, webControl, context);
                 break;
@@ -1374,6 +1377,28 @@ public class HmiScreenToHtmlConverter
             html.Append(')');
         }
         html.Append("</div></div>");
+    }
+
+    private static void AppendSystemDiagnosisControl(StringBuilder html, HmiSystemDiagnosisControl systemDiagnosisControl, HmiHtmlConvertContext context)
+    {
+        var title = systemDiagnosisControl.ViewKind switch
+        {
+            HmiSystemDiagnosisViewKind.DiagnosticsList => "Diagnostics list",
+            HmiSystemDiagnosisViewKind.DiagnosticsViewer => "Diagnostics viewer",
+            HmiSystemDiagnosisViewKind.AutomaticEventSummary => "Automatic diagnostic event summary",
+            _ => "System diagnostics"
+        };
+
+        html.Append("<div");
+        AppendCommonAttributes(
+            html,
+            systemDiagnosisControl,
+            context,
+            additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-view-kind", systemDiagnosisControl.ViewKind.ToString());
+        html.Append("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">")
+            .Append(WebUtility.HtmlEncode(title))
+            .Append("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Diagnostic data not loaded</div></div>");
     }
 
     private static void AppendAlarmLineControl(StringBuilder html, HmiAlarmLineControl alarmLineControl, HmiHtmlConvertContext context)
