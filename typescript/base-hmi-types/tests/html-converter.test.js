@@ -17,10 +17,12 @@ import {
   HmiBar,
   HmiClock,
   HmiDataGridControl,
+  HmiDotNetControlContainer,
   HmiImage,
   HmiLayer,
   HmiListBox,
   HmiMultilingualText,
+  HmiOcxControl,
   HmiProjectBase,
   HmiRecipeColumn,
   HmiRecipeColumnType,
@@ -477,4 +479,50 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-show-alarm-state="true"/);
   assert.match(html, /data-show-alarm-time="true" data-time-format="HH:mm"/);
   assert.match(html, />Alarm data not loaded<\/div>/);
+});
+
+test("HTML converter renders inert opaque host control previews", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  const ocx = new HmiOcxControl();
+  ocx.name = "LegacyTrend";
+  ocx.width = staticProperty(300);
+  ocx.height = staticProperty(120);
+  ocx.ocxGuid = "{11111111-2222-3333-4444-555555555555}";
+  ocx.ocxName = "Legacy Trend Control";
+  ocx.ocxProgramId = "Vendor.Trend.1";
+  ocx.ocxFileName = "trend.ocx";
+  ocx.ocxFileVersion = "1.2.3";
+  ocx.ocxStateFormat = "binary";
+  ocx.ocxState = new Uint8Array([1, 2, 3, 4]);
+  layer.items.push(ocx);
+  const managed = new HmiDotNetControlContainer();
+  managed.name = "ManagedControl";
+  managed.y = staticProperty(130);
+  managed.width = staticProperty(300);
+  managed.height = staticProperty(80);
+  layer.items.push(managed);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="LegacyTrend"/);
+  assert.match(html, /data-ocx-guid="{11111111-2222-3333-4444-555555555555}"/);
+  assert.match(html, /data-ocx-program-id="Vendor\.Trend\.1"/);
+  assert.match(html, /data-ocx-file-name="trend\.ocx"/);
+  assert.match(html, /data-ocx-file-version="1\.2\.3"/);
+  assert.match(html, /data-state-format="binary" data-state-length="4"/);
+  assert.match(html, />ActiveX control<\/div>/);
+  assert.match(html, />Legacy Trend Control<\/div>/);
+  assert.match(html, /<div id="ManagedControl"/);
+  assert.match(html, />\.NET control<\/div>/);
+  assert.match(html, />Metadata preserved<\/div>/);
+  assert.doesNotMatch(html, /<object/);
+  assert.doesNotMatch(html, /<embed/);
 });

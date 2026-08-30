@@ -8,12 +8,14 @@ import { HmiColor } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
 import { HmiDynamicSvg } from "../../screens/base/HmiDynamicSvg.js";
+import { HmiDotNetControlContainer } from "../../screens/base/HmiDotNetControlContainer.js";
 import { HmiFont } from "../../screens/base/HmiFont.js";
 import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
+import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
 import { getStaticValue, getStaticValueOrDefault, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
 import { HmiScreenBase } from "../../screens/base/HmiScreenBase.js";
 import { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
@@ -325,6 +327,10 @@ export class HmiScreenToHtmlConverter {
       } else {
         await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
       }
+    } else if (item instanceof HmiOcxControl) {
+      await this.appendOcxControlAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
+    } else if (item instanceof HmiDotNetControlContainer) {
+      await this.appendDotNetControlAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiLayoutContainerBase || item instanceof HmiContainerBase) {
       await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiScreenWindow) {
@@ -439,6 +445,91 @@ export class HmiScreenToHtmlConverter {
           signal,
         );
       }
+    }
+    html.push("</div>");
+  }
+
+  private async appendOcxControlAsync(
+    html: string[],
+    ocxControl: HmiOcxControl,
+    project: IHmiProject | undefined,
+    context: HmiHtmlConvertContext,
+    screenStack: Set<string>,
+    key: string,
+    includeInspectionAttributes: boolean,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    html.push("<div");
+    appendCommonAttributes(
+      html,
+      ocxControl,
+      context,
+      true,
+      "display: flex; flex-direction: column; overflow: hidden;",
+    );
+    appendAttribute(html, "data-ocx-guid", ocxControl.ocxGuid);
+    appendAttribute(html, "data-ocx-name", ocxControl.ocxName);
+    appendAttribute(html, "data-ocx-program-id", ocxControl.ocxProgramId);
+    appendAttribute(html, "data-ocx-file-name", ocxControl.ocxFileName);
+    appendAttribute(html, "data-ocx-file-version", ocxControl.ocxFileVersion);
+    appendAttribute(html, "data-ocx-type-library", ocxControl.ocxTypeLibrary);
+    appendAttribute(html, "data-ocx-type-library-version", ocxControl.ocxTypeLibraryVersion);
+    appendAttribute(html, "data-state-format", ocxControl.ocxStateFormat);
+    appendAttribute(html, "data-state-length", ocxControl.ocxState?.length.toString());
+    html.push(
+      "><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;\">ActiveX control</div>",
+      "<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">",
+      escapeHtml(ocxControl.ocxName ?? ocxControl.ocxProgramId ?? ocxControl.ocxFileName ?? "State preserved"),
+      "</div>",
+    );
+    for (let childIndex = 0; childIndex < ocxControl.items.length; childIndex++) {
+      await this.appendItemAsync(
+        html,
+        ocxControl.items[childIndex],
+        project,
+        context,
+        screenStack,
+        `${key}/item:${childIndex}`,
+        includeInspectionAttributes,
+        signal,
+      );
+    }
+    html.push("</div>");
+  }
+
+  private async appendDotNetControlAsync(
+    html: string[],
+    dotNetControl: HmiDotNetControlContainer,
+    project: IHmiProject | undefined,
+    context: HmiHtmlConvertContext,
+    screenStack: Set<string>,
+    key: string,
+    includeInspectionAttributes: boolean,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    html.push("<div");
+    appendCommonAttributes(
+      html,
+      dotNetControl,
+      context,
+      true,
+      "display: flex; flex-direction: column; overflow: hidden;",
+    );
+    html.push(
+      "><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;\">.NET control</div>",
+      "<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Metadata preserved</div>",
+    );
+    for (let childIndex = 0; childIndex < dotNetControl.items.length; childIndex++) {
+      await this.appendItemAsync(
+        html,
+        dotNetControl.items[childIndex],
+        project,
+        context,
+        screenStack,
+        `${key}/item:${childIndex}`,
+        includeInspectionAttributes,
+        signal,
+      );
     }
     html.push("</div>");
   }
