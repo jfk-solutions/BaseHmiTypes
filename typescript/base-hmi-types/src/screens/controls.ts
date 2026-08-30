@@ -13,6 +13,8 @@ export * from "./controls/HmiAlarmEventSubscription.js";
 export * from "./controls/HmiAlarmBlinkRate.js";
 export * from "./controls/HmiAlarmStateAppearance.js";
 export * from "./controls/HmiAlarmStateAppearanceType.js";
+export * from "./controls/HmiAlarmSortCriterion.js";
+export * from "./controls/HmiAlarmSortDirection.js";
 export * from "./controls/HmiAlarmCondition.js";
 export * from "./controls/HmiAlarmConditionPresentation.js";
 export * from "./controls/HmiAlarmSelectedIndicator.js";

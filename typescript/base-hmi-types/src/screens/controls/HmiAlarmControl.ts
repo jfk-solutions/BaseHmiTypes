@@ -15,6 +15,7 @@ import { HmiAlarmStatusBarPanel } from "./HmiAlarmStatusBarPanel.js";
 import { HmiAlarmEventSubscription } from "./HmiAlarmEventSubscription.js";
 import { HmiAlarmBlinkRate } from "./HmiAlarmBlinkRate.js";
 import { HmiAlarmStateAppearance } from "./HmiAlarmStateAppearance.js";
+import { HmiAlarmSortCriterion } from "./HmiAlarmSortCriterion.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -91,6 +92,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showVerticalScrollbar?: HmiProperty<boolean>;
   showOutOfServiceAlarms?: HmiProperty<boolean>;
   sortOrder?: HmiProperty<string>;
+  readonly sortCriteria: HmiAlarmSortCriterion[] = [];
   showStatusBar?: HmiProperty<boolean>;
   readonly statusBarPanels: HmiAlarmStatusBarPanel[] = [];
   statusBarFont?: HmiFont;
