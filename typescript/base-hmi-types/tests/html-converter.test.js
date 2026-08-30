@@ -29,6 +29,8 @@ import {
   HmiRecipeControl,
   HmiRecipeViewKind,
   HmiRadarChartControl,
+  HmiSystemDiagnosisControl,
+  HmiSystemDiagnosisViewKind,
   HmiScale,
   HmiScreen,
   HmiScreenToHtmlConverter,
@@ -554,4 +556,44 @@ test("HTML converter renders an inert radar chart preview", async () => {
   assert.match(html, />Process overview<\/div>/);
   assert.match(html, />Radar payload preserved \(Series: 3 · Categories: 8\)<\/div>/);
   assert.doesNotMatch(html, /<canvas/);
+});
+
+test("HTML converter renders inert system diagnosis previews", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(640);
+  screen.height = staticProperty(480);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+
+  for (const [name, y, viewKind] of [
+    ["MeDiagnostics", 0, HmiSystemDiagnosisViewKind.DiagnosticsList],
+    ["SeDiagnostics", 110, HmiSystemDiagnosisViewKind.DiagnosticsViewer],
+    ["AutomaticSummary", 220, HmiSystemDiagnosisViewKind.AutomaticEventSummary],
+  ]) {
+    const diagnostics = new HmiSystemDiagnosisControl();
+    diagnostics.name = name;
+    diagnostics.y = staticProperty(y);
+    diagnostics.width = staticProperty(300);
+    diagnostics.height = staticProperty(100);
+    diagnostics.viewKind = viewKind;
+    layer.items.push(diagnostics);
+  }
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="MeDiagnostics"/);
+  assert.match(html, /data-view-kind="DiagnosticsList"/);
+  assert.match(html, />Diagnostics list<\/div>/);
+  assert.match(html, /<div id="SeDiagnostics"/);
+  assert.match(html, /data-view-kind="DiagnosticsViewer"/);
+  assert.match(html, />Diagnostics viewer<\/div>/);
+  assert.match(html, /<div id="AutomaticSummary"/);
+  assert.match(html, /data-view-kind="AutomaticEventSummary"/);
+  assert.match(html, />Automatic diagnostic event summary<\/div>/);
+  assert.equal((html.match(/>Diagnostic data not loaded<\/div>/g) ?? []).length, 3);
+  assert.doesNotMatch(html, /<button/);
 });

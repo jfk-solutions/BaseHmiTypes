@@ -83,6 +83,8 @@ import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewK
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
 import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
 import { HmiRadarChartControl } from "../../screens/controls/HmiRadarChartControl.js";
+import { HmiSystemDiagnosisControl } from "../../screens/controls/HmiSystemDiagnosisControl.js";
+import { HmiSystemDiagnosisViewKind } from "../../screens/controls/HmiSystemDiagnosisViewKind.js";
 import { HmiWebControl } from "../../screens/controls/HmiWebControl.js";
 import { HmiInspectableScreenHtml, inspectHmiScreenAsync } from "./HmiScreenInspection.js";
 
@@ -344,6 +346,8 @@ export class HmiScreenToHtmlConverter {
       appendAuditTrailControl(html, item, context);
     } else if (item instanceof HmiRadarChartControl) {
       appendRadarChartControl(html, item, context);
+    } else if (item instanceof HmiSystemDiagnosisControl) {
+      appendSystemDiagnosisControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
       appendWebControl(html, item, context);
     } else if (item instanceof HmiAlarmLineControl) {
@@ -1275,6 +1279,35 @@ function appendRadarChartControl(html: string[], radarChartControl: HmiRadarChar
     html.push(")");
   }
   html.push("</div></div>");
+}
+
+function appendSystemDiagnosisControl(
+  html: string[],
+  systemDiagnosisControl: HmiSystemDiagnosisControl,
+  context: HmiHtmlConvertContext,
+): void {
+  const title = systemDiagnosisControl.viewKind === HmiSystemDiagnosisViewKind.DiagnosticsList
+    ? "Diagnostics list"
+    : systemDiagnosisControl.viewKind === HmiSystemDiagnosisViewKind.DiagnosticsViewer
+      ? "Diagnostics viewer"
+      : systemDiagnosisControl.viewKind === HmiSystemDiagnosisViewKind.AutomaticEventSummary
+        ? "Automatic diagnostic event summary"
+        : "System diagnostics";
+
+  html.push("<div");
+  appendCommonAttributes(
+    html,
+    systemDiagnosisControl,
+    context,
+    true,
+    "display: flex; flex-direction: column; overflow: hidden;",
+  );
+  appendAttribute(html, "data-view-kind", systemDiagnosisControl.viewKind);
+  html.push(
+    "><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">",
+    escapeHtml(title),
+    "</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Diagnostic data not loaded</div></div>",
+  );
 }
 
 function appendAlarmLineControl(html: string[], alarmLineControl: HmiAlarmLineControl, context: HmiHtmlConvertContext): void {
