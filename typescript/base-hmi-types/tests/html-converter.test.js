@@ -5,6 +5,10 @@ import {
   expressionProperty,
   hmiColorFromArgb,
   HmiArrowIndicator,
+  HmiAuditTrailControl,
+  HmiAuditTrailField,
+  HmiAuditTrailFieldPresentation,
+  HmiAuditTrailViewKind,
   HmiBar,
   HmiClock,
   HmiDataGridControl,
@@ -355,4 +359,51 @@ test("HTML converter renders an inert recipe table preview", async () => {
   assert.doesNotMatch(html, /data-column-type="TagName"/);
   assert.match(html, /colspan="2" style="text-align: center;">Recipe data not loaded<\/td>/);
   assert.match(html, />Recipe control<\/div>/);
+});
+
+test("HTML converter renders an inert audit trail preview", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  const audit = new HmiAuditTrailControl();
+  audit.name = "OperatorAudit";
+  audit.width = staticProperty(300);
+  audit.height = staticProperty(180);
+  audit.viewKind = HmiAuditTrailViewKind.List;
+  audit.showHeader = staticProperty(true);
+  audit.linesPerEntry = staticProperty(2);
+  audit.wordWrap = staticProperty(true);
+  audit.receiveSelectionFrom = "AuditDetail";
+  const occurred = new HmiAuditTrailFieldPresentation();
+  occurred.field = HmiAuditTrailField.OccurredTime;
+  occurred.headerText = HmiMultilingualText.fromText("When");
+  occurred.timeAndDateFormat = "yyyy-MM-dd HH:mm:ss";
+  audit.fields.push(occurred);
+  const user = new HmiAuditTrailFieldPresentation();
+  user.field = HmiAuditTrailField.Username;
+  user.headerText = HmiMultilingualText.fromText("User");
+  audit.fields.push(user);
+  const hidden = new HmiAuditTrailFieldPresentation();
+  hidden.field = HmiAuditTrailField.Resource;
+  hidden.visible = staticProperty(false);
+  audit.fields.push(hidden);
+  layer.items.push(audit);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="OperatorAudit"/);
+  assert.match(html, /data-view-kind="List"/);
+  assert.match(html, /data-lines-per-entry="2"/);
+  assert.match(html, /data-word-wrap="true"/);
+  assert.match(html, /data-receive-selection-from="AuditDetail"/);
+  assert.match(html, /data-field="OccurredTime" data-time-format="yyyy-MM-dd HH:mm:ss">When<\/th>/);
+  assert.match(html, /data-field="Username">User<\/th>/);
+  assert.doesNotMatch(html, /data-field="Resource"/);
+  assert.match(html, /colspan="2" style="text-align: center;">Audit data not loaded<\/td>/);
 });
