@@ -27,6 +27,7 @@ import {
 } from "../../screens/base/HmiSymbolLibraryEnums.js";
 import { HmiVerticalAlignment } from "../../screens/base/HmiVerticalAlignment.js";
 import { HmiAlarmControl } from "../../screens/controls/HmiAlarmControl.js";
+import { HmiArrowIndicator } from "../../screens/widgets/HmiArrowIndicator.js";
 import { HmiScreenWindow } from "../../screens/screen/HmiScreenWindow.js";
 import { HmiCircle } from "../../screens/shapes/HmiCircle.js";
 import { HmiCircularArc } from "../../screens/shapes/HmiCircularArc.js";
@@ -289,6 +290,8 @@ export class HmiScreenToHtmlConverter {
       appendScale(html, item, context);
     } else if (item instanceof HmiClock) {
       appendClock(html, item, context);
+    } else if (item instanceof HmiArrowIndicator) {
+      appendArrowIndicator(html, item, context);
     } else if (item instanceof HmiGauge) {
       appendGauge(html, item, context);
     } else if (item instanceof HmiTrendControl) {
@@ -847,6 +850,29 @@ function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertCon
   appendAttribute(html, "data-time-zone", getStaticValue(clock.timeZone));
   appendBooleanAttribute(html, "data-analog", getStaticValue(clock.analog) === true);
   html.push(`>${parts.length === 0 ? "Clock" : parts.join(" ")}</time>`);
+}
+
+function appendArrowIndicator(
+  html: string[],
+  arrowIndicator: HmiArrowIndicator,
+  context: HmiHtmlConvertContext,
+): void {
+  const [minimum, maximum] = resolveScaleRange(arrowIndicator);
+  const value = resolveScaleValue(arrowIndicator, minimum, maximum);
+  const ratio = (value - minimum) / (maximum - minimum);
+  const vertical = getStaticValue(arrowIndicator.orientation) === 1;
+  const position = toCss(ratio * 100);
+  const markerStyle = vertical
+    ? `position: absolute; left: 50%; bottom: ${position}%; transform: translate(-50%, 50%);`
+    : `position: absolute; top: 50%; left: ${position}%; transform: translate(-50%, -50%);`;
+
+  html.push("<div");
+  appendCommonAttributes(html, arrowIndicator, context, true, "overflow: hidden;");
+  appendAttribute(html, "data-min", toCss(minimum));
+  appendAttribute(html, "data-max", toCss(maximum));
+  appendAttribute(html, "data-value", toCss(value));
+  appendAttribute(html, "data-orientation", vertical ? "vertical" : "horizontal");
+  html.push(`><span style="${markerStyle}">${vertical ? "▲" : "▶"}</span></div>`);
 }
 
 function resolveScaleRange(scale: HmiScaleWidgetBase): [number, number] {
