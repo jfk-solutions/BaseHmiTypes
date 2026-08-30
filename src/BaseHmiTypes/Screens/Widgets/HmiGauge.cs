@@ -69,6 +69,18 @@ public class HmiGauge : HmiScaleWidgetBase
 
     public HmiProperty<double>? ThresholdLowLow { get; set; }
 
+    public HmiProperty<HmiColor>? NormalOperatingRangeColor { get; set; }
+
+    public HmiProperty<bool>? UseVariableThresholds { get; set; }
+
+    public HmiGaugeThresholdPresentation? HighHighThresholdPresentation { get; set; }
+
+    public HmiGaugeThresholdPresentation? HighThresholdPresentation { get; set; }
+
+    public HmiGaugeThresholdPresentation? LowThresholdPresentation { get; set; }
+
+    public HmiGaugeThresholdPresentation? LowLowThresholdPresentation { get; set; }
+
     public HmiProperty<double>? ControlLimitHighHigh { get; set; }
 
     public HmiProperty<double>? ControlLimitHigh { get; set; }
@@ -76,6 +88,22 @@ public class HmiGauge : HmiScaleWidgetBase
     public HmiProperty<double>? ControlLimitLow { get; set; }
 
     public HmiProperty<double>? ControlLimitLowLow { get; set; }
+
+    public HmiProperty<bool>? UseVariableControlLimits { get; set; }
+
+    public HmiProperty<bool>? ControlLimitHighHighEnabled { get; set; }
+
+    public HmiProperty<bool>? ControlLimitHighEnabled { get; set; }
+
+    public HmiProperty<bool>? ControlLimitLowEnabled { get; set; }
+
+    public HmiProperty<bool>? ControlLimitLowLowEnabled { get; set; }
+
+    public HmiProperty<string>? ControlLimitIconSize { get; set; }
+
+    public HmiProperty<HmiColor>? WithinControlLimitColor { get; set; }
+
+    public HmiProperty<HmiColor>? BeyondControlLimitColor { get; set; }
 
     public HmiProperty<bool>? SparklineEnabled { get; set; }
 
@@ -93,4 +121,15 @@ public class HmiGauge : HmiScaleWidgetBase
 
     public HmiProperty<bool>? SparklineThresholdLinesVisible { get; set; }
 
+}
+
+public class HmiGaugeThresholdPresentation
+{
+    public HmiProperty<bool>? Enabled { get; set; }
+
+    public HmiProperty<HmiColor>? InactiveColor { get; set; }
+
+    public HmiProperty<HmiColor>? ActiveColor { get; set; }
+
+    public HmiProperty<bool>? Blink { get; set; }
 }
