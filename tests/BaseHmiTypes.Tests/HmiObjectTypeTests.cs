@@ -71,6 +71,17 @@ public class HmiObjectTypeTests
     }
 
     [TestMethod]
+    public void ScreenItem_RetainsNamedSourceConnections()
+    {
+        var item = new HmiIOField();
+        item.Connections.Add(new HmiObjectConnection { Name = "Value", Expression = "{[PLC]Speed}" });
+
+        var connection = item.Connections.Single();
+        Assert.AreEqual("Value", connection.Name);
+        Assert.AreEqual("{[PLC]Speed}", connection.Expression);
+    }
+
+    [TestMethod]
     public void ButtonOperations_ExposeNavigationHistoryActions()
     {
         var names = Enum.GetNames<HmiButtonOperation>();
