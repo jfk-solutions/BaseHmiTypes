@@ -1,5 +1,6 @@
 import { HmiColor } from "./HmiColor.js";
 import { HmiScreenCacheMode } from "./HmiScreenCacheMode.js";
+import type { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 
 export enum HmiScreenDisplayType {
   Replace = "Replace",
@@ -32,6 +33,8 @@ export class HmiScreenRuntimeSettings {
   securityCode?: string;
   titleBarVisible?: boolean;
   titleBarText?: string;
+  /** Structured, potentially multilingual title; titleBarText can retain a renderer-friendly preview. */
+  title?: HmiMultilingualText;
   maximumTagUpdateRateSeconds?: number;
   initialInputFocusEnabled?: boolean;
   focusHighlightEnabled?: boolean;
