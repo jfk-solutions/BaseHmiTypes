@@ -122,6 +122,10 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<HmiAlarmRowDoubleClickAction>? RowDoubleClickAction { get; set; }
 
+    public HmiProperty<bool>? SendSelectedAlarmMessageIdToTag { get; set; }
+
+    public HmiProperty<string>? SelectedAlarmMessageIdTag { get; set; }
+
     public HmiProperty<string>? DefaultFilter { get; set; }
 
     public HmiProperty<string>? FilterDefinition { get; set; }
