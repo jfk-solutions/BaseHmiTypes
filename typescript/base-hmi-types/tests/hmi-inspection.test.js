@@ -122,6 +122,43 @@ test("HTML conversion renders a project-backed button image", async () => {
   assert.match(html, /<img src="data:image\/png;base64,AQID"/);
 });
 
+test("HTML conversion renders the selected button state caption and project image", async () => {
+  const button = new HmiButton();
+  button.name = "Motor";
+  button.state = staticProperty(2);
+  button.text = staticProperty(HmiMultilingualText.fromText("Default"));
+  const stopped = new HmiState();
+  stopped.value = 0;
+  stopped.text = HmiMultilingualText.fromText("Stopped");
+  const running = new HmiState();
+  running.value = 2;
+  running.text = HmiMultilingualText.fromText("Running");
+  running.image = {
+    imageId: "running-image",
+    kind: HmiImageSourceKind.Uri,
+  };
+  button.states.push(stopped, running);
+  const image = new HmiImage();
+  image.id = "running-image";
+  image.name = "running.png";
+  image.imageType = HmiImageType.Png;
+  image.mimeType = "image/png";
+  image.data = new Uint8Array([4, 5, 6]);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(button);
+  const project = {
+    info: {},
+    getImage: async id => (id === image.id ? image : undefined),
+  };
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen, project);
+
+  assert.match(html, /<button id="Motor"/);
+  assert.match(html, /<img src="data:image\/png;base64,BAUG"/);
+  assert.match(html, /Running<\/button>/);
+  assert.doesNotMatch(html, />Default<\/button>/);
+});
+
 test("HTML conversion renders materialized reference objects", async () => {
   const materialized = new HmiGroup();
   materialized.name = "PumpFaceplate";
