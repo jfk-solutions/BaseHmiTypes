@@ -1,6 +1,7 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import type { HmiColor } from "../base/HmiColor.js";
 import { HmiFont } from "../base/HmiFont.js";
+import type { HmiImageSource } from "../base/HmiImageSource.js";
 import { HmiConfirmationButtons } from "./HmiConfirmationButtons.js";
 
 export class HmiConfirmationDialogSettings {
@@ -12,6 +13,8 @@ export class HmiConfirmationDialogSettings {
   message?: HmiMultilingualText;
   messageFont?: HmiFont;
   imageReference?: string;
+  /** Resolved project image while imageReference preserves the source filename. */
+  image?: HmiImageSource;
   imageScaled?: boolean;
   imageColor?: HmiColor;
   imageBackgroundColor?: HmiColor;
