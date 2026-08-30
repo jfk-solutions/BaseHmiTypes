@@ -103,6 +103,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   readonly stateAppearances: HmiAlarmStateAppearance[] = [];
   alarmBlinkRate?: HmiProperty<HmiAlarmBlinkRate>;
   alarmBlinkRateSource?: string;
+  alarmSoundRepeatIntervalSeconds?: HmiProperty<number>;
   recordLimit?: HmiProperty<number>;
   whereClause?: HmiProperty<string>;
   showPendingAlarms?: HmiProperty<boolean>;

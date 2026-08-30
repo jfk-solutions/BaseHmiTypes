@@ -7,6 +7,8 @@ import { HmiAlarmColumn } from "./HmiAlarmColumn.js";
 import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
 import { HmiAlarmSortCriterion } from "./HmiAlarmSortCriterion.js";
 import { HmiAlarmEventSubscription } from "./HmiAlarmEventSubscription.js";
+import { HmiAlarmBlinkRate } from "./HmiAlarmBlinkRate.js";
+import { HmiAlarmStateAppearance } from "./HmiAlarmStateAppearance.js";
 
 export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   constructor() {
@@ -46,6 +48,10 @@ export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   sortOrder?: HmiProperty<string>;
   readonly sortCriteria: HmiAlarmSortCriterion[] = [];
   readonly eventSubscriptions: HmiAlarmEventSubscription[] = [];
+  readonly stateAppearances: HmiAlarmStateAppearance[] = [];
+  alarmBlinkRate?: HmiProperty<HmiAlarmBlinkRate>;
+  alarmBlinkRateSource?: string;
+  alarmSoundRepeatIntervalSeconds?: HmiProperty<number>;
   showTriggerValue?: HmiProperty<boolean>;
   showTriggerLabel?: HmiProperty<boolean>;
   showInactiveAlarms?: HmiProperty<boolean>;
