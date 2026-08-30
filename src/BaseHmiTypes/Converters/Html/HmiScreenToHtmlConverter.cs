@@ -204,6 +204,9 @@ public class HmiScreenToHtmlConverter
             case HmiScale scale:
                 AppendScale(html, scale, context);
                 break;
+            case HmiClock clock:
+                AppendClock(html, clock, context);
+                break;
             case HmiGauge gauge:
                 AppendGauge(html, gauge, context);
                 break;
@@ -943,6 +946,38 @@ public class HmiScreenToHtmlConverter
         html.Append("<div");
         AppendCommonAttributes(html, scale, context, additionalStyle: "display: flex; align-items: end; justify-content: space-between; overflow: hidden;");
         html.Append("><span>").Append(ToCss(minimum)).Append("</span><span>").Append(ToCss(maximum)).Append("</span></div>");
+    }
+
+    private static void AppendClock(StringBuilder html, HmiClock clock, HmiHtmlConvertContext context)
+    {
+        var showDate = clock.ShowDate is not null && ResolveStaticValue(clock.ShowDate, context);
+        var showTime = clock.ShowTime is null || ResolveStaticValue(clock.ShowTime, context);
+        var showHours = clock.ShowHours is null || ResolveStaticValue(clock.ShowHours, context);
+        var showMinutes = clock.ShowMinutes is null || ResolveStaticValue(clock.ShowMinutes, context);
+        var showSeconds = clock.ShowSeconds is not null && ResolveStaticValue(clock.ShowSeconds, context);
+        var parts = new List<string>();
+        if (showDate)
+            parts.Add("2000-01-01");
+        if (showTime)
+        {
+            var timeParts = new List<string>();
+            if (showHours)
+                timeParts.Add("12");
+            if (showMinutes)
+                timeParts.Add("34");
+            if (showSeconds)
+                timeParts.Add("56");
+            if (timeParts.Count > 0)
+                parts.Add(string.Join(":", timeParts));
+        }
+
+        html.Append("<time");
+        AppendCommonAttributes(html, clock, context, additionalStyle: "display: flex; align-items: center; justify-content: center; overflow: hidden;");
+        AppendAttribute(html, "datetime", "2000-01-01T12:34:56");
+        AppendAttribute(html, "data-format", ResolveStaticValue(clock.Format, context));
+        AppendAttribute(html, "data-time-zone", ResolveStaticValue(clock.TimeZone, context));
+        AppendBooleanAttribute(html, "data-analog", clock.Analog is not null && ResolveStaticValue(clock.Analog, context));
+        html.Append('>').Append(WebUtility.HtmlEncode(parts.Count == 0 ? "Clock" : string.Join(" ", parts))).Append("</time>");
     }
 
     private static (double Minimum, double Maximum) ResolveScaleRange(HmiScaleWidgetBase scale, HmiHtmlConvertContext context)

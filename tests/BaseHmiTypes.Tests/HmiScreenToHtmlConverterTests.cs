@@ -383,6 +383,32 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersClockPreview()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiClock
+        {
+            Name = "BatchClock",
+            Width = 160,
+            Height = 24,
+            ShowDate = true,
+            ShowTime = true,
+            ShowSeconds = false,
+            Format = "dateAndTime",
+            TimeZone = "UTC"
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<time id=\"BatchClock\"");
+        StringAssert.Contains(html, "datetime=\"2000-01-01T12:34:56\"");
+        StringAssert.Contains(html, "data-format=\"dateAndTime\" data-time-zone=\"UTC\"");
+        StringAssert.Contains(html, ">2000-01-01 12:34</time>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen
