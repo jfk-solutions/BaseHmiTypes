@@ -1091,7 +1091,10 @@ public class HmiScreenToHtmlConverterTests
         {
             Value = 2,
             Text = HmiMultilingualText.FromText("Running"),
-            Image = new HmiImageSource { ImageId = "running-image" }
+            Image = new HmiImageSource { ImageId = "running-image" },
+            BackgroundColor = HmiColor.FromArgb(255, 10, 20, 30),
+            CaptionColor = HmiColor.FromArgb(255, 240, 241, 242),
+            BorderColor = HmiColor.FromArgb(255, 100, 101, 102)
         });
         var screen = new HmiScreen { Id = "main", Name = "Main" };
         var layer = new HmiLayer { Id = "default", Name = "Default" };
@@ -1112,6 +1115,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<button id=\"Motor\"");
         StringAssert.Contains(html, "<img src=\"data:image/png;base64,BAUG\"");
         StringAssert.Contains(html, "Running</button>");
+        StringAssert.Contains(html, "background-color: #0A141E;");
+        StringAssert.Contains(html, "color: #F0F1F2;");
+        StringAssert.Contains(html, "border-color: #646566;");
         Assert.DoesNotContain(">Default</button>", html);
     }
 

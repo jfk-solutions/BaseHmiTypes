@@ -846,15 +846,15 @@ public class HmiScreenToHtmlConverter
         HmiHtmlConvertContext context,
         CancellationToken cancellationToken)
     {
+        var stateValue = ResolveStaticValue(button.State, context);
+        var state = button.States.FirstOrDefault(candidate => candidate.Value == stateValue)
+            ?? button.States.FirstOrDefault();
         html.Append("<button");
-        AppendCommonAttributes(html, button, context);
+        AppendCommonAttributes(html, button, context, additionalStyle: CreateButtonStateStyle(state));
         var enabled = button.Enabled is null || ResolveStaticValue(button.Enabled, context);
         if (!enabled)
             AppendAttribute(html, "disabled", "disabled");
         html.Append(">");
-        var stateValue = ResolveStaticValue(button.State, context);
-        var state = button.States.FirstOrDefault(candidate => candidate.Value == stateValue)
-            ?? button.States.FirstOrDefault();
         var image = state?.Image ?? button.Image.GetStaticValue();
         var disabledImageMode = ResolveStaticValue(button.DisabledImageMode, context);
         var showDisabledAppearance = !enabled && button.ShowDisabledState is not null && ResolveStaticValue(button.ShowDisabledState, context);
@@ -865,6 +865,21 @@ public class HmiScreenToHtmlConverter
             AppendInnerImage(html, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale);
         AppendMultilingualText(html, state?.Text ?? ResolveStaticValue(button.Text, context), context);
         html.Append("</button>");
+    }
+
+    private static string? CreateButtonStateStyle(HmiState? state)
+    {
+        if (state is null)
+            return null;
+
+        var style = new StringBuilder();
+        if (state.BackgroundColor is HmiColor backgroundColor)
+            style.Append("background-color: ").Append(ToCss(backgroundColor)).Append(';');
+        if ((state.CaptionColor ?? state.ForegroundColor) is HmiColor foregroundColor)
+            style.Append("color: ").Append(ToCss(foregroundColor)).Append(';');
+        if (state.BorderColor is HmiColor borderColor)
+            style.Append("border-color: ").Append(ToCss(borderColor)).Append(';');
+        return style.Length == 0 ? null : style.ToString();
     }
 
     private static void AppendInput(StringBuilder html, HmiIOField ioField, HmiHtmlConvertContext context)
