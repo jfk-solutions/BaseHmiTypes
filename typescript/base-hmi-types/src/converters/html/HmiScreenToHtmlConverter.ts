@@ -236,7 +236,7 @@ export class HmiScreenToHtmlConverter {
     }
 
     if (item instanceof HmiToggleSwitch) {
-      appendToggleSwitch(html, item, context);
+      await appendToggleSwitch(html, item, project, context, signal);
     } else if (item instanceof HmiCheckBoxGroup) {
       await appendSelectionGroup(html, "hmi-checkbox-group", item, project, context, signal);
     } else if (item instanceof HmiRadioButtonGroup) {
@@ -781,18 +781,34 @@ function appendSymbolicInput(html: string[], symbolicIoField: HmiSymbolicIOField
   html.push("</select>");
 }
 
-function appendToggleSwitch(html: string[], toggleSwitch: HmiToggleSwitch, context: HmiHtmlConvertContext): void {
+async function appendToggleSwitch(
+  html: string[],
+  toggleSwitch: HmiToggleSwitch,
+  project: IHmiProject | undefined,
+  context: HmiHtmlConvertContext,
+  signal?: AbortSignal,
+): Promise<void> {
+  const stateValue = getStaticValue(toggleSwitch.state);
+  const offState = toggleSwitch.states[0];
+  const onState = toggleSwitch.states[1] ?? offState;
+  const selectedState = toggleSwitch.states.find(candidate => candidate.value === stateValue) ?? offState;
+  const text = getStaticValue(toggleSwitch.text) ?? offState?.text;
+  const alternateText = getStaticValue(toggleSwitch.alternateText) ?? onState?.text;
+  const image = getStaticValue(toggleSwitch.image) ?? offState?.image;
+  const alternateImage = getStaticValue(toggleSwitch.alternateImage) ?? onState?.image;
+
   html.push("<hmi-toggle-switch");
-  appendCommonAttributes(html, toggleSwitch, context);
+  appendCommonAttributes(html, toggleSwitch, context, true, createStateStyle(selectedState));
   appendStaticAttribute(
     html,
     "mode",
     context.effectiveProperties.resolve<HmiSwitchType>(toggleSwitch, "Mode", toggleSwitch.mode),
   );
-  appendTextAttribute(html, "text", toggleSwitch.text, context);
-  appendTextAttribute(html, "alternate-text", toggleSwitch.alternateText, context);
-  appendAttribute(html, "image", getStaticValue(toggleSwitch.image)?.uri);
-  appendAttribute(html, "alternate-image", getStaticValue(toggleSwitch.alternateImage)?.uri);
+  appendAttribute(html, "text", text?.getDisplayText(context.options.cultureLcid));
+  appendAttribute(html, "alternate-text", alternateText?.getDisplayText(context.options.cultureLcid));
+  appendAttribute(html, "image", await resolveImageUri(image, project, signal));
+  appendAttribute(html, "alternate-image", await resolveImageUri(alternateImage, project, signal));
+  appendBooleanAttribute(html, "checked", onState !== undefined && onState !== offState && selectedState === onState);
   appendStaticAttribute(html, "header", toggleSwitch.header);
   appendTextAttribute(html, "header-text", toggleSwitch.headerText, context);
   html.push("></hmi-toggle-switch>");
