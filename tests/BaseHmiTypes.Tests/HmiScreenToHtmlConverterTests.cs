@@ -729,6 +729,51 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersInertSystemDiagnosisPreviews()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 640, Height = 480 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiSystemDiagnosisControl
+        {
+            Name = "MeDiagnostics",
+            Width = 300,
+            Height = 100,
+            ViewKind = HmiSystemDiagnosisViewKind.DiagnosticsList
+        });
+        layer.Items.Add(new HmiSystemDiagnosisControl
+        {
+            Name = "SeDiagnostics",
+            Y = 110,
+            Width = 300,
+            Height = 100,
+            ViewKind = HmiSystemDiagnosisViewKind.DiagnosticsViewer
+        });
+        layer.Items.Add(new HmiSystemDiagnosisControl
+        {
+            Name = "AutomaticSummary",
+            Y = 220,
+            Width = 300,
+            Height = 100,
+            ViewKind = HmiSystemDiagnosisViewKind.AutomaticEventSummary
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"MeDiagnostics\"");
+        StringAssert.Contains(html, "data-view-kind=\"DiagnosticsList\"");
+        StringAssert.Contains(html, ">Diagnostics list</div>");
+        StringAssert.Contains(html, "<div id=\"SeDiagnostics\"");
+        StringAssert.Contains(html, "data-view-kind=\"DiagnosticsViewer\"");
+        StringAssert.Contains(html, ">Diagnostics viewer</div>");
+        StringAssert.Contains(html, "<div id=\"AutomaticSummary\"");
+        StringAssert.Contains(html, "data-view-kind=\"AutomaticEventSummary\"");
+        StringAssert.Contains(html, ">Automatic diagnostic event summary</div>");
+        Assert.AreEqual(3, CountOccurrences(html, ">Diagnostic data not loaded</div>"));
+        Assert.IsFalse(html.Contains("<button", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen
