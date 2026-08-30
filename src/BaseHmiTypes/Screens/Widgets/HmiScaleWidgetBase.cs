@@ -28,6 +28,8 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<bool>? UseAutoScaling { get; set; }
 
+    public HmiProperty<bool>? UseVariableMinimumMaximum { get; set; }
+
     public HmiProperty<bool>? ShowLimitRanges { get; set; }
 
     public HmiProperty<double>? BeginValue { get; set; }
