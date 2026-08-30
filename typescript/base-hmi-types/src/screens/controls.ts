@@ -4,6 +4,8 @@ export * from "./controls/HmiAlarmRowDoubleClickAction.js";
 export * from "./controls/HmiAlarmControl.js";
 export * from "./controls/HmiAlarmColumn.js";
 export * from "./controls/HmiAlarmColumnType.js";
+export * from "./controls/HmiAlarmToolbarButton.js";
+export * from "./controls/HmiAlarmToolbarButtonType.js";
 export * from "./controls/HmiAlarmCondition.js";
 export * from "./controls/HmiAlarmConditionPresentation.js";
 export * from "./controls/HmiAlarmSelectedIndicator.js";
