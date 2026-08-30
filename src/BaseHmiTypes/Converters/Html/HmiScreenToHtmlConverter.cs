@@ -139,7 +139,7 @@ public class HmiScreenToHtmlConverter
                 await AppendSelectionGroupAsync(html, "hmi-radio-button-group", radioButtonGroup, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiButton button:
-                AppendButton(html, button, context);
+                await AppendButtonAsync(html, button, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiIOField ioField:
                 AppendInput(html, ioField, context);
@@ -839,13 +839,18 @@ public class HmiScreenToHtmlConverter
         html.Append("</style>");
     }
 
-    private static void AppendButton(StringBuilder html, HmiButton button, HmiHtmlConvertContext context)
+    private static async ValueTask AppendButtonAsync(
+        StringBuilder html,
+        HmiButton button,
+        IHmiProject? project,
+        HmiHtmlConvertContext context,
+        CancellationToken cancellationToken)
     {
         html.Append("<button");
         AppendCommonAttributes(html, button, context);
         html.Append(">");
         var image = button.Image.GetStaticValue();
-        var imageUri = image?.Uri;
+        var imageUri = await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
         if (!string.IsNullOrWhiteSpace(imageUri))
             AppendInnerImage(html, imageUri);
         AppendMultilingualText(html, ResolveStaticValue(button.Text, context), context);
