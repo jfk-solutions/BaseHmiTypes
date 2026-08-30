@@ -13,6 +13,8 @@ import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js"
 import { HmiAlarmToolbarButton } from "./HmiAlarmToolbarButton.js";
 import { HmiAlarmStatusBarPanel } from "./HmiAlarmStatusBarPanel.js";
 import { HmiAlarmEventSubscription } from "./HmiAlarmEventSubscription.js";
+import { HmiAlarmBlinkRate } from "./HmiAlarmBlinkRate.js";
+import { HmiAlarmStateAppearance } from "./HmiAlarmStateAppearance.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -94,6 +96,9 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   statusBarFont?: HmiFont;
   statusBarIconSize?: HmiProperty<string>;
   readonly eventSubscriptions: HmiAlarmEventSubscription[] = [];
+  readonly stateAppearances: HmiAlarmStateAppearance[] = [];
+  alarmBlinkRate?: HmiProperty<HmiAlarmBlinkRate>;
+  alarmBlinkRateSource?: string;
   recordLimit?: HmiProperty<number>;
   whereClause?: HmiProperty<string>;
   showPendingAlarms?: HmiProperty<boolean>;
