@@ -245,6 +245,9 @@ public class HmiScreenToHtmlConverter
             case HmiScreenWindow screenWindow:
                 await AppendScreenWindowAsync(html, screenWindow, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
+            case HmiWebControl webControl:
+                AppendWebControl(html, webControl, context);
+                break;
             case HmiAlarmControl alarmControl:
                 AppendDiv(html, alarmControl, context.Options.UnsupportedItemPlaceholderCssClass, "Alarm control", context);
                 break;
@@ -1004,6 +1007,45 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-value", ToCss(value));
         AppendAttribute(html, "data-orientation", vertical ? "vertical" : "horizontal");
         html.Append("><span style=\"").Append(markerStyle).Append("\">").Append(vertical ? "▲" : "▶").Append("</span></div>");
+    }
+
+    private static void AppendWebControl(StringBuilder html, HmiWebControl webControl, HmiHtmlConvertContext context)
+    {
+        var url = ResolveStaticValue(webControl.Url, context);
+        if (string.IsNullOrWhiteSpace(url) && webControl.Url is HmiExpressionProperty<string> urlExpression)
+            url = urlExpression.Expression;
+        if (string.IsNullOrWhiteSpace(url))
+            url = ResolveStaticValue(webControl.HomeUrl, context);
+        var showAddressBar = webControl.ShowAddressBar is null || ResolveStaticValue(webControl.ShowAddressBar, context);
+
+        html.Append("<div");
+        AppendCommonAttributes(
+            html,
+            webControl,
+            context,
+            additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-url", url);
+        AppendBooleanAttribute(html, "data-use-parameter-placeholders", webControl.UseParameterPlaceholders is not null && ResolveStaticValue(webControl.UseParameterPlaceholders, context));
+        AppendAttribute(html, "data-navigate-back", ResolvePropertyPreview(webControl.NavigateBack, context));
+        AppendAttribute(html, "data-navigate-forward", ResolvePropertyPreview(webControl.NavigateForward, context));
+        AppendAttribute(html, "data-stop", ResolvePropertyPreview(webControl.Stop, context));
+        AppendAttribute(html, "data-refresh", ResolvePropertyPreview(webControl.Refresh, context));
+        html.Append('>');
+        if (showAddressBar)
+        {
+            html.Append("<div style=\"flex: 0 0 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 1px solid currentColor; padding: 2px 4px;\">");
+            html.Append(WebUtility.HtmlEncode(url ?? string.Empty)).Append("</div>");
+        }
+        html.Append("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Web browser</div></div>");
+    }
+
+    private static string? ResolvePropertyPreview<T>(HmiProperty<T>? property, HmiHtmlConvertContext context)
+    {
+        if (property is null)
+            return null;
+        if (property is HmiExpressionProperty<T> expression && !string.IsNullOrWhiteSpace(expression.Expression))
+            return expression.Expression;
+        return FormatAttributeValue(ResolveStaticValue(property, context));
     }
 
     private static (double Minimum, double Maximum) ResolveScaleRange(HmiScaleWidgetBase scale, HmiHtmlConvertContext context)

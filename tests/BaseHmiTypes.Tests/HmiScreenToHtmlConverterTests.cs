@@ -4,6 +4,7 @@ using BaseHmiTypes.Images;
 using BaseHmiTypes.Projects;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
+using BaseHmiTypes.Screens.Controls;
 using BaseHmiTypes.Screens.Defaults;
 using BaseHmiTypes.Screens.Shapes;
 using BaseHmiTypes.Screens.Widgets;
@@ -430,6 +431,36 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<div id=\"LevelArrow\"");
         StringAssert.Contains(html, "data-min=\"0\" data-max=\"100\" data-value=\"25\" data-orientation=\"vertical\"");
         StringAssert.Contains(html, "bottom: 25%; transform: translate(-50%, 50%);\">▲</span>");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_RendersInertWebControlPreview()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiWebControl
+        {
+            Name = "ManualBrowser",
+            Width = 300,
+            Height = 180,
+            Url = HmiProperty.Expression("{[PLC]ManualUrl}", "https://example.test/manual?a=1&b=2"),
+            ShowAddressBar = true,
+            UseParameterPlaceholders = true,
+            NavigateBack = HmiProperty.Expression<bool>("{[PLC]Back}"),
+            Refresh = HmiProperty.Expression<bool>("{[PLC]Refresh}")
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"ManualBrowser\"");
+        StringAssert.Contains(html, "data-url=\"https://example.test/manual?a=1&amp;b=2\"");
+        StringAssert.Contains(html, "data-use-parameter-placeholders");
+        StringAssert.Contains(html, "data-navigate-back=\"{[PLC]Back}\"");
+        StringAssert.Contains(html, "data-refresh=\"{[PLC]Refresh}\"");
+        StringAssert.Contains(html, ">https://example.test/manual?a=1&amp;b=2</div>");
+        StringAssert.Contains(html, ">Web browser</div>");
+        Assert.IsFalse(html.Contains("<iframe", StringComparison.Ordinal));
     }
 
     [TestMethod]
