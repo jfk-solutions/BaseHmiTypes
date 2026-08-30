@@ -58,6 +58,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showShelveUnshelveButtons?: HmiProperty<boolean>;
   showAreaTree?: HmiProperty<boolean>;
   areaTreeWidth?: HmiProperty<number>;
+  allowAreaTreeResize?: HmiProperty<boolean>;
   rootArea?: HmiProperty<string>;
   nameFilter?: HmiProperty<string>;
   statusFilter?: HmiProperty<string>;
