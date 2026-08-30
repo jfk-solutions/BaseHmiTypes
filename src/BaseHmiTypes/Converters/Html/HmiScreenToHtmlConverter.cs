@@ -207,6 +207,9 @@ public class HmiScreenToHtmlConverter
             case HmiClock clock:
                 AppendClock(html, clock, context);
                 break;
+            case HmiArrowIndicator arrowIndicator:
+                AppendArrowIndicator(html, arrowIndicator, context);
+                break;
             case HmiGauge gauge:
                 AppendGauge(html, gauge, context);
                 break;
@@ -978,6 +981,29 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-time-zone", ResolveStaticValue(clock.TimeZone, context));
         AppendBooleanAttribute(html, "data-analog", clock.Analog is not null && ResolveStaticValue(clock.Analog, context));
         html.Append('>').Append(WebUtility.HtmlEncode(parts.Count == 0 ? "Clock" : string.Join(" ", parts))).Append("</time>");
+    }
+
+    private static void AppendArrowIndicator(
+        StringBuilder html,
+        HmiArrowIndicator arrowIndicator,
+        HmiHtmlConvertContext context)
+    {
+        var (minimum, maximum) = ResolveScaleRange(arrowIndicator, context);
+        var value = ResolveScaleValue(arrowIndicator, minimum, maximum, context);
+        var ratio = (value - minimum) / (maximum - minimum);
+        var vertical = arrowIndicator.Orientation is not null && ResolveStaticValue(arrowIndicator.Orientation, context) == 1;
+        var position = ToCss(ratio * 100);
+        var markerStyle = vertical
+            ? $"position: absolute; left: 50%; bottom: {position}%; transform: translate(-50%, 50%);"
+            : $"position: absolute; top: 50%; left: {position}%; transform: translate(-50%, -50%);";
+
+        html.Append("<div");
+        AppendCommonAttributes(html, arrowIndicator, context, additionalStyle: "overflow: hidden;");
+        AppendAttribute(html, "data-min", ToCss(minimum));
+        AppendAttribute(html, "data-max", ToCss(maximum));
+        AppendAttribute(html, "data-value", ToCss(value));
+        AppendAttribute(html, "data-orientation", vertical ? "vertical" : "horizontal");
+        html.Append("><span style=\"").Append(markerStyle).Append("\">").Append(vertical ? "▲" : "▶").Append("</span></div>");
     }
 
     private static (double Minimum, double Maximum) ResolveScaleRange(HmiScaleWidgetBase scale, HmiHtmlConvertContext context)
