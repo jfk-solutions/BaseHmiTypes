@@ -17,6 +17,9 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
     /// <summary>Gets the global-object parameter definitions declared by this base object.</summary>
     public IList<HmiScreenParameter> Parameters { get; } = new List<HmiScreenParameter>();
 
+    /// <summary>Gets the source connections assigned directly to this object.</summary>
+    public IList<HmiObjectConnection> Connections { get; } = new List<HmiObjectConnection>();
+
     public HmiScriptExposureMode? ScriptExposureMode { get; set; }
 
     public string? SourceFormat { get; set; }
