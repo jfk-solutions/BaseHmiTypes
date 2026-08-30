@@ -701,7 +701,7 @@ async function appendButton(
   const state = button.states.find(candidate => candidate.value === stateValue)
     ?? button.states[0];
   html.push("<button");
-  appendCommonAttributes(html, button, context, true, createButtonStateStyle(state));
+  appendCommonAttributes(html, button, context, true, createStateStyle(state));
   const enabled = button.enabled === undefined || getStaticValue(button.enabled) === true;
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
@@ -729,7 +729,7 @@ async function appendButton(
   html.push("</button>");
 }
 
-function createButtonStateStyle(state: HmiState | undefined): string | null {
+function createStateStyle(state: HmiState | undefined): string | null {
   if (!state) return null;
 
   const style: string[] = [];
@@ -750,15 +750,18 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
 }
 
 function appendSymbolicInput(html: string[], symbolicIoField: HmiSymbolicIOField, context: HmiHtmlConvertContext): void {
-  html.push("<select");
-  appendCommonAttributes(html, symbolicIoField, context);
-  html.push(">");
   const selectedValue = getStaticValue(symbolicIoField.value);
+  const selectedState = symbolicIoField.states.find(candidate => candidate.value === selectedValue)
+    ?? symbolicIoField.states[0];
+  html.push("<select");
+  appendCommonAttributes(html, symbolicIoField, context, true, createStateStyle(selectedState));
+  html.push(">");
   for (const state of symbolicIoField.states) {
     html.push("<option");
     if (state.value !== undefined)
       appendAttribute(html, "value", toCss(state.value));
-    if (selectedValue !== undefined && state.value === selectedValue)
+    appendAttribute(html, "style", createStateStyle(state) ?? undefined);
+    if (state === selectedState)
       appendAttribute(html, "selected", "selected");
     html.push(">");
     appendMultilingualText(html, state.text, context);

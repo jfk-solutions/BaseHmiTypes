@@ -80,11 +80,16 @@ test("HTML conversion renders symbolic IO field states", async () => {
   stopped.name = "Stopped";
   stopped.value = 0;
   stopped.text = HmiMultilingualText.fromText("Stopped");
+  stopped.backgroundColor = hmiColorFromArgb(255, 100, 0, 0);
+  stopped.foregroundColor = hmiColorFromArgb(255, 255, 255, 255);
   symbolicIoField.states.push(stopped);
   const running = new HmiState();
   running.name = "Running";
   running.value = 2;
   running.text = HmiMultilingualText.fromText("Running");
+  running.backgroundColor = hmiColorFromArgb(255, 0, 100, 0);
+  running.captionColor = hmiColorFromArgb(255, 240, 241, 242);
+  running.borderColor = hmiColorFromArgb(255, 50, 51, 52);
   symbolicIoField.states.push(running);
   const screen = createScreen("main", "Main");
   screen.layers[0].items.push(symbolicIoField);
@@ -92,8 +97,9 @@ test("HTML conversion renders symbolic IO field states", async () => {
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
 
   assert.match(html, /<select id="MotorState"/);
-  assert.match(html, /<option value="0">Stopped<\/option>/);
-  assert.match(html, /<option value="2" selected="selected">Running<\/option>/);
+  assert.match(html, /background-color: #006400;color: #F0F1F2;border-color: #323334;/);
+  assert.match(html, /<option value="0" style="background-color: #640000;color: #FFFFFF;">Stopped<\/option>/);
+  assert.match(html, /<option value="2" style="background-color: #006400;color: #F0F1F2;border-color: #323334;" selected="selected">Running<\/option>/);
   assert.doesNotMatch(html, /HmiSymbolicIOField/);
 });
 
