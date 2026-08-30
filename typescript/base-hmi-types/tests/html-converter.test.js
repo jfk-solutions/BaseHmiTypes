@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  expressionProperty,
   hmiColorFromArgb,
   HmiArrowIndicator,
   HmiBar,
@@ -17,6 +18,7 @@ import {
   HmiState,
   HmiSlider,
   HmiToggleSwitch,
+  HmiWebControl,
   staticProperty,
 } from "../dist/index.js";
 
@@ -233,4 +235,37 @@ test("HTML converter renders an arrow indicator preview", async () => {
   assert.match(html, /<div id="LevelArrow"/);
   assert.match(html, /data-min="0" data-max="100" data-value="25" data-orientation="vertical"/);
   assert.match(html, /bottom: 25%; transform: translate\(-50%, 50%\);">▲<\/span>/);
+});
+
+test("HTML converter renders an inert web control preview", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  const browser = new HmiWebControl();
+  browser.name = "ManualBrowser";
+  browser.width = staticProperty(300);
+  browser.height = staticProperty(180);
+  browser.url = expressionProperty("{[PLC]ManualUrl}", "https://example.test/manual?a=1&b=2");
+  browser.showAddressBar = staticProperty(true);
+  browser.useParameterPlaceholders = staticProperty(true);
+  browser.navigateBack = expressionProperty("{[PLC]Back}");
+  browser.refresh = expressionProperty("{[PLC]Refresh}");
+  layer.items.push(browser);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="ManualBrowser"/);
+  assert.match(html, /data-url="https:\/\/example.test\/manual\?a=1&amp;b=2"/);
+  assert.match(html, /data-use-parameter-placeholders/);
+  assert.match(html, /data-navigate-back="{\[PLC\]Back}"/);
+  assert.match(html, /data-refresh="{\[PLC\]Refresh}"/);
+  assert.match(html, />https:\/\/example.test\/manual\?a=1&amp;b=2<\/div>/);
+  assert.match(html, />Web browser<\/div>/);
+  assert.doesNotMatch(html, /<iframe/);
 });
