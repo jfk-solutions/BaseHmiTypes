@@ -23,5 +23,10 @@ public class HmiClock : HmiWidgetBase
 
     public HmiProperty<bool>? ShowSeconds { get; set; }
 
+    /// <summary>
+    /// Product-specific date/time display format retained without locale-dependent conversion.
+    /// </summary>
+    public HmiProperty<string>? Format { get; set; }
+
     public HmiProperty<string>? TimeZone { get; set; }
 }
