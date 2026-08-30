@@ -15,6 +15,24 @@ public class HmiGauge : HmiScaleWidgetBase
 
     public HmiProperty<string>? EngineeringUnit { get; set; }
 
+    public HmiProperty<bool>? CurrentValueVisible { get; set; }
+
+    public HmiProperty<int>? CurrentValueFieldLength { get; set; }
+
+    public HmiProperty<int>? CurrentValueDecimalPlaces { get; set; }
+
+    public HmiProperty<HmiColor>? CurrentValueColor { get; set; }
+
+    public HmiFont? CurrentValueFont { get; set; }
+
+    public HmiProperty<bool>? EngineeringUnitVisible { get; set; }
+
+    public HmiProperty<bool>? UseVariableEngineeringUnit { get; set; }
+
+    public HmiProperty<HmiColor>? EngineeringUnitColor { get; set; }
+
+    public HmiFont? EngineeringUnitFont { get; set; }
+
     public HmiProperty<double>? TargetValue { get; set; }
 
     public HmiProperty<bool>? TargetEnabled { get; set; }
