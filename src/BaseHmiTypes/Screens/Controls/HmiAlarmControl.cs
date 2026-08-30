@@ -156,6 +156,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<string>? StatusBarIconSize { get; set; }
 
+    public IList<HmiAlarmEventSubscription> EventSubscriptions { get; } = new List<HmiAlarmEventSubscription>();
+
     public HmiProperty<int>? RecordLimit { get; set; }
 
     public HmiProperty<string>? WhereClause { get; set; }
