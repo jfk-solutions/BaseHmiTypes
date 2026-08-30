@@ -174,6 +174,26 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<string>? WhereClause { get; set; }
 
+    public HmiProperty<string>? HistoryDatabase { get; set; }
+
+    public HmiProperty<bool>? DisplayReportOnStartup { get; set; }
+
+    public HmiProperty<bool>? ShowTooltips { get; set; }
+
+    public HmiProperty<bool>? ShowQualityMessages { get; set; }
+
+    public HmiProperty<bool>? ShowBorder { get; set; }
+
+    public HmiProperty<string>? IconStyle { get; set; }
+
+    public HmiProperty<HmiColor>? ToolbarForegroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }
+
+    public HmiProperty<string>? ToolbarIconSize { get; set; }
+
+    public HmiFont? DefaultPrintFont { get; set; }
+
     public HmiProperty<bool>? ShowPendingAlarms { get; set; }
 
     public HmiProperty<bool>? ShowAlarmsToAcknowledge { get; set; }
