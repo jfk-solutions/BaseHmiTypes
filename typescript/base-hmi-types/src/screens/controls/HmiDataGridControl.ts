@@ -13,6 +13,8 @@ export class HmiDataGridControl extends HmiControlWindowBase {
   showStatusBar?: HmiProperty<boolean>;
   showToolbar?: HmiProperty<boolean>;
   toolbarIconSize?: HmiProperty<string>;
+  maximumRows?: HmiProperty<number>;
+  useLocalMachineTimeZone?: HmiProperty<boolean>;
   timePeriodAbsoluteMode?: HmiProperty<boolean>;
   timePeriodDuration?: HmiProperty<string>;
   timePeriodStart?: HmiProperty<string>;
