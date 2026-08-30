@@ -1078,6 +1078,44 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersSelectedButtonStateCaptionAndProjectImage()
+    {
+        var button = new HmiButton
+        {
+            Name = "Motor",
+            State = 2,
+            Text = HmiMultilingualText.FromText("Default")
+        };
+        button.States.Add(new HmiState { Value = 0, Text = HmiMultilingualText.FromText("Stopped") });
+        button.States.Add(new HmiState
+        {
+            Value = 2,
+            Text = HmiMultilingualText.FromText("Running"),
+            Image = new HmiImageSource { ImageId = "running-image" }
+        });
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(button);
+        screen.Layers.Add(layer);
+        var project = new FakeProject(screen);
+        project.AddImage(new HmiImage
+        {
+            Id = "running-image",
+            Name = "running.png",
+            ImageType = HmiImageType.Png,
+            MimeType = "image/png",
+            Data = [4, 5, 6]
+        });
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen, project);
+
+        StringAssert.Contains(html, "<button id=\"Motor\"");
+        StringAssert.Contains(html, "<img src=\"data:image/png;base64,BAUG\"");
+        StringAssert.Contains(html, "Running</button>");
+        Assert.DoesNotContain(">Default</button>", html);
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSymbolLibraryControlMetafileSymbol()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
