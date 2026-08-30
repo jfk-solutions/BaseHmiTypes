@@ -6,6 +6,7 @@ import {
   HmiChildCoordinateSpace,
   HmiDynamicSvg,
   HmiDynamicSvgProperty,
+  HmiDisabledImageMode,
   HmiGroup,
   HmiImage,
   HmiImageSourceKind,
@@ -157,6 +158,51 @@ test("HTML conversion renders the selected button state caption and project imag
   assert.match(html, /<img src="data:image\/png;base64,BAUG"/);
   assert.match(html, /Running<\/button>/);
   assert.doesNotMatch(html, />Default<\/button>/);
+});
+
+test("HTML conversion renders static disabled button appearance", async () => {
+  const disabled = new HmiButton();
+  disabled.name = "Disabled";
+  disabled.enabled = staticProperty(false);
+  disabled.showDisabledState = staticProperty(true);
+  disabled.disabledImageMode = staticProperty(HmiDisabledImageMode.Reference);
+  disabled.image = staticProperty({ imageId: "normal-image" });
+  disabled.disabledImage = staticProperty({ imageId: "disabled-image" });
+  const grayscale = new HmiButton();
+  grayscale.name = "Grayscale";
+  grayscale.enabled = staticProperty(false);
+  grayscale.showDisabledState = staticProperty(true);
+  grayscale.disabledImageMode = staticProperty(HmiDisabledImageMode.Grayscale);
+  grayscale.image = staticProperty({ imageId: "normal-image" });
+  const normalImage = new HmiImage();
+  normalImage.id = "normal-image";
+  normalImage.name = "normal.png";
+  normalImage.imageType = HmiImageType.Png;
+  normalImage.mimeType = "image/png";
+  normalImage.data = new Uint8Array([1]);
+  const disabledImage = new HmiImage();
+  disabledImage.id = "disabled-image";
+  disabledImage.name = "disabled.png";
+  disabledImage.imageType = HmiImageType.Png;
+  disabledImage.mimeType = "image/png";
+  disabledImage.data = new Uint8Array([2]);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(disabled, grayscale);
+  const project = {
+    info: {},
+    getImage: async id =>
+      id === normalImage.id
+        ? normalImage
+        : id === disabledImage.id
+          ? disabledImage
+          : undefined,
+  };
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen, project);
+
+  assert.match(html, /<button id="Disabled"[^>]* disabled="disabled"><img src="data:image\/png;base64,Ag=="/);
+  assert.match(html, /<button id="Grayscale"/);
+  assert.match(html, /src="data:image\/png;base64,AQ==" style="width: 100%; height: 100%; filter: grayscale\(1\);"/);
 });
 
 test("HTML conversion renders materialized reference objects", async () => {

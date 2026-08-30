@@ -46,6 +46,7 @@ import { HmiShapeBase } from "../../screens/shapes/HmiShapeBase.js";
 import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
+import { HmiDisabledImageMode } from "../../screens/widgets/HmiDisabledImageMode.js";
 import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
@@ -697,14 +698,31 @@ async function appendButton(
 ): Promise<void> {
   html.push("<button");
   appendCommonAttributes(html, button, context);
+  const enabled = button.enabled === undefined || getStaticValue(button.enabled) === true;
+  if (!enabled) {
+    appendAttribute(html, "disabled", "disabled");
+  }
   html.push(">");
   const stateValue = getStaticValue(button.state);
   const state = button.states.find(candidate => candidate.value === stateValue)
     ?? button.states[0];
-  const image = state?.image ?? getStaticValue(button.image);
+  let image = state?.image ?? getStaticValue(button.image);
+  const disabledImageMode = getStaticValue(button.disabledImageMode);
+  const showDisabledAppearance = !enabled && getStaticValue(button.showDisabledState) === true;
+  if (
+    showDisabledAppearance &&
+    (disabledImageMode === HmiDisabledImageMode.Reference ||
+      disabledImageMode === HmiDisabledImageMode.Imported)
+  ) {
+    image = getStaticValue(button.disabledImage) ?? image;
+  }
   const imageUri = await resolveImageUri(image, project, signal);
   if (imageUri) {
-    appendInnerImage(html, imageUri);
+    appendInnerImage(
+      html,
+      imageUri,
+      showDisabledAppearance && disabledImageMode === HmiDisabledImageMode.Grayscale,
+    );
   }
   appendMultilingualText(html, state?.text ?? getStaticValue(button.text), context);
   html.push("</button>");
@@ -991,14 +1009,18 @@ function appendSymbolLibraryTransform(html: string[], symbolLibraryControl: HmiS
   }
 }
 
-function appendInnerImage(html: string[], uri: string): void {
+function appendInnerImage(html: string[], uri: string, grayscale = false): void {
   if (!uri.trim()) {
     return;
   }
 
   html.push("<img");
   appendAttribute(html, "src", uri);
-  html.push(" style=\"width: 100%; height: 100%;\">");
+  html.push(" style=\"width: 100%; height: 100%;");
+  if (grayscale) {
+    html.push(" filter: grayscale(1);");
+  }
+  html.push("\">");
 }
 
 function appendSymbolImage(
