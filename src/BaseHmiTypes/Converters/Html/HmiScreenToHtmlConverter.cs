@@ -260,6 +260,9 @@ public class HmiScreenToHtmlConverter
             case HmiAuditTrailControl auditTrailControl:
                 AppendAuditTrailControl(html, auditTrailControl, context);
                 break;
+            case HmiRadarChartControl radarChartControl:
+                AppendRadarChartControl(html, radarChartControl, context);
+                break;
             case HmiWebControl webControl:
                 AppendWebControl(html, webControl, context);
                 break;
@@ -1340,6 +1343,37 @@ public class HmiScreenToHtmlConverter
             html.Append("</div>");
         }
         html.Append("</div>");
+    }
+
+    private static void AppendRadarChartControl(StringBuilder html, HmiRadarChartControl radarChartControl, HmiHtmlConvertContext context)
+    {
+        var title = radarChartControl.Title?.GetDisplayText(context.CultureInfo);
+        int? seriesCount = radarChartControl.SeriesCount is null ? null : ResolveStaticValue(radarChartControl.SeriesCount, context);
+        int? categoryCount = radarChartControl.CategoryCount is null ? null : ResolveStaticValue(radarChartControl.CategoryCount, context);
+
+        html.Append("<div");
+        AppendCommonAttributes(
+            html,
+            radarChartControl,
+            context,
+            additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-series-count", ResolvePropertyPreview(radarChartControl.SeriesCount, context));
+        AppendAttribute(html, "data-category-count", ResolvePropertyPreview(radarChartControl.CategoryCount, context));
+        html.Append("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">")
+            .Append(WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(title) ? "Radar chart" : title))
+            .Append("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Radar payload preserved");
+        if (seriesCount is not null || categoryCount is not null)
+        {
+            html.Append(" (");
+            if (seriesCount is not null)
+                html.Append("Series: ").Append(seriesCount.Value.ToString(CultureInfo.InvariantCulture));
+            if (seriesCount is not null && categoryCount is not null)
+                html.Append(" · ");
+            if (categoryCount is not null)
+                html.Append("Categories: ").Append(categoryCount.Value.ToString(CultureInfo.InvariantCulture));
+            html.Append(')');
+        }
+        html.Append("</div></div>");
     }
 
     private static void AppendAlarmLineControl(StringBuilder html, HmiAlarmLineControl alarmLineControl, HmiHtmlConvertContext context)

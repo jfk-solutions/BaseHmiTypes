@@ -704,6 +704,31 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersInertRadarChartPreview()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiRadarChartControl
+        {
+            Name = "ProcessRadar",
+            Width = 300,
+            Height = 180,
+            Title = HmiMultilingualText.FromText("Process overview"),
+            SeriesCount = 3,
+            CategoryCount = 8
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"ProcessRadar\"");
+        StringAssert.Contains(html, "data-series-count=\"3\" data-category-count=\"8\"");
+        StringAssert.Contains(html, ">Process overview</div>");
+        StringAssert.Contains(html, ">Radar payload preserved (Series: 3 · Categories: 8)</div>");
+        Assert.IsFalse(html.Contains("<canvas", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen
