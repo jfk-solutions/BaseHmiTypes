@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  HmiButton,
   HmiReferenceObjectSettings,
   HmiReferenceParameter,
 } from "../dist/index.js";
@@ -16,4 +17,18 @@ test("reference object settings retain parameter assignments", () => {
   settings.parameters.push(parameter);
 
   assert.deepEqual(settings.parameters, [parameter]);
+});
+
+test("reference object settings separate shared and materialized objects", () => {
+  const shared = new HmiButton();
+  shared.name = "#1 shared";
+  const materialized = new HmiButton();
+  materialized.name = "Motor shared";
+  const settings = new HmiReferenceObjectSettings();
+  settings.resolvedObject = shared;
+  settings.materializedObject = materialized;
+
+  assert.equal(settings.resolvedObject, shared);
+  assert.equal(settings.materializedObject, materialized);
+  assert.notEqual(settings.resolvedObject, settings.materializedObject);
 });
