@@ -73,6 +73,7 @@ import { HmiHtmlConvertOptions } from "./HmiHtmlConvertOptions.js";
 import { hmiHtmlCommonStyle } from "./HmiHtmlCommonStyle.generated.js";
 import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
 import { HmiTrendControl } from "../../screens/controls/HmiTrendControl.js";
+import { HmiWebControl } from "../../screens/controls/HmiWebControl.js";
 import { HmiInspectableScreenHtml, inspectHmiScreenAsync } from "./HmiScreenInspection.js";
 
 type ArcShape = HmiCircularArc | HmiEllipticalArc | HmiCircleSegment | HmiEllipseSegment;
@@ -321,6 +322,8 @@ export class HmiScreenToHtmlConverter {
       await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiScreenWindow) {
       await this.appendScreenWindowAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
+    } else if (item instanceof HmiWebControl) {
+      appendWebControl(html, item, context);
     } else if (item instanceof HmiAlarmControl) {
       appendDiv(html, item, context.options.unsupportedItemPlaceholderCssClass, "Alarm control", context);
     } else if (item instanceof HmiUnkown) {
@@ -873,6 +876,52 @@ function appendArrowIndicator(
   appendAttribute(html, "data-value", toCss(value));
   appendAttribute(html, "data-orientation", vertical ? "vertical" : "horizontal");
   html.push(`><span style="${markerStyle}">${vertical ? "▲" : "▶"}</span></div>`);
+}
+
+function appendWebControl(html: string[], webControl: HmiWebControl, context: HmiHtmlConvertContext): void {
+  let url = getStaticValue(webControl.url);
+  if (!url?.trim() && webControl.url?.kind === HmiPropertyKind.Expression)
+    url = (webControl.url as HmiExpressionProperty<string>).expression;
+  if (!url?.trim())
+    url = getStaticValue(webControl.homeUrl);
+  const showAddressBar = webControl.showAddressBar === undefined
+    || getStaticValue(webControl.showAddressBar) === true;
+
+  html.push("<div");
+  appendCommonAttributes(
+    html,
+    webControl,
+    context,
+    true,
+    "display: flex; flex-direction: column; overflow: hidden;",
+  );
+  appendAttribute(html, "data-url", url);
+  appendBooleanAttribute(
+    html,
+    "data-use-parameter-placeholders",
+    getStaticValue(webControl.useParameterPlaceholders) === true,
+  );
+  appendAttribute(html, "data-navigate-back", resolvePropertyPreview(webControl.navigateBack));
+  appendAttribute(html, "data-navigate-forward", resolvePropertyPreview(webControl.navigateForward));
+  appendAttribute(html, "data-stop", resolvePropertyPreview(webControl.stop));
+  appendAttribute(html, "data-refresh", resolvePropertyPreview(webControl.refresh));
+  html.push(">");
+  if (showAddressBar) {
+    html.push("<div style=\"flex: 0 0 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 1px solid currentColor; padding: 2px 4px;\">");
+    html.push(escapeHtml(url ?? ""), "</div>");
+  }
+  html.push("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Web browser</div></div>");
+}
+
+function resolvePropertyPreview<T>(property: HmiProperty<T> | undefined): string | undefined {
+  if (property === undefined)
+    return undefined;
+  if (property.kind === HmiPropertyKind.Expression) {
+    const expression = (property as HmiExpressionProperty<T>).expression;
+    if (expression?.trim())
+      return expression;
+  }
+  return formatAttributeValue(getStaticValue(property));
 }
 
 function resolveScaleRange(scale: HmiScaleWidgetBase): [number, number] {
