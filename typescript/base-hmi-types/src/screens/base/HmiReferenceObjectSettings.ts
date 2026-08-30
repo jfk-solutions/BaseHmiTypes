@@ -1,5 +1,6 @@
 import { HmiReferenceAnimationMode } from "./HmiReferenceAnimationMode.js";
 import { HmiReferenceParameter } from "./HmiReferenceParameter.js";
+import type { HmiScreenItemBase } from "./HmiScreenItemBase.js";
 
 export class HmiReferenceObjectSettings {
   source?: string;
@@ -11,6 +12,8 @@ export class HmiReferenceObjectSettings {
   resolvedObjectId?: string;
   /** Name of the resolved base object. */
   resolvedObjectName?: string;
+  /** Resolved source definition; this is not a materialized reference instance. */
+  resolvedObject?: HmiScreenItemBase;
   animationMode?: HmiReferenceAnimationMode;
   connectionsLinked?: boolean;
   sizeLinked?: boolean;
