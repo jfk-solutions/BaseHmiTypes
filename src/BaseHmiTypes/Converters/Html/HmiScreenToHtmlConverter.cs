@@ -1408,6 +1408,7 @@ public class HmiScreenToHtmlConverter
     {
         html.Append("<div");
         AppendCommonAttributes(html, alarmLineControl, context, additionalStyle: "display: flex; align-items: center; overflow: hidden;");
+        AppendAttribute(html, "data-view-kind", alarmLineControl.ViewKind.ToString());
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmLineControl.NumberOfRows, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(alarmLineControl.WordWrap, context));
         AppendAttribute(html, "data-queue-new-alarms", ResolvePropertyPreview(alarmLineControl.QueueNewAlarms, context));
