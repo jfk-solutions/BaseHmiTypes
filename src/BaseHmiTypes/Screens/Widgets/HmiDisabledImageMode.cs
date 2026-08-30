@@ -3,5 +3,7 @@ namespace BaseHmiTypes.Screens.Widgets;
 public enum HmiDisabledImageMode
 {
     Original,
-    Grayscale
+    Grayscale,
+    Reference,
+    Imported
 }
