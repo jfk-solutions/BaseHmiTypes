@@ -19,6 +19,22 @@ public class HmiDataGridControl : HmiControlWindowBase
 
     public HmiProperty<string>? ToolbarIconSize { get; set; }
 
+    public HmiProperty<HmiDataGridDataSourceKind>? DataSourceKind { get; set; }
+
+    public string? SourceDataSourceKind { get; set; }
+
+    public HmiProperty<string>? DataSourceName { get; set; }
+
+    public HmiProperty<string>? TableOrView { get; set; }
+
+    public HmiProperty<HmiDataGridSortDirection>? TimeSortDirection { get; set; }
+
+    public string? SourceTimeSortDirection { get; set; }
+
+    public HmiProperty<bool>? HistorianInterpolatedMode { get; set; }
+
+    public HmiProperty<string>? HistorianInterpolationInterval { get; set; }
+
     public HmiProperty<int>? MaximumRows { get; set; }
 
     public HmiProperty<bool>? UseLocalMachineTimeZone { get; set; }

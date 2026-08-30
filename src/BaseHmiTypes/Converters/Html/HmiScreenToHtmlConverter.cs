@@ -1126,6 +1126,14 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(dataGridControl.ShowStatusBar, context));
         AppendAttribute(html, "data-show-export-csv", ResolvePropertyPreview(dataGridControl.ShowExportCsv, context));
         AppendAttribute(html, "data-show-properties", ResolvePropertyPreview(dataGridControl.ShowProperties, context));
+        AppendAttribute(html, "data-source-kind", ResolvePropertyPreview(dataGridControl.DataSourceKind, context));
+        AppendAttribute(html, "data-source-kind-raw", dataGridControl.SourceDataSourceKind);
+        AppendAttribute(html, "data-source-name", ResolvePropertyPreview(dataGridControl.DataSourceName, context));
+        AppendAttribute(html, "data-table-or-view", ResolvePropertyPreview(dataGridControl.TableOrView, context));
+        AppendAttribute(html, "data-time-sort", ResolvePropertyPreview(dataGridControl.TimeSortDirection, context));
+        AppendAttribute(html, "data-time-sort-raw", dataGridControl.SourceTimeSortDirection);
+        AppendAttribute(html, "data-historian-interpolated", ResolvePropertyPreview(dataGridControl.HistorianInterpolatedMode, context));
+        AppendAttribute(html, "data-historian-interval", ResolvePropertyPreview(dataGridControl.HistorianInterpolationInterval, context));
         AppendAttribute(html, "data-time-period-absolute", ResolvePropertyPreview(dataGridControl.TimePeriodAbsoluteMode, context));
         AppendAttribute(html, "data-time-period-duration", ResolvePropertyPreview(dataGridControl.TimePeriodDuration, context));
         AppendAttribute(html, "data-time-period-start", ResolvePropertyPreview(dataGridControl.TimePeriodStart, context));
@@ -1155,7 +1163,21 @@ public class HmiScreenToHtmlConverter
             html.Append("Duration: ")
                 .Append(WebUtility.HtmlEncode(ResolveStaticValue(dataGridControl.TimePeriodDuration, context) ?? string.Empty));
         }
-        html.Append("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Data binding not decoded</div>");
+        html.Append("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">");
+        var dataSourceKind = dataGridControl.DataSourceKind is null ? null : ResolveStaticValue(dataGridControl.DataSourceKind, context).ToString();
+        var dataSourceName = ResolveStaticValue(dataGridControl.DataSourceName, context);
+        var tableOrView = ResolveStaticValue(dataGridControl.TableOrView, context);
+        if (!string.IsNullOrWhiteSpace(dataSourceKind) || !string.IsNullOrWhiteSpace(dataSourceName) || !string.IsNullOrWhiteSpace(tableOrView))
+        {
+            html.Append(WebUtility.HtmlEncode(dataSourceKind ?? "Data source"));
+            if (!string.IsNullOrWhiteSpace(dataSourceName)) html.Append(": ").Append(WebUtility.HtmlEncode(dataSourceName));
+            if (!string.IsNullOrWhiteSpace(tableOrView)) html.Append(" · ").Append(WebUtility.HtmlEncode(tableOrView));
+        }
+        else
+        {
+            html.Append("Data binding not decoded");
+        }
+        html.Append("</div>");
 
         if (showStatusBar)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Status</div>");

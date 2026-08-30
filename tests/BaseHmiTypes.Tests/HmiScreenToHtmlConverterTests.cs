@@ -477,6 +477,12 @@ public class HmiScreenToHtmlConverterTests
             ShowStatusBar = true,
             ShowExportCsv = true,
             ShowProperties = false,
+            DataSourceKind = HmiDataGridDataSourceKind.SqlServer,
+            SourceDataSourceKind = "SQL Server",
+            DataSourceName = "ProductionHistory",
+            TableOrView = "dbo.BatchEvents",
+            TimeSortDirection = HmiDataGridSortDirection.Descending,
+            SourceTimeSortDirection = "Descending",
             TimePeriodAbsoluteMode = true,
             TimePeriodStart = "2026-08-30T08:00:00",
             TimePeriodEnd = "2026-08-30T12:00:00"
@@ -488,10 +494,15 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<div id=\"BatchHistory\"");
         StringAssert.Contains(html, "data-show-toolbar=\"true\"");
         StringAssert.Contains(html, "data-show-properties=\"false\"");
+        StringAssert.Contains(html, "data-source-kind=\"SqlServer\"");
+        StringAssert.Contains(html, "data-source-kind-raw=\"SQL Server\"");
+        StringAssert.Contains(html, "data-source-name=\"ProductionHistory\"");
+        StringAssert.Contains(html, "data-table-or-view=\"dbo.BatchEvents\"");
+        StringAssert.Contains(html, "data-time-sort=\"Descending\"");
         StringAssert.Contains(html, "data-time-period-absolute=\"true\"");
         StringAssert.Contains(html, ">Data grid · Export CSV</div>");
         StringAssert.Contains(html, ">Time: 2026-08-30T08:00:00 – 2026-08-30T12:00:00</div>");
-        StringAssert.Contains(html, ">Data binding not decoded</div>");
+        StringAssert.Contains(html, ">SqlServer: ProductionHistory · dbo.BatchEvents</div>");
         StringAssert.Contains(html, ">Status</div>");
     }
 
