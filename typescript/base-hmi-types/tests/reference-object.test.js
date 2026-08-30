@@ -3,8 +3,10 @@ import test from "node:test";
 
 import {
   HmiButton,
+  HmiGroup,
   HmiReferenceObjectSettings,
   HmiReferenceParameter,
+  HmiScreenParameter,
 } from "../dist/index.js";
 
 test("reference object settings retain parameter assignments", () => {
@@ -31,4 +33,15 @@ test("reference object settings separate shared and materialized objects", () =>
   assert.equal(settings.resolvedObject, shared);
   assert.equal(settings.materializedObject, materialized);
   assert.notEqual(settings.resolvedObject, settings.materializedObject);
+});
+
+test("screen item retains global object parameter definitions", () => {
+  const item = new HmiGroup();
+  const parameter = new HmiScreenParameter();
+  parameter.name = "#1";
+  parameter.description = "Motor tag";
+  item.parameters.push(parameter);
+
+  assert.deepEqual(item.parameters, [parameter]);
+  assert.equal(item.referenceObject, undefined);
 });
