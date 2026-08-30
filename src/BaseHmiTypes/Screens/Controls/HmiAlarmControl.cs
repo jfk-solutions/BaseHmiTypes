@@ -136,6 +136,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<string>? FilterName { get; set; }
 
+    public IList<HmiAlarmDisplayFilter> DisplayFilters { get; } = new List<HmiAlarmDisplayFilter>();
+
     public HmiProperty<HmiColor>? GridBackgroundColor { get; set; }
 
     public HmiProperty<bool>? ShowHorizontalGridLines { get; set; }
