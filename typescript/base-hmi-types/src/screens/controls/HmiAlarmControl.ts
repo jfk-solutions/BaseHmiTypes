@@ -106,6 +106,16 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   alarmSoundRepeatIntervalSeconds?: HmiProperty<number>;
   recordLimit?: HmiProperty<number>;
   whereClause?: HmiProperty<string>;
+  historyDatabase?: HmiProperty<string>;
+  displayReportOnStartup?: HmiProperty<boolean>;
+  showTooltips?: HmiProperty<boolean>;
+  showQualityMessages?: HmiProperty<boolean>;
+  showBorder?: HmiProperty<boolean>;
+  iconStyle?: HmiProperty<string>;
+  toolbarForegroundColor?: HmiProperty<HmiColor>;
+  toolbarBackgroundColor?: HmiProperty<HmiColor>;
+  toolbarIconSize?: HmiProperty<string>;
+  defaultPrintFont?: HmiFont;
   showPendingAlarms?: HmiProperty<boolean>;
   showAlarmsToAcknowledge?: HmiProperty<boolean>;
   sortByTimeEnabled?: HmiProperty<boolean>;
