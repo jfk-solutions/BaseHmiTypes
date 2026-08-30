@@ -35,6 +35,8 @@ public class HmiDataGridControl : HmiControlWindowBase
 
     public HmiProperty<double>? RowHeight { get; set; }
 
+    public IList<HmiDataGridColumn> ColumnDefinitions { get; } = new List<HmiDataGridColumn>();
+
     public HmiProperty<bool>? TimePeriodAbsoluteMode { get; set; }
 
     public HmiProperty<string>? TimePeriodDuration { get; set; }
