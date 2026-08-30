@@ -4,11 +4,21 @@ import { HmiProperty } from "../base/HmiProperty.js";
 import { HmiGaugeSweepStyle } from "./HmiGaugeSweepStyle.js";
 import { HmiLineStyle } from "../base/HmiLineStyle.js";
 import type { HmiColor } from "../base/HmiColor.js";
+import type { HmiFont } from "../base/HmiFont.js";
 
 export class HmiGauge extends HmiScaleWidgetBase {
   needleWidth?: HmiProperty<number>;
   sweepStyle?: HmiProperty<HmiGaugeSweepStyle>;
   engineeringUnit?: HmiProperty<string>;
+  currentValueVisible?: HmiProperty<boolean>;
+  currentValueFieldLength?: HmiProperty<number>;
+  currentValueDecimalPlaces?: HmiProperty<number>;
+  currentValueColor?: HmiProperty<HmiColor>;
+  currentValueFont?: HmiFont;
+  engineeringUnitVisible?: HmiProperty<boolean>;
+  useVariableEngineeringUnit?: HmiProperty<boolean>;
+  engineeringUnitColor?: HmiProperty<HmiColor>;
+  engineeringUnitFont?: HmiFont;
   targetValue?: HmiProperty<number>;
   targetEnabled?: HmiProperty<boolean>;
   useVariableTarget?: HmiProperty<boolean>;
