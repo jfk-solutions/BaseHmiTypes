@@ -11,12 +11,15 @@ import { HmiTouchAreaShape } from "./HmiTouchAreaShape.js";
 import { HmiConfirmationDialogSettings } from "../widgets/HmiConfirmationDialogSettings.js";
 import { HmiRangeAnimation } from "./HmiRangeAnimation.js";
 import { HmiSliderAnimation } from "./HmiSliderAnimation.js";
+import { HmiScreenParameter } from "./HmiScreenParameter.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   description?: string;
   isWallpaper?: boolean;
   isReferenceObject?: boolean;
   referenceObject?: HmiReferenceObjectSettings;
+  /** Global-object parameter definitions declared by this base object. */
+  readonly parameters: HmiScreenParameter[] = [];
   scriptExposureMode?: HmiScriptExposureMode;
   sourceFormat?: string;
   sourceData?: Uint8Array;
