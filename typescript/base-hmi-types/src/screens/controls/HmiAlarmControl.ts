@@ -8,6 +8,7 @@ import { HmiAlarmSelectedIndicator } from "./HmiAlarmSelectedIndicator.js";
 import { HmiAlarmListMode } from "./HmiAlarmListMode.js";
 import { HmiBorderStyle } from "./HmiBorderStyle.js";
 import { HmiAlarmViewKind } from "./HmiAlarmViewKind.js";
+import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -40,6 +41,20 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showAcknowledgmentTime?: HmiProperty<boolean>;
   showAcknowledgeButton?: HmiProperty<boolean>;
   showHelpButton?: HmiProperty<boolean>;
+  showToolbar?: HmiProperty<boolean>;
+  showDetailsButton?: HmiProperty<boolean>;
+  showEnableDisableButtons?: HmiProperty<boolean>;
+  showSuppressUnsuppressButtons?: HmiProperty<boolean>;
+  showShelveUnshelveButtons?: HmiProperty<boolean>;
+  showAreaTree?: HmiProperty<boolean>;
+  areaTreeWidth?: HmiProperty<number>;
+  rootArea?: HmiProperty<string>;
+  nameFilter?: HmiProperty<string>;
+  statusFilter?: HmiProperty<string>;
+  readOnlyMode?: HmiProperty<boolean>;
+  displayErrorsInDialog?: HmiProperty<boolean>;
+  displayMilliseconds?: HmiProperty<boolean>;
+  timePrecision?: HmiProperty<HmiAlarmTimePrecision>;
   showPendingAlarms?: HmiProperty<boolean>;
   showAlarmsToAcknowledge?: HmiProperty<boolean>;
   sortByTimeEnabled?: HmiProperty<boolean>;
