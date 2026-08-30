@@ -1046,6 +1046,14 @@ function appendDataGridControl(html: string[], dataGridControl: HmiDataGridContr
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(dataGridControl.showStatusBar));
   appendAttribute(html, "data-show-export-csv", resolvePropertyPreview(dataGridControl.showExportCsv));
   appendAttribute(html, "data-show-properties", resolvePropertyPreview(dataGridControl.showProperties));
+  appendAttribute(html, "data-source-kind", resolvePropertyPreview(dataGridControl.dataSourceKind));
+  appendAttribute(html, "data-source-kind-raw", dataGridControl.sourceDataSourceKind);
+  appendAttribute(html, "data-source-name", resolvePropertyPreview(dataGridControl.dataSourceName));
+  appendAttribute(html, "data-table-or-view", resolvePropertyPreview(dataGridControl.tableOrView));
+  appendAttribute(html, "data-time-sort", resolvePropertyPreview(dataGridControl.timeSortDirection));
+  appendAttribute(html, "data-time-sort-raw", dataGridControl.sourceTimeSortDirection);
+  appendAttribute(html, "data-historian-interpolated", resolvePropertyPreview(dataGridControl.historianInterpolatedMode));
+  appendAttribute(html, "data-historian-interval", resolvePropertyPreview(dataGridControl.historianInterpolationInterval));
   appendAttribute(html, "data-time-period-absolute", resolvePropertyPreview(dataGridControl.timePeriodAbsoluteMode));
   appendAttribute(html, "data-time-period-duration", resolvePropertyPreview(dataGridControl.timePeriodDuration));
   appendAttribute(html, "data-time-period-start", resolvePropertyPreview(dataGridControl.timePeriodStart));
@@ -1072,7 +1080,20 @@ function appendDataGridControl(html: string[], dataGridControl: HmiDataGridContr
   } else {
     html.push("Duration: ", escapeHtml(getStaticValue(dataGridControl.timePeriodDuration) ?? ""));
   }
-  html.push("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Data binding not decoded</div>");
+  html.push("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">");
+  const dataSourceKind = getStaticValue(dataGridControl.dataSourceKind);
+  const dataSourceName = getStaticValue(dataGridControl.dataSourceName);
+  const tableOrView = getStaticValue(dataGridControl.tableOrView);
+  if (dataSourceKind !== undefined || dataSourceName !== undefined || tableOrView !== undefined) {
+    html.push(escapeHtml(dataSourceKind ?? "Data source"));
+    if (dataSourceName !== undefined && dataSourceName.trim().length > 0)
+      html.push(": ", escapeHtml(dataSourceName));
+    if (tableOrView !== undefined && tableOrView.trim().length > 0)
+      html.push(" · ", escapeHtml(tableOrView));
+  } else {
+    html.push("Data binding not decoded");
+  }
+  html.push("</div>");
 
   if (showStatusBar)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Status</div>");
