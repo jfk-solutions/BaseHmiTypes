@@ -1293,6 +1293,7 @@ public class HmiScreenToHtmlConverter
             alarmControl,
             context,
             additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-view-kind", alarmControl.ViewKind.ToString());
         AppendAttribute(html, "data-list-mode", listMode.ToString());
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmControl.NumberOfRows, context));
         AppendAttribute(html, "data-lines-per-alarm", ResolvePropertyPreview(alarmControl.LinesPerAlarm, context));
@@ -1315,7 +1316,9 @@ public class HmiScreenToHtmlConverter
         {
             html.Append("<thead><tr>");
             if (visibleColumns.Length == 0)
-                html.Append("<th style=\"border: 1px solid currentColor;\">Alarm</th>");
+                html.Append("<th style=\"border: 1px solid currentColor;\">")
+                    .Append(WebUtility.HtmlEncode(ResolveAlarmViewLabel(alarmControl.ViewKind)))
+                    .Append("</th>");
             foreach (var column in visibleColumns)
             {
                 html.Append("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
@@ -1432,6 +1435,17 @@ public class HmiScreenToHtmlConverter
         title = modeTitle?.GetDisplayText(context.CultureInfo);
         return string.IsNullOrWhiteSpace(title) ? $"{listMode} alarms" : title!;
     }
+
+    private static string ResolveAlarmViewLabel(HmiAlarmViewKind viewKind) => viewKind switch
+    {
+        HmiAlarmViewKind.InformationMessageDisplay => "Information message",
+        HmiAlarmViewKind.AlarmList => "Alarm",
+        HmiAlarmViewKind.AlarmStatusList => "Alarm status",
+        HmiAlarmViewKind.AlarmAndEventSummary => "Alarm and event summary",
+        HmiAlarmViewKind.AlarmStatusExplorer => "Alarm status explorer",
+        HmiAlarmViewKind.AlarmAndEventLogViewer => "Alarm and event log",
+        _ => "Alarm"
+    };
 
     private static string? ResolvePropertyPreview<T>(HmiProperty<T>? property, HmiHtmlConvertContext context)
     {

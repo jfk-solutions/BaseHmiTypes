@@ -601,6 +601,7 @@ public class HmiScreenToHtmlConverterTests
             Name = "ActiveAlarms",
             Width = 300,
             Height = 160,
+            ViewKind = HmiAlarmViewKind.AlarmAndEventSummary,
             ShowHeader = true,
             ShowTitle = true,
             ListMode = HmiAlarmListMode.Active,
@@ -643,6 +644,7 @@ public class HmiScreenToHtmlConverterTests
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
         StringAssert.Contains(html, "<div id=\"ActiveAlarms\"");
+        StringAssert.Contains(html, "data-view-kind=\"AlarmAndEventSummary\"");
         StringAssert.Contains(html, "data-list-mode=\"Active\"");
         StringAssert.Contains(html, "data-number-of-rows=\"8\"");
         StringAssert.Contains(html, "data-filtered-triggers=\"Motor*\"");
