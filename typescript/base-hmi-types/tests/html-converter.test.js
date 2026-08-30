@@ -10,6 +10,7 @@ import {
   HmiAlarmControl,
   HmiAlarmLineControl,
   HmiAlarmListMode,
+  HmiAlarmViewKind,
   HmiAuditTrailControl,
   HmiAuditTrailField,
   HmiAuditTrailFieldPresentation,
@@ -431,6 +432,7 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.name = "ActiveAlarms";
   alarms.width = staticProperty(300);
   alarms.height = staticProperty(160);
+  alarms.viewKind = HmiAlarmViewKind.AlarmAndEventSummary;
   alarms.showHeader = staticProperty(true);
   alarms.showTitle = staticProperty(true);
   alarms.listMode = staticProperty(HmiAlarmListMode.Active);
@@ -468,6 +470,7 @@ test("HTML converter renders inert alarm previews", async () => {
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
 
   assert.match(html, /<div id="ActiveAlarms"/);
+  assert.match(html, /data-view-kind="AlarmAndEventSummary"/);
   assert.match(html, /data-list-mode="Active"/);
   assert.match(html, /data-number-of-rows="8"/);
   assert.match(html, /data-filtered-triggers="Motor\*"/);

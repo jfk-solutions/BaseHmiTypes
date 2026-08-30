@@ -31,6 +31,7 @@ import { HmiVerticalAlignment } from "../../screens/base/HmiVerticalAlignment.js
 import { HmiAlarmControl } from "../../screens/controls/HmiAlarmControl.js";
 import { HmiAlarmLineControl } from "../../screens/controls/HmiAlarmLineControl.js";
 import { HmiAlarmListMode } from "../../screens/controls/HmiAlarmListMode.js";
+import { HmiAlarmViewKind } from "../../screens/controls/HmiAlarmViewKind.js";
 import { HmiArrowIndicator } from "../../screens/widgets/HmiArrowIndicator.js";
 import { HmiScreenWindow } from "../../screens/screen/HmiScreenWindow.js";
 import { HmiCircle } from "../../screens/shapes/HmiCircle.js";
@@ -1197,6 +1198,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     true,
     "display: flex; flex-direction: column; overflow: hidden;",
   );
+  appendAttribute(html, "data-view-kind", alarmControl.viewKind);
   appendAttribute(html, "data-list-mode", listMode);
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmControl.numberOfRows));
   appendAttribute(html, "data-lines-per-alarm", resolvePropertyPreview(alarmControl.linesPerAlarm));
@@ -1219,7 +1221,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (showHeader) {
     html.push("<thead><tr>");
     if (visibleColumns.length === 0)
-      html.push("<th style=\"border: 1px solid currentColor;\">Alarm</th>");
+      html.push("<th style=\"border: 1px solid currentColor;\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
     for (const column of visibleColumns) {
       html.push("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
       appendAttribute(html, "data-column-type", column.type);
@@ -1343,6 +1345,18 @@ function resolveAlarmTitle(alarmControl: HmiAlarmControl, listMode: HmiAlarmList
       : alarmControl.allAlarmsTitle;
   title = modeTitle?.getDisplayText(context.options.cultureLcid);
   return title?.trim() ? title : `${listMode} alarms`;
+}
+
+function resolveAlarmViewLabel(viewKind: HmiAlarmViewKind): string {
+  switch (viewKind) {
+    case HmiAlarmViewKind.InformationMessageDisplay: return "Information message";
+    case HmiAlarmViewKind.AlarmList: return "Alarm";
+    case HmiAlarmViewKind.AlarmStatusList: return "Alarm status";
+    case HmiAlarmViewKind.AlarmAndEventSummary: return "Alarm and event summary";
+    case HmiAlarmViewKind.AlarmStatusExplorer: return "Alarm status explorer";
+    case HmiAlarmViewKind.AlarmAndEventLogViewer: return "Alarm and event log";
+    default: return "Alarm";
+  }
 }
 
 function resolvePropertyPreview<T>(property: HmiProperty<T> | undefined): string | undefined {
