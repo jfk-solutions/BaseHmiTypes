@@ -76,6 +76,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<double>? AreaTreeWidth { get; set; }
 
+    public HmiProperty<bool>? AllowAreaTreeResize { get; set; }
+
     public HmiProperty<string>? RootArea { get; set; }
 
     public HmiProperty<string>? NameFilter { get; set; }
