@@ -6,6 +6,7 @@ import {
   HmiLayer,
   HmiPropertyKind,
   HmiRectangle,
+  HmiReferenceObjectSettings,
   HmiScreen,
   HmiScreenToHtmlConverter,
   HmiScreenWindow,
@@ -16,6 +17,41 @@ import {
   staticProperty,
   tagProperty,
 } from "../dist/index.js";
+
+test("HTML conversion renders materialized reference objects", async () => {
+  const materialized = new HmiGroup();
+  materialized.name = "PumpFaceplate";
+  materialized.x = staticProperty(5);
+  materialized.y = staticProperty(6);
+  materialized.width = staticProperty(100);
+  materialized.height = staticProperty(50);
+  const pumpBody = createRectangle("PumpBody");
+  pumpBody.x = staticProperty(7);
+  pumpBody.y = staticProperty(8);
+  materialized.items.push(pumpBody);
+
+  const reference = new HmiGroup();
+  reference.name = "Pump101";
+  reference.x = staticProperty(10);
+  reference.y = staticProperty(20);
+  reference.width = staticProperty(100);
+  reference.height = staticProperty(50);
+  reference.isReferenceObject = true;
+  reference.referenceObject = new HmiReferenceObjectSettings();
+  reference.referenceObject.source = "Pumps.PumpFaceplate";
+  reference.referenceObject.materializedObject = materialized;
+
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(reference);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /class="hmi-reference-object"/);
+  assert.match(html, /data-hmi-reference-source="Pumps\.PumpFaceplate"/);
+  assert.match(html, /id="Pump101"/);
+  assert.match(html, /id="PumpFaceplate"/);
+  assert.match(html, /id="PumpBody"/);
+});
 
 test("inspectable HMI conversion keeps model and rendered hierarchy aligned", async () => {
   const template = createScreen("template", "Template");
