@@ -49,6 +49,10 @@ public class HmiAlarmLineControl : HmiSimpleScreenItemBase
 
     public HmiProperty<string>? StatusBarButtonSize { get; set; }
 
+    public IList<HmiAlarmStatusBarPanel> StatusBarPanels { get; } = new List<HmiAlarmStatusBarPanel>();
+
+    public IList<HmiAlarmToolbarButton> StatusBarButtons { get; } = new List<HmiAlarmToolbarButton>();
+
     public HmiProperty<bool>? ShowTooltips { get; set; }
 
     public HmiProperty<bool>? ShowStatusBar { get; set; }

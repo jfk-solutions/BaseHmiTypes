@@ -10,7 +10,9 @@ public enum HmiAlarmStatusBarPanelType
     InAlarmUnacknowledged,
     InAlarmAcknowledged,
     NormalUnacknowledged,
+    ActiveEvent,
     AlarmFault,
+    UnknownMessages,
     Filter,
     Sort
 }
