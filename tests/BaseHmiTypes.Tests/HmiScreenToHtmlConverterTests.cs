@@ -634,6 +634,7 @@ public class HmiScreenToHtmlConverterTests
             Y = 170,
             Width = 300,
             Height = 30,
+            ViewKind = HmiAlarmLineViewKind.AlarmBanner,
             QueueNewAlarms = true,
             ShowAlarmTime = true,
             AlarmTimeFormat = "HH:mm",
@@ -655,6 +656,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, ">Alarm data not loaded</td>");
         StringAssert.Contains(html, ">Acknowledge · Help</div>");
         StringAssert.Contains(html, "<div id=\"AlarmBanner\"");
+        StringAssert.Contains(html, "data-view-kind=\"AlarmBanner\"");
         StringAssert.Contains(html, "data-queue-new-alarms=\"true\"");
         StringAssert.Contains(html, "data-show-alarm-state=\"true\"");
         StringAssert.Contains(html, "data-show-alarm-time=\"true\" data-time-format=\"HH:mm\"");
