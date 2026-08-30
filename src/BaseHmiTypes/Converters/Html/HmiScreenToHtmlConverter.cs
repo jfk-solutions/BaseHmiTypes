@@ -245,6 +245,9 @@ public class HmiScreenToHtmlConverter
             case HmiScreenWindow screenWindow:
                 await AppendScreenWindowAsync(html, screenWindow, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
+            case HmiDataGridControl dataGridControl:
+                AppendDataGridControl(html, dataGridControl, context);
+                break;
             case HmiWebControl webControl:
                 AppendWebControl(html, webControl, context);
                 break;
@@ -1037,6 +1040,60 @@ public class HmiScreenToHtmlConverter
             html.Append(WebUtility.HtmlEncode(url ?? string.Empty)).Append("</div>");
         }
         html.Append("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Web browser</div></div>");
+    }
+
+    private static void AppendDataGridControl(StringBuilder html, HmiDataGridControl dataGridControl, HmiHtmlConvertContext context)
+    {
+        var showToolbar = dataGridControl.ShowToolbar is not null && ResolveStaticValue(dataGridControl.ShowToolbar, context);
+        var showStatusBar = dataGridControl.ShowStatusBar is not null && ResolveStaticValue(dataGridControl.ShowStatusBar, context);
+        var showExportCsv = dataGridControl.ShowExportCsv is not null && ResolveStaticValue(dataGridControl.ShowExportCsv, context);
+        var showProperties = dataGridControl.ShowProperties is not null && ResolveStaticValue(dataGridControl.ShowProperties, context);
+        var absoluteMode = dataGridControl.TimePeriodAbsoluteMode is not null && ResolveStaticValue(dataGridControl.TimePeriodAbsoluteMode, context);
+
+        html.Append("<div");
+        AppendCommonAttributes(
+            html,
+            dataGridControl,
+            context,
+            additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(dataGridControl.ShowToolbar, context));
+        AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(dataGridControl.ShowStatusBar, context));
+        AppendAttribute(html, "data-show-export-csv", ResolvePropertyPreview(dataGridControl.ShowExportCsv, context));
+        AppendAttribute(html, "data-show-properties", ResolvePropertyPreview(dataGridControl.ShowProperties, context));
+        AppendAttribute(html, "data-time-period-absolute", ResolvePropertyPreview(dataGridControl.TimePeriodAbsoluteMode, context));
+        AppendAttribute(html, "data-time-period-duration", ResolvePropertyPreview(dataGridControl.TimePeriodDuration, context));
+        AppendAttribute(html, "data-time-period-start", ResolvePropertyPreview(dataGridControl.TimePeriodStart, context));
+        AppendAttribute(html, "data-time-period-end", ResolvePropertyPreview(dataGridControl.TimePeriodEnd, context));
+        html.Append('>');
+
+        if (showToolbar)
+        {
+            html.Append("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px;\">Data grid");
+            if (showExportCsv)
+                html.Append(" · Export CSV");
+            if (showProperties)
+                html.Append(" · Properties");
+            html.Append("</div>");
+        }
+
+        html.Append("<div style=\"flex: 0 0 auto; padding: 2px 4px;\">");
+        if (absoluteMode)
+        {
+            html.Append("Time: ")
+                .Append(WebUtility.HtmlEncode(ResolveStaticValue(dataGridControl.TimePeriodStart, context) ?? string.Empty))
+                .Append(" – ")
+                .Append(WebUtility.HtmlEncode(ResolveStaticValue(dataGridControl.TimePeriodEnd, context) ?? string.Empty));
+        }
+        else
+        {
+            html.Append("Duration: ")
+                .Append(WebUtility.HtmlEncode(ResolveStaticValue(dataGridControl.TimePeriodDuration, context) ?? string.Empty));
+        }
+        html.Append("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Data binding not decoded</div>");
+
+        if (showStatusBar)
+            html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Status</div>");
+        html.Append("</div>");
     }
 
     private static string? ResolvePropertyPreview<T>(HmiProperty<T>? property, HmiHtmlConvertContext context)
