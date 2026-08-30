@@ -158,6 +158,12 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public IList<HmiAlarmEventSubscription> EventSubscriptions { get; } = new List<HmiAlarmEventSubscription>();
 
+    public IList<HmiAlarmStateAppearance> StateAppearances { get; } = new List<HmiAlarmStateAppearance>();
+
+    public HmiProperty<HmiAlarmBlinkRate>? AlarmBlinkRate { get; set; }
+
+    public string? AlarmBlinkRateSource { get; set; }
+
     public HmiProperty<int>? RecordLimit { get; set; }
 
     public HmiProperty<string>? WhereClause { get; set; }
