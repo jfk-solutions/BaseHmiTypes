@@ -21,6 +21,9 @@ public class HmiConfirmationDialogSettings
 
     public string? ImageReference { get; set; }
 
+    /// <summary>Resolved project image while <see cref="ImageReference"/> preserves the source filename.</summary>
+    public HmiImageSource? Image { get; set; }
+
     public bool? ImageScaled { get; set; }
 
     public HmiColor? ImageColor { get; set; }
