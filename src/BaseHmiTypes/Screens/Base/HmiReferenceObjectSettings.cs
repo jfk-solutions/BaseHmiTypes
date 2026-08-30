@@ -22,6 +22,13 @@ public class HmiReferenceObjectSettings
     /// </summary>
     public HmiScreenItemBase? ResolvedObject { get; set; }
 
+    /// <summary>
+    /// Gets or sets a reference-specific copy of the resolved base object after
+    /// parameter substitution. The shared <see cref="ResolvedObject"/> remains
+    /// unchanged.
+    /// </summary>
+    public HmiScreenItemBase? MaterializedObject { get; set; }
+
     public HmiReferenceAnimationMode? AnimationMode { get; set; }
 
     public bool? ConnectionsLinked { get; set; }
