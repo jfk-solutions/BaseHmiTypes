@@ -19,6 +19,10 @@ public class HmiDataGridControl : HmiControlWindowBase
 
     public HmiProperty<string>? ToolbarIconSize { get; set; }
 
+    public HmiProperty<int>? MaximumRows { get; set; }
+
+    public HmiProperty<bool>? UseLocalMachineTimeZone { get; set; }
+
     public HmiProperty<bool>? TimePeriodAbsoluteMode { get; set; }
 
     public HmiProperty<string>? TimePeriodDuration { get; set; }
