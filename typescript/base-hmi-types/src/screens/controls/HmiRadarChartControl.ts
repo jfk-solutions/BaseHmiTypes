@@ -1,3 +1,5 @@
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
+import { HmiProperty } from "../base/HmiProperty.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 
@@ -10,4 +12,8 @@ export class HmiRadarChartControl extends HmiControlWindowBase {
     super();
     this.hmiObjectType = HmiObjectType.HmiRadarChartControl;
   }
+
+  title?: HmiMultilingualText;
+  seriesCount?: HmiProperty<number>;
+  categoryCount?: HmiProperty<number>;
 }

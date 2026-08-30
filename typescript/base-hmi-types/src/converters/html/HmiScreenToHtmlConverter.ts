@@ -82,6 +82,7 @@ import { HmiAuditTrailControl } from "../../screens/controls/HmiAuditTrailContro
 import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewKind.js";
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
 import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
+import { HmiRadarChartControl } from "../../screens/controls/HmiRadarChartControl.js";
 import { HmiWebControl } from "../../screens/controls/HmiWebControl.js";
 import { HmiInspectableScreenHtml, inspectHmiScreenAsync } from "./HmiScreenInspection.js";
 
@@ -341,6 +342,8 @@ export class HmiScreenToHtmlConverter {
       appendRecipeControl(html, item, context);
     } else if (item instanceof HmiAuditTrailControl) {
       appendAuditTrailControl(html, item, context);
+    } else if (item instanceof HmiRadarChartControl) {
+      appendRadarChartControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
       appendWebControl(html, item, context);
     } else if (item instanceof HmiAlarmLineControl) {
@@ -1239,6 +1242,39 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     html.push("</div>");
   }
   html.push("</div>");
+}
+
+function appendRadarChartControl(html: string[], radarChartControl: HmiRadarChartControl, context: HmiHtmlConvertContext): void {
+  const title = radarChartControl.title?.getDisplayText(context.options.cultureLcid);
+  const seriesCount = getStaticValue(radarChartControl.seriesCount);
+  const categoryCount = getStaticValue(radarChartControl.categoryCount);
+
+  html.push("<div");
+  appendCommonAttributes(
+    html,
+    radarChartControl,
+    context,
+    true,
+    "display: flex; flex-direction: column; overflow: hidden;",
+  );
+  appendAttribute(html, "data-series-count", resolvePropertyPreview(radarChartControl.seriesCount));
+  appendAttribute(html, "data-category-count", resolvePropertyPreview(radarChartControl.categoryCount));
+  html.push(
+    "><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">",
+    escapeHtml(title?.trim() ? title : "Radar chart"),
+    "</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Radar payload preserved",
+  );
+  if (seriesCount !== undefined || categoryCount !== undefined) {
+    html.push(" (");
+    if (seriesCount !== undefined)
+      html.push("Series: ", seriesCount.toString());
+    if (seriesCount !== undefined && categoryCount !== undefined)
+      html.push(" · ");
+    if (categoryCount !== undefined)
+      html.push("Categories: ", categoryCount.toString());
+    html.push(")");
+  }
+  html.push("</div></div>");
 }
 
 function appendAlarmLineControl(html: string[], alarmLineControl: HmiAlarmLineControl, context: HmiHtmlConvertContext): void {

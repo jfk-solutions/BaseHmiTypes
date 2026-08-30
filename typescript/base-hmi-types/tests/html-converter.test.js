@@ -28,6 +28,7 @@ import {
   HmiRecipeColumnType,
   HmiRecipeControl,
   HmiRecipeViewKind,
+  HmiRadarChartControl,
   HmiScale,
   HmiScreen,
   HmiScreenToHtmlConverter,
@@ -525,4 +526,32 @@ test("HTML converter renders inert opaque host control previews", async () => {
   assert.match(html, />Metadata preserved<\/div>/);
   assert.doesNotMatch(html, /<object/);
   assert.doesNotMatch(html, /<embed/);
+});
+
+test("HTML converter renders an inert radar chart preview", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  const radar = new HmiRadarChartControl();
+  radar.name = "ProcessRadar";
+  radar.width = staticProperty(300);
+  radar.height = staticProperty(180);
+  radar.title = HmiMultilingualText.fromText("Process overview");
+  radar.seriesCount = staticProperty(3);
+  radar.categoryCount = staticProperty(8);
+  layer.items.push(radar);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="ProcessRadar"/);
+  assert.match(html, /data-series-count="3" data-category-count="8"/);
+  assert.match(html, />Process overview<\/div>/);
+  assert.match(html, />Radar payload preserved \(Series: 3 · Categories: 8\)<\/div>/);
+  assert.doesNotMatch(html, /<canvas/);
 });
