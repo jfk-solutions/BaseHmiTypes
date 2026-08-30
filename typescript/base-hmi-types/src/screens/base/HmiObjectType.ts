@@ -48,6 +48,7 @@ export enum HmiObjectType {
   HmiRadarChartControl = "HmiRadarChartControl",
   HmiRecipeControl = "HmiRecipeControl",
   HmiRectangle = "HmiRectangle",
+  HmiScale = "HmiScale",
   HmiScreen = "HmiScreen",
   HmiScreenMaster = "HmiScreenMaster",
   HmiScreenWindow = "HmiScreenWindow",

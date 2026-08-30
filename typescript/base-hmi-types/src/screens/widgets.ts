@@ -39,6 +39,7 @@ export * from "./widgets/HmiTextWidgetBase.js";
 export * from "./widgets/HmiBar.js";
 export * from "./widgets/HmiSlider.js";
 export * from "./widgets/HmiGauge.js";
+export * from "./widgets/HmiScale.js";
 export * from "./widgets/HmiCheckBoxGroup.js";
 export * from "./widgets/HmiComboBox.js";
 export * from "./widgets/HmiListBox.js";
