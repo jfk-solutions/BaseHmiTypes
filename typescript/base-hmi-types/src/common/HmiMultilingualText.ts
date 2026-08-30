@@ -1,6 +1,9 @@
+import type { HmiTextPart } from "./HmiTextPart.js";
+
 export class HmiMultilingualText {
   readonly texts = new Map<number, string>();
   readonly formattedTexts = new Map<number, string>();
+  readonly parts = new Map<number, readonly HmiTextPart[]>();
   categoryTypeId = 0;
   categorySubtype?: string;
 
@@ -25,6 +28,18 @@ export class HmiMultilingualText {
 
   getFormattedTextBody(cultureId?: number): string {
     return HmiMultilingualText.extractFormattedTextBody(this.getFormattedText(cultureId));
+  }
+
+  getParts(cultureId?: number): readonly HmiTextPart[] {
+    if (this.parts.size === 0) return [];
+    if (cultureId !== undefined && this.parts.has(cultureId))
+      return this.parts.get(cultureId) ?? [];
+    return (
+      this.parts.get(-1) ??
+      this.parts.get(0) ??
+      this.parts.values().next().value ??
+      []
+    );
   }
 
   getDefaultText(): string {
