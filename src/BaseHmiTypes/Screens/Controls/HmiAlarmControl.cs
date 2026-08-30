@@ -168,6 +168,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public string? AlarmBlinkRateSource { get; set; }
 
+    public HmiProperty<double>? AlarmSoundRepeatIntervalSeconds { get; set; }
+
     public HmiProperty<int>? RecordLimit { get; set; }
 
     public HmiProperty<string>? WhereClause { get; set; }
