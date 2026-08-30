@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  HmiChildCoordinateSpace,
+  HmiDynamicSvg,
+  HmiDynamicSvgProperty,
   HmiGroup,
   HmiLayer,
   HmiMultilingualText,
@@ -16,10 +19,49 @@ import {
   HmiTagTriggerMode,
   HmiTriggerKind,
   expressionProperty,
+  hmiColorFromArgb,
   inspectHmiProperties,
   staticProperty,
   tagProperty,
 } from "../dist/index.js";
+
+test("HTML conversion keeps screen-absolute group children at their source position", async () => {
+  const group = new HmiGroup();
+  group.name = "PumpGroup";
+  group.x = staticProperty(100);
+  group.y = staticProperty(50);
+  group.width = staticProperty(80);
+  group.height = staticProperty(40);
+  group.childCoordinateSpace = HmiChildCoordinateSpace.ScreenAbsolute;
+  const child = createRectangle("PumpBody");
+  child.x = staticProperty(110);
+  child.y = staticProperty(70);
+  group.items.push(child);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(group);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /id="PumpGroup" style="position: absolute;left: 100px;top: 50px;width: 80px;height: 40px;/);
+  assert.match(html, /id="PumpBody" style="position: absolute;left: 10px;top: 20px;width: 100px;height: 50px;/);
+});
+
+test("HTML conversion serializes dynamic SVG colors in HMI format", async () => {
+  const dynamicSvg = new HmiDynamicSvg();
+  dynamicSvg.name = "Valve";
+  dynamicSvg.width = staticProperty(32);
+  dynamicSvg.height = staticProperty(32);
+  const fillColor = new HmiDynamicSvgProperty();
+  fillColor.name = "FillColor";
+  fillColor.value = staticProperty(hmiColorFromArgb(255, 0, 128, 255));
+  dynamicSvg.properties.push(fillColor);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(dynamicSvg);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /fill-color="0xFF0080FF"/);
+});
 
 test("HTML conversion renders symbolic IO field states", async () => {
   const symbolicIoField = new HmiSymbolicIOField();
