@@ -76,6 +76,10 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<HmiDisabledImageMode>? DisabledImageMode { get; set; }
 
+    public HmiProperty<HmiImageSource>? DisabledImage { get; set; }
+
+    public HmiProperty<bool>? DisabledImageScaled { get; set; }
+
     public HmiConfirmationDialogSettings? ConfirmationDialog { get; set; }
 
     public HmiSignatureButtonSettings? SignatureSettings { get; set; }
