@@ -43,6 +43,22 @@ public class HmiObjectTypeTests
     }
 
     [TestMethod]
+    public void ReferenceObjectSettings_SeparateSharedAndMaterializedObjects()
+    {
+        var shared = new HmiButton { Name = "#1 shared" };
+        var materialized = new HmiButton { Name = "Motor shared" };
+        var settings = new HmiReferenceObjectSettings
+        {
+            ResolvedObject = shared,
+            MaterializedObject = materialized
+        };
+
+        Assert.AreSame(shared, settings.ResolvedObject);
+        Assert.AreSame(materialized, settings.MaterializedObject);
+        Assert.AreNotSame(settings.ResolvedObject, settings.MaterializedObject);
+    }
+
+    [TestMethod]
     public void ButtonOperations_ExposeNavigationHistoryActions()
     {
         var names = Enum.GetNames<HmiButtonOperation>();
