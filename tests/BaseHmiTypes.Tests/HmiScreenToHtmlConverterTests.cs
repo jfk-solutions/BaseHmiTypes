@@ -15,6 +15,33 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    public async Task ConvertAsync_RendersSymbolicIoFieldStates()
+    {
+        var symbolicIoField = new HmiSymbolicIOField
+        {
+            Name = "MotorState",
+            X = 10,
+            Y = 20,
+            Width = 120,
+            Height = 30,
+            Value = 2
+        };
+        symbolicIoField.States.Add(new HmiState { Name = "Stopped", Value = 0, Text = HmiMultilingualText.FromText("Stopped") });
+        symbolicIoField.States.Add(new HmiState { Name = "Running", Value = 2, Text = HmiMultilingualText.FromText("Running") });
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(symbolicIoField);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<select id=\"MotorState\"");
+        StringAssert.Contains(html, "<option value=\"0\">Stopped</option>");
+        StringAssert.Contains(html, "<option value=\"2\" selected=\"selected\">Running</option>");
+        Assert.IsFalse(html.Contains("HmiSymbolicIOField", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersMaterializedReferenceObject()
     {
         var materialized = new HmiGroup { Name = "PumpFaceplate", X = 5, Y = 6, Width = 100, Height = 50 };

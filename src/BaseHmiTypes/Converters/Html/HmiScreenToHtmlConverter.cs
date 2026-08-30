@@ -144,6 +144,9 @@ public class HmiScreenToHtmlConverter
             case HmiIOField ioField:
                 AppendInput(html, ioField, context);
                 break;
+            case HmiSymbolicIOField symbolicIoField:
+                AppendSymbolicInput(html, symbolicIoField, context);
+                break;
             case HmiTextBox textBox:
                 AppendTextBlock(html, textBox, textBox.Text, context);
                 break;
@@ -854,6 +857,26 @@ public class HmiScreenToHtmlConverter
         html.Append("<input");
         AppendCommonAttributes(html, ioField, context);
         html.Append(">");
+    }
+
+    private static void AppendSymbolicInput(StringBuilder html, HmiSymbolicIOField symbolicIoField, HmiHtmlConvertContext context)
+    {
+        html.Append("<select");
+        AppendCommonAttributes(html, symbolicIoField, context);
+        html.Append('>');
+        var hasSelectedValue = TryGetStaticValue(symbolicIoField.Value, out var selectedValue);
+        foreach (var state in symbolicIoField.States)
+        {
+            html.Append("<option");
+            if (state.Value is double value)
+                AppendAttribute(html, "value", ToCss(value));
+            if (hasSelectedValue && state.Value == selectedValue)
+                AppendAttribute(html, "selected", "selected");
+            html.Append('>');
+            AppendMultilingualText(html, state.Text, context);
+            html.Append("</option>");
+        }
+        html.Append("</select>");
     }
 
     private static void AppendToggleSwitch(StringBuilder html, HmiToggleSwitch toggleSwitch, HmiHtmlConvertContext context)
