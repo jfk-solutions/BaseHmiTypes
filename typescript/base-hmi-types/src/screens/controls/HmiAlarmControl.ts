@@ -7,6 +7,7 @@ import { HmiAlarmConditionPresentation } from "./HmiAlarmConditionPresentation.j
 import { HmiAlarmSelectedIndicator } from "./HmiAlarmSelectedIndicator.js";
 import { HmiAlarmListMode } from "./HmiAlarmListMode.js";
 import { HmiBorderStyle } from "./HmiBorderStyle.js";
+import { HmiAlarmViewKind } from "./HmiAlarmViewKind.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -15,6 +16,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   }
 
   suppressFlashing?: HmiProperty<boolean>;
+  viewKind = HmiAlarmViewKind.Unknown;
   acknowledgmentFlashingRate?: HmiProperty<number>;
   resetFlashingRate?: HmiProperty<number>;
   numberOfRows?: HmiProperty<number>;
