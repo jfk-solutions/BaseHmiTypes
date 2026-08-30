@@ -22,6 +22,10 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<bool>? ShowTickLabels { get; set; }
 
+    public HmiProperty<int>? TickLabelFieldLength { get; set; }
+
+    public HmiProperty<int>? TickLabelDecimalPlaces { get; set; }
+
     public HmiProperty<bool>? UseAutoScaling { get; set; }
 
     public HmiProperty<bool>? ShowLimitRanges { get; set; }
