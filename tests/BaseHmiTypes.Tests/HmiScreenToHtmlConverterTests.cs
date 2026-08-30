@@ -544,6 +544,54 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersInertAuditTrailPreview()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        var audit = new HmiAuditTrailControl
+        {
+            Name = "OperatorAudit",
+            Width = 300,
+            Height = 180,
+            ViewKind = HmiAuditTrailViewKind.List,
+            ShowHeader = true,
+            LinesPerEntry = 2,
+            WordWrap = true,
+            ReceiveSelectionFrom = "AuditDetail"
+        };
+        audit.Fields.Add(new HmiAuditTrailFieldPresentation
+        {
+            Field = HmiAuditTrailField.OccurredTime,
+            HeaderText = HmiMultilingualText.FromText("When"),
+            TimeAndDateFormat = "yyyy-MM-dd HH:mm:ss"
+        });
+        audit.Fields.Add(new HmiAuditTrailFieldPresentation
+        {
+            Field = HmiAuditTrailField.Username,
+            HeaderText = HmiMultilingualText.FromText("User")
+        });
+        audit.Fields.Add(new HmiAuditTrailFieldPresentation
+        {
+            Field = HmiAuditTrailField.Resource,
+            Visible = false
+        });
+        layer.Items.Add(audit);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"OperatorAudit\"");
+        StringAssert.Contains(html, "data-view-kind=\"List\"");
+        StringAssert.Contains(html, "data-lines-per-entry=\"2\"");
+        StringAssert.Contains(html, "data-word-wrap=\"true\"");
+        StringAssert.Contains(html, "data-receive-selection-from=\"AuditDetail\"");
+        StringAssert.Contains(html, "data-field=\"OccurredTime\" data-time-format=\"yyyy-MM-dd HH:mm:ss\">When</th>");
+        StringAssert.Contains(html, "data-field=\"Username\">User</th>");
+        Assert.IsFalse(html.Contains("data-field=\"Resource\"", StringComparison.Ordinal));
+        StringAssert.Contains(html, "colspan=\"2\" style=\"text-align: center;\">Audit data not loaded</td>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen

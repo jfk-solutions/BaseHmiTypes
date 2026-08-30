@@ -251,6 +251,9 @@ public class HmiScreenToHtmlConverter
             case HmiRecipeControl recipeControl:
                 AppendRecipeControl(html, recipeControl, context);
                 break;
+            case HmiAuditTrailControl auditTrailControl:
+                AppendAuditTrailControl(html, auditTrailControl, context);
+                break;
             case HmiWebControl webControl:
                 AppendWebControl(html, webControl, context);
                 break;
@@ -1152,6 +1155,66 @@ public class HmiScreenToHtmlConverter
 
         if (showFooter)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
+        html.Append("</div>");
+    }
+
+    private static void AppendAuditTrailControl(StringBuilder html, HmiAuditTrailControl auditTrailControl, HmiHtmlConvertContext context)
+    {
+        var showHeader = auditTrailControl.ShowHeader is null || ResolveStaticValue(auditTrailControl.ShowHeader, context);
+        var visibleFields = auditTrailControl.Fields
+            .Where(field => field.Visible is null || ResolveStaticValue(field.Visible, context))
+            .ToArray();
+
+        html.Append("<div");
+        AppendCommonAttributes(
+            html,
+            auditTrailControl,
+            context,
+            additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-view-kind", auditTrailControl.ViewKind.ToString());
+        AppendAttribute(html, "data-lines-per-entry", ResolvePropertyPreview(auditTrailControl.LinesPerEntry, context));
+        AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(auditTrailControl.WordWrap, context));
+        AppendAttribute(html, "data-wrap-around", ResolvePropertyPreview(auditTrailControl.WrapAround, context));
+        AppendAttribute(html, "data-receive-selection-from", auditTrailControl.ReceiveSelectionFrom);
+        html.Append('>');
+
+        if (auditTrailControl.ViewKind == HmiAuditTrailViewKind.Detail)
+        {
+            if (showHeader)
+                html.Append("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px;\">Audit trail detail</div>");
+            html.Append("<dl style=\"margin: 0; padding: 2px 4px; overflow: hidden;\">");
+            foreach (var field in visibleFields)
+            {
+                html.Append("<dt");
+                AppendAttribute(html, "data-field", field.Field.ToString());
+                html.Append('>')
+                    .Append(WebUtility.HtmlEncode(field.HeaderText?.GetDisplayText(context.CultureInfo) ?? field.Field.ToString()))
+                    .Append("</dt><dd>—</dd>");
+            }
+            html.Append("</dl>");
+        }
+        else
+        {
+            html.Append("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
+            if (showHeader)
+            {
+                html.Append("<thead><tr>");
+                foreach (var field in visibleFields)
+                {
+                    html.Append("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
+                    AppendAttribute(html, "data-field", field.Field.ToString());
+                    AppendAttribute(html, "data-time-format", field.TimeAndDateFormat);
+                    html.Append('>')
+                        .Append(WebUtility.HtmlEncode(field.HeaderText?.GetDisplayText(context.CultureInfo) ?? field.Field.ToString()))
+                        .Append("</th>");
+                }
+                html.Append("</tr></thead>");
+            }
+            html.Append("<tbody><tr><td");
+            AppendAttribute(html, "colspan", Math.Max(visibleFields.Length, 1).ToString(CultureInfo.InvariantCulture));
+            html.Append(" style=\"text-align: center;\">Audit data not loaded</td></tr></tbody></table>");
+        }
+
         html.Append("</div>");
     }
 
