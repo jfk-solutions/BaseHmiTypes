@@ -849,11 +849,14 @@ public class HmiScreenToHtmlConverter
         html.Append("<button");
         AppendCommonAttributes(html, button, context);
         html.Append(">");
-        var image = button.Image.GetStaticValue();
+        var stateValue = ResolveStaticValue(button.State, context);
+        var state = button.States.FirstOrDefault(candidate => candidate.Value == stateValue)
+            ?? button.States.FirstOrDefault();
+        var image = state?.Image ?? button.Image.GetStaticValue();
         var imageUri = await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
         if (!string.IsNullOrWhiteSpace(imageUri))
             AppendInnerImage(html, imageUri);
-        AppendMultilingualText(html, ResolveStaticValue(button.Text, context), context);
+        AppendMultilingualText(html, state?.Text ?? ResolveStaticValue(button.Text, context), context);
         html.Append("</button>");
     }
 
