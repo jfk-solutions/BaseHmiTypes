@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  HmiButton,
   HmiChildCoordinateSpace,
   HmiDynamicSvg,
   HmiDynamicSvgProperty,
   HmiGroup,
+  HmiImage,
+  HmiImageSourceKind,
+  HmiImageType,
   HmiLayer,
   HmiMultilingualText,
   HmiPropertyKind,
@@ -90,6 +94,32 @@ test("HTML conversion renders symbolic IO field states", async () => {
   assert.match(html, /<option value="0">Stopped<\/option>/);
   assert.match(html, /<option value="2" selected="selected">Running<\/option>/);
   assert.doesNotMatch(html, /HmiSymbolicIOField/);
+});
+
+test("HTML conversion renders a project-backed button image", async () => {
+  const button = new HmiButton();
+  button.name = "Start";
+  button.image = staticProperty({
+    imageId: "start-image",
+    kind: HmiImageSourceKind.Uri,
+  });
+  const image = new HmiImage();
+  image.id = "start-image";
+  image.name = "start.png";
+  image.imageType = HmiImageType.Png;
+  image.mimeType = "image/png";
+  image.data = new Uint8Array([1, 2, 3]);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(button);
+  const project = {
+    info: {},
+    getImage: async id => (id === image.id ? image : undefined),
+  };
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen, project);
+
+  assert.match(html, /<button id="Start"/);
+  assert.match(html, /<img src="data:image\/png;base64,AQID"/);
 });
 
 test("HTML conversion renders materialized reference objects", async () => {
