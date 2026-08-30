@@ -5,6 +5,11 @@ import {
   expressionProperty,
   hmiColorFromArgb,
   HmiArrowIndicator,
+  HmiAlarmColumn,
+  HmiAlarmColumnType,
+  HmiAlarmControl,
+  HmiAlarmLineControl,
+  HmiAlarmListMode,
   HmiAuditTrailControl,
   HmiAuditTrailField,
   HmiAuditTrailFieldPresentation,
@@ -406,4 +411,70 @@ test("HTML converter renders an inert audit trail preview", async () => {
   assert.match(html, /data-field="Username">User<\/th>/);
   assert.doesNotMatch(html, /data-field="Resource"/);
   assert.match(html, /colspan="2" style="text-align: center;">Audit data not loaded<\/td>/);
+});
+
+test("HTML converter renders inert alarm previews", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  const alarms = new HmiAlarmControl();
+  alarms.name = "ActiveAlarms";
+  alarms.width = staticProperty(300);
+  alarms.height = staticProperty(160);
+  alarms.showHeader = staticProperty(true);
+  alarms.showTitle = staticProperty(true);
+  alarms.listMode = staticProperty(HmiAlarmListMode.Active);
+  alarms.activeAlarmsTitle = HmiMultilingualText.fromText("Active process alarms");
+  alarms.numberOfRows = staticProperty(8);
+  alarms.showAcknowledgeButton = staticProperty(true);
+  alarms.showHelpButton = staticProperty(true);
+  alarms.filteredTriggers.push("Motor*");
+  const time = new HmiAlarmColumn();
+  time.type = HmiAlarmColumnType.AlarmTime;
+  time.headerText = HmiMultilingualText.fromText("Time");
+  time.timeAndDateFormat = "HH:mm:ss";
+  alarms.columnDefinitions.push(time);
+  const message = new HmiAlarmColumn();
+  message.type = HmiAlarmColumnType.Message;
+  message.headerText = HmiMultilingualText.fromText("Message");
+  alarms.columnDefinitions.push(message);
+  const hidden = new HmiAlarmColumn();
+  hidden.type = HmiAlarmColumnType.AlarmState;
+  hidden.visible = staticProperty(false);
+  alarms.columnDefinitions.push(hidden);
+  layer.items.push(alarms);
+  const banner = new HmiAlarmLineControl();
+  banner.name = "AlarmBanner";
+  banner.y = staticProperty(170);
+  banner.width = staticProperty(300);
+  banner.height = staticProperty(30);
+  banner.queueNewAlarms = staticProperty(true);
+  banner.showAlarmTime = staticProperty(true);
+  banner.alarmTimeFormat = "HH:mm";
+  banner.showAlarmState = staticProperty(true);
+  layer.items.push(banner);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="ActiveAlarms"/);
+  assert.match(html, /data-list-mode="Active"/);
+  assert.match(html, /data-number-of-rows="8"/);
+  assert.match(html, /data-filtered-triggers="Motor\*"/);
+  assert.match(html, />Active process alarms<\/div>/);
+  assert.match(html, /data-column-type="AlarmTime" data-time-format="HH:mm:ss">Time<\/th>/);
+  assert.match(html, /data-column-type="Message">Message<\/th>/);
+  assert.doesNotMatch(html, /data-column-type="AlarmState"/);
+  assert.match(html, />Alarm data not loaded<\/td>/);
+  assert.match(html, />Acknowledge · Help<\/div>/);
+  assert.match(html, /<div id="AlarmBanner"/);
+  assert.match(html, /data-queue-new-alarms="true"/);
+  assert.match(html, /data-show-alarm-state="true"/);
+  assert.match(html, /data-show-alarm-time="true" data-time-format="HH:mm"/);
+  assert.match(html, />Alarm data not loaded<\/div>/);
 });

@@ -27,6 +27,8 @@ import {
 } from "../../screens/base/HmiSymbolLibraryEnums.js";
 import { HmiVerticalAlignment } from "../../screens/base/HmiVerticalAlignment.js";
 import { HmiAlarmControl } from "../../screens/controls/HmiAlarmControl.js";
+import { HmiAlarmLineControl } from "../../screens/controls/HmiAlarmLineControl.js";
+import { HmiAlarmListMode } from "../../screens/controls/HmiAlarmListMode.js";
 import { HmiArrowIndicator } from "../../screens/widgets/HmiArrowIndicator.js";
 import { HmiScreenWindow } from "../../screens/screen/HmiScreenWindow.js";
 import { HmiCircle } from "../../screens/shapes/HmiCircle.js";
@@ -335,8 +337,10 @@ export class HmiScreenToHtmlConverter {
       appendAuditTrailControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
       appendWebControl(html, item, context);
+    } else if (item instanceof HmiAlarmLineControl) {
+      appendAlarmLineControl(html, item, context);
     } else if (item instanceof HmiAlarmControl) {
-      appendDiv(html, item, context.options.unsupportedItemPlaceholderCssClass, "Alarm control", context);
+      appendAlarmControl(html, item, context);
     } else if (item instanceof HmiUnkown) {
       appendDiv(html, item, undefined, `Unkown:${item.type ?? ""}`, context);
     } else {
@@ -1077,6 +1081,108 @@ function appendAuditTrailControl(html: string[], auditTrailControl: HmiAuditTrai
   }
 
   html.push("</div>");
+}
+
+function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, context: HmiHtmlConvertContext): void {
+  const showHeader = alarmControl.showHeader === undefined || getStaticValue(alarmControl.showHeader) === true;
+  const showTitle = getStaticValue(alarmControl.showTitle) === true;
+  const listMode = getStaticValue(alarmControl.listMode) ?? HmiAlarmListMode.All;
+  const visibleColumns = alarmControl.columnDefinitions.filter(
+    (column) => column.visible === undefined || getStaticValue(column.visible) === true,
+  );
+
+  html.push("<div");
+  appendCommonAttributes(
+    html,
+    alarmControl,
+    context,
+    true,
+    "display: flex; flex-direction: column; overflow: hidden;",
+  );
+  appendAttribute(html, "data-list-mode", listMode);
+  appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmControl.numberOfRows));
+  appendAttribute(html, "data-lines-per-alarm", resolvePropertyPreview(alarmControl.linesPerAlarm));
+  appendAttribute(html, "data-word-wrap", resolvePropertyPreview(alarmControl.wordWrap));
+  appendAttribute(html, "data-wrap-around", resolvePropertyPreview(alarmControl.wrapAround));
+  appendAttribute(html, "data-filtered-triggers", alarmControl.filteredTriggers.length === 0 ? undefined : alarmControl.filteredTriggers.join(","));
+  appendAttribute(html, "data-alarm-identifier", resolvePropertyPreview(alarmControl.alarmIdentifier));
+  html.push(">");
+
+  if (showTitle) {
+    const title = resolveAlarmTitle(alarmControl, listMode, context);
+    html.push(
+      "<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;\">",
+      escapeHtml(title),
+      "</div>",
+    );
+  }
+
+  html.push("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
+  if (showHeader) {
+    html.push("<thead><tr>");
+    if (visibleColumns.length === 0)
+      html.push("<th style=\"border: 1px solid currentColor;\">Alarm</th>");
+    for (const column of visibleColumns) {
+      html.push("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
+      appendAttribute(html, "data-column-type", column.type);
+      appendAttribute(html, "data-time-format", column.timeAndDateFormat);
+      appendAttribute(html, "data-symbol", column.symbol);
+      html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.type), "</th>");
+    }
+    html.push("</tr></thead>");
+  }
+  html.push("<tbody><tr><td");
+  appendAttribute(html, "colspan", Math.max(visibleColumns.length, 1).toString());
+  html.push(" style=\"text-align: center;\">Alarm data not loaded</td></tr></tbody></table>");
+
+  const showAcknowledgeButton = getStaticValue(alarmControl.showAcknowledgeButton) === true;
+  const showHelpButton = getStaticValue(alarmControl.showHelpButton) === true;
+  if (showAcknowledgeButton || showHelpButton) {
+    html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">");
+    if (showAcknowledgeButton)
+      html.push("Acknowledge");
+    if (showAcknowledgeButton && showHelpButton)
+      html.push(" · ");
+    if (showHelpButton)
+      html.push("Help");
+    html.push("</div>");
+  }
+  html.push("</div>");
+}
+
+function appendAlarmLineControl(html: string[], alarmLineControl: HmiAlarmLineControl, context: HmiHtmlConvertContext): void {
+  html.push("<div");
+  appendCommonAttributes(
+    html,
+    alarmLineControl,
+    context,
+    true,
+    "display: flex; align-items: center; overflow: hidden;",
+  );
+  appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmLineControl.numberOfRows));
+  appendAttribute(html, "data-word-wrap", resolvePropertyPreview(alarmLineControl.wordWrap));
+  appendAttribute(html, "data-queue-new-alarms", resolvePropertyPreview(alarmLineControl.queueNewAlarms));
+  appendAttribute(html, "data-show-trigger-value", resolvePropertyPreview(alarmLineControl.showTriggerValue));
+  appendAttribute(html, "data-show-trigger-label", resolvePropertyPreview(alarmLineControl.showTriggerLabel));
+  appendAttribute(html, "data-show-inactive-alarms", resolvePropertyPreview(alarmLineControl.showInactiveAlarms));
+  appendAttribute(html, "data-show-alarm-state", resolvePropertyPreview(alarmLineControl.showAlarmState));
+  appendAttribute(html, "data-show-alarm-time", resolvePropertyPreview(alarmLineControl.showAlarmTime));
+  appendAttribute(html, "data-time-format", alarmLineControl.alarmTimeFormat);
+  appendAttribute(html, "data-filtered-triggers", alarmLineControl.filteredTriggers.length === 0 ? undefined : alarmLineControl.filteredTriggers.join(","));
+  html.push(">Alarm data not loaded</div>");
+}
+
+function resolveAlarmTitle(alarmControl: HmiAlarmControl, listMode: HmiAlarmListMode, context: HmiHtmlConvertContext): string {
+  let title = alarmControl.title?.getDisplayText(context.options.cultureLcid);
+  if (title?.trim())
+    return title;
+  const modeTitle = listMode === HmiAlarmListMode.Active
+    ? alarmControl.activeAlarmsTitle
+    : listMode === HmiAlarmListMode.Past
+      ? alarmControl.pastAlarmsTitle
+      : alarmControl.allAlarmsTitle;
+  title = modeTitle?.getDisplayText(context.options.cultureLcid);
+  return title?.trim() ? title : `${listMode} alarms`;
 }
 
 function resolvePropertyPreview<T>(property: HmiProperty<T> | undefined): string | undefined {
