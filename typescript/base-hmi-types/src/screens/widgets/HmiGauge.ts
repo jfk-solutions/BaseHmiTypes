@@ -10,9 +10,14 @@ export class HmiGauge extends HmiScaleWidgetBase {
   sweepStyle?: HmiProperty<HmiGaugeSweepStyle>;
   engineeringUnit?: HmiProperty<string>;
   targetValue?: HmiProperty<number>;
+  targetEnabled?: HmiProperty<boolean>;
+  useVariableTarget?: HmiProperty<boolean>;
+  targetColor?: HmiProperty<HmiColor>;
+  expectedRangeColor?: HmiProperty<HmiColor>;
   targetHighDeviation?: HmiProperty<number>;
   targetLowDeviation?: HmiProperty<number>;
   setpointValue?: HmiProperty<number>;
+  setpointEnabled?: HmiProperty<boolean>;
   thresholdHighHigh?: HmiProperty<number>;
   thresholdHigh?: HmiProperty<number>;
   thresholdLow?: HmiProperty<number>;
