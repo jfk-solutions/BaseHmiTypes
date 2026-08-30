@@ -2,6 +2,7 @@ import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiColor } from "../base/HmiColor.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiProperty } from "../base/HmiProperty.js";
+import { HmiDataGridColumn } from "./HmiDataGridColumn.js";
 
 export class HmiDataGridControl extends HmiControlWindowBase {
   constructor() {
@@ -22,6 +23,7 @@ export class HmiDataGridControl extends HmiControlWindowBase {
   headerRowHeight?: HmiProperty<number>;
   rowHeightAutomatic?: HmiProperty<boolean>;
   rowHeight?: HmiProperty<number>;
+  readonly columnDefinitions: HmiDataGridColumn[] = [];
   timePeriodAbsoluteMode?: HmiProperty<boolean>;
   timePeriodDuration?: HmiProperty<string>;
   timePeriodStart?: HmiProperty<string>;
