@@ -1,3 +1,5 @@
+using BaseHmiTypes.Common;
+
 namespace BaseHmiTypes.Screens.Base;
 
 public enum HmiScreenDisplayType
@@ -43,6 +45,12 @@ public sealed class HmiScreenRuntimeSettings
     public bool? TitleBarVisible { get; set; }
 
     public string? TitleBarText { get; set; }
+
+    /// <summary>
+    /// Gets or sets the structured, potentially multilingual screen title.
+    /// <see cref="TitleBarText"/> can retain a renderer-friendly preview.
+    /// </summary>
+    public HmiMultilingualText? Title { get; set; }
 
     public double? MaximumTagUpdateRateSeconds { get; set; }
 
