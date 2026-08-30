@@ -47,6 +47,7 @@ import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
 import { HmiDisabledImageMode } from "../../screens/widgets/HmiDisabledImageMode.js";
+import { HmiState } from "../../screens/widgets/HmiState.js";
 import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
@@ -696,16 +697,16 @@ async function appendButton(
   context: HmiHtmlConvertContext,
   signal?: AbortSignal,
 ): Promise<void> {
+  const stateValue = getStaticValue(button.state);
+  const state = button.states.find(candidate => candidate.value === stateValue)
+    ?? button.states[0];
   html.push("<button");
-  appendCommonAttributes(html, button, context);
+  appendCommonAttributes(html, button, context, true, createButtonStateStyle(state));
   const enabled = button.enabled === undefined || getStaticValue(button.enabled) === true;
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
   }
   html.push(">");
-  const stateValue = getStaticValue(button.state);
-  const state = button.states.find(candidate => candidate.value === stateValue)
-    ?? button.states[0];
   let image = state?.image ?? getStaticValue(button.image);
   const disabledImageMode = getStaticValue(button.disabledImageMode);
   const showDisabledAppearance = !enabled && getStaticValue(button.showDisabledState) === true;
@@ -726,6 +727,20 @@ async function appendButton(
   }
   appendMultilingualText(html, state?.text ?? getStaticValue(button.text), context);
   html.push("</button>");
+}
+
+function createButtonStateStyle(state: HmiState | undefined): string | null {
+  if (!state) return null;
+
+  const style: string[] = [];
+  if (state.backgroundColor)
+    style.push(`background-color: ${colorToCss(state.backgroundColor)};`);
+  const foregroundColor = state.captionColor ?? state.foregroundColor;
+  if (foregroundColor)
+    style.push(`color: ${colorToCss(foregroundColor)};`);
+  if (state.borderColor)
+    style.push(`border-color: ${colorToCss(state.borderColor)};`);
+  return style.length === 0 ? null : style.join("");
 }
 
 function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConvertContext): void {
