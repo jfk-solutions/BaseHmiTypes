@@ -3,14 +3,17 @@ import test from "node:test";
 
 import {
   hmiColorFromArgb,
+  HmiBar,
   HmiImage,
   HmiLayer,
   HmiListBox,
   HmiMultilingualText,
   HmiProjectBase,
+  HmiScale,
   HmiScreen,
   HmiScreenToHtmlConverter,
   HmiState,
+  HmiSlider,
   HmiToggleSwitch,
   staticProperty,
 } from "../dist/index.js";
@@ -123,4 +126,53 @@ test("HTML converter renders list box states", async () => {
   assert.match(html, />Automatic<\/option>/);
   assert.match(html, /value="4" style="background-color: #0A141E;color: #F0F1F2;" selected="selected"/);
   assert.match(html, />Manual<\/option>/);
+});
+
+test("HTML converter renders bar slider and scale previews", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+
+  const bar = new HmiBar();
+  bar.name = "LevelBar";
+  bar.width = staticProperty(100);
+  bar.height = staticProperty(20);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(100);
+  bar.value = staticProperty(35);
+  layer.items.push(bar);
+
+  const slider = new HmiSlider();
+  slider.name = "SetpointSlider";
+  slider.y = staticProperty(30);
+  slider.width = staticProperty(100);
+  slider.height = staticProperty(20);
+  slider.beginValue = staticProperty(-10);
+  slider.endValue = staticProperty(10);
+  slider.value = staticProperty(4);
+  layer.items.push(slider);
+
+  const scale = new HmiScale();
+  scale.name = "LevelScale";
+  scale.y = staticProperty(60);
+  scale.width = staticProperty(100);
+  scale.height = staticProperty(20);
+  scale.beginValue = staticProperty(100);
+  scale.endValue = staticProperty(0);
+  layer.items.push(scale);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<meter id="LevelBar"/);
+  assert.match(html, /min="0" max="100" value="35">35<\/meter>/);
+  assert.match(html, /<input id="SetpointSlider"/);
+  assert.match(html, /type="range" min="-10" max="10" value="4" disabled="disabled"/);
+  assert.match(html, /<div id="LevelScale"/);
+  assert.match(html, /><span>0<\/span><span>100<\/span><\/div>/);
 });
