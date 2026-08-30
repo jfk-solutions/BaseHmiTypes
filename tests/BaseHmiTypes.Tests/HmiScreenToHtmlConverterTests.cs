@@ -464,6 +464,38 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersInertDataGridPreview()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiDataGridControl
+        {
+            Name = "BatchHistory",
+            Width = 300,
+            Height = 180,
+            ShowToolbar = true,
+            ShowStatusBar = true,
+            ShowExportCsv = true,
+            ShowProperties = false,
+            TimePeriodAbsoluteMode = true,
+            TimePeriodStart = "2026-08-30T08:00:00",
+            TimePeriodEnd = "2026-08-30T12:00:00"
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"BatchHistory\"");
+        StringAssert.Contains(html, "data-show-toolbar=\"true\"");
+        StringAssert.Contains(html, "data-show-properties=\"false\"");
+        StringAssert.Contains(html, "data-time-period-absolute=\"true\"");
+        StringAssert.Contains(html, ">Data grid · Export CSV</div>");
+        StringAssert.Contains(html, ">Time: 2026-08-30T08:00:00 – 2026-08-30T12:00:00</div>");
+        StringAssert.Contains(html, ">Data binding not decoded</div>");
+        StringAssert.Contains(html, ">Status</div>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen
