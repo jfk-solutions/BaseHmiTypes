@@ -23,6 +23,18 @@ public class HmiDataGridControl : HmiControlWindowBase
 
     public HmiProperty<bool>? UseLocalMachineTimeZone { get; set; }
 
+    public HmiProperty<HmiColor>? AlternatingRowBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? GridLineColor { get; set; }
+
+    public HmiProperty<bool>? HeaderRowHeightAutomatic { get; set; }
+
+    public HmiProperty<double>? HeaderRowHeight { get; set; }
+
+    public HmiProperty<bool>? RowHeightAutomatic { get; set; }
+
+    public HmiProperty<double>? RowHeight { get; set; }
+
     public HmiProperty<bool>? TimePeriodAbsoluteMode { get; set; }
 
     public HmiProperty<string>? TimePeriodDuration { get; set; }
