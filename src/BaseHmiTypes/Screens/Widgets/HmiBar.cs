@@ -9,4 +9,14 @@ public class HmiBar : HmiScaleWidgetBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiBar;
     }
 
+    public HmiProperty<HmiBarFillStyle>? FillStyle { get; set; }
+
+    public HmiProperty<HmiFillDirection>? FillDirection { get; set; }
+
+}
+
+public enum HmiBarFillStyle
+{
+    Solid,
+    Gradient
 }
