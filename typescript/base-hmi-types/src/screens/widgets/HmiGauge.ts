@@ -8,6 +8,8 @@ import type { HmiFont } from "../base/HmiFont.js";
 
 export class HmiGauge extends HmiScaleWidgetBase {
   needleWidth?: HmiProperty<number>;
+  needleColor?: HmiProperty<HmiColor>;
+  sweepFillColor?: HmiProperty<HmiColor>;
   gaugeStyle?: HmiProperty<string>;
   valueIndicatorSize?: HmiProperty<string>;
   valueIndicatorColor?: HmiProperty<HmiColor>;
