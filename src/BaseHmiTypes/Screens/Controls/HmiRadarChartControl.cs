@@ -1,3 +1,4 @@
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Screens.Base;
 
 namespace BaseHmiTypes.Screens.Controls;
@@ -12,4 +13,10 @@ public class HmiRadarChartControl : HmiControlWindowBase
     {
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiRadarChartControl;
     }
+
+    public HmiMultilingualText? Title { get; set; }
+
+    public HmiProperty<int>? SeriesCount { get; set; }
+
+    public HmiProperty<int>? CategoryCount { get; set; }
 }
