@@ -35,6 +35,34 @@ public class HmiAlarmLineControl : HmiSimpleScreenItemBase
 
     public HmiProperty<bool>? QueueNewAlarms { get; set; }
 
+    public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
+
+    public HmiProperty<string>? IconStyle { get; set; }
+
+    public HmiProperty<HmiAlarmRowDoubleClickAction>? RowDoubleClickAction { get; set; }
+
+    public HmiProperty<bool>? ShowBorder { get; set; }
+
+    public HmiFont? StatusBarFont { get; set; }
+
+    public HmiProperty<string>? StatusBarButtonSize { get; set; }
+
+    public HmiProperty<bool>? ShowTooltips { get; set; }
+
+    public HmiProperty<bool>? ShowStatusBar { get; set; }
+
+    public HmiProperty<string>? AlarmAndEventSummaryCommand { get; set; }
+
+    public HmiProperty<bool>? DisplayErrorsInDialog { get; set; }
+
+    public HmiProperty<bool>? MaintainSelection { get; set; }
+
+    public HmiProperty<bool>? ShowWaitingMessage { get; set; }
+
+    public HmiProperty<bool>? AlarmBellEnabled { get; set; }
+
     public HmiProperty<bool>? ShowTriggerValue { get; set; }
 
     public HmiProperty<bool>? ShowTriggerLabel { get; set; }
