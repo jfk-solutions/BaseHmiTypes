@@ -47,6 +47,8 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   audioEnabled?: HmiProperty<boolean>;
   showDisabledState?: HmiProperty<boolean>;
   disabledImageMode?: HmiProperty<HmiDisabledImageMode>;
+  disabledImage?: HmiProperty<HmiImageSource>;
+  disabledImageScaled?: HmiProperty<boolean>;
   confirmationDialog?: HmiConfirmationDialogSettings;
   signatureSettings?: HmiSignatureButtonSettings;
   autoRepeatDelaySeconds?: HmiProperty<number>;
