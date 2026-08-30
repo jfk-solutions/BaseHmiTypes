@@ -11,6 +11,7 @@ import { HmiAlarmViewKind } from "./HmiAlarmViewKind.js";
 import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
 import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js";
 import { HmiAlarmToolbarButton } from "./HmiAlarmToolbarButton.js";
+import { HmiAlarmStatusBarPanel } from "./HmiAlarmStatusBarPanel.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -88,6 +89,9 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showOutOfServiceAlarms?: HmiProperty<boolean>;
   sortOrder?: HmiProperty<string>;
   showStatusBar?: HmiProperty<boolean>;
+  readonly statusBarPanels: HmiAlarmStatusBarPanel[] = [];
+  statusBarFont?: HmiFont;
+  statusBarIconSize?: HmiProperty<string>;
   recordLimit?: HmiProperty<number>;
   whereClause?: HmiProperty<string>;
   showPendingAlarms?: HmiProperty<boolean>;
