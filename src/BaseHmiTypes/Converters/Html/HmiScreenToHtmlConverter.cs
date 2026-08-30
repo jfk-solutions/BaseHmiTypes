@@ -138,6 +138,9 @@ public class HmiScreenToHtmlConverter
             case HmiRadioButtonGroup radioButtonGroup:
                 await AppendSelectionGroupAsync(html, "hmi-radio-button-group", radioButtonGroup, project, context, cancellationToken).ConfigureAwait(false);
                 break;
+            case HmiListBox listBox:
+                AppendListBox(html, listBox, context);
+                break;
             case HmiButton button:
                 await AppendButtonAsync(html, button, project, context, cancellationToken).ConfigureAwait(false);
                 break;
@@ -973,6 +976,33 @@ public class HmiScreenToHtmlConverter
             await AppendSelectionGroupItemAsync(html, item, project, cancellationToken).ConfigureAwait(false);
 
         html.Append("</").Append(elementName).Append('>');
+    }
+
+    private static void AppendListBox(StringBuilder html, HmiListBox listBox, HmiHtmlConvertContext context)
+    {
+        var selectedValue = listBox.Indicator is not null
+            ? ResolveStaticValue(listBox.Indicator, context)
+            : ResolveStaticValue(listBox.Value, context);
+        var selectedState = listBox.States.FirstOrDefault(candidate => candidate.Value == selectedValue)
+            ?? listBox.States.FirstOrDefault();
+
+        html.Append("<select");
+        AppendCommonAttributes(html, listBox, context, additionalStyle: CreateStateStyle(selectedState));
+        html.Append('>');
+        foreach (var state in listBox.States)
+        {
+            html.Append("<option");
+            if (state.Value is double value)
+                AppendAttribute(html, "value", ToCss(value));
+            AppendAttribute(html, "style", CreateStateStyle(state));
+            AppendAttribute(html, "data-image-name", state.ImageName ?? state.Image?.ImageName);
+            if (ReferenceEquals(state, selectedState))
+                AppendAttribute(html, "selected", "selected");
+            html.Append('>');
+            AppendMultilingualText(html, state.Text, context);
+            html.Append("</option>");
+        }
+        html.Append("</select>");
     }
 
     private static async ValueTask AppendSelectionGroupItemAsync(

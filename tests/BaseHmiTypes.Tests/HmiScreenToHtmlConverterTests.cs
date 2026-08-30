@@ -311,6 +311,46 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersListBoxStates()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var listBox = new HmiListBox
+        {
+            Id = "list-1",
+            Name = "ModeList",
+            X = 10,
+            Y = 20,
+            Width = 120,
+            Height = 52,
+            Value = 4
+        };
+        listBox.States.Add(new HmiState
+        {
+            Value = 2,
+            Text = HmiMultilingualText.FromText("Automatic"),
+            ImageName = "auto.bmp"
+        });
+        listBox.States.Add(new HmiState
+        {
+            Value = 4,
+            Text = HmiMultilingualText.FromText("Manual"),
+            BackgroundColor = HmiColor.FromArgb(255, 10, 20, 30),
+            ForegroundColor = HmiColor.FromArgb(255, 240, 241, 242)
+        });
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(listBox);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<select id=\"ModeList\"");
+        StringAssert.Contains(html, "value=\"2\" data-image-name=\"auto.bmp\"");
+        StringAssert.Contains(html, ">Automatic</option>");
+        StringAssert.Contains(html, "value=\"4\" style=\"background-color: #0A141E;color: #F0F1F2;\" selected=\"selected\"");
+        StringAssert.Contains(html, ">Manual</option>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen
