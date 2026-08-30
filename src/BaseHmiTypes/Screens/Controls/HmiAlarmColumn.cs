@@ -13,4 +13,8 @@ public sealed class HmiAlarmColumn
     public string? TimeAndDateFormat { get; set; }
     public HmiMultilingualText? HeaderText { get; set; }
     public string? Symbol { get; set; }
+
+    public HmiProperty<HmiHorizontalAlignment>? Alignment { get; set; }
+
+    public HmiProperty<int>? Order { get; set; }
 }

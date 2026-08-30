@@ -63,6 +63,10 @@ public class HmiAlarmLineControl : HmiSimpleScreenItemBase
 
     public HmiProperty<bool>? AlarmBellEnabled { get; set; }
 
+    public IList<HmiAlarmColumn> ColumnDefinitions { get; } = new List<HmiAlarmColumn>();
+
+    public HmiProperty<HmiAlarmTimePrecision>? TimePrecision { get; set; }
+
     public HmiProperty<bool>? ShowTriggerValue { get; set; }
 
     public HmiProperty<bool>? ShowTriggerLabel { get; set; }
