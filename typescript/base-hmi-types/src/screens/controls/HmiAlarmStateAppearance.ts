@@ -7,4 +7,8 @@ export class HmiAlarmStateAppearance {
   foregroundColor?: HmiProperty<HmiColor>;
   backgroundColor?: HmiProperty<HmiColor>;
   blink?: HmiProperty<boolean>;
+  showEventType?: HmiProperty<boolean>;
+  audioEnabled?: HmiProperty<boolean>;
+  audioSource?: string;
+  audioStatusTag?: string;
 }
