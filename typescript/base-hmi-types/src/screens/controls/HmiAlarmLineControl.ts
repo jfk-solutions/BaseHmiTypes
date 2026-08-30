@@ -1,7 +1,8 @@
-import { HmiFont, HmiHorizontalAlignment, HmiProperty } from "../base.js";
+import { HmiColor, HmiFont, HmiHorizontalAlignment, HmiProperty } from "../base.js";
 import { HmiSimpleScreenItemBase } from "../base/HmiSimpleScreenItemBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiAlarmLineViewKind } from "./HmiAlarmLineViewKind.js";
+import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js";
 
 export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   constructor() {
@@ -22,6 +23,20 @@ export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   useAlarmIdentifier?: HmiProperty<boolean>;
   alarmIdentifier?: HmiProperty<number>;
   queueNewAlarms?: HmiProperty<boolean>;
+  selectionBackgroundColor?: HmiProperty<HmiColor>;
+  selectionForegroundColor?: HmiProperty<HmiColor>;
+  iconStyle?: HmiProperty<string>;
+  rowDoubleClickAction?: HmiProperty<HmiAlarmRowDoubleClickAction>;
+  showBorder?: HmiProperty<boolean>;
+  statusBarFont?: HmiFont;
+  statusBarButtonSize?: HmiProperty<string>;
+  showTooltips?: HmiProperty<boolean>;
+  showStatusBar?: HmiProperty<boolean>;
+  alarmAndEventSummaryCommand?: HmiProperty<string>;
+  displayErrorsInDialog?: HmiProperty<boolean>;
+  maintainSelection?: HmiProperty<boolean>;
+  showWaitingMessage?: HmiProperty<boolean>;
+  alarmBellEnabled?: HmiProperty<boolean>;
   showTriggerValue?: HmiProperty<boolean>;
   showTriggerLabel?: HmiProperty<boolean>;
   showInactiveAlarms?: HmiProperty<boolean>;
