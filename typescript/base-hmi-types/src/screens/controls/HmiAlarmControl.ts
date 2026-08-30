@@ -55,6 +55,13 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   displayErrorsInDialog?: HmiProperty<boolean>;
   displayMilliseconds?: HmiProperty<boolean>;
   timePrecision?: HmiProperty<HmiAlarmTimePrecision>;
+  context?: HmiProperty<string>;
+  listBackgroundColor?: HmiProperty<HmiColor>;
+  disabledColumnWidth?: HmiProperty<number>;
+  nameColumnWidth?: HmiProperty<number>;
+  pathColumnWidth?: HmiProperty<number>;
+  shelvedColumnWidth?: HmiProperty<number>;
+  suppressedColumnWidth?: HmiProperty<number>;
   showPendingAlarms?: HmiProperty<boolean>;
   showAlarmsToAcknowledge?: HmiProperty<boolean>;
   sortByTimeEnabled?: HmiProperty<boolean>;
