@@ -16,6 +16,12 @@ public class HmiReferenceObjectSettings
     /// <summary>Gets or sets the resolved base object's name.</summary>
     public string? ResolvedObjectName { get; set; }
 
+    /// <summary>
+    /// Gets or sets the resolved base-object definition. This is source
+    /// configuration, not a materialized reference instance.
+    /// </summary>
+    public HmiScreenItemBase? ResolvedObject { get; set; }
+
     public HmiReferenceAnimationMode? AnimationMode { get; set; }
 
     public bool? ConnectionsLinked { get; set; }
