@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   hmiColorFromArgb,
   HmiBar,
+  HmiClock,
   HmiImage,
   HmiLayer,
   HmiListBox,
@@ -175,4 +176,33 @@ test("HTML converter renders bar slider and scale previews", async () => {
   assert.match(html, /type="range" min="-10" max="10" value="4" disabled="disabled"/);
   assert.match(html, /<div id="LevelScale"/);
   assert.match(html, /><span>0<\/span><span>100<\/span><\/div>/);
+});
+
+test("HTML converter renders a clock preview", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  const clock = new HmiClock();
+  clock.name = "BatchClock";
+  clock.width = staticProperty(160);
+  clock.height = staticProperty(24);
+  clock.showDate = staticProperty(true);
+  clock.showTime = staticProperty(true);
+  clock.showSeconds = staticProperty(false);
+  clock.format = staticProperty("dateAndTime");
+  clock.timeZone = staticProperty("UTC");
+  layer.items.push(clock);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<time id="BatchClock"/);
+  assert.match(html, /datetime="2000-01-01T12:34:56"/);
+  assert.match(html, /data-format="dateAndTime" data-time-zone="UTC"/);
+  assert.match(html, />2000-01-01 12:34<\/time>/);
 });

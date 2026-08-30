@@ -50,6 +50,7 @@ import { HmiBar } from "../../screens/widgets/HmiBar.js";
 import { HmiDisabledImageMode } from "../../screens/widgets/HmiDisabledImageMode.js";
 import { HmiState } from "../../screens/widgets/HmiState.js";
 import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
+import { HmiClock } from "../../screens/widgets/HmiClock.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
@@ -286,6 +287,8 @@ export class HmiScreenToHtmlConverter {
       appendBar(html, item, context);
     } else if (item instanceof HmiScale) {
       appendScale(html, item, context);
+    } else if (item instanceof HmiClock) {
+      appendClock(html, item, context);
     } else if (item instanceof HmiGauge) {
       appendGauge(html, item, context);
     } else if (item instanceof HmiTrendControl) {
@@ -808,6 +811,42 @@ function appendScale(html: string[], scale: HmiScale, context: HmiHtmlConvertCon
     "display: flex; align-items: end; justify-content: space-between; overflow: hidden;",
   );
   html.push(`><span>${toCss(minimum)}</span><span>${toCss(maximum)}</span></div>`);
+}
+
+function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertContext): void {
+  const showDate = getStaticValue(clock.showDate) === true;
+  const showTime = clock.showTime === undefined || getStaticValue(clock.showTime) === true;
+  const showHours = clock.showHours === undefined || getStaticValue(clock.showHours) === true;
+  const showMinutes = clock.showMinutes === undefined || getStaticValue(clock.showMinutes) === true;
+  const showSeconds = getStaticValue(clock.showSeconds) === true;
+  const parts: string[] = [];
+  if (showDate)
+    parts.push("2000-01-01");
+  if (showTime) {
+    const timeParts: string[] = [];
+    if (showHours)
+      timeParts.push("12");
+    if (showMinutes)
+      timeParts.push("34");
+    if (showSeconds)
+      timeParts.push("56");
+    if (timeParts.length > 0)
+      parts.push(timeParts.join(":"));
+  }
+
+  html.push("<time");
+  appendCommonAttributes(
+    html,
+    clock,
+    context,
+    true,
+    "display: flex; align-items: center; justify-content: center; overflow: hidden;",
+  );
+  appendAttribute(html, "datetime", "2000-01-01T12:34:56");
+  appendAttribute(html, "data-format", getStaticValue(clock.format));
+  appendAttribute(html, "data-time-zone", getStaticValue(clock.timeZone));
+  appendBooleanAttribute(html, "data-analog", getStaticValue(clock.analog) === true);
+  html.push(`>${parts.length === 0 ? "Clock" : parts.join(" ")}</time>`);
 }
 
 function resolveScaleRange(scale: HmiScaleWidgetBase): [number, number] {
