@@ -24,6 +24,7 @@ public enum HmiAlarmToolbarButtonType
     Find,
     ShowHideDetails,
     RefreshAlarmList,
+    StopDatabaseQuery,
     SilenceAll,
     ToggleAlarmBell,
     RunAlarmAndEventSummary,
