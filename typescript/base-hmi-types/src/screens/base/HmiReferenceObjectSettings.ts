@@ -14,6 +14,8 @@ export class HmiReferenceObjectSettings {
   resolvedObjectName?: string;
   /** Resolved source definition; this is not a materialized reference instance. */
   resolvedObject?: HmiScreenItemBase;
+  /** Reference-specific object after parameter substitution; the shared source stays unchanged. */
+  materializedObject?: HmiScreenItemBase;
   animationMode?: HmiReferenceAnimationMode;
   connectionsLinked?: boolean;
   sizeLinked?: boolean;
