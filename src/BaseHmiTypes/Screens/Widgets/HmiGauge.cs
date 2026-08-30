@@ -11,6 +11,10 @@ public class HmiGauge : HmiScaleWidgetBase
 
     public HmiProperty<double>? NeedleWidth { get; set; }
 
+    public HmiProperty<HmiColor>? NeedleColor { get; set; }
+
+    public HmiProperty<HmiColor>? SweepFillColor { get; set; }
+
     public HmiProperty<string>? GaugeStyle { get; set; }
 
     public HmiProperty<string>? ValueIndicatorSize { get; set; }
