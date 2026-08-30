@@ -52,6 +52,7 @@ import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
+import { HmiListBox } from "../../screens/widgets/HmiListBox.js";
 import { HmiRadioButtonGroup } from "../../screens/widgets/HmiRadioButtonGroup.js";
 import { HmiSelectionGroupBase, HmiSelectionGroupItem } from "../../screens/widgets/HmiSelectionGroupBase.js";
 import { HmiSwitchType } from "../../screens/widgets/HmiSwitchType.js";
@@ -241,6 +242,8 @@ export class HmiScreenToHtmlConverter {
       await appendSelectionGroup(html, "hmi-checkbox-group", item, project, context, signal);
     } else if (item instanceof HmiRadioButtonGroup) {
       await appendSelectionGroup(html, "hmi-radio-button-group", item, project, context, signal);
+    } else if (item instanceof HmiListBox) {
+      appendListBox(html, item, context);
     } else if (item instanceof HmiButton) {
       await appendButton(html, item, project, context, signal);
     } else if (item instanceof HmiIOField) {
@@ -835,6 +838,31 @@ async function appendSelectionGroup(
     await appendSelectionGroupItem(html, item, project, signal);
   }
   html.push(`</${elementName}>`);
+}
+
+function appendListBox(html: string[], listBox: HmiListBox, context: HmiHtmlConvertContext): void {
+  const selectedValue = listBox.indicator !== undefined
+    ? getStaticValue(listBox.indicator)
+    : getStaticValue(listBox.value);
+  const selectedState = listBox.states.find(candidate => candidate.value === selectedValue)
+    ?? listBox.states[0];
+
+  html.push("<select");
+  appendCommonAttributes(html, listBox, context, true, createStateStyle(selectedState));
+  html.push(">");
+  for (const state of listBox.states) {
+    html.push("<option");
+    if (state.value !== undefined)
+      appendAttribute(html, "value", toCss(state.value));
+    appendAttribute(html, "style", createStateStyle(state) ?? undefined);
+    appendAttribute(html, "data-image-name", state.imageName ?? state.image?.imageName);
+    if (state === selectedState)
+      appendAttribute(html, "selected", "selected");
+    html.push(">");
+    appendMultilingualText(html, state.text, context);
+    html.push("</option>");
+  }
+  html.push("</select>");
 }
 
 async function appendSelectionGroupItem(

@@ -5,6 +5,7 @@ import {
   hmiColorFromArgb,
   HmiImage,
   HmiLayer,
+  HmiListBox,
   HmiMultilingualText,
   HmiProjectBase,
   HmiScreen,
@@ -81,4 +82,45 @@ test("HTML converter renders toggle states and project images", async () => {
   assert.match(html, /color: #F0F1F2;/);
   assert.match(html, /border-color: #323C46;/);
   assert.match(html, / checked/);
+});
+
+test("HTML converter renders list box states", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+
+  const listBox = new HmiListBox();
+  listBox.id = "list-1";
+  listBox.name = "ModeList";
+  listBox.x = staticProperty(10);
+  listBox.y = staticProperty(20);
+  listBox.width = staticProperty(120);
+  listBox.height = staticProperty(52);
+  listBox.value = staticProperty(4);
+  const automatic = new HmiState();
+  automatic.value = 2;
+  automatic.text = HmiMultilingualText.fromText("Automatic");
+  automatic.imageName = "auto.bmp";
+  listBox.states.push(automatic);
+  const manual = new HmiState();
+  manual.value = 4;
+  manual.text = HmiMultilingualText.fromText("Manual");
+  manual.backgroundColor = hmiColorFromArgb(255, 10, 20, 30);
+  manual.foregroundColor = hmiColorFromArgb(255, 240, 241, 242);
+  listBox.states.push(manual);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  layer.items.push(listBox);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<select id="ModeList"/);
+  assert.match(html, /value="2" data-image-name="auto.bmp"/);
+  assert.match(html, />Automatic<\/option>/);
+  assert.match(html, /value="4" style="background-color: #0A141E;color: #F0F1F2;" selected="selected"/);
+  assert.match(html, />Manual<\/option>/);
 });
