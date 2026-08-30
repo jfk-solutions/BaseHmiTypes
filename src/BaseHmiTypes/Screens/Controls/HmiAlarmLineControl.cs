@@ -73,6 +73,14 @@ public class HmiAlarmLineControl : HmiSimpleScreenItemBase
 
     public IList<HmiAlarmEventSubscription> EventSubscriptions { get; } = new List<HmiAlarmEventSubscription>();
 
+    public IList<HmiAlarmStateAppearance> StateAppearances { get; } = new List<HmiAlarmStateAppearance>();
+
+    public HmiProperty<HmiAlarmBlinkRate>? AlarmBlinkRate { get; set; }
+
+    public string? AlarmBlinkRateSource { get; set; }
+
+    public HmiProperty<double>? AlarmSoundRepeatIntervalSeconds { get; set; }
+
     public HmiProperty<bool>? ShowTriggerValue { get; set; }
 
     public HmiProperty<bool>? ShowTriggerLabel { get; set; }
