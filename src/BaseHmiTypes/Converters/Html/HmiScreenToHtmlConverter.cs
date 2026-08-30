@@ -233,6 +233,12 @@ public class HmiScreenToHtmlConverter
                     await AppendContainerAsync(html, group, group.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 }
                 break;
+            case HmiOcxControl ocxControl:
+                await AppendOcxControlAsync(html, ocxControl, project, context, screenStack, cancellationToken).ConfigureAwait(false);
+                break;
+            case HmiDotNetControlContainer dotNetControl:
+                await AppendDotNetControlAsync(html, dotNetControl, project, context, screenStack, cancellationToken).ConfigureAwait(false);
+                break;
             case HmiLayoutContainerBase layoutContainer:
                 await AppendContainerAsync(html, layoutContainer, layoutContainer.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
@@ -297,6 +303,51 @@ public class HmiScreenToHtmlConverter
             foreach (var child in items)
                 await AppendItemAsync(html, child, project, context, screenStack, cancellationToken).ConfigureAwait(false);
         }
+        html.Append("</div>");
+    }
+
+    private async ValueTask AppendOcxControlAsync(
+        StringBuilder html,
+        HmiOcxControl ocxControl,
+        IHmiProject? project,
+        HmiHtmlConvertContext context,
+        ISet<string> screenStack,
+        CancellationToken cancellationToken)
+    {
+        html.Append("<div");
+        AppendCommonAttributes(html, ocxControl, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-ocx-guid", ocxControl.OcxGuid);
+        AppendAttribute(html, "data-ocx-name", ocxControl.OcxName);
+        AppendAttribute(html, "data-ocx-program-id", ocxControl.OcxProgramId);
+        AppendAttribute(html, "data-ocx-file-name", ocxControl.OcxFileName);
+        AppendAttribute(html, "data-ocx-file-version", ocxControl.OcxFileVersion);
+        AppendAttribute(html, "data-ocx-type-library", ocxControl.OcxTypeLibrary);
+        AppendAttribute(html, "data-ocx-type-library-version", ocxControl.OcxTypeLibraryVersion);
+        AppendAttribute(html, "data-state-format", ocxControl.OcxStateFormat);
+        AppendAttribute(html, "data-state-length", ocxControl.OcxState?.Length.ToString(CultureInfo.InvariantCulture));
+        html.Append("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;\">ActiveX control</div>")
+            .Append("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">")
+            .Append(WebUtility.HtmlEncode(ocxControl.OcxName ?? ocxControl.OcxProgramId ?? ocxControl.OcxFileName ?? "State preserved"))
+            .Append("</div>");
+        foreach (var child in ocxControl.Items)
+            await AppendItemAsync(html, child, project, context, screenStack, cancellationToken).ConfigureAwait(false);
+        html.Append("</div>");
+    }
+
+    private async ValueTask AppendDotNetControlAsync(
+        StringBuilder html,
+        HmiDotNetControlContainer dotNetControl,
+        IHmiProject? project,
+        HmiHtmlConvertContext context,
+        ISet<string> screenStack,
+        CancellationToken cancellationToken)
+    {
+        html.Append("<div");
+        AppendCommonAttributes(html, dotNetControl, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        html.Append("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;\">.NET control</div>")
+            .Append("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Metadata preserved</div>");
+        foreach (var child in dotNetControl.Items)
+            await AppendItemAsync(html, child, project, context, screenStack, cancellationToken).ConfigureAwait(false);
         html.Append("</div>");
     }
 
