@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   HmiButton,
   HmiGroup,
+  HmiIOField,
+  HmiObjectConnection,
   HmiReferenceObjectSettings,
   HmiReferenceParameter,
   HmiScreenParameter,
@@ -44,4 +46,14 @@ test("screen item retains global object parameter definitions", () => {
 
   assert.deepEqual(item.parameters, [parameter]);
   assert.equal(item.referenceObject, undefined);
+});
+
+test("screen item retains named source connections", () => {
+  const item = new HmiIOField();
+  const connection = new HmiObjectConnection();
+  connection.name = "Value";
+  connection.expression = "{[PLC]Speed}";
+  item.connections.push(connection);
+
+  assert.deepEqual(item.connections, [connection]);
 });

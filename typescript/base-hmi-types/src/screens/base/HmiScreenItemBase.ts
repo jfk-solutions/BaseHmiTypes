@@ -12,6 +12,7 @@ import { HmiConfirmationDialogSettings } from "../widgets/HmiConfirmationDialogS
 import { HmiRangeAnimation } from "./HmiRangeAnimation.js";
 import { HmiSliderAnimation } from "./HmiSliderAnimation.js";
 import { HmiScreenParameter } from "./HmiScreenParameter.js";
+import { HmiObjectConnection } from "./HmiObjectConnection.js";
 
 export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   description?: string;
@@ -20,6 +21,8 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   referenceObject?: HmiReferenceObjectSettings;
   /** Global-object parameter definitions declared by this base object. */
   readonly parameters: HmiScreenParameter[] = [];
+  /** Source connections assigned directly to this object. */
+  readonly connections: HmiObjectConnection[] = [];
   scriptExposureMode?: HmiScriptExposureMode;
   sourceFormat?: string;
   sourceData?: Uint8Array;
