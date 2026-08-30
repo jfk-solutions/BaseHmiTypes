@@ -13,4 +13,12 @@ public sealed class HmiAlarmStateAppearance
     public HmiProperty<HmiColor>? BackgroundColor { get; set; }
 
     public HmiProperty<bool>? Blink { get; set; }
+
+    public HmiProperty<bool>? ShowEventType { get; set; }
+
+    public HmiProperty<bool>? AudioEnabled { get; set; }
+
+    public string? AudioSource { get; set; }
+
+    public string? AudioStatusTag { get; set; }
 }
