@@ -9,6 +9,8 @@ import { HmiAlarmSortCriterion } from "./HmiAlarmSortCriterion.js";
 import { HmiAlarmEventSubscription } from "./HmiAlarmEventSubscription.js";
 import { HmiAlarmBlinkRate } from "./HmiAlarmBlinkRate.js";
 import { HmiAlarmStateAppearance } from "./HmiAlarmStateAppearance.js";
+import { HmiAlarmStatusBarPanel } from "./HmiAlarmStatusBarPanel.js";
+import { HmiAlarmToolbarButton } from "./HmiAlarmToolbarButton.js";
 
 export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   constructor() {
@@ -36,6 +38,8 @@ export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   showBorder?: HmiProperty<boolean>;
   statusBarFont?: HmiFont;
   statusBarButtonSize?: HmiProperty<string>;
+  readonly statusBarPanels: HmiAlarmStatusBarPanel[] = [];
+  readonly statusBarButtons: HmiAlarmToolbarButton[] = [];
   showTooltips?: HmiProperty<boolean>;
   showStatusBar?: HmiProperty<boolean>;
   alarmAndEventSummaryCommand?: HmiProperty<string>;
