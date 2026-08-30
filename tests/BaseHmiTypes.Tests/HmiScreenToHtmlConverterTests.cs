@@ -257,6 +257,60 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersToggleSwitchStatesAndProjectImages()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "main",
+            Name = "MainScreen",
+            Width = 320,
+            Height = 240
+        };
+        var toggle = new HmiToggleSwitch
+        {
+            Id = "toggle-1",
+            Name = "ModeSwitch",
+            X = 10,
+            Y = 20,
+            Width = 120,
+            Height = 52,
+            State = 1
+        };
+        toggle.States.Add(new HmiState
+        {
+            Value = 0,
+            Text = HmiMultilingualText.FromText("Stopped"),
+            Image = new HmiImageSource { ImageId = "off-image" }
+        });
+        toggle.States.Add(new HmiState
+        {
+            Value = 1,
+            Text = HmiMultilingualText.FromText("Running"),
+            Image = new HmiImageSource { ImageId = "on-image" },
+            BackgroundColor = HmiColor.FromArgb(255, 10, 20, 30),
+            CaptionColor = HmiColor.FromArgb(255, 240, 241, 242),
+            BorderColor = HmiColor.FromArgb(255, 50, 60, 70)
+        });
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(toggle);
+        screen.Layers.Add(layer);
+        var project = new FakeProject(screen);
+        project.AddImage(new HmiImage { Id = "off-image", MimeType = "image/png", Data = [1] });
+        project.AddImage(new HmiImage { Id = "on-image", MimeType = "image/png", Data = [2] });
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen, project);
+
+        StringAssert.Contains(html, "text=\"Stopped\"");
+        StringAssert.Contains(html, "alternate-text=\"Running\"");
+        StringAssert.Contains(html, "image=\"data:image/png;base64,AQ==\"");
+        StringAssert.Contains(html, "alternate-image=\"data:image/png;base64,Ag==\"");
+        StringAssert.Contains(html, "background-color: #0A141E;");
+        StringAssert.Contains(html, "color: #F0F1F2;");
+        StringAssert.Contains(html, "border-color: #323C46;");
+        StringAssert.Contains(html, " checked");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen

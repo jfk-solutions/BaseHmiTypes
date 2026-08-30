@@ -130,7 +130,7 @@ public class HmiScreenToHtmlConverter
         switch (item)
         {
             case HmiToggleSwitch toggleSwitch:
-                AppendToggleSwitch(html, toggleSwitch, context);
+                await AppendToggleSwitchAsync(html, toggleSwitch, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiCheckBoxGroup checkBoxGroup:
                 await AppendSelectionGroupAsync(html, "hmi-checkbox-group", checkBoxGroup, project, context, cancellationToken).ConfigureAwait(false);
@@ -922,15 +922,30 @@ public class HmiScreenToHtmlConverter
         html.Append("</select>");
     }
 
-    private static void AppendToggleSwitch(StringBuilder html, HmiToggleSwitch toggleSwitch, HmiHtmlConvertContext context)
+    private static async ValueTask AppendToggleSwitchAsync(
+        StringBuilder html,
+        HmiToggleSwitch toggleSwitch,
+        IHmiProject? project,
+        HmiHtmlConvertContext context,
+        CancellationToken cancellationToken)
     {
+        var stateValue = ResolveStaticValue(toggleSwitch.State, context);
+        var offState = toggleSwitch.States.FirstOrDefault();
+        var onState = toggleSwitch.States.Skip(1).FirstOrDefault() ?? offState;
+        var selectedState = toggleSwitch.States.FirstOrDefault(candidate => candidate.Value == stateValue) ?? offState;
+        var text = ResolveStaticValue(toggleSwitch.Text, context) ?? offState?.Text;
+        var alternateText = ResolveStaticValue(toggleSwitch.AlternateText, context) ?? onState?.Text;
+        var image = ResolveStaticValue(toggleSwitch.Image, context) ?? offState?.Image;
+        var alternateImage = ResolveStaticValue(toggleSwitch.AlternateImage, context) ?? onState?.Image;
+
         html.Append("<hmi-toggle-switch");
-        AppendCommonAttributes(html, toggleSwitch, context);
+        AppendCommonAttributes(html, toggleSwitch, context, additionalStyle: CreateStateStyle(selectedState));
         AppendStaticAttribute(html, "mode", context.EffectiveProperties.Resolve(toggleSwitch, nameof(HmiToggleSwitch.Mode), toggleSwitch.Mode));
-        AppendTextAttribute(html, "text", toggleSwitch.Text, context);
-        AppendTextAttribute(html, "alternate-text", toggleSwitch.AlternateText, context);
-        AppendAttribute(html, "image", toggleSwitch.Image.GetStaticValue()?.Uri);
-        AppendAttribute(html, "alternate-image", toggleSwitch.AlternateImage.GetStaticValue()?.Uri);
+        AppendAttribute(html, "text", text?.GetDisplayText(context.CultureInfo));
+        AppendAttribute(html, "alternate-text", alternateText?.GetDisplayText(context.CultureInfo));
+        AppendAttribute(html, "image", await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false));
+        AppendAttribute(html, "alternate-image", await ResolveImageUriAsync(alternateImage, project, cancellationToken).ConfigureAwait(false));
+        AppendBooleanAttribute(html, "checked", onState is not null && !ReferenceEquals(onState, offState) && ReferenceEquals(selectedState, onState));
         AppendStaticAttribute(html, "header", toggleSwitch.Header);
         AppendTextAttribute(html, "header-text", toggleSwitch.HeaderText, context);
         html.Append("></hmi-toggle-switch>");
