@@ -660,6 +660,50 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersInertOpaqueHostControlPreviews()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiOcxControl
+        {
+            Name = "LegacyTrend",
+            Width = 300,
+            Height = 120,
+            OcxGuid = "{11111111-2222-3333-4444-555555555555}",
+            OcxName = "Legacy Trend Control",
+            OcxProgramId = "Vendor.Trend.1",
+            OcxFileName = "trend.ocx",
+            OcxFileVersion = "1.2.3",
+            OcxStateFormat = "binary",
+            OcxState = [1, 2, 3, 4]
+        });
+        layer.Items.Add(new HmiDotNetControlContainer
+        {
+            Name = "ManagedControl",
+            Y = 130,
+            Width = 300,
+            Height = 80
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"LegacyTrend\"");
+        StringAssert.Contains(html, "data-ocx-guid=\"{11111111-2222-3333-4444-555555555555}\"");
+        StringAssert.Contains(html, "data-ocx-program-id=\"Vendor.Trend.1\"");
+        StringAssert.Contains(html, "data-ocx-file-name=\"trend.ocx\"");
+        StringAssert.Contains(html, "data-ocx-file-version=\"1.2.3\"");
+        StringAssert.Contains(html, "data-state-format=\"binary\" data-state-length=\"4\"");
+        StringAssert.Contains(html, ">ActiveX control</div>");
+        StringAssert.Contains(html, ">Legacy Trend Control</div>");
+        StringAssert.Contains(html, "<div id=\"ManagedControl\"");
+        StringAssert.Contains(html, ">.NET control</div>");
+        StringAssert.Contains(html, ">Metadata preserved</div>");
+        Assert.IsFalse(html.Contains("<object", StringComparison.Ordinal));
+        Assert.IsFalse(html.Contains("<embed", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen
