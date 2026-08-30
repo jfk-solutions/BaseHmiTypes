@@ -1,6 +1,7 @@
 import { HmiFont, HmiHorizontalAlignment, HmiProperty } from "../base.js";
 import { HmiSimpleScreenItemBase } from "../base/HmiSimpleScreenItemBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
+import { HmiAlarmLineViewKind } from "./HmiAlarmLineViewKind.js";
 
 export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   constructor() {
@@ -9,6 +10,7 @@ export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   }
 
   suppressFlashing?: HmiProperty<boolean>;
+  viewKind = HmiAlarmLineViewKind.Unknown;
   acknowledgmentFlashingRate?: HmiProperty<number>;
   resetFlashingRate?: HmiProperty<number>;
   numberOfRows?: HmiProperty<number>;

@@ -9,6 +9,7 @@ import {
   HmiAlarmColumnType,
   HmiAlarmControl,
   HmiAlarmLineControl,
+  HmiAlarmLineViewKind,
   HmiAlarmListMode,
   HmiAlarmViewKind,
   HmiAuditTrailControl,
@@ -460,6 +461,7 @@ test("HTML converter renders inert alarm previews", async () => {
   banner.y = staticProperty(170);
   banner.width = staticProperty(300);
   banner.height = staticProperty(30);
+  banner.viewKind = HmiAlarmLineViewKind.AlarmBanner;
   banner.queueNewAlarms = staticProperty(true);
   banner.showAlarmTime = staticProperty(true);
   banner.alarmTimeFormat = "HH:mm";
@@ -481,6 +483,7 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, />Alarm data not loaded<\/td>/);
   assert.match(html, />Acknowledge · Help<\/div>/);
   assert.match(html, /<div id="AlarmBanner"/);
+  assert.match(html, /data-view-kind="AlarmBanner"/);
   assert.match(html, /data-queue-new-alarms="true"/);
   assert.match(html, /data-show-alarm-state="true"/);
   assert.match(html, /data-show-alarm-time="true" data-time-format="HH:mm"/);

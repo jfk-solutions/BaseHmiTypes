@@ -1321,6 +1321,7 @@ function appendAlarmLineControl(html: string[], alarmLineControl: HmiAlarmLineCo
     true,
     "display: flex; align-items: center; overflow: hidden;",
   );
+  appendAttribute(html, "data-view-kind", alarmLineControl.viewKind);
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmLineControl.numberOfRows));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(alarmLineControl.wordWrap));
   appendAttribute(html, "data-queue-new-alarms", resolvePropertyPreview(alarmLineControl.queueNewAlarms));
