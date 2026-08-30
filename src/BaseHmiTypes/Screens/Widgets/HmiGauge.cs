@@ -17,11 +17,21 @@ public class HmiGauge : HmiScaleWidgetBase
 
     public HmiProperty<double>? TargetValue { get; set; }
 
+    public HmiProperty<bool>? TargetEnabled { get; set; }
+
+    public HmiProperty<bool>? UseVariableTarget { get; set; }
+
+    public HmiProperty<HmiColor>? TargetColor { get; set; }
+
+    public HmiProperty<HmiColor>? ExpectedRangeColor { get; set; }
+
     public HmiProperty<double>? TargetHighDeviation { get; set; }
 
     public HmiProperty<double>? TargetLowDeviation { get; set; }
 
     public HmiProperty<double>? SetpointValue { get; set; }
+
+    public HmiProperty<bool>? SetpointEnabled { get; set; }
 
     public HmiProperty<double>? ThresholdHighHigh { get; set; }
 
