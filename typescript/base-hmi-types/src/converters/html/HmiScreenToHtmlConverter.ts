@@ -73,6 +73,7 @@ import { HmiHtmlConvertOptions } from "./HmiHtmlConvertOptions.js";
 import { hmiHtmlCommonStyle } from "./HmiHtmlCommonStyle.generated.js";
 import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
 import { HmiTrendControl } from "../../screens/controls/HmiTrendControl.js";
+import { HmiDataGridControl } from "../../screens/controls/HmiDataGridControl.js";
 import { HmiWebControl } from "../../screens/controls/HmiWebControl.js";
 import { HmiInspectableScreenHtml, inspectHmiScreenAsync } from "./HmiScreenInspection.js";
 
@@ -322,6 +323,8 @@ export class HmiScreenToHtmlConverter {
       await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiScreenWindow) {
       await this.appendScreenWindowAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
+    } else if (item instanceof HmiDataGridControl) {
+      appendDataGridControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
       appendWebControl(html, item, context);
     } else if (item instanceof HmiAlarmControl) {
@@ -911,6 +914,58 @@ function appendWebControl(html: string[], webControl: HmiWebControl, context: Hm
     html.push(escapeHtml(url ?? ""), "</div>");
   }
   html.push("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Web browser</div></div>");
+}
+
+function appendDataGridControl(html: string[], dataGridControl: HmiDataGridControl, context: HmiHtmlConvertContext): void {
+  const showToolbar = getStaticValue(dataGridControl.showToolbar) === true;
+  const showStatusBar = getStaticValue(dataGridControl.showStatusBar) === true;
+  const showExportCsv = getStaticValue(dataGridControl.showExportCsv) === true;
+  const showProperties = getStaticValue(dataGridControl.showProperties) === true;
+  const absoluteMode = getStaticValue(dataGridControl.timePeriodAbsoluteMode) === true;
+
+  html.push("<div");
+  appendCommonAttributes(
+    html,
+    dataGridControl,
+    context,
+    true,
+    "display: flex; flex-direction: column; overflow: hidden;",
+  );
+  appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(dataGridControl.showToolbar));
+  appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(dataGridControl.showStatusBar));
+  appendAttribute(html, "data-show-export-csv", resolvePropertyPreview(dataGridControl.showExportCsv));
+  appendAttribute(html, "data-show-properties", resolvePropertyPreview(dataGridControl.showProperties));
+  appendAttribute(html, "data-time-period-absolute", resolvePropertyPreview(dataGridControl.timePeriodAbsoluteMode));
+  appendAttribute(html, "data-time-period-duration", resolvePropertyPreview(dataGridControl.timePeriodDuration));
+  appendAttribute(html, "data-time-period-start", resolvePropertyPreview(dataGridControl.timePeriodStart));
+  appendAttribute(html, "data-time-period-end", resolvePropertyPreview(dataGridControl.timePeriodEnd));
+  html.push(">");
+
+  if (showToolbar) {
+    html.push("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px;\">Data grid");
+    if (showExportCsv)
+      html.push(" · Export CSV");
+    if (showProperties)
+      html.push(" · Properties");
+    html.push("</div>");
+  }
+
+  html.push("<div style=\"flex: 0 0 auto; padding: 2px 4px;\">");
+  if (absoluteMode) {
+    html.push(
+      "Time: ",
+      escapeHtml(getStaticValue(dataGridControl.timePeriodStart) ?? ""),
+      " – ",
+      escapeHtml(getStaticValue(dataGridControl.timePeriodEnd) ?? ""),
+    );
+  } else {
+    html.push("Duration: ", escapeHtml(getStaticValue(dataGridControl.timePeriodDuration) ?? ""));
+  }
+  html.push("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Data binding not decoded</div>");
+
+  if (showStatusBar)
+    html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Status</div>");
+  html.push("</div>");
 }
 
 function resolvePropertyPreview<T>(property: HmiProperty<T> | undefined): string | undefined {

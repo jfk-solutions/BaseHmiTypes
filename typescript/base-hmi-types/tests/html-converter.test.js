@@ -7,6 +7,7 @@ import {
   HmiArrowIndicator,
   HmiBar,
   HmiClock,
+  HmiDataGridControl,
   HmiImage,
   HmiLayer,
   HmiListBox,
@@ -268,4 +269,39 @@ test("HTML converter renders an inert web control preview", async () => {
   assert.match(html, />https:\/\/example.test\/manual\?a=1&amp;b=2<\/div>/);
   assert.match(html, />Web browser<\/div>/);
   assert.doesNotMatch(html, /<iframe/);
+});
+
+test("HTML converter renders an inert data grid preview", async () => {
+  const screen = new HmiScreen();
+  screen.id = "main";
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.id = "layer-1";
+  layer.name = "Layer 1";
+  const dataGrid = new HmiDataGridControl();
+  dataGrid.name = "BatchHistory";
+  dataGrid.width = staticProperty(300);
+  dataGrid.height = staticProperty(180);
+  dataGrid.showToolbar = staticProperty(true);
+  dataGrid.showStatusBar = staticProperty(true);
+  dataGrid.showExportCsv = staticProperty(true);
+  dataGrid.showProperties = staticProperty(false);
+  dataGrid.timePeriodAbsoluteMode = staticProperty(true);
+  dataGrid.timePeriodStart = staticProperty("2026-08-30T08:00:00");
+  dataGrid.timePeriodEnd = staticProperty("2026-08-30T12:00:00");
+  layer.items.push(dataGrid);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="BatchHistory"/);
+  assert.match(html, /data-show-toolbar="true"/);
+  assert.match(html, /data-show-properties="false"/);
+  assert.match(html, /data-time-period-absolute="true"/);
+  assert.match(html, />Data grid · Export CSV<\/div>/);
+  assert.match(html, />Time: 2026-08-30T08:00:00 – 2026-08-30T12:00:00<\/div>/);
+  assert.match(html, />Data binding not decoded<\/div>/);
+  assert.match(html, />Status<\/div>/);
 });
