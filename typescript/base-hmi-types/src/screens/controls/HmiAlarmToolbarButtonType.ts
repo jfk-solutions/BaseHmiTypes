@@ -21,6 +21,7 @@ export enum HmiAlarmToolbarButtonType {
   Find = "Find",
   ShowHideDetails = "ShowHideDetails",
   RefreshAlarmList = "RefreshAlarmList",
+  StopDatabaseQuery = "StopDatabaseQuery",
   SilenceAll = "SilenceAll",
   ToggleAlarmBell = "ToggleAlarmBell",
   RunAlarmAndEventSummary = "RunAlarmAndEventSummary",
