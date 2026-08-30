@@ -37,10 +37,24 @@ export class HmiGauge extends HmiScaleWidgetBase {
   thresholdHigh?: HmiProperty<number>;
   thresholdLow?: HmiProperty<number>;
   thresholdLowLow?: HmiProperty<number>;
+  normalOperatingRangeColor?: HmiProperty<HmiColor>;
+  useVariableThresholds?: HmiProperty<boolean>;
+  highHighThresholdPresentation?: HmiGaugeThresholdPresentation;
+  highThresholdPresentation?: HmiGaugeThresholdPresentation;
+  lowThresholdPresentation?: HmiGaugeThresholdPresentation;
+  lowLowThresholdPresentation?: HmiGaugeThresholdPresentation;
   controlLimitHighHigh?: HmiProperty<number>;
   controlLimitHigh?: HmiProperty<number>;
   controlLimitLow?: HmiProperty<number>;
   controlLimitLowLow?: HmiProperty<number>;
+  useVariableControlLimits?: HmiProperty<boolean>;
+  controlLimitHighHighEnabled?: HmiProperty<boolean>;
+  controlLimitHighEnabled?: HmiProperty<boolean>;
+  controlLimitLowEnabled?: HmiProperty<boolean>;
+  controlLimitLowLowEnabled?: HmiProperty<boolean>;
+  controlLimitIconSize?: HmiProperty<string>;
+  withinControlLimitColor?: HmiProperty<HmiColor>;
+  beyondControlLimitColor?: HmiProperty<HmiColor>;
   sparklineEnabled?: HmiProperty<boolean>;
   gaugeBarSize?: HmiProperty<number>;
   sparklineLineWidth?: HmiProperty<number>;
@@ -54,4 +68,11 @@ export class HmiGauge extends HmiScaleWidgetBase {
     super();
     this.hmiObjectType = HmiObjectType.HmiGauge;
   }
+}
+
+export class HmiGaugeThresholdPresentation {
+  enabled?: HmiProperty<boolean>;
+  inactiveColor?: HmiProperty<HmiColor>;
+  activeColor?: HmiProperty<HmiColor>;
+  blink?: HmiProperty<boolean>;
 }
