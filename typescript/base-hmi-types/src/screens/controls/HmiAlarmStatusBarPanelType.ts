@@ -7,7 +7,9 @@ export enum HmiAlarmStatusBarPanelType {
   InAlarmUnacknowledged = "InAlarmUnacknowledged",
   InAlarmAcknowledged = "InAlarmAcknowledged",
   NormalUnacknowledged = "NormalUnacknowledged",
+  ActiveEvent = "ActiveEvent",
   AlarmFault = "AlarmFault",
+  UnknownMessages = "UnknownMessages",
   Filter = "Filter",
   Sort = "Sort"
 }
