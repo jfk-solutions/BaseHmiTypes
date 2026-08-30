@@ -850,7 +850,7 @@ public class HmiScreenToHtmlConverter
         var state = button.States.FirstOrDefault(candidate => candidate.Value == stateValue)
             ?? button.States.FirstOrDefault();
         html.Append("<button");
-        AppendCommonAttributes(html, button, context, additionalStyle: CreateButtonStateStyle(state));
+        AppendCommonAttributes(html, button, context, additionalStyle: CreateStateStyle(state));
         var enabled = button.Enabled is null || ResolveStaticValue(button.Enabled, context);
         if (!enabled)
             AppendAttribute(html, "disabled", "disabled");
@@ -867,7 +867,7 @@ public class HmiScreenToHtmlConverter
         html.Append("</button>");
     }
 
-    private static string? CreateButtonStateStyle(HmiState? state)
+    private static string? CreateStateStyle(HmiState? state)
     {
         if (state is null)
             return null;
@@ -891,16 +891,19 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendSymbolicInput(StringBuilder html, HmiSymbolicIOField symbolicIoField, HmiHtmlConvertContext context)
     {
+        var selectedValue = ResolveStaticValue(symbolicIoField.Value, context);
+        var selectedState = symbolicIoField.States.FirstOrDefault(candidate => candidate.Value == selectedValue)
+            ?? symbolicIoField.States.FirstOrDefault();
         html.Append("<select");
-        AppendCommonAttributes(html, symbolicIoField, context);
+        AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: CreateStateStyle(selectedState));
         html.Append('>');
-        var hasSelectedValue = TryGetStaticValue(symbolicIoField.Value, out var selectedValue);
         foreach (var state in symbolicIoField.States)
         {
             html.Append("<option");
             if (state.Value is double value)
                 AppendAttribute(html, "value", ToCss(value));
-            if (hasSelectedValue && state.Value == selectedValue)
+            AppendAttribute(html, "style", CreateStateStyle(state));
+            if (ReferenceEquals(state, selectedState))
                 AppendAttribute(html, "selected", "selected");
             html.Append('>');
             AppendMultilingualText(html, state.Text, context);

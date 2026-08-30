@@ -26,8 +26,23 @@ public class HmiScreenToHtmlConverterTests
             Height = 30,
             Value = 2
         };
-        symbolicIoField.States.Add(new HmiState { Name = "Stopped", Value = 0, Text = HmiMultilingualText.FromText("Stopped") });
-        symbolicIoField.States.Add(new HmiState { Name = "Running", Value = 2, Text = HmiMultilingualText.FromText("Running") });
+        symbolicIoField.States.Add(new HmiState
+        {
+            Name = "Stopped",
+            Value = 0,
+            Text = HmiMultilingualText.FromText("Stopped"),
+            BackgroundColor = HmiColor.FromArgb(255, 100, 0, 0),
+            ForegroundColor = HmiColor.FromArgb(255, 255, 255, 255)
+        });
+        symbolicIoField.States.Add(new HmiState
+        {
+            Name = "Running",
+            Value = 2,
+            Text = HmiMultilingualText.FromText("Running"),
+            BackgroundColor = HmiColor.FromArgb(255, 0, 100, 0),
+            CaptionColor = HmiColor.FromArgb(255, 240, 241, 242),
+            BorderColor = HmiColor.FromArgb(255, 50, 51, 52)
+        });
         var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
         var layer = new HmiLayer { Name = "Layer0" };
         layer.Items.Add(symbolicIoField);
@@ -36,8 +51,9 @@ public class HmiScreenToHtmlConverterTests
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
         StringAssert.Contains(html, "<select id=\"MotorState\"");
-        StringAssert.Contains(html, "<option value=\"0\">Stopped</option>");
-        StringAssert.Contains(html, "<option value=\"2\" selected=\"selected\">Running</option>");
+        StringAssert.Contains(html, "background-color: #006400;color: #F0F1F2;border-color: #323334;");
+        StringAssert.Contains(html, "<option value=\"0\" style=\"background-color: #640000;color: #FFFFFF;\">Stopped</option>");
+        StringAssert.Contains(html, "<option value=\"2\" style=\"background-color: #006400;color: #F0F1F2;border-color: #323334;\" selected=\"selected\">Running</option>");
         Assert.IsFalse(html.Contains("HmiSymbolicIOField", StringComparison.Ordinal));
     }
 
