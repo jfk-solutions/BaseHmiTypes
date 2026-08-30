@@ -207,6 +207,31 @@ export class HmiScreenToHtmlConverter {
     }
     context = context.withNodeKey(includeInspectionAttributes ? key : undefined);
 
+    const materializedReference = item.referenceObject?.materializedObject;
+    if (materializedReference !== undefined && materializedReference !== item) {
+      html.push("<div");
+      appendCommonAttributes(html, item, context, undefined, "overflow: hidden;");
+      appendAttribute(html, "class", "hmi-reference-object");
+      appendAttribute(html, "data-hmi-reference-source", item.referenceObject?.source);
+      html.push(">");
+      const childContext = context.withPositionOffset(
+        -getStaticValueOrDefault(materializedReference.x, 0) - context.positionOffsetX,
+        -getStaticValueOrDefault(materializedReference.y, 0) - context.positionOffsetY,
+      );
+      await this.appendItemAsync(
+        html,
+        materializedReference,
+        project,
+        childContext,
+        screenStack,
+        `${key}/materialized`,
+        includeInspectionAttributes,
+        signal,
+      );
+      html.push("</div>");
+      return;
+    }
+
     if (item instanceof HmiToggleSwitch) {
       appendToggleSwitch(html, item, context);
     } else if (item instanceof HmiCheckBoxGroup) {
