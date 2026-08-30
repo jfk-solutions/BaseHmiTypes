@@ -1,0 +1,37 @@
+namespace BaseHmiTypes.Screens.Controls;
+
+public enum HmiAlarmFilterFieldType
+{
+    Unknown,
+    AcknowledgmentTime,
+    AlarmClass,
+    AlarmCount,
+    AlarmName,
+    AlarmShortName,
+    AlarmState,
+    Area,
+    ConditionName,
+    CurrentValue,
+    EventCategory,
+    EventSource,
+    EventTime,
+    Group,
+    InAlarmTime,
+    LimitValue,
+    LiveDataValue,
+    Message,
+    OutOfAlarmTime,
+    Priority,
+    ServerName,
+    Severity,
+    Tag1Value,
+    Tag2Value,
+    Tag3Value,
+    Tag4Value,
+    AcknowledgeComment,
+    AcknowledgeUsername,
+    ConditionQuality,
+    EventType,
+    SubconditionName,
+    Suppress
+}
