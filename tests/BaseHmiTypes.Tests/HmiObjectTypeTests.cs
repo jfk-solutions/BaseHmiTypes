@@ -59,6 +59,18 @@ public class HmiObjectTypeTests
     }
 
     [TestMethod]
+    public void ScreenItem_RetainsGlobalObjectParameterDefinitions()
+    {
+        var item = new HmiGroup();
+        item.Parameters.Add(new HmiScreenParameter { Name = "#1", Description = "Motor tag" });
+
+        var parameter = item.Parameters.Single();
+        Assert.AreEqual("#1", parameter.Name);
+        Assert.AreEqual("Motor tag", parameter.Description);
+        Assert.IsNull(item.ReferenceObject);
+    }
+
+    [TestMethod]
     public void ButtonOperations_ExposeNavigationHistoryActions()
     {
         var names = Enum.GetNames<HmiButtonOperation>();
