@@ -19,6 +19,8 @@ import {
   HmiBar,
   HmiClock,
   HmiDataGridControl,
+  HmiDataGridDataSourceKind,
+  HmiDataGridSortDirection,
   HmiDotNetControlContainer,
   HmiImage,
   HmiLayer,
@@ -308,6 +310,12 @@ test("HTML converter renders an inert data grid preview", async () => {
   dataGrid.showStatusBar = staticProperty(true);
   dataGrid.showExportCsv = staticProperty(true);
   dataGrid.showProperties = staticProperty(false);
+  dataGrid.dataSourceKind = staticProperty(HmiDataGridDataSourceKind.SqlServer);
+  dataGrid.sourceDataSourceKind = "SQL Server";
+  dataGrid.dataSourceName = staticProperty("ProductionHistory");
+  dataGrid.tableOrView = staticProperty("dbo.BatchEvents");
+  dataGrid.timeSortDirection = staticProperty(HmiDataGridSortDirection.Descending);
+  dataGrid.sourceTimeSortDirection = "Descending";
   dataGrid.timePeriodAbsoluteMode = staticProperty(true);
   dataGrid.timePeriodStart = staticProperty("2026-08-30T08:00:00");
   dataGrid.timePeriodEnd = staticProperty("2026-08-30T12:00:00");
@@ -319,10 +327,15 @@ test("HTML converter renders an inert data grid preview", async () => {
   assert.match(html, /<div id="BatchHistory"/);
   assert.match(html, /data-show-toolbar="true"/);
   assert.match(html, /data-show-properties="false"/);
+  assert.match(html, /data-source-kind="SqlServer"/);
+  assert.match(html, /data-source-kind-raw="SQL Server"/);
+  assert.match(html, /data-source-name="ProductionHistory"/);
+  assert.match(html, /data-table-or-view="dbo.BatchEvents"/);
+  assert.match(html, /data-time-sort="Descending"/);
   assert.match(html, /data-time-period-absolute="true"/);
   assert.match(html, />Data grid · Export CSV<\/div>/);
   assert.match(html, />Time: 2026-08-30T08:00:00 – 2026-08-30T12:00:00<\/div>/);
-  assert.match(html, />Data binding not decoded<\/div>/);
+  assert.match(html, />SqlServer: ProductionHistory · dbo.BatchEvents<\/div>/);
   assert.match(html, />Status<\/div>/);
 });
 

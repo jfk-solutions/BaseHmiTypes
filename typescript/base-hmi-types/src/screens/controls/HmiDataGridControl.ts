@@ -3,6 +3,8 @@ import { HmiColor } from "../base/HmiColor.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiProperty } from "../base/HmiProperty.js";
 import { HmiDataGridColumn } from "./HmiDataGridColumn.js";
+import { HmiDataGridDataSourceKind } from "./HmiDataGridDataSourceKind.js";
+import { HmiDataGridSortDirection } from "./HmiDataGridSortDirection.js";
 
 export class HmiDataGridControl extends HmiControlWindowBase {
   constructor() {
@@ -15,6 +17,14 @@ export class HmiDataGridControl extends HmiControlWindowBase {
   showStatusBar?: HmiProperty<boolean>;
   showToolbar?: HmiProperty<boolean>;
   toolbarIconSize?: HmiProperty<string>;
+  dataSourceKind?: HmiProperty<HmiDataGridDataSourceKind>;
+  sourceDataSourceKind?: string;
+  dataSourceName?: HmiProperty<string>;
+  tableOrView?: HmiProperty<string>;
+  timeSortDirection?: HmiProperty<HmiDataGridSortDirection>;
+  sourceTimeSortDirection?: string;
+  historianInterpolatedMode?: HmiProperty<boolean>;
+  historianInterpolationInterval?: HmiProperty<string>;
   maximumRows?: HmiProperty<number>;
   useLocalMachineTimeZone?: HmiProperty<boolean>;
   alternatingRowBackgroundColor?: HmiProperty<HmiColor>;
