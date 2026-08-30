@@ -17,6 +17,7 @@ import { HmiAlarmBlinkRate } from "./HmiAlarmBlinkRate.js";
 import { HmiAlarmStateAppearance } from "./HmiAlarmStateAppearance.js";
 import { HmiAlarmSortCriterion } from "./HmiAlarmSortCriterion.js";
 import { HmiAlarmFilterExpression } from "./HmiAlarmFilterExpression.js";
+import { HmiAlarmDisplayFilter } from "./HmiAlarmDisplayFilter.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -87,6 +88,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   filterDefinition?: HmiProperty<string>;
   filterExpression?: HmiAlarmFilterExpression;
   filterName?: HmiProperty<string>;
+  readonly displayFilters: HmiAlarmDisplayFilter[] = [];
   gridBackgroundColor?: HmiProperty<HmiColor>;
   showHorizontalGridLines?: HmiProperty<boolean>;
   showVerticalGridLines?: HmiProperty<boolean>;

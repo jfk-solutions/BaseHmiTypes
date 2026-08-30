@@ -16,6 +16,7 @@ export * from "./controls/HmiAlarmStateAppearanceType.js";
 export * from "./controls/HmiAlarmSortCriterion.js";
 export * from "./controls/HmiAlarmSortDirection.js";
 export * from "./controls/HmiAlarmFilterExpression.js";
+export * from "./controls/HmiAlarmDisplayFilter.js";
 export * from "./controls/HmiAlarmFilterExpressionType.js";
 export * from "./controls/HmiAlarmFilterFieldType.js";
 export * from "./controls/HmiAlarmFilterOperator.js";
