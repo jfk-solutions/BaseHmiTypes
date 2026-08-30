@@ -73,6 +73,8 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   allowColumnResize?: HmiProperty<boolean>;
   allowSortByColumn?: HmiProperty<boolean>;
   rowDoubleClickAction?: HmiProperty<HmiAlarmRowDoubleClickAction>;
+  sendSelectedAlarmMessageIdToTag?: HmiProperty<boolean>;
+  selectedAlarmMessageIdTag?: HmiProperty<string>;
   defaultFilter?: HmiProperty<string>;
   filterDefinition?: HmiProperty<string>;
   filterName?: HmiProperty<string>;
