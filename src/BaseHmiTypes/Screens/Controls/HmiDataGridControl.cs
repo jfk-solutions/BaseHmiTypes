@@ -17,6 +17,8 @@ public class HmiDataGridControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowToolbar { get; set; }
 
+    public HmiProperty<string>? ToolbarIconSize { get; set; }
+
     public HmiProperty<bool>? TimePeriodAbsoluteMode { get; set; }
 
     public HmiProperty<string>? TimePeriodDuration { get; set; }
