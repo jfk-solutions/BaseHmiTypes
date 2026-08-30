@@ -71,6 +71,8 @@ public class HmiAlarmLineControl : HmiSimpleScreenItemBase
 
     public IList<HmiAlarmSortCriterion> SortCriteria { get; } = new List<HmiAlarmSortCriterion>();
 
+    public IList<HmiAlarmEventSubscription> EventSubscriptions { get; } = new List<HmiAlarmEventSubscription>();
+
     public HmiProperty<bool>? ShowTriggerValue { get; set; }
 
     public HmiProperty<bool>? ShowTriggerLabel { get; set; }
