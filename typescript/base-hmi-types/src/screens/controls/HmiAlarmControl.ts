@@ -9,6 +9,7 @@ import { HmiAlarmListMode } from "./HmiAlarmListMode.js";
 import { HmiBorderStyle } from "./HmiBorderStyle.js";
 import { HmiAlarmViewKind } from "./HmiAlarmViewKind.js";
 import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
+import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -69,6 +70,9 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   detailsPaneHeight?: HmiProperty<number>;
   detailsPaneVisible?: HmiProperty<boolean>;
   displayEventContextMenu?: HmiProperty<boolean>;
+  allowColumnResize?: HmiProperty<boolean>;
+  allowSortByColumn?: HmiProperty<boolean>;
+  rowDoubleClickAction?: HmiProperty<HmiAlarmRowDoubleClickAction>;
   defaultFilter?: HmiProperty<string>;
   filterDefinition?: HmiProperty<string>;
   filterName?: HmiProperty<string>;
