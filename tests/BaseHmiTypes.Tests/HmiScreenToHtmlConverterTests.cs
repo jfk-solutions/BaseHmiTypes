@@ -409,6 +409,30 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersArrowIndicatorPreview()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiArrowIndicator
+        {
+            Name = "LevelArrow",
+            Width = 30,
+            Height = 120,
+            BeginValue = 0,
+            EndValue = 100,
+            Value = 25,
+            Orientation = 1
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"LevelArrow\"");
+        StringAssert.Contains(html, "data-min=\"0\" data-max=\"100\" data-value=\"25\" data-orientation=\"vertical\"");
+        StringAssert.Contains(html, "bottom: 25%; transform: translate(-50%, 50%);\">▲</span>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersFormattedToggleSwitchTextAttributes()
     {
         var screen = new HmiScreen
