@@ -46,6 +46,7 @@ import { HmiShapeBase } from "../../screens/shapes/HmiShapeBase.js";
 import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
+import { HmiBar } from "../../screens/widgets/HmiBar.js";
 import { HmiDisabledImageMode } from "../../screens/widgets/HmiDisabledImageMode.js";
 import { HmiState } from "../../screens/widgets/HmiState.js";
 import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
@@ -54,9 +55,12 @@ import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
 import { HmiListBox } from "../../screens/widgets/HmiListBox.js";
 import { HmiRadioButtonGroup } from "../../screens/widgets/HmiRadioButtonGroup.js";
+import { HmiScale } from "../../screens/widgets/HmiScale.js";
+import { HmiScaleWidgetBase } from "../../screens/widgets/HmiScaleWidgetBase.js";
 import { HmiSelectionGroupBase, HmiSelectionGroupItem } from "../../screens/widgets/HmiSelectionGroupBase.js";
 import { HmiSwitchType } from "../../screens/widgets/HmiSwitchType.js";
 import { HmiSymbolicIOField } from "../../screens/widgets/HmiSymbolicIOField.js";
+import { HmiSlider } from "../../screens/widgets/HmiSlider.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiToggleSwitch } from "../../screens/widgets/HmiToggleSwitch.js";
 import { HmiWidgetBase } from "../../screens/widgets/HmiWidgetBase.js";
@@ -276,6 +280,12 @@ export class HmiScreenToHtmlConverter {
       appendEllipse(html, item, context);
     } else if (item instanceof HmiDynamicSvg) {
       appendDynamicSvg(html, item, context);
+    } else if (item instanceof HmiSlider) {
+      appendSlider(html, item, context);
+    } else if (item instanceof HmiBar) {
+      appendBar(html, item, context);
+    } else if (item instanceof HmiScale) {
+      appendScale(html, item, context);
     } else if (item instanceof HmiGauge) {
       appendGauge(html, item, context);
     } else if (item instanceof HmiTrendControl) {
@@ -761,6 +771,58 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
   if (fieldLength !== undefined)
     appendAttribute(html, "maxlength", fieldLength.toString());
   html.push(">");
+}
+
+function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
+  const [minimum, maximum] = resolveScaleRange(bar);
+  const value = resolveScaleValue(bar, minimum, maximum);
+  html.push("<meter");
+  appendCommonAttributes(html, bar, context);
+  appendAttribute(html, "min", toCss(minimum));
+  appendAttribute(html, "max", toCss(maximum));
+  appendAttribute(html, "value", toCss(value));
+  html.push(`>${toCss(value)}</meter>`);
+}
+
+function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvertContext): void {
+  const [minimum, maximum] = resolveScaleRange(slider);
+  const value = resolveScaleValue(slider, minimum, maximum);
+  html.push("<input");
+  appendCommonAttributes(html, slider, context);
+  appendAttribute(html, "type", "range");
+  appendAttribute(html, "min", toCss(minimum));
+  appendAttribute(html, "max", toCss(maximum));
+  appendAttribute(html, "value", toCss(value));
+  appendAttribute(html, "disabled", "disabled");
+  html.push(">");
+}
+
+function appendScale(html: string[], scale: HmiScale, context: HmiHtmlConvertContext): void {
+  const [minimum, maximum] = resolveScaleRange(scale);
+  html.push("<div");
+  appendCommonAttributes(
+    html,
+    scale,
+    context,
+    true,
+    "display: flex; align-items: end; justify-content: space-between; overflow: hidden;",
+  );
+  html.push(`><span>${toCss(minimum)}</span><span>${toCss(maximum)}</span></div>`);
+}
+
+function resolveScaleRange(scale: HmiScaleWidgetBase): [number, number] {
+  const begin = getStaticValue(scale.beginValue) ?? 0;
+  let end = getStaticValue(scale.endValue) ?? 0;
+  if (begin === end)
+    end = begin + 1;
+  return begin < end ? [begin, end] : [end, begin];
+}
+
+function resolveScaleValue(scale: HmiScaleWidgetBase, minimum: number, maximum: number): number {
+  const value = getStaticValue(scale.showFillLevel) === true
+    ? getStaticValue(scale.fillLevel) ?? 0
+    : getStaticValue(scale.value) ?? 0;
+  return Math.min(Math.max(value, minimum), maximum);
 }
 
 function appendSymbolicInput(html: string[], symbolicIoField: HmiSymbolicIOField, context: HmiHtmlConvertContext): void {
