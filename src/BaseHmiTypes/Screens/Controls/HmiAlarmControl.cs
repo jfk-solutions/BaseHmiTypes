@@ -62,6 +62,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowToolbar { get; set; }
 
+    public IList<HmiAlarmToolbarButton> ToolbarButtons { get; } = new List<HmiAlarmToolbarButton>();
+
     public HmiProperty<bool>? ShowDetailsButton { get; set; }
 
     public HmiProperty<bool>? ShowEnableDisableButtons { get; set; }
