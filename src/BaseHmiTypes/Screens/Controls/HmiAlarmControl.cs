@@ -132,6 +132,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<string>? FilterDefinition { get; set; }
 
+    public HmiAlarmFilterExpression? FilterExpression { get; set; }
+
     public HmiProperty<string>? FilterName { get; set; }
 
     public HmiProperty<HmiColor>? GridBackgroundColor { get; set; }
