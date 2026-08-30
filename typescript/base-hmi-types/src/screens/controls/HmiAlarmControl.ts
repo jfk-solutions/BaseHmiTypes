@@ -80,6 +80,8 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showOutOfServiceAlarms?: HmiProperty<boolean>;
   sortOrder?: HmiProperty<string>;
   showStatusBar?: HmiProperty<boolean>;
+  recordLimit?: HmiProperty<number>;
+  whereClause?: HmiProperty<string>;
   showPendingAlarms?: HmiProperty<boolean>;
   showAlarmsToAcknowledge?: HmiProperty<boolean>;
   sortByTimeEnabled?: HmiProperty<boolean>;
