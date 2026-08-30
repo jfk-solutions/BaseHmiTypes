@@ -3,6 +3,8 @@ import { HmiSimpleScreenItemBase } from "../base/HmiSimpleScreenItemBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiAlarmLineViewKind } from "./HmiAlarmLineViewKind.js";
 import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js";
+import { HmiAlarmColumn } from "./HmiAlarmColumn.js";
+import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
 
 export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   constructor() {
@@ -37,6 +39,8 @@ export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   maintainSelection?: HmiProperty<boolean>;
   showWaitingMessage?: HmiProperty<boolean>;
   alarmBellEnabled?: HmiProperty<boolean>;
+  readonly columnDefinitions: HmiAlarmColumn[] = [];
+  timePrecision?: HmiProperty<HmiAlarmTimePrecision>;
   showTriggerValue?: HmiProperty<boolean>;
   showTriggerLabel?: HmiProperty<boolean>;
   showInactiveAlarms?: HmiProperty<boolean>;
