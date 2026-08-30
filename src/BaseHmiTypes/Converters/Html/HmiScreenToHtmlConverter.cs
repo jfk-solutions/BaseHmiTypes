@@ -195,6 +195,15 @@ public class HmiScreenToHtmlConverter
             case HmiDynamicSvg dynamicSvg:
                 AppendDynamicSvg(html, dynamicSvg, context);
                 break;
+            case HmiSlider slider:
+                AppendSlider(html, slider, context);
+                break;
+            case HmiBar bar:
+                AppendBar(html, bar, context);
+                break;
+            case HmiScale scale:
+                AppendScale(html, scale, context);
+                break;
             case HmiGauge gauge:
                 AppendGauge(html, gauge, context);
                 break;
@@ -900,6 +909,61 @@ public class HmiScreenToHtmlConverter
         if (ioField.FieldLength is not null)
             AppendAttribute(html, "maxlength", ResolveStaticValue(ioField.FieldLength, context).ToString(CultureInfo.InvariantCulture));
         html.Append(">");
+    }
+
+    private static void AppendBar(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)
+    {
+        var (minimum, maximum) = ResolveScaleRange(bar, context);
+        var value = ResolveScaleValue(bar, minimum, maximum, context);
+        html.Append("<meter");
+        AppendCommonAttributes(html, bar, context);
+        AppendAttribute(html, "min", ToCss(minimum));
+        AppendAttribute(html, "max", ToCss(maximum));
+        AppendAttribute(html, "value", ToCss(value));
+        html.Append('>').Append(ToCss(value)).Append("</meter>");
+    }
+
+    private static void AppendSlider(StringBuilder html, HmiSlider slider, HmiHtmlConvertContext context)
+    {
+        var (minimum, maximum) = ResolveScaleRange(slider, context);
+        var value = ResolveScaleValue(slider, minimum, maximum, context);
+        html.Append("<input");
+        AppendCommonAttributes(html, slider, context);
+        AppendAttribute(html, "type", "range");
+        AppendAttribute(html, "min", ToCss(minimum));
+        AppendAttribute(html, "max", ToCss(maximum));
+        AppendAttribute(html, "value", ToCss(value));
+        AppendAttribute(html, "disabled", "disabled");
+        html.Append('>');
+    }
+
+    private static void AppendScale(StringBuilder html, HmiScale scale, HmiHtmlConvertContext context)
+    {
+        var (minimum, maximum) = ResolveScaleRange(scale, context);
+        html.Append("<div");
+        AppendCommonAttributes(html, scale, context, additionalStyle: "display: flex; align-items: end; justify-content: space-between; overflow: hidden;");
+        html.Append("><span>").Append(ToCss(minimum)).Append("</span><span>").Append(ToCss(maximum)).Append("</span></div>");
+    }
+
+    private static (double Minimum, double Maximum) ResolveScaleRange(HmiScaleWidgetBase scale, HmiHtmlConvertContext context)
+    {
+        var begin = ResolveStaticValue(scale.BeginValue, context);
+        var end = ResolveStaticValue(scale.EndValue, context);
+        if (begin == end)
+            end = begin + 1;
+        return begin < end ? (begin, end) : (end, begin);
+    }
+
+    private static double ResolveScaleValue(
+        HmiScaleWidgetBase scale,
+        double minimum,
+        double maximum,
+        HmiHtmlConvertContext context)
+    {
+        var value = scale.ShowFillLevel is not null && ResolveStaticValue(scale.ShowFillLevel, context)
+            ? ResolveStaticValue(scale.FillLevel, context)
+            : ResolveStaticValue(scale.Value, context);
+        return Math.Clamp(value, minimum, maximum);
     }
 
     private static void AppendSymbolicInput(StringBuilder html, HmiSymbolicIOField symbolicIoField, HmiHtmlConvertContext context)
