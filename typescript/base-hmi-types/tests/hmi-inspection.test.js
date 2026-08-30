@@ -11,6 +11,7 @@ import {
   HmiImage,
   HmiImageSourceKind,
   HmiImageType,
+  HmiIOField,
   HmiLayer,
   HmiMultilingualText,
   HmiPropertyKind,
@@ -101,6 +102,25 @@ test("HTML conversion renders symbolic IO field states", async () => {
   assert.match(html, /<option value="0" style="background-color: #640000;color: #FFFFFF;">Stopped<\/option>/);
   assert.match(html, /<option value="2" style="background-color: #006400;color: #F0F1F2;border-color: #323334;" selected="selected">Running<\/option>/);
   assert.doesNotMatch(html, /HmiSymbolicIOField/);
+});
+
+test("HTML conversion renders IO field preview and input settings", async () => {
+  const field = new HmiIOField();
+  field.name = "Speed";
+  field.text = expressionProperty("{[PLC]Speed}");
+  field.readOnly = staticProperty(true);
+  field.maskInput = staticProperty(true);
+  field.fieldLength = staticProperty(12);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(field);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<input id="Speed"/);
+  assert.match(html, /value="{\[PLC\]Speed}"/);
+  assert.match(html, /readonly="readonly"/);
+  assert.match(html, /type="password"/);
+  assert.match(html, /maxlength="12"/);
 });
 
 test("HTML conversion renders a project-backed button image", async () => {

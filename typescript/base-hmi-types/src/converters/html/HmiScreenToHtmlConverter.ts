@@ -14,7 +14,7 @@ import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignmen
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
-import { getStaticValue, getStaticValueOrDefault, HmiProperty } from "../../screens/base/HmiProperty.js";
+import { getStaticValue, getStaticValueOrDefault, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
 import { HmiScreenBase } from "../../screens/base/HmiScreenBase.js";
 import { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
 import { HmiSymbolContainer } from "../../screens/base/HmiSymbolContainer.js";
@@ -746,6 +746,17 @@ function createStateStyle(state: HmiState | undefined): string | null {
 function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConvertContext): void {
   html.push("<input");
   appendCommonAttributes(html, ioField, context);
+  let text = getStaticValue(ioField.text)?.getDisplayText(context.options.cultureLcid);
+  if (!text?.trim() && ioField.text?.kind === HmiPropertyKind.Expression)
+    text = (ioField.text as HmiExpressionProperty<HmiMultilingualText>).expression;
+  appendAttribute(html, "value", text);
+  if (getStaticValue(ioField.readOnly) === true)
+    appendAttribute(html, "readonly", "readonly");
+  if (getStaticValue(ioField.maskInput) === true)
+    appendAttribute(html, "type", "password");
+  const fieldLength = getStaticValue(ioField.fieldLength);
+  if (fieldLength !== undefined)
+    appendAttribute(html, "maxlength", fieldLength.toString());
   html.push(">");
 }
 
