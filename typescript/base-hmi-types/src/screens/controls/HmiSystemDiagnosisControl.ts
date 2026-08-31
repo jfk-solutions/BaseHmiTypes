@@ -9,6 +9,10 @@ import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
 import { HmiSystemDiagnosisColumn } from "./HmiSystemDiagnosisColumn.js";
 import { HmiAlarmToolbarButton } from "./HmiAlarmToolbarButton.js";
 import { HmiAlarmStatusBarPanel } from "./HmiAlarmStatusBarPanel.js";
+import { HmiAlarmDisplayFilter } from "./HmiAlarmDisplayFilter.js";
+import { HmiAlarmEventSubscription } from "./HmiAlarmEventSubscription.js";
+import { HmiAlarmStateAppearance } from "./HmiAlarmStateAppearance.js";
+import { HmiSystemDiagnosisSortCriterion } from "./HmiSystemDiagnosisSortCriterion.js";
 
 export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   constructor() {
@@ -53,4 +57,10 @@ export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   readonly columnDefinitions: HmiSystemDiagnosisColumn[] = [];
   readonly toolbarButtons: HmiAlarmToolbarButton[] = [];
   readonly statusBarPanels: HmiAlarmStatusBarPanel[] = [];
+  defaultFilter?: HmiProperty<string>;
+  readonly displayFilters: HmiAlarmDisplayFilter[] = [];
+  sortOrder?: HmiProperty<string>;
+  readonly sortCriteria: HmiSystemDiagnosisSortCriterion[] = [];
+  readonly eventSubscriptions: HmiAlarmEventSubscription[] = [];
+  readonly stateAppearances: HmiAlarmStateAppearance[] = [];
 }

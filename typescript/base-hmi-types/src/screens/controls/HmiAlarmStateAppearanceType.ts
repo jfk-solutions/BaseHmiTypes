@@ -8,5 +8,8 @@ export enum HmiAlarmStateAppearanceType {
   High = "High",
   Medium = "Medium",
   Low = "Low",
-  Event = "Event"
+  Event = "Event",
+  ActiveUnsuppressed = "ActiveUnsuppressed",
+  ActiveSuppressed = "ActiveSuppressed",
+  InactiveSuppressed = "InactiveSuppressed"
 }
