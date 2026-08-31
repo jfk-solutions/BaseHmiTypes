@@ -14,6 +14,7 @@ import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
+import { HmiLineStyle } from "../../screens/base/HmiLineStyle.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
 import { getStaticValue, getStaticValueOrDefault, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
@@ -1286,10 +1287,23 @@ function appendRadarChartControl(html: string[], radarChartControl: HmiRadarChar
   );
   appendAttribute(html, "data-series-count", resolvePropertyPreview(radarChartControl.seriesCount));
   appendAttribute(html, "data-category-count", resolvePropertyPreview(radarChartControl.categoryCount));
+  appendAttribute(html, "data-radar-shape", resolvePropertyPreview(radarChartControl.radarShape));
+  appendAttribute(html, "data-radar-shape-raw", radarChartControl.sourceRadarShape);
+  appendAttribute(html, "data-chart-background", resolvePropertyPreview(radarChartControl.chartBackgroundColor));
+  const gridLineStyle = getStaticValue(radarChartControl.gridLineStyle);
+  appendAttribute(html, "data-grid-line-style", gridLineStyle === undefined ? undefined : HmiLineStyle[gridLineStyle]);
+  appendAttribute(html, "data-grid-line-style-raw", radarChartControl.sourceGridLineStyle);
+  appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(radarChartControl.gridLineColor));
+  appendAttribute(html, "data-banded-color", resolvePropertyPreview(radarChartControl.bandedColor));
+  appendAttribute(html, "data-show-legend", resolvePropertyPreview(radarChartControl.showLegend));
+  appendAttribute(html, "data-legend-position", resolvePropertyPreview(radarChartControl.legendPosition));
+  appendAttribute(html, "data-legend-position-raw", radarChartControl.sourceLegendPosition);
+  appendAttribute(html, "data-decimal-places", resolvePropertyPreview(radarChartControl.decimalPlaces));
+  appendAttribute(html, "data-refresh-rate-seconds", resolvePropertyPreview(radarChartControl.refreshRateSeconds));
   html.push(
     "><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">",
     escapeHtml(title?.trim() ? title : "Radar chart"),
-    "</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Radar payload preserved",
+    "</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Radar data not loaded",
   );
   if (seriesCount !== undefined || categoryCount !== undefined) {
     html.push(" (");

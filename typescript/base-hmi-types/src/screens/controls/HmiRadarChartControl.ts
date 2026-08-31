@@ -1,7 +1,12 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiProperty } from "../base/HmiProperty.js";
+import { HmiColor } from "../base/HmiColor.js";
+import { HmiFont } from "../base/HmiFont.js";
+import { HmiLineStyle } from "../base/HmiLineStyle.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
+import { HmiRadarLegendPosition } from "./HmiRadarLegendPosition.js";
+import { HmiRadarShape } from "./HmiRadarShape.js";
 
 /**
  * Represents a radar/spider chart control. Product-specific chart payloads can
@@ -16,4 +21,20 @@ export class HmiRadarChartControl extends HmiControlWindowBase {
   title?: HmiMultilingualText;
   seriesCount?: HmiProperty<number>;
   categoryCount?: HmiProperty<number>;
+  radarShape?: HmiProperty<HmiRadarShape>;
+  sourceRadarShape?: string;
+  chartBackgroundColor?: HmiProperty<HmiColor>;
+  gridLineStyle?: HmiProperty<HmiLineStyle>;
+  sourceGridLineStyle?: string;
+  gridLineColor?: HmiProperty<HmiColor>;
+  bandedColor?: HmiProperty<HmiColor>;
+  showLegend?: HmiProperty<boolean>;
+  legendPosition?: HmiProperty<HmiRadarLegendPosition>;
+  sourceLegendPosition?: string;
+  decimalPlaces?: HmiProperty<number>;
+  refreshRateSeconds?: HmiProperty<number>;
+  titleFont?: HmiFont;
+  categoryFont?: HmiFont;
+  legendFont?: HmiFont;
+  dataLabelFont?: HmiFont;
 }

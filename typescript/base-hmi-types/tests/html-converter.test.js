@@ -33,6 +33,9 @@ import {
   HmiRecipeControl,
   HmiRecipeViewKind,
   HmiRadarChartControl,
+  HmiRadarLegendPosition,
+  HmiRadarShape,
+  HmiLineStyle,
   HmiSystemDiagnosisControl,
   HmiSystemDiagnosisViewKind,
   HmiScale,
@@ -565,6 +568,18 @@ test("HTML converter renders an inert radar chart preview", async () => {
   radar.title = HmiMultilingualText.fromText("Process overview");
   radar.seriesCount = staticProperty(3);
   radar.categoryCount = staticProperty(8);
+  radar.radarShape = staticProperty(HmiRadarShape.Polygon);
+  radar.sourceRadarShape = "Polygon";
+  radar.chartBackgroundColor = staticProperty(hmiColorFromArgb(255, 17, 34, 51));
+  radar.gridLineStyle = staticProperty(HmiLineStyle.Dash);
+  radar.sourceGridLineStyle = "Dash";
+  radar.gridLineColor = staticProperty(hmiColorFromArgb(255, 68, 85, 102));
+  radar.bandedColor = staticProperty(hmiColorFromArgb(255, 119, 136, 153));
+  radar.showLegend = staticProperty(true);
+  radar.legendPosition = staticProperty(HmiRadarLegendPosition.Right);
+  radar.sourceLegendPosition = "Right";
+  radar.decimalPlaces = staticProperty(2);
+  radar.refreshRateSeconds = staticProperty(1.5);
   layer.items.push(radar);
   screen.layers.push(layer);
 
@@ -572,8 +587,17 @@ test("HTML converter renders an inert radar chart preview", async () => {
 
   assert.match(html, /<div id="ProcessRadar"/);
   assert.match(html, /data-series-count="3" data-category-count="8"/);
+  assert.match(html, /data-radar-shape="Polygon"/);
+  assert.match(html, /data-chart-background="#112233"/);
+  assert.match(html, /data-grid-line-style="Dash"/);
+  assert.match(html, /data-grid-line-color="#445566"/);
+  assert.match(html, /data-banded-color="#778899"/);
+  assert.match(html, /data-show-legend="true"/);
+  assert.match(html, /data-legend-position="Right"/);
+  assert.match(html, /data-decimal-places="2"/);
+  assert.match(html, /data-refresh-rate-seconds="1.5"/);
   assert.match(html, />Process overview<\/div>/);
-  assert.match(html, />Radar payload preserved \(Series: 3 · Categories: 8\)<\/div>/);
+  assert.match(html, />Radar data not loaded \(Series: 3 · Categories: 8\)<\/div>/);
   assert.doesNotMatch(html, /<canvas/);
 });
 
