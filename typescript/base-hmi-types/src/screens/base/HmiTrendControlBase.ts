@@ -9,6 +9,7 @@ import { HmiTrendContainerType } from "./HmiTrendContainerType.js";
 import { HmiTrendAxisScalingMode } from "./HmiTrendAxisScalingMode.js";
 import { HmiTrendBatch } from "./HmiTrendBatch.js";
 import { HmiTrendDataPointConnection } from "./HmiTrendDataPointConnection.js";
+import { HmiTrendDataServer } from "./HmiTrendDataServer.js";
 import { HmiTrendNumericRadix } from "./HmiTrendNumericRadix.js";
 import { HmiTrendLegendPosition } from "./HmiTrendLegendPosition.js";
 import { HmiTrendOverlay } from "./HmiTrendOverlay.js";
@@ -58,6 +59,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   chartTitle?: string;
   displayChartTitle?: HmiProperty<boolean>;
   dataServerName?: string;
+  dataServer?: HmiProperty<HmiTrendDataServer>;
   displayHistoricalLoadProgress?: HmiProperty<boolean>;
   displayLineLegend?: HmiProperty<boolean>;
   displayLineLegendMinimumMaximum?: HmiProperty<boolean>;
