@@ -4,6 +4,7 @@ import { HmiColor } from "../base/HmiColor.js";
 import { HmiFont } from "../base/HmiFont.js";
 import { HmiProperty } from "../base/HmiProperty.js";
 import { HmiSystemDiagnosisViewKind } from "./HmiSystemDiagnosisViewKind.js";
+import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js";
 
 export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   constructor() {
@@ -38,4 +39,10 @@ export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   statusBarFont?: HmiFont;
   statusBarIconSize?: HmiProperty<string>;
   showTooltips?: HmiProperty<boolean>;
+  allowColumnResize?: HmiProperty<boolean>;
+  allowSortByColumn?: HmiProperty<boolean>;
+  displayContextMenu?: HmiProperty<boolean>;
+  rowDoubleClickAction?: HmiProperty<HmiAlarmRowDoubleClickAction>;
+  displayErrorsInDialog?: HmiProperty<boolean>;
+  showWaitingMessage?: HmiProperty<boolean>;
 }
