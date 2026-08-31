@@ -131,6 +131,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<bool>? HideUserNameEntry { get; set; }
 
     /// <summary>
+    /// Gets or sets the fixed user name initially shown by a user-login dialog.
+    /// </summary>
+    public HmiProperty<string>? LoginUserName { get; set; }
+
+    /// <summary>
     /// Gets or sets whether a user-login dialog displays the configured domain name.
     /// </summary>
     public HmiProperty<bool>? LoginDomainNameVisible { get; set; }
