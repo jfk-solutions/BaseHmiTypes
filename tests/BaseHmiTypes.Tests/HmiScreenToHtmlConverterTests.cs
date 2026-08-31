@@ -730,7 +730,19 @@ public class HmiScreenToHtmlConverterTests
             Height = 180,
             Title = HmiMultilingualText.FromText("Process overview"),
             SeriesCount = 3,
-            CategoryCount = 8
+            CategoryCount = 8,
+            RadarShape = HmiRadarShape.Polygon,
+            SourceRadarShape = "Polygon",
+            ChartBackgroundColor = HmiColor.FromArgb(255, 17, 34, 51),
+            GridLineStyle = HmiLineStyle.Dash,
+            SourceGridLineStyle = "Dash",
+            GridLineColor = HmiColor.FromArgb(255, 68, 85, 102),
+            BandedColor = HmiColor.FromArgb(255, 119, 136, 153),
+            ShowLegend = true,
+            LegendPosition = HmiRadarLegendPosition.Right,
+            SourceLegendPosition = "Right",
+            DecimalPlaces = 2,
+            RefreshRateSeconds = 1.5
         });
         screen.Layers.Add(layer);
 
@@ -738,8 +750,17 @@ public class HmiScreenToHtmlConverterTests
 
         StringAssert.Contains(html, "<div id=\"ProcessRadar\"");
         StringAssert.Contains(html, "data-series-count=\"3\" data-category-count=\"8\"");
+        StringAssert.Contains(html, "data-radar-shape=\"Polygon\"");
+        StringAssert.Contains(html, "data-chart-background=\"#112233\"");
+        StringAssert.Contains(html, "data-grid-line-style=\"Dash\"");
+        StringAssert.Contains(html, "data-grid-line-color=\"#445566\"");
+        StringAssert.Contains(html, "data-banded-color=\"#778899\"");
+        StringAssert.Contains(html, "data-show-legend=\"true\"");
+        StringAssert.Contains(html, "data-legend-position=\"Right\"");
+        StringAssert.Contains(html, "data-decimal-places=\"2\"");
+        StringAssert.Contains(html, "data-refresh-rate-seconds=\"1.5\"");
         StringAssert.Contains(html, ">Process overview</div>");
-        StringAssert.Contains(html, ">Radar payload preserved (Series: 3 · Categories: 8)</div>");
+        StringAssert.Contains(html, ">Radar data not loaded (Series: 3 · Categories: 8)</div>");
         Assert.IsFalse(html.Contains("<canvas", StringComparison.Ordinal));
     }
 
