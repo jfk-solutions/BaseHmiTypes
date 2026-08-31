@@ -1,3 +1,4 @@
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Screens.Base;
 using BaseHmiTypes.Screens.Controls;
 
@@ -51,8 +52,20 @@ public sealed class HmiSystemDiagnosisTests
             DisplayContextMenu = true,
             RowDoubleClickAction = HmiAlarmRowDoubleClickAction.Suppress,
             DisplayErrorsInDialog = true,
-            ShowWaitingMessage = true
+            ShowWaitingMessage = true,
+            TimestampPrecision = HmiAlarmTimePrecision.Milliseconds
         };
+        control.ColumnDefinitions.Add(new HmiSystemDiagnosisColumn
+        {
+            Type = HmiSystemDiagnosisColumnType.DiagnosticCode,
+            SourceType = "DiagnosticCode",
+            Visible = true,
+            Width = 140,
+            HeaderText = HmiMultilingualText.FromText("Code"),
+            Alignment = HmiHorizontalAlignment.Left,
+            Format = "Text",
+            Order = 1
+        });
 
         Assert.IsTrue(control.ShowColumnHeadings!.StaticValue);
         Assert.IsFalse(control.ShowVerticalGridLines!.StaticValue);
@@ -67,5 +80,10 @@ public sealed class HmiSystemDiagnosisTests
         Assert.AreEqual(HmiAlarmRowDoubleClickAction.Suppress, control.RowDoubleClickAction!.StaticValue);
         Assert.IsTrue(control.DisplayErrorsInDialog!.StaticValue);
         Assert.IsTrue(control.ShowWaitingMessage!.StaticValue);
+        Assert.AreEqual(HmiAlarmTimePrecision.Milliseconds, control.TimestampPrecision!.StaticValue);
+        var column = control.ColumnDefinitions.Single();
+        Assert.AreEqual(HmiSystemDiagnosisColumnType.DiagnosticCode, column.Type);
+        Assert.AreEqual("Code", column.HeaderText!.GetText(null));
+        Assert.AreEqual(140, column.Width!.StaticValue);
     }
 }
