@@ -7,6 +7,8 @@ import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiRadarLegendPosition } from "./HmiRadarLegendPosition.js";
 import { HmiRadarShape } from "./HmiRadarShape.js";
+import { HmiRadarChartCategory } from "./HmiRadarChartCategory.js";
+import { HmiRadarChartSeries } from "./HmiRadarChartSeries.js";
 
 /**
  * Represents a radar/spider chart control. Product-specific chart payloads can
@@ -37,4 +39,6 @@ export class HmiRadarChartControl extends HmiControlWindowBase {
   categoryFont?: HmiFont;
   legendFont?: HmiFont;
   dataLabelFont?: HmiFont;
+  readonly categories: HmiRadarChartCategory[] = [];
+  readonly series: HmiRadarChartSeries[] = [];
 }
