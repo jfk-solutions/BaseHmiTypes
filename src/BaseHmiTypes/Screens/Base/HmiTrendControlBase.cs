@@ -123,6 +123,18 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiTrendYAxisRangeMode>? YAxisRangeMode { get; set; }
 
+    public HmiProperty<HmiTrendYAxisCustomBoundSource>? YAxisCustomMinimumSource { get; set; }
+
+    public HmiProperty<double>? YAxisCustomMinimumValue { get; set; }
+
+    public string? YAxisCustomMinimumTagName { get; set; }
+
+    public HmiProperty<HmiTrendYAxisCustomBoundSource>? YAxisCustomMaximumSource { get; set; }
+
+    public HmiProperty<double>? YAxisCustomMaximumValue { get; set; }
+
+    public string? YAxisCustomMaximumTagName { get; set; }
+
     public HmiProperty<bool>? YAxisIsolatedGraphing { get; set; }
 
     public HmiProperty<double>? YAxisIsolationPercent { get; set; }

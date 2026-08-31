@@ -21,6 +21,7 @@ import { HmiTrendTimeFormat } from "./HmiTrendTimeFormat.js";
 import { HmiTrendTemplateOption } from "./HmiTrendTemplateOption.js";
 import { HmiTrendUpdateMode } from "./HmiTrendUpdateMode.js";
 import { HmiTrendYAxisRangeMode } from "./HmiTrendYAxisRangeMode.js";
+import { HmiTrendYAxisCustomBoundSource } from "./HmiTrendYAxisCustomBoundSource.js";
 import { HmiTrendYAxisScaleMode } from "./HmiTrendYAxisScaleMode.js";
 import { HmiTrendWindowStyle } from "./HmiTrendWindowStyle.js";
 
@@ -84,6 +85,12 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   xAxisTimeSpan?: HmiProperty<number>;
   xAxisTimeSpanUnit?: string;
   yAxisRangeMode?: HmiProperty<HmiTrendYAxisRangeMode>;
+  yAxisCustomMinimumSource?: HmiProperty<HmiTrendYAxisCustomBoundSource>;
+  yAxisCustomMinimumValue?: HmiProperty<number>;
+  yAxisCustomMinimumTagName?: string;
+  yAxisCustomMaximumSource?: HmiProperty<HmiTrendYAxisCustomBoundSource>;
+  yAxisCustomMaximumValue?: HmiProperty<number>;
+  yAxisCustomMaximumTagName?: string;
   yAxisIsolatedGraphing?: HmiProperty<boolean>;
   yAxisIsolationPercent?: HmiProperty<number>;
   yAxisScaleVisible?: HmiProperty<boolean>;
