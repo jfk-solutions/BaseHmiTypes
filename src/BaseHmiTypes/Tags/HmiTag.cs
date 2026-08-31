@@ -20,6 +20,8 @@ public sealed class HmiTag : IHmiObject
 
     public bool? ReadOnly { get; set; }
 
+    public string? AccessRight { get; set; }
+
     public bool? Alarmed { get; set; }
 
     public bool? Retentive { get; set; }
