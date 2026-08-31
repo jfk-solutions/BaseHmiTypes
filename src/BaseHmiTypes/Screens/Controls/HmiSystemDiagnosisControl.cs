@@ -16,4 +16,48 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
     public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
+
+    public HmiProperty<bool>? ShowColumnHeadings { get; set; }
+
+    public HmiProperty<bool>? ShowHorizontalGridLines { get; set; }
+
+    public HmiProperty<bool>? ShowVerticalGridLines { get; set; }
+
+    public HmiProperty<bool>? ShowHorizontalScrollbar { get; set; }
+
+    public HmiProperty<bool>? ShowVerticalScrollbar { get; set; }
+
+    public HmiProperty<bool>? DetailsPaneVisible { get; set; }
+
+    public HmiProperty<bool>? DetailsPaneAllowResize { get; set; }
+
+    public HmiProperty<double>? DetailsPaneHeightPercent { get; set; }
+
+    public HmiProperty<HmiColor>? DetailsPaneBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? DetailsPaneForegroundColor { get; set; }
+
+    public HmiFont? DetailsPaneFont { get; set; }
+
+    public HmiProperty<bool>? ShowToolbar { get; set; }
+
+    public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? ToolbarForegroundColor { get; set; }
+
+    public HmiFont? ToolbarFont { get; set; }
+
+    public HmiProperty<string>? ToolbarIconSize { get; set; }
+
+    public HmiProperty<bool>? ShowStatusBar { get; set; }
+
+    public HmiProperty<HmiColor>? StatusBarBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? StatusBarForegroundColor { get; set; }
+
+    public HmiFont? StatusBarFont { get; set; }
+
+    public HmiProperty<string>? StatusBarIconSize { get; set; }
+
+    public HmiProperty<bool>? ShowTooltips { get; set; }
 }
