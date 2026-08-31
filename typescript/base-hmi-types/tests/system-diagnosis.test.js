@@ -4,6 +4,10 @@ import test from "node:test";
 import {
   HmiAlarmRowDoubleClickAction,
   HmiAlarmTimePrecision,
+  HmiAlarmToolbarButton,
+  HmiAlarmToolbarButtonType,
+  HmiAlarmStatusBarPanel,
+  HmiAlarmStatusBarPanelType,
   HmiHorizontalAlignment,
   HmiSystemDiagnosisControl,
   HmiSystemDiagnosisColumn,
@@ -59,6 +63,12 @@ test("automatic event summary retains documented general presentation", () => {
   column.format = "DateTime";
   column.order = staticProperty(0);
   control.columnDefinitions.push(column);
+  const toolbarButton = new HmiAlarmToolbarButton();
+  toolbarButton.type = HmiAlarmToolbarButtonType.UnsuppressSelected;
+  control.toolbarButtons.push(toolbarButton);
+  const statusPanel = new HmiAlarmStatusBarPanel();
+  statusPanel.type = HmiAlarmStatusBarPanelType.ActiveSuppressed;
+  control.statusBarPanels.push(statusPanel);
 
   assert.equal(control.showColumnHeadings.staticValue, true);
   assert.equal(control.showVerticalGridLines.staticValue, false);
@@ -79,4 +89,6 @@ test("automatic event summary retains documented general presentation", () => {
   assert.equal(control.columnDefinitions[0].width.staticValue, 140);
   assert.equal(control.columnDefinitions[0].alignment.staticValue, HmiHorizontalAlignment.Center);
   assert.equal(control.columnDefinitions[0].format, "DateTime");
+  assert.equal(control.toolbarButtons[0].type, HmiAlarmToolbarButtonType.UnsuppressSelected);
+  assert.equal(control.statusBarPanels[0].type, HmiAlarmStatusBarPanelType.ActiveSuppressed);
 });
