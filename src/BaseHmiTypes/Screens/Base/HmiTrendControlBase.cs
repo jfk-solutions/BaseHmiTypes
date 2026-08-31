@@ -66,6 +66,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public string? DataServerName { get; set; }
 
+    public HmiProperty<HmiTrendDataServer>? DataServer { get; set; }
+
     public HmiProperty<bool>? DisplayHistoricalLoadProgress { get; set; }
 
     public HmiProperty<bool>? DisplayLineLegend { get; set; }
