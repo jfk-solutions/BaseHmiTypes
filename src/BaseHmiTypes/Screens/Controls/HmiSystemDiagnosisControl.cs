@@ -23,6 +23,8 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowVerticalGridLines { get; set; }
 
+    public HmiProperty<HmiColor>? GridLineColor { get; set; }
+
     public HmiProperty<bool>? ShowHorizontalScrollbar { get; set; }
 
     public HmiProperty<bool>? ShowVerticalScrollbar { get; set; }
