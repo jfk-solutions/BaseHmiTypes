@@ -30,5 +30,7 @@ public enum HmiAlarmToolbarButtonType
     RunAlarmAndEventSummary,
     ToggleEvents,
     RunLogixPinpoint,
-    ExportCsv
+    ExportCsv,
+    UnsuppressSelected,
+    RefreshEventList
 }

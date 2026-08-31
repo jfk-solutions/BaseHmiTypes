@@ -66,6 +66,20 @@ public sealed class HmiSystemDiagnosisTests
             Format = "Text",
             Order = 1
         });
+        control.ToolbarButtons.Add(new HmiAlarmToolbarButton
+        {
+            Type = HmiAlarmToolbarButtonType.UnsuppressSelected,
+            SourceType = "Unsuppress",
+            Visible = true,
+            Order = 1
+        });
+        control.StatusBarPanels.Add(new HmiAlarmStatusBarPanel
+        {
+            Type = HmiAlarmStatusBarPanelType.ActiveSuppressed,
+            SourceType = "Active Suppressed",
+            Visible = true,
+            Order = 2
+        });
 
         Assert.IsTrue(control.ShowColumnHeadings!.StaticValue);
         Assert.IsFalse(control.ShowVerticalGridLines!.StaticValue);
@@ -85,5 +99,7 @@ public sealed class HmiSystemDiagnosisTests
         Assert.AreEqual(HmiSystemDiagnosisColumnType.DiagnosticCode, column.Type);
         Assert.AreEqual("Code", column.HeaderText!.GetText(null));
         Assert.AreEqual(140, column.Width!.StaticValue);
+        Assert.AreEqual(HmiAlarmToolbarButtonType.UnsuppressSelected, control.ToolbarButtons.Single().Type);
+        Assert.AreEqual(HmiAlarmStatusBarPanelType.ActiveSuppressed, control.StatusBarPanels.Single().Type);
     }
 }
