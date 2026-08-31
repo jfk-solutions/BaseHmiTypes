@@ -25,4 +25,33 @@ public sealed class HmiSystemDiagnosisTests
         Assert.AreEqual((byte)0xF0, control.SelectionForegroundColor!.StaticValue.Red);
         Assert.AreEqual("Arial", control.ContentFont.Name!.StaticValue);
     }
+
+    [TestMethod]
+    public void AutomaticEventSummaryRetainsDocumentedGeneralPresentation()
+    {
+        var control = new HmiSystemDiagnosisControl
+        {
+            ViewKind = HmiSystemDiagnosisViewKind.AutomaticEventSummary,
+            ShowColumnHeadings = true,
+            ShowHorizontalGridLines = true,
+            ShowVerticalGridLines = false,
+            ShowHorizontalScrollbar = true,
+            ShowVerticalScrollbar = true,
+            DetailsPaneVisible = true,
+            DetailsPaneAllowResize = true,
+            DetailsPaneHeightPercent = 35,
+            ShowToolbar = true,
+            ToolbarIconSize = "Large",
+            ShowStatusBar = true,
+            StatusBarIconSize = "Small",
+            ShowTooltips = true
+        };
+
+        Assert.IsTrue(control.ShowColumnHeadings!.StaticValue);
+        Assert.IsFalse(control.ShowVerticalGridLines!.StaticValue);
+        Assert.AreEqual(35, control.DetailsPaneHeightPercent!.StaticValue);
+        Assert.AreEqual("Large", control.ToolbarIconSize!.StaticValue);
+        Assert.AreEqual("Small", control.StatusBarIconSize!.StaticValue);
+        Assert.IsTrue(control.ShowTooltips!.StaticValue);
+    }
 }
