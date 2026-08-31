@@ -74,4 +74,8 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
     public HmiProperty<bool>? DisplayErrorsInDialog { get; set; }
 
     public HmiProperty<bool>? ShowWaitingMessage { get; set; }
+
+    public HmiProperty<HmiAlarmTimePrecision>? TimestampPrecision { get; set; }
+
+    public IList<HmiSystemDiagnosisColumn> ColumnDefinitions { get; } = new List<HmiSystemDiagnosisColumn>();
 }
