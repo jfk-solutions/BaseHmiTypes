@@ -71,6 +71,7 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   passwordChangeMode?: HmiProperty<HmiPasswordChangeMode>;
   readonly alarmFilteredTriggers: string[] = [];
   alarmPrintListMode?: HmiProperty<HmiAlarmListMode>;
+  alarmPrintTitle?: HmiProperty<string>;
   printAlarmTime?: HmiProperty<boolean>;
   printAcknowledgeTime?: HmiProperty<boolean>;
   printTriggerLabel?: HmiProperty<boolean>;
