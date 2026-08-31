@@ -7,6 +7,8 @@ import { HmiSystemDiagnosisViewKind } from "./HmiSystemDiagnosisViewKind.js";
 import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js";
 import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
 import { HmiSystemDiagnosisColumn } from "./HmiSystemDiagnosisColumn.js";
+import { HmiAlarmToolbarButton } from "./HmiAlarmToolbarButton.js";
+import { HmiAlarmStatusBarPanel } from "./HmiAlarmStatusBarPanel.js";
 
 export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   constructor() {
@@ -49,4 +51,6 @@ export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   showWaitingMessage?: HmiProperty<boolean>;
   timestampPrecision?: HmiProperty<HmiAlarmTimePrecision>;
   readonly columnDefinitions: HmiSystemDiagnosisColumn[] = [];
+  readonly toolbarButtons: HmiAlarmToolbarButton[] = [];
+  readonly statusBarPanels: HmiAlarmStatusBarPanel[] = [];
 }
