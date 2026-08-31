@@ -143,6 +143,16 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<int>? YAxisScalePenNumber { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether Y-axis values are presented as percentages.
+    /// </summary>
+    public HmiProperty<bool>? YAxisScaleAsPercent { get; set; }
+
+    /// <summary>
+    /// Gets or sets the one-based pen whose scale is selected for the Y axis.
+    /// </summary>
+    public HmiProperty<int>? YAxisSelectedPenScale { get; set; }
+
     public IList<string> RuntimePropertyTabs { get; } = new List<string>();
 
     public HmiProperty<long>? RuntimeAttributesEnabledMask { get; set; }
