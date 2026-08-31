@@ -10,6 +10,7 @@ export class HmiTag implements IHmiObject {
   plcTag?: string;
   address?: string;
   readOnly?: boolean;
+  accessRight?: string;
   alarmed?: boolean;
   retentive?: boolean;
   securityCode?: string;
