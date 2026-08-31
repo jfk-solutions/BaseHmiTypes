@@ -51,4 +51,8 @@ public class HmiRadarChartControl : HmiControlWindowBase
     public HmiFont? LegendFont { get; set; }
 
     public HmiFont? DataLabelFont { get; set; }
+
+    public IList<HmiRadarChartCategory> Categories { get; } = new List<HmiRadarChartCategory>();
+
+    public IList<HmiRadarChartSeries> Series { get; } = new List<HmiRadarChartSeries>();
 }
