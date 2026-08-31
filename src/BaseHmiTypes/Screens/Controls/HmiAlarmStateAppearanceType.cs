@@ -11,5 +11,8 @@ public enum HmiAlarmStateAppearanceType
     High,
     Medium,
     Low,
-    Event
+    Event,
+    ActiveUnsuppressed,
+    ActiveSuppressed,
+    InactiveSuppressed
 }
