@@ -7,5 +7,7 @@ public enum HmiGradientDirection
     HorizontalFromCenter,
     VerticalFromTop,
     VerticalFromBottom,
-    VerticalFromCenter
+    VerticalFromCenter,
+    DiagonalUp,
+    DiagonalDown
 }
