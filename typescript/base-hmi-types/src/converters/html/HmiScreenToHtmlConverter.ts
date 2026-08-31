@@ -1227,6 +1227,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(alarmControl.wordWrap));
   appendAttribute(html, "data-wrap-around", resolvePropertyPreview(alarmControl.wrapAround));
   appendAttribute(html, "data-show-waiting-message", resolvePropertyPreview(alarmControl.showWaitingMessage));
+  appendAttribute(html, "data-show-out-of-scope-alarms", resolvePropertyPreview(alarmControl.showOutOfScopeAlarms));
   appendAttribute(html, "data-filtered-triggers", alarmControl.filteredTriggers.length === 0 ? undefined : alarmControl.filteredTriggers.join(","));
   appendAttribute(html, "data-alarm-identifier", resolvePropertyPreview(alarmControl.alarmIdentifier));
   html.push(">");

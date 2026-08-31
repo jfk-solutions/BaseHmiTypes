@@ -456,6 +456,7 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.activeAlarmsTitle = HmiMultilingualText.fromText("Active process alarms");
   alarms.numberOfRows = staticProperty(8);
   alarms.showWaitingMessage = staticProperty(true);
+  alarms.showOutOfScopeAlarms = staticProperty(false);
   alarms.showAcknowledgeButton = staticProperty(true);
   alarms.showHelpButton = staticProperty(true);
   alarms.filteredTriggers.push("Motor*");
@@ -493,6 +494,7 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-list-mode="Active"/);
   assert.match(html, /data-number-of-rows="8"/);
   assert.match(html, /data-show-waiting-message="true"/);
+  assert.match(html, /data-show-out-of-scope-alarms="false"/);
   assert.match(html, /data-filtered-triggers="Motor\*"/);
   assert.match(html, />Active process alarms<\/div>/);
   assert.match(html, /data-column-type="AlarmTime" data-time-format="HH:mm:ss">Time<\/th>/);
