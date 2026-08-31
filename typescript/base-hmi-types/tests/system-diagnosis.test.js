@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  HmiAlarmRowDoubleClickAction,
   HmiSystemDiagnosisControl,
   HmiSystemDiagnosisViewKind,
   staticProperty,
@@ -38,6 +39,12 @@ test("automatic event summary retains documented general presentation", () => {
   control.showStatusBar = staticProperty(true);
   control.statusBarIconSize = staticProperty("Small");
   control.showTooltips = staticProperty(true);
+  control.allowColumnResize = staticProperty(true);
+  control.allowSortByColumn = staticProperty(false);
+  control.displayContextMenu = staticProperty(true);
+  control.rowDoubleClickAction = staticProperty(HmiAlarmRowDoubleClickAction.Suppress);
+  control.displayErrorsInDialog = staticProperty(true);
+  control.showWaitingMessage = staticProperty(true);
 
   assert.equal(control.showColumnHeadings.staticValue, true);
   assert.equal(control.showVerticalGridLines.staticValue, false);
@@ -46,4 +53,10 @@ test("automatic event summary retains documented general presentation", () => {
   assert.equal(control.toolbarIconSize.staticValue, "Large");
   assert.equal(control.statusBarIconSize.staticValue, "Small");
   assert.equal(control.showTooltips.staticValue, true);
+  assert.equal(control.allowColumnResize.staticValue, true);
+  assert.equal(control.allowSortByColumn.staticValue, false);
+  assert.equal(control.displayContextMenu.staticValue, true);
+  assert.equal(control.rowDoubleClickAction.staticValue, HmiAlarmRowDoubleClickAction.Suppress);
+  assert.equal(control.displayErrorsInDialog.staticValue, true);
+  assert.equal(control.showWaitingMessage.staticValue, true);
 });
