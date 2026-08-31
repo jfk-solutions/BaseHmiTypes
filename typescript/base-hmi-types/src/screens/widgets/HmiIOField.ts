@@ -36,6 +36,8 @@ export class HmiIOField extends HmiTextWidgetBase {
   continuouslyUpdate?: HmiProperty<boolean>;
   discardInputOnFocusLost?: HmiProperty<boolean>;
   remark?: HmiProperty<HmiMultilingualText>;
+  /** Whether operator input requests an audit remark. */
+  remarkEnabled?: HmiProperty<boolean>;
   confirmationMode?: HmiProperty<HmiConfirmationMode>;
 
   constructor() {

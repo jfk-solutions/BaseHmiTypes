@@ -33,6 +33,8 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   height: HmiProperty<number> = staticProperty(0);
   visible: HmiProperty<boolean> = staticProperty(true);
   enabled: HmiProperty<boolean> = staticProperty(true);
+  /** Source polarity for an optional enabled-state expression. */
+  enabledWhenExpressionIsTrue?: boolean;
   opacity?: HmiProperty<number>;
   rotationAngle?: HmiProperty<number>;
   rotationCenterX?: HmiProperty<number>;
