@@ -82,4 +82,16 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
     public IList<HmiAlarmToolbarButton> ToolbarButtons { get; } = new List<HmiAlarmToolbarButton>();
 
     public IList<HmiAlarmStatusBarPanel> StatusBarPanels { get; } = new List<HmiAlarmStatusBarPanel>();
+
+    public HmiProperty<string>? DefaultFilter { get; set; }
+
+    public IList<HmiAlarmDisplayFilter> DisplayFilters { get; } = new List<HmiAlarmDisplayFilter>();
+
+    public HmiProperty<string>? SortOrder { get; set; }
+
+    public IList<HmiSystemDiagnosisSortCriterion> SortCriteria { get; } = new List<HmiSystemDiagnosisSortCriterion>();
+
+    public IList<HmiAlarmEventSubscription> EventSubscriptions { get; } = new List<HmiAlarmEventSubscription>();
+
+    public IList<HmiAlarmStateAppearance> StateAppearances { get; } = new List<HmiAlarmStateAppearance>();
 }

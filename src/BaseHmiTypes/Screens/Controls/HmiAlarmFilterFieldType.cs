@@ -33,5 +33,16 @@ public enum HmiAlarmFilterFieldType
     ConditionQuality,
     EventType,
     SubconditionName,
-    Suppress
+    Suppress,
+    Assessment,
+    DeviceName,
+    Catalog,
+    DiagnosticCode,
+    DevicePath,
+    Resource,
+    ProductType,
+    Vendor,
+    ProductName,
+    MajorRevision,
+    MinorRevision
 }

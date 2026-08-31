@@ -80,6 +80,30 @@ public sealed class HmiSystemDiagnosisTests
             Visible = true,
             Order = 2
         });
+        control.DefaultFilter = "Failures";
+        control.DisplayFilters.Add(new HmiAlarmDisplayFilter
+        {
+            Name = "Failures",
+            Definition = "Assessment = 'FAILED'",
+            IsInitial = true
+        });
+        control.SortOrder = "Event Time DESC";
+        control.SortCriteria.Add(new HmiSystemDiagnosisSortCriterion
+        {
+            Column = HmiSystemDiagnosisColumnType.EventTime,
+            SourceColumn = "Event Time",
+            Direction = HmiAlarmSortDirection.Descending,
+            SourceDirection = "DESC"
+        });
+        var subscription = new HmiAlarmEventSubscription { Name = "Packaging" };
+        subscription.Scopes.Add("/Plant/Packaging");
+        control.EventSubscriptions.Add(subscription);
+        control.StateAppearances.Add(new HmiAlarmStateAppearance
+        {
+            Type = HmiAlarmStateAppearanceType.ActiveUnsuppressed,
+            SourceType = "Active Unsuppressed",
+            ForegroundColor = HmiColor.FromArgb(255, 0x10, 0x20, 0x30)
+        });
 
         Assert.IsTrue(control.ShowColumnHeadings!.StaticValue);
         Assert.IsFalse(control.ShowVerticalGridLines!.StaticValue);
@@ -101,5 +125,10 @@ public sealed class HmiSystemDiagnosisTests
         Assert.AreEqual(140, column.Width!.StaticValue);
         Assert.AreEqual(HmiAlarmToolbarButtonType.UnsuppressSelected, control.ToolbarButtons.Single().Type);
         Assert.AreEqual(HmiAlarmStatusBarPanelType.ActiveSuppressed, control.StatusBarPanels.Single().Type);
+        Assert.AreEqual("Failures", control.DefaultFilter!.StaticValue);
+        Assert.AreEqual("Assessment = 'FAILED'", control.DisplayFilters.Single().Definition!.StaticValue);
+        Assert.AreEqual(HmiSystemDiagnosisColumnType.EventTime, control.SortCriteria.Single().Column);
+        Assert.AreEqual("/Plant/Packaging", control.EventSubscriptions.Single().Scopes.Single());
+        Assert.AreEqual(HmiAlarmStateAppearanceType.ActiveUnsuppressed, control.StateAppearances.Single().Type);
     }
 }
