@@ -78,4 +78,8 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
     public HmiProperty<HmiAlarmTimePrecision>? TimestampPrecision { get; set; }
 
     public IList<HmiSystemDiagnosisColumn> ColumnDefinitions { get; } = new List<HmiSystemDiagnosisColumn>();
+
+    public IList<HmiAlarmToolbarButton> ToolbarButtons { get; } = new List<HmiAlarmToolbarButton>();
+
+    public IList<HmiAlarmStatusBarPanel> StatusBarPanels { get; } = new List<HmiAlarmStatusBarPanel>();
 }
