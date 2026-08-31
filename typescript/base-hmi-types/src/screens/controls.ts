@@ -42,6 +42,8 @@ export * from "./controls/HmiDataGridColumn.js";
 export * from "./controls/HmiDataGridColumnWidthMode.js";
 export * from "./controls/HmiDataGridSortDirection.js";
 export * from "./controls/HmiRadarChartControl.js";
+export * from "./controls/HmiRadarShape.js";
+export * from "./controls/HmiRadarLegendPosition.js";
 export * from "./controls/HmiDetailedParameterControl.js";
 export * from "./controls/HmiMediaControl.js";
 export * from "./controls/HmiObjectExplorerControl.js";
