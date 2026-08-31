@@ -30,6 +30,21 @@ public sealed class HmiTrendPen
 
     public HmiProperty<double>? MaximumValue { get; set; }
 
+    /// <summary>
+    /// Gets or sets the current minimum value used to scale this pen.
+    /// </summary>
+    public HmiProperty<double>? CurrentScaleMinimumValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current maximum value used to scale this pen.
+    /// </summary>
+    public HmiProperty<double>? CurrentScaleMaximumValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the pen's current value is in an error state.
+    /// </summary>
+    public HmiProperty<bool>? IsInError { get; set; }
+
     public HmiProperty<bool>? LinkData { get; set; }
 
     public string? DataLogModelName { get; set; }

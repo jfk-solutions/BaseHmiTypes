@@ -17,6 +17,12 @@ export class HmiTrendPen {
   marker?: HmiProperty<string>;
   minimumValue?: HmiProperty<number>;
   maximumValue?: HmiProperty<number>;
+  /** Current minimum value used to scale this pen. */
+  currentScaleMinimumValue?: HmiProperty<number>;
+  /** Current maximum value used to scale this pen. */
+  currentScaleMaximumValue?: HmiProperty<number>;
+  /** Whether the pen's current value is in an error state. */
+  isInError?: HmiProperty<boolean>;
   linkData?: HmiProperty<boolean>;
   dataLogModelName?: string;
   dataSourceName?: string;
