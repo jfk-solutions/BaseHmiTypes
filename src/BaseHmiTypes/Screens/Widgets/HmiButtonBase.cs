@@ -131,6 +131,26 @@ public abstract class HmiButtonBase : HmiWidgetBase
     public HmiProperty<bool>? HideUserNameEntry { get; set; }
 
     /// <summary>
+    /// Gets or sets whether a user-login dialog displays the configured domain name.
+    /// </summary>
+    public HmiProperty<bool>? LoginDomainNameVisible { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the configured user-login domain is read-only at runtime.
+    /// </summary>
+    public HmiProperty<bool>? LoginDomainNameDisabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the user-login domain name is selected dynamically.
+    /// </summary>
+    public HmiProperty<bool>? UseVariableLoginDomainName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the fixed or fallback user-login domain name.
+    /// </summary>
+    public HmiProperty<string>? LoginDomainName { get; set; }
+
+    /// <summary>
     /// Gets or sets whether a user-logout operation opens the configured navigation target.
     /// </summary>
     public HmiProperty<bool>? ShowDisplayOnLogout { get; set; }
