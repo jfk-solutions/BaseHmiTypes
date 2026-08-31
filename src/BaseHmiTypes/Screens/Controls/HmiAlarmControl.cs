@@ -88,6 +88,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? DisplayErrorsInDialog { get; set; }
 
+    public HmiProperty<bool>? ShowWaitingMessage { get; set; }
+
     public HmiProperty<bool>? DisplayMilliseconds { get; set; }
 
     public HmiProperty<HmiAlarmTimePrecision>? TimePrecision { get; set; }
