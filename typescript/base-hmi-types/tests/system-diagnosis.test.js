@@ -8,10 +8,16 @@ import {
   HmiAlarmToolbarButtonType,
   HmiAlarmStatusBarPanel,
   HmiAlarmStatusBarPanelType,
+  HmiAlarmDisplayFilter,
+  HmiAlarmEventSubscription,
+  HmiAlarmSortDirection,
+  HmiAlarmStateAppearance,
+  HmiAlarmStateAppearanceType,
   HmiHorizontalAlignment,
   HmiSystemDiagnosisControl,
   HmiSystemDiagnosisColumn,
   HmiSystemDiagnosisColumnType,
+  HmiSystemDiagnosisSortCriterion,
   HmiSystemDiagnosisViewKind,
   staticProperty,
 } from "../dist/index.js";
@@ -69,6 +75,27 @@ test("automatic event summary retains documented general presentation", () => {
   const statusPanel = new HmiAlarmStatusBarPanel();
   statusPanel.type = HmiAlarmStatusBarPanelType.ActiveSuppressed;
   control.statusBarPanels.push(statusPanel);
+  control.defaultFilter = staticProperty("Failures");
+  const displayFilter = new HmiAlarmDisplayFilter();
+  displayFilter.name = "Failures";
+  displayFilter.definition = staticProperty("Assessment = 'FAILED'");
+  displayFilter.isInitial = staticProperty(true);
+  control.displayFilters.push(displayFilter);
+  control.sortOrder = staticProperty("Event Time DESC");
+  const sortCriterion = new HmiSystemDiagnosisSortCriterion();
+  sortCriterion.column = HmiSystemDiagnosisColumnType.EventTime;
+  sortCriterion.sourceColumn = "Event Time";
+  sortCriterion.direction = HmiAlarmSortDirection.Descending;
+  sortCriterion.sourceDirection = "DESC";
+  control.sortCriteria.push(sortCriterion);
+  const subscription = new HmiAlarmEventSubscription();
+  subscription.name = "Packaging";
+  subscription.scopes.push("/Plant/Packaging");
+  control.eventSubscriptions.push(subscription);
+  const appearance = new HmiAlarmStateAppearance();
+  appearance.type = HmiAlarmStateAppearanceType.ActiveUnsuppressed;
+  appearance.sourceType = "Active Unsuppressed";
+  control.stateAppearances.push(appearance);
 
   assert.equal(control.showColumnHeadings.staticValue, true);
   assert.equal(control.showVerticalGridLines.staticValue, false);
@@ -91,4 +118,9 @@ test("automatic event summary retains documented general presentation", () => {
   assert.equal(control.columnDefinitions[0].format, "DateTime");
   assert.equal(control.toolbarButtons[0].type, HmiAlarmToolbarButtonType.UnsuppressSelected);
   assert.equal(control.statusBarPanels[0].type, HmiAlarmStatusBarPanelType.ActiveSuppressed);
+  assert.equal(control.defaultFilter.staticValue, "Failures");
+  assert.equal(control.displayFilters[0].definition.staticValue, "Assessment = 'FAILED'");
+  assert.equal(control.sortCriteria[0].column, HmiSystemDiagnosisColumnType.EventTime);
+  assert.equal(control.eventSubscriptions[0].scopes[0], "/Plant/Packaging");
+  assert.equal(control.stateAppearances[0].type, HmiAlarmStateAppearanceType.ActiveUnsuppressed);
 });
