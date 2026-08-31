@@ -8,7 +8,9 @@ test("tag retains exported alarm and value type metadata", () => {
   tag.name = "Pressure";
   tag.alarmed = true;
   tag.valueType = "F";
+  tag.accessRight = "both";
 
   assert.equal(tag.alarmed, true);
   assert.equal(tag.valueType, "F");
+  assert.equal(tag.accessRight, "both");
 });
