@@ -154,6 +154,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowOutOfServiceAlarms { get; set; }
 
+    public HmiProperty<bool>? ShowOutOfScopeAlarms { get; set; }
+
     public HmiProperty<string>? SortOrder { get; set; }
 
     public IList<HmiAlarmSortCriterion> SortCriteria { get; } = new List<HmiAlarmSortCriterion>();

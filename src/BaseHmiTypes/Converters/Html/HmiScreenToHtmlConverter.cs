@@ -1322,6 +1322,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(alarmControl.WordWrap, context));
         AppendAttribute(html, "data-wrap-around", ResolvePropertyPreview(alarmControl.WrapAround, context));
         AppendAttribute(html, "data-show-waiting-message", ResolvePropertyPreview(alarmControl.ShowWaitingMessage, context));
+        AppendAttribute(html, "data-show-out-of-scope-alarms", ResolvePropertyPreview(alarmControl.ShowOutOfScopeAlarms, context));
         AppendAttribute(html, "data-filtered-triggers", alarmControl.FilteredTriggers.Count == 0 ? null : string.Join(",", alarmControl.FilteredTriggers));
         AppendAttribute(html, "data-alarm-identifier", ResolvePropertyPreview(alarmControl.AlarmIdentifier, context));
         html.Append('>');

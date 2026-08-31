@@ -619,6 +619,7 @@ public class HmiScreenToHtmlConverterTests
             ActiveAlarmsTitle = HmiMultilingualText.FromText("Active process alarms"),
             NumberOfRows = 8,
             ShowWaitingMessage = true,
+            ShowOutOfScopeAlarms = false,
             ShowAcknowledgeButton = true,
             ShowHelpButton = true
         };
@@ -661,6 +662,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-list-mode=\"Active\"");
         StringAssert.Contains(html, "data-number-of-rows=\"8\"");
         StringAssert.Contains(html, "data-show-waiting-message=\"true\"");
+        StringAssert.Contains(html, "data-show-out-of-scope-alarms=\"false\"");
         StringAssert.Contains(html, "data-filtered-triggers=\"Motor*\"");
         StringAssert.Contains(html, ">Active process alarms</div>");
         StringAssert.Contains(html, "data-column-type=\"AlarmTime\" data-time-format=\"HH:mm:ss\">Time</th>");
