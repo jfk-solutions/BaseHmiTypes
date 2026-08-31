@@ -97,6 +97,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showHorizontalScrollbar?: HmiProperty<boolean>;
   showVerticalScrollbar?: HmiProperty<boolean>;
   showOutOfServiceAlarms?: HmiProperty<boolean>;
+  showOutOfScopeAlarms?: HmiProperty<boolean>;
   sortOrder?: HmiProperty<string>;
   readonly sortCriteria: HmiAlarmSortCriterion[] = [];
   showStatusBar?: HmiProperty<boolean>;
