@@ -9,9 +9,10 @@ public class HmiTagTests
     [TestMethod]
     public void Tag_RetainsExportedAlarmAndValueTypeMetadata()
     {
-        var tag = new HmiTag { Name = "Pressure", Alarmed = true, ValueType = "F" };
+        var tag = new HmiTag { Name = "Pressure", Alarmed = true, ValueType = "F", AccessRight = "both" };
 
         Assert.IsTrue(tag.Alarmed);
         Assert.AreEqual("F", tag.ValueType);
+        Assert.AreEqual("both", tag.AccessRight);
     }
 }
