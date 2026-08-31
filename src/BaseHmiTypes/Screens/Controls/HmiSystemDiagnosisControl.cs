@@ -62,4 +62,16 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
     public HmiProperty<string>? StatusBarIconSize { get; set; }
 
     public HmiProperty<bool>? ShowTooltips { get; set; }
+
+    public HmiProperty<bool>? AllowColumnResize { get; set; }
+
+    public HmiProperty<bool>? AllowSortByColumn { get; set; }
+
+    public HmiProperty<bool>? DisplayContextMenu { get; set; }
+
+    public HmiProperty<HmiAlarmRowDoubleClickAction>? RowDoubleClickAction { get; set; }
+
+    public HmiProperty<bool>? DisplayErrorsInDialog { get; set; }
+
+    public HmiProperty<bool>? ShowWaitingMessage { get; set; }
 }

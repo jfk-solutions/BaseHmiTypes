@@ -45,7 +45,13 @@ public sealed class HmiSystemDiagnosisTests
             ToolbarIconSize = "Large",
             ShowStatusBar = true,
             StatusBarIconSize = "Small",
-            ShowTooltips = true
+            ShowTooltips = true,
+            AllowColumnResize = true,
+            AllowSortByColumn = false,
+            DisplayContextMenu = true,
+            RowDoubleClickAction = HmiAlarmRowDoubleClickAction.Suppress,
+            DisplayErrorsInDialog = true,
+            ShowWaitingMessage = true
         };
 
         Assert.IsTrue(control.ShowColumnHeadings!.StaticValue);
@@ -55,5 +61,11 @@ public sealed class HmiSystemDiagnosisTests
         Assert.AreEqual("Large", control.ToolbarIconSize!.StaticValue);
         Assert.AreEqual("Small", control.StatusBarIconSize!.StaticValue);
         Assert.IsTrue(control.ShowTooltips!.StaticValue);
+        Assert.IsTrue(control.AllowColumnResize!.StaticValue);
+        Assert.IsFalse(control.AllowSortByColumn!.StaticValue);
+        Assert.IsTrue(control.DisplayContextMenu!.StaticValue);
+        Assert.AreEqual(HmiAlarmRowDoubleClickAction.Suppress, control.RowDoubleClickAction!.StaticValue);
+        Assert.IsTrue(control.DisplayErrorsInDialog!.StaticValue);
+        Assert.IsTrue(control.ShowWaitingMessage!.StaticValue);
     }
 }
