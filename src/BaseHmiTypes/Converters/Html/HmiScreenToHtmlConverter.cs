@@ -1387,9 +1387,21 @@ public class HmiScreenToHtmlConverter
             additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-series-count", ResolvePropertyPreview(radarChartControl.SeriesCount, context));
         AppendAttribute(html, "data-category-count", ResolvePropertyPreview(radarChartControl.CategoryCount, context));
+        AppendAttribute(html, "data-radar-shape", ResolvePropertyPreview(radarChartControl.RadarShape, context));
+        AppendAttribute(html, "data-radar-shape-raw", radarChartControl.SourceRadarShape);
+        AppendAttribute(html, "data-chart-background", ResolvePropertyPreview(radarChartControl.ChartBackgroundColor, context));
+        AppendAttribute(html, "data-grid-line-style", ResolvePropertyPreview(radarChartControl.GridLineStyle, context));
+        AppendAttribute(html, "data-grid-line-style-raw", radarChartControl.SourceGridLineStyle);
+        AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(radarChartControl.GridLineColor, context));
+        AppendAttribute(html, "data-banded-color", ResolvePropertyPreview(radarChartControl.BandedColor, context));
+        AppendAttribute(html, "data-show-legend", ResolvePropertyPreview(radarChartControl.ShowLegend, context));
+        AppendAttribute(html, "data-legend-position", ResolvePropertyPreview(radarChartControl.LegendPosition, context));
+        AppendAttribute(html, "data-legend-position-raw", radarChartControl.SourceLegendPosition);
+        AppendAttribute(html, "data-decimal-places", ResolvePropertyPreview(radarChartControl.DecimalPlaces, context));
+        AppendAttribute(html, "data-refresh-rate-seconds", ResolvePropertyPreview(radarChartControl.RefreshRateSeconds, context));
         html.Append("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">")
             .Append(WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(title) ? "Radar chart" : title))
-            .Append("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Radar payload preserved");
+            .Append("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Radar data not loaded");
         if (seriesCount is not null || categoryCount is not null)
         {
             html.Append(" (");
