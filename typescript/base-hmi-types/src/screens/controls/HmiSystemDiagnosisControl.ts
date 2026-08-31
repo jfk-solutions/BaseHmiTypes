@@ -5,6 +5,8 @@ import { HmiFont } from "../base/HmiFont.js";
 import { HmiProperty } from "../base/HmiProperty.js";
 import { HmiSystemDiagnosisViewKind } from "./HmiSystemDiagnosisViewKind.js";
 import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js";
+import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
+import { HmiSystemDiagnosisColumn } from "./HmiSystemDiagnosisColumn.js";
 
 export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   constructor() {
@@ -45,4 +47,6 @@ export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   rowDoubleClickAction?: HmiProperty<HmiAlarmRowDoubleClickAction>;
   displayErrorsInDialog?: HmiProperty<boolean>;
   showWaitingMessage?: HmiProperty<boolean>;
+  timestampPrecision?: HmiProperty<HmiAlarmTimePrecision>;
+  readonly columnDefinitions: HmiSystemDiagnosisColumn[] = [];
 }

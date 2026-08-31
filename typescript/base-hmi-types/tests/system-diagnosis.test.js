@@ -3,7 +3,11 @@ import test from "node:test";
 
 import {
   HmiAlarmRowDoubleClickAction,
+  HmiAlarmTimePrecision,
+  HmiHorizontalAlignment,
   HmiSystemDiagnosisControl,
+  HmiSystemDiagnosisColumn,
+  HmiSystemDiagnosisColumnType,
   HmiSystemDiagnosisViewKind,
   staticProperty,
 } from "../dist/index.js";
@@ -45,6 +49,16 @@ test("automatic event summary retains documented general presentation", () => {
   control.rowDoubleClickAction = staticProperty(HmiAlarmRowDoubleClickAction.Suppress);
   control.displayErrorsInDialog = staticProperty(true);
   control.showWaitingMessage = staticProperty(true);
+  control.timestampPrecision = staticProperty(HmiAlarmTimePrecision.Microseconds);
+  const column = new HmiSystemDiagnosisColumn();
+  column.type = HmiSystemDiagnosisColumnType.EventTime;
+  column.sourceType = "Event Time";
+  column.visible = staticProperty(true);
+  column.width = staticProperty(140);
+  column.alignment = staticProperty(HmiHorizontalAlignment.Center);
+  column.format = "DateTime";
+  column.order = staticProperty(0);
+  control.columnDefinitions.push(column);
 
   assert.equal(control.showColumnHeadings.staticValue, true);
   assert.equal(control.showVerticalGridLines.staticValue, false);
@@ -59,4 +73,10 @@ test("automatic event summary retains documented general presentation", () => {
   assert.equal(control.rowDoubleClickAction.staticValue, HmiAlarmRowDoubleClickAction.Suppress);
   assert.equal(control.displayErrorsInDialog.staticValue, true);
   assert.equal(control.showWaitingMessage.staticValue, true);
+  assert.equal(control.timestampPrecision.staticValue, HmiAlarmTimePrecision.Microseconds);
+  assert.equal(control.columnDefinitions[0].type, HmiSystemDiagnosisColumnType.EventTime);
+  assert.equal(control.columnDefinitions[0].sourceType, "Event Time");
+  assert.equal(control.columnDefinitions[0].width.staticValue, 140);
+  assert.equal(control.columnDefinitions[0].alignment.staticValue, HmiHorizontalAlignment.Center);
+  assert.equal(control.columnDefinitions[0].format, "DateTime");
 });
