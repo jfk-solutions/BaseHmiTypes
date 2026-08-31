@@ -64,6 +64,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   statusFilter?: HmiProperty<string>;
   readOnlyMode?: HmiProperty<boolean>;
   displayErrorsInDialog?: HmiProperty<boolean>;
+  showWaitingMessage?: HmiProperty<boolean>;
   displayMilliseconds?: HmiProperty<boolean>;
   timePrecision?: HmiProperty<HmiAlarmTimePrecision>;
   context?: HmiProperty<string>;
