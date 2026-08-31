@@ -175,6 +175,11 @@ public abstract class HmiButtonBase : HmiWidgetBase
     /// </summary>
     public HmiProperty<HmiAlarmListMode>? AlarmPrintListMode { get; set; }
 
+    /// <summary>
+    /// Gets or sets the heading used by an alarm-report print operation.
+    /// </summary>
+    public HmiProperty<string>? AlarmPrintTitle { get; set; }
+
     public HmiProperty<bool>? PrintAlarmTime { get; set; }
 
     public HmiProperty<bool>? PrintAcknowledgeTime { get; set; }
