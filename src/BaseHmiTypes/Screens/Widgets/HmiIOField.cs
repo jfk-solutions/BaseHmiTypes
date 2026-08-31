@@ -95,5 +95,11 @@ public class HmiIOField : HmiTextWidgetBase
 
     public HmiProperty<HmiMultilingualText>? Remark { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the source application requests an audit remark
+    /// when the operator enters a value.
+    /// </summary>
+    public HmiProperty<bool>? RemarkEnabled { get; set; }
+
     public HmiProperty<HmiConfirmationMode>? ConfirmationMode { get; set; }
 }

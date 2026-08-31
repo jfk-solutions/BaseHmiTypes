@@ -40,6 +40,12 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiProperty<bool> Enabled { get; set; } = true;
 
+    /// <summary>
+    /// Gets or sets the source polarity for an optional enabled-state expression.
+    /// A value of true means that a true expression enables the object.
+    /// </summary>
+    public bool? EnabledWhenExpressionIsTrue { get; set; }
+
     public HmiProperty<double>? Opacity { get; set; }
 
     public HmiProperty<double>? RotationAngle { get; set; }
