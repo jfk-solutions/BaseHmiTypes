@@ -5,4 +5,6 @@ export enum HmiGradientDirection {
   VerticalFromTop = "VerticalFromTop",
   VerticalFromBottom = "VerticalFromBottom",
   VerticalFromCenter = "VerticalFromCenter",
+  DiagonalUp = "DiagonalUp",
+  DiagonalDown = "DiagonalDown",
 }
