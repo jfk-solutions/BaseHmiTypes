@@ -35,6 +35,7 @@ public sealed class HmiSystemDiagnosisTests
             ShowColumnHeadings = true,
             ShowHorizontalGridLines = true,
             ShowVerticalGridLines = false,
+            GridLineColor = HmiColor.FromArgb(255, 0x20, 0x30, 0x40),
             ShowHorizontalScrollbar = true,
             ShowVerticalScrollbar = true,
             DetailsPaneVisible = true,
@@ -49,6 +50,7 @@ public sealed class HmiSystemDiagnosisTests
 
         Assert.IsTrue(control.ShowColumnHeadings!.StaticValue);
         Assert.IsFalse(control.ShowVerticalGridLines!.StaticValue);
+        Assert.AreEqual((byte)0x20, control.GridLineColor!.StaticValue.Red);
         Assert.AreEqual(35, control.DetailsPaneHeightPercent!.StaticValue);
         Assert.AreEqual("Large", control.ToolbarIconSize!.StaticValue);
         Assert.AreEqual("Small", control.StatusBarIconSize!.StaticValue);
