@@ -104,6 +104,38 @@ public abstract class HmiBaseAlarm : HmiAlarm
     public string? LowAcknowledgedStatusTag { get; set; }
 
     public string? SuppressedStatusTag { get; set; }
+
+    public string? ShelvedStatusTag { get; set; }
+
+    public string? RemoteAcknowledgeAllTag { get; set; }
+
+    public bool? RemoteAcknowledgeAllAutoReset { get; set; }
+
+    public string? RemoteDisableTag { get; set; }
+
+    public bool? RemoteDisableAutoReset { get; set; }
+
+    public string? RemoteEnableTag { get; set; }
+
+    public bool? RemoteEnableAutoReset { get; set; }
+
+    public string? RemoteSuppressTag { get; set; }
+
+    public bool? RemoteSuppressAutoReset { get; set; }
+
+    public string? RemoteUnsuppressTag { get; set; }
+
+    public bool? RemoteUnsuppressAutoReset { get; set; }
+
+    public string? RemoteShelveAllTag { get; set; }
+
+    public bool? RemoteShelveAllAutoReset { get; set; }
+
+    public string? RemoteShelveDurationTag { get; set; }
+
+    public string? RemoteUnshelveTag { get; set; }
+
+    public bool? RemoteUnshelveAutoReset { get; set; }
 }
 
 public sealed class HmiDiscreteAlarm : HmiBaseAlarm
