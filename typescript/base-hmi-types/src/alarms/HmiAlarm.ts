@@ -18,6 +18,7 @@ export class HmiAlarmClass {
 }
 
 export abstract class HmiBaseAlarm extends HmiAlarm {
+  enabled?: boolean;
   tiaAlarmId = 0;
   alarmId = 0;
   priority = 0;
