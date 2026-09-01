@@ -26,6 +26,8 @@ public sealed class HmiAlarmClass
 
 public abstract class HmiBaseAlarm : HmiAlarm
 {
+    public bool? Enabled { get; set; }
+
     public int TiaAlarmId { get; set; }
 
     public int AlarmId { get; set; }
