@@ -57,6 +57,14 @@ export abstract class HmiBaseAlarm extends HmiAlarm {
   acknowledgeFileMessage?: HmiMultilingualText;
   acknowledgePrinterMessage?: HmiMultilingualText;
   alarmIdentification?: string;
+  inAlarmStatusTag?: string;
+  highInAlarmStatusTag?: string;
+  lowInAlarmStatusTag?: string;
+  disabledStatusTag?: string;
+  acknowledgedStatusTag?: string;
+  highAcknowledgedStatusTag?: string;
+  lowAcknowledgedStatusTag?: string;
+  suppressedStatusTag?: string;
 }
 
 export class HmiDiscreteAlarm extends HmiBaseAlarm {
