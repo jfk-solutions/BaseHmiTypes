@@ -66,6 +66,22 @@ export abstract class HmiBaseAlarm extends HmiAlarm {
   highAcknowledgedStatusTag?: string;
   lowAcknowledgedStatusTag?: string;
   suppressedStatusTag?: string;
+  shelvedStatusTag?: string;
+  remoteAcknowledgeAllTag?: string;
+  remoteAcknowledgeAllAutoReset?: boolean;
+  remoteDisableTag?: string;
+  remoteDisableAutoReset?: boolean;
+  remoteEnableTag?: string;
+  remoteEnableAutoReset?: boolean;
+  remoteSuppressTag?: string;
+  remoteSuppressAutoReset?: boolean;
+  remoteUnsuppressTag?: string;
+  remoteUnsuppressAutoReset?: boolean;
+  remoteShelveAllTag?: string;
+  remoteShelveAllAutoReset?: boolean;
+  remoteShelveDurationTag?: string;
+  remoteUnshelveTag?: string;
+  remoteUnshelveAutoReset?: boolean;
 }
 
 export class HmiDiscreteAlarm extends HmiBaseAlarm {
