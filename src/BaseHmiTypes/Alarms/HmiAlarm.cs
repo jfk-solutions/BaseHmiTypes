@@ -86,6 +86,22 @@ public abstract class HmiBaseAlarm : HmiAlarm
     public HmiMultilingualText? AcknowledgePrinterMessage { get; set; }
 
     public string? AlarmIdentification { get; set; }
+
+    public string? InAlarmStatusTag { get; set; }
+
+    public string? HighInAlarmStatusTag { get; set; }
+
+    public string? LowInAlarmStatusTag { get; set; }
+
+    public string? DisabledStatusTag { get; set; }
+
+    public string? AcknowledgedStatusTag { get; set; }
+
+    public string? HighAcknowledgedStatusTag { get; set; }
+
+    public string? LowAcknowledgedStatusTag { get; set; }
+
+    public string? SuppressedStatusTag { get; set; }
 }
 
 public sealed class HmiDiscreteAlarm : HmiBaseAlarm
