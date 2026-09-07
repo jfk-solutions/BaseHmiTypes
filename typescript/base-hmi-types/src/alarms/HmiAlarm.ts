@@ -17,6 +17,11 @@ export class HmiAlarmClass {
   }
 }
 
+export class HmiAlarmUserDataEntry {
+  name?: string;
+  value?: string;
+}
+
 export abstract class HmiBaseAlarm extends HmiAlarm {
   enabled?: boolean;
   tiaAlarmId = 0;
@@ -25,6 +30,8 @@ export abstract class HmiBaseAlarm extends HmiAlarm {
   priorityTag?: string;
   minimumDurationMilliseconds?: number;
   exposedAsTag?: boolean;
+  userData?: string;
+  readonly userDataEntries: HmiAlarmUserDataEntry[] = [];
   alarmClass?: HmiAlarmClass;
   alarmText?: HmiMultilingualText;
   infoText?: HmiMultilingualText;
