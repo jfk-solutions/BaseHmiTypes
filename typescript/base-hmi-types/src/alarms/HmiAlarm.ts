@@ -22,6 +22,9 @@ export abstract class HmiBaseAlarm extends HmiAlarm {
   tiaAlarmId = 0;
   alarmId = 0;
   priority = 0;
+  priorityTag?: string;
+  minimumDurationMilliseconds?: number;
+  exposedAsTag?: boolean;
   alarmClass?: HmiAlarmClass;
   alarmText?: HmiMultilingualText;
   infoText?: HmiMultilingualText;
