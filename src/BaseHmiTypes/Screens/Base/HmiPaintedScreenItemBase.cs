@@ -10,6 +10,11 @@ public abstract class HmiPaintedScreenItemBase : HmiScreenItemBase
 
     public HmiProperty<HmiColor>? AlternateBackgroundColor { get; set; }
 
+    /// <summary>
+    /// Gets or sets the foreground color used by a patterned background fill.
+    /// </summary>
+    public HmiProperty<HmiColor>? PatternColor { get; set; }
+
     public HmiProperty<HmiColor>? BorderColor { get; set; }
 
     public HmiProperty<HmiColor>? BorderBackgroundColor { get; set; }
