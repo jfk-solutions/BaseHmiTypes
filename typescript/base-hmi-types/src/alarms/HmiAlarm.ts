@@ -163,6 +163,9 @@ export class HmiSystemAlarm extends HmiAlarm {
 export class HmiAlarmList implements IHmiObject {
   lastModified?: Date;
   name?: string;
+  sourceIdentifier?: string;
+  sourceFormatVersion?: string;
+  sourceProductIdentifier?: string;
   hmiAlarmListType: HmiAlarmListType = HmiAlarmListType.Discrete;
   readonly alarms: HmiAlarm[] = [];
   historySize?: number;
