@@ -1,4 +1,4 @@
-import { HmiColor, HmiFont, HmiProperty } from "../base.js";
+import { HmiColor, HmiFont, HmiGradientDirection, HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiThreshold, HmiThresholdValueMode } from "./HmiThreshold.js";
 import { HmiTickDirection } from "./HmiTickDirection.js";
@@ -33,5 +33,9 @@ export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   scaleBackgroundColor?: HmiProperty<HmiColor>;
   scaleForegroundColor?: HmiProperty<HmiColor>;
   tickColor?: HmiProperty<HmiColor>;
+  fillEndColor?: HmiProperty<HmiColor>;
+  fillGradientStop?: HmiProperty<number>;
+  fillGradientAxis?: string;
+  fillGradientDirection?: HmiGradientDirection;
   labelFont?: HmiFont;
 }
