@@ -62,5 +62,13 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<HmiColor>? TickColor { get; set; }
 
+    public HmiProperty<HmiColor>? FillEndColor { get; set; }
+
+    public HmiProperty<double>? FillGradientStop { get; set; }
+
+    public string? FillGradientAxis { get; set; }
+
+    public HmiGradientDirection? FillGradientDirection { get; set; }
+
     public HmiFont? LabelFont { get; set; }
 }
