@@ -8,6 +8,8 @@ public class HmiFont
 
     public HmiProperty<double>? CharacterWidth { get; set; }
 
+    public HmiProperty<double>? CharacterHeight { get; set; }
+
     public HmiProperty<double>? EscapementAngle { get; set; }
 
     public HmiProperty<double>? OrientationAngle { get; set; }
