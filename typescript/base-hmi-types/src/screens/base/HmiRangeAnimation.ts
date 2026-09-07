@@ -1,5 +1,6 @@
 import { HmiAnimationRangeSource } from "./HmiAnimationRangeSource.js";
 import { HmiRangeAnimationOutputUnit } from "./HmiRangeAnimationOutputUnit.js";
+import { HmiRangeAnimationAnchor } from "./HmiRangeAnimationAnchor.js";
 
 /** Describes a linear animation that maps an input expression range to an output range. */
 export class HmiRangeAnimation {
@@ -12,4 +13,5 @@ export class HmiRangeAnimation {
   outputMinimum?: number;
   outputMaximum?: number;
   outputUnit?: HmiRangeAnimationOutputUnit;
+  anchor?: HmiRangeAnimationAnchor;
 }
