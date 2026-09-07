@@ -22,4 +22,6 @@ public class HmiRangeAnimation
     public double? OutputMaximum { get; set; }
 
     public HmiRangeAnimationOutputUnit? OutputUnit { get; set; }
+
+    public HmiRangeAnimationAnchor? Anchor { get; set; }
 }
