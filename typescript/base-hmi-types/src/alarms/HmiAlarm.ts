@@ -114,6 +114,12 @@ export class HmiDiscreteAlarm extends HmiBaseAlarm {
 
 export class HmiAnalogAlarm extends HmiBaseAlarm {
   triggerTag?: string;
+  targetValueConstant?: string;
+  targetValueTag?: string;
+  targetValueType?: string;
+  deviationValueConstant?: string;
+  deviationValueTag?: string;
+  deviationValueType?: string;
   limitMode?: string;
   limitValueConstant?: string;
   limitValueTag?: string;
