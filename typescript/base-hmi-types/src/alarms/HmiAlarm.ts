@@ -107,6 +107,7 @@ export class HmiDiscreteAlarm extends HmiBaseAlarm {
   plcAcknowledgementBitNumber = 0;
   triggerValue?: number;
   triggerReference?: string;
+  triggerReferenceKind = HmiAlarmTriggerReferenceKind.Unknown;
   useAcknowledgeAll?: boolean;
   acknowledgeAllValue?: number;
   handshakeTag?: string;
@@ -123,6 +124,13 @@ export class HmiDiscreteAlarm extends HmiBaseAlarm {
   writeMessageToTag?: boolean;
   acknowledgementAutoReset?: boolean;
   handshakeAutoReset?: boolean;
+}
+
+export enum HmiAlarmTriggerReferenceKind {
+  Unknown,
+  Specific,
+  All,
+  Unassigned,
 }
 
 export class HmiAnalogAlarm extends HmiBaseAlarm {
