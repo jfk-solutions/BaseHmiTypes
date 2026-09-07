@@ -1,4 +1,4 @@
-import { HmiProperty } from "../base.js";
+import { HmiColor, HmiProperty } from "../base.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiAuditTrailFieldPresentation } from "./HmiAuditTrailFieldPresentation.js";
@@ -16,5 +16,7 @@ export class HmiAuditTrailControl extends HmiControlWindowBase {
   wordWrap?: HmiProperty<boolean>;
   wrapAround?: HmiProperty<boolean>;
   receiveSelectionFrom?: string;
+  selectionBackgroundColor?: HmiProperty<HmiColor>;
+  selectionForegroundColor?: HmiProperty<HmiColor>;
   readonly fields: HmiAuditTrailFieldPresentation[] = [];
 }
