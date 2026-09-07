@@ -9,6 +9,8 @@ public class HmiAlarmLineControl : HmiSimpleScreenItemBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiAlarmLineControl;
     }
 
+    public HmiAlarmConnectionBindings AlarmConnections { get; } = new();
+
     public HmiProperty<bool>? SuppressFlashing { get; set; }
 
     public HmiAlarmLineViewKind ViewKind { get; set; }
