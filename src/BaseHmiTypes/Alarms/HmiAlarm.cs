@@ -195,6 +195,18 @@ public sealed class HmiAnalogAlarm : HmiBaseAlarm
 {
     public string? TriggerTag { get; set; }
 
+    public string? TargetValueConstant { get; set; }
+
+    public string? TargetValueTag { get; set; }
+
+    public string? TargetValueType { get; set; }
+
+    public string? DeviationValueConstant { get; set; }
+
+    public string? DeviationValueTag { get; set; }
+
+    public string? DeviationValueType { get; set; }
+
     public string? LimitMode { get; set; }
 
     public string? LimitValueConstant { get; set; }
