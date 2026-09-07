@@ -34,6 +34,7 @@ export abstract class HmiBaseAlarm extends HmiAlarm {
   readonly userDataEntries: HmiAlarmUserDataEntry[] = [];
   command?: string;
   groupId?: number;
+  latched?: boolean;
   alarmClass?: HmiAlarmClass;
   alarmText?: HmiMultilingualText;
   infoText?: HmiMultilingualText;
