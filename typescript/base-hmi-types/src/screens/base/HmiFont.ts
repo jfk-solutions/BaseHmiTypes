@@ -4,6 +4,7 @@ export class HmiFont {
   name?: HmiProperty<string>;
   size?: HmiProperty<number>;
   characterWidth?: HmiProperty<number>;
+  characterHeight?: HmiProperty<number>;
   escapementAngle?: HmiProperty<number>;
   orientationAngle?: HmiProperty<number>;
   weight?: HmiProperty<number>;
