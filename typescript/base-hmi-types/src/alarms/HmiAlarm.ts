@@ -32,6 +32,7 @@ export abstract class HmiBaseAlarm extends HmiAlarm {
   exposedAsTag?: boolean;
   userData?: string;
   readonly userDataEntries: HmiAlarmUserDataEntry[] = [];
+  command?: string;
   alarmClass?: HmiAlarmClass;
   alarmText?: HmiMultilingualText;
   infoText?: HmiMultilingualText;
