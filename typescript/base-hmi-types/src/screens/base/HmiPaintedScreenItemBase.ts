@@ -10,6 +10,8 @@ export abstract class HmiPaintedScreenItemBase extends HmiScreenItemBase {
   alternateForegroundColor?: HmiProperty<HmiColor>;
   backgroundColor?: HmiProperty<HmiColor>;
   alternateBackgroundColor?: HmiProperty<HmiColor>;
+  /** Foreground color used by a patterned background fill. */
+  patternColor?: HmiProperty<HmiColor>;
   borderColor?: HmiProperty<HmiColor>;
   borderBackgroundColor?: HmiProperty<HmiColor>;
   borderUsesBackgroundColor?: HmiProperty<boolean>;
