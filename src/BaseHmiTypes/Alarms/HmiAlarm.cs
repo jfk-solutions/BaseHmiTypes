@@ -55,6 +55,8 @@ public abstract class HmiBaseAlarm : HmiAlarm
 
     public int? GroupId { get; set; }
 
+    public bool? Latched { get; set; }
+
     public HmiAlarmClass? AlarmClass { get; set; }
 
     public HmiMultilingualText? AlarmText { get; set; }
