@@ -18,6 +18,7 @@ import { HmiAlarmStateAppearance } from "./HmiAlarmStateAppearance.js";
 import { HmiAlarmSortCriterion } from "./HmiAlarmSortCriterion.js";
 import { HmiAlarmFilterExpression } from "./HmiAlarmFilterExpression.js";
 import { HmiAlarmDisplayFilter } from "./HmiAlarmDisplayFilter.js";
+import { HmiAlarmConnectionBindings } from "./HmiAlarmConnectionBindings.js";
 
 export class HmiAlarmControl extends HmiControlWindowBase {
   constructor() {
@@ -26,6 +27,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   }
 
   suppressFlashing?: HmiProperty<boolean>;
+  readonly alarmConnections = new HmiAlarmConnectionBindings();
   viewKind = HmiAlarmViewKind.Unknown;
   acknowledgmentFlashingRate?: HmiProperty<number>;
   resetFlashingRate?: HmiProperty<number>;
