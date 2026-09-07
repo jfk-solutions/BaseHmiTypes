@@ -11,6 +11,7 @@ import { HmiAlarmBlinkRate } from "./HmiAlarmBlinkRate.js";
 import { HmiAlarmStateAppearance } from "./HmiAlarmStateAppearance.js";
 import { HmiAlarmStatusBarPanel } from "./HmiAlarmStatusBarPanel.js";
 import { HmiAlarmToolbarButton } from "./HmiAlarmToolbarButton.js";
+import { HmiAlarmConnectionBindings } from "./HmiAlarmConnectionBindings.js";
 
 export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   constructor() {
@@ -19,6 +20,7 @@ export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
   }
 
   suppressFlashing?: HmiProperty<boolean>;
+  readonly alarmConnections = new HmiAlarmConnectionBindings();
   viewKind = HmiAlarmLineViewKind.Unknown;
   acknowledgmentFlashingRate?: HmiProperty<number>;
   resetFlashingRate?: HmiProperty<number>;

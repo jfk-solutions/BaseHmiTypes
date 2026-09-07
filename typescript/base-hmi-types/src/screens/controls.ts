@@ -2,6 +2,7 @@ export * from "./controls/HmiAlarmLineControl.js";
 export * from "./controls/HmiAlarmLineViewKind.js";
 export * from "./controls/HmiAlarmRowDoubleClickAction.js";
 export * from "./controls/HmiAlarmControl.js";
+export * from "./controls/HmiAlarmConnectionBindings.js";
 export * from "./controls/HmiAlarmColumn.js";
 export * from "./controls/HmiAlarmColumnType.js";
 export * from "./controls/HmiAlarmToolbarButton.js";
