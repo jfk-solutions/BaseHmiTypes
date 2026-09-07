@@ -34,6 +34,12 @@ public abstract class HmiBaseAlarm : HmiAlarm
 
     public int Priority { get; set; }
 
+    public string? PriorityTag { get; set; }
+
+    public int? MinimumDurationMilliseconds { get; set; }
+
+    public bool? ExposedAsTag { get; set; }
+
     public HmiAlarmClass? AlarmClass { get; set; }
 
     public HmiMultilingualText? AlarmText { get; set; }
