@@ -181,6 +181,8 @@ public sealed class HmiDiscreteAlarm : HmiBaseAlarm
 
     public string? TriggerReference { get; set; }
 
+    public HmiAlarmTriggerReferenceKind TriggerReferenceKind { get; set; }
+
     public bool? UseAcknowledgeAll { get; set; }
 
     public int? AcknowledgeAllValue { get; set; }
@@ -212,6 +214,14 @@ public sealed class HmiDiscreteAlarm : HmiBaseAlarm
     public bool? AcknowledgementAutoReset { get; set; }
 
     public bool? HandshakeAutoReset { get; set; }
+}
+
+public enum HmiAlarmTriggerReferenceKind
+{
+    Unknown,
+    Specific,
+    All,
+    Unassigned
 }
 
 public sealed class HmiAnalogAlarm : HmiBaseAlarm
