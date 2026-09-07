@@ -10,6 +10,8 @@ public class HmiAlarmControl : HmiControlWindowBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiAlarmControl;
     }
 
+    public HmiAlarmConnectionBindings AlarmConnections { get; } = new();
+
     public HmiProperty<bool>? SuppressFlashing { get; set; }
 
     public HmiAlarmViewKind ViewKind { get; set; }
