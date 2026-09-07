@@ -21,5 +21,9 @@ public sealed class HmiAuditTrailControl : HmiControlWindowBase
 
     public string? ReceiveSelectionFrom { get; set; }
 
+    public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
+
     public IList<HmiAuditTrailFieldPresentation> Fields { get; } = new List<HmiAuditTrailFieldPresentation>();
 }
