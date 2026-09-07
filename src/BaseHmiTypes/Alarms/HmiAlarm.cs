@@ -24,6 +24,13 @@ public sealed class HmiAlarmClass
     }
 }
 
+public sealed class HmiAlarmUserDataEntry
+{
+    public string? Name { get; set; }
+
+    public string? Value { get; set; }
+}
+
 public abstract class HmiBaseAlarm : HmiAlarm
 {
     public bool? Enabled { get; set; }
@@ -39,6 +46,10 @@ public abstract class HmiBaseAlarm : HmiAlarm
     public int? MinimumDurationMilliseconds { get; set; }
 
     public bool? ExposedAsTag { get; set; }
+
+    public string? UserData { get; set; }
+
+    public IList<HmiAlarmUserDataEntry> UserDataEntries { get; } = new List<HmiAlarmUserDataEntry>();
 
     public HmiAlarmClass? AlarmClass { get; set; }
 
