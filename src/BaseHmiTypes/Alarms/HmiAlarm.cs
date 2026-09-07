@@ -281,6 +281,12 @@ public sealed class HmiAlarmList : IHmiObject
 
     public string? Name { get; set; }
 
+    public string? SourceIdentifier { get; set; }
+
+    public string? SourceFormatVersion { get; set; }
+
+    public string? SourceProductIdentifier { get; set; }
+
     public HmiAlarmListType HmiAlarmListType { get; set; }
 
     public IList<HmiAlarm> Alarms { get; } = new List<HmiAlarm>();
