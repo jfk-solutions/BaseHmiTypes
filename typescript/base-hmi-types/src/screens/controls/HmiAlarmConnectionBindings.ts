@@ -6,6 +6,7 @@ export class HmiAlarmConnectionBindings {
   statusResetNotification?: HmiProperty<number>;
   messageNotification?: HmiProperty<number>;
   messageHandshake?: HmiProperty<number>;
+  closeDisplayNotification?: HmiProperty<number>;
   remoteAcknowledge?: HmiProperty<number>;
   remoteAcknowledgeAll?: HmiProperty<number>;
   remoteAcknowledgeHandshake?: HmiProperty<number>;
