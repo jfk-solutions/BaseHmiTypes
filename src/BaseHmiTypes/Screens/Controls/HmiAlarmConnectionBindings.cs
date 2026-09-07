@@ -15,6 +15,8 @@ public class HmiAlarmConnectionBindings
 
     public HmiProperty<double>? MessageHandshake { get; set; }
 
+    public HmiProperty<double>? CloseDisplayNotification { get; set; }
+
     public HmiProperty<double>? RemoteAcknowledge { get; set; }
 
     public HmiProperty<double>? RemoteAcknowledgeAll { get; set; }
