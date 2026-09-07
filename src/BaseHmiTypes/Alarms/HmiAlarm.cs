@@ -53,6 +53,8 @@ public abstract class HmiBaseAlarm : HmiAlarm
 
     public string? Command { get; set; }
 
+    public int? GroupId { get; set; }
+
     public HmiAlarmClass? AlarmClass { get; set; }
 
     public HmiMultilingualText? AlarmText { get; set; }
