@@ -37,6 +37,8 @@ export class HmiScreenRuntimeSettings {
   title?: HmiMultilingualText;
   maximumTagUpdateRateSeconds?: number;
   initialInputFocusEnabled?: boolean;
+  /** Whether a reusable/library screen carries translations for multiple languages. */
+  supportsMultipleLanguages?: boolean;
   focusHighlightEnabled?: boolean;
   focusHighlightColor?: HmiColor;
   allowMultipleRunningCopies?: boolean;
