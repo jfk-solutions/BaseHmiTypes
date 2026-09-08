@@ -56,6 +56,11 @@ public sealed class HmiScreenRuntimeSettings
 
     public bool? InitialInputFocusEnabled { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether a reusable/library screen carries translations for multiple languages.
+    /// </summary>
+    public bool? SupportsMultipleLanguages { get; set; }
+
     public bool? FocusHighlightEnabled { get; set; }
 
     public HmiColor? FocusHighlightColor { get; set; }
