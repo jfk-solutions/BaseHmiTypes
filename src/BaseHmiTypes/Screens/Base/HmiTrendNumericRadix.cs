@@ -4,5 +4,6 @@ public enum HmiTrendNumericRadix
 {
     Decimal,
     Hexadecimal,
-    Octal
+    Octal,
+    Exponent
 }
