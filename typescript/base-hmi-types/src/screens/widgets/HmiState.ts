@@ -4,6 +4,12 @@ import { HmiDisplayParameterSource } from "./HmiDisplayParameterSource.js";
 import { HmiStateAccess } from "./HmiStateAccess.js";
 
 export class HmiState {
+  /** Parser-specific format of sourceData. */
+  sourceFormat?: string;
+  /** Exact parser-specific source record when retained. */
+  sourceData?: Uint8Array;
+  /** Parser-specific state properties without a neutral semantic representation. */
+  readonly sourceProperties: Record<string, string> = {};
   name?: string;
   value?: number;
   access?: HmiStateAccess;
