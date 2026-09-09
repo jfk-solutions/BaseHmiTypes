@@ -5,6 +5,15 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public sealed class HmiState
 {
+    /// <summary>Gets or sets the parser-specific format of <see cref="SourceData"/>.</summary>
+    public string? SourceFormat { get; set; }
+
+    /// <summary>Gets or sets the exact parser-specific source record when retained.</summary>
+    public byte[]? SourceData { get; set; }
+
+    /// <summary>Gets parser-specific state properties that have no neutral semantic representation.</summary>
+    public Dictionary<string, string> SourceProperties { get; } = [];
+
     public string? Name { get; set; }
 
     public double? Value { get; set; }
