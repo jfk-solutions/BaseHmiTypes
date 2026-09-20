@@ -529,6 +529,47 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersEnabledBarThresholdMarkers()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        var bar = new HmiBar
+        {
+            Name = "ThresholdBar",
+            Width = 120,
+            Height = 20,
+            BeginValue = 0,
+            EndValue = 100,
+            Value = 35,
+            FillDirection = HmiFillDirection.Right,
+            ThresholdValueMode = HmiThresholdValueMode.Absolute
+        };
+        bar.Thresholds.Add(new HmiThreshold
+        {
+            Index = 4,
+            Enabled = true,
+            Value = 25,
+            Color = HmiColor.FromArgb(255, 255, 0, 0)
+        });
+        bar.Thresholds.Add(new HmiThreshold
+        {
+            Index = 5,
+            Enabled = false,
+            Value = 75,
+            Color = HmiColor.FromArgb(255, 255, 255, 0)
+        });
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-hmi-bar-meter=\"true\"");
+        StringAssert.Contains(html, "data-hmi-bar-threshold=\"4\" data-threshold-value=\"25\"");
+        StringAssert.Contains(html, "background-color: #FF0000; top: 0; bottom: 0; left: 25%; width: 2px;");
+        Assert.IsFalse(html.Contains("data-hmi-bar-threshold=\"5\"", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSliderOrientations()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };

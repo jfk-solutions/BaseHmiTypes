@@ -12,6 +12,8 @@ public sealed class HmiThreshold
 {
     public int? Index { get; set; }
 
+    public HmiProperty<bool>? Enabled { get; set; }
+
     public HmiProperty<double>? Value { get; set; }
 
     public HmiProperty<HmiColor>? Color { get; set; }
