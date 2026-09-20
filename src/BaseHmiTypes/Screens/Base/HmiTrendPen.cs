@@ -52,6 +52,9 @@ public sealed class HmiTrendPen
     /// <summary>Gets or sets whether alarm symbols are displayed for limit violations.</summary>
     public HmiProperty<bool>? ShowAlarms { get; set; }
 
+    /// <summary>Gets or sets the vertical alignment of labels for the values-only trend type.</summary>
+    public HmiProperty<HmiVerticalAlignment>? ValueAlignment { get; set; }
+
     /// <summary>
     /// Engineering-system marker name or numeric marker identifier.
     /// </summary>
