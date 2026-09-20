@@ -242,6 +242,14 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
 
+    public HmiProperty<int>? SelectionRectangleMode { get; set; }
+
+    public HmiProperty<bool>? UseAutomaticSelectionRectangleColor { get; set; }
+
+    public HmiProperty<HmiColor>? SelectionRectangleColor { get; set; }
+
+    public HmiProperty<double>? SelectionRectangleWidth { get; set; }
+
     public HmiProperty<bool>? UseAlarmColors { get; set; }
 
     public HmiProperty<HmiColor>? TableHeaderBackgroundColor { get; set; }
