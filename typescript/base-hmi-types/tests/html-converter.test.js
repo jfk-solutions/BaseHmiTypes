@@ -1227,6 +1227,7 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.movable = staticProperty(true);
   alarms.closeable = staticProperty(true);
   alarms.gridLineColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x55, 0x66));
+  alarms.gridLineWidth = staticProperty(2);
   alarms.showHorizontalGridLines = staticProperty(false);
   alarms.showVerticalGridLines = staticProperty(true);
   alarms.tableBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x10, 0x20, 0x30));
@@ -1296,6 +1297,7 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-window-movable="true"/);
   assert.match(html, /data-window-closeable="true"/);
   assert.match(html, /data-grid-line-color="#445566"/);
+  assert.match(html, /data-grid-line-width="2"/);
   assert.match(html, /data-show-horizontal-grid-lines="false"/);
   assert.match(html, /data-show-vertical-grid-lines="true"/);
   assert.match(html, /data-table-background-color="#102030"/);
@@ -1307,7 +1309,7 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-status-bar-foreground-color="#FEDCBA"/);
   assert.match(html, /--hmi-grid-line-color: #445566;/);
   assert.match(html, /background-color: #102030;color: #E0D0C0;/);
-  assert.match(html, /border-style: solid; border-color: var\(--hmi-grid-line-color, currentColor\); border-width: 0px 1px;/);
+  assert.match(html, /border-style: solid; border-color: var\(--hmi-grid-line-color, currentColor\); border-width: 0px 2px;/);
   assert.match(html, /background-color: #708090;color: #F1F2F3;/);
   assert.match(html, /font-family: Arial;font-size: 9.75px;font-weight: 400;/);
   assert.match(html, /font-family: Siemens Sans;font-size: 10px;font-weight: 700;font-style: italic;text-decoration: underline line-through;/);

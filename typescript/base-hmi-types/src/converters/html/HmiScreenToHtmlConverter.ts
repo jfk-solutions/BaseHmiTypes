@@ -2032,6 +2032,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-filtered-triggers", alarmControl.filteredTriggers.length === 0 ? undefined : alarmControl.filteredTriggers.join(","));
   appendAttribute(html, "data-alarm-identifier", resolvePropertyPreview(alarmControl.alarmIdentifier));
   appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(alarmControl.gridLineColor));
+  appendAttribute(html, "data-grid-line-width", resolvePropertyPreview(alarmControl.gridLineWidth));
   appendAttribute(html, "data-show-horizontal-grid-lines", resolvePropertyPreview(alarmControl.showHorizontalGridLines));
   appendAttribute(html, "data-show-vertical-grid-lines", resolvePropertyPreview(alarmControl.showVerticalGridLines));
   appendAttribute(html, "data-table-background-color", resolvePropertyPreview(alarmControl.tableBackgroundColor));
@@ -3117,7 +3118,8 @@ function createAlarmTableStyle(alarmControl: HmiAlarmControl): string {
 function createAlarmGridCellStyle(alarmControl: HmiAlarmControl): string {
   const horizontal = getStaticValue(alarmControl.showHorizontalGridLines) !== false;
   const vertical = getStaticValue(alarmControl.showVerticalGridLines) !== false;
-  return `border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: ${horizontal ? 1 : 0}px ${vertical ? 1 : 0}px;`;
+  const width = Math.max(0, getStaticValue(alarmControl.gridLineWidth) ?? 1);
+  return `border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: ${horizontal ? toCss(width) : "0"}px ${vertical ? toCss(width) : "0"}px;`;
 }
 
 function createTrendControlStyle(trendControl: HmiTrendControl): string {
