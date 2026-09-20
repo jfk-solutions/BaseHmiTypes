@@ -61,6 +61,9 @@ public sealed class HmiTrendPen
     /// <summary>Gets or sets the scaling type of the value axis assigned to this pen.</summary>
     public HmiProperty<HmiTrendAxisScaleType>? AxisScaleType { get; set; }
 
+    /// <summary>Gets or sets whether values on this pen's axis use exponential notation.</summary>
+    public HmiProperty<bool>? ExponentialFormat { get; set; }
+
     /// <summary>
     /// Gets or sets the current minimum value used to scale this pen.
     /// </summary>
