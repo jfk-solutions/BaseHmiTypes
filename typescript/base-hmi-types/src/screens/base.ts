@@ -14,6 +14,7 @@ export * from "./base/HmiFont.js";
 export * from "./base/HmiHorizontalAlignment.js";
 export * from "./base/HmiVerticalAlignment.js";
 export * from "./base/HmiImageSource.js";
+export * from "./base/HmiBackgroundImageLayout.js";
 export * from "./base/HmiScreenModelBase.js";
 export * from "./base/HmiScreenKind.js";
 export * from "./base/HmiElectronicSignatureSettings.js";
