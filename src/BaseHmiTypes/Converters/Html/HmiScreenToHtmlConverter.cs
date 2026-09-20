@@ -2263,6 +2263,10 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-table-header-border-color", ResolvePropertyPreview(alarmControl.TableHeaderBorderColor, context));
         AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(alarmControl.SelectionBackgroundColor, context));
         AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(alarmControl.SelectionForegroundColor, context));
+        AppendAttribute(html, "data-selection-rectangle-mode", ResolvePropertyPreview(alarmControl.SelectionRectangleMode, context));
+        AppendAttribute(html, "data-use-automatic-selection-rectangle-color", ResolvePropertyPreview(alarmControl.UseAutomaticSelectionRectangleColor, context));
+        AppendAttribute(html, "data-selection-rectangle-color", ResolvePropertyPreview(alarmControl.SelectionRectangleColor, context));
+        AppendAttribute(html, "data-selection-rectangle-width", ResolvePropertyPreview(alarmControl.SelectionRectangleWidth, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(alarmControl.ShowStatusBar, context));
         AppendAttribute(html, "data-status-bar-background-color", ResolvePropertyPreview(alarmControl.StatusBarBackgroundColor, context));
         AppendAttribute(html, "data-status-bar-foreground-color", ResolvePropertyPreview(alarmControl.StatusBarForegroundColor, context));
@@ -2312,6 +2316,7 @@ public class HmiScreenToHtmlConverter
         html.Append(" style=\"text-align: center;").Append(gridCellStyle);
         AppendColorStyle(html, "background-color", alarmControl.SelectionBackgroundColor);
         AppendColorStyle(html, "color", alarmControl.SelectionForegroundColor);
+        AppendAlarmSelectionRectangleStyle(html, alarmControl, context);
         html.Append("\">Alarm data not loaded</td></tr></tbody></table>");
 
         var showAcknowledgeButton = alarmControl.ShowAcknowledgeButton is not null && ResolveStaticValue(alarmControl.ShowAcknowledgeButton, context);
@@ -3409,6 +3414,29 @@ public class HmiScreenToHtmlConverter
             ? 1d
             : Math.Max(0d, ResolveStaticValue(alarmControl.GridLineWidth, context));
         return $"border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: {(horizontal ? ToCss(width) : "0")}px {(vertical ? ToCss(width) : "0")}px;";
+    }
+
+    private static void AppendAlarmSelectionRectangleStyle(
+        StringBuilder style,
+        HmiAlarmControl alarmControl,
+        HmiHtmlConvertContext context)
+    {
+        if (alarmControl.SelectionRectangleMode is null ||
+            ResolveStaticValue(alarmControl.SelectionRectangleMode, context) == 0)
+            return;
+
+        var width = alarmControl.SelectionRectangleWidth is null
+            ? 1d
+            : Math.Max(0d, ResolveStaticValue(alarmControl.SelectionRectangleWidth, context));
+        style.Append("outline: ").Append(ToCss(width)).Append("px solid ");
+        if (alarmControl.UseAutomaticSelectionRectangleColor is not null &&
+            ResolveStaticValue(alarmControl.UseAutomaticSelectionRectangleColor, context))
+            style.Append("currentColor");
+        else if (alarmControl.SelectionRectangleColor is not null)
+            style.Append(ToCss(ResolveStaticValue(alarmControl.SelectionRectangleColor, context)));
+        else
+            style.Append("currentColor");
+        style.Append(";outline-offset: -").Append(ToCss(width)).Append("px;");
     }
 
     private static string CreateAlarmTableHeaderCellStyle(
