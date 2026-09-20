@@ -3619,6 +3619,8 @@ public class HmiScreenToHtmlConverter
             AddTrendJsonBoolean(properties, "upperLimitColoring", pen.UpperLimitColoring?.StaticValue);
             AddTrendJsonNumber(properties, "upperLimit", pen.UpperLimitValue?.StaticValue);
             AddTrendJsonString(properties, "upperLimitColor", pen.UpperLimitColor?.StaticValue is HmiColor upperLimitColor ? ToCss(upperLimitColor) : null);
+            AddTrendJsonBoolean(properties, "uncertainColoring", pen.UncertainColoring?.StaticValue);
+            AddTrendJsonString(properties, "uncertainColor", pen.UncertainColor?.StaticValue is HmiColor uncertainColor ? ToCss(uncertainColor) : null);
             AddTrendJsonString(properties, "marker", pen.Marker?.StaticValue);
             AddTrendJsonString(properties, "markerColor", pen.MarkerColor?.StaticValue is HmiColor markerColor ? ToCss(markerColor) : null);
             AddTrendJsonNumber(properties, "markerSize", pen.MarkerSize?.StaticValue);
