@@ -79,6 +79,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   displayValueBar?: HmiProperty<boolean>;
   valueBarColor?: HmiProperty<HmiColor>;
   valueBarWidth?: HmiProperty<number>;
+  /** Whether the value bar extends into the time axis. */
+  showValueBarInXAxis?: HmiProperty<boolean>;
   xAxisScaleVisible?: HmiProperty<boolean>;
   xAxisColor?: HmiProperty<HmiColor>;
   xAxisAlignment?: HmiProperty<HmiVerticalAlignment>;

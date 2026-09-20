@@ -3109,6 +3109,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "display-value-bar", trendControl.displayValueBar);
   appendStaticAttribute(html, "value-bar-color", trendControl.valueBarColor);
   appendStaticAttribute(html, "value-bar-width", trendControl.valueBarWidth);
+  appendStaticBooleanValueAttribute(html, "show-value-bar-in-x-axis", trendControl.showValueBarInXAxis);
   appendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.displayScrollMechanism);
   appendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.chartLiveMode);
   appendStaticBooleanValueAttribute(html, "auto-scale", trendControl.autoScale);
