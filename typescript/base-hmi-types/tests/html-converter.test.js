@@ -1580,6 +1580,12 @@ test("HTML converter exposes trend configuration to the web component", async ()
   pen.style = staticProperty(HmiLineStyle.Dash);
   pen.fillVisible = staticProperty(true);
   pen.fillColor = staticProperty(hmiColorFromArgb(255, 0x33, 0x66, 0x99));
+  pen.lowerLimitColoring = staticProperty(true);
+  pen.lowerLimitValue = staticProperty(10);
+  pen.lowerLimitColor = staticProperty(hmiColorFromArgb(255, 0x00, 0x44, 0xcc));
+  pen.upperLimitColoring = staticProperty(true);
+  pen.upperLimitValue = staticProperty(90);
+  pen.upperLimitColor = staticProperty(hmiColorFromArgb(255, 0xcc, 0x22, 0x11));
   pen.marker = staticProperty("2");
   pen.markerColor = staticProperty(hmiColorFromArgb(255, 0xaa, 0xbb, 0xcc));
   pen.markerSize = staticProperty(5);
@@ -1649,7 +1655,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /minimum-value="-5"/);
   assert.match(html, /maximum-value="100"/);
   assert.match(html, /y-axis-decimal-places="2"/);
-  assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}\]"/);
+  assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;lowerLimitColoring&quot;:true,&quot;lowerLimit&quot;:10,&quot;lowerLimitColor&quot;:&quot;#0044CC&quot;,&quot;upperLimitColoring&quot;:true,&quot;upperLimit&quot;:90,&quot;upperLimitColor&quot;:&quot;#CC2211&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}\]"/);
 });
 
 test("HTML converter does not render disabled trend status backgrounds", async () => {
