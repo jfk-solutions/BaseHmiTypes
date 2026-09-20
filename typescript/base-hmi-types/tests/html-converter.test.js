@@ -1548,6 +1548,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.displayPenIcons = staticProperty(true);
   trend.useTrendNameAsLabel = staticProperty(false);
   trend.displayValueBar = staticProperty(true);
+  trend.useGraphicValueBar = staticProperty(true);
   trend.valueBarColor = staticProperty(hmiColorFromArgb(255, 0x65, 0x43, 0x21));
   trend.valueBarWidth = staticProperty(3);
   trend.showValueBarInXAxis = staticProperty(true);
@@ -1643,6 +1644,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /--hmi-trend-status-font-family: Tahoma;--hmi-trend-status-font-size: 8px;--hmi-trend-status-font-weight: 600;--hmi-trend-status-font-style: italic;/);
   assert.match(html, /display-pen-icons="true"/);
   assert.match(html, /display-value-bar="true"/);
+  assert.match(html, /use-graphic-value-bar="true"/);
   assert.match(html, /value-bar-color="#654321"/);
   assert.match(html, /value-bar-width="3"/);
   assert.match(html, /show-value-bar-in-x-axis="true"/);
