@@ -15,7 +15,8 @@ const trendControlProperties = {
   xAxisGridVisible: String,
   yAxisScaleVisible: String,
   yAxisGridVisible: String,
-  yAxisScaleAsPercent: String,
+  showPercentageAxis: String,
+  percentageAxisAlignment: String,
   minimumValue: String,
   maximumValue: String,
   yAxisDecimalPlaces: String,
@@ -115,7 +116,8 @@ export class HmiTrendControl extends HTMLElement {
     const xAxisGridVisible = readBooleanAttribute(this, "x-axis-grid-visible", true);
     const yAxisVisible = readBooleanAttribute(this, "y-axis-scale-visible", true);
     const yAxisGridVisible = readBooleanAttribute(this, "y-axis-grid-visible", true);
-    const yAxisScaleAsPercent = readBooleanAttribute(this, "y-axis-scale-as-percent", false);
+    const showPercentageAxis = readBooleanAttribute(this, "show-percentage-axis", false);
+    const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
     const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
     const now = new Date();
     const labels = createTimeLabels(now, xAxisDateVisible);
@@ -238,7 +240,23 @@ export class HmiTrendControl extends HTMLElement {
           transform: translateY(50%);
           text-align: right;
           width: 3.6em;
-          color: var(--hmi-trend-y-axis-percentage-color, ${escapeCss(foregroundColor)});
+        }
+
+        .percentage-axis-line {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          ${percentageAxisAlignment}: 0;
+          border-${percentageAxisAlignment}: 1px solid var(--hmi-trend-percentage-axis-color, ${escapeCss(foregroundColor)});
+          pointer-events: none;
+        }
+
+        .percentage-label {
+          ${percentageAxisAlignment}: -4.4em;
+          transform: translateY(50%);
+          width: 3.6em;
+          color: var(--hmi-trend-percentage-axis-color, ${escapeCss(foregroundColor)});
+          text-align: ${percentageAxisAlignment === "left" ? "right" : "left"};
         }
 
         .x-label {
@@ -297,7 +315,8 @@ export class HmiTrendControl extends HTMLElement {
             ${yAxisVisible ? `<line x1="0" y1="0" x2="0" y2="100" stroke="#444850" stroke-width="0.55"></line>` : ""}
             ${renderPens(visiblePens)}
           </svg>
-          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, yAxisScaleAsPercent) : ""}
+          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces) : ""}
+          ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${xAxisVisible ? renderXLabels(labels) : ""}
         </div>
         ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"></div></div>` : ""}
@@ -322,13 +341,21 @@ function renderGrid(verticalVisible: boolean, horizontalVisible: boolean): strin
   return lines.join("");
 }
 
-function renderYLabels(minimum: number, maximum: number, decimalPlaces: number, asPercent: boolean): string {
+function renderYLabels(minimum: number, maximum: number, decimalPlaces: number): string {
   const labels: string[] = [];
   for (let index = 0; index <= 5; index++) {
     const ratio = index / 5;
     const value = maximum - (maximum - minimum) * ratio;
-    const suffix = asPercent ? "%" : "";
-    labels.push(`<span class="axis-label y-label" style="top:${toCss(ratio * 100)}%">${escapeHtml(value.toFixed(decimalPlaces))}${suffix}</span>`);
+    labels.push(`<span class="axis-label y-label" style="top:${toCss(ratio * 100)}%">${escapeHtml(value.toFixed(decimalPlaces))}</span>`);
+  }
+  return labels.join("");
+}
+
+function renderPercentageLabels(): string {
+  const labels: string[] = [];
+  for (let index = 0; index <= 5; index++) {
+    const ratio = index / 5;
+    labels.push(`<span class="axis-label percentage-label" style="top:${toCss(ratio * 100)}%">${100 - index * 20}%</span>`);
   }
   return labels.join("");
 }

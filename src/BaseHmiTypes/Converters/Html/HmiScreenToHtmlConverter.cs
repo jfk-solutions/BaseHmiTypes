@@ -3344,8 +3344,9 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.XAxisGridVisible);
         AppendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.YAxisScaleVisible);
         AppendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.YAxisGridVisible);
-        AppendStaticBooleanValueAttribute(html, "y-axis-scale-as-percent", trendControl.YAxisScaleAsPercent);
-        AppendStaticAttribute(html, "y-axis-percentage-color", trendControl.YAxisPercentageColor);
+        AppendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.ShowPercentageAxis);
+        AppendStaticAttribute(html, "percentage-axis-color", trendControl.PercentageAxisColor);
+        AppendStaticAttribute(html, "percentage-axis-alignment", trendControl.PercentageAxisAlignment);
         AppendStaticAttribute(html, "minimum-value", trendControl.MinimumValue);
         AppendStaticAttribute(html, "maximum-value", trendControl.MaximumValue);
         AppendStaticAttribute(html, "y-axis-decimal-places", trendControl.YAxisDecimalPlaces);
@@ -3481,9 +3482,9 @@ public class HmiScreenToHtmlConverter
         if (trendControl.StatusBarForegroundColor is not null)
             style.Append("--hmi-trend-status-foreground: ")
                 .Append(ToCss(ResolveStaticValue(trendControl.StatusBarForegroundColor, context))).Append(';');
-        if (trendControl.YAxisPercentageColor is not null)
-            style.Append("--hmi-trend-y-axis-percentage-color: ")
-                .Append(ToCss(ResolveStaticValue(trendControl.YAxisPercentageColor, context))).Append(';');
+        if (trendControl.PercentageAxisColor is not null)
+            style.Append("--hmi-trend-percentage-axis-color: ")
+                .Append(ToCss(ResolveStaticValue(trendControl.PercentageAxisColor, context))).Append(';');
         return style.ToString();
     }
 
