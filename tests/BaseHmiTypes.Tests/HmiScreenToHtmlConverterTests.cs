@@ -1797,6 +1797,57 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersScreenWindowViewportModes()
+    {
+        var main = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiScreenWindow
+        {
+            Id = "fit-picture",
+            Name = "FitPicture",
+            ScreenId = "detail",
+            Width = 200,
+            Height = 100,
+            FitScreenToWindow = true,
+            ShowScrollBars = true
+        });
+        layer.Items.Add(new HmiScreenWindow
+        {
+            Id = "fit-window",
+            Name = "FitWindow",
+            ScreenId = "detail",
+            Width = 50,
+            Height = 50,
+            FitWindowToScreen = true,
+            ZoomPercent = 150
+        });
+        layer.Items.Add(new HmiScreenWindow
+        {
+            Id = "scroll-window",
+            Name = "ScrollWindow",
+            ScreenId = "detail",
+            Width = 50,
+            Height = 50,
+            ShowScrollBars = true,
+            ZoomPercent = 125
+        });
+        main.Layers.Add(layer);
+
+        var detail = new HmiScreen { Id = "detail", Name = "Detail", Width = 400, Height = 200 };
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(main, new FakeProject(detail));
+
+        StringAssert.Contains(html, "data-fit-screen-to-window data-show-scrollbars id=\"FitPicture\"");
+        StringAssert.Contains(html, "width: 200px; height: 100px; overflow: hidden;");
+        StringAssert.Contains(html, "transform: scale(0.5, 0.5);");
+        StringAssert.Contains(html, "data-fit-window-to-screen data-zoom-percent=\"150\" id=\"FitWindow\"");
+        StringAssert.Contains(html, "width: 600px;height: 300px;overflow: hidden;");
+        StringAssert.Contains(html, "transform: scale(1.5, 1.5);");
+        StringAssert.Contains(html, "data-show-scrollbars data-zoom-percent=\"125\" id=\"ScrollWindow\"");
+        StringAssert.Contains(html, "overflow: auto;");
+        StringAssert.Contains(html, "transform: scale(1.25, 1.25);");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersVectorShapesAsSvg()
     {
         var screen = new HmiScreen
