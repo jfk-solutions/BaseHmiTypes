@@ -1556,6 +1556,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.xAxisAlignment = staticProperty(HmiVerticalAlignment.Top);
   trend.xAxisLabel = "Recorded time";
   trend.xAxisDateVisible = staticProperty(false);
+  trend.xAxisFlipped = staticProperty(true);
   trend.timeFormat = staticProperty(HmiTrendTimeFormat.TwentyFourHour);
   trend.xAxisTimeSpan = staticProperty(120000);
   trend.xAxisTimeSpanUnit = "Milliseconds";
@@ -1661,6 +1662,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /minimum-value="-5"/);
   assert.match(html, /maximum-value="100"/);
   assert.match(html, /y-axis-decimal-places="2"/);
+  assert.match(html, /x-axis-flipped="true"/);
   assert.match(html, /time-format="TwentyFourHour"/);
   assert.match(html, /use-trend-name-as-label="false"/);
   assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;label&quot;:&quot;Vessel pressure&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;lineType&quot;:2,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;lowerLimitColoring&quot;:true,&quot;lowerLimit&quot;:10,&quot;lowerLimitColor&quot;:&quot;#0044CC&quot;,&quot;upperLimitColoring&quot;:true,&quot;upperLimit&quot;:90,&quot;upperLimitColor&quot;:&quot;#CC2211&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}\]"/);
