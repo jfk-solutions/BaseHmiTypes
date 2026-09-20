@@ -81,6 +81,12 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   valueBarWidth?: HmiProperty<number>;
   /** Whether the value bar extends into the time axis. */
   showValueBarInXAxis?: HmiProperty<boolean>;
+  /** Whether the two statistics-area rulers are displayed. */
+  displayStatisticRulers?: HmiProperty<boolean>;
+  /** Whether statistics rulers use their configured color and width. */
+  useGraphicStatisticRulers?: HmiProperty<boolean>;
+  statisticRulerColor?: HmiProperty<HmiColor>;
+  statisticRulerWidth?: HmiProperty<number>;
   xAxisScaleVisible?: HmiProperty<boolean>;
   xAxisColor?: HmiProperty<HmiColor>;
   xAxisAlignment?: HmiProperty<HmiVerticalAlignment>;
