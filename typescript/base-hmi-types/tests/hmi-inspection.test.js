@@ -89,6 +89,20 @@ test("HTML conversion renders rectangle corner radii", async () => {
   assert.match(html, /border-radius: 10px 20px 30px 40px \/ 5px 6px 7px 8px;/);
 });
 
+test("HTML conversion renders painted shape border styles", async () => {
+  const rectangle = createRectangle("DottedFrame");
+  rectangle.borderWidth = staticProperty(3);
+  rectangle.borderStyle = staticProperty(HmiLineStyle.Dot);
+  rectangle.dashType = staticProperty(HmiLineStyle.Dot);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(rectangle);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /border-style: dotted;/);
+  assert.match(html, /border-width: 3px;/);
+});
+
 test("HTML conversion serializes dynamic SVG colors in HMI format", async () => {
   const dynamicSvg = new HmiDynamicSvg();
   dynamicSvg.name = "Valve";
