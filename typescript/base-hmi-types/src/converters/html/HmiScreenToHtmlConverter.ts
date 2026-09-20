@@ -2746,7 +2746,9 @@ function appendAlarmIndicator(
       ? text
       : alarmState !== undefined && isActive ? "!" : "";
 
-  let style = "display: flex; align-items: center; justify-content: center; overflow: hidden;";
+  let style = "display: flex; overflow: hidden;";
+  if (indicator.verticalAlignment === undefined) style += "align-items: center;";
+  if (indicator.horizontalAlignment === undefined) style += "justify-content: center;";
   const flashingColor = getStaticValue(indicator.flashingColor);
   if (isActive && flashingColor !== undefined) {
     if (isFlashingRequired) {
@@ -3320,6 +3322,9 @@ function getHorizontalAlignment(item: HmiScreenItemBase): HmiProperty<HmiHorizon
   if (item instanceof HmiText) {
     return item.horizontalAlignment;
   }
+  if (item instanceof HmiAlarmIndicator) {
+    return item.horizontalAlignment;
+  }
   if (item instanceof HmiWidgetBase) {
     return item.horizontalAlignment;
   }
@@ -3328,6 +3333,9 @@ function getHorizontalAlignment(item: HmiScreenItemBase): HmiProperty<HmiHorizon
 
 function getVerticalAlignment(item: HmiScreenItemBase): HmiProperty<HmiVerticalAlignment> | undefined {
   if (item instanceof HmiText) {
+    return item.verticalAlignment;
+  }
+  if (item instanceof HmiAlarmIndicator) {
     return item.verticalAlignment;
   }
   if (item instanceof HmiWidgetBase) {

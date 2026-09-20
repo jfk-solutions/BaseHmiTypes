@@ -27,6 +27,7 @@ import {
   HmiDotNetControlContainer,
   HmiFillDirection,
   HmiFont,
+  HmiHorizontalAlignment,
   HmiImage,
   HmiLayer,
   HmiListBox,
@@ -55,6 +56,7 @@ import {
   HmiThreshold,
   HmiThresholdValueMode,
   HmiWebControl,
+  HmiVerticalAlignment,
   staticProperty,
 } from "../dist/index.js";
 
@@ -448,6 +450,8 @@ test("HTML converter renders alarm indicator font", async () => {
   indicator.font.name = staticProperty("Arial");
   indicator.font.size = staticProperty(12);
   indicator.font.bold = staticProperty(true);
+  indicator.horizontalAlignment = staticProperty(HmiHorizontalAlignment.Right);
+  indicator.verticalAlignment = staticProperty(HmiVerticalAlignment.Bottom);
   const layer = new HmiLayer();
   layer.name = "Layer 1";
   layer.items.push(indicator);
@@ -458,6 +462,9 @@ test("HTML converter renders alarm indicator font", async () => {
   assert.match(html, /font-family: Arial;/);
   assert.match(html, /font-size: 12px;/);
   assert.match(html, /font-weight: bold;/);
+  assert.match(html, /text-align: right;/);
+  assert.match(html, /justify-content: flex-end;/);
+  assert.match(html, /align-items: flex-end;/);
 });
 
 test("HTML converter renders bar slider and scale previews", async () => {
