@@ -1343,6 +1343,28 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersRectangleCornerRadii()
+    {
+        var screen = new HmiScreen { Name = "Main" };
+        var layer = new HmiLayer { Name = "Default" };
+        layer.Items.Add(new HmiRectangle
+        {
+            Name = "RoundedFrame",
+            Width = 100,
+            Height = 50,
+            TopLeftRadius = (10d, 5d),
+            TopRightRadius = (20d, 6d),
+            BottomRightRadius = (30d, 7d),
+            BottomLeftRadius = (40d, 8d)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "border-radius: 10px 20px 30px 40px / 5px 6px 7px 8px;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersPaintedItemPadding()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
