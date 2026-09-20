@@ -2254,6 +2254,9 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-vertical-scrollbar", ResolvePropertyPreview(alarmControl.ShowVerticalScrollbar, context));
         AppendAttribute(html, "data-table-background-color", ResolvePropertyPreview(alarmControl.TableBackgroundColor, context));
         AppendAttribute(html, "data-table-foreground-color", ResolvePropertyPreview(alarmControl.TableForegroundColor, context));
+        AppendAttribute(html, "data-table-header-background-color", ResolvePropertyPreview(alarmControl.TableHeaderBackgroundColor, context));
+        AppendAttribute(html, "data-table-header-foreground-color", ResolvePropertyPreview(alarmControl.TableHeaderForegroundColor, context));
+        AppendAttribute(html, "data-table-header-border-color", ResolvePropertyPreview(alarmControl.TableHeaderBorderColor, context));
         AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(alarmControl.SelectionBackgroundColor, context));
         AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(alarmControl.SelectionForegroundColor, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(alarmControl.ShowStatusBar, context));
@@ -2279,14 +2282,15 @@ public class HmiScreenToHtmlConverter
         var gridCellStyle = CreateAlarmGridCellStyle(alarmControl, context);
         if (showHeader)
         {
+            var headerCellStyle = CreateAlarmTableHeaderCellStyle(alarmControl, context, gridCellStyle);
             html.Append("<thead><tr>");
             if (visibleColumns.Length == 0)
-                html.Append("<th style=\"").Append(gridCellStyle).Append("\">")
+                html.Append("<th style=\"").Append(headerCellStyle).Append("\">")
                     .Append(WebUtility.HtmlEncode(ResolveAlarmViewLabel(alarmControl.ViewKind)))
                     .Append("</th>");
             foreach (var column in visibleColumns)
             {
-                html.Append("<th style=\"").Append(gridCellStyle).Append("overflow: hidden; text-overflow: ellipsis;\"");
+                html.Append("<th style=\"").Append(headerCellStyle).Append("overflow: hidden; text-overflow: ellipsis;\"");
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-time-format", column.TimeAndDateFormat);
                 AppendAttribute(html, "data-symbol", column.Symbol);
@@ -3392,6 +3396,23 @@ public class HmiScreenToHtmlConverter
             ? 1d
             : Math.Max(0d, ResolveStaticValue(alarmControl.GridLineWidth, context));
         return $"border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: {(horizontal ? ToCss(width) : "0")}px {(vertical ? ToCss(width) : "0")}px;";
+    }
+
+    private static string CreateAlarmTableHeaderCellStyle(
+        HmiAlarmControl alarmControl,
+        HmiHtmlConvertContext context,
+        string gridCellStyle)
+    {
+        var style = new StringBuilder(gridCellStyle);
+        AppendColorStyle(style, "background-color", alarmControl.TableHeaderBackgroundColor);
+        AppendColorStyle(style, "color", alarmControl.TableHeaderForegroundColor);
+        AppendColorStyle(style, "border-color", alarmControl.TableHeaderBorderColor);
+        if (alarmControl.TableHeaderBorderWidth is not null)
+            style.Append("border-width: ")
+                .Append(ToCss(Math.Max(0d, ResolveStaticValue(alarmControl.TableHeaderBorderWidth, context))))
+                .Append("px;");
+        AppendFontStyle(style, alarmControl.HeaderFont);
+        return style.ToString();
     }
 
     private static string CreateTrendControlStyle(HmiTrendControl trendControl, HmiHtmlConvertContext context)

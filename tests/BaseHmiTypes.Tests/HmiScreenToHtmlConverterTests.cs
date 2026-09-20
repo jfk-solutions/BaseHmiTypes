@@ -1358,6 +1358,10 @@ public class HmiScreenToHtmlConverterTests
             ShowVerticalScrollbar = false,
             TableBackgroundColor = HmiColor.FromArgb(255, 0x10, 0x20, 0x30),
             TableForegroundColor = HmiColor.FromArgb(255, 0xE0, 0xD0, 0xC0),
+            TableHeaderBackgroundColor = HmiColor.FromArgb(255, 0xE3, 0xE3, 0xE3),
+            TableHeaderForegroundColor = HmiColor.FromArgb(255, 0x01, 0x02, 0x03),
+            TableHeaderBorderColor = HmiColor.FromArgb(255, 0x66, 0x77, 0x88),
+            TableHeaderBorderWidth = 3,
             SelectionBackgroundColor = HmiColor.FromArgb(255, 0x70, 0x80, 0x90),
             SelectionForegroundColor = HmiColor.FromArgb(255, 0xF1, 0xF2, 0xF3),
             ShowStatusBar = true,
@@ -1448,6 +1452,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "overflow-x: auto;overflow-y: hidden;");
         StringAssert.Contains(html, "data-table-background-color=\"#102030\"");
         StringAssert.Contains(html, "data-table-foreground-color=\"#E0D0C0\"");
+        StringAssert.Contains(html, "data-table-header-background-color=\"#E3E3E3\"");
+        StringAssert.Contains(html, "data-table-header-foreground-color=\"#010203\"");
+        StringAssert.Contains(html, "data-table-header-border-color=\"#667788\"");
         StringAssert.Contains(html, "data-selection-background-color=\"#708090\"");
         StringAssert.Contains(html, "data-selection-foreground-color=\"#F1F2F3\"");
         StringAssert.Contains(html, "data-show-status-bar=\"true\"");
@@ -1460,6 +1467,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "font-family: Arial;font-size: 9.75px;font-weight: 400;");
         StringAssert.Contains(html, "font-family: Siemens Sans;font-size: 10px;font-weight: 700;font-style: italic;text-decoration: underline line-through;");
         StringAssert.Contains(html, "background-color: #E3E3E3;color: #010203;border-bottom-color: #667788;");
+        StringAssert.Contains(html, "background-color: #E3E3E3;color: #010203;border-color: #667788;border-width: 3px;font-family: Siemens Sans;");
         StringAssert.Contains(html, "resize: both;");
         StringAssert.Contains(html, "cursor: move;");
         StringAssert.Contains(html, "aria-label=\"Close\" disabled");
