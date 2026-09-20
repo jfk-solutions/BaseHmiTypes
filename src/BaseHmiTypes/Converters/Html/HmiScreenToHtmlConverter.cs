@@ -3344,6 +3344,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.ChartLiveMode);
         AppendStaticBooleanValueAttribute(html, "auto-scale", trendControl.AutoScale);
         AppendStaticBooleanValueAttribute(html, "x-axis-scale-visible", trendControl.XAxisScaleVisible);
+        AppendStaticAttribute(html, "x-axis-color", trendControl.XAxisColor);
         AppendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.XAxisDateVisible);
         AppendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.XAxisGridVisible);
         AppendStaticBooleanValueAttribute(html, "major-grid-visible", trendControl.MajorGridVisible);
@@ -3351,6 +3352,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "minor-grid-visible", trendControl.MinorGridVisible);
         AppendStaticAttribute(html, "minor-grid-color", trendControl.MinorGridColor);
         AppendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.YAxisScaleVisible);
+        AppendStaticAttribute(html, "y-axis-color", trendControl.YAxisColor);
         AppendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.YAxisGridVisible);
         AppendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.ShowPercentageAxis);
         AppendStaticAttribute(html, "percentage-axis-color", trendControl.PercentageAxisColor);
@@ -3512,6 +3514,12 @@ public class HmiScreenToHtmlConverter
         if (trendControl.MinorGridColor is not null)
             style.Append("--hmi-trend-minor-grid-color: ")
                 .Append(ToCss(ResolveStaticValue(trendControl.MinorGridColor, context))).Append(';');
+        if (trendControl.XAxisColor is not null)
+            style.Append("--hmi-trend-x-axis-color: ")
+                .Append(ToCss(ResolveStaticValue(trendControl.XAxisColor, context))).Append(';');
+        if (trendControl.YAxisColor is not null)
+            style.Append("--hmi-trend-y-axis-color: ")
+                .Append(ToCss(ResolveStaticValue(trendControl.YAxisColor, context))).Append(';');
         return style.ToString();
     }
 
