@@ -1301,8 +1301,12 @@ function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvert
   const direction = orientation === undefined || orientation < 0 || orientation > 3
     ? HmiFillDirection.Right
     : orientation as HmiFillDirection;
+  const thumbColor = getStaticValue(slider.thumbBackgroundColor);
+  const sliderStyle = getBarDirectionStyle(direction) +
+    (thumbColor === undefined ? "" : `--hmi-slider-thumb-background: ${colorToCss(thumbColor)};`);
   html.push("<input");
-  appendCommonAttributes(html, slider, context, true, getBarDirectionStyle(direction));
+  appendCommonAttributes(html, slider, context, true, sliderStyle);
+  appendAttribute(html, "data-hmi-slider", "true");
   appendAttribute(html, "data-orientation", HmiFillDirection[direction]);
   appendAttribute(html, "type", "range");
   appendAttribute(html, "min", toCss(minimum));
