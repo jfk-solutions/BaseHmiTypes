@@ -60,6 +60,7 @@ import { HmiDisabledImageMode } from "../../screens/widgets/HmiDisabledImageMode
 import { HmiState } from "../../screens/widgets/HmiState.js";
 import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
 import { HmiClock } from "../../screens/widgets/HmiClock.js";
+import { HmiComboBox } from "../../screens/widgets/HmiComboBox.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
@@ -275,6 +276,8 @@ export class HmiScreenToHtmlConverter {
       await appendSelectionGroup(html, "hmi-checkbox-group", item, project, context, signal);
     } else if (item instanceof HmiRadioButtonGroup) {
       await appendSelectionGroup(html, "hmi-radio-button-group", item, project, context, signal);
+    } else if (item instanceof HmiComboBox) {
+      appendComboBox(html, item, context);
     } else if (item instanceof HmiListBox) {
       appendListBox(html, item, context);
     } else if (item instanceof HmiButton) {
@@ -1513,16 +1516,30 @@ async function appendSelectionGroup(
 }
 
 function appendListBox(html: string[], listBox: HmiListBox, context: HmiHtmlConvertContext): void {
-  const selectedValue = listBox.indicator !== undefined
-    ? getStaticValue(listBox.indicator)
-    : getStaticValue(listBox.value);
-  const selectedState = listBox.states.find(candidate => candidate.value === selectedValue)
-    ?? listBox.states[0];
+  appendSelectionList(html, listBox, context);
+}
+
+function appendComboBox(html: string[], comboBox: HmiComboBox, context: HmiHtmlConvertContext): void {
+  appendSelectionList(html, comboBox, context);
+}
+
+function appendSelectionList(
+  html: string[],
+  selectionGroup: HmiSelectionGroupBase,
+  context: HmiHtmlConvertContext,
+): void {
+  const selectedValue = selectionGroup.indicator !== undefined
+    ? getStaticValue(selectionGroup.indicator)
+    : getStaticValue(selectionGroup.value);
+  const selectedIndex = getStaticValue(selectionGroup.selectedIndex) ?? -1;
+  const selectedState = selectionGroup.states.find(candidate => candidate.value === selectedValue)
+    ?? (selectedIndex >= 0 && selectedIndex < selectionGroup.states.length ? selectionGroup.states[selectedIndex] : undefined)
+    ?? selectionGroup.states[0];
 
   html.push("<select");
-  appendCommonAttributes(html, listBox, context, true, createStateStyle(selectedState));
+  appendCommonAttributes(html, selectionGroup, context, true, createStateStyle(selectedState));
   html.push(">");
-  for (const state of listBox.states) {
+  for (const state of selectionGroup.states) {
     html.push("<option");
     if (state.value !== undefined)
       appendAttribute(html, "value", toCss(state.value));
