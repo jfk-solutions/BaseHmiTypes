@@ -3116,6 +3116,8 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticAttribute(html, "x-axis-alignment", trendControl.xAxisAlignment);
   appendAttribute(html, "x-axis-label", trendControl.xAxisLabel);
   appendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.xAxisDateVisible);
+  appendStaticAttribute(html, "x-axis-time-span", trendControl.xAxisTimeSpan);
+  appendAttribute(html, "x-axis-time-span-unit", trendControl.xAxisTimeSpanUnit);
   appendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.xAxisGridVisible);
   appendStaticBooleanValueAttribute(html, "major-grid-visible", trendControl.majorGridVisible);
   appendStaticAttribute(html, "major-grid-color", trendControl.majorGridColor);
