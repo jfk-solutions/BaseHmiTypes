@@ -3,6 +3,7 @@ import { HmiSimpleScreenItemBase } from "../base/HmiSimpleScreenItemBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiAlarmIndicatorSegment } from "./HmiAlarmIndicatorSegment.js";
 import { HmiAlarmIndicatorState } from "./HmiAlarmIndicatorState.js";
+import { HmiAlarmIndicatorMessageClassAppearance } from "./HmiAlarmIndicatorMessageClassAppearance.js";
 
 export class HmiAlarmIndicator extends HmiSimpleScreenItemBase {
   constructor() {
@@ -26,6 +27,8 @@ export class HmiAlarmIndicator extends HmiSimpleScreenItemBase {
   userValue2?: HmiProperty<number>;
   userValue3?: HmiProperty<number>;
   userValue4?: HmiProperty<number>;
+  selectedMessageClass?: HmiProperty<number>;
+  messageClassAppearances: HmiAlarmIndicatorMessageClassAppearance[] = [];
   noAlarmState?: HmiProperty<number>;
   numberOfAlarms?: HmiProperty<number>;
   text?: HmiProperty<string>;
