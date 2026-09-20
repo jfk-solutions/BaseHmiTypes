@@ -35,6 +35,7 @@ import {
   HmiSymbolicIOField,
   HmiTagTriggerMode,
   HmiTriggerKind,
+  blinkProperty,
   expressionProperty,
   hmiColorFromArgb,
   inspectHmiProperties,
@@ -521,6 +522,28 @@ test("HTML conversion renders button caption colors", async () => {
 
   assert.match(html, /<button id="ColoredCaption"/);
   assert.match(html, /color: #0C2238;/);
+});
+
+test("HTML conversion renders blinking button caption colors", async () => {
+  const button = new HmiButton();
+  button.name = "FlashingCaption";
+  button.width = staticProperty(100);
+  button.height = staticProperty(30);
+  button.text = staticProperty(HmiMultilingualText.fromText("Alarm"));
+  button.captionColor = blinkProperty(
+    hmiColorFromArgb(255, 12, 34, 56),
+    hmiColorFromArgb(255, 238, 68, 17),
+    HmiBlinkRate.Fast,
+  );
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(button);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /--hmi-caption-color-off: #0C2238;/);
+  assert.match(html, /--hmi-caption-color-on: #EE4411;/);
+  assert.match(html, /animation: hmi-caption-color-flash 0.5s steps\(1, end\) infinite;/);
+  assert.match(html, /@keyframes hmi-caption-color-flash/);
 });
 
 test("HTML conversion renders static disabled button appearance", async () => {

@@ -26,7 +26,7 @@ import { HmiLineMarker } from "../../screens/base/HmiLineMarker.js";
 import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
-import { getStaticValue, getStaticValueOrDefault, HmiBlinkRate, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
+import { getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
 import { HmiScreenBase } from "../../screens/base/HmiScreenBase.js";
 import { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
 import { HmiSymbolContainer } from "../../screens/base/HmiSymbolContainer.js";
@@ -1240,7 +1240,18 @@ async function appendButton(
 
 function createButtonStyle(button: HmiButton, state: HmiState | undefined): string | null {
   const captionColor = getStaticValue(button.captionColor);
-  let style = captionColor === undefined ? "" : `color: ${colorToCss(captionColor)};`;
+  const stateHasCaptionColor = (state?.captionColor ?? state?.foregroundColor) !== undefined;
+  const captionBlink = button.captionColor?.kind === HmiPropertyKind.Blink
+    ? button.captionColor as HmiBlinkProperty<HmiColor>
+    : undefined;
+  let style = "";
+  if (!stateHasCaptionColor && captionColor !== undefined && captionBlink?.blinkValue !== undefined) {
+    style += `--hmi-caption-color-off: ${colorToCss(captionColor)};`;
+    style += `--hmi-caption-color-on: ${colorToCss(captionBlink.blinkValue)};`;
+    style += `animation: hmi-caption-color-flash ${getBlinkDuration(captionBlink.rate)}s steps(1, end) infinite;`;
+  } else if (!stateHasCaptionColor && captionColor !== undefined) {
+    style = `color: ${colorToCss(captionColor)};`;
+  }
   style += createStateStyle(state) ?? "";
   const borderWidth = getStaticValue(button.threeDBorderWidth) ?? 0;
   if (borderWidth <= 0)
