@@ -989,18 +989,26 @@ public class HmiScreenToHtmlConverter
 
     private static string GetFillPatternId(HmiShapeBase item) => GetFillGradientId(item).Replace("hmi-fill-", "hmi-pattern-");
 
-    private static HmiFillPattern? GetFillPattern(HmiShapeBase item, HmiHtmlConvertContext context)
+    private static HmiFillPattern? GetFillPattern(HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
-        return context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.FillPattern), item.FillPattern, out var pattern)
-            ? pattern
-            : null;
+        return item switch
+        {
+            HmiShapeBase shape when context.EffectiveProperties.TryGetStaticValue(shape, nameof(HmiShapeBase.FillPattern), shape.FillPattern, out var pattern) => pattern,
+            HmiWidgetBase widget when context.EffectiveProperties.TryGetStaticValue(widget, nameof(HmiWidgetBase.FillPattern), widget.FillPattern, out var pattern) => pattern,
+            HmiWindowBase window when context.EffectiveProperties.TryGetStaticValue(window, nameof(HmiWindowBase.FillPattern), window.FillPattern, out var pattern) => pattern,
+            _ => null
+        };
     }
 
-    private static HmiColor GetPatternColor(HmiShapeBase item, HmiHtmlConvertContext context)
+    private static HmiColor GetPatternColor(HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
-        return context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiPaintedScreenItemBase.PatternColor), item.PatternColor, out var color)
-            ? color
-            : GetStrokeColor(item, context);
+        if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiPaintedScreenItemBase.PatternColor), item.PatternColor, out var color))
+            return color;
+        if (item is HmiShapeBase shape)
+            return GetStrokeColor(shape, context);
+        if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiPaintedScreenItemBase.ForegroundColor), item.ForegroundColor, out var foregroundColor))
+            return foregroundColor;
+        return HmiColor.FromArgb(255, 0, 0, 0);
     }
 
     private static bool TryGetFillPercentage(HmiFillAnimation? animation, out double percentage)
@@ -1982,7 +1990,6 @@ public class HmiScreenToHtmlConverter
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, rectangle, context);
         AppendStyle(html, rectangle, context);
-        AppendFillPatternStyle(html, rectangle, context);
         AppendFillAnimationStyle(html, rectangle, context);
         AppendRectangleRadius(html, rectangle, context);
         if (rectangle.BorderColor == null && rectangle.BorderWidth == null && rectangle.LineColor == null && rectangle.LineWidth == null)
@@ -1992,7 +1999,7 @@ public class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendFillPatternStyle(StringBuilder html, HmiShapeBase item, HmiHtmlConvertContext context)
+    private static void AppendFillPatternStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
         var pattern = GetFillPattern(item, context);
         if (pattern is null or HmiFillPattern.Solid)
@@ -2844,6 +2851,7 @@ public class HmiScreenToHtmlConverter
                 html.Append("border-width: ").Append(ToCss(shape.LineWidth.StaticValue)).Append("px;");
             }
         }
+        AppendFillPatternStyle(html, item, context);
         if (margin != null)
         {
             html.Append("margin: ")
