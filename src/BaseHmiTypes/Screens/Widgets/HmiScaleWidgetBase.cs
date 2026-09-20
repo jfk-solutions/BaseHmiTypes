@@ -26,6 +26,8 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<int>? TickLabelDecimalPlaces { get; set; }
 
+    public HmiProperty<string>? EngineeringUnit { get; set; }
+
     public HmiProperty<bool>? UseAutoScaling { get; set; }
 
     public HmiProperty<bool>? UseVariableMinimumMaximum { get; set; }

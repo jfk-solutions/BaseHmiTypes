@@ -1456,6 +1456,9 @@ public class HmiScreenToHtmlConverter
         var decimalPlaces = bar.TickLabelDecimalPlaces is null
             ? (int?)null
             : Math.Clamp(ResolveStaticValue(bar.TickLabelDecimalPlaces, context), 0, 15);
+        var engineeringUnit = bar.EngineeringUnit is null
+            ? null
+            : ResolveStaticValue(bar.EngineeringUnit, context);
         var reverse = direction is HmiFillDirection.Up or HmiFillDirection.Left;
         var style = new StringBuilder(vertical
             ? "display: flex; flex-direction: column; justify-content: space-between; height: 100%;"
@@ -1477,7 +1480,10 @@ public class HmiScreenToHtmlConverter
             var label = decimalPlaces is int places
                 ? tick.ToString($"F{places}", CultureInfo.InvariantCulture)
                 : ToCss(tick);
-            html.Append("<span>").Append(label).Append("</span>");
+            html.Append("<span>").Append(label);
+            if (!string.IsNullOrWhiteSpace(engineeringUnit))
+                html.Append("&nbsp;").Append(WebUtility.HtmlEncode(engineeringUnit));
+            html.Append("</span>");
         }
         html.Append("</div>");
     }

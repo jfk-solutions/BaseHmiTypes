@@ -507,6 +507,7 @@ public class HmiScreenToHtmlConverterTests
             ShowScale = true,
             DivisionCount = 3,
             TickLabelDecimalPlaces = 1,
+            EngineeringUnit = "bar",
             LabelColor = HmiColor.FromArgb(255, 12, 34, 56),
             LabelFont = new HmiFont
             {
@@ -524,7 +525,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<meter style=\"width: 100%; flex: 1; min-width: 0; min-height: 0;direction: ltr;\" min=\"0\" max=\"100\" value=\"35\">35</meter>");
         StringAssert.Contains(html, "data-hmi-bar-scale=\"true\"");
         StringAssert.Contains(html, "color: #0C2238; font-family: Arial; font-size: 9px; font-weight: bold;");
-        StringAssert.Contains(html, "<span>0.0</span><span>50.0</span><span>100.0</span>");
+        StringAssert.Contains(html, "<span>0.0&nbsp;bar</span><span>50.0&nbsp;bar</span><span>100.0&nbsp;bar</span>");
     }
 
     [TestMethod]

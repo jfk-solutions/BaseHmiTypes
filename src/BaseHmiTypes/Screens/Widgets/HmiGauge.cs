@@ -27,8 +27,6 @@ public class HmiGauge : HmiScaleWidgetBase
 
     public HmiProperty<HmiGaugeSweepStyle>? SweepStyle { get; set; }
 
-    public HmiProperty<string>? EngineeringUnit { get; set; }
-
     public HmiProperty<bool>? CurrentValueVisible { get; set; }
 
     public HmiProperty<int>? CurrentValueFieldLength { get; set; }
