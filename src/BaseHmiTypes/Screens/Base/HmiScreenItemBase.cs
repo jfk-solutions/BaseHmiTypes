@@ -48,6 +48,11 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
 
     public HmiProperty<double>? Opacity { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the object's border adapts to the size of its rendered content.
+    /// </summary>
+    public HmiProperty<bool>? AdaptBorderToContent { get; set; }
+
     public HmiProperty<double>? RotationAngle { get; set; }
 
     public HmiProperty<double>? RotationCenterX { get; set; }
