@@ -2047,6 +2047,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-table-foreground-color", resolvePropertyPreview(alarmControl.tableForegroundColor));
   appendAttribute(html, "data-table-header-background-color", resolvePropertyPreview(alarmControl.tableHeaderBackgroundColor));
   appendAttribute(html, "data-table-header-foreground-color", resolvePropertyPreview(alarmControl.tableHeaderForegroundColor));
+  appendAttribute(html, "data-table-header-horizontal-alignment", resolvePropertyPreview(alarmControl.tableHeaderHorizontalAlignment));
   appendAttribute(html, "data-table-header-border-color", resolvePropertyPreview(alarmControl.tableHeaderBorderColor));
   appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(alarmControl.selectionBackgroundColor));
   appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(alarmControl.selectionForegroundColor));
@@ -3152,6 +3153,9 @@ function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCell
   const parts = [gridCellStyle];
   appendColorStyle(parts, "background-color", alarmControl.tableHeaderBackgroundColor);
   appendColorStyle(parts, "color", alarmControl.tableHeaderForegroundColor);
+  const horizontalAlignment = getStaticValue(alarmControl.tableHeaderHorizontalAlignment);
+  if (horizontalAlignment !== undefined)
+    parts.push(`text-align: ${horizontalAlignmentToCss(horizontalAlignment)};`);
   appendColorStyle(parts, "border-color", alarmControl.tableHeaderBorderColor);
   const borderWidth = getStaticValue(alarmControl.tableHeaderBorderWidth);
   if (borderWidth !== undefined) parts.push(`border-width: ${toCss(Math.max(0, borderWidth))}px;`);
