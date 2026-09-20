@@ -124,6 +124,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   allowExportTrendData?: HmiProperty<boolean>;
   allowExportDataLogModelData?: HmiProperty<boolean>;
   showToolbar?: HmiProperty<boolean>;
+  useToolbarBackgroundColor?: HmiProperty<boolean>;
+  toolbarBackgroundColor?: HmiProperty<HmiColor>;
   showStatusBar?: HmiProperty<boolean>;
   statusBarBackgroundColor?: HmiProperty<HmiColor>;
   statusBarForegroundColor?: HmiProperty<HmiColor>;
