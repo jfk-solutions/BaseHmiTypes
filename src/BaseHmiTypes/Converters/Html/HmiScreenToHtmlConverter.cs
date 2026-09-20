@@ -70,6 +70,7 @@ public class HmiScreenToHtmlConverter
             AppendAttribute(html, "id", screen.Name);
             AppendAttribute(html, "data-background-image", screen.BackgroundImage?.ImageName ?? screen.BackgroundImage?.ImageId);
             AppendStaticAttribute(html, "data-background-image-layout", screen.BackgroundImageLayout);
+            AppendStaticAttribute(html, "data-fill-pattern-alignment", screen.FillPatternAlignment);
             html.Append(" style=\"position: relative; overflow: hidden;");
             AppendSize(html, screen.Width.GetStaticValueOrDefault(), screen.Height.GetStaticValueOrDefault());
             AppendScreenStyle(html, screen, backgroundImageUri);
@@ -3572,10 +3573,13 @@ public class HmiScreenToHtmlConverter
         if (screen.BackgroundColor != null)
             html.Append("background-color: ").Append(ToCss(screen.BackgroundColor.StaticValue)).Append(";");
         if (screen.FillPattern is not null)
+        {
             AppendFillPatternStyle(
                 html,
                 screen.FillPattern.StaticValue,
                 screen.PatternColor?.StaticValue ?? HmiColor.FromArgb(255, 0, 0, 0));
+            AppendScreenFillPatternAlignment(html, screen);
+        }
         AppendColorGradientStyle(html, GetColorGradient(screen));
         if (!string.IsNullOrWhiteSpace(backgroundImageUri))
         {
@@ -3594,6 +3598,23 @@ public class HmiScreenToHtmlConverter
                     break;
             }
         }
+    }
+
+    private static void AppendScreenFillPatternAlignment(StringBuilder html, HmiScreenBase screen)
+    {
+        if (screen.FillPatternAlignment?.StaticValue != HmiFillPatternAlignment.StretchToViewport ||
+            screen.FillPattern?.StaticValue is HmiFillPattern.Solid or HmiFillPattern.Transparent)
+            return;
+
+        var width = screen.Width.GetStaticValueOrDefault();
+        var height = screen.Height.GetStaticValueOrDefault();
+        if (width <= 0 || height <= 0)
+            return;
+
+        var tileSize = screen.FillPattern?.StaticValue is HmiFillPattern.CheckersFiner or HmiFillPattern.DiagonalCrossFiner ? 4d : 8d;
+        html.Append("background-size: ")
+            .Append(ToCss(tileSize / width * 100d)).Append("% ")
+            .Append(ToCss(tileSize / height * 100d)).Append("%;");
     }
 
     private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)

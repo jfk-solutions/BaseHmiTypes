@@ -26,6 +26,8 @@ public abstract class HmiScreenBase : HmiScreenModelBase
 
     public HmiProperty<HmiFillPattern>? FillPattern { get; set; }
 
+    public HmiProperty<HmiFillPatternAlignment>? FillPatternAlignment { get; set; }
+
     public HmiProperty<HmiColor>? FirstGradientColor { get; set; }
 
     public HmiProperty<double>? FirstGradientOffset { get; set; }
