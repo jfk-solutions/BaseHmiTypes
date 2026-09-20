@@ -45,6 +45,7 @@ import { HmiAlarmListMode } from "../../screens/controls/HmiAlarmListMode.js";
 import { HmiAlarmViewKind } from "../../screens/controls/HmiAlarmViewKind.js";
 import { HmiArrowIndicator } from "../../screens/widgets/HmiArrowIndicator.js";
 import { HmiAlarmIndicator } from "../../screens/widgets/HmiAlarmIndicator.js";
+import { HmiAlarmIndicatorState } from "../../screens/widgets/HmiAlarmIndicatorState.js";
 import { HmiScreenWindow } from "../../screens/screen/HmiScreenWindow.js";
 import { HmiCircle } from "../../screens/shapes/HmiCircle.js";
 import { HmiCircularArc } from "../../screens/shapes/HmiCircularArc.js";
@@ -2736,11 +2737,13 @@ function appendAlarmIndicator(
 ): void {
   const alarmState = getStaticValue(indicator.alarmState);
   const noAlarmState = getStaticValue(indicator.noAlarmState) ?? 0;
+  const visualState = getStaticValue(indicator.visualState)
+    ?? (alarmState !== undefined && alarmState !== noAlarmState ? HmiAlarmIndicatorState.CameIn : HmiAlarmIndicatorState.Normal);
   const numberOfAlarms = getStaticValue(indicator.numberOfAlarms);
   const text = getStaticValue(indicator.text);
   const isLocked = getStaticValue(indicator.isLocked) === true;
   const lockedText = getStaticValue(indicator.lockedText);
-  const isActive = alarmState !== undefined && alarmState !== noAlarmState;
+  const isActive = visualState !== HmiAlarmIndicatorState.Normal;
   const isFlashingRequired = getStaticValue(indicator.isFlashingRequired) === true;
   const content = isLocked && lockedText
     ? lockedText
@@ -2792,6 +2795,7 @@ function appendAlarmIndicator(
   appendAttribute(html, "role", "status");
   appendAttribute(html, "aria-label", "Alarm indicator");
   appendAttribute(html, "data-active", isActive ? "true" : "false");
+  appendStaticValueAttribute(html, "data-visual-state", indicator.visualState);
   appendStaticValueAttribute(html, "data-flashing-required", indicator.isFlashingRequired);
   appendStaticValueAttribute(html, "data-flashing-color", indicator.flashingColor);
   appendStaticValueAttribute(html, "data-foreground-flashing-required", indicator.isForegroundFlashingRequired);

@@ -6,6 +6,7 @@ import {
   hmiColorFromArgb,
   HmiArrowIndicator,
   HmiAlarmIndicator,
+  HmiAlarmIndicatorState,
   HmiAlarmIndicatorSegment,
   HmiAlarmColumn,
   HmiAlarmColumnType,
@@ -384,6 +385,7 @@ test("HTML converter renders alarm indicator state", async () => {
   indicator.width = staticProperty(80);
   indicator.height = staticProperty(30);
   indicator.alarmState = staticProperty(5);
+  indicator.visualState = staticProperty(HmiAlarmIndicatorState.CameIn);
   indicator.noAlarmState = staticProperty(0);
   indicator.numberOfAlarms = staticProperty(2);
   indicator.isFlashingRequired = staticProperty(true);
@@ -404,6 +406,7 @@ test("HTML converter renders alarm indicator state", async () => {
   assert.match(html, /<div id="GroupDisplay"/);
   assert.match(html, /class="hmi-alarm-indicator"/);
   assert.match(html, /data-active="true"/);
+  assert.match(html, /data-visual-state="CameIn"/);
   assert.match(html, /data-flashing-required="true"/);
   assert.match(html, /data-flashing-color="#FF0000"/);
   assert.match(html, /data-foreground-flashing-required="true"/);
