@@ -116,6 +116,33 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersDisabledForegroundColors()
+    {
+        var text = new HmiText
+        {
+            Name = "DisabledText",
+            Text = HmiMultilingualText.FromText("Inactive"),
+            Enabled = false,
+            ForegroundColor = HmiColor.FromArgb(255, 1, 2, 3),
+            DisabledForegroundColor = HmiColor.FromArgb(255, 11, 22, 33),
+            DisabledForegroundShadowColor = HmiColor.FromArgb(255, 44, 55, 66),
+            UseDisabledForegroundColor = true
+        };
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(text);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-disabled-foreground-color=\"#0B1621\"");
+        StringAssert.Contains(html, "data-disabled-foreground-shadow-color=\"#2C3742\"");
+        StringAssert.Contains(html, "data-use-disabled-foreground-color=\"true\"");
+        StringAssert.Contains(html, "color: #0B1621;");
+        StringAssert.Contains(html, "text-shadow: 1px 1px #2C3742;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersRectangleRotation()
     {
         var rectangle = new HmiRectangle
