@@ -20,7 +20,9 @@ import {
   HmiIOField,
   HmiLayer,
   HmiLine,
+  HmiLineCap,
   HmiLineStyle,
+  HmiPolyline,
   HmiMultilingualText,
   HmiPropertyKind,
   HmiRectangle,
@@ -58,6 +60,31 @@ test("HTML conversion renders SVG line dash styles", async () => {
   assert.match(html, /stroke-width="3"/);
   assert.match(html, /stroke-dasharray="6 3 1 3"/);
   assert.match(html, /stroke-linecap="round"/);
+});
+
+test("HTML conversion renders SVG line caps", async () => {
+  const line = new HmiLine();
+  line.name = "SquareLine";
+  line.width = staticProperty(100);
+  line.height = staticProperty(20);
+  line.x1 = staticProperty(0);
+  line.y1 = staticProperty(10);
+  line.x2 = staticProperty(100);
+  line.y2 = staticProperty(10);
+  line.lineCap = staticProperty(HmiLineCap.Square);
+  const polyline = new HmiPolyline();
+  polyline.name = "RoundedPolyline";
+  polyline.width = staticProperty(100);
+  polyline.height = staticProperty(20);
+  polyline.lineCap = staticProperty(HmiLineCap.Round);
+  polyline.points.push({ x: 0, y: 10 }, { x: 100, y: 10 });
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(line, polyline);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /id="SquareLine"[^>]*><line[^>]*stroke-linecap="square"/);
+  assert.match(html, /id="RoundedPolyline"[^>]*><polyline[^>]*stroke-linecap="round"/);
 });
 
 test("HTML conversion keeps screen-absolute group children at their source position", async () => {
