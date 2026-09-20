@@ -1419,7 +1419,8 @@ public class HmiScreenToHtmlConverter
             ? null
             : ResolveStaticValue(slider.ThumbBackgroundColor, context);
         var sliderStyle = GetBarDirectionStyle(direction) +
-            (thumbColor is null ? string.Empty : $"--hmi-slider-thumb-background: {ToCss(thumbColor.Value)};");
+            (thumbColor is null ? string.Empty : $"--hmi-slider-thumb-background: {ToCss(thumbColor.Value)};") +
+            GetSliderTrackStyle(slider, direction, context);
         html.Append("<input");
         AppendCommonAttributes(html, slider, context, additionalStyle: sliderStyle);
         AppendAttribute(html, "data-hmi-slider", "true");
@@ -1430,6 +1431,32 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "value", ToCss(value));
         AppendAttribute(html, "disabled", "disabled");
         html.Append('>');
+    }
+
+    private static string GetSliderTrackStyle(
+        HmiSlider slider,
+        HmiFillDirection direction,
+        HmiHtmlConvertContext context)
+    {
+        HmiColor? high = slider.TrackHighBackgroundColor is null
+            ? null
+            : ResolveStaticValue(slider.TrackHighBackgroundColor, context);
+        HmiColor? low = slider.TrackLowBackgroundColor is null
+            ? null
+            : ResolveStaticValue(slider.TrackLowBackgroundColor, context);
+        if (high is null && low is null)
+            return string.Empty;
+
+        high ??= low;
+        low ??= high;
+        var gradientDirection = direction switch
+        {
+            HmiFillDirection.Up => "to bottom",
+            HmiFillDirection.Down => "to top",
+            HmiFillDirection.Left => "to right",
+            _ => "to left"
+        };
+        return $"--hmi-slider-track-background: linear-gradient({gradientDirection}, {ToCss(high!.Value)}, {ToCss(low!.Value)});";
     }
 
     private static void AppendScale(StringBuilder html, HmiScale scale, HmiHtmlConvertContext context)

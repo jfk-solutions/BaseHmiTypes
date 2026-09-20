@@ -528,9 +528,43 @@ public class HmiScreenToHtmlConverterTests
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
-        StringAssert.Contains(html, "input[data-hmi-slider]{accent-color:var(--hmi-slider-thumb-background,auto);}");
+        StringAssert.Contains(html, "input[data-hmi-slider]{accent-color:var(--hmi-slider-thumb-background,auto);");
         StringAssert.Contains(html, "--hmi-slider-thumb-background: #0C2238;");
         StringAssert.Contains(html, "data-hmi-slider=\"true\"");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_RendersDirectionAwareSliderTrackColors()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiSlider
+        {
+            Name = "VerticalSlider",
+            Width = 20,
+            Height = 100,
+            Orientation = 0,
+            TrackHighBackgroundColor = HmiColor.FromArgb(255, 255, 0, 0),
+            TrackLowBackgroundColor = HmiColor.FromArgb(255, 0, 0, 255)
+        });
+        layer.Items.Add(new HmiSlider
+        {
+            Name = "HorizontalSlider",
+            Y = 110,
+            Width = 100,
+            Height = 20,
+            Orientation = 3,
+            TrackHighBackgroundColor = HmiColor.FromArgb(255, 255, 0, 0),
+            TrackLowBackgroundColor = HmiColor.FromArgb(255, 0, 0, 255)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "--hmi-slider-track-background: linear-gradient(to bottom, #FF0000, #0000FF);");
+        StringAssert.Contains(html, "--hmi-slider-track-background: linear-gradient(to left, #FF0000, #0000FF);");
+        StringAssert.Contains(html, "::-webkit-slider-runnable-track");
+        StringAssert.Contains(html, "::-moz-range-track");
     }
 
     [TestMethod]
