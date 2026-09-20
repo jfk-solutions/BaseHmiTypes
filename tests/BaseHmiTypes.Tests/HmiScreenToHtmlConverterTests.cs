@@ -1469,6 +1469,40 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersHostedApplicationWindowChrome()
+    {
+        var screen = new HmiScreen { Name = "Main" };
+        var layer = new HmiLayer { Name = "Default" };
+        layer.Items.Add(new HmiCustomWidgetContainer
+        {
+            Name = "Diagnostics",
+            Width = 320,
+            Height = 180,
+            Resizable = true,
+            Movable = true,
+            ShowWindowBorder = true,
+            ShowCaption = true,
+            ShowMaximizeButton = true,
+            ShowCloseButton = true,
+            AlwaysOnTop = true,
+            HostedApplication = "Global Script",
+            HostedTemplate = "GSC Diagnostics"
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-window-resizable data-window-movable data-window-border data-window-caption data-window-maximize data-window-close data-window-always-on-top");
+        StringAssert.Contains(html, "data-hosted-application=\"Global Script\" data-hosted-template=\"GSC Diagnostics\"");
+        StringAssert.Contains(html, "border: 1px solid #6b7280;resize: both;z-index: 2147483647;");
+        StringAssert.Contains(html, "class=\"hmi-hosted-window-caption\"");
+        StringAssert.Contains(html, "cursor: move;");
+        StringAssert.Contains(html, "aria-label=\"Maximize\"");
+        StringAssert.Contains(html, "aria-label=\"Close\"");
+        StringAssert.Contains(html, "GSC Diagnostics");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersInertRadarChartPreview()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
