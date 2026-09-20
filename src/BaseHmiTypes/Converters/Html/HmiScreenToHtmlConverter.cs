@@ -1916,7 +1916,88 @@ public class HmiScreenToHtmlConverter
         AppendCommonAttributes(html, trendControl, context);
         AppendAttribute(html, "control-name", trendControl.Name);
         AppendAttribute(html, "type-name", "Trend control");
+        AppendAttribute(html, "chart-title", trendControl.ChartTitle);
+        AppendStaticAttribute(html, "display-chart-title", trendControl.DisplayChartTitle);
+        AppendStaticAttribute(html, "show-toolbar", trendControl.ShowToolbar);
+        AppendStaticAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
+        AppendStaticAttribute(html, "display-scroll-mechanism", trendControl.DisplayScrollMechanism);
+        AppendStaticAttribute(html, "chart-live-mode", trendControl.ChartLiveMode);
+        AppendStaticAttribute(html, "auto-scale", trendControl.AutoScale);
+        AppendStaticAttribute(html, "x-axis-scale-visible", trendControl.XAxisScaleVisible);
+        AppendStaticAttribute(html, "x-axis-date-visible", trendControl.XAxisDateVisible);
+        AppendStaticAttribute(html, "x-axis-grid-visible", trendControl.XAxisGridVisible);
+        AppendStaticAttribute(html, "y-axis-scale-visible", trendControl.YAxisScaleVisible);
+        AppendStaticAttribute(html, "y-axis-grid-visible", trendControl.YAxisGridVisible);
+        AppendStaticAttribute(html, "minimum-value", trendControl.MinimumValue);
+        AppendStaticAttribute(html, "maximum-value", trendControl.MaximumValue);
+        AppendStaticAttribute(html, "y-axis-decimal-places", trendControl.YAxisDecimalPlaces);
+        AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens));
         html.Append("></hmi-trend-control>");
+    }
+
+    private static string? FormatTrendPens(IEnumerable<HmiTrendPen> pens)
+    {
+        var entries = pens.Select(pen =>
+        {
+            var properties = new List<string>
+            {
+                "\"number\":" + pen.Number.ToString(CultureInfo.InvariantCulture)
+            };
+            AddTrendJsonString(properties, "name", pen.Name);
+            AddTrendJsonString(properties, "color", pen.Color?.StaticValue is HmiColor color ? ToCss(color) : null);
+            AddTrendJsonBoolean(properties, "visible", pen.Visible?.StaticValue);
+            AddTrendJsonNumber(properties, "width", pen.Width?.StaticValue);
+            AddTrendJsonNumber(properties, "style", pen.Style?.StaticValue is HmiLineStyle style ? (int)style : null);
+            AddTrendJsonString(properties, "marker", pen.Marker?.StaticValue);
+            AddTrendJsonNumber(properties, "minimum", pen.MinimumValue?.StaticValue);
+            AddTrendJsonNumber(properties, "maximum", pen.MaximumValue?.StaticValue);
+            AddTrendJsonString(properties, "unit", pen.EngineeringUnit);
+            return "{" + string.Join(",", properties) + "}";
+        }).ToArray();
+        return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";
+    }
+
+    private static void AddTrendJsonString(ICollection<string> properties, string name, string? value)
+    {
+        if (value != null)
+            properties.Add(JsonQuote(name) + ":" + JsonQuote(value));
+    }
+
+    private static void AddTrendJsonBoolean(ICollection<string> properties, string name, bool? value)
+    {
+        if (value.HasValue)
+            properties.Add(JsonQuote(name) + ":" + (value.Value ? "true" : "false"));
+    }
+
+    private static void AddTrendJsonNumber(ICollection<string> properties, string name, double? value)
+    {
+        if (value.HasValue && !double.IsNaN(value.Value) && !double.IsInfinity(value.Value))
+            properties.Add(JsonQuote(name) + ":" + value.Value.ToString("R", CultureInfo.InvariantCulture));
+    }
+
+    private static string JsonQuote(string value)
+    {
+        var result = new StringBuilder(value.Length + 2).Append('"');
+        foreach (var character in value)
+        {
+            switch (character)
+            {
+                case '"': result.Append("\\\""); break;
+                case '\\': result.Append("\\\\"); break;
+                case '\b': result.Append("\\b"); break;
+                case '\f': result.Append("\\f"); break;
+                case '\n': result.Append("\\n"); break;
+                case '\r': result.Append("\\r"); break;
+                case '\t': result.Append("\\t"); break;
+                default:
+                    if (character < ' ')
+                        result.Append("\\u").Append(((int)character).ToString("X4", CultureInfo.InvariantCulture));
+                    else
+                        result.Append(character);
+                    break;
+            }
+        }
+        return result.Append('"').ToString();
     }
 
     private static void AppendBooleanAttribute(StringBuilder html, string name, bool value)

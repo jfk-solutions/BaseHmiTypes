@@ -1588,6 +1588,69 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersTrendConfigurationForWebComponent()
+    {
+        var screen = new HmiScreen { Name = "Main", Width = 400, Height = 240 };
+        var layer = new HmiLayer { Name = "Default" };
+        var trend = new HmiTrendControl
+        {
+            Name = "ProcessTrend",
+            Width = 320,
+            Height = 180,
+            ChartTitle = "Pressure & temperature",
+            DisplayChartTitle = true,
+            ShowToolbar = false,
+            DisplayPenIcons = true,
+            DisplayScrollMechanism = true,
+            ChartLiveMode = true,
+            AutoScale = false,
+            XAxisScaleVisible = true,
+            XAxisDateVisible = false,
+            XAxisGridVisible = true,
+            YAxisScaleVisible = true,
+            YAxisGridVisible = false,
+            MinimumValue = -5,
+            MaximumValue = 100,
+            YAxisDecimalPlaces = 2
+        };
+        trend.Pens.Add(new HmiTrendPen
+        {
+            Number = 1,
+            Name = "Pressure \"A\"",
+            Color = HmiColor.FromArgb(255, 17, 34, 51),
+            Visible = true,
+            Width = 3,
+            Style = HmiLineStyle.Dash,
+            Marker = "2",
+            MinimumValue = 0,
+            MaximumValue = 100,
+            EngineeringUnit = "bar"
+        });
+        layer.Items.Add(trend);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<hmi-trend-control id=\"ProcessTrend\"");
+        StringAssert.Contains(html, "chart-title=\"Pressure &amp; temperature\"");
+        StringAssert.Contains(html, "display-chart-title");
+        StringAssert.Contains(html, "display-pen-icons");
+        StringAssert.Contains(html, "display-scroll-mechanism");
+        StringAssert.Contains(html, "chart-live-mode");
+        StringAssert.Contains(html, "x-axis-scale-visible");
+        StringAssert.Contains(html, "x-axis-grid-visible");
+        StringAssert.Contains(html, "y-axis-scale-visible");
+        StringAssert.Contains(html, "minimum-value=\"-5\"");
+        StringAssert.Contains(html, "maximum-value=\"100\"");
+        StringAssert.Contains(html, "y-axis-decimal-places=\"2\"");
+        StringAssert.Contains(html, "pens=\"[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;marker&quot;:&quot;2&quot;,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}]\"");
+        Assert.IsFalse(html.Contains(" show-toolbar"));
+        Assert.IsFalse(html.Contains(" auto-scale"));
+        Assert.IsFalse(html.Contains(" x-axis-date-visible"));
+        Assert.IsFalse(html.Contains(" y-axis-grid-visible"));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersStaticSvgImagesAsPlainImages()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
