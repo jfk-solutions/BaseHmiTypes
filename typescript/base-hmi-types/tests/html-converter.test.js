@@ -6,6 +6,7 @@ import {
   hmiColorFromArgb,
   HmiArrowIndicator,
   HmiAlarmIndicator,
+  HmiAlarmIndicatorMessageClassAppearance,
   HmiAlarmIndicatorState,
   HmiAlarmIndicatorSegment,
   HmiAlarmColumn,
@@ -395,6 +396,17 @@ test("HTML converter renders alarm indicator state", async () => {
   indicator.userValue2 = staticProperty(12);
   indicator.userValue3 = staticProperty(13);
   indicator.userValue4 = staticProperty(14);
+  indicator.selectedMessageClass = staticProperty(3);
+  const firstAppearance = new HmiAlarmIndicatorMessageClassAppearance();
+  firstAppearance.index = 1;
+  firstAppearance.isTextFlashingRequired = staticProperty(true);
+  firstAppearance.isBackgroundFlashingRequired = staticProperty(false);
+  indicator.messageClassAppearances.push(firstAppearance);
+  const secondAppearance = new HmiAlarmIndicatorMessageClassAppearance();
+  secondAppearance.index = 2;
+  secondAppearance.isTextFlashingRequired = staticProperty(false);
+  secondAppearance.isBackgroundFlashingRequired = staticProperty(true);
+  indicator.messageClassAppearances.push(secondAppearance);
   indicator.noAlarmState = staticProperty(0);
   indicator.numberOfAlarms = staticProperty(2);
   indicator.isFlashingRequired = staticProperty(true);
@@ -425,6 +437,9 @@ test("HTML converter renders alarm indicator state", async () => {
   assert.match(html, /data-user-value-2="12"/);
   assert.match(html, /data-user-value-3="13"/);
   assert.match(html, /data-user-value-4="14"/);
+  assert.match(html, /data-selected-message-class="3"/);
+  assert.match(html, /data-text-flashing-message-classes="1"/);
+  assert.match(html, /data-background-flashing-message-classes="2"/);
   assert.match(html, /data-flashing-required="true"/);
   assert.match(html, /data-flashing-color="#FF0000"/);
   assert.match(html, /data-foreground-flashing-required="true"/);

@@ -2805,6 +2805,17 @@ function appendAlarmIndicator(
   appendStaticValueAttribute(html, "data-user-value-2", indicator.userValue2);
   appendStaticValueAttribute(html, "data-user-value-3", indicator.userValue3);
   appendStaticValueAttribute(html, "data-user-value-4", indicator.userValue4);
+  appendStaticValueAttribute(html, "data-selected-message-class", indicator.selectedMessageClass);
+  appendAttribute(html, "data-text-flashing-message-classes", indicator.messageClassAppearances
+    .filter(x => getStaticValue(x.isTextFlashingRequired) === true)
+    .sort((left, right) => left.index - right.index)
+    .map(x => x.index)
+    .join(","));
+  appendAttribute(html, "data-background-flashing-message-classes", indicator.messageClassAppearances
+    .filter(x => getStaticValue(x.isBackgroundFlashingRequired) === true)
+    .sort((left, right) => left.index - right.index)
+    .map(x => x.index)
+    .join(","));
   appendStaticValueAttribute(html, "data-flashing-required", indicator.isFlashingRequired);
   appendStaticValueAttribute(html, "data-flashing-color", indicator.flashingColor);
   appendStaticValueAttribute(html, "data-foreground-flashing-required", indicator.isForegroundFlashingRequired);
