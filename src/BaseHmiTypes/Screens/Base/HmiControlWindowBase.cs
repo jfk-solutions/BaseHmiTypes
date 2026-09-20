@@ -6,6 +6,8 @@ public abstract class HmiControlWindowBase : HmiWindowBase
 
     public HmiProperty<HmiColor>? HeaderForegroundColor { get; set; }
 
+    public HmiProperty<HmiColor>? HeaderBorderColor { get; set; }
+
     public HmiProperty<HmiColor>? ContentBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? ContentForegroundColor { get; set; }
