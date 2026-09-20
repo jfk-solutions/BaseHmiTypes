@@ -21,6 +21,12 @@ public sealed class HmiTrendPen
 
     public HmiProperty<HmiLineStyle>? Style { get; set; }
 
+    /// <summary>Gets or sets whether the area below the trend line is filled.</summary>
+    public HmiProperty<bool>? FillVisible { get; set; }
+
+    /// <summary>Gets or sets the area-fill color independently of the trend line color.</summary>
+    public HmiProperty<HmiColor>? FillColor { get; set; }
+
     /// <summary>
     /// Engineering-system marker name or numeric marker identifier.
     /// </summary>

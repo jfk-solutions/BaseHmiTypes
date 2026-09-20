@@ -43,6 +43,8 @@ interface TrendPen {
   visible?: boolean;
   width?: number;
   style?: number;
+  fill?: boolean;
+  fillColor?: string;
   marker?: string;
   markerColor?: string;
   markerSize?: number;
@@ -485,13 +487,16 @@ function renderPens(pens: readonly TrendPen[]): string {
       points.push(`${toCss(x)},${toCss(clamp(y, 3, 97))}`);
     }
     const markerColor = pen.markerColor ?? color;
+    const area = pen.fill === true
+      ? `<polygon points="0,100 ${points.join(" ")} 100,100" fill="${escapeHtml(pen.fillColor ?? color)}" fill-opacity="0.3"></polygon>`
+      : "";
     const markers = pen.marker === undefined || pen.marker === "0"
       ? ""
       : points.filter((_point, pointIndex) => pointIndex % 5 === 0).map(point => {
         const [x, y] = point.split(",").map(Number);
         return renderMarker(pen, markerColor, x ?? 0, y ?? 0, markerRadius(pen, clamp(width + 1, 2, 5)));
       }).join("");
-    return `<polyline points="${points.join(" ")}" fill="none" stroke="${escapeHtml(color)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></polyline>${markers}`;
+    return `${area}<polyline points="${points.join(" ")}" fill="none" stroke="${escapeHtml(color)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></polyline>${markers}`;
   }).join("");
 }
 
@@ -530,6 +535,8 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.visible === "boolean") pen.visible = source.visible;
       if (typeof source.width === "number" && Number.isFinite(source.width)) pen.width = source.width;
       if (typeof source.style === "number" && Number.isFinite(source.style)) pen.style = source.style;
+      if (typeof source.fill === "boolean") pen.fill = source.fill;
+      if (typeof source.fillColor === "string") pen.fillColor = source.fillColor;
       if (typeof source.marker === "string") pen.marker = source.marker;
       if (typeof source.markerColor === "string") pen.markerColor = source.markerColor;
       if (typeof source.markerSize === "number" && Number.isFinite(source.markerSize)) pen.markerSize = source.markerSize;
