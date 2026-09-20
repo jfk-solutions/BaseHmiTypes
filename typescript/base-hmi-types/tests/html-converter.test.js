@@ -726,6 +726,33 @@ test("HTML converter renders alarm indicator fill pattern", async () => {
   assert.match(html, /background-image: conic-gradient\(#0C2238 25%, transparent 0 50%, #0C2238 0 75%, transparent 0\);/);
 });
 
+test("HTML converter renders extended fill patterns", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  const layer = new HmiLayer();
+  for (const [name, pattern, color] of [
+    ["LargeBoxes", HmiFillPattern.LargeBoxes, hmiColorFromArgb(255, 0, 0, 0)],
+    ["Ovals", HmiFillPattern.Ovals, hmiColorFromArgb(255, 0, 128, 255)],
+    ["WideDiagonal", HmiFillPattern.WideDiagonalRightToLeft, hmiColorFromArgb(255, 255, 0, 0)],
+  ]) {
+    const item = new HmiRectangle();
+    item.name = name;
+    item.width = staticProperty(80);
+    item.height = staticProperty(30);
+    item.backgroundColor = staticProperty(hmiColorFromArgb(255, 255, 255, 255));
+    item.patternColor = staticProperty(color);
+    item.fillPattern = staticProperty(pattern);
+    layer.items.push(item);
+  }
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /background-image: linear-gradient\(#000000 1px, transparent 1px\), linear-gradient\(90deg, #000000 1px, transparent 1px\);background-size: 12px 12px;/);
+  assert.match(html, /background-image: radial-gradient\(ellipse at center, transparent 0 35%, #0080FF 36% 45%, transparent 46%\);background-size: 12px 12px;/);
+  assert.match(html, /background-image: repeating-linear-gradient\(45deg, #FF0000 0 2px, transparent 2px 6px\);background-size: 8px 8px;/);
+});
+
 test("HTML converter renders bar slider and scale previews", async () => {
   const screen = new HmiScreen();
   screen.id = "main";
