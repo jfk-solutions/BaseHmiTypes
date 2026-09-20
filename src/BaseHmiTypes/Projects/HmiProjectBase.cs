@@ -16,6 +16,8 @@ public abstract class HmiProjectBase : IHmiProject
 {
     public HmiProjectInfo Info { get; } = new();
 
+    public virtual IReadOnlyList<HmiProjectDevice> Devices => Folders.OfType<HmiProjectDevice>().ToArray();
+
     public virtual string? Id => null;
 
     public virtual string Name => string.IsNullOrWhiteSpace(Info.ProjectName) ? "Project" : Info.ProjectName!;
@@ -130,11 +132,7 @@ public abstract class HmiProjectBase : IHmiProject
     public virtual async ValueTask<IReadOnlyList<HmiScreenDescriptor>> GetScreensAsync(CancellationToken cancellationToken = default)
     {
         var result = new List<HmiScreenDescriptor>();
-        var screens = Screens;
-        if (screens == null)
-            return result;
-
-        await CollectScreensAsync(screens, result, cancellationToken).ConfigureAwait(false);
+        await CollectScreensAsync(this, result, cancellationToken).ConfigureAwait(false);
         return result;
     }
 

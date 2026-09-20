@@ -28,6 +28,8 @@ public interface IHmiProject :
     IHmiDataLogProvider
 {
     HmiProjectInfo Info { get; }
+
+    IReadOnlyList<HmiProjectDevice> Devices { get; }
 }
 
 public interface IHmiProjectFolder

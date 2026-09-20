@@ -14,5 +14,6 @@ public enum HmiProjectFolderType
     Connections,
     Faceplates,
     Recipes,
-    DataLogs
+    DataLogs,
+    Device
 }
