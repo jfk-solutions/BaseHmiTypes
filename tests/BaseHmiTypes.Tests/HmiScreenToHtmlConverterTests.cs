@@ -1344,6 +1344,7 @@ public class HmiScreenToHtmlConverterTests
             Resizable = true,
             Movable = true,
             Closeable = true,
+            GridLineColor = HmiColor.FromArgb(255, 0x44, 0x55, 0x66),
             ListMode = HmiAlarmListMode.Active,
             ActiveAlarmsTitle = HmiMultilingualText.FromText("Active process alarms"),
             NumberOfRows = 8,
@@ -1392,6 +1393,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-window-resizable=\"true\"");
         StringAssert.Contains(html, "data-window-movable=\"true\"");
         StringAssert.Contains(html, "data-window-closeable=\"true\"");
+        StringAssert.Contains(html, "data-grid-line-color=\"#445566\"");
+        StringAssert.Contains(html, "--hmi-grid-line-color: #445566;");
+        StringAssert.Contains(html, "border: 1px solid var(--hmi-grid-line-color, currentColor);");
         StringAssert.Contains(html, "resize: both;");
         StringAssert.Contains(html, "cursor: move;");
         StringAssert.Contains(html, "aria-label=\"Close\" disabled");

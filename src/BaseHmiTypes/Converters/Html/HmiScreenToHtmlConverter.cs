@@ -2226,7 +2226,7 @@ public class HmiScreenToHtmlConverter
             html,
             alarmControl,
             context,
-            additionalStyle: CreateControlWindowStyle(alarmControl, context, "display: flex; flex-direction: column; overflow: hidden;"));
+            additionalStyle: CreateAlarmControlStyle(alarmControl, context));
         AppendAttribute(html, "data-window-resizable", ResolvePropertyPreview(alarmControl.Resizable, context));
         AppendAttribute(html, "data-window-movable", ResolvePropertyPreview(alarmControl.Movable, context));
         AppendAttribute(html, "data-window-closeable", ResolvePropertyPreview(alarmControl.Closeable, context));
@@ -2240,6 +2240,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-out-of-scope-alarms", ResolvePropertyPreview(alarmControl.ShowOutOfScopeAlarms, context));
         AppendAttribute(html, "data-filtered-triggers", alarmControl.FilteredTriggers.Count == 0 ? null : string.Join(",", alarmControl.FilteredTriggers));
         AppendAttribute(html, "data-alarm-identifier", ResolvePropertyPreview(alarmControl.AlarmIdentifier, context));
+        AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(alarmControl.GridLineColor, context));
         html.Append('>');
 
         if (showTitle)
@@ -2261,12 +2262,12 @@ public class HmiScreenToHtmlConverter
         {
             html.Append("<thead><tr>");
             if (visibleColumns.Length == 0)
-                html.Append("<th style=\"border: 1px solid currentColor;\">")
+                html.Append("<th style=\"border: 1px solid var(--hmi-grid-line-color, currentColor);\">")
                     .Append(WebUtility.HtmlEncode(ResolveAlarmViewLabel(alarmControl.ViewKind)))
                     .Append("</th>");
             foreach (var column in visibleColumns)
             {
-                html.Append("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
+                html.Append("<th style=\"border: 1px solid var(--hmi-grid-line-color, currentColor); overflow: hidden; text-overflow: ellipsis;\"");
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-time-format", column.TimeAndDateFormat);
                 AppendAttribute(html, "data-symbol", column.Symbol);
@@ -3301,6 +3302,20 @@ public class HmiScreenToHtmlConverter
         if (window.Resizable is null || !ResolveStaticValue(window.Resizable, context))
             return baseStyle;
         return baseStyle + "resize: both;";
+    }
+
+    private static string CreateAlarmControlStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
+    {
+        var style = new StringBuilder(CreateControlWindowStyle(
+            alarmControl,
+            context,
+            "display: flex; flex-direction: column; overflow: hidden;"));
+        if (alarmControl.GridLineColor is not null)
+        {
+            var gridLineColor = ResolveStaticValue(alarmControl.GridLineColor, context);
+            style.Append("--hmi-grid-line-color: ").Append(ToCss(gridLineColor)).Append(';');
+        }
+        return style.ToString();
     }
 
     private static void AppendStaticBooleanValueAttribute(
