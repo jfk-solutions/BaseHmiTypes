@@ -26,6 +26,12 @@ public sealed class HmiTrendPen
     /// </summary>
     public HmiProperty<string>? Marker { get; set; }
 
+    /// <summary>Gets or sets the marker color independently of the trend line color.</summary>
+    public HmiProperty<HmiColor>? MarkerColor { get; set; }
+
+    /// <summary>Gets or sets the marker width in pixels.</summary>
+    public HmiProperty<double>? MarkerSize { get; set; }
+
     public HmiProperty<double>? MinimumValue { get; set; }
 
     public HmiProperty<double>? MaximumValue { get; set; }

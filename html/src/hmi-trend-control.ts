@@ -44,6 +44,8 @@ interface TrendPen {
   width?: number;
   style?: number;
   marker?: string;
+  markerColor?: string;
+  markerSize?: number;
   minimum?: number;
   maximum?: number;
   unit?: string;
@@ -460,7 +462,10 @@ function renderPenLegend(pens: readonly TrendPen[], displayIcons: boolean): stri
     const color = normalizePenColor(pen.color, index);
     const label = pen.name || `Pen ${pen.number || index + 1}`;
     const unit = pen.unit ? ` (${pen.unit})` : "";
-    const marker = pen.marker === undefined || pen.marker === "0" ? "" : renderMarker(pen, color, 15, 7, 3);
+    const markerColor = pen.markerColor ?? color;
+    const marker = pen.marker === undefined || pen.marker === "0"
+      ? ""
+      : renderMarker(pen, markerColor, 15, 7, markerRadius(pen, 3));
     const icon = displayIcons
       ? `<svg class="pen-icon" viewBox="0 0 30 14" aria-hidden="true"><line x1="1" y1="7" x2="29" y2="7" stroke="${escapeHtml(color)}" stroke-width="${toCss(clamp(pen.width ?? 2, 1, 8))}"${dashAttribute(pen.style)}></line>${marker}</svg>`
       : "";
@@ -479,11 +484,12 @@ function renderPens(pens: readonly TrendPen[]): string {
       const y = 50 - Math.sin((point + index * 3) * 0.55) * amplitude + (index % 8) * 3;
       points.push(`${toCss(x)},${toCss(clamp(y, 3, 97))}`);
     }
+    const markerColor = pen.markerColor ?? color;
     const markers = pen.marker === undefined || pen.marker === "0"
       ? ""
       : points.filter((_point, pointIndex) => pointIndex % 5 === 0).map(point => {
         const [x, y] = point.split(",").map(Number);
-        return renderMarker(pen, color, x ?? 0, y ?? 0, clamp(width + 1, 2, 5));
+        return renderMarker(pen, markerColor, x ?? 0, y ?? 0, markerRadius(pen, clamp(width + 1, 2, 5)));
       }).join("");
     return `<polyline points="${points.join(" ")}" fill="none" stroke="${escapeHtml(color)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></polyline>${markers}`;
   }).join("");
@@ -494,6 +500,10 @@ function renderMarker(pen: TrendPen, color: string, x: number, y: number, size: 
   if (marker === 2 || marker === 5)
     return `<circle cx="${toCss(x)}" cy="${toCss(y)}" r="${toCss(size)}" fill="${escapeHtml(color)}"></circle>`;
   return `<rect x="${toCss(x - size)}" y="${toCss(y - size)}" width="${toCss(size * 2)}" height="${toCss(size * 2)}" fill="${escapeHtml(color)}"></rect>`;
+}
+
+function markerRadius(pen: TrendPen, fallback: number): number {
+  return pen.markerSize === undefined ? fallback : clamp(pen.markerSize / 2, 1, 8);
 }
 
 function dashAttribute(style: number | undefined): string {
@@ -521,6 +531,8 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.width === "number" && Number.isFinite(source.width)) pen.width = source.width;
       if (typeof source.style === "number" && Number.isFinite(source.style)) pen.style = source.style;
       if (typeof source.marker === "string") pen.marker = source.marker;
+      if (typeof source.markerColor === "string") pen.markerColor = source.markerColor;
+      if (typeof source.markerSize === "number" && Number.isFinite(source.markerSize)) pen.markerSize = source.markerSize;
       if (typeof source.minimum === "number" && Number.isFinite(source.minimum)) pen.minimum = source.minimum;
       if (typeof source.maximum === "number" && Number.isFinite(source.maximum)) pen.maximum = source.maximum;
       if (typeof source.unit === "string") pen.unit = source.unit;
