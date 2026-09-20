@@ -72,6 +72,7 @@ export * from "./base/HmiTrendControlBase.js";
 export * from "./base/HmiTrendChartStyle.js";
 export * from "./base/HmiTrendContainerType.js";
 export * from "./base/HmiTrendAxisScalingMode.js";
+export * from "./base/HmiTrendAxisScaleType.js";
 export * from "./base/HmiTrendBatch.js";
 export * from "./base/HmiTrendDataPointConnection.js";
 export * from "./base/HmiTrendDataServer.js";

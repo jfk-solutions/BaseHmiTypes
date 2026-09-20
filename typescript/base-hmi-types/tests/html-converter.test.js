@@ -58,6 +58,7 @@ import {
   HmiSlider,
   HmiToggleSwitch,
   HmiTrendControl,
+  HmiTrendAxisScaleType,
   HmiTrendLineType,
   HmiTrendPen,
   HmiTrendTimeFormat,
@@ -1598,6 +1599,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   pen.markerSize = staticProperty(5);
   pen.minimumValue = staticProperty(0);
   pen.maximumValue = staticProperty(100);
+  pen.axisScaleType = staticProperty(HmiTrendAxisScaleType.Logarithmic);
   pen.engineeringUnit = "bar";
   trend.pens.push(pen);
   layer.items.push(trend);
@@ -1665,7 +1667,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /x-axis-flipped="true"/);
   assert.match(html, /time-format="TwentyFourHour"/);
   assert.match(html, /use-trend-name-as-label="false"/);
-  assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;label&quot;:&quot;Vessel pressure&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;lineType&quot;:2,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;lowerLimitColoring&quot;:true,&quot;lowerLimit&quot;:10,&quot;lowerLimitColor&quot;:&quot;#0044CC&quot;,&quot;upperLimitColoring&quot;:true,&quot;upperLimit&quot;:90,&quot;upperLimitColor&quot;:&quot;#CC2211&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}\]"/);
+  assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;label&quot;:&quot;Vessel pressure&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;lineType&quot;:2,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;lowerLimitColoring&quot;:true,&quot;lowerLimit&quot;:10,&quot;lowerLimitColor&quot;:&quot;#0044CC&quot;,&quot;upperLimitColoring&quot;:true,&quot;upperLimit&quot;:90,&quot;upperLimitColor&quot;:&quot;#CC2211&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;axisScaleType&quot;:1,&quot;unit&quot;:&quot;bar&quot;}\]"/);
 });
 
 test("HTML converter does not render disabled trend status backgrounds", async () => {
