@@ -1210,7 +1210,7 @@ async function appendButton(
   const state = button.states.find(candidate => candidate.value === stateValue)
     ?? button.states[0];
   html.push("<button");
-  appendCommonAttributes(html, button, context, true, createStateStyle(state));
+  appendCommonAttributes(html, button, context, true, createButtonStyle(button, state));
   const enabled = button.enabled === undefined || getStaticValue(button.enabled) === true;
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
@@ -1236,6 +1236,24 @@ async function appendButton(
   }
   appendMultilingualText(html, state?.text ?? getStaticValue(button.text), context);
   html.push("</button>");
+}
+
+function createButtonStyle(button: HmiButton, state: HmiState | undefined): string | null {
+  let style = createStateStyle(state) ?? "";
+  const borderWidth = getStaticValue(button.threeDBorderWidth) ?? 0;
+  if (borderWidth <= 0)
+    return style || null;
+
+  style += `border-style: solid;border-width: ${toCss(borderWidth)}px;`;
+  let topColor = getStaticValue(button.threeDBorderTopColor);
+  let bottomColor = getStaticValue(button.threeDBorderBottomColor);
+  topColor ??= bottomColor;
+  bottomColor ??= topColor;
+  if (topColor !== undefined && bottomColor !== undefined) {
+    style += `border-color: ${colorToCss(topColor)} ${colorToCss(bottomColor)} ` +
+      `${colorToCss(bottomColor)} ${colorToCss(topColor)};`;
+  }
+  return style;
 }
 
 function createStateStyle(state: HmiState | undefined): string | null {
