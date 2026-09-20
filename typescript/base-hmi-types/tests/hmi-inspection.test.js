@@ -173,6 +173,21 @@ test("HTML conversion renders shape fill patterns", async () => {
   assert.match(html, /background-image: conic-gradient\(#FF0000 25%, transparent 0 50%, #FF0000 0 75%, transparent 0\);/);
 });
 
+test("HTML conversion renders screen fill patterns", async () => {
+  const screen = createScreen("main", "Main");
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(200);
+  screen.backgroundColor = staticProperty(hmiColorFromArgb(255, 255, 255, 255));
+  screen.patternColor = staticProperty(hmiColorFromArgb(255, 0, 64, 128));
+  screen.fillPattern = staticProperty(HmiFillPattern.Checkers);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /background-color: #FFFFFF;/);
+  assert.match(html, /background-image: conic-gradient\(#004080 25%, transparent 0 50%, #004080 0 75%, transparent 0\);/);
+  assert.match(html, /background-size: 8px 8px;/);
+});
+
 test("HTML conversion serializes dynamic SVG colors in HMI format", async () => {
   const dynamicSvg = new HmiDynamicSvg();
   dynamicSvg.name = "Valve";
