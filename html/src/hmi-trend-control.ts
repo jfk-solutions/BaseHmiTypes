@@ -250,6 +250,7 @@ export class HmiTrendControl extends HTMLElement {
           transform: translateY(50%);
           text-align: right;
           width: 3.6em;
+          color: var(--hmi-trend-y-axis-color, ${escapeCss(foregroundColor)});
         }
 
         .percentage-axis-line {
@@ -285,6 +286,7 @@ export class HmiTrendControl extends HTMLElement {
           transform: translateX(-50%);
           text-align: center;
           min-width: 5.2em;
+          color: var(--hmi-trend-x-axis-color, ${escapeCss(foregroundColor)});
         }
 
         .status {
@@ -332,8 +334,8 @@ export class HmiTrendControl extends HTMLElement {
         <div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             ${renderGrid(xAxisGridVisible, yAxisGridVisible, majorGridVisible, minorGridVisible)}
-            ${xAxisVisible ? `<line x1="0" y1="100" x2="100" y2="100" stroke="#444850" stroke-width="0.55"></line>` : ""}
-            ${yAxisVisible ? `<line x1="0" y1="0" x2="0" y2="100" stroke="#444850" stroke-width="0.55"></line>` : ""}
+            ${xAxisVisible ? `<line x1="0" y1="100" x2="100" y2="100" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
+            ${yAxisVisible ? `<line x1="0" y1="0" x2="0" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${renderPens(visiblePens)}
           </svg>
           ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces) : ""}
