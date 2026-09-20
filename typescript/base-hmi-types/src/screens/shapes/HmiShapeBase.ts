@@ -1,6 +1,7 @@
 import { HmiColor, HmiProperty } from "../base.js";
 import { HmiFillPattern } from "../base/HmiFillPattern.js";
 import { HmiGradientDirection } from "../base/HmiGradientDirection.js";
+import { HmiLineCap } from "../base/HmiLineCap.js";
 import { HmiSimpleScreenItemBase } from "../base/HmiSimpleScreenItemBase.js";
 
 export abstract class HmiShapeBase extends HmiSimpleScreenItemBase {
@@ -8,6 +9,7 @@ export abstract class HmiShapeBase extends HmiSimpleScreenItemBase {
   alternateLineColor?: HmiProperty<HmiColor>;
   lineWidth?: HmiProperty<number>;
   dashType?: HmiProperty<number>;
+  lineCap?: HmiProperty<HmiLineCap>;
   backFillPattern?: HmiProperty<number>;
   fillPattern?: HmiProperty<HmiFillPattern>;
   transparentColor?: HmiProperty<HmiColor>;

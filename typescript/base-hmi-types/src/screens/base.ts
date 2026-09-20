@@ -6,6 +6,7 @@ export * from "./base/HmiChildCoordinateSpace.js";
 export * from "./base/HmiAffineTransform.js";
 export * from "./base/HmiThickness.js";
 export * from "./base/HmiLineStyle.js";
+export * from "./base/HmiLineCap.js";
 export * from "./base/HmiFillPattern.js";
 export * from "./base/HmiGradientDirection.js";
 export * from "./base/HmiFont.js";

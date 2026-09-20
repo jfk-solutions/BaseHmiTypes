@@ -21,6 +21,7 @@ import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignmen
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
 import { HmiLineStyle } from "../../screens/base/HmiLineStyle.js";
+import { HmiLineCap } from "../../screens/base/HmiLineCap.js";
 import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
@@ -855,6 +856,8 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
   appendAttribute(html, "fill", fill);
   appendAttribute(html, "stroke", lineStyle === HmiLineStyle.None ? "none" : colorToCss(getStrokeColor(item, context)));
   appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context));
+  const lineCap = context.effectiveProperties.tryGetStaticValue<HmiLineCap>(item, "LineCap", item.lineCap).value;
+  if (lineCap !== undefined) appendAttribute(html, "stroke-linecap", lineCapToCss(lineCap));
 
   switch (lineStyle) {
     case HmiLineStyle.Dash:
@@ -862,16 +865,27 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
       break;
     case HmiLineStyle.Dot:
       appendAttribute(html, "stroke-dasharray", "1 3");
-      appendAttribute(html, "stroke-linecap", "round");
+      if (lineCap === undefined) appendAttribute(html, "stroke-linecap", "round");
       break;
     case HmiLineStyle.DashDot:
       appendAttribute(html, "stroke-dasharray", "6 3 1 3");
-      appendAttribute(html, "stroke-linecap", "round");
+      if (lineCap === undefined) appendAttribute(html, "stroke-linecap", "round");
       break;
     case HmiLineStyle.DashDotDot:
       appendAttribute(html, "stroke-dasharray", "6 3 1 3 1 3");
-      appendAttribute(html, "stroke-linecap", "round");
+      if (lineCap === undefined) appendAttribute(html, "stroke-linecap", "round");
       break;
+  }
+}
+
+function lineCapToCss(lineCap: HmiLineCap): string {
+  switch (lineCap) {
+    case HmiLineCap.Round:
+      return "round";
+    case HmiLineCap.Square:
+      return "square";
+    default:
+      return "butt";
   }
 }
 
