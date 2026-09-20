@@ -2024,6 +2024,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-header-background-color", resolvePropertyPreview(alarmControl.headerBackgroundColor));
   appendAttribute(html, "data-header-foreground-color", resolvePropertyPreview(alarmControl.headerForegroundColor));
   appendAttribute(html, "data-header-border-color", resolvePropertyPreview(alarmControl.headerBorderColor));
+  appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(alarmControl.showToolbar));
+  appendAttribute(html, "data-toolbar-background-color", resolvePropertyPreview(alarmControl.toolbarBackgroundColor));
+  appendAttribute(html, "data-toolbar-foreground-color", resolvePropertyPreview(alarmControl.toolbarForegroundColor));
   appendAttribute(html, "data-view-kind", alarmControl.viewKind);
   appendAttribute(html, "data-list-mode", listMode);
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmControl.numberOfRows));
@@ -2082,14 +2085,20 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
 
   const showAcknowledgeButton = getStaticValue(alarmControl.showAcknowledgeButton) === true;
   const showHelpButton = getStaticValue(alarmControl.showHelpButton) === true;
-  if (showAcknowledgeButton || showHelpButton) {
-    html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">");
+  const showToolbar = getStaticValue(alarmControl.showToolbar) === true;
+  if (showToolbar || showAcknowledgeButton || showHelpButton) {
+    const toolbarStyle = ["flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;"];
+    appendColorStyle(toolbarStyle, "background-color", alarmControl.toolbarBackgroundColor);
+    appendColorStyle(toolbarStyle, "color", alarmControl.toolbarForegroundColor);
+    html.push("<div class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"", ...toolbarStyle, "\">");
     if (showAcknowledgeButton)
       html.push("Acknowledge");
     if (showAcknowledgeButton && showHelpButton)
       html.push(" · ");
     if (showHelpButton)
       html.push("Help");
+    if (!showAcknowledgeButton && !showHelpButton)
+      html.push("Toolbar");
     html.push("</div>");
   }
   if (getStaticValue(alarmControl.showStatusBar) === true) {
