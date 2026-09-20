@@ -3,6 +3,7 @@ import { HmiLineStyle } from "./HmiLineStyle.js";
 import { HmiProperty } from "./HmiProperty.js";
 import { HmiTrendPenType } from "./HmiTrendPenType.js";
 import { HmiTrendLineType } from "./HmiTrendLineType.js";
+import { HmiTrendAxisScaleType } from "./HmiTrendAxisScaleType.js";
 
 export class HmiTrendPen {
   /** One-based pen number as exposed by the engineering system. */
@@ -34,6 +35,8 @@ export class HmiTrendPen {
   markerSize?: HmiProperty<number>;
   minimumValue?: HmiProperty<number>;
   maximumValue?: HmiProperty<number>;
+  /** Scaling type of the value axis assigned to this pen. */
+  axisScaleType?: HmiProperty<HmiTrendAxisScaleType>;
   /** Current minimum value used to scale this pen. */
   currentScaleMinimumValue?: HmiProperty<number>;
   /** Current maximum value used to scale this pen. */

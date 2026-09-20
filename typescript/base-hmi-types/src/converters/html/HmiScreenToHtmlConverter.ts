@@ -3330,6 +3330,8 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     if (minimum !== undefined) result.minimum = minimum;
     const maximum = getStaticValue(pen.maximumValue);
     if (maximum !== undefined) result.maximum = maximum;
+    const axisScaleType = getStaticValue(pen.axisScaleType);
+    if (axisScaleType !== undefined) result.axisScaleType = axisScaleType;
     if (pen.engineeringUnit !== undefined) result.unit = pen.engineeringUnit;
     return result;
   }));
