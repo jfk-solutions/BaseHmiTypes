@@ -417,6 +417,45 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersAlarmIndicatorState()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var indicator = new HmiAlarmIndicator
+        {
+            Name = "GroupDisplay",
+            Width = 80,
+            Height = 30,
+            AlarmState = 5,
+            NoAlarmState = 0,
+            NumberOfAlarms = 2,
+            IsFlashingRequired = true,
+            FlashingColor = HmiColor.FromArgb(255, 255, 0, 0),
+            FlashingRate = 500,
+            ShowAcknowledgedAlarmClasses = new List<int> { 1, 3 },
+            ShowPendingAlarmClasses = new List<int> { 2, 4 }
+        };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(indicator);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"GroupDisplay\"");
+        StringAssert.Contains(html, "class=\"hmi-alarm-indicator\"");
+        StringAssert.Contains(html, "data-active=\"true\"");
+        StringAssert.Contains(html, "data-flashing-required=\"true\"");
+        StringAssert.Contains(html, "data-flashing-color=\"#FF0000\"");
+        StringAssert.Contains(html, "data-flashing-rate=\"500\"");
+        StringAssert.Contains(html, "data-alarm-state=\"5\"");
+        StringAssert.Contains(html, "data-no-alarm-state=\"0\"");
+        StringAssert.Contains(html, "data-number-of-alarms=\"2\"");
+        StringAssert.Contains(html, "data-show-acknowledged-alarm-classes=\"1,3\"");
+        StringAssert.Contains(html, "data-show-pending-alarm-classes=\"2,4\"");
+        StringAssert.Contains(html, ">2</div>");
+        Assert.IsFalse(html.Contains("HmiAlarmIndicator", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersClockPreview()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
