@@ -2278,6 +2278,7 @@ function appendTextBlock(
 function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHtmlConvertContext): void {
   html.push("<div");
   appendAttribute(html, "id", rectangle.name);
+  appendTextAttribute(html, "title", rectangle.toolTipText, context);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
@@ -2597,6 +2598,7 @@ function appendSymbolLibraryAttributes(
   context: HmiHtmlConvertContext,
 ): void {
   appendAttribute(html, "id", symbolLibraryControl.name);
+  appendTextAttribute(html, "title", symbolLibraryControl.toolTipText, context);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   appendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.symbolId);
   appendAttribute(html, "data-hmi-symbol-appearance", formatAttributeValue(getStaticValue(symbolLibraryControl.symbolAppearance)));
@@ -2994,6 +2996,7 @@ function appendCommonAttributes(
   additionalStyle: string | null = null
 ): void {
   appendAttribute(html, "id", item.name);
+  appendTextAttribute(html, "title", item.toolTipText, context);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
@@ -3025,6 +3028,7 @@ function appendItemTransform(html: string[], item: HmiScreenItemBase): void {
 
 function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContainer, context: HmiHtmlConvertContext): void {
   appendAttribute(html, "id", symbolContainer.name);
+  appendTextAttribute(html, "title", symbolContainer.toolTipText, context);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   appendAttribute(html, "data-hmi-fill-color-mode", getStaticValue(symbolContainer.fillColorMode));
   appendAttribute(html, "data-hmi-flip", getStaticValue(symbolContainer.flip));
