@@ -1239,7 +1239,9 @@ async function appendButton(
 }
 
 function createButtonStyle(button: HmiButton, state: HmiState | undefined): string | null {
-  let style = createStateStyle(state) ?? "";
+  const captionColor = getStaticValue(button.captionColor);
+  let style = captionColor === undefined ? "" : `color: ${colorToCss(captionColor)};`;
+  style += createStateStyle(state) ?? "";
   const borderWidth = getStaticValue(button.threeDBorderWidth) ?? 0;
   if (borderWidth <= 0)
     return style || null;
