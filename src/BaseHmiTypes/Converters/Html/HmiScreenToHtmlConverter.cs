@@ -2879,7 +2879,11 @@ public class HmiScreenToHtmlConverter
                 ? text
                 : alarmState.HasValue && isActive ? "!" : string.Empty;
 
-        var style = new StringBuilder("display: flex; align-items: center; justify-content: center; overflow: hidden;");
+        var style = new StringBuilder("display: flex; overflow: hidden;");
+        if (indicator.VerticalAlignment is null)
+            style.Append("align-items: center;");
+        if (indicator.HorizontalAlignment is null)
+            style.Append("justify-content: center;");
         if (isActive && indicator.FlashingColor is not null)
         {
             var flashingColor = ResolveStaticValue(indicator.FlashingColor, context);
@@ -3620,6 +3624,8 @@ public class HmiScreenToHtmlConverter
     {
         if (item is HmiText text)
             return text.HorizontalAlignment;
+        if (item is HmiAlarmIndicator alarmIndicator)
+            return alarmIndicator.HorizontalAlignment;
         if (item is HmiWidgetBase widget)
             return widget.HorizontalAlignment;
         return null;
@@ -3629,6 +3635,8 @@ public class HmiScreenToHtmlConverter
     {
         if (item is HmiText text)
             return text.VerticalAlignment;
+        if (item is HmiAlarmIndicator alarmIndicator)
+            return alarmIndicator.VerticalAlignment;
         if (item is HmiWidgetBase widget)
             return widget.VerticalAlignment;
         return null;

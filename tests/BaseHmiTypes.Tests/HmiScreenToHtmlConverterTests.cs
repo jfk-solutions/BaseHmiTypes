@@ -910,7 +910,9 @@ public class HmiScreenToHtmlConverterTests
                 Name = "Arial",
                 Size = 12,
                 Bold = true
-            }
+            },
+            HorizontalAlignment = HmiHorizontalAlignment.Right,
+            VerticalAlignment = HmiVerticalAlignment.Bottom
         });
         screen.Layers.Add(layer);
 
@@ -919,6 +921,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "font-family: Arial;");
         StringAssert.Contains(html, "font-size: 12px;");
         StringAssert.Contains(html, "font-weight: bold;");
+        StringAssert.Contains(html, "text-align: right;");
+        StringAssert.Contains(html, "justify-content: flex-end;");
+        StringAssert.Contains(html, "align-items: flex-end;");
     }
 
     [TestMethod]
