@@ -43,6 +43,12 @@ public sealed class HmiTrendPen
 
     public HmiProperty<HmiColor>? UpperLimitColor { get; set; }
 
+    /// <summary>Gets or sets whether uncertain-quality values use a dedicated color.</summary>
+    public HmiProperty<bool>? UncertainColoring { get; set; }
+
+    /// <summary>Gets or sets the color used for uncertain-quality values.</summary>
+    public HmiProperty<HmiColor>? UncertainColor { get; set; }
+
     /// <summary>
     /// Engineering-system marker name or numeric marker identifier.
     /// </summary>

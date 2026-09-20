@@ -58,6 +58,8 @@ interface TrendPen {
   upperLimitColoring?: boolean;
   upperLimit?: number;
   upperLimitColor?: string;
+  uncertainColoring?: boolean;
+  uncertainColor?: string;
   marker?: string;
   markerColor?: string;
   markerSize?: number;
@@ -550,7 +552,7 @@ function renderPens(
     const color = normalizePenColor(pen.color, index);
     const width = clamp(pen.width ?? 2, 1, 8);
     const amplitude = Math.max(6, 24 - (index % 8) * 2);
-    const points: Array<{ x: number; y: number; value: number }> = [];
+    const points: Array<{ x: number; y: number; value: number; uncertain: boolean }> = [];
     for (let point = 0; point <= 20; point++) {
       const x = xAxisFlipped ? 100 - point * 5 : point * 5;
       const y = 50 - Math.sin((point + index * 3) * 0.55) * amplitude + (index % 8) * 3;
@@ -559,6 +561,7 @@ function renderPens(
         x,
         y: clippedY,
         value: valueAtYAxisPosition(clippedY, minimumValue, maximumValue, axisScaleType),
+        uncertain: pen.uncertainColoring === true && point >= 8 && point <= 11,
       });
     }
     const pointText = trendPointText(points, pen.lineType);
@@ -569,7 +572,13 @@ function renderPens(
     const markers = pen.marker === undefined || pen.marker === "0"
       ? ""
       : points.filter((_point, pointIndex) => pointIndex % 5 === 0)
-        .map(point => renderMarker(pen, markerColor, point.x, point.y, markerRadius(pen, clamp(width + 1, 2, 5))))
+        .map(point => renderMarker(
+          pen,
+          trendSegmentColor(pen, markerColor, point.value, point.uncertain),
+          point.x,
+          point.y,
+          markerRadius(pen, clamp(width + 1, 2, 5)),
+        ))
         .join("");
     const line = renderTrendLine(pen, points, pointText, color, width, exponentialFormat, decimalPlaces);
     return `${area}${line}${markers}`;
@@ -618,7 +627,7 @@ function trendPointText(points: ReadonlyArray<{ x: number; y: number }>, lineTyp
 
 function renderTrendLine(
   pen: TrendPen,
-  points: ReadonlyArray<{ x: number; y: number; value: number }>,
+  points: ReadonlyArray<{ x: number; y: number; value: number; uncertain: boolean }>,
   pointText: string,
   color: string,
   width: number,
@@ -629,7 +638,7 @@ function renderTrendLine(
   if (lineType === 0) return "";
   if (lineType === 3) {
     return points.filter((_point, index) => index % 5 === 0).map(point => {
-      const valueColor = trendSegmentColor(pen, color, point.value);
+      const valueColor = trendSegmentColor(pen, color, point.value, point.uncertain);
       return `<text x="${toCss(point.x)}" y="${toCss(point.y)}" fill="${escapeHtml(valueColor)}" font-size="4" text-anchor="middle">${escapeHtml(formatAxisValue(point.value, decimalPlaces, exponentialFormat))}</text>`;
     }).join("");
   }
@@ -638,11 +647,11 @@ function renderTrendLine(
   return points.slice(1).map((point, pointIndex) => {
     const previous = points[pointIndex]!;
     if (lineType === 2) {
-      const horizontalColor = trendSegmentColor(pen, color, previous.value);
-      const verticalColor = trendSegmentColor(pen, color, (previous.value + point.value) / 2);
+      const horizontalColor = trendSegmentColor(pen, color, previous.value, previous.uncertain || point.uncertain);
+      const verticalColor = trendSegmentColor(pen, color, (previous.value + point.value) / 2, previous.uncertain || point.uncertain);
       return `${renderTrendSegment(previous.x, previous.y, point.x, previous.y, horizontalColor, width, pen.style)}${renderTrendSegment(point.x, previous.y, point.x, point.y, verticalColor, width, pen.style)}`;
     }
-    return renderTrendSegment(previous.x, previous.y, point.x, point.y, trendSegmentColor(pen, color, (previous.value + point.value) / 2), width, pen.style);
+    return renderTrendSegment(previous.x, previous.y, point.x, point.y, trendSegmentColor(pen, color, (previous.value + point.value) / 2, previous.uncertain || point.uncertain), width, pen.style);
   }).join("");
 }
 
@@ -652,10 +661,13 @@ function renderTrendSegment(x1: number, y1: number, x2: number, y2: number, colo
 
 function hasLimitColoring(pen: TrendPen): boolean {
   return pen.lowerLimitColoring === true && pen.lowerLimit !== undefined && pen.lowerLimitColor !== undefined
-    || pen.upperLimitColoring === true && pen.upperLimit !== undefined && pen.upperLimitColor !== undefined;
+    || pen.upperLimitColoring === true && pen.upperLimit !== undefined && pen.upperLimitColor !== undefined
+    || pen.uncertainColoring === true && pen.uncertainColor !== undefined;
 }
 
-function trendSegmentColor(pen: TrendPen, fallback: string, value: number): string {
+function trendSegmentColor(pen: TrendPen, fallback: string, value: number, uncertain = false): string {
+  if (uncertain && pen.uncertainColoring === true && pen.uncertainColor !== undefined)
+    return pen.uncertainColor;
   if (pen.lowerLimitColoring === true && pen.lowerLimit !== undefined && value < pen.lowerLimit)
     return pen.lowerLimitColor ?? fallback;
   if (pen.upperLimitColoring === true && pen.upperLimit !== undefined && value > pen.upperLimit)
@@ -708,6 +720,8 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.upperLimitColoring === "boolean") pen.upperLimitColoring = source.upperLimitColoring;
       if (typeof source.upperLimit === "number" && Number.isFinite(source.upperLimit)) pen.upperLimit = source.upperLimit;
       if (typeof source.upperLimitColor === "string") pen.upperLimitColor = source.upperLimitColor;
+      if (typeof source.uncertainColoring === "boolean") pen.uncertainColoring = source.uncertainColoring;
+      if (typeof source.uncertainColor === "string") pen.uncertainColor = source.uncertainColor;
       if (typeof source.marker === "string") pen.marker = source.marker;
       if (typeof source.markerColor === "string") pen.markerColor = source.markerColor;
       if (typeof source.markerSize === "number" && Number.isFinite(source.markerSize)) pen.markerSize = source.markerSize;
