@@ -504,12 +504,33 @@ public class HmiScreenToHtmlConverterTests
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
-        StringAssert.Contains(html, "writing-mode: vertical-lr; direction: rtl;\" data-orientation=\"Up\"");
-        StringAssert.Contains(html, "writing-mode: vertical-lr; direction: ltr;\" data-orientation=\"Down\"");
+        StringAssert.Contains(html, "writing-mode: vertical-lr; direction: rtl;\" data-hmi-slider=\"true\" data-orientation=\"Up\"");
+        StringAssert.Contains(html, "writing-mode: vertical-lr; direction: ltr;\" data-hmi-slider=\"true\" data-orientation=\"Down\"");
         StringAssert.Contains(html, "id=\"LeftSlider\"");
-        StringAssert.Contains(html, "direction: rtl;\" data-orientation=\"Left\"");
+        StringAssert.Contains(html, "direction: rtl;\" data-hmi-slider=\"true\" data-orientation=\"Left\"");
         StringAssert.Contains(html, "id=\"RightSlider\"");
-        StringAssert.Contains(html, "direction: ltr;\" data-orientation=\"Right\"");
+        StringAssert.Contains(html, "direction: ltr;\" data-hmi-slider=\"true\" data-orientation=\"Right\"");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_RendersSliderThumbColor()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiSlider
+        {
+            Name = "ColoredSlider",
+            Width = 100,
+            Height = 20,
+            ThumbBackgroundColor = HmiColor.FromArgb(255, 12, 34, 56)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "input[data-hmi-slider]{accent-color:var(--hmi-slider-thumb-background,auto);}");
+        StringAssert.Contains(html, "--hmi-slider-thumb-background: #0C2238;");
+        StringAssert.Contains(html, "data-hmi-slider=\"true\"");
     }
 
     [TestMethod]
