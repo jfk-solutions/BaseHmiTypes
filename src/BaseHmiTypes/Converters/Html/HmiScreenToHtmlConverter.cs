@@ -1412,8 +1412,12 @@ public class HmiScreenToHtmlConverter
     {
         var (minimum, maximum) = ResolveScaleRange(slider, context);
         var value = ResolveScaleValue(slider, minimum, maximum, context);
+        var direction = slider.Orientation is null || slider.Orientation.StaticValue is < 0 or > 3
+            ? HmiFillDirection.Right
+            : (HmiFillDirection)ResolveStaticValue(slider.Orientation, context);
         html.Append("<input");
-        AppendCommonAttributes(html, slider, context);
+        AppendCommonAttributes(html, slider, context, additionalStyle: GetBarDirectionStyle(direction));
+        AppendAttribute(html, "data-orientation", direction.ToString());
         AppendAttribute(html, "type", "range");
         AppendAttribute(html, "min", ToCss(minimum));
         AppendAttribute(html, "max", ToCss(maximum));
