@@ -177,6 +177,29 @@ test("HTML converter renders disabled item semantics", async () => {
   assert.match(html, /id="DisabledRectangle" aria-disabled="true"[^>]*style="position: absolute;left: 0px;top: 0px;width: 100px;height: 50px;pointer-events: none;/);
 });
 
+test("HTML converter renders disabled foreground colors", async () => {
+  const rectangle = new HmiRectangle();
+  rectangle.name = "DisabledText";
+  rectangle.enabled = staticProperty(false);
+  rectangle.foregroundColor = staticProperty(hmiColorFromArgb(255, 1, 2, 3));
+  rectangle.disabledForegroundColor = staticProperty(hmiColorFromArgb(255, 11, 22, 33));
+  rectangle.disabledForegroundShadowColor = staticProperty(hmiColorFromArgb(255, 44, 55, 66));
+  rectangle.useDisabledForegroundColor = staticProperty(true);
+
+  const layer = new HmiLayer();
+  layer.items.push(rectangle);
+  const screen = new HmiScreen();
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /data-disabled-foreground-color="#0B1621"/);
+  assert.match(html, /data-disabled-foreground-shadow-color="#2C3742"/);
+  assert.match(html, /data-use-disabled-foreground-color="true"/);
+  assert.match(html, /color: #0B1621;/);
+  assert.match(html, /text-shadow: 1px 1px #2C3742;/);
+});
+
 test("HTML converter renders rectangle rotation", async () => {
   const rectangle = new HmiRectangle();
   rectangle.name = "RotatedRectangle";

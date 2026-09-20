@@ -8,6 +8,9 @@ import { HmiColorAnimation } from "./HmiColorAnimation.js";
 export abstract class HmiPaintedScreenItemBase extends HmiScreenItemBase {
   foregroundColor?: HmiProperty<HmiColor>;
   alternateForegroundColor?: HmiProperty<HmiColor>;
+  disabledForegroundColor?: HmiProperty<HmiColor>;
+  disabledForegroundShadowColor?: HmiProperty<HmiColor>;
+  useDisabledForegroundColor?: HmiProperty<boolean>;
   backgroundColor?: HmiProperty<HmiColor>;
   alternateBackgroundColor?: HmiProperty<HmiColor>;
   /** Foreground color used by a patterned background fill. */
