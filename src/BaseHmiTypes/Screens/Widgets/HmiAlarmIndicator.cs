@@ -33,6 +33,14 @@ public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 
     public IList<HmiAlarmIndicatorSegment> Segments { get; } = [];
 
+    public HmiProperty<bool>? IsLocked { get; set; }
+
+    public HmiProperty<string>? LockedText { get; set; }
+
+    public HmiProperty<HmiColor>? LockedForegroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? LockedBackgroundColor { get; set; }
+
     public HmiProperty<IList<int>>? ShowAcknowledgedAlarmClasses { get; set; }
 
     public HmiProperty<IList<int>>? ShowPendingAlarmClasses { get; set; }
