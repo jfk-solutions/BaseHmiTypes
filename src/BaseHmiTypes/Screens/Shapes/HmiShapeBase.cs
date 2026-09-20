@@ -12,6 +12,8 @@ public abstract class HmiShapeBase : HmiSimpleScreenItemBase
 
     public HmiProperty<int>? DashType { get; set; }
 
+    public HmiProperty<HmiLineCap>? LineCap { get; set; }
+
     public HmiProperty<int>? BackFillPattern { get; set; }
 
     public HmiProperty<HmiFillPattern>? FillPattern { get; set; }
