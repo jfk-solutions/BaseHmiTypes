@@ -320,20 +320,32 @@ public class HmiScreenToHtmlConverter
         ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
+        var itemList = items as IReadOnlyCollection<HmiScreenItemBase> ?? items.ToArray();
+        var isEmptyCustomWidget = container is HmiCustomWidgetContainer && itemList.Count == 0;
         html.Append("<div");
-        AppendCommonAttributes(html, container, context);
+        AppendCommonAttributes(
+            html,
+            container,
+            context,
+            additionalStyle: isEmptyCustomWidget
+                ? "display: flex; align-items: center; justify-content: center; overflow: hidden;"
+                : null);
+        if (container is HmiCustomWidgetContainer)
+            AppendAttribute(html, "data-hmi-custom-widget-type", container.GetType().Name);
         html.Append(">");
+        if (isEmptyCustomWidget)
+            html.Append("<span aria-hidden=\"true\">").Append(WebUtility.HtmlEncode(container.Name)).Append("</span>");
         if (container is HmiLayoutContainerBase { ChildCoordinateSpace: HmiChildCoordinateSpace.ScreenAbsolute } layoutContainer)
         {
             var childContext = context.WithPositionOffset(
                 -layoutContainer.X.GetStaticValueOrDefault(),
                 -layoutContainer.Y.GetStaticValueOrDefault());
-            foreach (var child in items)
+            foreach (var child in itemList)
                 await AppendItemAsync(html, child, project, childContext, screenStack, cancellationToken).ConfigureAwait(false);
         }
         else
         {
-            foreach (var child in items)
+            foreach (var child in itemList)
                 await AppendItemAsync(html, child, project, context, screenStack, cancellationToken).ConfigureAwait(false);
         }
         html.Append("</div>");
