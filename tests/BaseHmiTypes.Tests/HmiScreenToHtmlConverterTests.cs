@@ -3094,6 +3094,7 @@ public class HmiScreenToHtmlConverterTests
             UncertainColoring = true,
             UncertainColor = HmiColor.FromArgb(255, 0x88, 0x44, 0xCC),
             ShowAlarms = true,
+            ValueAlignment = HmiVerticalAlignment.Bottom,
             Marker = "2",
             MarkerColor = HmiColor.FromArgb(255, 0xAA, 0xBB, 0xCC),
             MarkerSize = 5,
@@ -3169,7 +3170,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "minimum-value=\"-5\"");
         StringAssert.Contains(html, "maximum-value=\"100\"");
         StringAssert.Contains(html, "y-axis-decimal-places=\"2\"");
-        StringAssert.Contains(html, "pens=\"[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;label&quot;:&quot;Vessel pressure&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;lineType&quot;:2,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;lowerLimitColoring&quot;:true,&quot;lowerLimit&quot;:10,&quot;lowerLimitColor&quot;:&quot;#0044CC&quot;,&quot;upperLimitColoring&quot;:true,&quot;upperLimit&quot;:90,&quot;upperLimitColor&quot;:&quot;#CC2211&quot;,&quot;uncertainColoring&quot;:true,&quot;uncertainColor&quot;:&quot;#8844CC&quot;,&quot;showAlarms&quot;:true,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;axisScaleType&quot;:1,&quot;exponentialFormat&quot;:true,&quot;autoDecimalPlaces&quot;:true,&quot;unit&quot;:&quot;bar&quot;}]\"");
+        StringAssert.Contains(html, "pens=\"[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;label&quot;:&quot;Vessel pressure&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;lineType&quot;:2,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;lowerLimitColoring&quot;:true,&quot;lowerLimit&quot;:10,&quot;lowerLimitColor&quot;:&quot;#0044CC&quot;,&quot;upperLimitColoring&quot;:true,&quot;upperLimit&quot;:90,&quot;upperLimitColor&quot;:&quot;#CC2211&quot;,&quot;uncertainColoring&quot;:true,&quot;uncertainColor&quot;:&quot;#8844CC&quot;,&quot;showAlarms&quot;:true,&quot;valueAlignment&quot;:&quot;Bottom&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;axisScaleType&quot;:1,&quot;exponentialFormat&quot;:true,&quot;autoDecimalPlaces&quot;:true,&quot;unit&quot;:&quot;bar&quot;}]\"");
     }
 
     [TestMethod]

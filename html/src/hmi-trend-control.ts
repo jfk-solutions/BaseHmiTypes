@@ -61,6 +61,7 @@ interface TrendPen {
   uncertainColoring?: boolean;
   uncertainColor?: string;
   showAlarms?: boolean;
+  valueAlignment?: "Top" | "Center" | "Bottom";
   marker?: string;
   markerColor?: string;
   markerSize?: number;
@@ -657,7 +658,8 @@ function renderTrendLine(
   if (lineType === 3) {
     return points.filter((_point, index) => index % 5 === 0).map(point => {
       const valueColor = trendSegmentColor(pen, color, point.value, point.uncertain);
-      return `<text x="${toCss(point.x)}" y="${toCss(point.y)}" fill="${escapeHtml(valueColor)}" font-size="4" text-anchor="middle">${escapeHtml(formatAxisValue(point.value, decimalPlaces, exponentialFormat))}</text>`;
+      const y = pen.valueAlignment === "Top" ? 6 : pen.valueAlignment === "Bottom" ? 94 : 50;
+      return `<text x="${toCss(point.x)}" y="${toCss(y)}" fill="${escapeHtml(valueColor)}" font-size="4" text-anchor="middle" dominant-baseline="middle">${escapeHtml(formatAxisValue(point.value, decimalPlaces, exponentialFormat))}</text>`;
     }).join("");
   }
   if (!hasLimitColoring(pen))
@@ -741,6 +743,8 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.uncertainColoring === "boolean") pen.uncertainColoring = source.uncertainColoring;
       if (typeof source.uncertainColor === "string") pen.uncertainColor = source.uncertainColor;
       if (typeof source.showAlarms === "boolean") pen.showAlarms = source.showAlarms;
+      if (source.valueAlignment === "Top" || source.valueAlignment === "Center" || source.valueAlignment === "Bottom")
+        pen.valueAlignment = source.valueAlignment;
       if (typeof source.marker === "string") pen.marker = source.marker;
       if (typeof source.markerColor === "string") pen.markerColor = source.markerColor;
       if (typeof source.markerSize === "number" && Number.isFinite(source.markerSize)) pen.markerSize = source.markerSize;
