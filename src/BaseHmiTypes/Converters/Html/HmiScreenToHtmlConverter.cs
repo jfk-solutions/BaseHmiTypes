@@ -3590,6 +3590,8 @@ public class HmiScreenToHtmlConverter
     {
         if (item is HmiText text)
             return text.Font;
+        if (item is HmiAlarmIndicator alarmIndicator)
+            return alarmIndicator.Font;
         if (item is HmiWidgetBase widget)
             return widget.Font;
         return null;
