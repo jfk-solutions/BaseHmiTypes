@@ -1345,6 +1345,7 @@ public class HmiScreenToHtmlConverterTests
             Movable = true,
             Closeable = true,
             GridLineColor = HmiColor.FromArgb(255, 0x44, 0x55, 0x66),
+            GridLineWidth = 2,
             ShowHorizontalGridLines = false,
             ShowVerticalGridLines = true,
             TableBackgroundColor = HmiColor.FromArgb(255, 0x10, 0x20, 0x30),
@@ -1425,6 +1426,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-window-movable=\"true\"");
         StringAssert.Contains(html, "data-window-closeable=\"true\"");
         StringAssert.Contains(html, "data-grid-line-color=\"#445566\"");
+        StringAssert.Contains(html, "data-grid-line-width=\"2\"");
         StringAssert.Contains(html, "data-show-horizontal-grid-lines=\"false\"");
         StringAssert.Contains(html, "data-show-vertical-grid-lines=\"true\"");
         StringAssert.Contains(html, "data-table-background-color=\"#102030\"");
@@ -1436,7 +1438,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-status-bar-foreground-color=\"#FEDCBA\"");
         StringAssert.Contains(html, "--hmi-grid-line-color: #445566;");
         StringAssert.Contains(html, "background-color: #102030;color: #E0D0C0;");
-        StringAssert.Contains(html, "border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: 0px 1px;");
+        StringAssert.Contains(html, "border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: 0px 2px;");
         StringAssert.Contains(html, "background-color: #708090;color: #F1F2F3;");
         StringAssert.Contains(html, "font-family: Arial;font-size: 9.75px;font-weight: 400;");
         StringAssert.Contains(html, "font-family: Siemens Sans;font-size: 10px;font-weight: 700;font-style: italic;text-decoration: underline line-through;");

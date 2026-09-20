@@ -262,6 +262,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? GridLineColor { get; set; }
 
+    public HmiProperty<double>? GridLineWidth { get; set; }
+
     public HmiProperty<HmiColor>? ButtonBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? ButtonBorderBackgroundColor { get; set; }
