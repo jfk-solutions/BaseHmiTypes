@@ -6,6 +6,12 @@
 
 input[data-hmi-slider] {
   accent-color: var(--hmi-slider-thumb-background, auto);
+  background: var(--hmi-slider-track-background, initial);
+}
+
+input[data-hmi-slider]::-webkit-slider-runnable-track,
+input[data-hmi-slider]::-moz-range-track {
+  background: var(--hmi-slider-track-background, initial);
 }
 
 @keyframes hmi-symbolic-base-flash {
