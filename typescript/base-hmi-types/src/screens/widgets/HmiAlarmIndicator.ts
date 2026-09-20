@@ -1,4 +1,4 @@
-import { HmiColor, HmiFont, HmiHorizontalAlignment, HmiProperty, HmiVerticalAlignment } from "../base.js";
+import { HmiColor, HmiFillPattern, HmiFont, HmiHorizontalAlignment, HmiProperty, HmiVerticalAlignment } from "../base.js";
 import { HmiSimpleScreenItemBase } from "../base/HmiSimpleScreenItemBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiAlarmIndicatorSegment } from "./HmiAlarmIndicatorSegment.js";
@@ -25,6 +25,8 @@ export class HmiAlarmIndicator extends HmiSimpleScreenItemBase {
   lockedText?: HmiProperty<string>;
   lockedForegroundColor?: HmiProperty<HmiColor>;
   lockedBackgroundColor?: HmiProperty<HmiColor>;
+  backFillPattern?: HmiProperty<number>;
+  fillPattern?: HmiProperty<HmiFillPattern>;
   showAcknowledgedAlarmClasses?: HmiProperty<number[]>;
   showPendingAlarmClasses?: HmiProperty<number[]>;
 }
