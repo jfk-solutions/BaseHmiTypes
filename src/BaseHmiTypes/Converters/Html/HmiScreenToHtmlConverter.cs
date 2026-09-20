@@ -1391,6 +1391,27 @@ public class HmiScreenToHtmlConverter
         var direction = bar.FillDirection is null
             ? HmiFillDirection.Right
             : ResolveStaticValue(bar.FillDirection, context);
+        var showScale = bar.ShowScale is not null && ResolveStaticValue(bar.ShowScale, context);
+        if (showScale)
+        {
+            var vertical = direction is HmiFillDirection.Up or HmiFillDirection.Down;
+            html.Append("<div");
+            AppendCommonAttributes(
+                html,
+                bar,
+                context,
+                additionalStyle: vertical
+                    ? "display: flex; flex-direction: row; align-items: stretch; gap: 4px;"
+                    : "display: flex; flex-direction: column; align-items: stretch; gap: 2px;");
+            AppendAttribute(html, "data-hmi-bar", "true");
+            AppendAttribute(html, "data-fill-direction", direction.ToString());
+            html.Append('>');
+            AppendBarMeter(html, minimum, maximum, value, direction, vertical);
+            AppendBarScale(html, bar, minimum, maximum, direction, vertical, context);
+            html.Append("</div>");
+            return;
+        }
+
         html.Append("<meter");
         AppendCommonAttributes(html, bar, context, additionalStyle: GetBarDirectionStyle(direction));
         AppendAttribute(html, "data-fill-direction", direction.ToString());
@@ -1398,6 +1419,86 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "max", ToCss(maximum));
         AppendAttribute(html, "value", ToCss(value));
         html.Append('>').Append(ToCss(value)).Append("</meter>");
+    }
+
+    private static void AppendBarMeter(
+        StringBuilder html,
+        double minimum,
+        double maximum,
+        double value,
+        HmiFillDirection direction,
+        bool vertical)
+    {
+        html.Append("<meter");
+        AppendAttribute(
+            html,
+            "style",
+            (vertical ? "height: 100%;" : "width: 100%;") +
+            " flex: 1; min-width: 0; min-height: 0;" + GetBarDirectionStyle(direction));
+        AppendAttribute(html, "min", ToCss(minimum));
+        AppendAttribute(html, "max", ToCss(maximum));
+        AppendAttribute(html, "value", ToCss(value));
+        html.Append('>').Append(ToCss(value)).Append("</meter>");
+    }
+
+    private static void AppendBarScale(
+        StringBuilder html,
+        HmiBar bar,
+        double minimum,
+        double maximum,
+        HmiFillDirection direction,
+        bool vertical,
+        HmiHtmlConvertContext context)
+    {
+        var tickCount = bar.DivisionCount is null
+            ? 2
+            : Math.Max(2, ResolveStaticValue(bar.DivisionCount, context));
+        var decimalPlaces = bar.TickLabelDecimalPlaces is null
+            ? (int?)null
+            : Math.Clamp(ResolveStaticValue(bar.TickLabelDecimalPlaces, context), 0, 15);
+        var reverse = direction is HmiFillDirection.Up or HmiFillDirection.Left;
+        var style = new StringBuilder(vertical
+            ? "display: flex; flex-direction: column; justify-content: space-between; height: 100%;"
+            : "display: flex; justify-content: space-between; width: 100%;");
+        if (bar.LabelColor is not null)
+            style.Append(" color: ").Append(ToCss(ResolveStaticValue(bar.LabelColor, context))).Append(';');
+        AppendBarScaleFontStyle(style, bar.LabelFont, context);
+
+        html.Append("<div");
+        AppendAttribute(html, "data-hmi-bar-scale", "true");
+        AppendAttribute(html, "style", style.ToString());
+        html.Append('>');
+        for (var index = 0; index < tickCount; index++)
+        {
+            var ratio = tickCount == 1 ? 0d : (double)index / (tickCount - 1);
+            if (reverse)
+                ratio = 1d - ratio;
+            var tick = minimum + ((maximum - minimum) * ratio);
+            var label = decimalPlaces is int places
+                ? tick.ToString($"F{places}", CultureInfo.InvariantCulture)
+                : ToCss(tick);
+            html.Append("<span>").Append(label).Append("</span>");
+        }
+        html.Append("</div>");
+    }
+
+    private static void AppendBarScaleFontStyle(
+        StringBuilder style,
+        HmiFont? font,
+        HmiHtmlConvertContext context)
+    {
+        if (font is null)
+            return;
+        if (font.Name is not null)
+            style.Append(" font-family: ").Append(ResolveStaticValue(font.Name, context)).Append(';');
+        if (font.Size is not null)
+            style.Append(" font-size: ").Append(ToCss(ResolveStaticValue(font.Size, context))).Append("px;");
+        if (font.Bold is not null && ResolveStaticValue(font.Bold, context))
+            style.Append(" font-weight: bold;");
+        if (font.Italic is not null && ResolveStaticValue(font.Italic, context))
+            style.Append(" font-style: italic;");
+        if (font.Underline is not null && ResolveStaticValue(font.Underline, context))
+            style.Append(" text-decoration: underline;");
     }
 
     private static string GetBarDirectionStyle(HmiFillDirection direction) => direction switch

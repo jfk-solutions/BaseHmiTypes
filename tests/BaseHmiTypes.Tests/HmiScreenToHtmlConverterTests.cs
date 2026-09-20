@@ -492,6 +492,42 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersBarScaleTicksAndAppearance()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiBar
+        {
+            Name = "ScaledBar",
+            Width = 120,
+            Height = 40,
+            BeginValue = 0,
+            EndValue = 100,
+            Value = 35,
+            ShowScale = true,
+            DivisionCount = 3,
+            TickLabelDecimalPlaces = 1,
+            LabelColor = HmiColor.FromArgb(255, 12, 34, 56),
+            LabelFont = new HmiFont
+            {
+                Name = "Arial",
+                Size = 9,
+                Bold = true
+            }
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"ScaledBar\"");
+        StringAssert.Contains(html, "data-hmi-bar=\"true\" data-fill-direction=\"Right\"");
+        StringAssert.Contains(html, "<meter style=\"width: 100%; flex: 1; min-width: 0; min-height: 0;direction: ltr;\" min=\"0\" max=\"100\" value=\"35\">35</meter>");
+        StringAssert.Contains(html, "data-hmi-bar-scale=\"true\"");
+        StringAssert.Contains(html, "color: #0C2238; font-family: Arial; font-size: 9px; font-weight: bold;");
+        StringAssert.Contains(html, "<span>0.0</span><span>50.0</span><span>100.0</span>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSliderOrientations()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
