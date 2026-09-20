@@ -2434,8 +2434,10 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", rectangle.Name);
         AppendTextAttribute(html, "title", rectangle.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", rectangle.TabIndex, context);
+        AppendDisabledAttribute(html, rectangle, context);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, rectangle, context);
+        AppendDisabledStyle(html, rectangle, context);
         AppendOpacity(html, rectangle, context);
         AppendDesignShadow(html, rectangle, context);
         AppendStyle(html, rectangle, context);
@@ -2749,12 +2751,14 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", symbolLibraryControl.Name);
         AppendTextAttribute(html, "title", symbolLibraryControl.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", symbolLibraryControl.TabIndex, context);
+        AppendDisabledAttribute(html, symbolLibraryControl, context);
         AppendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.SymbolId);
         AppendAttribute(html, "data-hmi-symbol-appearance", FormatAttributeValue(symbolLibraryControl.SymbolAppearance?.StaticValue));
         AppendAttribute(html, "data-hmi-fill-color-mode", FormatAttributeValue(symbolLibraryControl.FillColorMode?.StaticValue));
         AppendAttribute(html, "data-hmi-blink-mode", FormatAttributeValue(symbolLibraryControl.BlinkMode?.StaticValue));
         html.Append(" style=\"position: absolute; overflow: hidden;");
         AppendPosition(html, symbolLibraryControl, context);
+        AppendDisabledStyle(html, symbolLibraryControl, context);
         AppendOpacity(html, symbolLibraryControl, context);
         AppendDesignShadow(html, symbolLibraryControl, context);
         if (symbolLibraryControl.BackFillStyle.GetStaticValueOrDefault() == HmiSymbolLibraryBackFillStyle.Solid && symbolLibraryControl.BackColor?.StaticValue != null)
@@ -3274,8 +3278,10 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", item.Name);
         AppendTextAttribute(html, "title", item.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", item.TabIndex, context);
+        AppendDisabledAttribute(html, item, context);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, item, context);
+        AppendDisabledStyle(html, item, context);
         AppendOpacity(html, item, context);
         AppendDesignShadow(html, item, context);
         if (includePaintedStyle && item is HmiPaintedScreenItemBase paintedItem)
@@ -3311,10 +3317,12 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", symbolContainer.Name);
         AppendTextAttribute(html, "title", symbolContainer.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", symbolContainer.TabIndex, context);
+        AppendDisabledAttribute(html, symbolContainer, context);
         AppendAttribute(html, "data-hmi-fill-color-mode", symbolContainer.FillColorMode == null ? null : symbolContainer.FillColorMode.StaticValue.ToString());
         AppendAttribute(html, "data-hmi-flip", symbolContainer.Flip == null ? null : symbolContainer.Flip.StaticValue.ToString());
         html.Append(" style=\"position: absolute; overflow: hidden;");
         AppendPosition(html, symbolContainer, context);
+        AppendDisabledStyle(html, symbolContainer, context);
         AppendOpacity(html, symbolContainer, context);
         AppendDesignShadow(html, symbolContainer, context);
         AppendStyle(html, symbolContainer, context);
@@ -3358,6 +3366,18 @@ public class HmiScreenToHtmlConverter
         var opacity = context.EffectiveProperties.Resolve(item, nameof(HmiScreenItemBase.Opacity), item.Opacity);
         if (opacity?.StaticValue is double value)
             html.Append("opacity: ").Append(ToCss(Math.Clamp(value, 0d, 1d))).Append(';');
+    }
+
+    private static void AppendDisabledAttribute(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
+    {
+        if (!ResolveStaticValue(item.Enabled, context))
+            AppendAttribute(html, "aria-disabled", "true");
+    }
+
+    private static void AppendDisabledStyle(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
+    {
+        if (!ResolveStaticValue(item.Enabled, context))
+            html.Append("pointer-events: none;");
     }
 
     private static void AppendDesignShadow(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
