@@ -27,6 +27,18 @@ public sealed class HmiTrendPen
     /// <summary>Gets or sets the area-fill color independently of the trend line color.</summary>
     public HmiProperty<HmiColor>? FillColor { get; set; }
 
+    public HmiProperty<bool>? LowerLimitColoring { get; set; }
+
+    public HmiProperty<double>? LowerLimitValue { get; set; }
+
+    public HmiProperty<HmiColor>? LowerLimitColor { get; set; }
+
+    public HmiProperty<bool>? UpperLimitColoring { get; set; }
+
+    public HmiProperty<double>? UpperLimitValue { get; set; }
+
+    public HmiProperty<HmiColor>? UpperLimitColor { get; set; }
+
     /// <summary>
     /// Engineering-system marker name or numeric marker identifier.
     /// </summary>
