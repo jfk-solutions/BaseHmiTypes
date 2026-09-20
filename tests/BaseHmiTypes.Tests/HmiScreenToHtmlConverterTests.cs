@@ -927,6 +927,46 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersAlarmIndicatorSegments()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        var indicator = new HmiAlarmIndicator
+        {
+            Name = "GroupDisplay",
+            Width = 80,
+            Height = 30,
+            Text = "A",
+            UseEqualSegmentWidths = false
+        };
+        indicator.Segments.Add(new HmiAlarmIndicatorSegment
+        {
+            Index = 1,
+            Width = 15,
+            MessageClasses = new List<int> { 1, 2 }
+        });
+        indicator.Segments.Add(new HmiAlarmIndicatorSegment
+        {
+            Index = 2,
+            Width = 25,
+            MessageClasses = new List<int> { 3 }
+        });
+        indicator.Segments.Add(new HmiAlarmIndicatorSegment { Index = 3, Width = 0 });
+        layer.Items.Add(indicator);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-equal-segment-widths=\"false\"");
+        StringAssert.Contains(html, "data-segment-count=\"3\"");
+        StringAssert.Contains(html, "data-segment-index=\"1\" data-message-classes=\"1,2\" style=\"flex: 0 0 15px;");
+        StringAssert.Contains(html, "data-segment-index=\"2\" data-message-classes=\"3\" style=\"flex: 0 0 25px;");
+        StringAssert.Contains(html, "data-segment-index=\"3\" style=\"display: none;");
+        StringAssert.Contains(html, "class=\"hmi-alarm-indicator-label\"");
+        StringAssert.Contains(html, ">A</span></div>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersClockPreview()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };

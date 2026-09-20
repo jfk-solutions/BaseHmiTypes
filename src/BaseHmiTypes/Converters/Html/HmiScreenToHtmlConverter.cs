@@ -2920,9 +2920,49 @@ public class HmiScreenToHtmlConverter
         AppendStaticValueAttribute(html, "data-no-alarm-state", indicator.NoAlarmState, context);
         AppendStaticValueAttribute(html, "data-number-of-alarms", indicator.NumberOfAlarms, context);
         AppendStaticValueAttribute(html, "data-text", indicator.Text, context);
+        AppendStaticValueAttribute(html, "data-equal-segment-widths", indicator.UseEqualSegmentWidths, context);
+        if (indicator.Segments.Count > 0)
+            AppendAttribute(html, "data-segment-count", indicator.Segments.Count.ToString(CultureInfo.InvariantCulture));
         AppendIntegerListAttribute(html, "data-show-acknowledged-alarm-classes", indicator.ShowAcknowledgedAlarmClasses, context);
         AppendIntegerListAttribute(html, "data-show-pending-alarm-classes", indicator.ShowPendingAlarmClasses, context);
-        html.Append('>').Append(WebUtility.HtmlEncode(content)).Append("</div>");
+        html.Append('>');
+        if (indicator.Segments.Count > 0)
+        {
+            var useEqualWidths = indicator.UseEqualSegmentWidths is not null &&
+                ResolveStaticValue(indicator.UseEqualSegmentWidths, context);
+            foreach (var segment in indicator.Segments.OrderBy(candidate => candidate.Index))
+            {
+                var width = segment.Width is null ? 0d : ResolveStaticValue(segment.Width, context);
+                html.Append("<span");
+                AppendAttribute(html, "class", "hmi-alarm-indicator-segment");
+                AppendAttribute(html, "data-segment-index", segment.Index.ToString(CultureInfo.InvariantCulture));
+                AppendIntegerListAttribute(html, "data-message-classes", segment.MessageClasses, context);
+                html.Append(" style=\"");
+                if (width <= 0)
+                    html.Append("display: none;");
+                else if (useEqualWidths)
+                    html.Append("flex: 1 1 0;");
+                else
+                    html.Append("flex: 0 0 ").Append(ToCss(width)).Append("px;");
+                html.Append("height: 100%; min-width: 0; border-right: 1px solid currentColor;\"></span>");
+            }
+
+            var horizontalAlignment = indicator.HorizontalAlignment is null
+                ? HmiHorizontalAlignment.Center
+                : ResolveStaticValue(indicator.HorizontalAlignment, context);
+            var verticalAlignment = indicator.VerticalAlignment is null
+                ? HmiVerticalAlignment.Center
+                : ResolveStaticValue(indicator.VerticalAlignment, context);
+            html.Append("<span class=\"hmi-alarm-indicator-label\" style=\"position: absolute; inset: 0; display: flex; pointer-events: none; justify-content: ")
+                .Append(ToFlexCss(horizontalAlignment)).Append("; align-items: ")
+                .Append(ToCss(verticalAlignment)).Append(";\">")
+                .Append(WebUtility.HtmlEncode(content)).Append("</span>");
+        }
+        else
+        {
+            html.Append(WebUtility.HtmlEncode(content));
+        }
+        html.Append("</div>");
     }
 
     private static void AppendStaticValueAttribute<T>(
