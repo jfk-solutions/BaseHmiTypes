@@ -2282,6 +2282,7 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
   appendOpacity(html, rectangle, context);
+  appendDesignShadow(html, rectangle, context);
   appendStyle(html, rectangle, context);
   appendFillAnimationStyle(html, rectangle, context);
   appendRectangleRadius(html, rectangle);
@@ -2604,6 +2605,7 @@ function appendSymbolLibraryAttributes(
   html.push(" style=\"position: absolute; overflow: hidden;");
   appendPosition(html, symbolLibraryControl, context);
   appendOpacity(html, symbolLibraryControl, context);
+  appendDesignShadow(html, symbolLibraryControl, context);
   if (
     getStaticValueOrDefault(symbolLibraryControl.backFillStyle, HmiSymbolLibraryBackFillStyle.Transparent) ===
       HmiSymbolLibraryBackFillStyle.Solid &&
@@ -2996,6 +2998,7 @@ function appendCommonAttributes(
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
   appendOpacity(html, item, context);
+  appendDesignShadow(html, item, context);
   if (includePaintedStyle && item instanceof HmiPaintedScreenItemBase) {
     appendStyle(html, item, context);
   }
@@ -3028,6 +3031,7 @@ function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContai
   html.push(" style=\"position: absolute; overflow: hidden;");
   appendPosition(html, symbolContainer, context);
   appendOpacity(html, symbolContainer, context);
+  appendDesignShadow(html, symbolContainer, context);
   appendStyle(html, symbolContainer, context);
   appendSymbolTransform(html, symbolContainer);
   html.push("\"");
@@ -3067,6 +3071,17 @@ function appendOpacity(html: string[], item: HmiScreenItemBase, context: HmiHtml
   const opacity = getStaticValue(context.effectiveProperties.resolve(item, "Opacity", item.opacity));
   if (opacity !== undefined) {
     html.push(`opacity: ${toCss(Math.min(Math.max(opacity, 0), 1))};`);
+  }
+}
+
+function appendDesignShadow(html: string[], item: HmiScreenItemBase, context: HmiHtmlConvertContext): void {
+  let configuredShadow: HmiProperty<boolean> | undefined;
+  if (item instanceof HmiShapeBase || item instanceof HmiWidgetBase || item instanceof HmiWindowBase) {
+    configuredShadow = item.useDesignShadowSettings;
+  }
+  const useDesignShadow = context.effectiveProperties.resolve(item, "UseDesignShadowSettings", configuredShadow);
+  if (getStaticValueOrDefault(useDesignShadow, false)) {
+    html.push("filter: drop-shadow(3px 3px 3px rgba(0, 0, 0, 0.35));");
   }
 }
 
