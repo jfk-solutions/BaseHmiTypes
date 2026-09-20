@@ -2254,6 +2254,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-vertical-scrollbar", ResolvePropertyPreview(alarmControl.ShowVerticalScrollbar, context));
         AppendAttribute(html, "data-table-background-color", ResolvePropertyPreview(alarmControl.TableBackgroundColor, context));
         AppendAttribute(html, "data-table-foreground-color", ResolvePropertyPreview(alarmControl.TableForegroundColor, context));
+        AppendAttribute(html, "data-use-alternating-row-colors", ResolvePropertyPreview(alarmControl.UseAlternatingRowColors, context));
         AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(alarmControl.AlternatingRowBackgroundColor, context));
         AppendAttribute(html, "data-alternating-row-foreground-color", ResolvePropertyPreview(alarmControl.AlternatingRowForegroundColor, context));
         AppendAttribute(html, "data-table-header-background-color", ResolvePropertyPreview(alarmControl.TableHeaderBackgroundColor, context));
@@ -2281,7 +2282,10 @@ public class HmiScreenToHtmlConverter
             html.Append("</div>");
         }
 
-        html.Append("<table class=\"hmi-alarm-table\" style=\"").Append(CreateAlarmTableStyle(alarmControl, context)).Append("\">");
+        html.Append("<table class=\"hmi-alarm-table");
+        if (alarmControl.UseAlternatingRowColors is not null && ResolveStaticValue(alarmControl.UseAlternatingRowColors, context))
+            html.Append(" hmi-alarm-table--alternating");
+        html.Append("\" style=\"").Append(CreateAlarmTableStyle(alarmControl, context)).Append("\">");
         var gridCellStyle = CreateAlarmGridCellStyle(alarmControl, context);
         if (showHeader)
         {

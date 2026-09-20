@@ -232,6 +232,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? TableForegroundColor { get; set; }
 
+    public HmiProperty<bool>? UseAlternatingRowColors { get; set; }
+
     public HmiProperty<HmiColor>? AlternatingRowBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? AlternatingRowForegroundColor { get; set; }
