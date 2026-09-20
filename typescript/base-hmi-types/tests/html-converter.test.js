@@ -27,6 +27,7 @@ import {
   HmiDataGridSortDirection,
   HmiDotNetControlContainer,
   HmiFillDirection,
+  HmiFillPattern,
   HmiFont,
   HmiHorizontalAlignment,
   HmiImage,
@@ -537,6 +538,29 @@ test("HTML converter renders locked alarm indicator", async () => {
   assert.match(html, /color: #FFFF00;/);
   assert.match(html, /background-color: #203040;/);
   assert.match(html, />LOCKED<\/div>/);
+});
+
+test("HTML converter renders alarm indicator fill pattern", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const indicator = new HmiAlarmIndicator();
+  indicator.name = "GroupDisplay";
+  indicator.width = staticProperty(80);
+  indicator.height = staticProperty(30);
+  indicator.backgroundColor = staticProperty(hmiColorFromArgb(255, 17, 34, 51));
+  indicator.patternColor = staticProperty(hmiColorFromArgb(255, 12, 34, 56));
+  indicator.fillPattern = staticProperty(HmiFillPattern.Checkers);
+  const layer = new HmiLayer();
+  layer.name = "Layer 1";
+  layer.items.push(indicator);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /background-color: #112233;/);
+  assert.match(html, /background-image: conic-gradient\(#0C2238 25%, transparent 0 50%, #0C2238 0 75%, transparent 0\);/);
 });
 
 test("HTML converter renders bar slider and scale previews", async () => {

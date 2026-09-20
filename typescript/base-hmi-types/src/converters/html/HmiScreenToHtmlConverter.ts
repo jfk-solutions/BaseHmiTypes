@@ -1170,7 +1170,7 @@ function getLineMarkerId(item: HmiShapeBase, start: boolean): string {
 }
 
 function getFillPattern(item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): HmiFillPattern | undefined {
-  if (item instanceof HmiShapeBase || item instanceof HmiWidgetBase || item instanceof HmiWindowBase)
+  if (item instanceof HmiShapeBase || item instanceof HmiWidgetBase || item instanceof HmiWindowBase || item instanceof HmiAlarmIndicator)
     return context.effectiveProperties.tryGetStaticValue<HmiFillPattern>(item, "FillPattern", item.fillPattern).value;
   return undefined;
 }
