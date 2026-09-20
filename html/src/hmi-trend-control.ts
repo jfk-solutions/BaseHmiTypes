@@ -17,6 +17,7 @@ const trendControlProperties = {
   xAxisAlignment: String,
   xAxisLabel: String,
   xAxisDateVisible: String,
+  xAxisFlipped: String,
   timeFormat: String,
   xAxisTimeSpan: String,
   xAxisTimeSpanUnit: String,
@@ -143,6 +144,7 @@ export class HmiTrendControl extends HTMLElement {
     const xAxisAlignment = this.getAttribute("x-axis-alignment")?.toLowerCase() === "top" ? "top" : "bottom";
     const xAxisLabel = this.getAttribute("x-axis-label") ?? "";
     const xAxisDateVisible = readBooleanAttribute(this, "x-axis-date-visible", true);
+    const xAxisFlipped = readBooleanAttribute(this, "x-axis-flipped", false);
     const timeFormat = this.getAttribute("time-format")?.toLowerCase() === "twentyfourhour"
       ? "twenty-four-hour"
       : "twelve-hour";
@@ -161,6 +163,7 @@ export class HmiTrendControl extends HTMLElement {
     const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
     const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
     const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat);
+    if (xAxisFlipped) labels.reverse();
     const plotTop = displayChartTitle ? (showToolbar ? 29 : 15) : (showToolbar ? 23 : 7);
     const plotBottom = (displayScrollMechanism ? 22 : 16) + (showStatusBar ? 10 : 0);
 
@@ -385,7 +388,7 @@ export class HmiTrendControl extends HTMLElement {
             ${renderGrid(xAxisGridVisible, yAxisGridVisible, majorGridVisible, minorGridVisible)}
             ${xAxisVisible ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
-            ${renderPens(visiblePens, minimumValue, maximumValue)}
+            ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped)}
           </svg>
           ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
@@ -394,7 +397,7 @@ export class HmiTrendControl extends HTMLElement {
           ${xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
           ${yAxisVisible && yAxisLabel ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
         </div>
-        ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"></div></div>` : ""}
+        ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"${xAxisFlipped && chartLiveMode ? ' style="margin-left: 0"' : ""}></div></div>` : ""}
       </div>`;
   }
 }
@@ -520,14 +523,19 @@ function renderPenLegend(pens: readonly TrendPen[], displayIcons: boolean, useTr
   }).join("");
 }
 
-function renderPens(pens: readonly TrendPen[], minimumValue: number, maximumValue: number): string {
+function renderPens(
+  pens: readonly TrendPen[],
+  minimumValue: number,
+  maximumValue: number,
+  xAxisFlipped: boolean,
+): string {
   return pens.map((pen, index) => {
     const color = normalizePenColor(pen.color, index);
     const width = clamp(pen.width ?? 2, 1, 8);
     const amplitude = Math.max(6, 24 - (index % 8) * 2);
     const points: Array<{ x: number; y: number; value: number }> = [];
     for (let point = 0; point <= 20; point++) {
-      const x = point * 5;
+      const x = xAxisFlipped ? 100 - point * 5 : point * 5;
       const y = 50 - Math.sin((point + index * 3) * 0.55) * amplitude + (index % 8) * 3;
       const clippedY = clamp(y, 3, 97);
       points.push({ x, y: clippedY, value: maximumValue - clippedY / 100 * (maximumValue - minimumValue) });
