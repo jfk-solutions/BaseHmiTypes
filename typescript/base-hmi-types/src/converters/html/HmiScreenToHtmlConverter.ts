@@ -2041,6 +2041,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-grid-line-width", resolvePropertyPreview(alarmControl.gridLineWidth));
   appendAttribute(html, "data-show-horizontal-grid-lines", resolvePropertyPreview(alarmControl.showHorizontalGridLines));
   appendAttribute(html, "data-show-vertical-grid-lines", resolvePropertyPreview(alarmControl.showVerticalGridLines));
+  appendAttribute(html, "data-show-horizontal-scrollbar", resolvePropertyPreview(alarmControl.showHorizontalScrollbar));
+  appendAttribute(html, "data-show-vertical-scrollbar", resolvePropertyPreview(alarmControl.showVerticalScrollbar));
   appendAttribute(html, "data-table-background-color", resolvePropertyPreview(alarmControl.tableBackgroundColor));
   appendAttribute(html, "data-table-foreground-color", resolvePropertyPreview(alarmControl.tableForegroundColor));
   appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(alarmControl.selectionBackgroundColor));
@@ -3103,7 +3105,12 @@ function createControlWindowStyle(window: HmiWindowBase, baseStyle: string): str
 }
 
 function createAlarmControlStyle(alarmControl: HmiAlarmControl): string {
-  let style = createControlWindowStyle(alarmControl, "display: flex; flex-direction: column; overflow: hidden;");
+  const horizontalOverflow = getStaticValue(alarmControl.showHorizontalScrollbar) === true ? "auto" : "hidden";
+  const verticalOverflow = getStaticValue(alarmControl.showVerticalScrollbar) === true ? "auto" : "hidden";
+  let style = createControlWindowStyle(
+    alarmControl,
+    `display: flex; flex-direction: column; overflow-x: ${horizontalOverflow};overflow-y: ${verticalOverflow};`,
+  );
   const gridLineColor = getStaticValue(alarmControl.gridLineColor);
   if (gridLineColor !== undefined)
     style += `--hmi-grid-line-color: ${colorToCss(gridLineColor)};`;
