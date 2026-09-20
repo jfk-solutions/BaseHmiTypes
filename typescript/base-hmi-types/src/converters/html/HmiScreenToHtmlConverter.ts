@@ -2321,12 +2321,17 @@ function hasThicknessEdges(value: unknown): value is {
 
 function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): void {
   const suppressBorderStyle = item instanceof HmiCheckBoxGroup || item instanceof HmiRadioButtonGroup;
+  const borderStyle = getBorderStyleCss(item, context);
   appendColorStyle(html, "color", context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor));
   if (!(item instanceof HmiGauge)) {
     appendColorStyle(html, "background-color", context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor));
   }
   appendColorStyle(html, "border-color", context.effectiveProperties.resolve(item, "BorderColor", item.borderColor));
-  appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth), !suppressBorderStyle);
+  appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth), borderStyle, !suppressBorderStyle);
+  if (item instanceof HmiShapeBase) {
+    appendColorStyle(html, "border-color", item.lineColor);
+    appendWidthStyle(html, item.lineWidth, borderStyle);
+  }
   if (item.margin !== undefined) {
     html.push(
       `margin: ${toCss(getStaticValueOrDefault(item.margin.top, 0))}px ${toCss(
@@ -2365,6 +2370,30 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   if (verticalAlignment !== undefined) {
     html.push("display: flex;");
     html.push(`align-items: ${verticalAlignmentToCss(verticalAlignment)};`);
+  }
+}
+
+function getBorderStyleCss(item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): string {
+  const style = item instanceof HmiShapeBase
+    ? context.effectiveProperties.tryGetStaticValue<number>(item, "DashType", item.dashType).value
+      ?? context.effectiveProperties.tryGetStaticValue<number>(item, "BorderStyle", item.borderStyle).value
+    : context.effectiveProperties.tryGetStaticValue<number>(item, "BorderStyle", item.borderStyle).value;
+
+  switch (style) {
+    case HmiLineStyle.None:
+      return "none";
+    case HmiLineStyle.Dash:
+    case HmiLineStyle.DashDot:
+    case HmiLineStyle.DashDotDot:
+      return "dashed";
+    case HmiLineStyle.Dot:
+      return "dotted";
+    case HmiLineStyle.Double:
+      return "double";
+    case HmiLineStyle.Style3D:
+      return "groove";
+    default:
+      return "solid";
   }
 }
 
@@ -2425,11 +2454,16 @@ function appendColorStyle(html: string[], name: string, property: HmiProperty<Hm
   }
 }
 
-function appendWidthStyle(html: string[], property: HmiProperty<number> | undefined, includeBorderStyle = true): void {
+function appendWidthStyle(
+  html: string[],
+  property: HmiProperty<number> | undefined,
+  borderStyle: string,
+  includeBorderStyle = true,
+): void {
   const value = getStaticValue(property);
   if (value !== undefined) {
     if (includeBorderStyle) {
-      html.push("border-style: solid;");
+      html.push(`border-style: ${borderStyle};`);
     }
     html.push(`border-width: ${toCss(value)}px;`);
   }
