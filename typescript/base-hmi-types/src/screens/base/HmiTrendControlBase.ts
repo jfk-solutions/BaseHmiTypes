@@ -80,6 +80,10 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   xAxisScaleVisible?: HmiProperty<boolean>;
   xAxisDateVisible?: HmiProperty<boolean>;
   xAxisGridVisible?: HmiProperty<boolean>;
+  majorGridVisible?: HmiProperty<boolean>;
+  majorGridColor?: HmiProperty<HmiColor>;
+  minorGridVisible?: HmiProperty<boolean>;
+  minorGridColor?: HmiProperty<HmiColor>;
   xAxisMajorGridLineCount?: HmiProperty<number>;
   xAxisMinorGridLineCount?: HmiProperty<number>;
   xAxisGridColor?: HmiProperty<HmiColor>;

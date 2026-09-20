@@ -1551,6 +1551,10 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.xAxisScaleVisible = staticProperty(true);
   trend.xAxisDateVisible = staticProperty(false);
   trend.xAxisGridVisible = staticProperty(true);
+  trend.majorGridVisible = staticProperty(true);
+  trend.majorGridColor = staticProperty(hmiColorFromArgb(255, 0x20, 0x40, 0x60));
+  trend.minorGridVisible = staticProperty(false);
+  trend.minorGridColor = staticProperty(hmiColorFromArgb(255, 0x80, 0x90, 0xa0));
   trend.yAxisScaleVisible = staticProperty(true);
   trend.yAxisGridVisible = staticProperty(false);
   trend.showPercentageAxis = staticProperty(true);
@@ -1608,6 +1612,12 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /x-axis-scale-visible="true"/);
   assert.match(html, /x-axis-date-visible="false"/);
   assert.match(html, /x-axis-grid-visible="true"/);
+  assert.match(html, /major-grid-visible="true"/);
+  assert.match(html, /major-grid-color="#204060"/);
+  assert.match(html, /minor-grid-visible="false"/);
+  assert.match(html, /minor-grid-color="#8090A0"/);
+  assert.match(html, /--hmi-trend-major-grid-color: #204060;/);
+  assert.match(html, /--hmi-trend-minor-grid-color: #8090A0;/);
   assert.match(html, /y-axis-scale-visible="true"/);
   assert.match(html, /y-axis-grid-visible="false"/);
   assert.match(html, /show-percentage-axis="true"/);
