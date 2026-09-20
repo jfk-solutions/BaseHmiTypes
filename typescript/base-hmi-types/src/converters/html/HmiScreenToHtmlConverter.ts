@@ -2281,6 +2281,7 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
+  appendOpacity(html, rectangle, context);
   appendStyle(html, rectangle, context);
   appendFillAnimationStyle(html, rectangle, context);
   appendRectangleRadius(html, rectangle);
@@ -2602,6 +2603,7 @@ function appendSymbolLibraryAttributes(
   appendAttribute(html, "data-hmi-blink-mode", formatAttributeValue(getStaticValue(symbolLibraryControl.blinkMode)));
   html.push(" style=\"position: absolute; overflow: hidden;");
   appendPosition(html, symbolLibraryControl, context);
+  appendOpacity(html, symbolLibraryControl, context);
   if (
     getStaticValueOrDefault(symbolLibraryControl.backFillStyle, HmiSymbolLibraryBackFillStyle.Transparent) ===
       HmiSymbolLibraryBackFillStyle.Solid &&
@@ -2993,6 +2995,7 @@ function appendCommonAttributes(
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
+  appendOpacity(html, item, context);
   if (includePaintedStyle && item instanceof HmiPaintedScreenItemBase) {
     appendStyle(html, item, context);
   }
@@ -3024,6 +3027,7 @@ function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContai
   appendAttribute(html, "data-hmi-flip", getStaticValue(symbolContainer.flip));
   html.push(" style=\"position: absolute; overflow: hidden;");
   appendPosition(html, symbolContainer, context);
+  appendOpacity(html, symbolContainer, context);
   appendStyle(html, symbolContainer, context);
   appendSymbolTransform(html, symbolContainer);
   html.push("\"");
@@ -3057,6 +3061,13 @@ function appendPosition(html: string[], item: HmiScreenItemBase, context: HmiHtm
   html.push(`left: ${toCss(getStaticValueOrDefault(item.x, 0) + context.positionOffsetX)}px;`);
   html.push(`top: ${toCss(getStaticValueOrDefault(item.y, 0) + context.positionOffsetY)}px;`);
   appendSize(html, getStaticValueOrDefault(item.width, 0), getStaticValueOrDefault(item.height, 0));
+}
+
+function appendOpacity(html: string[], item: HmiScreenItemBase, context: HmiHtmlConvertContext): void {
+  const opacity = getStaticValue(context.effectiveProperties.resolve(item, "Opacity", item.opacity));
+  if (opacity !== undefined) {
+    html.push(`opacity: ${toCss(Math.min(Math.max(opacity, 0), 1))};`);
+  }
 }
 
 function appendSize(html: string[], width: number, height: number): void {
