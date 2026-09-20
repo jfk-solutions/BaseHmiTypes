@@ -1917,22 +1917,31 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "control-name", trendControl.Name);
         AppendAttribute(html, "type-name", "Trend control");
         AppendAttribute(html, "chart-title", trendControl.ChartTitle);
-        AppendStaticAttribute(html, "display-chart-title", trendControl.DisplayChartTitle);
-        AppendStaticAttribute(html, "show-toolbar", trendControl.ShowToolbar);
-        AppendStaticAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
-        AppendStaticAttribute(html, "display-scroll-mechanism", trendControl.DisplayScrollMechanism);
-        AppendStaticAttribute(html, "chart-live-mode", trendControl.ChartLiveMode);
-        AppendStaticAttribute(html, "auto-scale", trendControl.AutoScale);
-        AppendStaticAttribute(html, "x-axis-scale-visible", trendControl.XAxisScaleVisible);
-        AppendStaticAttribute(html, "x-axis-date-visible", trendControl.XAxisDateVisible);
-        AppendStaticAttribute(html, "x-axis-grid-visible", trendControl.XAxisGridVisible);
-        AppendStaticAttribute(html, "y-axis-scale-visible", trendControl.YAxisScaleVisible);
-        AppendStaticAttribute(html, "y-axis-grid-visible", trendControl.YAxisGridVisible);
+        AppendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.DisplayChartTitle);
+        AppendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.ShowToolbar);
+        AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
+        AppendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.DisplayScrollMechanism);
+        AppendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.ChartLiveMode);
+        AppendStaticBooleanValueAttribute(html, "auto-scale", trendControl.AutoScale);
+        AppendStaticBooleanValueAttribute(html, "x-axis-scale-visible", trendControl.XAxisScaleVisible);
+        AppendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.XAxisDateVisible);
+        AppendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.XAxisGridVisible);
+        AppendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.YAxisScaleVisible);
+        AppendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.YAxisGridVisible);
         AppendStaticAttribute(html, "minimum-value", trendControl.MinimumValue);
         AppendStaticAttribute(html, "maximum-value", trendControl.MaximumValue);
         AppendStaticAttribute(html, "y-axis-decimal-places", trendControl.YAxisDecimalPlaces);
         AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens));
         html.Append("></hmi-trend-control>");
+    }
+
+    private static void AppendStaticBooleanValueAttribute(
+        StringBuilder html,
+        string name,
+        HmiProperty<bool>? property)
+    {
+        if (property != null)
+            AppendAttribute(html, name, property.StaticValue ? "true" : "false");
     }
 
     private static string? FormatTrendPens(IEnumerable<HmiTrendPen> pens)

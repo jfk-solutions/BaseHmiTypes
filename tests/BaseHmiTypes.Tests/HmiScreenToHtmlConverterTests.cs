@@ -1633,21 +1633,21 @@ public class HmiScreenToHtmlConverterTests
 
         StringAssert.Contains(html, "<hmi-trend-control id=\"ProcessTrend\"");
         StringAssert.Contains(html, "chart-title=\"Pressure &amp; temperature\"");
-        StringAssert.Contains(html, "display-chart-title");
-        StringAssert.Contains(html, "display-pen-icons");
-        StringAssert.Contains(html, "display-scroll-mechanism");
-        StringAssert.Contains(html, "chart-live-mode");
-        StringAssert.Contains(html, "x-axis-scale-visible");
-        StringAssert.Contains(html, "x-axis-grid-visible");
-        StringAssert.Contains(html, "y-axis-scale-visible");
+        StringAssert.Contains(html, "display-chart-title=\"true\"");
+        StringAssert.Contains(html, "show-toolbar=\"false\"");
+        StringAssert.Contains(html, "display-pen-icons=\"true\"");
+        StringAssert.Contains(html, "display-scroll-mechanism=\"true\"");
+        StringAssert.Contains(html, "chart-live-mode=\"true\"");
+        StringAssert.Contains(html, "auto-scale=\"false\"");
+        StringAssert.Contains(html, "x-axis-scale-visible=\"true\"");
+        StringAssert.Contains(html, "x-axis-date-visible=\"false\"");
+        StringAssert.Contains(html, "x-axis-grid-visible=\"true\"");
+        StringAssert.Contains(html, "y-axis-scale-visible=\"true\"");
+        StringAssert.Contains(html, "y-axis-grid-visible=\"false\"");
         StringAssert.Contains(html, "minimum-value=\"-5\"");
         StringAssert.Contains(html, "maximum-value=\"100\"");
         StringAssert.Contains(html, "y-axis-decimal-places=\"2\"");
         StringAssert.Contains(html, "pens=\"[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;marker&quot;:&quot;2&quot;,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}]\"");
-        Assert.IsFalse(html.Contains(" show-toolbar"));
-        Assert.IsFalse(html.Contains(" auto-scale"));
-        Assert.IsFalse(html.Contains(" x-axis-date-visible"));
-        Assert.IsFalse(html.Contains(" y-axis-grid-visible"));
     }
 
     [TestMethod]
