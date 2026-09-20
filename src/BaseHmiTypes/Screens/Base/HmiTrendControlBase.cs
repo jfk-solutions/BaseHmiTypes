@@ -231,6 +231,11 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }
 
+    /// <summary>
+    /// Gets or sets the toolbar button size in pixels. A value of zero uses the WinCC default of 28 pixels.
+    /// </summary>
+    public HmiProperty<int>? ToolbarButtonSize { get; set; }
+
     public HmiProperty<bool>? ShowStatusBar { get; set; }
 
     public HmiProperty<bool>? UseStatusBarBackgroundColor { get; set; }

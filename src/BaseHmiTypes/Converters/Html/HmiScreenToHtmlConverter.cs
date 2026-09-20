@@ -3333,6 +3333,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.ShowToolbar);
         AppendStaticBooleanValueAttribute(html, "use-toolbar-background-color", trendControl.UseToolbarBackgroundColor);
         AppendStaticAttribute(html, "toolbar-background-color", trendControl.ToolbarBackgroundColor);
+        AppendStaticAttribute(html, "toolbar-button-size", trendControl.ToolbarButtonSize);
         AppendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.ShowStatusBar);
         AppendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.UseStatusBarBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
@@ -3475,6 +3476,12 @@ public class HmiScreenToHtmlConverter
             (trendControl.UseToolbarBackgroundColor is null || ResolveStaticValue(trendControl.UseToolbarBackgroundColor, context)))
             style.Append("--hmi-trend-toolbar-background: ")
                 .Append(ToCss(ResolveStaticValue(trendControl.ToolbarBackgroundColor, context))).Append(';');
+        if (trendControl.ToolbarButtonSize is not null)
+        {
+            var toolbarButtonSize = ResolveStaticValue(trendControl.ToolbarButtonSize, context);
+            style.Append("--hmi-trend-toolbar-button-size: ")
+                .Append(Math.Max(1, toolbarButtonSize == 0 ? 28 : toolbarButtonSize)).Append("px;");
+        }
         if (trendControl.StatusBarBackgroundColor is not null &&
             (trendControl.UseStatusBarBackgroundColor is null || ResolveStaticValue(trendControl.UseStatusBarBackgroundColor, context)))
             style.Append("--hmi-trend-status-background: ")

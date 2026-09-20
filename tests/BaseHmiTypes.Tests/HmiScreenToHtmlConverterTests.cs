@@ -3027,6 +3027,7 @@ public class HmiScreenToHtmlConverterTests
             ShowToolbar = true,
             UseToolbarBackgroundColor = true,
             ToolbarBackgroundColor = HmiColor.FromArgb(255, 0x44, 0x33, 0x22),
+            ToolbarButtonSize = 42,
             ShowStatusBar = true,
             UseStatusBarBackgroundColor = true,
             StatusBarBackgroundColor = HmiColor.FromArgb(255, 16, 32, 48),
@@ -3085,6 +3086,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "use-toolbar-background-color=\"true\"");
         StringAssert.Contains(html, "toolbar-background-color=\"#443322\"");
         StringAssert.Contains(html, "--hmi-trend-toolbar-background: #443322;");
+        StringAssert.Contains(html, "toolbar-button-size=\"42\"");
+        StringAssert.Contains(html, "--hmi-trend-toolbar-button-size: 42px;");
         StringAssert.Contains(html, "show-status-bar=\"true\"");
         StringAssert.Contains(html, "use-status-bar-background-color=\"true\"");
         StringAssert.Contains(html, "--hmi-trend-status-background: #102030;");

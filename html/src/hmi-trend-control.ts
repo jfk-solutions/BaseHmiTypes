@@ -5,6 +5,7 @@ const trendControlProperties = {
   pens: String,
   displayChartTitle: String,
   showToolbar: String,
+  toolbarButtonSize: String,
   showStatusBar: String,
   displayPenIcons: String,
   displayScrollMechanism: String,
@@ -106,6 +107,8 @@ export class HmiTrendControl extends HTMLElement {
     const decimalPlaces = clamp(Math.trunc(readNumberAttribute(this, "y-axis-decimal-places", 0)), 0, 12);
     const displayChartTitle = readBooleanAttribute(this, "display-chart-title", false);
     const showToolbar = readBooleanAttribute(this, "show-toolbar", true);
+    const configuredToolbarButtonSize = readNumberAttribute(this, "toolbar-button-size", 28);
+    const toolbarButtonSize = Math.max(1, configuredToolbarButtonSize === 0 ? 28 : configuredToolbarButtonSize);
     const showStatusBar = readBooleanAttribute(this, "show-status-bar", false);
     const displayPenIcons = readBooleanAttribute(this, "display-pen-icons", true);
     const displayScrollMechanism = readBooleanAttribute(this, "display-scroll-mechanism", false);
@@ -176,7 +179,7 @@ export class HmiTrendControl extends HTMLElement {
           top: ${displayChartTitle ? 11 : 3}%;
           left: 10%;
           right: 2.5%;
-          min-height: 26px;
+          min-height: var(--hmi-trend-toolbar-button-size, ${toCss(toolbarButtonSize)}px);
           display: flex;
           align-items: center;
           gap: 6px;
@@ -197,12 +200,13 @@ export class HmiTrendControl extends HTMLElement {
           border-radius: 4px;
           background: linear-gradient(#ffffff, #f4f4f5);
           overflow: hidden;
+          height: var(--hmi-trend-toolbar-button-size, ${toCss(toolbarButtonSize)}px);
         }
 
         .pen-icon {
-          width: 30px;
-          height: 14px;
-          flex: 0 0 30px;
+          width: calc(var(--hmi-trend-toolbar-button-size, ${toCss(toolbarButtonSize)}px) * 0.7);
+          height: calc(var(--hmi-trend-toolbar-button-size, ${toCss(toolbarButtonSize)}px) * 0.33);
+          flex: 0 0 calc(var(--hmi-trend-toolbar-button-size, ${toCss(toolbarButtonSize)}px) * 0.7);
         }
 
         .pen-name {
