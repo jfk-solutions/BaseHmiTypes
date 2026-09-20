@@ -29,6 +29,10 @@ public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 
     public HmiProperty<HmiVerticalAlignment>? VerticalAlignment { get; set; }
 
+    public HmiProperty<bool>? UseEqualSegmentWidths { get; set; }
+
+    public IList<HmiAlarmIndicatorSegment> Segments { get; } = [];
+
     public HmiProperty<IList<int>>? ShowAcknowledgedAlarmClasses { get; set; }
 
     public HmiProperty<IList<int>>? ShowPendingAlarmClasses { get; set; }
