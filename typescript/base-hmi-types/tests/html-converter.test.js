@@ -1532,6 +1532,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.headerFont.weight = staticProperty(700);
   trend.headerFont.italic = staticProperty(true);
   trend.showToolbar = staticProperty(true);
+  trend.toolbarAlignment = staticProperty(HmiVerticalAlignment.Bottom);
   trend.useToolbarBackgroundColor = staticProperty(true);
   trend.toolbarBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x33, 0x22));
   trend.toolbarButtonSize = staticProperty(42);
@@ -1625,6 +1626,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /--hmi-trend-content-font-family: Arial;--hmi-trend-content-font-size: 9px;--hmi-trend-content-font-weight: 400;/);
   assert.match(html, /--hmi-trend-header-font-family: Siemens Sans;--hmi-trend-header-font-size: 11px;--hmi-trend-header-font-weight: 700;--hmi-trend-header-font-style: italic;/);
   assert.match(html, /show-toolbar="true"/);
+  assert.match(html, /toolbar-alignment="Bottom"/);
   assert.match(html, /use-toolbar-background-color="true"/);
   assert.match(html, /toolbar-background-color="#443322"/);
   assert.match(html, /--hmi-trend-toolbar-background: #443322;/);

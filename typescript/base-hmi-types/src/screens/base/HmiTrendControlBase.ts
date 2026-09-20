@@ -150,6 +150,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   allowExportTrendData?: HmiProperty<boolean>;
   allowExportDataLogModelData?: HmiProperty<boolean>;
   showToolbar?: HmiProperty<boolean>;
+  /** Whether the toolbar is aligned to the top or bottom edge. */
+  toolbarAlignment?: HmiProperty<HmiVerticalAlignment>;
   useToolbarBackgroundColor?: HmiProperty<boolean>;
   toolbarBackgroundColor?: HmiProperty<HmiColor>;
   toolbarButtonSize?: HmiProperty<number>;

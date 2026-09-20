@@ -3099,6 +3099,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendAttribute(html, "chart-title", trendControl.chartTitle);
   appendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.displayChartTitle);
   appendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.showToolbar);
+  appendStaticAttribute(html, "toolbar-alignment", trendControl.toolbarAlignment);
   appendStaticBooleanValueAttribute(html, "use-toolbar-background-color", trendControl.useToolbarBackgroundColor);
   appendStaticAttribute(html, "toolbar-background-color", trendControl.toolbarBackgroundColor);
   appendStaticAttribute(html, "toolbar-button-size", trendControl.toolbarButtonSize);
