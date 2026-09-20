@@ -1225,7 +1225,8 @@ public class HmiScreenToHtmlConverterTests
             X2 = 100,
             Y2 = 40,
             LineColor = HmiColor.FromArgb(255, 255, 0, 0),
-            LineWidth = 3
+            LineWidth = 3,
+            DashType = (int)HmiLineStyle.DashDot
         });
         var polyline = new HmiPolyline
         {
@@ -1281,6 +1282,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<line");
         StringAssert.Contains(html, "stroke=\"#FF0000\"");
         StringAssert.Contains(html, "stroke-width=\"3\"");
+        StringAssert.Contains(html, "stroke-dasharray=\"6 3 1 3\"");
+        StringAssert.Contains(html, "stroke-linecap=\"round\"");
         StringAssert.Contains(html, "<polyline");
         StringAssert.Contains(html, "points=\"0,50 40,10 120,30\"");
         StringAssert.Contains(html, "<polygon");
