@@ -3114,6 +3114,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "x-axis-scale-visible", trendControl.xAxisScaleVisible);
   appendStaticAttribute(html, "x-axis-color", trendControl.xAxisColor);
   appendStaticAttribute(html, "x-axis-alignment", trendControl.xAxisAlignment);
+  appendAttribute(html, "x-axis-label", trendControl.xAxisLabel);
   appendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.xAxisDateVisible);
   appendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.xAxisGridVisible);
   appendStaticBooleanValueAttribute(html, "major-grid-visible", trendControl.majorGridVisible);
@@ -3123,6 +3124,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.yAxisScaleVisible);
   appendStaticAttribute(html, "y-axis-color", trendControl.yAxisColor);
   appendStaticAttribute(html, "y-axis-alignment", trendControl.yAxisAlignment);
+  appendAttribute(html, "y-axis-label", trendControl.yAxisLabel);
   appendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.yAxisGridVisible);
   appendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.showPercentageAxis);
   appendStaticAttribute(html, "percentage-axis-color", trendControl.percentageAxisColor);
