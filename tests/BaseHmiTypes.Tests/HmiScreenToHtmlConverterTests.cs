@@ -996,6 +996,28 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersAlarmIndicatorFillPattern()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiAlarmIndicator
+        {
+            Name = "GroupDisplay",
+            Width = 80,
+            Height = 30,
+            BackFillPattern = 3 << 16,
+            FillPattern = HmiFillPattern.Checkers,
+            PatternColor = HmiColor.FromArgb(255, 12, 34, 56)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "background-image: conic-gradient(#0C2238 25%, transparent 0 50%, #0C2238 0 75%, transparent 0);");
+        StringAssert.Contains(html, "background-size: 8px 8px;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersClockPreview()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };

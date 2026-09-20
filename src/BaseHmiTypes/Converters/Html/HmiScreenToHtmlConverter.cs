@@ -1155,6 +1155,7 @@ public class HmiScreenToHtmlConverter
         return item switch
         {
             HmiShapeBase shape when context.EffectiveProperties.TryGetStaticValue(shape, nameof(HmiShapeBase.FillPattern), shape.FillPattern, out var pattern) => pattern,
+            HmiAlarmIndicator indicator when context.EffectiveProperties.TryGetStaticValue(indicator, nameof(HmiAlarmIndicator.FillPattern), indicator.FillPattern, out var pattern) => pattern,
             HmiWidgetBase widget when context.EffectiveProperties.TryGetStaticValue(widget, nameof(HmiWidgetBase.FillPattern), widget.FillPattern, out var pattern) => pattern,
             HmiWindowBase window when context.EffectiveProperties.TryGetStaticValue(window, nameof(HmiWindowBase.FillPattern), window.FillPattern, out var pattern) => pattern,
             _ => null

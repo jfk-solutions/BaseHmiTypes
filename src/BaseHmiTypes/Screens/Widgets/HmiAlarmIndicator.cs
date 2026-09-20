@@ -41,6 +41,10 @@ public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 
     public HmiProperty<HmiColor>? LockedBackgroundColor { get; set; }
 
+    public HmiProperty<int>? BackFillPattern { get; set; }
+
+    public HmiProperty<HmiFillPattern>? FillPattern { get; set; }
+
     public HmiProperty<IList<int>>? ShowAcknowledgedAlarmClasses { get; set; }
 
     public HmiProperty<IList<int>>? ShowPendingAlarmClasses { get; set; }
