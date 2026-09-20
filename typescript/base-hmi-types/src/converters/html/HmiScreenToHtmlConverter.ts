@@ -1271,12 +1271,27 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
 function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
   const [minimum, maximum] = resolveScaleRange(bar);
   const value = resolveScaleValue(bar, minimum, maximum);
+  const direction = getStaticValue(bar.fillDirection) ?? HmiFillDirection.Right;
   html.push("<meter");
-  appendCommonAttributes(html, bar, context);
+  appendCommonAttributes(html, bar, context, true, getBarDirectionStyle(direction));
+  appendAttribute(html, "data-fill-direction", HmiFillDirection[direction]);
   appendAttribute(html, "min", toCss(minimum));
   appendAttribute(html, "max", toCss(maximum));
   appendAttribute(html, "value", toCss(value));
   html.push(`>${toCss(value)}</meter>`);
+}
+
+function getBarDirectionStyle(direction: HmiFillDirection): string {
+  switch (direction) {
+    case HmiFillDirection.Up:
+      return "writing-mode: vertical-lr; direction: rtl;";
+    case HmiFillDirection.Down:
+      return "writing-mode: vertical-lr; direction: ltr;";
+    case HmiFillDirection.Left:
+      return "direction: rtl;";
+    default:
+      return "direction: ltr;";
+  }
 }
 
 function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvertContext): void {

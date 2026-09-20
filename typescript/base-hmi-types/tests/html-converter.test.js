@@ -25,6 +25,7 @@ import {
   HmiDataGridDataSourceKind,
   HmiDataGridSortDirection,
   HmiDotNetControlContainer,
+  HmiFillDirection,
   HmiImage,
   HmiLayer,
   HmiListBox,
@@ -281,6 +282,36 @@ test("HTML converter renders bar slider and scale previews", async () => {
   assert.match(html, /type="range" min="-10" max="10" value="4" disabled="disabled"/);
   assert.match(html, /<div id="LevelScale"/);
   assert.match(html, /><span>0<\/span><span>100<\/span><\/div>/);
+});
+
+test("HTML converter renders bar fill directions", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+
+  for (const [name, direction] of [
+    ["UpBar", HmiFillDirection.Up],
+    ["DownBar", HmiFillDirection.Down],
+    ["LeftBar", HmiFillDirection.Left],
+    ["RightBar", HmiFillDirection.Right],
+  ]) {
+    const bar = new HmiBar();
+    bar.name = name;
+    bar.width = staticProperty(100);
+    bar.height = staticProperty(20);
+    bar.fillDirection = staticProperty(direction);
+    layer.items.push(bar);
+  }
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /writing-mode: vertical-lr; direction: rtl;" data-fill-direction="Up"/);
+  assert.match(html, /writing-mode: vertical-lr; direction: ltr;" data-fill-direction="Down"/);
+  assert.match(html, /id="LeftBar"[^>]*direction: rtl;" data-fill-direction="Left"/);
+  assert.match(html, /id="RightBar"[^>]*direction: ltr;" data-fill-direction="Right"/);
 });
 
 test("HTML converter renders a clock preview", async () => {
