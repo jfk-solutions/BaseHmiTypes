@@ -898,7 +898,7 @@ function getSvgFillVector(direction: HmiFillDirection | undefined): [string, str
 }
 
 function getFillGradientId(item: HmiShapeBase): string {
-  const sanitized = (item.id ?? item.name ?? "shape").replace(/[^A-Za-z0-9_-]/g, "-");
+  const sanitized = (item.name ?? item.id ?? "shape").replace(/[^A-Za-z0-9_-]/g, "-");
   return `hmi-fill-${sanitized || "shape"}`;
 }
 

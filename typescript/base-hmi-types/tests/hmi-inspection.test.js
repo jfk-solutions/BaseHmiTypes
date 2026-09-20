@@ -136,8 +136,8 @@ test("HTML conversion renders shape fill animation previews", async () => {
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
 
   assert.match(html, /background-image: linear-gradient\(to right, #0080FF 0%, #0080FF 35%, transparent 35%, transparent 100%\);/);
-  assert.match(html, /fill="url\(#hmi-fill-level\)"/);
-  assert.match(html, /<linearGradient id="hmi-fill-level" x1="0%" y1="100%" x2="0%" y2="0%"/);
+  assert.match(html, /fill="url\(#hmi-fill-Level\)"/);
+  assert.match(html, /<linearGradient id="hmi-fill-Level" x1="0%" y1="100%" x2="0%" y2="0%"/);
   assert.match(html, /<stop offset="60%" stop-color="#00C800"/);
 });
 
