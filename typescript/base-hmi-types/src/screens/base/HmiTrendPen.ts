@@ -13,6 +13,10 @@ export class HmiTrendPen {
   width?: HmiProperty<number>;
   type?: HmiProperty<HmiTrendPenType>;
   style?: HmiProperty<HmiLineStyle>;
+  /** Whether the area below the trend line is filled. */
+  fillVisible?: HmiProperty<boolean>;
+  /** Area-fill color independently of the trend line color. */
+  fillColor?: HmiProperty<HmiColor>;
   /** Engineering-system marker name or numeric marker identifier. */
   marker?: HmiProperty<string>;
   /** Marker color independently of the trend line color. */
