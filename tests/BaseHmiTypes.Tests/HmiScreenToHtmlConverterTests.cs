@@ -568,6 +568,30 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersSliderStopColors()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiSlider
+        {
+            Name = "StoppedSlider",
+            Width = 100,
+            Height = 20,
+            Orientation = 3,
+            TrackHighBackgroundColor = HmiColor.FromArgb(255, 255, 128, 128),
+            TrackLowBackgroundColor = HmiColor.FromArgb(255, 128, 128, 255),
+            HighStopColor = HmiColor.FromArgb(255, 255, 0, 0),
+            LowStopColor = HmiColor.FromArgb(255, 0, 0, 255)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html,
+            "linear-gradient(to left, #FF0000 0 4px, #FF8080 4px, #8080FF calc(100% - 4px), #0000FF calc(100% - 4px) 100%)");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersAlarmIndicatorState()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };

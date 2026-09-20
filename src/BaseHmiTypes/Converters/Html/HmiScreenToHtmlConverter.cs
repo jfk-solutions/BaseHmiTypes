@@ -1444,7 +1444,13 @@ public class HmiScreenToHtmlConverter
         HmiColor? low = slider.TrackLowBackgroundColor is null
             ? null
             : ResolveStaticValue(slider.TrackLowBackgroundColor, context);
-        if (high is null && low is null)
+        HmiColor? highStop = slider.HighStopColor is null
+            ? null
+            : ResolveStaticValue(slider.HighStopColor, context);
+        HmiColor? lowStop = slider.LowStopColor is null
+            ? null
+            : ResolveStaticValue(slider.LowStopColor, context);
+        if (high is null && low is null && highStop is null && lowStop is null)
             return string.Empty;
 
         high ??= low;
@@ -1456,6 +1462,16 @@ public class HmiScreenToHtmlConverter
             HmiFillDirection.Left => "to right",
             _ => "to left"
         };
+        if (highStop is not null || lowStop is not null)
+        {
+            highStop ??= high ?? lowStop;
+            lowStop ??= low ?? highStop;
+            var highBackground = high is null ? "transparent" : ToCss(high.Value);
+            var lowBackground = low is null ? "transparent" : ToCss(low.Value);
+            return $"--hmi-slider-track-background: linear-gradient({gradientDirection}, " +
+                $"{ToCss(highStop!.Value)} 0 4px, {highBackground} 4px, " +
+                $"{lowBackground} calc(100% - 4px), {ToCss(lowStop!.Value)} calc(100% - 4px) 100%);";
+        }
         return $"--hmi-slider-track-background: linear-gradient({gradientDirection}, {ToCss(high!.Value)}, {ToCss(low!.Value)});";
     }
 

@@ -16,4 +16,8 @@ public class HmiSlider : HmiBar
     public HmiProperty<HmiColor>? TrackHighBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? TrackLowBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? HighStopColor { get; set; }
+
+    public HmiProperty<HmiColor>? LowStopColor { get; set; }
 }
