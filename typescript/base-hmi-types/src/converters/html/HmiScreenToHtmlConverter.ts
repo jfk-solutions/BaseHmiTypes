@@ -2038,6 +2038,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-table-foreground-color", resolvePropertyPreview(alarmControl.tableForegroundColor));
   appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(alarmControl.selectionBackgroundColor));
   appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(alarmControl.selectionForegroundColor));
+  appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(alarmControl.showStatusBar));
+  appendAttribute(html, "data-status-bar-background-color", resolvePropertyPreview(alarmControl.statusBarBackgroundColor));
+  appendAttribute(html, "data-status-bar-foreground-color", resolvePropertyPreview(alarmControl.statusBarForegroundColor));
   html.push(">");
 
   if (showTitle) {
@@ -2084,6 +2087,14 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     if (showHelpButton)
       html.push("Help");
     html.push("</div>");
+  }
+  if (getStaticValue(alarmControl.showStatusBar) === true) {
+    const statusStyle = ["flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;"];
+    appendColorStyle(statusStyle, "background-color", alarmControl.statusBarBackgroundColor);
+    appendColorStyle(statusStyle, "color", alarmControl.statusBarForegroundColor);
+    if (alarmControl.statusBarFont !== undefined)
+      appendFont(statusStyle, alarmControl.statusBarFont);
+    html.push("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"", ...statusStyle, "\">Status</div>");
   }
   html.push("</div>");
 }
