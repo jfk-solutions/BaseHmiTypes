@@ -1205,7 +1205,11 @@ function appendSvgPatternDefinition(html: string[], item: HmiShapeBase, fillColo
   if (pattern === undefined || pattern === HmiFillPattern.Transparent || pattern === HmiFillPattern.Solid) return;
 
   const patternColor = colorToCss(getPatternColor(item, context));
-  const size = pattern === HmiFillPattern.DottedEvenOddFiner || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.CheckersFiner ? 4 : 8;
+  const size = pattern === HmiFillPattern.DottedEvenOddFiner || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.CheckersFiner || pattern === HmiFillPattern.SmallBoxes
+    ? 4
+    : pattern === HmiFillPattern.LargeBoxes || pattern === HmiFillPattern.Ovals || pattern === HmiFillPattern.Scales || pattern === HmiFillPattern.Waves
+      ? 12
+      : 8;
   html.push("<defs><pattern");
   appendAttribute(html, "id", getFillPatternId(item));
   appendAttribute(html, "patternUnits", "userSpaceOnUse");
@@ -1229,16 +1233,24 @@ function appendSvgPatternMarks(html: string[], pattern: HmiFillPattern, size: nu
       break;
     case HmiFillPattern.Horizontal:
     case HmiFillPattern.HorizontalDifferentLines:
-      appendPatternPath(html, `M0 1H${size} M0 ${size / 2 + 1}H${size}`, color, pattern === HmiFillPattern.HorizontalDifferentLines ? 2 : 1);
+    case HmiFillPattern.WideHorizontal:
+      appendPatternPath(html, `M0 1H${size} M0 ${size / 2 + 1}H${size}`, color, pattern === HmiFillPattern.HorizontalDifferentLines || pattern === HmiFillPattern.WideHorizontal ? 2 : 1);
       break;
     case HmiFillPattern.Vertical:
-      appendPatternPath(html, `M1 0V${size} M${size / 2 + 1} 0V${size}`, color, 1);
+    case HmiFillPattern.WideVertical:
+      appendPatternPath(html, `M1 0V${size} M${size / 2 + 1} 0V${size}`, color, pattern === HmiFillPattern.WideVertical ? 2 : 1);
+      break;
+    case HmiFillPattern.SmallBoxes:
+    case HmiFillPattern.MediumBoxes:
+    case HmiFillPattern.LargeBoxes:
+      appendPatternPath(html, `M0 0H${size}V${size}H0Z`, color, 1);
       break;
     case HmiFillPattern.DottedHorizontal:
     case HmiFillPattern.DottedEvenOdd:
     case HmiFillPattern.DottedEvenOddFiner:
     case HmiFillPattern.DottedEvenOddFinest:
-    case HmiFillPattern.DottedHorizontalInverted: {
+    case HmiFillPattern.DottedHorizontalInverted:
+    case HmiFillPattern.Dots: {
       const radius = pattern === HmiFillPattern.DottedHorizontalInverted ? "2" : "1";
       html.push("<circle");
       appendAttribute(html, "cx", (size / 4).toString());
@@ -1253,14 +1265,33 @@ function appendSvgPatternMarks(html: string[], pattern: HmiFillPattern, size: nu
       html.push("></circle>");
       break;
     }
+    case HmiFillPattern.Ovals:
+      html.push("<ellipse");
+      appendAttribute(html, "cx", (size / 2).toString());
+      appendAttribute(html, "cy", (size / 2).toString());
+      appendAttribute(html, "rx", (size / 3).toString());
+      appendAttribute(html, "ry", (size / 4).toString());
+      appendAttribute(html, "fill", "none");
+      appendAttribute(html, "stroke", color);
+      html.push("></ellipse>");
+      break;
+    case HmiFillPattern.Diamonds:
+      appendPatternPath(html, `M${size / 2} 0L${size} ${size / 2}L${size / 2} ${size}L0 ${size / 2}Z`, color, 1);
+      break;
+    case HmiFillPattern.Scales:
+      appendPatternPath(html, `M0 ${size / 2}Q${size / 4} 0 ${size / 2} ${size / 2}T${size} ${size / 2} M-${size / 2} ${size}Q-${size / 4} ${size / 2} 0 ${size}T${size / 2} ${size}`, color, 1);
+      break;
+    case HmiFillPattern.Waves:
+      appendPatternPath(html, `M0 ${size / 2}Q${size / 4} 0 ${size / 2} ${size / 2}T${size} ${size / 2}`, color, 1);
+      break;
     case HmiFillPattern.Bricks:
     case HmiFillPattern.BricksDiagonal:
       appendPatternPath(html, `M0 0H${size} M0 ${size / 2}H${size} M${size / 2} 0V${size / 2} M0 ${size / 2}V${size}`, color, 1);
       break;
     default: {
-      const leftToRight = pattern === HmiFillPattern.DiagonalLeftToRight || pattern === HmiFillPattern.Diagonal || pattern === HmiFillPattern.DiagonalCross || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.DiagonalCrossBold;
-      const rightToLeft = pattern === HmiFillPattern.DiagonalRightToLeft || pattern === HmiFillPattern.DiagonalCross || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.DiagonalCrossBold;
-      const width = pattern === HmiFillPattern.DiagonalCrossBold ? 2 : 1;
+      const leftToRight = pattern === HmiFillPattern.DiagonalLeftToRight || pattern === HmiFillPattern.Diagonal || pattern === HmiFillPattern.DiagonalCross || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.DiagonalCrossBold || pattern === HmiFillPattern.WideDiagonalLeftToRight;
+      const rightToLeft = pattern === HmiFillPattern.DiagonalRightToLeft || pattern === HmiFillPattern.DiagonalCross || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.DiagonalCrossBold || pattern === HmiFillPattern.WideDiagonalRightToLeft;
+      const width = pattern === HmiFillPattern.DiagonalCrossBold || pattern === HmiFillPattern.WideDiagonalLeftToRight || pattern === HmiFillPattern.WideDiagonalRightToLeft ? 2 : 1;
       if (leftToRight)
         appendPatternPath(html, `M-${size / 4} ${size / 4}L${size / 4} -${size / 4} M0 ${size}L${size} 0 M${size * 3 / 4} ${size + size / 4}L${size + size / 4} ${size * 3 / 4}`, color, width);
       if (rightToLeft)
@@ -2543,15 +2574,27 @@ function appendFillPatternCss(html: string[], pattern: HmiFillPattern, patternCo
     case HmiFillPattern.Horizontal:
       image = `repeating-linear-gradient(to bottom, ${color} 0 1px, transparent 1px 6px)`;
       break;
+    case HmiFillPattern.WideHorizontal:
+      image = `repeating-linear-gradient(to bottom, ${color} 0 2px, transparent 2px 6px)`;
+      break;
     case HmiFillPattern.Vertical:
       image = `repeating-linear-gradient(to right, ${color} 0 1px, transparent 1px 6px)`;
+      break;
+    case HmiFillPattern.WideVertical:
+      image = `repeating-linear-gradient(to right, ${color} 0 2px, transparent 2px 6px)`;
       break;
     case HmiFillPattern.DiagonalLeftToRight:
     case HmiFillPattern.Diagonal:
       image = `repeating-linear-gradient(135deg, ${color} 0 1px, transparent 1px 6px)`;
       break;
+    case HmiFillPattern.WideDiagonalLeftToRight:
+      image = `repeating-linear-gradient(135deg, ${color} 0 2px, transparent 2px 6px)`;
+      break;
     case HmiFillPattern.DiagonalRightToLeft:
       image = `repeating-linear-gradient(45deg, ${color} 0 1px, transparent 1px 6px)`;
+      break;
+    case HmiFillPattern.WideDiagonalRightToLeft:
+      image = `repeating-linear-gradient(45deg, ${color} 0 2px, transparent 2px 6px)`;
       break;
     case HmiFillPattern.DiagonalCross:
     case HmiFillPattern.DiagonalCrossFiner:
@@ -2565,12 +2608,34 @@ function appendFillPatternCss(html: string[], pattern: HmiFillPattern, patternCo
     case HmiFillPattern.HorizontalDifferentLines:
       image = `repeating-linear-gradient(to bottom, ${color} 0 1px, transparent 1px 4px, ${color} 4px 6px, transparent 6px 10px)`;
       break;
+    case HmiFillPattern.SmallBoxes:
+    case HmiFillPattern.MediumBoxes:
+    case HmiFillPattern.LargeBoxes:
+      image = `linear-gradient(${color} 1px, transparent 1px), linear-gradient(90deg, ${color} 1px, transparent 1px)`;
+      break;
+    case HmiFillPattern.Ovals:
+      image = `radial-gradient(ellipse at center, transparent 0 35%, ${color} 36% 45%, transparent 46%)`;
+      break;
+    case HmiFillPattern.Diamonds:
+      image = `linear-gradient(45deg, transparent 42%, ${color} 43% 57%, transparent 58%), linear-gradient(-45deg, transparent 42%, ${color} 43% 57%, transparent 58%)`;
+      break;
+    case HmiFillPattern.Scales:
+      image = `radial-gradient(ellipse at 50% 0%, transparent 0 45%, ${color} 46% 52%, transparent 53%)`;
+      break;
+    case HmiFillPattern.Waves:
+      image = `radial-gradient(ellipse at 50% 100%, transparent 0 42%, ${color} 43% 50%, transparent 51%)`;
+      break;
     default:
       image = `radial-gradient(circle, ${color} 0 1px, transparent 1px)`;
       break;
   }
   html.push(`background-image: ${image};`);
-  html.push(`background-size: ${pattern === HmiFillPattern.CheckersFiner || pattern === HmiFillPattern.DiagonalCrossFiner ? "4px 4px" : "8px 8px"};`);
+  const size = pattern === HmiFillPattern.CheckersFiner || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.SmallBoxes
+    ? "4px 4px"
+    : pattern === HmiFillPattern.LargeBoxes || pattern === HmiFillPattern.Ovals || pattern === HmiFillPattern.Scales || pattern === HmiFillPattern.Waves
+      ? "12px 12px"
+      : "8px 8px";
+  html.push(`background-size: ${size};`);
 }
 
 interface ColorGradientSource {
