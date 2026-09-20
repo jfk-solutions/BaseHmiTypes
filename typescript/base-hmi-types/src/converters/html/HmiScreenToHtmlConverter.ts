@@ -1325,6 +1325,7 @@ function appendBarScale(
   const decimalPlaces = configuredDecimalPlaces === undefined
     ? undefined
     : Math.max(0, Math.min(15, configuredDecimalPlaces));
+  const engineeringUnit = getStaticValue(bar.engineeringUnit);
   const reverse = direction === HmiFillDirection.Up || direction === HmiFillDirection.Left;
   let style = vertical
     ? "display: flex; flex-direction: column; justify-content: space-between; height: 100%;"
@@ -1344,7 +1345,10 @@ function appendBarScale(
       ratio = 1 - ratio;
     const tick = minimum + ((maximum - minimum) * ratio);
     const label = decimalPlaces === undefined ? toCss(tick) : tick.toFixed(decimalPlaces);
-    html.push(`<span>${label}</span>`);
+    html.push(`<span>${label}`);
+    if (engineeringUnit?.trim())
+      html.push("&nbsp;", escapeHtml(engineeringUnit));
+    html.push("</span>");
   }
   html.push("</div>");
 }

@@ -330,6 +330,7 @@ test("HTML converter renders bar scale ticks and appearance", async () => {
   bar.showScale = staticProperty(true);
   bar.divisionCount = staticProperty(3);
   bar.tickLabelDecimalPlaces = staticProperty(1);
+  bar.engineeringUnit = staticProperty("bar");
   bar.labelColor = staticProperty(hmiColorFromArgb(255, 12, 34, 56));
   bar.labelFont = {
     name: staticProperty("Arial"),
@@ -346,7 +347,7 @@ test("HTML converter renders bar scale ticks and appearance", async () => {
   assert.match(html, /<meter style="width: 100%; flex: 1; min-width: 0; min-height: 0;direction: ltr;" min="0" max="100" value="35">35<\/meter>/);
   assert.match(html, /data-hmi-bar-scale="true"/);
   assert.match(html, /color: #0C2238; font-family: Arial; font-size: 9px; font-weight: bold;/);
-  assert.match(html, /<span>0.0<\/span><span>50.0<\/span><span>100.0<\/span>/);
+  assert.match(html, /<span>0.0&nbsp;bar<\/span><span>50.0&nbsp;bar<\/span><span>100.0&nbsp;bar<\/span>/);
 });
 
 test("HTML converter renders slider orientations", async () => {

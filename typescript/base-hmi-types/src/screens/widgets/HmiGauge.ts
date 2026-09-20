@@ -16,7 +16,6 @@ export class HmiGauge extends HmiScaleWidgetBase {
   alarmIndicatorVisible?: HmiProperty<boolean>;
   alarmIndicatorSize?: HmiProperty<string>;
   sweepStyle?: HmiProperty<HmiGaugeSweepStyle>;
-  engineeringUnit?: HmiProperty<string>;
   currentValueVisible?: HmiProperty<boolean>;
   currentValueFieldLength?: HmiProperty<number>;
   currentValueDecimalPlaces?: HmiProperty<number>;
