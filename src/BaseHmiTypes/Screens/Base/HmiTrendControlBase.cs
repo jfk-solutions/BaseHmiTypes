@@ -100,6 +100,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     /// </summary>
     public HmiProperty<bool>? DisplayValueBar { get; set; }
 
+    /// <summary>Gets or sets whether the value bar uses its configured color and width.</summary>
+    public HmiProperty<bool>? UseGraphicValueBar { get; set; }
+
     public HmiProperty<HmiColor>? ValueBarColor { get; set; }
 
     public HmiProperty<double>? ValueBarWidth { get; set; }

@@ -3340,6 +3340,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
         AppendStaticBooleanValueAttribute(html, "use-trend-name-as-label", trendControl.UseTrendNameAsLabel);
         AppendStaticBooleanValueAttribute(html, "display-value-bar", trendControl.DisplayValueBar);
+        AppendStaticBooleanValueAttribute(html, "use-graphic-value-bar", trendControl.UseGraphicValueBar);
         AppendStaticAttribute(html, "value-bar-color", trendControl.ValueBarColor);
         AppendStaticAttribute(html, "value-bar-width", trendControl.ValueBarWidth);
         AppendStaticBooleanValueAttribute(html, "show-value-bar-in-x-axis", trendControl.ShowValueBarInXAxis);
