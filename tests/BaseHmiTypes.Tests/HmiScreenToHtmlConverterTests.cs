@@ -1368,6 +1368,29 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersPaintedShapeBorderStyle()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiRectangle
+        {
+            Id = "rectangle-1",
+            Name = "DottedFrame",
+            Width = 100,
+            Height = 50,
+            BorderWidth = 3,
+            BorderStyle = (int)HmiLineStyle.Dot,
+            DashType = (int)HmiLineStyle.Dot
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "border-style: dotted;");
+        StringAssert.Contains(html, "border-width: 3px;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersPaintedItemPadding()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };

@@ -2545,6 +2545,7 @@ public class HmiScreenToHtmlConverter
         var backgroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
         var borderColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderColor), item.BorderColor);
         var borderWidth = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderWidth), item.BorderWidth);
+        var borderStyle = GetBorderStyleCss(item, context);
         var margin = item.Margin;
         var padding = item.Padding;
         var font = GetFont(item);
@@ -2561,7 +2562,7 @@ public class HmiScreenToHtmlConverter
         if (borderWidth?.StaticValue != null)
         {
             if (!suppressBorderStyle)
-                html.Append("border-style: solid;");
+                html.Append("border-style: ").Append(borderStyle).Append(";");
             html.Append("border-width: ").Append(ToCss(borderWidth.StaticValue)).Append("px;");
         }
 
@@ -2571,7 +2572,7 @@ public class HmiScreenToHtmlConverter
                 html.Append("border-color: ").Append(ToCss(shape.LineColor.StaticValue)).Append(";");
             if (shape.LineWidth != null)
             {
-                html.Append("border-style: solid;");
+                html.Append("border-style: ").Append(borderStyle).Append(";");
                 html.Append("border-width: ").Append(ToCss(shape.LineWidth.StaticValue)).Append("px;");
             }
         }
@@ -2615,6 +2616,30 @@ public class HmiScreenToHtmlConverter
             html.Append("display: flex;");
             html.Append("align-items: ").Append(ToCss(verticalAlignment.StaticValue)).Append(";");
         }
+    }
+
+    private static string GetBorderStyleCss(HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
+    {
+        int? style = null;
+        if (item is HmiShapeBase shape
+            && context.EffectiveProperties.TryGetStaticValue(shape, nameof(HmiShapeBase.DashType), shape.DashType, out var dashType))
+        {
+            style = dashType;
+        }
+        else if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiPaintedScreenItemBase.BorderStyle), item.BorderStyle, out var borderStyle))
+        {
+            style = borderStyle;
+        }
+
+        return (HmiLineStyle?)style switch
+        {
+            HmiLineStyle.None => "none",
+            HmiLineStyle.Dash or HmiLineStyle.DashDot or HmiLineStyle.DashDotDot => "dashed",
+            HmiLineStyle.Dot => "dotted",
+            HmiLineStyle.Double => "double",
+            HmiLineStyle.Style3D => "groove",
+            _ => "solid"
+        };
     }
 
     private static HmiFont? GetFont(HmiScreenItemBase item)
