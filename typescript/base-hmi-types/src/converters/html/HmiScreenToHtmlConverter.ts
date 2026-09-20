@@ -35,6 +35,7 @@ import {
   HmiSymbolLibraryRotation,
 } from "../../screens/base/HmiSymbolLibraryEnums.js";
 import { HmiVerticalAlignment } from "../../screens/base/HmiVerticalAlignment.js";
+import { HmiWindowBase } from "../../screens/base/HmiWindowBase.js";
 import { HmiAlarmControl } from "../../screens/controls/HmiAlarmControl.js";
 import { HmiAlarmLineControl } from "../../screens/controls/HmiAlarmLineControl.js";
 import { HmiAlarmListMode } from "../../screens/controls/HmiAlarmListMode.js";
@@ -995,13 +996,17 @@ function getFillPatternId(item: HmiShapeBase): string {
   return getFillGradientId(item).replace("hmi-fill-", "hmi-pattern-");
 }
 
-function getFillPattern(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiFillPattern | undefined {
-  return context.effectiveProperties.tryGetStaticValue<HmiFillPattern>(item, "FillPattern", item.fillPattern).value;
+function getFillPattern(item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): HmiFillPattern | undefined {
+  if (item instanceof HmiShapeBase || item instanceof HmiWidgetBase || item instanceof HmiWindowBase)
+    return context.effectiveProperties.tryGetStaticValue<HmiFillPattern>(item, "FillPattern", item.fillPattern).value;
+  return undefined;
 }
 
-function getPatternColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor {
+function getPatternColor(item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): HmiColor {
   return context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "PatternColor", item.patternColor).value
-    ?? getStrokeColor(item, context);
+    ?? (item instanceof HmiShapeBase ? getStrokeColor(item, context) : undefined)
+    ?? context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "ForegroundColor", item.foregroundColor).value
+    ?? { alpha: 255, red: 0, green: 0, blue: 0 };
 }
 
 function tryGetFillPercentage(animation: HmiFillAnimation | undefined): number | undefined {
@@ -1867,7 +1872,6 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
   appendStyle(html, rectangle, context);
-  appendFillPatternStyle(html, rectangle, context);
   appendFillAnimationStyle(html, rectangle, context);
   appendRectangleRadius(html, rectangle);
   if (
@@ -1881,7 +1885,7 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   html.push("\"></div>");
 }
 
-function appendFillPatternStyle(html: string[], item: HmiShapeBase, context: HmiHtmlConvertContext): void {
+function appendFillPatternStyle(html: string[], item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): void {
   const pattern = getFillPattern(item, context);
   if (pattern === undefined || pattern === HmiFillPattern.Solid) return;
   if (pattern === HmiFillPattern.Transparent) {
@@ -2604,6 +2608,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     appendColorStyle(html, "border-color", item.lineColor);
     appendWidthStyle(html, item.lineWidth, borderStyle);
   }
+  appendFillPatternStyle(html, item, context);
   if (item.margin !== undefined) {
     html.push(
       `margin: ${toCss(getStaticValueOrDefault(item.margin.top, 0))}px ${toCss(

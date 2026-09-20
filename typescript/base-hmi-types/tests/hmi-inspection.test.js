@@ -154,8 +154,15 @@ test("HTML conversion renders shape fill patterns", async () => {
   circle.backgroundColor = staticProperty(hmiColorFromArgb(255, 255, 255, 255));
   circle.patternColor = staticProperty(hmiColorFromArgb(255, 0, 128, 255));
   circle.fillPattern = staticProperty(HmiFillPattern.Horizontal);
+  const button = new HmiButton();
+  button.name = "CheckedButton";
+  button.width = staticProperty(80);
+  button.height = staticProperty(30);
+  button.backgroundColor = staticProperty(hmiColorFromArgb(255, 255, 255, 255));
+  button.patternColor = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+  button.fillPattern = staticProperty(HmiFillPattern.Checkers);
   const screen = createScreen("main", "Main");
-  screen.layers[0].items.push(rectangle, circle);
+  screen.layers[0].items.push(rectangle, circle, button);
 
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
 
@@ -163,6 +170,7 @@ test("HTML conversion renders shape fill patterns", async () => {
   assert.match(html, /fill="url\(#hmi-pattern-StripedLevel\)"/);
   assert.match(html, /<pattern id="hmi-pattern-StripedLevel" patternUnits="userSpaceOnUse"/);
   assert.match(html, /stroke="#0080FF"/);
+  assert.match(html, /background-image: conic-gradient\(#FF0000 25%, transparent 0 50%, #FF0000 0 75%, transparent 0\);/);
 });
 
 test("HTML conversion serializes dynamic SVG colors in HMI format", async () => {
