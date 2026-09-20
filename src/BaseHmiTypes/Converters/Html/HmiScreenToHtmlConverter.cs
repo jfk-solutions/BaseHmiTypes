@@ -1415,8 +1415,14 @@ public class HmiScreenToHtmlConverter
         var direction = slider.Orientation is null || slider.Orientation.StaticValue is < 0 or > 3
             ? HmiFillDirection.Right
             : (HmiFillDirection)ResolveStaticValue(slider.Orientation, context);
+        HmiColor? thumbColor = slider.ThumbBackgroundColor is null
+            ? null
+            : ResolveStaticValue(slider.ThumbBackgroundColor, context);
+        var sliderStyle = GetBarDirectionStyle(direction) +
+            (thumbColor is null ? string.Empty : $"--hmi-slider-thumb-background: {ToCss(thumbColor.Value)};");
         html.Append("<input");
-        AppendCommonAttributes(html, slider, context, additionalStyle: GetBarDirectionStyle(direction));
+        AppendCommonAttributes(html, slider, context, additionalStyle: sliderStyle);
+        AppendAttribute(html, "data-hmi-slider", "true");
         AppendAttribute(html, "data-orientation", direction.ToString());
         AppendAttribute(html, "type", "range");
         AppendAttribute(html, "min", ToCss(minimum));
