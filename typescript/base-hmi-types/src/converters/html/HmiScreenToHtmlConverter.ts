@@ -3298,6 +3298,10 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     if (style !== undefined) result.style = style;
     const marker = getStaticValue(pen.marker);
     if (marker !== undefined) result.marker = marker;
+    const markerColor = getStaticValue(pen.markerColor);
+    if (markerColor !== undefined) result.markerColor = colorToCss(markerColor);
+    const markerSize = getStaticValue(pen.markerSize);
+    if (markerSize !== undefined) result.markerSize = markerSize;
     const minimum = getStaticValue(pen.minimumValue);
     if (minimum !== undefined) result.minimum = minimum;
     const maximum = getStaticValue(pen.maximumValue);

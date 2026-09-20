@@ -15,6 +15,10 @@ export class HmiTrendPen {
   style?: HmiProperty<HmiLineStyle>;
   /** Engineering-system marker name or numeric marker identifier. */
   marker?: HmiProperty<string>;
+  /** Marker color independently of the trend line color. */
+  markerColor?: HmiProperty<HmiColor>;
+  /** Marker width in pixels. */
+  markerSize?: HmiProperty<number>;
   minimumValue?: HmiProperty<number>;
   maximumValue?: HmiProperty<number>;
   /** Current minimum value used to scale this pen. */
