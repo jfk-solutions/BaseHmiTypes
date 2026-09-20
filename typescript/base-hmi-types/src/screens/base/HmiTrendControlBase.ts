@@ -81,6 +81,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   xAxisScaleVisible?: HmiProperty<boolean>;
   xAxisColor?: HmiProperty<HmiColor>;
   xAxisAlignment?: HmiProperty<HmiVerticalAlignment>;
+  xAxisLabel?: string;
   xAxisDateVisible?: HmiProperty<boolean>;
   xAxisGridVisible?: HmiProperty<boolean>;
   majorGridVisible?: HmiProperty<boolean>;
@@ -108,6 +109,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   yAxisScaleVisible?: HmiProperty<boolean>;
   yAxisColor?: HmiProperty<HmiColor>;
   yAxisAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  yAxisLabel?: string;
   yAxisDecimalPlaces?: HmiProperty<number>;
   yAxisGridVisible?: HmiProperty<boolean>;
   yAxisMajorGridLineCount?: HmiProperty<number>;
