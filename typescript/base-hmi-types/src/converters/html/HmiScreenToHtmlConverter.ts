@@ -2280,9 +2280,11 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   appendAttribute(html, "id", rectangle.name);
   appendTextAttribute(html, "title", rectangle.toolTipText, context);
   appendStaticAttribute(html, "tabindex", rectangle.tabIndex);
+  appendDisabledAttribute(html, rectangle);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
+  appendDisabledStyle(html, rectangle);
   appendOpacity(html, rectangle, context);
   appendDesignShadow(html, rectangle, context);
   appendStyle(html, rectangle, context);
@@ -2601,6 +2603,7 @@ function appendSymbolLibraryAttributes(
   appendAttribute(html, "id", symbolLibraryControl.name);
   appendTextAttribute(html, "title", symbolLibraryControl.toolTipText, context);
   appendStaticAttribute(html, "tabindex", symbolLibraryControl.tabIndex);
+  appendDisabledAttribute(html, symbolLibraryControl);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   appendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.symbolId);
   appendAttribute(html, "data-hmi-symbol-appearance", formatAttributeValue(getStaticValue(symbolLibraryControl.symbolAppearance)));
@@ -2608,6 +2611,7 @@ function appendSymbolLibraryAttributes(
   appendAttribute(html, "data-hmi-blink-mode", formatAttributeValue(getStaticValue(symbolLibraryControl.blinkMode)));
   html.push(" style=\"position: absolute; overflow: hidden;");
   appendPosition(html, symbolLibraryControl, context);
+  appendDisabledStyle(html, symbolLibraryControl);
   appendOpacity(html, symbolLibraryControl, context);
   appendDesignShadow(html, symbolLibraryControl, context);
   if (
@@ -3000,9 +3004,11 @@ function appendCommonAttributes(
   appendAttribute(html, "id", item.name);
   appendTextAttribute(html, "title", item.toolTipText, context);
   appendStaticAttribute(html, "tabindex", item.tabIndex);
+  appendDisabledAttribute(html, item);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
+  appendDisabledStyle(html, item);
   appendOpacity(html, item, context);
   appendDesignShadow(html, item, context);
   if (includePaintedStyle && item instanceof HmiPaintedScreenItemBase) {
@@ -3033,11 +3039,13 @@ function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContai
   appendAttribute(html, "id", symbolContainer.name);
   appendTextAttribute(html, "title", symbolContainer.toolTipText, context);
   appendStaticAttribute(html, "tabindex", symbolContainer.tabIndex);
+  appendDisabledAttribute(html, symbolContainer);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   appendAttribute(html, "data-hmi-fill-color-mode", getStaticValue(symbolContainer.fillColorMode));
   appendAttribute(html, "data-hmi-flip", getStaticValue(symbolContainer.flip));
   html.push(" style=\"position: absolute; overflow: hidden;");
   appendPosition(html, symbolContainer, context);
+  appendDisabledStyle(html, symbolContainer);
   appendOpacity(html, symbolContainer, context);
   appendDesignShadow(html, symbolContainer, context);
   appendStyle(html, symbolContainer, context);
@@ -3079,6 +3087,18 @@ function appendOpacity(html: string[], item: HmiScreenItemBase, context: HmiHtml
   const opacity = getStaticValue(context.effectiveProperties.resolve(item, "Opacity", item.opacity));
   if (opacity !== undefined) {
     html.push(`opacity: ${toCss(Math.min(Math.max(opacity, 0), 1))};`);
+  }
+}
+
+function appendDisabledAttribute(html: string[], item: HmiScreenItemBase): void {
+  if (!getStaticValueOrDefault(item.enabled, true)) {
+    appendAttribute(html, "aria-disabled", "true");
+  }
+}
+
+function appendDisabledStyle(html: string[], item: HmiScreenItemBase): void {
+  if (!getStaticValueOrDefault(item.enabled, true)) {
+    html.push("pointer-events: none;");
   }
 }
 
