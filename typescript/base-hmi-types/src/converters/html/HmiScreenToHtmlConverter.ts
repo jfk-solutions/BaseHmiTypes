@@ -1297,8 +1297,13 @@ function getBarDirectionStyle(direction: HmiFillDirection): string {
 function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvertContext): void {
   const [minimum, maximum] = resolveScaleRange(slider);
   const value = resolveScaleValue(slider, minimum, maximum);
+  const orientation = getStaticValue(slider.orientation);
+  const direction = orientation === undefined || orientation < 0 || orientation > 3
+    ? HmiFillDirection.Right
+    : orientation as HmiFillDirection;
   html.push("<input");
-  appendCommonAttributes(html, slider, context);
+  appendCommonAttributes(html, slider, context, true, getBarDirectionStyle(direction));
+  appendAttribute(html, "data-orientation", HmiFillDirection[direction]);
   appendAttribute(html, "type", "range");
   appendAttribute(html, "min", toCss(minimum));
   appendAttribute(html, "max", toCss(maximum));
