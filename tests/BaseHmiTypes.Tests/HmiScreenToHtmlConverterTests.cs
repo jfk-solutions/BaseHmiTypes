@@ -1829,7 +1829,11 @@ public class HmiScreenToHtmlConverterTests
             Width = 50,
             Height = 50,
             ShowScrollBars = true,
-            ZoomPercent = 125
+            ZoomPercent = 125,
+            OffsetLeft = 40,
+            OffsetTop = 20,
+            ScrollPositionLeft = 15,
+            ScrollPositionTop = 10
         });
         main.Layers.Add(layer);
 
@@ -1842,9 +1846,12 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-fit-window-to-screen data-zoom-percent=\"150\" id=\"FitWindow\"");
         StringAssert.Contains(html, "width: 600px;height: 300px;overflow: hidden;");
         StringAssert.Contains(html, "transform: scale(1.5, 1.5);");
-        StringAssert.Contains(html, "data-show-scrollbars data-zoom-percent=\"125\" id=\"ScrollWindow\"");
+        StringAssert.Contains(html, "data-show-scrollbars data-zoom-percent=\"125\" data-picture-offset-x=\"40\" data-picture-offset-y=\"20\" data-scroll-position-x=\"15\" data-scroll-position-y=\"10\" id=\"ScrollWindow\"");
         StringAssert.Contains(html, "overflow: auto;");
+        StringAssert.Contains(html, "width: 450px; height: 225px; overflow: hidden;");
+        StringAssert.Contains(html, "left: -50px; top: -25px;");
         StringAssert.Contains(html, "transform: scale(1.25, 1.25);");
+        StringAssert.Contains(html, "<script>(e=>{e.scrollLeft=15;e.scrollTop=10;})(document.currentScript.previousElementSibling)</script>");
     }
 
     [TestMethod]
