@@ -18,6 +18,7 @@ import {
   HmiAuditTrailViewKind,
   HmiBar,
   HmiClock,
+  HmiComboBox,
   HmiDataGridControl,
   HmiDataGridDataSourceKind,
   HmiDataGridSortDirection,
@@ -158,6 +159,38 @@ test("HTML converter renders list box states", async () => {
   assert.match(html, />Automatic<\/option>/);
   assert.match(html, /value="4" style="background-color: #0A141E;color: #F0F1F2;" selected="selected"/);
   assert.match(html, />Manual<\/option>/);
+});
+
+test("HTML converter renders combo box states", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+
+  const comboBox = new HmiComboBox();
+  comboBox.name = "ModeCombo";
+  comboBox.width = staticProperty(120);
+  comboBox.height = staticProperty(28);
+  comboBox.selectedIndex = staticProperty(1);
+  const automatic = new HmiState();
+  automatic.value = 10;
+  automatic.text = HmiMultilingualText.fromText("Automatic");
+  comboBox.states.push(automatic);
+  const manual = new HmiState();
+  manual.value = 20;
+  manual.text = HmiMultilingualText.fromText("Manual");
+  comboBox.states.push(manual);
+  const layer = new HmiLayer();
+  layer.name = "Layer 1";
+  layer.items.push(comboBox);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<select id="ModeCombo"/);
+  assert.match(html, /<option value="10">Automatic<\/option>/);
+  assert.match(html, /<option value="20" selected="selected">Manual<\/option>/);
+  assert.doesNotMatch(html, /HmiComboBox/);
 });
 
 test("HTML converter renders bar slider and scale previews", async () => {
