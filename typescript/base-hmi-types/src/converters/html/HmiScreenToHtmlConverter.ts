@@ -287,7 +287,7 @@ export class HmiScreenToHtmlConverter {
     } else if (item instanceof HmiIOField) {
       appendInput(html, item, context);
     } else if (item instanceof HmiSymbolicIOField) {
-      appendSymbolicInput(html, item, context);
+      await appendSymbolicInput(html, item, project, context, signal);
     } else if (item instanceof HmiTextBox || item instanceof HmiLabel || item instanceof HmiText) {
       appendTextBlock(html, item, item.text, context);
     } else if (item instanceof HmiGraphicView) {
@@ -1455,10 +1455,53 @@ function resolveScaleValue(scale: HmiScaleWidgetBase, minimum: number, maximum: 
   return Math.min(Math.max(value, minimum), maximum);
 }
 
-function appendSymbolicInput(html: string[], symbolicIoField: HmiSymbolicIOField, context: HmiHtmlConvertContext): void {
+async function appendSymbolicInput(
+  html: string[],
+  symbolicIoField: HmiSymbolicIOField,
+  project: IHmiProject | undefined,
+  context: HmiHtmlConvertContext,
+  signal?: AbortSignal,
+): Promise<void> {
   const selectedValue = getStaticValue(symbolicIoField.value);
   const selectedState = symbolicIoField.states.find(candidate => candidate.value === selectedValue)
     ?? symbolicIoField.states[0];
+  if (selectedState?.image !== undefined) {
+    const imageUri = await resolveImageUri(selectedState.image, project, signal);
+    let stateStyle = createStateStyle(selectedState) ?? undefined;
+    if (selectedState.imageBackgroundTransparent !== true && selectedState.imageBackgroundColor !== undefined)
+      stateStyle = appendCssDeclaration(stateStyle, `background-color: ${colorToCss(selectedState.imageBackgroundColor)};`);
+    stateStyle = appendCssDeclaration(stateStyle, "overflow: hidden;");
+
+    html.push("<div");
+    appendCommonAttributes(html, symbolicIoField, context, true, stateStyle);
+    appendAttribute(html, "class", "hmi-symbolic-image-state");
+    appendAttribute(html, "role", "status");
+    appendAttribute(html, "data-state-value", selectedState.value === undefined ? undefined : toCss(selectedState.value));
+    appendAttribute(html, "data-image-name", selectedState.imageName ?? selectedState.image.imageName);
+    appendAttribute(html, "data-image-blink", selectedState.imageBlink ? "true" : "false");
+    html.push(">");
+    if (imageUri?.trim()) {
+      html.push("<img");
+      appendAttribute(html, "src", imageUri);
+      appendAttribute(html, "alt", selectedState.name ?? selectedState.imageName ?? selectedState.image.imageName ?? symbolicIoField.name);
+      appendAttribute(
+        html,
+        "style",
+        selectedState.imageScaled === false
+          ? "width: auto; height: auto; max-width: 100%; max-height: 100%; display: block;"
+          : "width: 100%; height: 100%; object-fit: contain; display: block;",
+      );
+      html.push(">");
+    }
+    if (selectedState.text !== undefined) {
+      html.push("<span>");
+      appendMultilingualText(html, selectedState.text, context);
+      html.push("</span>");
+    }
+    html.push("</div>");
+    return;
+  }
+
   html.push("<select");
   appendCommonAttributes(html, symbolicIoField, context, true, createStateStyle(selectedState));
   html.push(">");

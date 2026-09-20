@@ -104,6 +104,40 @@ test("HTML conversion renders symbolic IO field states", async () => {
   assert.doesNotMatch(html, /HmiSymbolicIOField/);
 });
 
+test("HTML conversion renders a symbolic IO field image state", async () => {
+  const symbolicIoField = new HmiSymbolicIOField();
+  symbolicIoField.name = "PumpState";
+  symbolicIoField.width = staticProperty(80);
+  symbolicIoField.height = staticProperty(60);
+  symbolicIoField.value = staticProperty(7);
+  const state = new HmiState();
+  state.name = "Running";
+  state.value = 7;
+  state.imageName = "pump-running.svg";
+  state.image = {
+    imageName: "pump-running.svg",
+    uri: "data:image/svg+xml,%3Csvg%2F%3E",
+    kind: HmiImageSourceKind.Uri,
+  };
+  state.imageScaled = true;
+  state.imageBlink = true;
+  state.imageBackgroundColor = hmiColorFromArgb(255, 17, 34, 51);
+  symbolicIoField.states.push(state);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(symbolicIoField);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="PumpState"/);
+  assert.match(html, /class="hmi-symbolic-image-state"/);
+  assert.match(html, /data-state-value="7"/);
+  assert.match(html, /data-image-name="pump-running.svg"/);
+  assert.match(html, /data-image-blink="true"/);
+  assert.match(html, /background-color: #112233;/);
+  assert.match(html, /<img src="data:image\/svg\+xml,%3Csvg%2F%3E" alt="Running"/);
+  assert.doesNotMatch(html, /<select id="PumpState"/);
+});
+
 test("HTML conversion renders IO field preview and input settings", async () => {
   const field = new HmiIOField();
   field.name = "Speed";
