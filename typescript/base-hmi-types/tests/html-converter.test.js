@@ -338,10 +338,31 @@ test("HTML converter renders slider orientations", async () => {
 
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
 
-  assert.match(html, /writing-mode: vertical-lr; direction: rtl;" data-orientation="Up"/);
-  assert.match(html, /writing-mode: vertical-lr; direction: ltr;" data-orientation="Down"/);
-  assert.match(html, /id="LeftSlider"[^>]*direction: rtl;" data-orientation="Left"/);
-  assert.match(html, /id="RightSlider"[^>]*direction: ltr;" data-orientation="Right"/);
+  assert.match(html, /writing-mode: vertical-lr; direction: rtl;" data-hmi-slider="true" data-orientation="Up"/);
+  assert.match(html, /writing-mode: vertical-lr; direction: ltr;" data-hmi-slider="true" data-orientation="Down"/);
+  assert.match(html, /id="LeftSlider"[^>]*direction: rtl;" data-hmi-slider="true" data-orientation="Left"/);
+  assert.match(html, /id="RightSlider"[^>]*direction: ltr;" data-hmi-slider="true" data-orientation="Right"/);
+});
+
+test("HTML converter renders slider thumb color", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  const slider = new HmiSlider();
+  slider.name = "ColoredSlider";
+  slider.width = staticProperty(100);
+  slider.height = staticProperty(20);
+  slider.thumbBackgroundColor = staticProperty(hmiColorFromArgb(255, 12, 34, 56));
+  layer.items.push(slider);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /input\[data-hmi-slider\]\{accent-color:var\(--hmi-slider-thumb-background,auto\);\}/);
+  assert.match(html, /--hmi-slider-thumb-background: #0C2238;/);
+  assert.match(html, /data-hmi-slider="true"/);
 });
 
 test("HTML converter renders a clock preview", async () => {
