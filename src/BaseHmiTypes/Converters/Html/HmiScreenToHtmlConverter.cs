@@ -886,7 +886,7 @@ public class HmiScreenToHtmlConverter
 
     private static string GetFillGradientId(HmiShapeBase item)
     {
-        var source = item.Id ?? item.Name ?? "shape";
+        var source = item.Name ?? item.Id ?? "shape";
         var sanitized = new string(source.Select(character => char.IsLetterOrDigit(character) || character is '-' or '_' ? character : '-').ToArray());
         return "hmi-fill-" + (string.IsNullOrEmpty(sanitized) ? "shape" : sanitized);
     }
