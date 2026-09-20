@@ -77,6 +77,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   currentValueLegendDisplayTime?: HmiProperty<boolean>;
   /** Whether the interactive value bar is displayed on the chart. */
   displayValueBar?: HmiProperty<boolean>;
+  /** Whether the value bar uses its configured color and width. */
+  useGraphicValueBar?: HmiProperty<boolean>;
   valueBarColor?: HmiProperty<HmiColor>;
   valueBarWidth?: HmiProperty<number>;
   /** Whether the value bar extends into the time axis. */
