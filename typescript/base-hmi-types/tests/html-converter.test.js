@@ -1240,6 +1240,10 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.showVerticalScrollbar = staticProperty(false);
   alarms.tableBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x10, 0x20, 0x30));
   alarms.tableForegroundColor = staticProperty(hmiColorFromArgb(255, 0xe0, 0xd0, 0xc0));
+  alarms.tableHeaderBackgroundColor = staticProperty(hmiColorFromArgb(255, 0xe3, 0xe3, 0xe3));
+  alarms.tableHeaderForegroundColor = staticProperty(hmiColorFromArgb(255, 0x01, 0x02, 0x03));
+  alarms.tableHeaderBorderColor = staticProperty(hmiColorFromArgb(255, 0x66, 0x77, 0x88));
+  alarms.tableHeaderBorderWidth = staticProperty(3);
   alarms.selectionBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x70, 0x80, 0x90));
   alarms.selectionForegroundColor = staticProperty(hmiColorFromArgb(255, 0xf1, 0xf2, 0xf3));
   alarms.showStatusBar = staticProperty(true);
@@ -1319,6 +1323,9 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /overflow-x: auto;overflow-y: hidden;/);
   assert.match(html, /data-table-background-color="#102030"/);
   assert.match(html, /data-table-foreground-color="#E0D0C0"/);
+  assert.match(html, /data-table-header-background-color="#E3E3E3"/);
+  assert.match(html, /data-table-header-foreground-color="#010203"/);
+  assert.match(html, /data-table-header-border-color="#667788"/);
   assert.match(html, /data-selection-background-color="#708090"/);
   assert.match(html, /data-selection-foreground-color="#F1F2F3"/);
   assert.match(html, /data-show-status-bar="true"/);
@@ -1331,6 +1338,7 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /font-family: Arial;font-size: 9.75px;font-weight: 400;/);
   assert.match(html, /font-family: Siemens Sans;font-size: 10px;font-weight: 700;font-style: italic;text-decoration: underline line-through;/);
   assert.match(html, /background-color: #E3E3E3;color: #010203;border-bottom-color: #667788;/);
+  assert.match(html, /background-color: #E3E3E3;color: #010203;border-color: #667788;border-width: 3px;font-family: Siemens Sans;/);
   assert.match(html, /resize: both;/);
   assert.match(html, /cursor: move;/);
   assert.match(html, /aria-label="Close" disabled/);

@@ -2045,6 +2045,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-show-vertical-scrollbar", resolvePropertyPreview(alarmControl.showVerticalScrollbar));
   appendAttribute(html, "data-table-background-color", resolvePropertyPreview(alarmControl.tableBackgroundColor));
   appendAttribute(html, "data-table-foreground-color", resolvePropertyPreview(alarmControl.tableForegroundColor));
+  appendAttribute(html, "data-table-header-background-color", resolvePropertyPreview(alarmControl.tableHeaderBackgroundColor));
+  appendAttribute(html, "data-table-header-foreground-color", resolvePropertyPreview(alarmControl.tableHeaderForegroundColor));
+  appendAttribute(html, "data-table-header-border-color", resolvePropertyPreview(alarmControl.tableHeaderBorderColor));
   appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(alarmControl.selectionBackgroundColor));
   appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(alarmControl.selectionForegroundColor));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(alarmControl.showStatusBar));
@@ -2066,11 +2069,12 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   html.push("<table style=\"", createAlarmTableStyle(alarmControl), "\">");
   const gridCellStyle = createAlarmGridCellStyle(alarmControl);
   if (showHeader) {
+    const headerCellStyle = createAlarmTableHeaderCellStyle(alarmControl, gridCellStyle);
     html.push("<thead><tr>");
     if (visibleColumns.length === 0)
-      html.push("<th style=\"", gridCellStyle, "\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
+      html.push("<th style=\"", headerCellStyle, "\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
     for (const column of visibleColumns) {
-      html.push("<th style=\"", gridCellStyle, "overflow: hidden; text-overflow: ellipsis;\"");
+      html.push("<th style=\"", headerCellStyle, "overflow: hidden; text-overflow: ellipsis;\"");
       appendAttribute(html, "data-column-type", column.type);
       appendAttribute(html, "data-time-format", column.timeAndDateFormat);
       appendAttribute(html, "data-symbol", column.symbol);
@@ -3142,6 +3146,17 @@ function createAlarmGridCellStyle(alarmControl: HmiAlarmControl): string {
   const vertical = getStaticValue(alarmControl.showVerticalGridLines) !== false;
   const width = Math.max(0, getStaticValue(alarmControl.gridLineWidth) ?? 1);
   return `border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: ${horizontal ? toCss(width) : "0"}px ${vertical ? toCss(width) : "0"}px;`;
+}
+
+function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCellStyle: string): string {
+  const parts = [gridCellStyle];
+  appendColorStyle(parts, "background-color", alarmControl.tableHeaderBackgroundColor);
+  appendColorStyle(parts, "color", alarmControl.tableHeaderForegroundColor);
+  appendColorStyle(parts, "border-color", alarmControl.tableHeaderBorderColor);
+  const borderWidth = getStaticValue(alarmControl.tableHeaderBorderWidth);
+  if (borderWidth !== undefined) parts.push(`border-width: ${toCss(Math.max(0, borderWidth))}px;`);
+  if (alarmControl.headerFont !== undefined) appendFont(parts, alarmControl.headerFont);
+  return parts.join("");
 }
 
 function createTrendControlStyle(trendControl: HmiTrendControl): string {
