@@ -1358,6 +1358,7 @@ public class HmiScreenToHtmlConverterTests
             ShowVerticalScrollbar = false,
             TableBackgroundColor = HmiColor.FromArgb(255, 0x10, 0x20, 0x30),
             TableForegroundColor = HmiColor.FromArgb(255, 0xE0, 0xD0, 0xC0),
+            UseAlternatingRowColors = true,
             AlternatingRowBackgroundColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56),
             AlternatingRowForegroundColor = HmiColor.FromArgb(255, 0xAB, 0xCD, 0xEF),
             TableHeaderBackgroundColor = HmiColor.FromArgb(255, 0xE3, 0xE3, 0xE3),
@@ -1455,6 +1456,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "overflow-x: auto;overflow-y: hidden;");
         StringAssert.Contains(html, "data-table-background-color=\"#102030\"");
         StringAssert.Contains(html, "data-table-foreground-color=\"#E0D0C0\"");
+        StringAssert.Contains(html, "data-use-alternating-row-colors=\"true\"");
         StringAssert.Contains(html, "data-alternating-row-background-color=\"#123456\"");
         StringAssert.Contains(html, "data-alternating-row-foreground-color=\"#ABCDEF\"");
         StringAssert.Contains(html, "data-table-header-background-color=\"#E3E3E3\"");
@@ -1467,8 +1469,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-status-bar-background-color=\"#213243\"");
         StringAssert.Contains(html, "data-status-bar-foreground-color=\"#FEDCBA\"");
         StringAssert.Contains(html, "--hmi-grid-line-color: #445566;");
-        StringAssert.Contains(html, "class=\"hmi-alarm-table\" style=\"width: 100%; border-collapse: collapse; table-layout: fixed;background-color: #102030;color: #E0D0C0;--hmi-alarm-alternating-row-background: #123456;--hmi-alarm-alternating-row-foreground: #ABCDEF;");
-        StringAssert.Contains(html, ".hmi-alarm-table tbody tr:nth-child(even)>td{background-color:var(--hmi-alarm-alternating-row-background,inherit);color:var(--hmi-alarm-alternating-row-foreground,inherit);");
+        StringAssert.Contains(html, "class=\"hmi-alarm-table hmi-alarm-table--alternating\" style=\"width: 100%; border-collapse: collapse; table-layout: fixed;background-color: #102030;color: #E0D0C0;--hmi-alarm-alternating-row-background: #123456;--hmi-alarm-alternating-row-foreground: #ABCDEF;");
+        StringAssert.Contains(html, ".hmi-alarm-table--alternating tbody tr:nth-child(even)>td{background-color:var(--hmi-alarm-alternating-row-background,inherit);color:var(--hmi-alarm-alternating-row-foreground,inherit);");
         StringAssert.Contains(html, "border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: 0px 2px;");
         StringAssert.Contains(html, "background-color: #708090;color: #F1F2F3;");
         StringAssert.Contains(html, "font-family: Arial;font-size: 9.75px;font-weight: 400;");
@@ -1495,6 +1497,28 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-show-alarm-state=\"true\"");
         StringAssert.Contains(html, "data-show-alarm-time=\"true\" data-time-format=\"HH:mm\"");
         StringAssert.Contains(html, ">Alarm data not loaded</div>");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_DoesNotRenderDisabledAlternatingAlarmRows()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
+        layer.Items.Add(new HmiAlarmControl
+        {
+            Name = "Alarms",
+            Width = 300,
+            Height = 160,
+            UseAlternatingRowColors = false,
+            AlternatingRowBackgroundColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-use-alternating-row-colors=\"false\"");
+        StringAssert.Contains(html, "class=\"hmi-alarm-table\"");
+        Assert.IsFalse(html.Contains("class=\"hmi-alarm-table hmi-alarm-table--alternating\"", StringComparison.Ordinal));
     }
 
     [TestMethod]
