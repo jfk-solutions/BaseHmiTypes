@@ -392,6 +392,30 @@ test("HTML converter renders direction-aware slider track colors", async () => {
   assert.match(html, /::-moz-range-track/);
 });
 
+test("HTML converter renders slider stop colors", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  const slider = new HmiSlider();
+  slider.name = "StoppedSlider";
+  slider.width = staticProperty(100);
+  slider.height = staticProperty(20);
+  slider.orientation = staticProperty(3);
+  slider.trackHighBackgroundColor = staticProperty(hmiColorFromArgb(255, 255, 128, 128));
+  slider.trackLowBackgroundColor = staticProperty(hmiColorFromArgb(255, 128, 128, 255));
+  slider.highStopColor = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+  slider.lowStopColor = staticProperty(hmiColorFromArgb(255, 0, 0, 255));
+  layer.items.push(slider);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html,
+    /linear-gradient\(to left, #FF0000 0 4px, #FF8080 4px, #8080FF calc\(100% - 4px\), #0000FF calc\(100% - 4px\) 100%\)/);
+});
+
 test("HTML converter renders a clock preview", async () => {
   const screen = new HmiScreen();
   screen.id = "main";

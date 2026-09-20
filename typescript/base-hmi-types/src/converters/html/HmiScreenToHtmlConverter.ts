@@ -1320,7 +1320,9 @@ function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvert
 function getSliderTrackStyle(slider: HmiSlider, direction: HmiFillDirection): string {
   let high = getStaticValue(slider.trackHighBackgroundColor);
   let low = getStaticValue(slider.trackLowBackgroundColor);
-  if (high === undefined && low === undefined)
+  let highStop = getStaticValue(slider.highStopColor);
+  let lowStop = getStaticValue(slider.lowStopColor);
+  if (high === undefined && low === undefined && highStop === undefined && lowStop === undefined)
     return "";
   high ??= low;
   low ??= high;
@@ -1331,6 +1333,15 @@ function getSliderTrackStyle(slider: HmiSlider, direction: HmiFillDirection): st
       : direction === HmiFillDirection.Left
         ? "to right"
         : "to left";
+  if (highStop !== undefined || lowStop !== undefined) {
+    highStop ??= high ?? lowStop;
+    lowStop ??= low ?? highStop;
+    const highBackground = high === undefined ? "transparent" : colorToCss(high);
+    const lowBackground = low === undefined ? "transparent" : colorToCss(low);
+    return `--hmi-slider-track-background: linear-gradient(${gradientDirection}, ` +
+      `${colorToCss(highStop!)} 0 4px, ${highBackground} 4px, ` +
+      `${lowBackground} calc(100% - 4px), ${colorToCss(lowStop!)} calc(100% - 4px) 100%);`;
+  }
   return `--hmi-slider-track-background: linear-gradient(${gradientDirection}, ${colorToCss(high!)}, ${colorToCss(low!)});`;
 }
 
