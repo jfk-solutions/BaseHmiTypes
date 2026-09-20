@@ -26,6 +26,7 @@ import {
   HmiDataGridSortDirection,
   HmiDotNetControlContainer,
   HmiFillDirection,
+  HmiFont,
   HmiImage,
   HmiLayer,
   HmiListBox,
@@ -428,6 +429,32 @@ test("HTML converter renders alarm indicator text", async () => {
 
   assert.match(html, /data-text="&lt;Alarm&gt;"/);
   assert.match(html, />&lt;Alarm&gt;<\/div>/);
+});
+
+test("HTML converter renders alarm indicator font", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const indicator = new HmiAlarmIndicator();
+  indicator.name = "GroupDisplay";
+  indicator.width = staticProperty(80);
+  indicator.height = staticProperty(30);
+  indicator.text = staticProperty("Alarm");
+  indicator.font = new HmiFont();
+  indicator.font.name = staticProperty("Arial");
+  indicator.font.size = staticProperty(12);
+  indicator.font.bold = staticProperty(true);
+  const layer = new HmiLayer();
+  layer.name = "Layer 1";
+  layer.items.push(indicator);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /font-family: Arial;/);
+  assert.match(html, /font-size: 12px;/);
+  assert.match(html, /font-weight: bold;/);
 });
 
 test("HTML converter renders bar slider and scale previews", async () => {

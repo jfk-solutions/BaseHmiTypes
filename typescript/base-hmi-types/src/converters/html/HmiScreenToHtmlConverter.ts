@@ -3296,6 +3296,9 @@ function getFont(item: HmiScreenItemBase): HmiFont | undefined {
   if (item instanceof HmiText) {
     return item.font;
   }
+  if (item instanceof HmiAlarmIndicator) {
+    return item.font;
+  }
   if (item instanceof HmiWidgetBase) {
     return item.font;
   }
