@@ -795,6 +795,26 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersEmptyCustomWidgetPreview()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiCustomWidgetContainer
+        {
+            Name = "External application",
+            Width = 200,
+            Height = 80
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"External application\"");
+        StringAssert.Contains(html, "data-hmi-custom-widget-type=\"HmiCustomWidgetContainer\"");
+        StringAssert.Contains(html, "<span aria-hidden=\"true\">External application</span>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersInertRadarChartPreview()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
