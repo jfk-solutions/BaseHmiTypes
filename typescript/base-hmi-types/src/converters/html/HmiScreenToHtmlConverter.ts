@@ -20,7 +20,7 @@ import { HmiLineStyle } from "../../screens/base/HmiLineStyle.js";
 import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
-import { getStaticValue, getStaticValueOrDefault, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
+import { getStaticValue, getStaticValueOrDefault, HmiBlinkRate, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
 import { HmiScreenBase } from "../../screens/base/HmiScreenBase.js";
 import { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
 import { HmiSymbolContainer } from "../../screens/base/HmiSymbolContainer.js";
@@ -1490,6 +1490,16 @@ async function appendSymbolicInput(
     ?? symbolicIoField.states[0];
   if (selectedState?.image !== undefined) {
     const imageUri = await resolveImageUri(selectedState.image, project, signal);
+    const alternateImageUri = selectedState.alternateImage === undefined
+      ? undefined
+      : await resolveImageUri(selectedState.alternateImage, project, signal);
+    const blinkAlternateImage = selectedState.imageBlink && Boolean(alternateImageUri?.trim());
+    const imageLayoutStyle = selectedState.imageScaled === false
+      ? "width: auto; height: auto; max-width: 100%; max-height: 100%; display: block;"
+      : "width: 100%; height: 100%; object-fit: contain; display: block;";
+    const imageStyle = blinkAlternateImage
+      ? appendCssDeclaration(imageLayoutStyle, `animation: hmi-symbolic-base-flash ${getBlinkDuration(selectedState.imageBlinkRate)}s steps(1, end) infinite;`)
+      : imageLayoutStyle;
     let stateStyle = createStateStyle(selectedState) ?? undefined;
     if (selectedState.imageBackgroundTransparent !== true && selectedState.imageBackgroundColor !== undefined)
       stateStyle = appendCssDeclaration(stateStyle, `background-color: ${colorToCss(selectedState.imageBackgroundColor)};`);
@@ -1502,18 +1512,25 @@ async function appendSymbolicInput(
     appendAttribute(html, "data-state-value", selectedState.value === undefined ? undefined : toCss(selectedState.value));
     appendAttribute(html, "data-image-name", selectedState.imageName ?? selectedState.image.imageName);
     appendAttribute(html, "data-image-blink", selectedState.imageBlink ? "true" : "false");
+    appendAttribute(html, "data-alternate-image-name", selectedState.alternateImageName ?? selectedState.alternateImage?.imageName);
+    appendAttribute(html, "data-image-blink-rate", selectedState.imageBlinkRate);
     html.push(">");
     if (imageUri?.trim()) {
       html.push("<img");
       appendAttribute(html, "src", imageUri);
       appendAttribute(html, "alt", selectedState.name ?? selectedState.imageName ?? selectedState.image.imageName ?? symbolicIoField.name);
-      appendAttribute(
-        html,
-        "style",
-        selectedState.imageScaled === false
-          ? "width: auto; height: auto; max-width: 100%; max-height: 100%; display: block;"
-          : "width: 100%; height: 100%; object-fit: contain; display: block;",
-      );
+      appendAttribute(html, "class", "hmi-symbolic-image-base");
+      appendAttribute(html, "style", imageStyle);
+      html.push(">");
+    }
+    if (blinkAlternateImage) {
+      let alternateStyle = appendCssDeclaration(imageLayoutStyle, "position: absolute; inset: 0;");
+      alternateStyle = appendCssDeclaration(alternateStyle, `animation: hmi-symbolic-alternate-flash ${getBlinkDuration(selectedState.imageBlinkRate)}s steps(1, end) infinite;`);
+      html.push("<img");
+      appendAttribute(html, "src", alternateImageUri);
+      appendAttribute(html, "alt", selectedState.name ?? selectedState.alternateImageName ?? selectedState.alternateImage?.imageName ?? symbolicIoField.name);
+      appendAttribute(html, "class", "hmi-symbolic-image-alternate");
+      appendAttribute(html, "style", alternateStyle);
       html.push(">");
     }
     if (selectedState.text !== undefined) {
@@ -1540,6 +1557,17 @@ async function appendSymbolicInput(
     html.push("</option>");
   }
   html.push("</select>");
+}
+
+function getBlinkDuration(rate: HmiBlinkRate | undefined): string {
+  switch (rate) {
+    case HmiBlinkRate.Slow:
+      return "2";
+    case HmiBlinkRate.Fast:
+      return "0.5";
+    default:
+      return "1";
+  }
 }
 
 async function appendToggleSwitch(

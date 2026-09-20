@@ -1,5 +1,5 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
-import { HmiColor, HmiFillPattern, HmiFont, HmiGradientDirection, HmiHorizontalAlignment, HmiImageSource, HmiVerticalAlignment } from "../base.js";
+import { HmiBlinkRate, HmiColor, HmiFillPattern, HmiFont, HmiGradientDirection, HmiHorizontalAlignment, HmiImageSource, HmiVerticalAlignment } from "../base.js";
 import { HmiDisplayParameterSource } from "./HmiDisplayParameterSource.js";
 import { HmiStateAccess } from "./HmiStateAccess.js";
 
@@ -25,6 +25,8 @@ export class HmiState {
   captionUsesDisplayName?: boolean;
   imageName?: string;
   image?: HmiImageSource;
+  alternateImageName?: string;
+  alternateImage?: HmiImageSource;
   imageScaled?: boolean;
   imageColor?: HmiColor;
   imageBackgroundColor?: HmiColor;
@@ -49,4 +51,5 @@ export class HmiState {
   captionBlink = false;
   captionBackgroundTransparent?: boolean;
   imageBlink = false;
+  imageBlinkRate?: HmiBlinkRate;
 }
