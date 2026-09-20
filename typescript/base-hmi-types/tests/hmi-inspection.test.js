@@ -507,6 +507,22 @@ test("HTML conversion renders button 3D borders", async () => {
   assert.match(html, /border-color: #EEEEEE #404040 #404040 #EEEEEE;/);
 });
 
+test("HTML conversion renders button caption colors", async () => {
+  const button = new HmiButton();
+  button.name = "ColoredCaption";
+  button.width = staticProperty(100);
+  button.height = staticProperty(30);
+  button.text = staticProperty(HmiMultilingualText.fromText("Start"));
+  button.captionColor = staticProperty(hmiColorFromArgb(255, 12, 34, 56));
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(button);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<button id="ColoredCaption"/);
+  assert.match(html, /color: #0C2238;/);
+});
+
 test("HTML conversion renders static disabled button appearance", async () => {
   const disabled = new HmiButton();
   disabled.name = "Disabled";
