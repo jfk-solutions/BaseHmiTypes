@@ -1,6 +1,22 @@
 const trendControlProperties = {
   controlName: String,
   typeName: String,
+  chartTitle: String,
+  pens: String,
+  displayChartTitle: String,
+  showToolbar: String,
+  displayPenIcons: String,
+  displayScrollMechanism: String,
+  chartLiveMode: String,
+  autoScale: String,
+  xAxisScaleVisible: String,
+  xAxisDateVisible: String,
+  xAxisGridVisible: String,
+  yAxisScaleVisible: String,
+  yAxisGridVisible: String,
+  minimumValue: String,
+  maximumValue: String,
+  yAxisDecimalPlaces: String,
 };
 
 type TrendControlPropertyName = keyof typeof trendControlProperties;
@@ -8,6 +24,19 @@ type TimeLabel = {
   primary: string;
   secondary: string;
 };
+
+interface TrendPen {
+  number: number;
+  name?: string;
+  color?: string;
+  visible?: boolean;
+  width?: number;
+  style?: number;
+  marker?: string;
+  minimum?: number;
+  maximum?: number;
+  unit?: string;
+}
 
 export class HmiTrendControl extends HTMLElement {
   static get observedAttributes(): string[] {
@@ -41,8 +70,10 @@ export class HmiTrendControl extends HTMLElement {
       return;
 
     const propertyName = fromKebabCase(name) as TrendControlPropertyName;
-    if (trendControlProperties[propertyName] === String) {
+    if (propertyName === "controlName" || propertyName === "typeName") {
       (this as unknown as Record<string, string>)[propertyName] = newValue ?? "";
+    } else if (trendControlProperties[propertyName] === String) {
+      this.render();
     }
   }
 
@@ -63,8 +94,29 @@ export class HmiTrendControl extends HTMLElement {
     const borderColor = normalizeTransparent(computed.borderTopColor, "#a8acb2");
     const rawBorderWidth = parseFloat(computed.borderTopWidth);
     const borderWidth = Number.isFinite(rawBorderWidth) ? rawBorderWidth : 0;
+    const pens = parsePens(this.getAttribute("pens"));
+    const visiblePens = pens.filter(pen => pen.visible !== false);
+    const firstPen = visiblePens[0] ?? pens[0];
+    const minimumValue = readNumberAttribute(this, "minimum-value", firstPen?.minimum ?? 0);
+    const maximumCandidate = readNumberAttribute(this, "maximum-value", firstPen?.maximum ?? 100);
+    const maximumValue = maximumCandidate === minimumValue ? minimumValue + 1 : maximumCandidate;
+    const decimalPlaces = clamp(Math.trunc(readNumberAttribute(this, "y-axis-decimal-places", 0)), 0, 12);
+    const displayChartTitle = readBooleanAttribute(this, "display-chart-title", false);
+    const showToolbar = readBooleanAttribute(this, "show-toolbar", true);
+    const displayPenIcons = readBooleanAttribute(this, "display-pen-icons", true);
+    const displayScrollMechanism = readBooleanAttribute(this, "display-scroll-mechanism", false);
+    const chartLiveMode = readBooleanAttribute(this, "chart-live-mode", false);
+    const autoScale = readBooleanAttribute(this, "auto-scale", false);
+    const xAxisVisible = readBooleanAttribute(this, "x-axis-scale-visible", true);
+    const xAxisDateVisible = readBooleanAttribute(this, "x-axis-date-visible", true);
+    const xAxisGridVisible = readBooleanAttribute(this, "x-axis-grid-visible", true);
+    const yAxisVisible = readBooleanAttribute(this, "y-axis-scale-visible", true);
+    const yAxisGridVisible = readBooleanAttribute(this, "y-axis-grid-visible", true);
+    const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
     const now = new Date();
-    const labels = createTimeLabels(now);
+    const labels = createTimeLabels(now, xAxisDateVisible);
+    const plotTop = displayChartTitle ? (showToolbar ? 29 : 15) : (showToolbar ? 23 : 7);
+    const plotBottom = displayScrollMechanism ? 22 : 16;
 
     this.root.innerHTML = `
       <style>
@@ -92,84 +144,66 @@ export class HmiTrendControl extends HTMLElement {
           ${borderWidth > 0 ? `border: ${toCss(borderWidth)}px solid ${escapeCss(borderColor)};` : ""}
         }
 
+        .title {
+          position: absolute;
+          top: 2%;
+          left: 4%;
+          right: 4%;
+          color: ${escapeCss(foregroundColor)};
+          font-size: clamp(12px, 2.5vmin, 22px);
+          font-weight: 600;
+          text-align: center;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
         .toolbar {
           position: absolute;
-          top: 4%;
+          top: ${displayChartTitle ? 11 : 3}%;
+          left: 10%;
           right: 2.5%;
-          width: min(50%, 700px);
-          min-width: 240px;
-          height: 13%;
-          color: #20242a;
-          display: grid;
-          grid-template-rows: auto 1fr;
-          gap: 4px;
-          font-size: clamp(11px, 2.1vmin, 18px);
-          line-height: 1;
-        }
-
-        .caption {
-          color: #8b8f97;
-          font-size: 0.86em;
-        }
-
-        .selector {
-          min-height: 0;
-          display: grid;
-          grid-template-columns: 64px minmax(0, 1fr) 58px;
+          min-height: 26px;
+          display: flex;
           align-items: center;
+          gap: 6px;
+          overflow: hidden;
+          color: #20242a;
+          font-size: clamp(10px, 1.8vmin, 16px);
+        }
+
+        .pen-chip {
+          min-width: 0;
+          max-width: 220px;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 3px 7px;
           border: 1px solid #d8d9dc;
-          border-radius: 6px;
+          border-radius: 4px;
           background: linear-gradient(#ffffff, #f4f4f5);
-          box-shadow:
-            inset 0 1px 2px rgba(0, 0, 0, 0.08),
-            0 1px 2px rgba(0, 0, 0, 0.06);
           overflow: hidden;
         }
 
-        .legend {
-          display: grid;
-          place-items: center;
-          height: 100%;
+        .pen-icon {
+          width: 30px;
+          height: 14px;
+          flex: 0 0 30px;
         }
 
-        .legend svg {
-          width: 44px;
-          height: 24px;
-        }
-
-        .trend-name {
+        .pen-name {
           min-width: 0;
           overflow: hidden;
           white-space: nowrap;
           text-overflow: ellipsis;
-          color: #15181d;
-          font-weight: 600;
-          text-align: center;
-        }
-
-        .drop {
-          height: 100%;
-          display: grid;
-          place-items: center;
-          background: linear-gradient(90deg, #d9dadd, #a8aaae);
-          border-left: 1px solid #c7c9cc;
-        }
-
-        .drop::before {
-          content: "";
-          width: 0;
-          height: 0;
-          border-left: 10px solid transparent;
-          border-right: 10px solid transparent;
-          border-top: 12px solid #060606;
         }
 
         .plot {
           position: absolute;
           left: 10%;
           right: 2.5%;
-          top: 29%;
-          bottom: 18%;
+          top: ${plotTop}%;
+          bottom: ${plotBottom}%;
         }
 
         .grid {
@@ -201,67 +235,75 @@ export class HmiTrendControl extends HTMLElement {
           min-width: 5.2em;
         }
 
-        .info {
+        .status {
           position: absolute;
-          left: 0;
-          top: 67%;
-          transform: translateY(-50%);
-          max-width: 44%;
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-          background: rgba(255, 245, 117, 0.72);
-          color: #101010;
-          padding: 0 2px;
-          font-size: clamp(11px, 2.15vmin, 20px);
-          line-height: 1.15;
+          top: 3%;
+          right: 2.5%;
+          color: #4f5967;
+          font-size: clamp(9px, 1.5vmin, 13px);
+        }
+
+        .scrollbar {
+          position: absolute;
+          left: 10%;
+          right: 2.5%;
+          bottom: 4%;
+          height: 8px;
+          border-radius: 4px;
+          background: #d6d9dd;
+          box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+        }
+
+        .scroll-thumb {
+          width: 34%;
+          height: 100%;
+          margin-left: ${chartLiveMode ? 66 : 33}%;
+          border-radius: inherit;
+          background: #858d98;
         }
       </style>
       <div class="frame">
-        <div class="toolbar">
-          <div class="caption">Min/max threshold:</div>
-          <div class="selector">
-            <div class="legend">
-              <svg viewBox="0 0 44 24" aria-hidden="true">
-                <line x1="2" y1="12" x2="42" y2="12" stroke="#0c66b0" stroke-width="4"></line>
-                <circle cx="22" cy="12" r="8" fill="#0c66b0"></circle>
-              </svg>
-            </div>
-            <div class="trend-name">Robot Left Position - X Axis</div>
-            <div class="drop"></div>
-          </div>
-        </div>
+        ${displayChartTitle ? `<div class="title">${escapeHtml(chartTitle)}</div>` : ""}
+        ${showToolbar ? `<div class="toolbar">${renderPenLegend(visiblePens, displayPenIcons)}</div>` : ""}
+        <div class="status">${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}</div>
         <div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            ${renderGrid()}
-            <line x1="0" y1="100" x2="100" y2="100" stroke="#444850" stroke-width="0.55"></line>
-            <line x1="0" y1="0" x2="0" y2="100" stroke="#444850" stroke-width="0.55"></line>
+            ${renderGrid(xAxisGridVisible, yAxisGridVisible)}
+            ${xAxisVisible ? `<line x1="0" y1="100" x2="100" y2="100" stroke="#444850" stroke-width="0.55"></line>` : ""}
+            ${yAxisVisible ? `<line x1="0" y1="0" x2="0" y2="100" stroke="#444850" stroke-width="0.55"></line>` : ""}
+            ${renderPens(visiblePens)}
           </svg>
-          ${renderYLabels()}
-          ${renderXLabels(labels)}
+          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces) : ""}
+          ${xAxisVisible ? renderXLabels(labels) : ""}
         </div>
+        ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"></div></div>` : ""}
       </div>`;
   }
 }
 
-function renderGrid(): string {
+function renderGrid(verticalVisible: boolean, horizontalVisible: boolean): string {
   const lines: string[] = [];
-  for (let index = 0; index <= 10; index++) {
-    const y = index * 10;
-    lines.push(`<line x1="0" y1="${y}" x2="100" y2="${y}" stroke="#dedede" stroke-width="0.32"></line>`);
+  if (horizontalVisible) {
+    for (let index = 0; index <= 10; index++) {
+      const y = index * 10;
+      lines.push(`<line x1="0" y1="${y}" x2="100" y2="${y}" stroke="#dedede" stroke-width="0.32"></line>`);
+    }
   }
-  for (let index = 0; index <= 7; index++) {
-    const x = (index / 7) * 100;
-    lines.push(`<line x1="${toCss(x)}" y1="0" x2="${toCss(x)}" y2="100" stroke="#dedede" stroke-width="0.32"></line>`);
+  if (verticalVisible) {
+    for (let index = 0; index <= 7; index++) {
+      const x = (index / 7) * 100;
+      lines.push(`<line x1="${toCss(x)}" y1="0" x2="${toCss(x)}" y2="100" stroke="#dedede" stroke-width="0.32"></line>`);
+    }
   }
   return lines.join("");
 }
 
-function renderYLabels(): string {
+function renderYLabels(minimum: number, maximum: number, decimalPlaces: number): string {
   const labels: string[] = [];
-  for (let value = 100; value >= 0; value -= 10) {
-    const y = 100 - value;
-    labels.push(`<span class="axis-label y-label" style="top:${toCss(y)}%">${value}</span>`);
+  for (let index = 0; index <= 5; index++) {
+    const ratio = index / 5;
+    const value = maximum - (maximum - minimum) * ratio;
+    labels.push(`<span class="axis-label y-label" style="top:${toCss(ratio * 100)}%">${escapeHtml(value.toFixed(decimalPlaces))}</span>`);
   }
   return labels.join("");
 }
@@ -275,16 +317,16 @@ function renderXLabels(values: TimeLabel[]): string {
     .join("");
 }
 
-function createTimeLabels(now: Date): TimeLabel[] {
+function createTimeLabels(now: Date, includeDate: boolean): TimeLabel[] {
   const labels: TimeLabel[] = [];
   for (let index = 0; index < 8; index++) {
     const date = new Date(now.getTime() + index * 9000);
-    labels.push(formatTimeLabel(date, index === 0));
+    labels.push(formatTimeLabel(date, includeDate));
   }
   return labels;
 }
 
-function formatTimeLabel(date: Date, includeYear: boolean): TimeLabel {
+function formatTimeLabel(date: Date, includeDate: boolean): TimeLabel {
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const year = date.getFullYear();
@@ -294,9 +336,113 @@ function formatTimeLabel(date: Date, includeYear: boolean): TimeLabel {
   const hour12 = hours % 12 === 0 ? 12 : hours % 12;
   const suffix = hours >= 12 ? "PM" : "AM";
   return {
-    primary: includeYear ? year.toString() : `${month}/${day}/${year}`,
+    primary: includeDate ? `${month}/${day}/${year}` : "",
     secondary: `${hour12}:${minutes}:${seconds}${suffix}`,
   };
+}
+
+function renderPenLegend(pens: readonly TrendPen[], displayIcons: boolean): string {
+  if (pens.length === 0) return `<div class="pen-chip"><span class="pen-name">No configured pens</span></div>`;
+  return pens.map((pen, index) => {
+    const color = normalizePenColor(pen.color, index);
+    const label = pen.name || `Pen ${pen.number || index + 1}`;
+    const unit = pen.unit ? ` (${pen.unit})` : "";
+    const marker = pen.marker === undefined || pen.marker === "0" ? "" : renderMarker(pen, color, 15, 7, 3);
+    const icon = displayIcons
+      ? `<svg class="pen-icon" viewBox="0 0 30 14" aria-hidden="true"><line x1="1" y1="7" x2="29" y2="7" stroke="${escapeHtml(color)}" stroke-width="${toCss(clamp(pen.width ?? 2, 1, 8))}"${dashAttribute(pen.style)}></line>${marker}</svg>`
+      : "";
+    return `<div class="pen-chip">${icon}<span class="pen-name">${escapeHtml(label + unit)}</span></div>`;
+  }).join("");
+}
+
+function renderPens(pens: readonly TrendPen[]): string {
+  return pens.map((pen, index) => {
+    const color = normalizePenColor(pen.color, index);
+    const width = clamp(pen.width ?? 2, 1, 8);
+    const amplitude = Math.max(6, 24 - (index % 8) * 2);
+    const points: string[] = [];
+    for (let point = 0; point <= 20; point++) {
+      const x = point * 5;
+      const y = 50 - Math.sin((point + index * 3) * 0.55) * amplitude + (index % 8) * 3;
+      points.push(`${toCss(x)},${toCss(clamp(y, 3, 97))}`);
+    }
+    const markers = pen.marker === undefined || pen.marker === "0"
+      ? ""
+      : points.filter((_point, pointIndex) => pointIndex % 5 === 0).map(point => {
+        const [x, y] = point.split(",").map(Number);
+        return renderMarker(pen, color, x ?? 0, y ?? 0, clamp(width + 1, 2, 5));
+      }).join("");
+    return `<polyline points="${points.join(" ")}" fill="none" stroke="${escapeHtml(color)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></polyline>${markers}`;
+  }).join("");
+}
+
+function renderMarker(pen: TrendPen, color: string, x: number, y: number, size: number): string {
+  const marker = Number(pen.marker ?? 0);
+  if (marker === 2 || marker === 5)
+    return `<circle cx="${toCss(x)}" cy="${toCss(y)}" r="${toCss(size)}" fill="${escapeHtml(color)}"></circle>`;
+  return `<rect x="${toCss(x - size)}" y="${toCss(y - size)}" width="${toCss(size * 2)}" height="${toCss(size * 2)}" fill="${escapeHtml(color)}"></rect>`;
+}
+
+function dashAttribute(style: number | undefined): string {
+  switch (style) {
+    case 1: return ` stroke-dasharray="6 4"`;
+    case 2: return ` stroke-dasharray="2 3"`;
+    case 3: return ` stroke-dasharray="6 3 2 3"`;
+    case 4: return ` stroke-dasharray="6 3 2 3 2 3"`;
+    default: return "";
+  }
+}
+
+function parsePens(value: string | null): TrendPen[] {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap((entry, index) => {
+      if (entry === null || typeof entry !== "object") return [];
+      const source = entry as Record<string, unknown>;
+      const pen: TrendPen = { number: finiteNumber(source.number, index + 1) };
+      if (typeof source.name === "string") pen.name = source.name;
+      if (typeof source.color === "string") pen.color = source.color;
+      if (typeof source.visible === "boolean") pen.visible = source.visible;
+      if (typeof source.width === "number" && Number.isFinite(source.width)) pen.width = source.width;
+      if (typeof source.style === "number" && Number.isFinite(source.style)) pen.style = source.style;
+      if (typeof source.marker === "string") pen.marker = source.marker;
+      if (typeof source.minimum === "number" && Number.isFinite(source.minimum)) pen.minimum = source.minimum;
+      if (typeof source.maximum === "number" && Number.isFinite(source.maximum)) pen.maximum = source.maximum;
+      if (typeof source.unit === "string") pen.unit = source.unit;
+      return [pen];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function readBooleanAttribute(element: Element, name: string, fallback: boolean): boolean {
+  const value = element.getAttribute(name);
+  if (value === null) return fallback;
+  if (value.toLowerCase() === "false" || value === "0") return false;
+  if (value.toLowerCase() === "true" || value === "1" || value === "") return true;
+  return fallback;
+}
+
+function readNumberAttribute(element: Element, name: string, fallback: number): number {
+  const value = Number(element.getAttribute(name));
+  return element.hasAttribute(name) && Number.isFinite(value) ? value : fallback;
+}
+
+function finiteNumber(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizePenColor(value: string | undefined, index: number): string {
+  const fallback = ["#0C66B0", "#D04A35", "#299447", "#8A55B4", "#D18B17"][index % 5]!;
+  if (!value) return fallback;
+  return /^(?:#[0-9a-f]{3}|#[0-9a-f]{4}|#[0-9a-f]{6}|#[0-9a-f]{8}|rgba?\([\d.,%\s]+\))$/iu.test(value) ? value : fallback;
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value));
 }
 
 function normalizeTransparent(value: string, fallback: string): string {
