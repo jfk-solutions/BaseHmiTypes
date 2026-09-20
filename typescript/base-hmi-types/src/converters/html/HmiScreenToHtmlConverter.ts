@@ -2739,6 +2739,7 @@ function appendAlarmIndicator(
   const numberOfAlarms = getStaticValue(indicator.numberOfAlarms);
   const text = getStaticValue(indicator.text);
   const isActive = alarmState !== undefined && alarmState !== noAlarmState;
+  const isFlashingRequired = getStaticValue(indicator.isFlashingRequired) === true;
   const content = numberOfAlarms !== undefined && numberOfAlarms > 0
     ? numberOfAlarms.toString()
     : text
@@ -2747,8 +2748,18 @@ function appendAlarmIndicator(
 
   let style = "display: flex; align-items: center; justify-content: center; overflow: hidden;";
   const flashingColor = getStaticValue(indicator.flashingColor);
-  if (isActive && flashingColor !== undefined)
-    style += `box-shadow: inset 0 0 0 0.35em ${colorToCss(flashingColor)};`;
+  if (isActive && flashingColor !== undefined) {
+    if (isFlashingRequired) {
+      const backgroundColor = getStaticValue(indicator.backgroundColor);
+      const flashingRate = getStaticValue(indicator.flashingRate) ?? 1000;
+      const duration = flashingRate > 0 ? flashingRate / 1000 : 1;
+      style += `--hmi-background-color-off: ${backgroundColor === undefined ? "transparent" : colorToCss(backgroundColor)};`;
+      style += `--hmi-background-color-on: ${colorToCss(flashingColor)};`;
+      style += `animation: hmi-background-color-flash ${toCss(duration)}s steps(1, end) infinite;`;
+    } else {
+      style += `box-shadow: inset 0 0 0 0.35em ${colorToCss(flashingColor)};`;
+    }
+  }
 
   html.push("<div");
   appendCommonAttributes(html, indicator, context, true, style);

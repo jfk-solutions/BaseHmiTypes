@@ -400,6 +400,9 @@ test("HTML converter renders alarm indicator state", async () => {
   assert.match(html, /data-flashing-required="true"/);
   assert.match(html, /data-flashing-color="#FF0000"/);
   assert.match(html, /data-flashing-rate="500"/);
+  assert.match(html, /--hmi-background-color-off: transparent;/);
+  assert.match(html, /--hmi-background-color-on: #FF0000;/);
+  assert.match(html, /animation: hmi-background-color-flash 0.5s steps\(1, end\) infinite;/);
   assert.match(html, /data-alarm-state="5"/);
   assert.match(html, /data-no-alarm-state="0"/);
   assert.match(html, /data-number-of-alarms="2"/);
