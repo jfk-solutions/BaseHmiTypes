@@ -65,11 +65,14 @@ public class HmiScreenToHtmlConverter
             if (includeRuntime)
                 AppendRuntimeModule(html);
 
+            var backgroundImageUri = await ResolveImageUriAsync(screen.BackgroundImage, project, cancellationToken).ConfigureAwait(false);
             html.Append("<div");
             AppendAttribute(html, "id", screen.Name);
+            AppendAttribute(html, "data-background-image", screen.BackgroundImage?.ImageName ?? screen.BackgroundImage?.ImageId);
+            AppendStaticAttribute(html, "data-background-image-layout", screen.BackgroundImageLayout);
             html.Append(" style=\"position: relative; overflow: hidden;");
             AppendSize(html, screen.Width.GetStaticValueOrDefault(), screen.Height.GetStaticValueOrDefault());
-            AppendScreenStyle(html, screen);
+            AppendScreenStyle(html, screen, backgroundImageUri);
             html.Append("\">");
 
             var template = await ResolveTemplateAsync(screen, project, screenStack, cancellationToken).ConfigureAwait(false);
@@ -3564,7 +3567,7 @@ public class HmiScreenToHtmlConverter
             html.Append("height: ").Append(ToCss(height)).Append("px;");
     }
 
-    private static void AppendScreenStyle(StringBuilder html, HmiScreenBase screen)
+    private static void AppendScreenStyle(StringBuilder html, HmiScreenBase screen, string? backgroundImageUri)
     {
         if (screen.BackgroundColor != null)
             html.Append("background-color: ").Append(ToCss(screen.BackgroundColor.StaticValue)).Append(";");
@@ -3574,6 +3577,23 @@ public class HmiScreenToHtmlConverter
                 screen.FillPattern.StaticValue,
                 screen.PatternColor?.StaticValue ?? HmiColor.FromArgb(255, 0, 0, 0));
         AppendColorGradientStyle(html, GetColorGradient(screen));
+        if (!string.IsNullOrWhiteSpace(backgroundImageUri))
+        {
+            html.Append("background-image: url(&quot;").Append(WebUtility.HtmlEncode(backgroundImageUri)).Append("&quot;);");
+            switch (screen.BackgroundImageLayout?.StaticValue ?? HmiBackgroundImageLayout.Normal)
+            {
+                case HmiBackgroundImageLayout.Tile:
+                    html.Append("background-repeat: repeat;background-size: auto;");
+                    break;
+                case HmiBackgroundImageLayout.StretchToViewport:
+                case HmiBackgroundImageLayout.StretchToScreen:
+                    html.Append("background-repeat: no-repeat;background-size: 100% 100%;");
+                    break;
+                default:
+                    html.Append("background-repeat: no-repeat;background-size: auto;");
+                    break;
+            }
+        }
     }
 
     private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)

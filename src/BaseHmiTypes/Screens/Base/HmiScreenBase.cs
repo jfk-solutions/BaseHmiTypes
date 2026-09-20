@@ -18,6 +18,10 @@ public abstract class HmiScreenBase : HmiScreenModelBase
 
     public HmiProperty<HmiColor>? BackgroundColor { get; set; }
 
+    public HmiImageSource? BackgroundImage { get; set; }
+
+    public HmiProperty<HmiBackgroundImageLayout>? BackgroundImageLayout { get; set; }
+
     public HmiProperty<HmiColor>? PatternColor { get; set; }
 
     public HmiProperty<HmiFillPattern>? FillPattern { get; set; }
