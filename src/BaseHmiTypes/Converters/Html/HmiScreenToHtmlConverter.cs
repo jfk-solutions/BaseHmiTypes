@@ -632,6 +632,10 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "data-fit-window-to-screen", screenWindow.FitWindowToScreen, context);
         AppendStaticAttribute(html, "data-show-scrollbars", screenWindow.ShowScrollBars, context);
         AppendStaticAttribute(html, "data-zoom-percent", screenWindow.ZoomPercent, context);
+        AppendStaticAttribute(html, "data-picture-offset-x", screenWindow.OffsetLeft, context);
+        AppendStaticAttribute(html, "data-picture-offset-y", screenWindow.OffsetTop, context);
+        AppendStaticAttribute(html, "data-scroll-position-x", screenWindow.ScrollPositionLeft, context);
+        AppendStaticAttribute(html, "data-scroll-position-y", screenWindow.ScrollPositionTop, context);
         AppendCommonAttributes(html, screenWindow, context, additionalStyle: CreateScreenWindowStyle(screenWindow, resolved, context));
         html.Append(">");
 
@@ -663,6 +667,7 @@ public class HmiScreenToHtmlConverter
         }
 
         html.Append("</div>");
+        AppendScreenWindowScrollInitializer(html, screenWindow, context);
     }
 
     private static string CreateScreenWindowStyle(
@@ -678,8 +683,10 @@ public class HmiScreenToHtmlConverter
 
         if (fitWindow && !fitScreen && resolved != null)
         {
-            style.Append("width: ").Append(ToCss(resolved.Width.GetStaticValueOrDefault() * zoom)).Append("px;")
-                .Append("height: ").Append(ToCss(resolved.Height.GetStaticValueOrDefault() * zoom)).Append("px;");
+            var contentWidth = GetScreenWindowContentExtent(resolved.Width.GetStaticValueOrDefault(), screenWindow.OffsetLeft, context);
+            var contentHeight = GetScreenWindowContentExtent(resolved.Height.GetStaticValueOrDefault(), screenWindow.OffsetTop, context);
+            style.Append("width: ").Append(ToCss(contentWidth * zoom)).Append("px;")
+                .Append("height: ").Append(ToCss(contentHeight * zoom)).Append("px;");
         }
 
         style.Append(showScrollBars && !fitScreen && !fitWindow ? "overflow: auto;" : "overflow: hidden;");
@@ -693,8 +700,8 @@ public class HmiScreenToHtmlConverter
     {
         var fitScreen = ResolveStaticValue(screenWindow.FitScreenToWindow, context);
         var zoom = GetScreenWindowZoom(screenWindow, context);
-        var screenWidth = resolved.Width.GetStaticValueOrDefault();
-        var screenHeight = resolved.Height.GetStaticValueOrDefault();
+        var screenWidth = GetScreenWindowContentExtent(resolved.Width.GetStaticValueOrDefault(), screenWindow.OffsetLeft, context);
+        var screenHeight = GetScreenWindowContentExtent(resolved.Height.GetStaticValueOrDefault(), screenWindow.OffsetTop, context);
         var windowWidth = screenWindow.Width.GetStaticValueOrDefault();
         var windowHeight = screenWindow.Height.GetStaticValueOrDefault();
 
@@ -725,15 +732,18 @@ public class HmiScreenToHtmlConverter
         HmiHtmlConvertContext context)
     {
         var fitScreen = ResolveStaticValue(screenWindow.FitScreenToWindow, context);
-        var screenWidth = resolved.Width.GetStaticValueOrDefault();
-        var screenHeight = resolved.Height.GetStaticValueOrDefault();
+        var screenWidth = GetScreenWindowContentExtent(resolved.Width.GetStaticValueOrDefault(), screenWindow.OffsetLeft, context);
+        var screenHeight = GetScreenWindowContentExtent(resolved.Height.GetStaticValueOrDefault(), screenWindow.OffsetTop, context);
         var scaleX = fitScreen && screenWidth > 0d
             ? screenWindow.Width.GetStaticValueOrDefault() / screenWidth
             : GetScreenWindowZoom(screenWindow, context);
         var scaleY = fitScreen && screenHeight > 0d
             ? screenWindow.Height.GetStaticValueOrDefault() / screenHeight
             : GetScreenWindowZoom(screenWindow, context);
-        return "position: absolute; left: 0; top: 0; transform-origin: top left; transform: scale(" +
+        var offsetX = Math.Clamp(ResolveStaticValue(screenWindow.OffsetLeft, context), 0d, resolved.Width.GetStaticValueOrDefault());
+        var offsetY = Math.Clamp(ResolveStaticValue(screenWindow.OffsetTop, context), 0d, resolved.Height.GetStaticValueOrDefault());
+        return "position: absolute; left: " + ToCss(-offsetX * scaleX) + "px; top: " +
+            ToCss(-offsetY * scaleY) + "px; transform-origin: top left; transform: scale(" +
             ToCss(scaleX) + ", " + ToCss(scaleY) + ");";
     }
 
@@ -741,6 +751,32 @@ public class HmiScreenToHtmlConverter
     {
         var zoomPercent = ResolveStaticValue(screenWindow.ZoomPercent, context);
         return zoomPercent > 0d ? zoomPercent / 100d : 1d;
+    }
+
+    private static double GetScreenWindowContentExtent(
+        double screenExtent,
+        HmiProperty<double>? offset,
+        HmiHtmlConvertContext context) =>
+        Math.Max(0d, screenExtent - Math.Clamp(ResolveStaticValue(offset, context), 0d, screenExtent));
+
+    private static void AppendScreenWindowScrollInitializer(
+        StringBuilder html,
+        HmiScreenWindow screenWindow,
+        HmiHtmlConvertContext context)
+    {
+        if (!ResolveStaticValue(screenWindow.ShowScrollBars, context)
+            || ResolveStaticValue(screenWindow.FitScreenToWindow, context)
+            || ResolveStaticValue(screenWindow.FitWindowToScreen, context))
+            return;
+
+        var scrollLeft = Math.Max(0d, ResolveStaticValue(screenWindow.ScrollPositionLeft, context));
+        var scrollTop = Math.Max(0d, ResolveStaticValue(screenWindow.ScrollPositionTop, context));
+        if (scrollLeft == 0d && scrollTop == 0d)
+            return;
+
+        html.Append("<script>(e=>{e.scrollLeft=").Append(ToCss(scrollLeft))
+            .Append(";e.scrollTop=").Append(ToCss(scrollTop))
+            .Append(";})(document.currentScript.previousElementSibling)</script>");
     }
 
     private static async ValueTask<HmiScreenBase?> ResolveTemplateAsync(
