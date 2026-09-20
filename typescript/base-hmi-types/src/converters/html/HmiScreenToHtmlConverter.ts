@@ -16,6 +16,7 @@ import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignmen
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
 import { HmiLineStyle } from "../../screens/base/HmiLineStyle.js";
+import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
 import { getStaticValue, getStaticValueOrDefault, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
@@ -1827,7 +1828,47 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendCommonAttributes(html, trendControl, context);
   appendAttribute(html, "control-name", trendControl.name);
   appendAttribute(html, "type-name", "Trend control");
+  appendAttribute(html, "chart-title", trendControl.chartTitle);
+  appendStaticAttribute(html, "display-chart-title", trendControl.displayChartTitle);
+  appendStaticAttribute(html, "show-toolbar", trendControl.showToolbar);
+  appendStaticAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
+  appendStaticAttribute(html, "display-scroll-mechanism", trendControl.displayScrollMechanism);
+  appendStaticAttribute(html, "chart-live-mode", trendControl.chartLiveMode);
+  appendStaticAttribute(html, "auto-scale", trendControl.autoScale);
+  appendStaticAttribute(html, "x-axis-scale-visible", trendControl.xAxisScaleVisible);
+  appendStaticAttribute(html, "x-axis-date-visible", trendControl.xAxisDateVisible);
+  appendStaticAttribute(html, "x-axis-grid-visible", trendControl.xAxisGridVisible);
+  appendStaticAttribute(html, "y-axis-scale-visible", trendControl.yAxisScaleVisible);
+  appendStaticAttribute(html, "y-axis-grid-visible", trendControl.yAxisGridVisible);
+  appendStaticAttribute(html, "minimum-value", trendControl.minimumValue);
+  appendStaticAttribute(html, "maximum-value", trendControl.maximumValue);
+  appendStaticAttribute(html, "y-axis-decimal-places", trendControl.yAxisDecimalPlaces);
+  appendAttribute(html, "pens", formatTrendPens(trendControl.pens));
   html.push("></hmi-trend-control>");
+}
+
+function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
+  if (pens.length === 0) return undefined;
+  return JSON.stringify(pens.map(pen => {
+    const result: Record<string, string | number | boolean> = { number: pen.number };
+    if (pen.name !== undefined) result.name = pen.name;
+    const color = getStaticValue(pen.color);
+    if (color !== undefined) result.color = colorToCss(color);
+    const visible = getStaticValue(pen.visible);
+    if (visible !== undefined) result.visible = visible;
+    const width = getStaticValue(pen.width);
+    if (width !== undefined) result.width = width;
+    const style = getStaticValue(pen.style);
+    if (style !== undefined) result.style = style;
+    const marker = getStaticValue(pen.marker);
+    if (marker !== undefined) result.marker = marker;
+    const minimum = getStaticValue(pen.minimumValue);
+    if (minimum !== undefined) result.minimum = minimum;
+    const maximum = getStaticValue(pen.maximumValue);
+    if (maximum !== undefined) result.maximum = maximum;
+    if (pen.engineeringUnit !== undefined) result.unit = pen.engineeringUnit;
+    return result;
+  }));
 }
 
 function appendBooleanAttribute(html: string[], name: string, value: boolean): void {
