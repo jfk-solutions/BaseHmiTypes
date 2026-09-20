@@ -64,6 +64,7 @@ interface TrendPen {
   minimum?: number;
   maximum?: number;
   axisScaleType?: number;
+  exponentialFormat?: boolean;
   unit?: string;
 }
 
@@ -130,6 +131,7 @@ export class HmiTrendControl extends HTMLElement {
     const maximumCandidate = readNumberAttribute(this, "maximum-value", firstPen?.maximum ?? 100);
     const maximumValue = maximumCandidate === minimumValue ? minimumValue + 1 : maximumCandidate;
     const axisScaleType = firstPen?.axisScaleType ?? 0;
+    const exponentialFormat = firstPen?.exponentialFormat === true;
     const decimalPlaces = clamp(Math.trunc(readNumberAttribute(this, "y-axis-decimal-places", 0)), 0, 12);
     const displayChartTitle = readBooleanAttribute(this, "display-chart-title", false);
     const showToolbar = readBooleanAttribute(this, "show-toolbar", true);
@@ -390,9 +392,9 @@ export class HmiTrendControl extends HTMLElement {
             ${renderGrid(xAxisGridVisible, yAxisGridVisible, majorGridVisible, minorGridVisible)}
             ${xAxisVisible ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
-            ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, axisScaleType)}
+            ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, axisScaleType, exponentialFormat, decimalPlaces)}
           </svg>
-          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, axisScaleType) : ""}
+          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, axisScaleType, exponentialFormat) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
           ${xAxisVisible ? renderXLabels(labels) : ""}
@@ -430,12 +432,18 @@ function renderGrid(
   return lines.join("");
 }
 
-function renderYLabels(minimum: number, maximum: number, decimalPlaces: number, axisScaleType: number): string {
+function renderYLabels(
+  minimum: number,
+  maximum: number,
+  decimalPlaces: number,
+  axisScaleType: number,
+  exponentialFormat: boolean,
+): string {
   const labels: string[] = [];
   for (let index = 0; index <= 5; index++) {
     const ratio = index / 5;
     const value = valueAtYAxisPosition(ratio * 100, minimum, maximum, axisScaleType);
-    labels.push(`<span class="axis-label y-label" style="top:${toCss(ratio * 100)}%">${escapeHtml(value.toFixed(decimalPlaces))}</span>`);
+    labels.push(`<span class="axis-label y-label" style="top:${toCss(ratio * 100)}%">${escapeHtml(formatAxisValue(value, decimalPlaces, exponentialFormat))}</span>`);
   }
   return labels.join("");
 }
@@ -531,6 +539,8 @@ function renderPens(
   maximumValue: number,
   xAxisFlipped: boolean,
   axisScaleType: number,
+  exponentialFormat: boolean,
+  decimalPlaces: number,
 ): string {
   return pens.map((pen, index) => {
     const color = normalizePenColor(pen.color, index);
@@ -557,7 +567,7 @@ function renderPens(
       : points.filter((_point, pointIndex) => pointIndex % 5 === 0)
         .map(point => renderMarker(pen, markerColor, point.x, point.y, markerRadius(pen, clamp(width + 1, 2, 5))))
         .join("");
-    const line = renderTrendLine(pen, points, pointText, color, width);
+    const line = renderTrendLine(pen, points, pointText, color, width, exponentialFormat, decimalPlaces);
     return `${area}${line}${markers}`;
   }).join("");
 }
@@ -578,6 +588,10 @@ function valueAtYAxisPosition(
   return maximumValue - ratio * (maximumValue - minimumValue);
 }
 
+function formatAxisValue(value: number, decimalPlaces: number, exponentialFormat: boolean): string {
+  return exponentialFormat ? value.toExponential(decimalPlaces) : value.toFixed(decimalPlaces);
+}
+
 function trendPointText(points: ReadonlyArray<{ x: number; y: number }>, lineType: number | undefined): string {
   if (lineType !== 2)
     return points.map(point => `${toCss(point.x)},${toCss(point.y)}`).join(" ");
@@ -596,13 +610,15 @@ function renderTrendLine(
   pointText: string,
   color: string,
   width: number,
+  exponentialFormat: boolean,
+  decimalPlaces: number,
 ): string {
   const lineType = pen.lineType ?? 1;
   if (lineType === 0) return "";
   if (lineType === 3) {
     return points.filter((_point, index) => index % 5 === 0).map(point => {
       const valueColor = trendSegmentColor(pen, color, point.value);
-      return `<text x="${toCss(point.x)}" y="${toCss(point.y)}" fill="${escapeHtml(valueColor)}" font-size="4" text-anchor="middle">${escapeHtml(toCss(point.value))}</text>`;
+      return `<text x="${toCss(point.x)}" y="${toCss(point.y)}" fill="${escapeHtml(valueColor)}" font-size="4" text-anchor="middle">${escapeHtml(formatAxisValue(point.value, decimalPlaces, exponentialFormat))}</text>`;
     }).join("");
   }
   if (!hasLimitColoring(pen))
@@ -686,6 +702,7 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.minimum === "number" && Number.isFinite(source.minimum)) pen.minimum = source.minimum;
       if (typeof source.maximum === "number" && Number.isFinite(source.maximum)) pen.maximum = source.maximum;
       if (typeof source.axisScaleType === "number" && Number.isFinite(source.axisScaleType)) pen.axisScaleType = source.axisScaleType;
+      if (typeof source.exponentialFormat === "boolean") pen.exponentialFormat = source.exponentialFormat;
       if (typeof source.unit === "string") pen.unit = source.unit;
       return [pen];
     });
