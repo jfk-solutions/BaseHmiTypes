@@ -96,6 +96,26 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersDisabledItemSemantics()
+    {
+        var rectangle = new HmiRectangle
+        {
+            Name = "DisabledRectangle",
+            Width = 100,
+            Height = 50,
+            Enabled = false
+        };
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(rectangle);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"DisabledRectangle\" aria-disabled=\"true\" style=\"position: absolute;left: 0px;top: 0px;width: 100px;height: 50px;pointer-events: none;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSymbolicIoFieldStates()
     {
         var symbolicIoField = new HmiSymbolicIOField
