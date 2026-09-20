@@ -172,7 +172,7 @@ public class HmiScreenToHtmlConverter
                 AppendInput(html, ioField, context);
                 break;
             case HmiSymbolicIOField symbolicIoField:
-                AppendSymbolicInput(html, symbolicIoField, context);
+                await AppendSymbolicInputAsync(html, symbolicIoField, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiTextBox textBox:
                 AppendTextBlock(html, textBox, textBox.Text, context);
@@ -1553,11 +1553,52 @@ public class HmiScreenToHtmlConverter
         return Math.Min(Math.Max(value, minimum), maximum);
     }
 
-    private static void AppendSymbolicInput(StringBuilder html, HmiSymbolicIOField symbolicIoField, HmiHtmlConvertContext context)
+    private static async ValueTask AppendSymbolicInputAsync(
+        StringBuilder html,
+        HmiSymbolicIOField symbolicIoField,
+        IHmiProject? project,
+        HmiHtmlConvertContext context,
+        CancellationToken cancellationToken)
     {
         var selectedValue = ResolveStaticValue(symbolicIoField.Value, context);
         var selectedState = symbolicIoField.States.FirstOrDefault(candidate => candidate.Value == selectedValue)
             ?? symbolicIoField.States.FirstOrDefault();
+        if (selectedState?.Image is not null)
+        {
+            var imageUri = await ResolveImageUriAsync(selectedState.Image, project, cancellationToken).ConfigureAwait(false);
+            var stateStyle = CreateStateStyle(selectedState);
+            if (selectedState.ImageBackgroundTransparent != true && selectedState.ImageBackgroundColor is HmiColor imageBackgroundColor)
+                stateStyle = AppendCssDeclaration(stateStyle, $"background-color: {ToCss(imageBackgroundColor)};");
+            stateStyle = AppendCssDeclaration(stateStyle, "overflow: hidden;");
+
+            html.Append("<div");
+            AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: stateStyle);
+            AppendAttribute(html, "class", "hmi-symbolic-image-state");
+            AppendAttribute(html, "role", "status");
+            AppendAttribute(html, "data-state-value", selectedState.Value is double stateValue ? ToCss(stateValue) : null);
+            AppendAttribute(html, "data-image-name", selectedState.ImageName ?? selectedState.Image.ImageName);
+            AppendAttribute(html, "data-image-blink", selectedState.ImageBlink ? "true" : "false");
+            html.Append('>');
+            if (!string.IsNullOrWhiteSpace(imageUri))
+            {
+                html.Append("<img");
+                AppendAttribute(html, "src", imageUri);
+                AppendAttribute(html, "alt", selectedState.Name ?? selectedState.ImageName ?? selectedState.Image.ImageName ?? symbolicIoField.Name);
+                AppendAttribute(html, "style", selectedState.ImageScaled == false
+                    ? "width: auto; height: auto; max-width: 100%; max-height: 100%; display: block;"
+                    : "width: 100%; height: 100%; object-fit: contain; display: block;");
+                html.Append('>');
+            }
+            if (selectedState.Text is not null)
+            {
+                html.Append("<span>");
+                AppendMultilingualText(html, selectedState.Text, context);
+                html.Append("</span>");
+            }
+            html.Append("</div>");
+            return;
+        }
+
         html.Append("<select");
         AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: CreateStateStyle(selectedState));
         html.Append('>');
