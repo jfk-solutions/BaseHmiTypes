@@ -14,12 +14,14 @@ const trendControlProperties = {
   autoScale: String,
   xAxisScaleVisible: String,
   xAxisAlignment: String,
+  xAxisLabel: String,
   xAxisDateVisible: String,
   xAxisGridVisible: String,
   majorGridVisible: String,
   minorGridVisible: String,
   yAxisScaleVisible: String,
   yAxisAlignment: String,
+  yAxisLabel: String,
   yAxisGridVisible: String,
   showPercentageAxis: String,
   percentageAxisAlignment: String,
@@ -122,12 +124,14 @@ export class HmiTrendControl extends HTMLElement {
     const autoScale = readBooleanAttribute(this, "auto-scale", false);
     const xAxisVisible = readBooleanAttribute(this, "x-axis-scale-visible", true);
     const xAxisAlignment = this.getAttribute("x-axis-alignment")?.toLowerCase() === "top" ? "top" : "bottom";
+    const xAxisLabel = this.getAttribute("x-axis-label") ?? "";
     const xAxisDateVisible = readBooleanAttribute(this, "x-axis-date-visible", true);
     const xAxisGridVisible = readBooleanAttribute(this, "x-axis-grid-visible", true);
     const majorGridVisible = readBooleanAttribute(this, "major-grid-visible", true);
     const minorGridVisible = readBooleanAttribute(this, "minor-grid-visible", true);
     const yAxisVisible = readBooleanAttribute(this, "y-axis-scale-visible", true);
     const yAxisAlignment = this.getAttribute("y-axis-alignment")?.toLowerCase() === "right" ? "right" : "left";
+    const yAxisLabel = this.getAttribute("y-axis-label") ?? "";
     const yAxisGridVisible = readBooleanAttribute(this, "y-axis-grid-visible", true);
     const showPercentageAxis = readBooleanAttribute(this, "show-percentage-axis", false);
     const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
@@ -293,6 +297,24 @@ export class HmiTrendControl extends HTMLElement {
           color: var(--hmi-trend-x-axis-color, ${escapeCss(foregroundColor)});
         }
 
+        .x-axis-title {
+          position: absolute;
+          ${xAxisAlignment}: calc(100% + 2.8em);
+          left: 50%;
+          transform: translateX(-50%);
+          color: var(--hmi-trend-x-axis-color, ${escapeCss(foregroundColor)});
+          white-space: nowrap;
+        }
+
+        .y-axis-title {
+          position: absolute;
+          top: 50%;
+          ${yAxisAlignment}: -7.1em;
+          transform: translateY(-50%) rotate(${yAxisAlignment === "left" ? -90 : 90}deg);
+          color: var(--hmi-trend-y-axis-color, ${escapeCss(foregroundColor)});
+          white-space: nowrap;
+        }
+
         .status {
           position: absolute;
           left: 0;
@@ -346,6 +368,8 @@ export class HmiTrendControl extends HTMLElement {
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
           ${xAxisVisible ? renderXLabels(labels) : ""}
+          ${xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
+          ${yAxisVisible && yAxisLabel ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
         </div>
         ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"></div></div>` : ""}
       </div>`;

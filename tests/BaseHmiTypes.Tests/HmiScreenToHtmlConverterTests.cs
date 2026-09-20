@@ -3049,6 +3049,7 @@ public class HmiScreenToHtmlConverterTests
             XAxisScaleVisible = true,
             XAxisColor = HmiColor.FromArgb(255, 0x11, 0x22, 0x33),
             XAxisAlignment = HmiVerticalAlignment.Top,
+            XAxisLabel = "Recorded time",
             XAxisDateVisible = false,
             XAxisGridVisible = true,
             MajorGridVisible = true,
@@ -3058,6 +3059,7 @@ public class HmiScreenToHtmlConverterTests
             YAxisScaleVisible = true,
             YAxisColor = HmiColor.FromArgb(255, 0x44, 0x55, 0x66),
             YAxisAlignment = HmiHorizontalAlignment.Right,
+            YAxisLabel = "Pressure (bar)",
             YAxisGridVisible = false,
             ShowPercentageAxis = true,
             PercentageAxisColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56),
@@ -3117,6 +3119,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "x-axis-color=\"#112233\"");
         StringAssert.Contains(html, "--hmi-trend-x-axis-color: #112233;");
         StringAssert.Contains(html, "x-axis-alignment=\"Top\"");
+        StringAssert.Contains(html, "x-axis-label=\"Recorded time\"");
         StringAssert.Contains(html, "x-axis-date-visible=\"false\"");
         StringAssert.Contains(html, "x-axis-grid-visible=\"true\"");
         StringAssert.Contains(html, "major-grid-visible=\"true\"");
@@ -3129,6 +3132,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "y-axis-color=\"#445566\"");
         StringAssert.Contains(html, "--hmi-trend-y-axis-color: #445566;");
         StringAssert.Contains(html, "y-axis-alignment=\"Right\"");
+        StringAssert.Contains(html, "y-axis-label=\"Pressure (bar)\"");
         StringAssert.Contains(html, "y-axis-grid-visible=\"false\"");
         StringAssert.Contains(html, "show-percentage-axis=\"true\"");
         StringAssert.Contains(html, "percentage-axis-color=\"#123456\"");
