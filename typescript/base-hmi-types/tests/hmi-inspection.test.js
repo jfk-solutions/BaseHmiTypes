@@ -488,6 +488,25 @@ test("HTML conversion renders the selected button state caption and project imag
   assert.doesNotMatch(html, />Default<\/button>/);
 });
 
+test("HTML conversion renders button 3D borders", async () => {
+  const button = new HmiButton();
+  button.name = "BeveledButton";
+  button.width = staticProperty(100);
+  button.height = staticProperty(30);
+  button.text = staticProperty(HmiMultilingualText.fromText("Start"));
+  button.threeDBorderWidth = staticProperty(3);
+  button.threeDBorderTopColor = staticProperty(hmiColorFromArgb(255, 238, 238, 238));
+  button.threeDBorderBottomColor = staticProperty(hmiColorFromArgb(255, 64, 64, 64));
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(button);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<button id="BeveledButton"/);
+  assert.match(html, /border-style: solid;border-width: 3px;/);
+  assert.match(html, /border-color: #EEEEEE #404040 #404040 #EEEEEE;/);
+});
+
 test("HTML conversion renders static disabled button appearance", async () => {
   const disabled = new HmiButton();
   disabled.name = "Disabled";
