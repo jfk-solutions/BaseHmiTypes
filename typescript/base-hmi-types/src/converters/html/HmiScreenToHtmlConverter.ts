@@ -1303,7 +1303,8 @@ function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvert
     : orientation as HmiFillDirection;
   const thumbColor = getStaticValue(slider.thumbBackgroundColor);
   const sliderStyle = getBarDirectionStyle(direction) +
-    (thumbColor === undefined ? "" : `--hmi-slider-thumb-background: ${colorToCss(thumbColor)};`);
+    (thumbColor === undefined ? "" : `--hmi-slider-thumb-background: ${colorToCss(thumbColor)};`) +
+    getSliderTrackStyle(slider, direction);
   html.push("<input");
   appendCommonAttributes(html, slider, context, true, sliderStyle);
   appendAttribute(html, "data-hmi-slider", "true");
@@ -1314,6 +1315,23 @@ function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvert
   appendAttribute(html, "value", toCss(value));
   appendAttribute(html, "disabled", "disabled");
   html.push(">");
+}
+
+function getSliderTrackStyle(slider: HmiSlider, direction: HmiFillDirection): string {
+  let high = getStaticValue(slider.trackHighBackgroundColor);
+  let low = getStaticValue(slider.trackLowBackgroundColor);
+  if (high === undefined && low === undefined)
+    return "";
+  high ??= low;
+  low ??= high;
+  const gradientDirection = direction === HmiFillDirection.Up
+    ? "to bottom"
+    : direction === HmiFillDirection.Down
+      ? "to top"
+      : direction === HmiFillDirection.Left
+        ? "to right"
+        : "to left";
+  return `--hmi-slider-track-background: linear-gradient(${gradientDirection}, ${colorToCss(high!)}, ${colorToCss(low!)});`;
 }
 
 function appendScale(html: string[], scale: HmiScale, context: HmiHtmlConvertContext): void {

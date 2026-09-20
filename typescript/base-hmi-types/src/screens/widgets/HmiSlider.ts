@@ -10,4 +10,6 @@ export class HmiSlider extends HmiBar {
 
   thumbBackgroundColor?: HmiProperty<HmiColor>;
   thumbForegroundColor?: HmiProperty<HmiColor>;
+  trackHighBackgroundColor?: HmiProperty<HmiColor>;
+  trackLowBackgroundColor?: HmiProperty<HmiColor>;
 }
