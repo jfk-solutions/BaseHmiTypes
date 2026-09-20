@@ -49,6 +49,9 @@ public sealed class HmiTrendPen
     /// <summary>Gets or sets the color used for uncertain-quality values.</summary>
     public HmiProperty<HmiColor>? UncertainColor { get; set; }
 
+    /// <summary>Gets or sets whether alarm symbols are displayed for limit violations.</summary>
+    public HmiProperty<bool>? ShowAlarms { get; set; }
+
     /// <summary>
     /// Engineering-system marker name or numeric marker identifier.
     /// </summary>
