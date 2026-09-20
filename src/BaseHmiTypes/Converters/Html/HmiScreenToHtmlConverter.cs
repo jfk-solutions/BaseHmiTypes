@@ -2230,6 +2230,9 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-window-resizable", ResolvePropertyPreview(alarmControl.Resizable, context));
         AppendAttribute(html, "data-window-movable", ResolvePropertyPreview(alarmControl.Movable, context));
         AppendAttribute(html, "data-window-closeable", ResolvePropertyPreview(alarmControl.Closeable, context));
+        AppendAttribute(html, "data-header-background-color", ResolvePropertyPreview(alarmControl.HeaderBackgroundColor, context));
+        AppendAttribute(html, "data-header-foreground-color", ResolvePropertyPreview(alarmControl.HeaderForegroundColor, context));
+        AppendAttribute(html, "data-header-border-color", ResolvePropertyPreview(alarmControl.HeaderBorderColor, context));
         AppendAttribute(html, "data-view-kind", alarmControl.ViewKind.ToString());
         AppendAttribute(html, "data-list-mode", listMode.ToString());
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmControl.NumberOfRows, context));
@@ -2256,7 +2259,7 @@ public class HmiScreenToHtmlConverter
         if (showTitle)
         {
             var title = ResolveAlarmTitle(alarmControl, listMode, context);
-            html.Append("<div style=\"").Append(CreateAlarmHeaderStyle(alarmControl));
+            html.Append("<div style=\"").Append(CreateAlarmHeaderStyle(alarmControl, context));
             if (alarmControl.Movable is not null && ResolveStaticValue(alarmControl.Movable, context))
                 html.Append("cursor: move;");
             html.Append("\"><span style=\"flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\">")
@@ -3343,9 +3346,13 @@ public class HmiScreenToHtmlConverter
         return style.ToString();
     }
 
-    private static string CreateAlarmHeaderStyle(HmiAlarmControl alarmControl)
+    private static string CreateAlarmHeaderStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
     {
         var style = new StringBuilder("flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;");
+        AppendColorStyle(style, "background-color", alarmControl.HeaderBackgroundColor);
+        AppendColorStyle(style, "color", alarmControl.HeaderForegroundColor);
+        if (alarmControl.HeaderBorderColor is not null)
+            style.Append("border-bottom-color: ").Append(ToCss(ResolveStaticValue(alarmControl.HeaderBorderColor, context))).Append(';');
         AppendFontStyle(style, alarmControl.HeaderFont);
         return style.ToString();
     }
