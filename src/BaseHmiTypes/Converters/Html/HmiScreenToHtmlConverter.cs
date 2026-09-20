@@ -2869,11 +2869,16 @@ public class HmiScreenToHtmlConverter
     {
         var alarmState = indicator.AlarmState is null ? (int?)null : ResolveStaticValue(indicator.AlarmState, context);
         var noAlarmState = indicator.NoAlarmState is null ? 0 : ResolveStaticValue(indicator.NoAlarmState, context);
+        var visualState = indicator.VisualState is null
+            ? alarmState.HasValue && alarmState.Value != noAlarmState
+                ? HmiAlarmIndicatorState.CameIn
+                : HmiAlarmIndicatorState.Normal
+            : ResolveStaticValue(indicator.VisualState, context);
         var numberOfAlarms = indicator.NumberOfAlarms is null ? (int?)null : ResolveStaticValue(indicator.NumberOfAlarms, context);
         var text = indicator.Text is null ? null : ResolveStaticValue(indicator.Text, context);
         var isLocked = indicator.IsLocked is not null && ResolveStaticValue(indicator.IsLocked, context);
         var lockedText = indicator.LockedText is null ? null : ResolveStaticValue(indicator.LockedText, context);
-        var isActive = alarmState.HasValue && alarmState.Value != noAlarmState;
+        var isActive = visualState != HmiAlarmIndicatorState.Normal;
         var isFlashingRequired = indicator.IsFlashingRequired is not null &&
             ResolveStaticValue(indicator.IsFlashingRequired, context);
         var content = isLocked && !string.IsNullOrEmpty(lockedText)
@@ -2948,6 +2953,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "role", "status");
         AppendAttribute(html, "aria-label", "Alarm indicator");
         AppendAttribute(html, "data-active", isActive ? "true" : "false");
+        AppendStaticValueAttribute(html, "data-visual-state", indicator.VisualState, context);
         AppendStaticValueAttribute(html, "data-flashing-required", indicator.IsFlashingRequired, context);
         AppendStaticValueAttribute(html, "data-flashing-color", indicator.FlashingColor, context);
         AppendStaticValueAttribute(html, "data-foreground-flashing-required", indicator.IsForegroundFlashingRequired, context);
