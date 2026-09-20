@@ -3280,6 +3280,7 @@ public class HmiScreenToHtmlConverter
         AppendTextAttribute(html, "title", item.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", item.TabIndex, context);
         AppendDisabledAttribute(html, item, context);
+        AppendHotKeyAttributes(html, item, context);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, item, context);
         AppendDisabledStyle(html, item, context);
@@ -3380,6 +3381,30 @@ public class HmiScreenToHtmlConverter
         if (!ResolveStaticValue(item.Enabled, context))
             html.Append("pointer-events: none;");
     }
+
+    private static void AppendHotKeyAttributes(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
+    {
+        var hotKeyProperty = item switch
+        {
+            HmiButtonBase button => button.HotKey,
+            HmiIOField ioField => ioField.HotKey,
+            _ => null
+        };
+        var hotKey = ResolveStaticValue(hotKeyProperty, context);
+        if (string.IsNullOrWhiteSpace(hotKey))
+            return;
+
+        AppendAttribute(html, "data-hmi-hot-key", hotKey);
+        AppendAttribute(html, "aria-keyshortcuts", ToAriaKeyShortcuts(hotKey));
+    }
+
+    private static string ToAriaKeyShortcuts(string hotKey) =>
+        string.Join("+", hotKey.Split('+').Select(part => part.ToUpperInvariant() switch
+        {
+            "CTRL" => "Control",
+            "WIN" => "Meta",
+            _ => part
+        }));
 
     private static void AppendDesignShadow(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
     {

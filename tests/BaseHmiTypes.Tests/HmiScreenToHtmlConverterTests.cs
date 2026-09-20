@@ -138,6 +138,26 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_ExposesItemHotKey()
+    {
+        var button = new HmiButton
+        {
+            Name = "ShortcutButton",
+            Width = 100,
+            Height = 50,
+            HotKey = "Ctrl+F11"
+        };
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(button);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"ShortcutButton\" data-hmi-hot-key=\"Ctrl+F11\" aria-keyshortcuts=\"Control+F11\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSymbolicIoFieldStates()
     {
         var symbolicIoField = new HmiSymbolicIOField
