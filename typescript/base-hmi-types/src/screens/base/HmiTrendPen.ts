@@ -27,6 +27,10 @@ export class HmiTrendPen {
   upperLimitColoring?: HmiProperty<boolean>;
   upperLimitValue?: HmiProperty<number>;
   upperLimitColor?: HmiProperty<HmiColor>;
+  /** Whether uncertain-quality values use a dedicated color. */
+  uncertainColoring?: HmiProperty<boolean>;
+  /** Color used for uncertain-quality values. */
+  uncertainColor?: HmiProperty<HmiColor>;
   /** Engineering-system marker name or numeric marker identifier. */
   marker?: HmiProperty<string>;
   /** Marker color independently of the trend line color. */
