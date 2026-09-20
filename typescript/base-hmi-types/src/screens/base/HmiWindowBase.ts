@@ -6,6 +6,9 @@ import { HmiPaintedScreenItemBase } from "./HmiPaintedScreenItemBase.js";
 import { HmiProperty } from "./HmiProperty.js";
 
 export abstract class HmiWindowBase extends HmiPaintedScreenItemBase {
+  resizable?: HmiProperty<boolean>;
+  movable?: HmiProperty<boolean>;
+  closeable?: HmiProperty<boolean>;
   captionColor?: HmiProperty<HmiColor>;
   captionBackgroundColor?: HmiProperty<HmiColor>;
   backFillPattern?: HmiProperty<number>;

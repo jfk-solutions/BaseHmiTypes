@@ -2016,8 +2016,11 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     alarmControl,
     context,
     true,
-    "display: flex; flex-direction: column; overflow: hidden;",
+    createControlWindowStyle(alarmControl, "display: flex; flex-direction: column; overflow: hidden;"),
   );
+  appendAttribute(html, "data-window-resizable", resolvePropertyPreview(alarmControl.resizable));
+  appendAttribute(html, "data-window-movable", resolvePropertyPreview(alarmControl.movable));
+  appendAttribute(html, "data-window-closeable", resolvePropertyPreview(alarmControl.closeable));
   appendAttribute(html, "data-view-kind", alarmControl.viewKind);
   appendAttribute(html, "data-list-mode", listMode);
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmControl.numberOfRows));
@@ -2032,11 +2035,13 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
 
   if (showTitle) {
     const title = resolveAlarmTitle(alarmControl, listMode, context);
-    html.push(
-      "<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;\">",
-      escapeHtml(title),
-      "</div>",
-    );
+    html.push("<div style=\"flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;");
+    if (getStaticValue(alarmControl.movable) === true)
+      html.push("cursor: move;");
+    html.push("\"><span style=\"flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\">", escapeHtml(title), "</span>");
+    if (getStaticValue(alarmControl.closeable) === true)
+      html.push("<button type=\"button\" aria-label=\"Close\" disabled style=\"flex: 0 0 auto;\">×</button>");
+    html.push("</div>");
   }
 
   html.push("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
@@ -3032,7 +3037,10 @@ function appendIntegerListAttribute(
 
 function appendTrendControl(html: string[], trendControl: HmiTrendControl, context: HmiHtmlConvertContext): void {
   html.push("<hmi-trend-control");
-  appendCommonAttributes(html, trendControl, context);
+  appendCommonAttributes(html, trendControl, context, true, createControlWindowStyle(trendControl, "overflow: hidden;"));
+  appendAttribute(html, "data-window-resizable", resolvePropertyPreview(trendControl.resizable));
+  appendAttribute(html, "data-window-movable", resolvePropertyPreview(trendControl.movable));
+  appendAttribute(html, "data-window-closeable", resolvePropertyPreview(trendControl.closeable));
   appendAttribute(html, "control-name", trendControl.name);
   appendAttribute(html, "type-name", "Trend control");
   appendAttribute(html, "chart-title", trendControl.chartTitle);
@@ -3052,6 +3060,10 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticAttribute(html, "y-axis-decimal-places", trendControl.yAxisDecimalPlaces);
   appendAttribute(html, "pens", formatTrendPens(trendControl.pens));
   html.push("></hmi-trend-control>");
+}
+
+function createControlWindowStyle(window: HmiWindowBase, baseStyle: string): string {
+  return getStaticValue(window.resizable) === true ? `${baseStyle}resize: both;` : baseStyle;
 }
 
 function appendStaticBooleanValueAttribute(
