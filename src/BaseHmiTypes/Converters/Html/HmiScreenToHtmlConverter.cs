@@ -2445,6 +2445,7 @@ public class HmiScreenToHtmlConverter
         AppendRectangleRadius(html, rectangle, context);
         if (rectangle.BorderColor == null && rectangle.BorderWidth == null && rectangle.LineColor == null && rectangle.LineWidth == null)
             html.Append("border: 1px solid #000000;");
+        AppendItemTransform(html, rectangle);
         html.Append("\"");
         html.Append(">");
         html.Append("</div>");

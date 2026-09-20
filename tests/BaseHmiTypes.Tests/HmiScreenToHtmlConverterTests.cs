@@ -116,6 +116,28 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersRectangleRotation()
+    {
+        var rectangle = new HmiRectangle
+        {
+            Name = "RotatedRectangle",
+            Width = 100,
+            Height = 50,
+            RotationAngle = 45,
+            RotationCenterX = 10,
+            RotationCenterY = 20
+        };
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(rectangle);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "transform: rotate(45deg);transform-origin: 10px 20px;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSymbolicIoFieldStates()
     {
         var symbolicIoField = new HmiSymbolicIOField
