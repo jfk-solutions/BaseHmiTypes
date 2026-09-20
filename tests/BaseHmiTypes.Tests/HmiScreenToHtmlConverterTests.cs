@@ -470,6 +470,28 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersBarFillDirections()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiBar { Name = "UpBar", Width = 20, Height = 100, FillDirection = HmiFillDirection.Up });
+        layer.Items.Add(new HmiBar { Name = "DownBar", X = 30, Width = 20, Height = 100, FillDirection = HmiFillDirection.Down });
+        layer.Items.Add(new HmiBar { Name = "LeftBar", Y = 110, Width = 100, Height = 20, FillDirection = HmiFillDirection.Left });
+        layer.Items.Add(new HmiBar { Name = "RightBar", Y = 140, Width = 100, Height = 20, FillDirection = HmiFillDirection.Right });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"UpBar\" style=\"position: absolute;");
+        StringAssert.Contains(html, "writing-mode: vertical-lr; direction: rtl;\" data-fill-direction=\"Up\"");
+        StringAssert.Contains(html, "writing-mode: vertical-lr; direction: ltr;\" data-fill-direction=\"Down\"");
+        StringAssert.Contains(html, "id=\"LeftBar\"");
+        StringAssert.Contains(html, "direction: rtl;\" data-fill-direction=\"Left\"");
+        StringAssert.Contains(html, "id=\"RightBar\"");
+        StringAssert.Contains(html, "direction: ltr;\" data-fill-direction=\"Right\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersAlarmIndicatorState()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };

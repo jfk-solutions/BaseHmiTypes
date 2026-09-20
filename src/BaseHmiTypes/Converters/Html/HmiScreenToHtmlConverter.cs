@@ -1388,13 +1388,25 @@ public class HmiScreenToHtmlConverter
     {
         var (minimum, maximum) = ResolveScaleRange(bar, context);
         var value = ResolveScaleValue(bar, minimum, maximum, context);
+        var direction = bar.FillDirection is null
+            ? HmiFillDirection.Right
+            : ResolveStaticValue(bar.FillDirection, context);
         html.Append("<meter");
-        AppendCommonAttributes(html, bar, context);
+        AppendCommonAttributes(html, bar, context, additionalStyle: GetBarDirectionStyle(direction));
+        AppendAttribute(html, "data-fill-direction", direction.ToString());
         AppendAttribute(html, "min", ToCss(minimum));
         AppendAttribute(html, "max", ToCss(maximum));
         AppendAttribute(html, "value", ToCss(value));
         html.Append('>').Append(ToCss(value)).Append("</meter>");
     }
+
+    private static string GetBarDirectionStyle(HmiFillDirection direction) => direction switch
+    {
+        HmiFillDirection.Up => "writing-mode: vertical-lr; direction: rtl;",
+        HmiFillDirection.Down => "writing-mode: vertical-lr; direction: ltr;",
+        HmiFillDirection.Left => "direction: rtl;",
+        _ => "direction: ltr;"
+    };
 
     private static void AppendSlider(StringBuilder html, HmiSlider slider, HmiHtmlConvertContext context)
     {
