@@ -1335,7 +1335,7 @@ public class HmiScreenToHtmlConverter
         var state = button.States.FirstOrDefault(candidate => candidate.Value == stateValue)
             ?? button.States.FirstOrDefault();
         html.Append("<button");
-        AppendCommonAttributes(html, button, context, additionalStyle: CreateStateStyle(state));
+        AppendCommonAttributes(html, button, context, additionalStyle: CreateButtonStyle(button, state, context));
         var enabled = button.Enabled is null || ResolveStaticValue(button.Enabled, context);
         if (!enabled)
             AppendAttribute(html, "disabled", "disabled");
@@ -1350,6 +1350,38 @@ public class HmiScreenToHtmlConverter
             AppendInnerImage(html, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale);
         AppendMultilingualText(html, state?.Text ?? ResolveStaticValue(button.Text, context), context);
         html.Append("</button>");
+    }
+
+    private static string? CreateButtonStyle(
+        HmiButton button,
+        HmiState? state,
+        HmiHtmlConvertContext context)
+    {
+        var style = new StringBuilder(CreateStateStyle(state));
+        var borderWidth = button.ThreeDBorderWidth is null
+            ? 0d
+            : ResolveStaticValue(button.ThreeDBorderWidth, context);
+        if (borderWidth <= 0)
+            return style.Length == 0 ? null : style.ToString();
+
+        style.Append("border-style: solid;border-width: ").Append(ToCss(borderWidth)).Append("px;");
+        HmiColor? topColor = button.ThreeDBorderTopColor is null
+            ? null
+            : ResolveStaticValue(button.ThreeDBorderTopColor, context);
+        HmiColor? bottomColor = button.ThreeDBorderBottomColor is null
+            ? null
+            : ResolveStaticValue(button.ThreeDBorderBottomColor, context);
+        topColor ??= bottomColor;
+        bottomColor ??= topColor;
+        if (topColor is not null && bottomColor is not null)
+        {
+            style.Append("border-color: ")
+                .Append(ToCss(topColor.Value)).Append(' ')
+                .Append(ToCss(bottomColor.Value)).Append(' ')
+                .Append(ToCss(bottomColor.Value)).Append(' ')
+                .Append(ToCss(topColor.Value)).Append(';');
+        }
+        return style.ToString();
     }
 
     private static string? CreateStateStyle(HmiState? state)
