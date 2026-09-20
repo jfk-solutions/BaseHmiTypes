@@ -3114,6 +3114,10 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "x-axis-scale-visible", trendControl.xAxisScaleVisible);
   appendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.xAxisDateVisible);
   appendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.xAxisGridVisible);
+  appendStaticBooleanValueAttribute(html, "major-grid-visible", trendControl.majorGridVisible);
+  appendStaticAttribute(html, "major-grid-color", trendControl.majorGridColor);
+  appendStaticBooleanValueAttribute(html, "minor-grid-visible", trendControl.minorGridVisible);
+  appendStaticAttribute(html, "minor-grid-color", trendControl.minorGridColor);
   appendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.yAxisScaleVisible);
   appendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.yAxisGridVisible);
   appendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.showPercentageAxis);
@@ -3232,6 +3236,12 @@ function createTrendControlStyle(trendControl: HmiTrendControl): string {
   const valueBarWidth = getStaticValue(trendControl.valueBarWidth);
   if (valueBarWidth !== undefined)
     parts.push(`--hmi-trend-value-bar-width: ${toCss(Math.max(0, valueBarWidth))}px;`);
+  const majorGridColor = getStaticValue(trendControl.majorGridColor);
+  if (majorGridColor !== undefined)
+    parts.push(`--hmi-trend-major-grid-color: ${colorToCss(majorGridColor)};`);
+  const minorGridColor = getStaticValue(trendControl.minorGridColor);
+  if (minorGridColor !== undefined)
+    parts.push(`--hmi-trend-minor-grid-color: ${colorToCss(minorGridColor)};`);
   return parts.join("");
 }
 
