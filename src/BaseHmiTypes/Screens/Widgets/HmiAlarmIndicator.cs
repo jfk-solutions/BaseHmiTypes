@@ -21,6 +21,8 @@ public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 
     public HmiProperty<int>? NumberOfAlarms { get; set; }
 
+    public HmiProperty<string>? Text { get; set; }
+
     public HmiProperty<IList<int>>? ShowAcknowledgedAlarmClasses { get; set; }
 
     public HmiProperty<IList<int>>? ShowPendingAlarmClasses { get; set; }
