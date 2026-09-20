@@ -3077,6 +3077,7 @@ public class HmiScreenToHtmlConverterTests
             Color = HmiColor.FromArgb(255, 17, 34, 51),
             Visible = true,
             Width = 3,
+            LineType = HmiTrendLineType.Stepped,
             Style = HmiLineStyle.Dash,
             FillVisible = true,
             FillColor = HmiColor.FromArgb(255, 0x33, 0x66, 0x99),
@@ -3155,7 +3156,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "minimum-value=\"-5\"");
         StringAssert.Contains(html, "maximum-value=\"100\"");
         StringAssert.Contains(html, "y-axis-decimal-places=\"2\"");
-        StringAssert.Contains(html, "pens=\"[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;lowerLimitColoring&quot;:true,&quot;lowerLimit&quot;:10,&quot;lowerLimitColor&quot;:&quot;#0044CC&quot;,&quot;upperLimitColoring&quot;:true,&quot;upperLimit&quot;:90,&quot;upperLimitColor&quot;:&quot;#CC2211&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}]\"");
+        StringAssert.Contains(html, "pens=\"[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;lineType&quot;:2,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;lowerLimitColoring&quot;:true,&quot;lowerLimit&quot;:10,&quot;lowerLimitColor&quot;:&quot;#0044CC&quot;,&quot;upperLimitColoring&quot;:true,&quot;upperLimit&quot;:90,&quot;upperLimitColor&quot;:&quot;#CC2211&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}]\"");
     }
 
     [TestMethod]

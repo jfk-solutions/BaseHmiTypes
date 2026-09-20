@@ -19,6 +19,8 @@ public sealed class HmiTrendPen
 
     public HmiProperty<HmiTrendPenType>? Type { get; set; }
 
+    public HmiProperty<HmiTrendLineType>? LineType { get; set; }
+
     public HmiProperty<HmiLineStyle>? Style { get; set; }
 
     /// <summary>Gets or sets whether the area below the trend line is filled.</summary>
