@@ -211,6 +211,29 @@ test("HTML conversion renders painted item background flashing", async () => {
   assert.match(html, /@keyframes hmi-background-color-flash/);
 });
 
+test("HTML conversion renders SVG border flashing", async () => {
+  const circle = new HmiCircle();
+  circle.name = "FlashingBorder";
+  circle.width = staticProperty(100);
+  circle.height = staticProperty(40);
+  circle.borderColor = blinkProperty(
+    hmiColorFromArgb(255, 1, 2, 3),
+    hmiColorFromArgb(255, 4, 5, 6),
+    HmiBlinkRate.Fast,
+  );
+  circle.borderWidth = staticProperty(2);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(circle);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /stroke="#010203"/);
+  assert.match(html, /--hmi-border-color-off: #010203;/);
+  assert.match(html, /--hmi-border-color-on: #040506;/);
+  assert.match(html, /animation: hmi-border-color-flash 0.5s steps\(1, end\) infinite;/);
+  assert.match(html, /@keyframes hmi-border-color-flash/);
+});
+
 test("HTML conversion renders shape fill animation previews", async () => {
   const rectangle = createRectangle("Tank");
   rectangle.id = "tank";
