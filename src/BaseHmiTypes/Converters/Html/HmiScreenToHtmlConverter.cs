@@ -815,9 +815,29 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendStrokeAttributes(StringBuilder html, HmiShapeBase item, HmiColor? fillColor, HmiHtmlConvertContext context)
     {
+        var lineStyle = GetLineStyle(item, context);
         AppendAttribute(html, "fill", fillColor == null ? "none" : ToCss(fillColor.Value));
-        AppendAttribute(html, "stroke", ToCss(GetStrokeColor(item, context)));
+        AppendAttribute(html, "stroke", lineStyle == HmiLineStyle.None ? "none" : ToCss(GetStrokeColor(item, context)));
         AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item, context));
+
+        switch (lineStyle)
+        {
+            case HmiLineStyle.Dash:
+                AppendAttribute(html, "stroke-dasharray", "6 4");
+                break;
+            case HmiLineStyle.Dot:
+                AppendAttribute(html, "stroke-dasharray", "1 3");
+                AppendAttribute(html, "stroke-linecap", "round");
+                break;
+            case HmiLineStyle.DashDot:
+                AppendAttribute(html, "stroke-dasharray", "6 3 1 3");
+                AppendAttribute(html, "stroke-linecap", "round");
+                break;
+            case HmiLineStyle.DashDotDot:
+                AppendAttribute(html, "stroke-dasharray", "6 3 1 3 1 3");
+                AppendAttribute(html, "stroke-linecap", "round");
+                break;
+        }
     }
 
     private static string CreateArcPath(
@@ -908,6 +928,13 @@ public class HmiScreenToHtmlConverter
             return borderWidth;
 
         return 1d;
+    }
+
+    private static HmiLineStyle GetLineStyle(HmiShapeBase item, HmiHtmlConvertContext context)
+    {
+        return context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.DashType), item.DashType, out var dashType)
+            ? (HmiLineStyle)dashType
+            : HmiLineStyle.Solid;
     }
 
     private static bool TryGetStaticValue<T>(HmiProperty<T>? property, out T value)
