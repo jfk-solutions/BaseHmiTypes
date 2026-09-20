@@ -824,9 +824,14 @@ public class HmiScreenToHtmlConverter
     private static void AppendStrokeAttributes(StringBuilder html, HmiShapeBase item, HmiColor? fillColor, HmiHtmlConvertContext context)
     {
         var lineStyle = GetLineStyle(item, context);
-        var fill = fillColor == null
+        var fillPattern = GetFillPattern(item, context);
+        var fill = fillColor == null || fillPattern == HmiFillPattern.Transparent
             ? "none"
-            : TryGetFillPercentage(item.FillAnimation, out _) ? $"url(#{GetFillGradientId(item)})" : ToCss(fillColor.Value);
+            : TryGetFillPercentage(item.FillAnimation, out _)
+                ? $"url(#{GetFillGradientId(item)})"
+                : fillPattern is not null and not HmiFillPattern.Solid
+                    ? $"url(#{GetFillPatternId(item)})"
+                    : ToCss(fillColor.Value);
         AppendAttribute(html, "fill", fill);
         AppendAttribute(html, "stroke", lineStyle == HmiLineStyle.None ? "none" : ToCss(GetStrokeColor(item, context)));
         AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item, context));
@@ -857,8 +862,14 @@ public class HmiScreenToHtmlConverter
         HmiColor? fillColor,
         HmiHtmlConvertContext context)
     {
-        if (fillColor is null || !TryGetFillPercentage(item.FillAnimation, out var percentage))
+        if (fillColor is null)
             return;
+
+        if (!TryGetFillPercentage(item.FillAnimation, out var percentage))
+        {
+            AppendSvgPatternDefinition(html, item, fillColor.Value, context);
+            return;
+        }
 
         var (x1, y1, x2, y2) = GetSvgFillVector(item.FillAnimation?.Direction);
         html.Append("<defs><linearGradient");
@@ -876,6 +887,91 @@ public class HmiScreenToHtmlConverter
         html.Append("></stop></linearGradient></defs>");
     }
 
+    private static void AppendSvgPatternDefinition(
+        StringBuilder html,
+        HmiShapeBase item,
+        HmiColor fillColor,
+        HmiHtmlConvertContext context)
+    {
+        var pattern = GetFillPattern(item, context);
+        if (pattern is null or HmiFillPattern.Transparent or HmiFillPattern.Solid)
+            return;
+
+        var patternColor = GetPatternColor(item, context);
+        var size = pattern is HmiFillPattern.DottedEvenOddFiner or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.CheckersFiner ? 4 : 8;
+        html.Append("<defs><pattern");
+        AppendAttribute(html, "id", GetFillPatternId(item));
+        AppendAttribute(html, "patternUnits", "userSpaceOnUse");
+        AppendAttribute(html, "width", size.ToString(CultureInfo.InvariantCulture));
+        AppendAttribute(html, "height", size.ToString(CultureInfo.InvariantCulture));
+        html.Append("><rect width=\"100%\" height=\"100%\"");
+        AppendAttribute(html, "fill", ToCss(fillColor));
+        html.Append("></rect>");
+        AppendSvgPatternMarks(html, pattern.Value, size, patternColor);
+        html.Append("</pattern></defs>");
+    }
+
+    private static void AppendSvgPatternMarks(StringBuilder html, HmiFillPattern pattern, int size, HmiColor color)
+    {
+        var cssColor = ToCss(color);
+        switch (pattern)
+        {
+            case HmiFillPattern.Checkers:
+            case HmiFillPattern.CheckersFiner:
+                html.Append("<path");
+                AppendAttribute(html, "d", $"M0 0H{size / 2}V{size / 2}H0ZM{size / 2} {size / 2}H{size}V{size}H{size / 2}Z");
+                AppendAttribute(html, "fill", cssColor);
+                html.Append("></path>");
+                break;
+            case HmiFillPattern.Horizontal:
+            case HmiFillPattern.HorizontalDifferentLines:
+                AppendPatternPath(html, $"M0 1H{size} M0 {size / 2 + 1}H{size}", cssColor, pattern == HmiFillPattern.HorizontalDifferentLines ? 2 : 1);
+                break;
+            case HmiFillPattern.Vertical:
+                AppendPatternPath(html, $"M1 0V{size} M{size / 2 + 1} 0V{size}", cssColor, 1);
+                break;
+            case HmiFillPattern.DottedHorizontal:
+            case HmiFillPattern.DottedEvenOdd:
+            case HmiFillPattern.DottedEvenOddFiner:
+            case HmiFillPattern.DottedEvenOddFinest:
+            case HmiFillPattern.DottedHorizontalInverted:
+                html.Append("<circle");
+                AppendAttribute(html, "cx", (size / 4d).ToString(CultureInfo.InvariantCulture));
+                AppendAttribute(html, "cy", (size / 4d).ToString(CultureInfo.InvariantCulture));
+                AppendAttribute(html, "r", pattern == HmiFillPattern.DottedHorizontalInverted ? "2" : "1");
+                AppendAttribute(html, "fill", cssColor);
+                html.Append("></circle><circle");
+                AppendAttribute(html, "cx", (size * 0.75d).ToString(CultureInfo.InvariantCulture));
+                AppendAttribute(html, "cy", (size * 0.75d).ToString(CultureInfo.InvariantCulture));
+                AppendAttribute(html, "r", pattern == HmiFillPattern.DottedHorizontalInverted ? "2" : "1");
+                AppendAttribute(html, "fill", cssColor);
+                html.Append("></circle>");
+                break;
+            case HmiFillPattern.Bricks:
+            case HmiFillPattern.BricksDiagonal:
+                AppendPatternPath(html, $"M0 0H{size} M0 {size / 2}H{size} M{size / 2} 0V{size / 2} M0 {size / 2}V{size}", cssColor, 1);
+                break;
+            default:
+                var leftToRight = pattern is HmiFillPattern.DiagonalLeftToRight or HmiFillPattern.Diagonal or HmiFillPattern.DiagonalCross or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.DiagonalCrossBold;
+                var rightToLeft = pattern is HmiFillPattern.DiagonalRightToLeft or HmiFillPattern.DiagonalCross or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.DiagonalCrossBold;
+                if (leftToRight)
+                    AppendPatternPath(html, $"M-{size / 4} {size / 4}L{size / 4} -{size / 4} M0 {size}L{size} 0 M{size * 3 / 4} {size + size / 4}L{size + size / 4} {size * 3 / 4}", cssColor, pattern == HmiFillPattern.DiagonalCrossBold ? 2 : 1);
+                if (rightToLeft)
+                    AppendPatternPath(html, $"M-{size / 4} {size * 3 / 4}L{size / 4} {size + size / 4} M0 0L{size} {size} M{size * 3 / 4} -{size / 4}L{size + size / 4} {size / 4}", cssColor, pattern == HmiFillPattern.DiagonalCrossBold ? 2 : 1);
+                break;
+        }
+    }
+
+    private static void AppendPatternPath(StringBuilder html, string data, string color, int width)
+    {
+        html.Append("<path");
+        AppendAttribute(html, "d", data);
+        AppendAttribute(html, "stroke", color);
+        AppendAttribute(html, "stroke-width", width.ToString(CultureInfo.InvariantCulture));
+        AppendAttribute(html, "fill", "none");
+        html.Append("></path>");
+    }
+
     private static (string x1, string y1, string x2, string y2) GetSvgFillVector(HmiFillDirection? direction) => direction switch
     {
         HmiFillDirection.Up => ("0%", "100%", "0%", "0%"),
@@ -889,6 +985,22 @@ public class HmiScreenToHtmlConverter
         var source = item.Name ?? item.Id ?? "shape";
         var sanitized = new string(source.Select(character => char.IsLetterOrDigit(character) || character is '-' or '_' ? character : '-').ToArray());
         return "hmi-fill-" + (string.IsNullOrEmpty(sanitized) ? "shape" : sanitized);
+    }
+
+    private static string GetFillPatternId(HmiShapeBase item) => GetFillGradientId(item).Replace("hmi-fill-", "hmi-pattern-");
+
+    private static HmiFillPattern? GetFillPattern(HmiShapeBase item, HmiHtmlConvertContext context)
+    {
+        return context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.FillPattern), item.FillPattern, out var pattern)
+            ? pattern
+            : null;
+    }
+
+    private static HmiColor GetPatternColor(HmiShapeBase item, HmiHtmlConvertContext context)
+    {
+        return context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiPaintedScreenItemBase.PatternColor), item.PatternColor, out var color)
+            ? color
+            : GetStrokeColor(item, context);
     }
 
     private static bool TryGetFillPercentage(HmiFillAnimation? animation, out double percentage)
@@ -1870,6 +1982,7 @@ public class HmiScreenToHtmlConverter
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, rectangle, context);
         AppendStyle(html, rectangle, context);
+        AppendFillPatternStyle(html, rectangle, context);
         AppendFillAnimationStyle(html, rectangle, context);
         AppendRectangleRadius(html, rectangle, context);
         if (rectangle.BorderColor == null && rectangle.BorderWidth == null && rectangle.LineColor == null && rectangle.LineWidth == null)
@@ -1877,6 +1990,37 @@ public class HmiScreenToHtmlConverter
         html.Append("\"");
         html.Append(">");
         html.Append("</div>");
+    }
+
+    private static void AppendFillPatternStyle(StringBuilder html, HmiShapeBase item, HmiHtmlConvertContext context)
+    {
+        var pattern = GetFillPattern(item, context);
+        if (pattern is null or HmiFillPattern.Solid)
+            return;
+        if (pattern == HmiFillPattern.Transparent)
+        {
+            html.Append("background-color: transparent;");
+            return;
+        }
+
+        var color = ToCss(GetPatternColor(item, context));
+        var image = pattern switch
+        {
+            HmiFillPattern.Checkers => $"conic-gradient({color} 25%, transparent 0 50%, {color} 0 75%, transparent 0)",
+            HmiFillPattern.CheckersFiner => $"conic-gradient({color} 25%, transparent 0 50%, {color} 0 75%, transparent 0)",
+            HmiFillPattern.Horizontal => $"repeating-linear-gradient(to bottom, {color} 0 1px, transparent 1px 6px)",
+            HmiFillPattern.Vertical => $"repeating-linear-gradient(to right, {color} 0 1px, transparent 1px 6px)",
+            HmiFillPattern.DiagonalLeftToRight or HmiFillPattern.Diagonal => $"repeating-linear-gradient(135deg, {color} 0 1px, transparent 1px 6px)",
+            HmiFillPattern.DiagonalRightToLeft => $"repeating-linear-gradient(45deg, {color} 0 1px, transparent 1px 6px)",
+            HmiFillPattern.DiagonalCross or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.DiagonalCrossBold =>
+                $"repeating-linear-gradient(45deg, {color} 0 1px, transparent 1px 6px), repeating-linear-gradient(135deg, {color} 0 1px, transparent 1px 6px)",
+            HmiFillPattern.Bricks or HmiFillPattern.BricksDiagonal =>
+                $"linear-gradient({color} 1px, transparent 1px), linear-gradient(90deg, {color} 1px, transparent 1px)",
+            HmiFillPattern.HorizontalDifferentLines => $"repeating-linear-gradient(to bottom, {color} 0 1px, transparent 1px 4px, {color} 4px 6px, transparent 6px 10px)",
+            _ => $"radial-gradient(circle, {color} 0 1px, transparent 1px)"
+        };
+        html.Append("background-image: ").Append(image).Append(';');
+        html.Append("background-size: ").Append(pattern is HmiFillPattern.CheckersFiner or HmiFillPattern.DiagonalCrossFiner ? "4px 4px" : "8px 8px").Append(';');
     }
 
     private static void AppendFillAnimationStyle(StringBuilder html, HmiShapeBase item, HmiHtmlConvertContext context)

@@ -1449,6 +1449,39 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersShapeFillPatterns()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiRectangle
+        {
+            Name = "CheckedTank",
+            Width = 100,
+            Height = 50,
+            BackgroundColor = HmiColor.FromArgb(255, 255, 255, 255),
+            PatternColor = HmiColor.FromArgb(255, 0, 0, 0),
+            FillPattern = HmiFillPattern.Checkers
+        });
+        layer.Items.Add(new HmiCircle
+        {
+            Name = "StripedLevel",
+            Width = 50,
+            Height = 50,
+            BackgroundColor = HmiColor.FromArgb(255, 255, 255, 255),
+            PatternColor = HmiColor.FromArgb(255, 0, 128, 255),
+            FillPattern = HmiFillPattern.Horizontal
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "background-image: conic-gradient(#000000 25%, transparent 0 50%, #000000 0 75%, transparent 0);");
+        StringAssert.Contains(html, "fill=\"url(#hmi-pattern-StripedLevel)\"");
+        StringAssert.Contains(html, "<pattern id=\"hmi-pattern-StripedLevel\" patternUnits=\"userSpaceOnUse\"");
+        StringAssert.Contains(html, "stroke=\"#0080FF\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersPaintedItemPadding()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
