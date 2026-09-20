@@ -1348,6 +1348,39 @@ test("HTML converter renders an empty custom widget preview", async () => {
   assert.match(html, /<span aria-hidden="true">External application<\/span>/);
 });
 
+test("HTML converter renders hosted application window chrome", async () => {
+  const screen = new HmiScreen();
+  screen.name = "Main";
+  const layer = new HmiLayer();
+  layer.name = "Default";
+  const window = new HmiCustomWidgetContainer();
+  window.name = "Diagnostics";
+  window.width = staticProperty(320);
+  window.height = staticProperty(180);
+  window.resizable = staticProperty(true);
+  window.movable = staticProperty(true);
+  window.showWindowBorder = staticProperty(true);
+  window.showCaption = staticProperty(true);
+  window.showMaximizeButton = staticProperty(true);
+  window.showCloseButton = staticProperty(true);
+  window.alwaysOnTop = staticProperty(true);
+  window.hostedApplication = staticProperty("Global Script");
+  window.hostedTemplate = staticProperty("GSC Diagnostics");
+  layer.items.push(window);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /data-window-resizable data-window-movable data-window-border data-window-caption data-window-maximize data-window-close data-window-always-on-top/);
+  assert.match(html, /data-hosted-application="Global Script" data-hosted-template="GSC Diagnostics"/);
+  assert.match(html, /border: 1px solid #6b7280;resize: both;z-index: 2147483647;/);
+  assert.match(html, /class="hmi-hosted-window-caption"/);
+  assert.match(html, /cursor: move;/);
+  assert.match(html, /aria-label="Maximize"/);
+  assert.match(html, /aria-label="Close"/);
+  assert.match(html, /GSC Diagnostics/);
+});
+
 test("HTML converter exposes trend configuration to the web component", async () => {
   const screen = new HmiScreen();
   screen.name = "Main";
