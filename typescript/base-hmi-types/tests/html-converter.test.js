@@ -1551,6 +1551,10 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.valueBarColor = staticProperty(hmiColorFromArgb(255, 0x65, 0x43, 0x21));
   trend.valueBarWidth = staticProperty(3);
   trend.showValueBarInXAxis = staticProperty(true);
+  trend.displayStatisticRulers = staticProperty(true);
+  trend.useGraphicStatisticRulers = staticProperty(true);
+  trend.statisticRulerColor = staticProperty(hmiColorFromArgb(255, 0x22, 0xaa, 0x66));
+  trend.statisticRulerWidth = staticProperty(4);
   trend.displayScrollMechanism = staticProperty(true);
   trend.chartLiveMode = staticProperty(true);
   trend.autoScale = staticProperty(false);
@@ -1642,6 +1646,10 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /value-bar-color="#654321"/);
   assert.match(html, /value-bar-width="3"/);
   assert.match(html, /show-value-bar-in-x-axis="true"/);
+  assert.match(html, /display-statistic-rulers="true"/);
+  assert.match(html, /use-graphic-statistic-rulers="true"/);
+  assert.match(html, /statistic-ruler-color="#22AA66"/);
+  assert.match(html, /statistic-ruler-width="4"/);
   assert.match(html, /--hmi-trend-value-bar-color: #654321;/);
   assert.match(html, /--hmi-trend-value-bar-width: 3px;/);
   assert.match(html, /display-scroll-mechanism="true"/);
