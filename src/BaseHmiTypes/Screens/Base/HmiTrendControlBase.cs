@@ -260,6 +260,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowToolbar { get; set; }
 
+    /// <summary>Gets or sets whether the toolbar is aligned to the top or bottom edge.</summary>
+    public HmiProperty<HmiVerticalAlignment>? ToolbarAlignment { get; set; }
+
     public HmiProperty<bool>? UseToolbarBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }
