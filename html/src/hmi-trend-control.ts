@@ -65,6 +65,7 @@ interface TrendPen {
   maximum?: number;
   axisScaleType?: number;
   exponentialFormat?: boolean;
+  autoDecimalPlaces?: boolean;
   unit?: string;
 }
 
@@ -132,7 +133,10 @@ export class HmiTrendControl extends HTMLElement {
     const maximumValue = maximumCandidate === minimumValue ? minimumValue + 1 : maximumCandidate;
     const axisScaleType = firstPen?.axisScaleType ?? 0;
     const exponentialFormat = firstPen?.exponentialFormat === true;
-    const decimalPlaces = clamp(Math.trunc(readNumberAttribute(this, "y-axis-decimal-places", 0)), 0, 12);
+    const configuredDecimalPlaces = clamp(Math.trunc(readNumberAttribute(this, "y-axis-decimal-places", 0)), 0, 12);
+    const decimalPlaces = firstPen?.autoDecimalPlaces === true
+      ? automaticDecimalPlaces(minimumValue, maximumValue, axisScaleType)
+      : configuredDecimalPlaces;
     const displayChartTitle = readBooleanAttribute(this, "display-chart-title", false);
     const showToolbar = readBooleanAttribute(this, "show-toolbar", true);
     const configuredToolbarButtonSize = readNumberAttribute(this, "toolbar-button-size", 28);
@@ -592,6 +596,14 @@ function formatAxisValue(value: number, decimalPlaces: number, exponentialFormat
   return exponentialFormat ? value.toExponential(decimalPlaces) : value.toFixed(decimalPlaces);
 }
 
+function automaticDecimalPlaces(minimumValue: number, maximumValue: number, axisScaleType: number): number {
+  const ticks = Array.from({ length: 6 }, (_value, index) =>
+    valueAtYAxisPosition(index * 20, minimumValue, maximumValue, axisScaleType));
+  const minimumStep = Math.min(...ticks.slice(1).map((value, index) => Math.abs(value - ticks[index]!)));
+  if (!Number.isFinite(minimumStep) || minimumStep <= 0 || minimumStep >= 1) return 0;
+  return clamp(Math.ceil(-Math.log10(minimumStep)), 0, 12);
+}
+
 function trendPointText(points: ReadonlyArray<{ x: number; y: number }>, lineType: number | undefined): string {
   if (lineType !== 2)
     return points.map(point => `${toCss(point.x)},${toCss(point.y)}`).join(" ");
@@ -703,6 +715,7 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.maximum === "number" && Number.isFinite(source.maximum)) pen.maximum = source.maximum;
       if (typeof source.axisScaleType === "number" && Number.isFinite(source.axisScaleType)) pen.axisScaleType = source.axisScaleType;
       if (typeof source.exponentialFormat === "boolean") pen.exponentialFormat = source.exponentialFormat;
+      if (typeof source.autoDecimalPlaces === "boolean") pen.autoDecimalPlaces = source.autoDecimalPlaces;
       if (typeof source.unit === "string") pen.unit = source.unit;
       return [pen];
     });
