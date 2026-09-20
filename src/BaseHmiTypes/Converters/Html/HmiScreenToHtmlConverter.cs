@@ -1392,7 +1392,10 @@ public class HmiScreenToHtmlConverter
             ? HmiFillDirection.Right
             : ResolveStaticValue(bar.FillDirection, context);
         var showScale = bar.ShowScale is not null && ResolveStaticValue(bar.ShowScale, context);
-        if (showScale)
+        var showThresholds = bar.Thresholds.Any(threshold =>
+            threshold.Value is not null &&
+            (threshold.Enabled is null || ResolveStaticValue(threshold.Enabled, context)));
+        if (showScale || showThresholds)
         {
             var vertical = direction is HmiFillDirection.Up or HmiFillDirection.Down;
             html.Append("<div");
@@ -1400,14 +1403,17 @@ public class HmiScreenToHtmlConverter
                 html,
                 bar,
                 context,
-                additionalStyle: vertical
-                    ? "display: flex; flex-direction: row; align-items: stretch; gap: 4px;"
-                    : "display: flex; flex-direction: column; align-items: stretch; gap: 2px;");
+                additionalStyle: showScale
+                    ? vertical
+                        ? "display: flex; flex-direction: row; align-items: stretch; gap: 4px;"
+                        : "display: flex; flex-direction: column; align-items: stretch; gap: 2px;"
+                    : "display: flex; align-items: stretch;");
             AppendAttribute(html, "data-hmi-bar", "true");
             AppendAttribute(html, "data-fill-direction", direction.ToString());
             html.Append('>');
-            AppendBarMeter(html, minimum, maximum, value, direction, vertical);
-            AppendBarScale(html, bar, minimum, maximum, direction, vertical, context);
+            AppendBarMeterRegion(html, bar, minimum, maximum, value, direction, vertical, context);
+            if (showScale)
+                AppendBarScale(html, bar, minimum, maximum, direction, vertical, context);
             html.Append("</div>");
             return;
         }
@@ -1419,6 +1425,25 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "max", ToCss(maximum));
         AppendAttribute(html, "value", ToCss(value));
         html.Append('>').Append(ToCss(value)).Append("</meter>");
+    }
+
+    private static void AppendBarMeterRegion(
+        StringBuilder html,
+        HmiBar bar,
+        double minimum,
+        double maximum,
+        double value,
+        HmiFillDirection direction,
+        bool vertical,
+        HmiHtmlConvertContext context)
+    {
+        html.Append("<div");
+        AppendAttribute(html, "data-hmi-bar-meter", "true");
+        AppendAttribute(html, "style", "position: relative; display: flex; flex: 1; min-width: 0; min-height: 0;");
+        html.Append('>');
+        AppendBarMeter(html, minimum, maximum, value, direction, vertical);
+        AppendBarThresholds(html, bar, minimum, maximum, direction, context);
+        html.Append("</div>");
     }
 
     private static void AppendBarMeter(
@@ -1439,6 +1464,46 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "max", ToCss(maximum));
         AppendAttribute(html, "value", ToCss(value));
         html.Append('>').Append(ToCss(value)).Append("</meter>");
+    }
+
+    private static void AppendBarThresholds(
+        StringBuilder html,
+        HmiBar bar,
+        double minimum,
+        double maximum,
+        HmiFillDirection direction,
+        HmiHtmlConvertContext context)
+    {
+        var percentageMode = bar.ThresholdValueMode is not null &&
+            ResolveStaticValue(bar.ThresholdValueMode, context) == HmiThresholdValueMode.Percentage;
+        for (var index = 0; index < bar.Thresholds.Count; index++)
+        {
+            var threshold = bar.Thresholds[index];
+            if (threshold.Value is null ||
+                (threshold.Enabled is not null && !ResolveStaticValue(threshold.Enabled, context)))
+                continue;
+            var thresholdValue = ResolveStaticValue(threshold.Value, context);
+            var percentage = percentageMode
+                ? thresholdValue
+                : maximum == minimum ? 0d : (thresholdValue - minimum) * 100d / (maximum - minimum);
+            percentage = Math.Clamp(percentage, 0d, 100d);
+            var position = direction switch
+            {
+                HmiFillDirection.Up => $"left: 0; right: 0; bottom: {ToCss(percentage)}%; height: 2px;",
+                HmiFillDirection.Down => $"left: 0; right: 0; top: {ToCss(percentage)}%; height: 2px;",
+                HmiFillDirection.Left => $"top: 0; bottom: 0; right: {ToCss(percentage)}%; width: 2px;",
+                _ => $"top: 0; bottom: 0; left: {ToCss(percentage)}%; width: 2px;"
+            };
+            var color = threshold.Color is null
+                ? "currentColor"
+                : ToCss(ResolveStaticValue(threshold.Color, context));
+            html.Append("<span");
+            AppendAttribute(html, "data-hmi-bar-threshold", (threshold.Index ?? index).ToString(CultureInfo.InvariantCulture));
+            AppendAttribute(html, "data-threshold-value", ToCss(thresholdValue));
+            AppendAttribute(html, "style",
+                $"position: absolute; pointer-events: none; z-index: 1; background-color: {color}; {position}");
+            html.Append("></span>");
+        }
     }
 
     private static void AppendBarScale(
