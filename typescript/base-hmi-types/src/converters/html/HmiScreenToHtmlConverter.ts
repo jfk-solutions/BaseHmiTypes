@@ -64,6 +64,7 @@ import { HmiShapeBase } from "../../screens/shapes/HmiShapeBase.js";
 import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
+import { HmiButtonBase } from "../../screens/widgets/HmiButtonBase.js";
 import { HmiBar } from "../../screens/widgets/HmiBar.js";
 import { HmiDisabledImageMode } from "../../screens/widgets/HmiDisabledImageMode.js";
 import { HmiState } from "../../screens/widgets/HmiState.js";
@@ -3006,6 +3007,7 @@ function appendCommonAttributes(
   appendTextAttribute(html, "title", item.toolTipText, context);
   appendStaticAttribute(html, "tabindex", item.tabIndex);
   appendDisabledAttribute(html, item);
+  appendHotKeyAttributes(html, item);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
@@ -3101,6 +3103,27 @@ function appendDisabledStyle(html: string[], item: HmiScreenItemBase): void {
   if (!getStaticValueOrDefault(item.enabled, true)) {
     html.push("pointer-events: none;");
   }
+}
+
+function appendHotKeyAttributes(html: string[], item: HmiScreenItemBase): void {
+  const hotKeyProperty = item instanceof HmiButtonBase || item instanceof HmiIOField
+    ? item.hotKey
+    : undefined;
+  const hotKey = getStaticValue(hotKeyProperty);
+  if (!hotKey) return;
+
+  appendAttribute(html, "data-hmi-hot-key", hotKey);
+  appendAttribute(html, "aria-keyshortcuts", toAriaKeyShortcuts(hotKey));
+}
+
+function toAriaKeyShortcuts(hotKey: string): string {
+  return hotKey.split("+").map(part => {
+    switch (part.toUpperCase()) {
+      case "CTRL": return "Control";
+      case "WIN": return "Meta";
+      default: return part;
+    }
+  }).join("+");
 }
 
 function appendDesignShadow(html: string[], item: HmiScreenItemBase, context: HmiHtmlConvertContext): void {
