@@ -3051,6 +3051,8 @@ public class HmiScreenToHtmlConverterTests
             XAxisAlignment = HmiVerticalAlignment.Top,
             XAxisLabel = "Recorded time",
             XAxisDateVisible = false,
+            XAxisTimeSpan = 120000,
+            XAxisTimeSpanUnit = "Milliseconds",
             XAxisGridVisible = true,
             MajorGridVisible = true,
             MajorGridColor = HmiColor.FromArgb(255, 0x20, 0x40, 0x60),
@@ -3125,6 +3127,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "x-axis-alignment=\"Top\"");
         StringAssert.Contains(html, "x-axis-label=\"Recorded time\"");
         StringAssert.Contains(html, "x-axis-date-visible=\"false\"");
+        StringAssert.Contains(html, "x-axis-time-span=\"120000\"");
+        StringAssert.Contains(html, "x-axis-time-span-unit=\"Milliseconds\"");
         StringAssert.Contains(html, "x-axis-grid-visible=\"true\"");
         StringAssert.Contains(html, "major-grid-visible=\"true\"");
         StringAssert.Contains(html, "major-grid-color=\"#204060\"");
