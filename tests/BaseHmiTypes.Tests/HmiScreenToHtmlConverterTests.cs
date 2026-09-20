@@ -892,6 +892,33 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersAlarmIndicatorFont()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiAlarmIndicator
+        {
+            Name = "GroupDisplay",
+            Width = 80,
+            Height = 30,
+            Text = "Alarm",
+            Font = new HmiFont
+            {
+                Name = "Arial",
+                Size = 12,
+                Bold = true
+            }
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "font-family: Arial;");
+        StringAssert.Contains(html, "font-size: 12px;");
+        StringAssert.Contains(html, "font-weight: bold;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersClockPreview()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
