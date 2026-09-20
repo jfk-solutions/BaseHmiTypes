@@ -2144,6 +2144,30 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersScreenBackgroundImage()
+    {
+        var screen = new HmiScreen
+        {
+            Name = "BackgroundScreen",
+            Width = 320,
+            Height = 240,
+            BackgroundImage = new HmiImageSource
+            {
+                ImageName = "background.svg",
+                Uri = "data:image/svg+xml;base64,PHN2Zy8+"
+            },
+            BackgroundImageLayout = HmiBackgroundImageLayout.Tile
+        };
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-background-image=\"background.svg\"");
+        StringAssert.Contains(html, "data-background-image-layout=\"Tile\"");
+        StringAssert.Contains(html, "background-image: url(&quot;data:image/svg+xml;base64,PHN2Zy8+&quot;);");
+        StringAssert.Contains(html, "background-repeat: repeat;background-size: auto;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersConfiguredColorGradients()
     {
         var screen = new HmiScreen
