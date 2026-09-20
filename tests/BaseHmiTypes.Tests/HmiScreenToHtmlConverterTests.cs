@@ -3044,6 +3044,7 @@ public class HmiScreenToHtmlConverterTests
             DisplayValueBar = true,
             ValueBarColor = HmiColor.FromArgb(255, 0x65, 0x43, 0x21),
             ValueBarWidth = 3,
+            ShowValueBarInXAxis = true,
             DisplayScrollMechanism = true,
             ChartLiveMode = true,
             AutoScale = false,
@@ -3136,6 +3137,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "display-value-bar=\"true\"");
         StringAssert.Contains(html, "value-bar-color=\"#654321\"");
         StringAssert.Contains(html, "value-bar-width=\"3\"");
+        StringAssert.Contains(html, "show-value-bar-in-x-axis=\"true\"");
         StringAssert.Contains(html, "--hmi-trend-value-bar-color: #654321;");
         StringAssert.Contains(html, "--hmi-trend-value-bar-width: 3px;");
         StringAssert.Contains(html, "display-scroll-mechanism=\"true\"");

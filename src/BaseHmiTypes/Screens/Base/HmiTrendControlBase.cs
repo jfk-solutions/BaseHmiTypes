@@ -104,6 +104,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<double>? ValueBarWidth { get; set; }
 
+    /// <summary>Gets or sets whether the value bar extends into the time axis.</summary>
+    public HmiProperty<bool>? ShowValueBarInXAxis { get; set; }
+
     public HmiProperty<bool>? XAxisScaleVisible { get; set; }
 
     public HmiProperty<HmiColor>? XAxisColor { get; set; }

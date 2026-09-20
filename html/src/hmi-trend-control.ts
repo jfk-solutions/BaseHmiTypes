@@ -10,6 +10,7 @@ const trendControlProperties = {
   displayPenIcons: String,
   useTrendNameAsLabel: String,
   displayValueBar: String,
+  showValueBarInXAxis: String,
   displayScrollMechanism: String,
   chartLiveMode: String,
   autoScale: String,
@@ -150,6 +151,7 @@ export class HmiTrendControl extends HTMLElement {
     const displayPenIcons = readBooleanAttribute(this, "display-pen-icons", true);
     const useTrendNameAsLabel = readBooleanAttribute(this, "use-trend-name-as-label", true);
     const displayValueBar = readBooleanAttribute(this, "display-value-bar", false);
+    const showValueBarInXAxis = readBooleanAttribute(this, "show-value-bar-in-x-axis", false);
     const displayScrollMechanism = readBooleanAttribute(this, "display-scroll-mechanism", false);
     const chartLiveMode = readBooleanAttribute(this, "chart-live-mode", false);
     const autoScale = readBooleanAttribute(this, "auto-scale", false);
@@ -320,8 +322,8 @@ export class HmiTrendControl extends HTMLElement {
 
         .value-bar {
           position: absolute;
-          top: 0;
-          bottom: 0;
+          top: ${showValueBarInXAxis && xAxisVisible && xAxisAlignment === "top" ? "-2.4em" : "0"};
+          bottom: ${showValueBarInXAxis && xAxisVisible && xAxisAlignment === "bottom" ? "-2.4em" : "0"};
           left: 50%;
           width: var(--hmi-trend-value-bar-width, 1px);
           transform: translateX(-50%);
