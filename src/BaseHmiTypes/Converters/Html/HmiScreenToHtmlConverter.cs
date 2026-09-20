@@ -2954,6 +2954,15 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "aria-label", "Alarm indicator");
         AppendAttribute(html, "data-active", isActive ? "true" : "false");
         AppendStaticValueAttribute(html, "data-visual-state", indicator.VisualState, context);
+        AppendStaticValueAttribute(html, "data-group-relevant", indicator.IsGroupRelevant, context);
+        AppendStaticValueAttribute(html, "data-significant-mask", indicator.SignificantMask, context);
+        AppendStaticValueAttribute(html, "data-event-acknowledgement-mask", indicator.EventAcknowledgementMask, context);
+        AppendStaticValueAttribute(html, "data-use-global-alarm-classes", indicator.UseGlobalAlarmClasses, context);
+        AppendStaticValueAttribute(html, "data-use-global-settings", indicator.UseGlobalSettings, context);
+        AppendStaticValueAttribute(html, "data-user-value-1", indicator.UserValue1, context);
+        AppendStaticValueAttribute(html, "data-user-value-2", indicator.UserValue2, context);
+        AppendStaticValueAttribute(html, "data-user-value-3", indicator.UserValue3, context);
+        AppendStaticValueAttribute(html, "data-user-value-4", indicator.UserValue4, context);
         AppendStaticValueAttribute(html, "data-flashing-required", indicator.IsFlashingRequired, context);
         AppendStaticValueAttribute(html, "data-flashing-color", indicator.FlashingColor, context);
         AppendStaticValueAttribute(html, "data-foreground-flashing-required", indicator.IsForegroundFlashingRequired, context);

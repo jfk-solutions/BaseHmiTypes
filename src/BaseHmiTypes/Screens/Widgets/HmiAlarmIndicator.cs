@@ -23,6 +23,24 @@ public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 
     public HmiProperty<HmiAlarmIndicatorState>? VisualState { get; set; }
 
+    public HmiProperty<bool>? IsGroupRelevant { get; set; }
+
+    public HmiProperty<int>? SignificantMask { get; set; }
+
+    public HmiProperty<int>? EventAcknowledgementMask { get; set; }
+
+    public HmiProperty<bool>? UseGlobalAlarmClasses { get; set; }
+
+    public HmiProperty<bool>? UseGlobalSettings { get; set; }
+
+    public HmiProperty<int>? UserValue1 { get; set; }
+
+    public HmiProperty<int>? UserValue2 { get; set; }
+
+    public HmiProperty<int>? UserValue3 { get; set; }
+
+    public HmiProperty<int>? UserValue4 { get; set; }
+
     public HmiProperty<int>? NoAlarmState { get; set; }
 
     public HmiProperty<int>? NumberOfAlarms { get; set; }
