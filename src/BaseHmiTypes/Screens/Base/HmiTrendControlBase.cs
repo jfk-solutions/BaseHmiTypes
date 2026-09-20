@@ -107,6 +107,16 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     /// <summary>Gets or sets whether the value bar extends into the time axis.</summary>
     public HmiProperty<bool>? ShowValueBarInXAxis { get; set; }
 
+    /// <summary>Gets or sets whether the two statistics-area rulers are displayed.</summary>
+    public HmiProperty<bool>? DisplayStatisticRulers { get; set; }
+
+    /// <summary>Gets or sets whether statistics rulers use their configured color and width.</summary>
+    public HmiProperty<bool>? UseGraphicStatisticRulers { get; set; }
+
+    public HmiProperty<HmiColor>? StatisticRulerColor { get; set; }
+
+    public HmiProperty<double>? StatisticRulerWidth { get; set; }
+
     public HmiProperty<bool>? XAxisScaleVisible { get; set; }
 
     public HmiProperty<HmiColor>? XAxisColor { get; set; }

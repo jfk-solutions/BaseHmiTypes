@@ -12,6 +12,10 @@ const trendControlProperties = {
   useTrendNameAsLabel: String,
   displayValueBar: String,
   showValueBarInXAxis: String,
+  displayStatisticRulers: String,
+  useGraphicStatisticRulers: String,
+  statisticRulerColor: String,
+  statisticRulerWidth: String,
   displayScrollMechanism: String,
   chartLiveMode: String,
   autoScale: String,
@@ -154,6 +158,14 @@ export class HmiTrendControl extends HTMLElement {
     const useTrendNameAsLabel = readBooleanAttribute(this, "use-trend-name-as-label", true);
     const displayValueBar = readBooleanAttribute(this, "display-value-bar", false);
     const showValueBarInXAxis = readBooleanAttribute(this, "show-value-bar-in-x-axis", false);
+    const displayStatisticRulers = readBooleanAttribute(this, "display-statistic-rulers", false);
+    const useGraphicStatisticRulers = readBooleanAttribute(this, "use-graphic-statistic-rulers", false);
+    const statisticRulerColor = useGraphicStatisticRulers
+      ? normalizeTransparent(this.getAttribute("statistic-ruler-color") ?? "", "#000000")
+      : "#000000";
+    const statisticRulerWidth = useGraphicStatisticRulers
+      ? Math.max(1, readNumberAttribute(this, "statistic-ruler-width", 1))
+      : 1;
     const displayScrollMechanism = readBooleanAttribute(this, "display-scroll-mechanism", false);
     const chartLiveMode = readBooleanAttribute(this, "chart-live-mode", false);
     const autoScale = readBooleanAttribute(this, "auto-scale", false);
@@ -334,6 +346,19 @@ export class HmiTrendControl extends HTMLElement {
           pointer-events: none;
         }
 
+        .statistic-ruler {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: ${toCss(statisticRulerWidth)}px;
+          transform: translateX(-50%);
+          background: ${escapeCss(statisticRulerColor)};
+          pointer-events: none;
+        }
+
+        .statistic-ruler.start { left: 35%; }
+        .statistic-ruler.end { left: 65%; }
+
         .x-label {
           ${xAxisAlignment}: calc(100% + 0.9em);
           transform: translateX(-50%);
@@ -418,6 +443,7 @@ export class HmiTrendControl extends HTMLElement {
           ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, axisScaleType, exponentialFormat) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
+          ${displayStatisticRulers ? `<div class="statistic-ruler start" title="Statistics range start"></div><div class="statistic-ruler end" title="Statistics range end"></div>` : ""}
           ${xAxisVisible ? renderXLabels(labels) : ""}
           ${xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
           ${yAxisVisible && yAxisLabel ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
