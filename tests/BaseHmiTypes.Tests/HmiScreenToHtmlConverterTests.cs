@@ -36,6 +36,26 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersDesignShadow()
+    {
+        var rectangle = new HmiRectangle
+        {
+            Name = "ShadowedRectangle",
+            Width = 100,
+            Height = 50,
+            UseDesignShadowSettings = true
+        };
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(rectangle);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"ShadowedRectangle\" style=\"position: absolute;left: 0px;top: 0px;width: 100px;height: 50px;filter: drop-shadow(3px 3px 3px rgba(0, 0, 0, 0.35));");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSymbolicIoFieldStates()
     {
         var symbolicIoField = new HmiSymbolicIOField
