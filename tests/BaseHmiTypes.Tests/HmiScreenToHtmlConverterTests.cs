@@ -3028,6 +3028,7 @@ public class HmiScreenToHtmlConverterTests
             UseToolbarBackgroundColor = true,
             ToolbarBackgroundColor = HmiColor.FromArgb(255, 0x44, 0x33, 0x22),
             ShowStatusBar = true,
+            UseStatusBarBackgroundColor = true,
             StatusBarBackgroundColor = HmiColor.FromArgb(255, 16, 32, 48),
             StatusBarForegroundColor = HmiColor.FromArgb(255, 224, 208, 192),
             StatusBarFont = new HmiFont
@@ -3084,6 +3085,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "toolbar-background-color=\"#443322\"");
         StringAssert.Contains(html, "--hmi-trend-toolbar-background: #443322;");
         StringAssert.Contains(html, "show-status-bar=\"true\"");
+        StringAssert.Contains(html, "use-status-bar-background-color=\"true\"");
         StringAssert.Contains(html, "--hmi-trend-status-background: #102030;");
         StringAssert.Contains(html, "--hmi-trend-status-foreground: #E0D0C0;");
         StringAssert.Contains(html, "--hmi-trend-status-font-family: Tahoma;--hmi-trend-status-font-size: 8px;--hmi-trend-status-font-weight: 600;--hmi-trend-status-font-style: italic;");
@@ -3103,6 +3105,28 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "maximum-value=\"100\"");
         StringAssert.Contains(html, "y-axis-decimal-places=\"2\"");
         StringAssert.Contains(html, "pens=\"[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;marker&quot;:&quot;2&quot;,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}]\"");
+    }
+
+    [TestMethod]
+    public async Task ConvertAsync_DoesNotRenderDisabledTrendStatusBarBackground()
+    {
+        var screen = new HmiScreen { Name = "Main", Width = 400, Height = 240 };
+        var layer = new HmiLayer { Name = "Default" };
+        layer.Items.Add(new HmiTrendControl
+        {
+            Name = "Trend",
+            Width = 320,
+            Height = 180,
+            ShowStatusBar = true,
+            UseStatusBarBackgroundColor = false,
+            StatusBarBackgroundColor = HmiColor.FromArgb(255, 0x10, 0x20, 0x30)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "use-status-bar-background-color=\"false\"");
+        Assert.IsFalse(html.Contains("--hmi-trend-status-background:", StringComparison.Ordinal));
     }
 
     [TestMethod]

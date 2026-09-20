@@ -211,6 +211,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowStatusBar { get; set; }
 
+    public HmiProperty<bool>? UseStatusBarBackgroundColor { get; set; }
+
     public HmiProperty<HmiColor>? StatusBarBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? StatusBarForegroundColor { get; set; }
