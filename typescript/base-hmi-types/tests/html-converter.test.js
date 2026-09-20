@@ -314,6 +314,41 @@ test("HTML converter renders bar fill directions", async () => {
   assert.match(html, /id="RightBar"[^>]*direction: ltr;" data-fill-direction="Right"/);
 });
 
+test("HTML converter renders bar scale ticks and appearance", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.name = "ScaledBar";
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(40);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(100);
+  bar.value = staticProperty(35);
+  bar.showScale = staticProperty(true);
+  bar.divisionCount = staticProperty(3);
+  bar.tickLabelDecimalPlaces = staticProperty(1);
+  bar.labelColor = staticProperty(hmiColorFromArgb(255, 12, 34, 56));
+  bar.labelFont = {
+    name: staticProperty("Arial"),
+    size: staticProperty(9),
+    bold: staticProperty(true),
+  };
+  layer.items.push(bar);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="ScaledBar"/);
+  assert.match(html, /data-hmi-bar="true" data-fill-direction="Right"/);
+  assert.match(html, /<meter style="width: 100%; flex: 1; min-width: 0; min-height: 0;direction: ltr;" min="0" max="100" value="35">35<\/meter>/);
+  assert.match(html, /data-hmi-bar-scale="true"/);
+  assert.match(html, /color: #0C2238; font-family: Arial; font-size: 9px; font-weight: bold;/);
+  assert.match(html, /<span>0.0<\/span><span>50.0<\/span><span>100.0<\/span>/);
+});
+
 test("HTML converter renders slider orientations", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
