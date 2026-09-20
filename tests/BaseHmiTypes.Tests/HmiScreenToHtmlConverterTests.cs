@@ -1443,8 +1443,8 @@ public class HmiScreenToHtmlConverterTests
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
         StringAssert.Contains(html, "background-image: linear-gradient(to right, #0080FF 0%, #0080FF 35%, transparent 35%, transparent 100%);");
-        StringAssert.Contains(html, "fill=\"url(#hmi-fill-level)\"");
-        StringAssert.Contains(html, "<linearGradient id=\"hmi-fill-level\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"");
+        StringAssert.Contains(html, "fill=\"url(#hmi-fill-Level)\"");
+        StringAssert.Contains(html, "<linearGradient id=\"hmi-fill-Level\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"");
         StringAssert.Contains(html, "<stop offset=\"60%\" stop-color=\"#00C800\"");
     }
 
