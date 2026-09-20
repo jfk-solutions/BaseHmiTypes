@@ -3,5 +3,5 @@ namespace BaseHmiTypes.Converters.Html;
 
 internal static class HmiHtmlCommonStyle
 {
-    internal static readonly string Style = "*,*::before,*::after{box-sizing:border-box;}";
+    internal static readonly string Style = "*,*::before,*::after{box-sizing:border-box;}@keyframes hmi-symbolic-base-flash{0%,49.999%{opacity:1}50%,100%{opacity:0}}@keyframes hmi-symbolic-alternate-flash{0%,49.999%{opacity:0}50%,100%{opacity:1}}";
 }
