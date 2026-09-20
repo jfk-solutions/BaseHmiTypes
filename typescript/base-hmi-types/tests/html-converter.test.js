@@ -112,6 +112,10 @@ test("HTML converter renders screen-window viewport modes", async () => {
   scrollWindow.height = staticProperty(50);
   scrollWindow.showScrollBars = staticProperty(true);
   scrollWindow.zoomPercent = staticProperty(125);
+  scrollWindow.offsetLeft = staticProperty(40);
+  scrollWindow.offsetTop = staticProperty(20);
+  scrollWindow.scrollPositionLeft = staticProperty(15);
+  scrollWindow.scrollPositionTop = staticProperty(10);
   layer.items.push(scrollWindow);
   main.layers.push(layer);
 
@@ -131,9 +135,12 @@ test("HTML converter renders screen-window viewport modes", async () => {
   assert.match(html, /data-fit-window-to-screen data-zoom-percent="150" id="FitWindow"/);
   assert.match(html, /width: 600px;height: 300px;overflow: hidden;/);
   assert.match(html, /transform: scale\(1\.5, 1\.5\);/);
-  assert.match(html, /data-show-scrollbars data-zoom-percent="125" id="ScrollWindow"/);
+  assert.match(html, /data-show-scrollbars data-zoom-percent="125" data-picture-offset-x="40" data-picture-offset-y="20" data-scroll-position-x="15" data-scroll-position-y="10" id="ScrollWindow"/);
   assert.match(html, /overflow: auto;/);
+  assert.match(html, /width: 450px; height: 225px; overflow: hidden;/);
+  assert.match(html, /left: -50px; top: -25px;/);
   assert.match(html, /transform: scale\(1\.25, 1\.25\);/);
+  assert.match(html, /<script>\(e=>\{e\.scrollLeft=15;e\.scrollTop=10;}\)\(document\.currentScript\.previousElementSibling\)<\/script>/);
 });
 
 test("HTML converter renders item opacity", async () => {
