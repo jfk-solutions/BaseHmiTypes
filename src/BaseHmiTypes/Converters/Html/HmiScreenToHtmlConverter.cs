@@ -2226,7 +2226,10 @@ public class HmiScreenToHtmlConverter
             html,
             alarmControl,
             context,
-            additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+            additionalStyle: CreateControlWindowStyle(alarmControl, context, "display: flex; flex-direction: column; overflow: hidden;"));
+        AppendAttribute(html, "data-window-resizable", ResolvePropertyPreview(alarmControl.Resizable, context));
+        AppendAttribute(html, "data-window-movable", ResolvePropertyPreview(alarmControl.Movable, context));
+        AppendAttribute(html, "data-window-closeable", ResolvePropertyPreview(alarmControl.Closeable, context));
         AppendAttribute(html, "data-view-kind", alarmControl.ViewKind.ToString());
         AppendAttribute(html, "data-list-mode", listMode.ToString());
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmControl.NumberOfRows, context));
@@ -2242,9 +2245,15 @@ public class HmiScreenToHtmlConverter
         if (showTitle)
         {
             var title = ResolveAlarmTitle(alarmControl, listMode, context);
-            html.Append("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;\">")
+            html.Append("<div style=\"flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;");
+            if (alarmControl.Movable is not null && ResolveStaticValue(alarmControl.Movable, context))
+                html.Append("cursor: move;");
+            html.Append("\"><span style=\"flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\">")
                 .Append(WebUtility.HtmlEncode(title))
-                .Append("</div>");
+                .Append("</span>");
+            if (alarmControl.Closeable is not null && ResolveStaticValue(alarmControl.Closeable, context))
+                html.Append("<button type=\"button\" aria-label=\"Close\" disabled style=\"flex: 0 0 auto;\">×</button>");
+            html.Append("</div>");
         }
 
         html.Append("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
@@ -3259,7 +3268,10 @@ public class HmiScreenToHtmlConverter
     private static void AppendTrendControl(StringBuilder html, HmiTrendControl trendControl, HmiHtmlConvertContext context)
     {
         html.Append("<hmi-trend-control");
-        AppendCommonAttributes(html, trendControl, context);
+        AppendCommonAttributes(html, trendControl, context, additionalStyle: CreateControlWindowStyle(trendControl, context, "overflow: hidden;"));
+        AppendAttribute(html, "data-window-resizable", ResolvePropertyPreview(trendControl.Resizable, context));
+        AppendAttribute(html, "data-window-movable", ResolvePropertyPreview(trendControl.Movable, context));
+        AppendAttribute(html, "data-window-closeable", ResolvePropertyPreview(trendControl.Closeable, context));
         AppendAttribute(html, "control-name", trendControl.Name);
         AppendAttribute(html, "type-name", "Trend control");
         AppendAttribute(html, "chart-title", trendControl.ChartTitle);
@@ -3279,6 +3291,16 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "y-axis-decimal-places", trendControl.YAxisDecimalPlaces);
         AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens));
         html.Append("></hmi-trend-control>");
+    }
+
+    private static string CreateControlWindowStyle(
+        HmiWindowBase window,
+        HmiHtmlConvertContext context,
+        string baseStyle)
+    {
+        if (window.Resizable is null || !ResolveStaticValue(window.Resizable, context))
+            return baseStyle;
+        return baseStyle + "resize: both;";
     }
 
     private static void AppendStaticBooleanValueAttribute(
