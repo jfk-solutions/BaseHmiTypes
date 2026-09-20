@@ -862,7 +862,19 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
         ? `url(#${getFillPatternId(item)})`
         : colorToCss(fillColor);
   appendAttribute(html, "fill", fill);
-  appendAttribute(html, "stroke", lineStyle === HmiLineStyle.None ? "none" : colorToCss(getStrokeColor(item, context)));
+  const strokeColor = getStrokeColorProperty(item, context);
+  appendAttribute(html, "stroke", lineStyle === HmiLineStyle.None
+    ? "none"
+    : colorToCss(strokeColor?.staticValue ?? { alpha: 255, red: 0, green: 0, blue: 0 }));
+  const strokeBlink = strokeColor?.kind === HmiPropertyKind.Blink
+    ? strokeColor as HmiBlinkProperty<HmiColor>
+    : undefined;
+  if (lineStyle !== HmiLineStyle.None && strokeBlink?.staticValue !== undefined && strokeBlink.blinkValue !== undefined) {
+    appendAttribute(html, "style",
+      `--hmi-border-color-off: ${colorToCss(strokeBlink.staticValue)};` +
+      `--hmi-border-color-on: ${colorToCss(strokeBlink.blinkValue)};` +
+      `animation: hmi-border-color-flash ${getBlinkDuration(strokeBlink.rate)}s steps(1, end) infinite;`);
+  }
   appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context));
   const lineCap = context.effectiveProperties.tryGetStaticValue<HmiLineCap>(item, "LineCap", item.lineCap).value;
   if (lineCap !== undefined) appendAttribute(html, "stroke-linecap", lineCapToCss(lineCap));
@@ -1168,17 +1180,17 @@ function tryGetFillPercentage(animation: HmiFillAnimation | undefined): number |
   return Math.min(Math.max(fillMinimum + (fillMaximum - fillMinimum) * normalized, 0), 100);
 }
 
+function getStrokeColorProperty(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiProperty<HmiColor> | undefined {
+  const lineColor = context.effectiveProperties.resolve(item, "LineColor", item.lineColor);
+  if (lineColor?.staticValue !== undefined) return lineColor;
+  const borderColor = context.effectiveProperties.resolve(item, "BorderColor", item.borderColor);
+  if (borderColor?.staticValue !== undefined) return borderColor;
+  const foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
+  return foregroundColor?.staticValue !== undefined ? foregroundColor : undefined;
+}
+
 function getStrokeColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor {
-  return (
-    context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "LineColor", item.lineColor).value ??
-    (item instanceof HmiPaintedScreenItemBase
-      ? context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "BorderColor", item.borderColor).value
-      : undefined) ??
-    (item instanceof HmiPaintedScreenItemBase
-      ? context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "ForegroundColor", item.foregroundColor).value
-      : undefined) ??
-    { alpha: 255, red: 0, green: 0, blue: 0 }
-  );
+  return getStrokeColorProperty(item, context)?.staticValue ?? { alpha: 255, red: 0, green: 0, blue: 0 };
 }
 
 function getFillColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor | undefined {
@@ -3088,9 +3100,19 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
       appendColorStyle(html, "background-color", backgroundColor);
     }
   }
+  const borderColor = context.effectiveProperties.resolve(item, "BorderColor", item.borderColor);
+  const borderBlink = borderColor?.kind === HmiPropertyKind.Blink
+    ? borderColor as HmiBlinkProperty<HmiColor>
+    : undefined;
+  if (borderBlink?.staticValue !== undefined && borderBlink.blinkValue !== undefined) {
+    html.push(`--hmi-border-color-off: ${colorToCss(borderBlink.staticValue)};`);
+    html.push(`--hmi-border-color-on: ${colorToCss(borderBlink.blinkValue)};`);
+    animations.push(`hmi-border-color-flash ${getBlinkDuration(borderBlink.rate)}s steps(1, end) infinite`);
+  } else {
+    appendColorStyle(html, "border-color", borderColor);
+  }
   if (animations.length > 0)
     html.push(`animation: ${animations.join(", ")};`);
-  appendColorStyle(html, "border-color", context.effectiveProperties.resolve(item, "BorderColor", item.borderColor));
   appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth), borderStyle, !suppressBorderStyle);
   if (item instanceof HmiShapeBase) {
     appendColorStyle(html, "border-color", item.lineColor);
