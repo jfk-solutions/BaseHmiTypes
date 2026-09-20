@@ -17,6 +17,7 @@ const trendControlProperties = {
   xAxisAlignment: String,
   xAxisLabel: String,
   xAxisDateVisible: String,
+  timeFormat: String,
   xAxisTimeSpan: String,
   xAxisTimeSpanUnit: String,
   xAxisGridVisible: String,
@@ -142,6 +143,9 @@ export class HmiTrendControl extends HTMLElement {
     const xAxisAlignment = this.getAttribute("x-axis-alignment")?.toLowerCase() === "top" ? "top" : "bottom";
     const xAxisLabel = this.getAttribute("x-axis-label") ?? "";
     const xAxisDateVisible = readBooleanAttribute(this, "x-axis-date-visible", true);
+    const timeFormat = this.getAttribute("time-format")?.toLowerCase() === "twentyfourhour"
+      ? "twenty-four-hour"
+      : "twelve-hour";
     const xAxisTimeSpan = readDurationMilliseconds(
       readNumberAttribute(this, "x-axis-time-span", 63_000),
       this.getAttribute("x-axis-time-span-unit"),
@@ -156,7 +160,7 @@ export class HmiTrendControl extends HTMLElement {
     const showPercentageAxis = readBooleanAttribute(this, "show-percentage-axis", false);
     const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
     const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
-    const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan);
+    const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat);
     const plotTop = displayChartTitle ? (showToolbar ? 29 : 15) : (showToolbar ? 23 : 7);
     const plotBottom = (displayScrollMechanism ? 22 : 16) + (showStatusBar ? 10 : 0);
 
@@ -449,11 +453,16 @@ function renderXLabels(values: TimeLabel[]): string {
     .join("");
 }
 
-function createTimeLabels(start: Date, includeDate: boolean, timeSpanMilliseconds: number): TimeLabel[] {
+function createTimeLabels(
+  start: Date,
+  includeDate: boolean,
+  timeSpanMilliseconds: number,
+  timeFormat: "twelve-hour" | "twenty-four-hour",
+): TimeLabel[] {
   const labels: TimeLabel[] = [];
   for (let index = 0; index < 8; index++) {
     const date = new Date(start.getTime() + index * timeSpanMilliseconds / 7);
-    labels.push(formatTimeLabel(date, includeDate));
+    labels.push(formatTimeLabel(date, includeDate, timeFormat));
   }
   return labels;
 }
@@ -473,7 +482,11 @@ function readDurationMilliseconds(value: number, unit: string | null): number {
   return Number.isFinite(duration) ? Math.max(1, duration) : 63_000;
 }
 
-function formatTimeLabel(date: Date, includeDate: boolean): TimeLabel {
+function formatTimeLabel(
+  date: Date,
+  includeDate: boolean,
+  timeFormat: "twelve-hour" | "twenty-four-hour",
+): TimeLabel {
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const year = date.getFullYear();
@@ -484,7 +497,9 @@ function formatTimeLabel(date: Date, includeDate: boolean): TimeLabel {
   const suffix = hours >= 12 ? "PM" : "AM";
   return {
     primary: includeDate ? `${month}/${day}/${year}` : "",
-    secondary: `${hour12}:${minutes}:${seconds}${suffix}`,
+    secondary: timeFormat === "twenty-four-hour"
+      ? `${hours.toString().padStart(2, "0")}:${minutes}:${seconds}`
+      : `${hour12}:${minutes}:${seconds}${suffix}`,
   };
 }
 

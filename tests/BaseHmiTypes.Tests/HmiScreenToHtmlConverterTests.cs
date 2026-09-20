@@ -3052,6 +3052,7 @@ public class HmiScreenToHtmlConverterTests
             XAxisAlignment = HmiVerticalAlignment.Top,
             XAxisLabel = "Recorded time",
             XAxisDateVisible = false,
+            TimeFormat = HmiTrendTimeFormat.TwentyFourHour,
             XAxisTimeSpan = 120000,
             XAxisTimeSpanUnit = "Milliseconds",
             XAxisGridVisible = true,
@@ -3137,6 +3138,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "x-axis-alignment=\"Top\"");
         StringAssert.Contains(html, "x-axis-label=\"Recorded time\"");
         StringAssert.Contains(html, "x-axis-date-visible=\"false\"");
+        StringAssert.Contains(html, "time-format=\"TwentyFourHour\"");
         StringAssert.Contains(html, "x-axis-time-span=\"120000\"");
         StringAssert.Contains(html, "x-axis-time-span-unit=\"Milliseconds\"");
         StringAssert.Contains(html, "x-axis-grid-visible=\"true\"");
