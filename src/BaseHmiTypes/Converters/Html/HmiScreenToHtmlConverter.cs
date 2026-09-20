@@ -2241,6 +2241,12 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-filtered-triggers", alarmControl.FilteredTriggers.Count == 0 ? null : string.Join(",", alarmControl.FilteredTriggers));
         AppendAttribute(html, "data-alarm-identifier", ResolvePropertyPreview(alarmControl.AlarmIdentifier, context));
         AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(alarmControl.GridLineColor, context));
+        AppendAttribute(html, "data-show-horizontal-grid-lines", ResolvePropertyPreview(alarmControl.ShowHorizontalGridLines, context));
+        AppendAttribute(html, "data-show-vertical-grid-lines", ResolvePropertyPreview(alarmControl.ShowVerticalGridLines, context));
+        AppendAttribute(html, "data-table-background-color", ResolvePropertyPreview(alarmControl.TableBackgroundColor, context));
+        AppendAttribute(html, "data-table-foreground-color", ResolvePropertyPreview(alarmControl.TableForegroundColor, context));
+        AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(alarmControl.SelectionBackgroundColor, context));
+        AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(alarmControl.SelectionForegroundColor, context));
         html.Append('>');
 
         if (showTitle)
@@ -2257,17 +2263,18 @@ public class HmiScreenToHtmlConverter
             html.Append("</div>");
         }
 
-        html.Append("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
+        html.Append("<table style=\"").Append(CreateAlarmTableStyle(alarmControl, context)).Append("\">");
+        var gridCellStyle = CreateAlarmGridCellStyle(alarmControl, context);
         if (showHeader)
         {
             html.Append("<thead><tr>");
             if (visibleColumns.Length == 0)
-                html.Append("<th style=\"border: 1px solid var(--hmi-grid-line-color, currentColor);\">")
+                html.Append("<th style=\"").Append(gridCellStyle).Append("\">")
                     .Append(WebUtility.HtmlEncode(ResolveAlarmViewLabel(alarmControl.ViewKind)))
                     .Append("</th>");
             foreach (var column in visibleColumns)
             {
-                html.Append("<th style=\"border: 1px solid var(--hmi-grid-line-color, currentColor); overflow: hidden; text-overflow: ellipsis;\"");
+                html.Append("<th style=\"").Append(gridCellStyle).Append("overflow: hidden; text-overflow: ellipsis;\"");
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-time-format", column.TimeAndDateFormat);
                 AppendAttribute(html, "data-symbol", column.Symbol);
@@ -2279,7 +2286,10 @@ public class HmiScreenToHtmlConverter
         }
         html.Append("<tbody><tr><td");
         AppendAttribute(html, "colspan", Math.Max(visibleColumns.Length, 1).ToString(CultureInfo.InvariantCulture));
-        html.Append(" style=\"text-align: center;\">Alarm data not loaded</td></tr></tbody></table>");
+        html.Append(" style=\"text-align: center;").Append(gridCellStyle);
+        AppendColorStyle(html, "background-color", alarmControl.SelectionBackgroundColor);
+        AppendColorStyle(html, "color", alarmControl.SelectionForegroundColor);
+        html.Append("\">Alarm data not loaded</td></tr></tbody></table>");
 
         var showAcknowledgeButton = alarmControl.ShowAcknowledgeButton is not null && ResolveStaticValue(alarmControl.ShowAcknowledgeButton, context);
         var showHelpButton = alarmControl.ShowHelpButton is not null && ResolveStaticValue(alarmControl.ShowHelpButton, context);
@@ -3326,6 +3336,23 @@ public class HmiScreenToHtmlConverter
         return style.ToString();
     }
 
+    private static string CreateAlarmTableStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
+    {
+        var style = new StringBuilder("width: 100%; border-collapse: collapse; table-layout: fixed;");
+        if (alarmControl.TableBackgroundColor is not null)
+            style.Append("background-color: ").Append(ToCss(ResolveStaticValue(alarmControl.TableBackgroundColor, context))).Append(';');
+        if (alarmControl.TableForegroundColor is not null)
+            style.Append("color: ").Append(ToCss(ResolveStaticValue(alarmControl.TableForegroundColor, context))).Append(';');
+        return style.ToString();
+    }
+
+    private static string CreateAlarmGridCellStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
+    {
+        var horizontal = alarmControl.ShowHorizontalGridLines is null || ResolveStaticValue(alarmControl.ShowHorizontalGridLines, context);
+        var vertical = alarmControl.ShowVerticalGridLines is null || ResolveStaticValue(alarmControl.ShowVerticalGridLines, context);
+        return $"border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: {(horizontal ? 1 : 0)}px {(vertical ? 1 : 0)}px;";
+    }
+
     private static string CreateTrendControlStyle(HmiTrendControl trendControl, HmiHtmlConvertContext context)
     {
         var style = new StringBuilder(CreateControlWindowStyle(trendControl, context, "overflow: hidden;"));
@@ -3381,6 +3408,12 @@ public class HmiScreenToHtmlConverter
             decorations.Add("line-through");
         if (decorations.Count > 0)
             style.Append("text-decoration: ").Append(string.Join(' ', decorations)).Append(';');
+    }
+
+    private static void AppendColorStyle(StringBuilder style, string propertyName, HmiProperty<HmiColor>? property)
+    {
+        if (property?.StaticValue is { } color)
+            style.Append(propertyName).Append(": ").Append(ToCss(color)).Append(';');
     }
 
     private static void AppendStaticBooleanValueAttribute(
