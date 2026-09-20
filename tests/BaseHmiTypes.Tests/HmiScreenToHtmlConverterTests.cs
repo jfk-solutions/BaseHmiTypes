@@ -2475,6 +2475,32 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersBlinkingButtonCaptionColor()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiButton
+        {
+            Name = "FlashingCaption",
+            Width = 100,
+            Height = 30,
+            Text = HmiMultilingualText.FromText("Alarm"),
+            CaptionColor = HmiProperty.Blink(
+                HmiColor.FromArgb(255, 12, 34, 56),
+                HmiColor.FromArgb(255, 238, 68, 17),
+                HmiBlinkRate.Fast)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "--hmi-caption-color-off: #0C2238;");
+        StringAssert.Contains(html, "--hmi-caption-color-on: #EE4411;");
+        StringAssert.Contains(html, "animation: hmi-caption-color-flash 0.5s steps(1, end) infinite;");
+        StringAssert.Contains(html, "@keyframes hmi-caption-color-flash");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersStaticDisabledButtonAppearance()
     {
         var disabled = new HmiButton

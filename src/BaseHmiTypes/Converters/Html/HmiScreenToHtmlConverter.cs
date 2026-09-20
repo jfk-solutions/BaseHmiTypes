@@ -1358,8 +1358,18 @@ public class HmiScreenToHtmlConverter
         HmiHtmlConvertContext context)
     {
         var style = new StringBuilder();
-        if (button.CaptionColor is not null)
+        var stateHasCaptionColor = (state?.CaptionColor ?? state?.ForegroundColor) is not null;
+        if (!stateHasCaptionColor && button.CaptionColor is HmiBlinkProperty<HmiColor> blinkColor && blinkColor.BlinkValue is HmiColor alternateColor)
+        {
+            style.Append("--hmi-caption-color-off: ").Append(ToCss(ResolveStaticValue(button.CaptionColor, context))).Append(';')
+                .Append("--hmi-caption-color-on: ").Append(ToCss(alternateColor)).Append(';')
+                .Append("animation: hmi-caption-color-flash ").Append(GetBlinkDuration(blinkColor.Rate))
+                .Append("s steps(1, end) infinite;");
+        }
+        else if (!stateHasCaptionColor && button.CaptionColor is not null)
+        {
             style.Append("color: ").Append(ToCss(ResolveStaticValue(button.CaptionColor, context))).Append(';');
+        }
         style.Append(CreateStateStyle(state));
         var borderWidth = button.ThreeDBorderWidth is null
             ? 0d
