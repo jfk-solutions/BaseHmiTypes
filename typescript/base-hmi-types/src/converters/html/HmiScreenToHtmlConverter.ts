@@ -36,6 +36,7 @@ import { HmiAlarmLineControl } from "../../screens/controls/HmiAlarmLineControl.
 import { HmiAlarmListMode } from "../../screens/controls/HmiAlarmListMode.js";
 import { HmiAlarmViewKind } from "../../screens/controls/HmiAlarmViewKind.js";
 import { HmiArrowIndicator } from "../../screens/widgets/HmiArrowIndicator.js";
+import { HmiAlarmIndicator } from "../../screens/widgets/HmiAlarmIndicator.js";
 import { HmiScreenWindow } from "../../screens/screen/HmiScreenWindow.js";
 import { HmiCircle } from "../../screens/shapes/HmiCircle.js";
 import { HmiCircularArc } from "../../screens/shapes/HmiCircularArc.js";
@@ -322,6 +323,8 @@ export class HmiScreenToHtmlConverter {
       appendClock(html, item, context);
     } else if (item instanceof HmiArrowIndicator) {
       appendArrowIndicator(html, item, context);
+    } else if (item instanceof HmiAlarmIndicator) {
+      appendAlarmIndicator(html, item, context);
     } else if (item instanceof HmiGauge) {
       appendGauge(html, item, context);
     } else if (item instanceof HmiTrendControl) {
@@ -1838,6 +1841,54 @@ function appendGauge(html: string[], gauge: HmiGauge, context: HmiHtmlConvertCon
   appendStaticAttribute(html, "tick-color", gauge.tickColor);
   appendAttribute(html, "label-font", formatFont(gauge.labelFont));
   html.push("></hmi-gauge>");
+}
+
+function appendAlarmIndicator(
+  html: string[],
+  indicator: HmiAlarmIndicator,
+  context: HmiHtmlConvertContext,
+): void {
+  const alarmState = getStaticValue(indicator.alarmState);
+  const noAlarmState = getStaticValue(indicator.noAlarmState) ?? 0;
+  const numberOfAlarms = getStaticValue(indicator.numberOfAlarms);
+  const isActive = alarmState !== undefined && alarmState !== noAlarmState;
+  const content = numberOfAlarms !== undefined && numberOfAlarms > 0
+    ? numberOfAlarms.toString()
+    : alarmState !== undefined && isActive ? "!" : "";
+
+  let style = "display: flex; align-items: center; justify-content: center; overflow: hidden;";
+  const flashingColor = getStaticValue(indicator.flashingColor);
+  if (isActive && flashingColor !== undefined)
+    style += `box-shadow: inset 0 0 0 0.35em ${colorToCss(flashingColor)};`;
+
+  html.push("<div");
+  appendCommonAttributes(html, indicator, context, true, style);
+  appendAttribute(html, "class", "hmi-alarm-indicator");
+  appendAttribute(html, "role", "status");
+  appendAttribute(html, "aria-label", "Alarm indicator");
+  appendAttribute(html, "data-active", isActive ? "true" : "false");
+  appendStaticValueAttribute(html, "data-flashing-required", indicator.isFlashingRequired);
+  appendStaticValueAttribute(html, "data-flashing-color", indicator.flashingColor);
+  appendStaticValueAttribute(html, "data-flashing-rate", indicator.flashingRate);
+  appendStaticValueAttribute(html, "data-alarm-state", indicator.alarmState);
+  appendStaticValueAttribute(html, "data-no-alarm-state", indicator.noAlarmState);
+  appendStaticValueAttribute(html, "data-number-of-alarms", indicator.numberOfAlarms);
+  appendIntegerListAttribute(html, "data-show-acknowledged-alarm-classes", indicator.showAcknowledgedAlarmClasses);
+  appendIntegerListAttribute(html, "data-show-pending-alarm-classes", indicator.showPendingAlarmClasses);
+  html.push(">", content, "</div>");
+}
+
+function appendStaticValueAttribute<T>(html: string[], name: string, property: HmiProperty<T> | undefined): void {
+  appendAttribute(html, name, formatAttributeValue(getStaticValue(property)));
+}
+
+function appendIntegerListAttribute(
+  html: string[],
+  name: string,
+  property: HmiProperty<number[]> | undefined,
+): void {
+  const value = getStaticValue(property);
+  if (value !== undefined) appendAttribute(html, name, value.join(","));
 }
 
 function appendTrendControl(html: string[], trendControl: HmiTrendControl, context: HmiHtmlConvertContext): void {

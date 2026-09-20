@@ -5,6 +5,7 @@ import {
   expressionProperty,
   hmiColorFromArgb,
   HmiArrowIndicator,
+  HmiAlarmIndicator,
   HmiAlarmColumn,
   HmiAlarmColumnType,
   HmiAlarmControl,
@@ -191,6 +192,45 @@ test("HTML converter renders combo box states", async () => {
   assert.match(html, /<option value="10">Automatic<\/option>/);
   assert.match(html, /<option value="20" selected="selected">Manual<\/option>/);
   assert.doesNotMatch(html, /HmiComboBox/);
+});
+
+test("HTML converter renders alarm indicator state", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const indicator = new HmiAlarmIndicator();
+  indicator.name = "GroupDisplay";
+  indicator.width = staticProperty(80);
+  indicator.height = staticProperty(30);
+  indicator.alarmState = staticProperty(5);
+  indicator.noAlarmState = staticProperty(0);
+  indicator.numberOfAlarms = staticProperty(2);
+  indicator.isFlashingRequired = staticProperty(true);
+  indicator.flashingColor = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+  indicator.flashingRate = staticProperty(500);
+  indicator.showAcknowledgedAlarmClasses = staticProperty([1, 3]);
+  indicator.showPendingAlarmClasses = staticProperty([2, 4]);
+  const layer = new HmiLayer();
+  layer.name = "Layer 1";
+  layer.items.push(indicator);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="GroupDisplay"/);
+  assert.match(html, /class="hmi-alarm-indicator"/);
+  assert.match(html, /data-active="true"/);
+  assert.match(html, /data-flashing-required="true"/);
+  assert.match(html, /data-flashing-color="#FF0000"/);
+  assert.match(html, /data-flashing-rate="500"/);
+  assert.match(html, /data-alarm-state="5"/);
+  assert.match(html, /data-no-alarm-state="0"/);
+  assert.match(html, /data-number-of-alarms="2"/);
+  assert.match(html, /data-show-acknowledged-alarm-classes="1,3"/);
+  assert.match(html, /data-show-pending-alarm-classes="2,4"/);
+  assert.match(html, />2<\/div>/);
+  assert.doesNotMatch(html, /HmiAlarmIndicator/);
 });
 
 test("HTML converter renders bar slider and scale previews", async () => {
