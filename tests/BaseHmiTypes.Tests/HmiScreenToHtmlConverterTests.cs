@@ -1351,6 +1351,16 @@ public class HmiScreenToHtmlConverterTests
             TableForegroundColor = HmiColor.FromArgb(255, 0xE0, 0xD0, 0xC0),
             SelectionBackgroundColor = HmiColor.FromArgb(255, 0x70, 0x80, 0x90),
             SelectionForegroundColor = HmiColor.FromArgb(255, 0xF1, 0xF2, 0xF3),
+            ShowStatusBar = true,
+            StatusBarBackgroundColor = HmiColor.FromArgb(255, 0x21, 0x32, 0x43),
+            StatusBarForegroundColor = HmiColor.FromArgb(255, 0xFE, 0xDC, 0xBA),
+            StatusBarFont = new HmiFont
+            {
+                Name = "Tahoma",
+                Size = 8,
+                Weight = 600,
+                Italic = true
+            },
             ContentFont = new HmiFont
             {
                 Name = "Arial",
@@ -1421,6 +1431,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-table-foreground-color=\"#E0D0C0\"");
         StringAssert.Contains(html, "data-selection-background-color=\"#708090\"");
         StringAssert.Contains(html, "data-selection-foreground-color=\"#F1F2F3\"");
+        StringAssert.Contains(html, "data-show-status-bar=\"true\"");
+        StringAssert.Contains(html, "data-status-bar-background-color=\"#213243\"");
+        StringAssert.Contains(html, "data-status-bar-foreground-color=\"#FEDCBA\"");
         StringAssert.Contains(html, "--hmi-grid-line-color: #445566;");
         StringAssert.Contains(html, "background-color: #102030;color: #E0D0C0;");
         StringAssert.Contains(html, "border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: 0px 1px;");
@@ -1440,6 +1453,7 @@ public class HmiScreenToHtmlConverterTests
         Assert.IsFalse(html.Contains("data-column-type=\"AlarmState\"", StringComparison.Ordinal));
         StringAssert.Contains(html, ">Alarm data not loaded</td>");
         StringAssert.Contains(html, ">Acknowledge · Help</div>");
+        StringAssert.Contains(html, "class=\"hmi-alarm-status-bar\" role=\"status\" style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #213243;color: #FEDCBA;font-family: Tahoma;font-size: 8px;font-weight: 600;font-style: italic;\">Status</div>");
         StringAssert.Contains(html, "<div id=\"AlarmBanner\"");
         StringAssert.Contains(html, "data-view-kind=\"AlarmBanner\"");
         StringAssert.Contains(html, "data-queue-new-alarms=\"true\"");
