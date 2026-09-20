@@ -97,6 +97,10 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     /// </summary>
     public HmiProperty<bool>? DisplayValueBar { get; set; }
 
+    public HmiProperty<HmiColor>? ValueBarColor { get; set; }
+
+    public HmiProperty<double>? ValueBarWidth { get; set; }
+
     public HmiProperty<bool>? XAxisScaleVisible { get; set; }
 
     public HmiProperty<bool>? XAxisDateVisible { get; set; }

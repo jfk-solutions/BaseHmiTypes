@@ -8,6 +8,7 @@ const trendControlProperties = {
   toolbarButtonSize: String,
   showStatusBar: String,
   displayPenIcons: String,
+  displayValueBar: String,
   displayScrollMechanism: String,
   chartLiveMode: String,
   autoScale: String,
@@ -111,6 +112,7 @@ export class HmiTrendControl extends HTMLElement {
     const toolbarButtonSize = Math.max(1, configuredToolbarButtonSize === 0 ? 28 : configuredToolbarButtonSize);
     const showStatusBar = readBooleanAttribute(this, "show-status-bar", false);
     const displayPenIcons = readBooleanAttribute(this, "display-pen-icons", true);
+    const displayValueBar = readBooleanAttribute(this, "display-value-bar", false);
     const displayScrollMechanism = readBooleanAttribute(this, "display-scroll-mechanism", false);
     const chartLiveMode = readBooleanAttribute(this, "chart-live-mode", false);
     const autoScale = readBooleanAttribute(this, "auto-scale", false);
@@ -263,6 +265,17 @@ export class HmiTrendControl extends HTMLElement {
           text-align: ${percentageAxisAlignment === "left" ? "right" : "left"};
         }
 
+        .value-bar {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 50%;
+          width: var(--hmi-trend-value-bar-width, 1px);
+          transform: translateX(-50%);
+          background: var(--hmi-trend-value-bar-color, ${escapeCss(foregroundColor)});
+          pointer-events: none;
+        }
+
         .x-label {
           top: calc(100% + 0.9em);
           transform: translateX(-50%);
@@ -321,6 +334,7 @@ export class HmiTrendControl extends HTMLElement {
           </svg>
           ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
+          ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
           ${xAxisVisible ? renderXLabels(labels) : ""}
         </div>
         ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"></div></div>` : ""}
