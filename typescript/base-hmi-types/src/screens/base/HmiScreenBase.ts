@@ -3,6 +3,7 @@ import { HmiProperty, staticProperty } from "./HmiProperty.js";
 import { HmiCursorMode } from "./HmiCursorMode.js";
 import { HmiColor } from "./HmiColor.js";
 import { HmiGradientDirection } from "./HmiGradientDirection.js";
+import { HmiFillPattern } from "./HmiFillPattern.js";
 import { HmiScreenModelBase } from "./HmiScreenModelBase.js";
 import { HmiScreenKind } from "./HmiScreenKind.js";
 import { HmiUpdateCycle } from "./HmiUpdateCycle.js";
@@ -18,6 +19,8 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   width: HmiProperty<number> = staticProperty(0);
   height: HmiProperty<number> = staticProperty(0);
   backgroundColor?: HmiProperty<HmiColor>;
+  patternColor?: HmiProperty<HmiColor>;
+  fillPattern?: HmiProperty<HmiFillPattern>;
   firstGradientColor?: HmiProperty<HmiColor>;
   firstGradientOffset?: HmiProperty<number>;
   middleGradientColor?: HmiProperty<HmiColor>;

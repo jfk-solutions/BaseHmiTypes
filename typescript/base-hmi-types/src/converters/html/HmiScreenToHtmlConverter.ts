@@ -5,7 +5,7 @@ import { HmiImage } from "../../images/HmiImage.js";
 import { HmiImageType } from "../../images/HmiImageType.js";
 import { MetafileToSvgRenderer } from "../../images/converters/metafile-to-svg-renderer.js";
 import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js";
-import { HmiColor } from "../../screens/base/HmiColor.js";
+import { HmiColor, hmiColorFromArgb } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
 import { HmiCustomWidgetContainer } from "../../screens/base/HmiCustomWidgetContainer.js";
@@ -1887,13 +1887,18 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
 
 function appendFillPatternStyle(html: string[], item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): void {
   const pattern = getFillPattern(item, context);
-  if (pattern === undefined || pattern === HmiFillPattern.Solid) return;
+  if (pattern === undefined) return;
+  appendFillPatternCss(html, pattern, getPatternColor(item, context));
+}
+
+function appendFillPatternCss(html: string[], pattern: HmiFillPattern, patternColor: HmiColor): void {
+  if (pattern === HmiFillPattern.Solid) return;
   if (pattern === HmiFillPattern.Transparent) {
     html.push("background-color: transparent;");
     return;
   }
 
-  const color = colorToCss(getPatternColor(item, context));
+  const color = colorToCss(patternColor);
   let image: string;
   switch (pattern) {
     case HmiFillPattern.Checkers:
@@ -2577,6 +2582,10 @@ function appendSize(html: string[], width: number, height: number): void {
 
 function appendScreenStyle(html: string[], screen: HmiScreenBase): void {
   appendColorStyle(html, "background-color", screen.backgroundColor);
+  const pattern = getStaticValue(screen.fillPattern);
+  if (pattern !== undefined) {
+    appendFillPatternCss(html, pattern, getStaticValue(screen.patternColor) ?? hmiColorFromArgb(255, 0, 0, 0));
+  }
 }
 
 function hasThicknessEdges(value: unknown): value is {
