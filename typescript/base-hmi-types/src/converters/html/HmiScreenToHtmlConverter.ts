@@ -3063,6 +3063,7 @@ function hasThicknessEdges(value: unknown): value is {
 function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): void {
   const suppressBorderStyle = item instanceof HmiCheckBoxGroup || item instanceof HmiRadioButtonGroup;
   const borderStyle = getBorderStyleCss(item, context);
+  const animations: string[] = [];
   const foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
   const foregroundBlink = foregroundColor?.kind === HmiPropertyKind.Blink
     ? foregroundColor as HmiBlinkProperty<HmiColor>
@@ -3070,13 +3071,25 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   if (foregroundBlink?.staticValue !== undefined && foregroundBlink.blinkValue !== undefined) {
     html.push(`--hmi-foreground-color-off: ${colorToCss(foregroundBlink.staticValue)};`);
     html.push(`--hmi-foreground-color-on: ${colorToCss(foregroundBlink.blinkValue)};`);
-    html.push(`animation: hmi-foreground-color-flash ${getBlinkDuration(foregroundBlink.rate)}s steps(1, end) infinite;`);
+    animations.push(`hmi-foreground-color-flash ${getBlinkDuration(foregroundBlink.rate)}s steps(1, end) infinite`);
   } else {
     appendColorStyle(html, "color", foregroundColor);
   }
   if (!(item instanceof HmiGauge)) {
-    appendColorStyle(html, "background-color", context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor));
+    const backgroundColor = context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor);
+    const backgroundBlink = backgroundColor?.kind === HmiPropertyKind.Blink
+      ? backgroundColor as HmiBlinkProperty<HmiColor>
+      : undefined;
+    if (backgroundBlink?.staticValue !== undefined && backgroundBlink.blinkValue !== undefined) {
+      html.push(`--hmi-background-color-off: ${colorToCss(backgroundBlink.staticValue)};`);
+      html.push(`--hmi-background-color-on: ${colorToCss(backgroundBlink.blinkValue)};`);
+      animations.push(`hmi-background-color-flash ${getBlinkDuration(backgroundBlink.rate)}s steps(1, end) infinite`);
+    } else {
+      appendColorStyle(html, "background-color", backgroundColor);
+    }
   }
+  if (animations.length > 0)
+    html.push(`animation: ${animations.join(", ")};`);
   appendColorStyle(html, "border-color", context.effectiveProperties.resolve(item, "BorderColor", item.borderColor));
   appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth), borderStyle, !suppressBorderStyle);
   if (item instanceof HmiShapeBase) {

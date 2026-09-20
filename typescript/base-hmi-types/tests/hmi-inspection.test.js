@@ -193,6 +193,24 @@ test("HTML conversion renders painted item foreground flashing", async () => {
   assert.match(html, /@keyframes hmi-foreground-color-flash/);
 });
 
+test("HTML conversion renders painted item background flashing", async () => {
+  const rectangle = createRectangle("FlashingRectangle");
+  rectangle.backgroundColor = blinkProperty(
+    hmiColorFromArgb(255, 10, 20, 30),
+    hmiColorFromArgb(255, 40, 50, 60),
+    HmiBlinkRate.Slow,
+  );
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(rectangle);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /--hmi-background-color-off: #0A141E;/);
+  assert.match(html, /--hmi-background-color-on: #28323C;/);
+  assert.match(html, /animation: hmi-background-color-flash 2s steps\(1, end\) infinite;/);
+  assert.match(html, /@keyframes hmi-background-color-flash/);
+});
+
 test("HTML conversion renders shape fill animation previews", async () => {
   const rectangle = createRectangle("Tank");
   rectangle.id = "tank";
