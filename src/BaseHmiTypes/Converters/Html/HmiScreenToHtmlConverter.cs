@@ -1593,6 +1593,16 @@ public class HmiScreenToHtmlConverter
         if (selectedState?.Image is not null)
         {
             var imageUri = await ResolveImageUriAsync(selectedState.Image, project, cancellationToken).ConfigureAwait(false);
+            var alternateImageUri = selectedState.AlternateImage is null
+                ? null
+                : await ResolveImageUriAsync(selectedState.AlternateImage, project, cancellationToken).ConfigureAwait(false);
+            var blinkAlternateImage = selectedState.ImageBlink && !string.IsNullOrWhiteSpace(alternateImageUri);
+            var imageLayoutStyle = selectedState.ImageScaled == false
+                ? "width: auto; height: auto; max-width: 100%; max-height: 100%; display: block;"
+                : "width: 100%; height: 100%; object-fit: contain; display: block;";
+            var imageStyle = imageLayoutStyle;
+            if (blinkAlternateImage)
+                imageStyle = AppendCssDeclaration(imageStyle, $"animation: hmi-symbolic-base-flash {GetBlinkDuration(selectedState.ImageBlinkRate)}s steps(1, end) infinite;");
             var stateStyle = CreateStateStyle(selectedState);
             if (selectedState.ImageBackgroundTransparent != true && selectedState.ImageBackgroundColor is HmiColor imageBackgroundColor)
                 stateStyle = AppendCssDeclaration(stateStyle, $"background-color: {ToCss(imageBackgroundColor)};");
@@ -1605,15 +1615,27 @@ public class HmiScreenToHtmlConverter
             AppendAttribute(html, "data-state-value", selectedState.Value is double stateValue ? ToCss(stateValue) : null);
             AppendAttribute(html, "data-image-name", selectedState.ImageName ?? selectedState.Image.ImageName);
             AppendAttribute(html, "data-image-blink", selectedState.ImageBlink ? "true" : "false");
+            AppendAttribute(html, "data-alternate-image-name", selectedState.AlternateImageName ?? selectedState.AlternateImage?.ImageName);
+            AppendAttribute(html, "data-image-blink-rate", selectedState.ImageBlinkRate?.ToString());
             html.Append('>');
             if (!string.IsNullOrWhiteSpace(imageUri))
             {
                 html.Append("<img");
                 AppendAttribute(html, "src", imageUri);
                 AppendAttribute(html, "alt", selectedState.Name ?? selectedState.ImageName ?? selectedState.Image.ImageName ?? symbolicIoField.Name);
-                AppendAttribute(html, "style", selectedState.ImageScaled == false
-                    ? "width: auto; height: auto; max-width: 100%; max-height: 100%; display: block;"
-                    : "width: 100%; height: 100%; object-fit: contain; display: block;");
+                AppendAttribute(html, "class", "hmi-symbolic-image-base");
+                AppendAttribute(html, "style", imageStyle);
+                html.Append('>');
+            }
+            if (blinkAlternateImage)
+            {
+                var alternateStyle = AppendCssDeclaration(imageLayoutStyle, "position: absolute; inset: 0;");
+                alternateStyle = AppendCssDeclaration(alternateStyle, $"animation: hmi-symbolic-alternate-flash {GetBlinkDuration(selectedState.ImageBlinkRate)}s steps(1, end) infinite;");
+                html.Append("<img");
+                AppendAttribute(html, "src", alternateImageUri);
+                AppendAttribute(html, "alt", selectedState.Name ?? selectedState.AlternateImageName ?? selectedState.AlternateImage?.ImageName ?? symbolicIoField.Name);
+                AppendAttribute(html, "class", "hmi-symbolic-image-alternate");
+                AppendAttribute(html, "style", alternateStyle);
                 html.Append('>');
             }
             if (selectedState.Text is not null)
@@ -1643,6 +1665,13 @@ public class HmiScreenToHtmlConverter
         }
         html.Append("</select>");
     }
+
+    private static string GetBlinkDuration(HmiBlinkRate? rate) => rate switch
+    {
+        HmiBlinkRate.Slow => "2",
+        HmiBlinkRate.Fast => "0.5",
+        _ => "1"
+    };
 
     private static async ValueTask AppendToggleSwitchAsync(
         StringBuilder html,

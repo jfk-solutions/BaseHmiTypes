@@ -44,6 +44,10 @@ public sealed class HmiState
 
     public HmiImageSource? Image { get; set; }
 
+    public string? AlternateImageName { get; set; }
+
+    public HmiImageSource? AlternateImage { get; set; }
+
     public bool? ImageScaled { get; set; }
 
     public HmiColor? ImageColor { get; set; }
@@ -91,4 +95,6 @@ public sealed class HmiState
     public bool? CaptionBackgroundTransparent { get; set; }
 
     public bool ImageBlink { get; set; }
+
+    public HmiBlinkRate? ImageBlinkRate { get; set; }
 }

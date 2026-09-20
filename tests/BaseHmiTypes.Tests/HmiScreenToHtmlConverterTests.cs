@@ -78,8 +78,15 @@ public class HmiScreenToHtmlConverterTests
                 ImageName = "pump-running.svg",
                 Uri = "data:image/svg+xml,%3Csvg%2F%3E"
             },
+            AlternateImageName = "pump-warning.svg",
+            AlternateImage = new HmiImageSource
+            {
+                ImageName = "pump-warning.svg",
+                Uri = "data:image/svg+xml,%3Csvg%20id%3D%22warning%22%2F%3E"
+            },
             ImageScaled = true,
             ImageBlink = true,
+            ImageBlinkRate = HmiBlinkRate.Fast,
             ImageBackgroundColor = HmiColor.FromArgb(255, 17, 34, 51)
         });
         var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
@@ -94,8 +101,13 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-state-value=\"7\"");
         StringAssert.Contains(html, "data-image-name=\"pump-running.svg\"");
         StringAssert.Contains(html, "data-image-blink=\"true\"");
+        StringAssert.Contains(html, "data-alternate-image-name=\"pump-warning.svg\"");
+        StringAssert.Contains(html, "data-image-blink-rate=\"Fast\"");
         StringAssert.Contains(html, "background-color: #112233;");
-        StringAssert.Contains(html, "<img src=\"data:image/svg+xml,%3Csvg%2F%3E\" alt=\"Running\"");
+        StringAssert.Contains(html, "<img src=\"data:image/svg+xml,%3Csvg%2F%3E\" alt=\"Running\" class=\"hmi-symbolic-image-base\"");
+        StringAssert.Contains(html, "animation: hmi-symbolic-base-flash 0.5s steps(1, end) infinite;");
+        StringAssert.Contains(html, "<img src=\"data:image/svg+xml,%3Csvg%20id%3D%22warning%22%2F%3E\" alt=\"Running\" class=\"hmi-symbolic-image-alternate\"");
+        StringAssert.Contains(html, "animation: hmi-symbolic-alternate-flash 0.5s steps(1, end) infinite;");
         Assert.IsFalse(html.Contains("<select id=\"PumpState\"", StringComparison.Ordinal));
     }
 
@@ -1672,10 +1684,11 @@ public class HmiScreenToHtmlConverterTests
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
-        StringAssert.Contains(html, "<style>*,*::before,*::after{box-sizing:border-box;}</style>");
+        StringAssert.Contains(html, "<style>*,*::before,*::after{box-sizing:border-box;}");
+        StringAssert.Contains(html, "@keyframes hmi-symbolic-base-flash");
         StringAssert.Contains(html, "<script type=\"module\">");
         StringAssert.Contains(html, "customElements.define(\"node-projects-svghmi\"");
-        Assert.AreEqual(1, CountOccurrences(html, "<style>*,*::before,*::after{box-sizing:border-box;}</style>"));
+        Assert.AreEqual(1, CountOccurrences(html, "<style>*,*::before,*::after{box-sizing:border-box;}"));
         Assert.AreEqual(1, CountOccurrences(html, "<script type=\"module\">"));
     }
 
