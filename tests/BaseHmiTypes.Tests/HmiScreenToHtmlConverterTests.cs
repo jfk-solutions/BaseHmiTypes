@@ -2430,6 +2430,30 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersButtonThreeDBorder()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiButton
+        {
+            Name = "BeveledButton",
+            Width = 100,
+            Height = 30,
+            Text = HmiMultilingualText.FromText("Start"),
+            ThreeDBorderWidth = 3,
+            ThreeDBorderTopColor = HmiColor.FromArgb(255, 238, 238, 238),
+            ThreeDBorderBottomColor = HmiColor.FromArgb(255, 64, 64, 64)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<button id=\"BeveledButton\"");
+        StringAssert.Contains(html, "border-style: solid;border-width: 3px;");
+        StringAssert.Contains(html, "border-color: #EEEEEE #404040 #404040 #EEEEEE;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersStaticDisabledButtonAppearance()
     {
         var disabled = new HmiButton

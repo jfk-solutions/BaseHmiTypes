@@ -51,6 +51,12 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<bool>? WindowsStyle { get; set; }
 
+    public HmiProperty<double>? ThreeDBorderWidth { get; set; }
+
+    public HmiProperty<HmiColor>? ThreeDBorderTopColor { get; set; }
+
+    public HmiProperty<HmiColor>? ThreeDBorderBottomColor { get; set; }
+
     public HmiProperty<HmiButtonVisualStyle>? VisualStyle { get; set; }
 
     public HmiProperty<bool>? CaptureCursor { get; set; }
