@@ -22,6 +22,7 @@ import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
 import { HmiLineStyle } from "../../screens/base/HmiLineStyle.js";
 import { HmiLineCap } from "../../screens/base/HmiLineCap.js";
+import { HmiLineMarker } from "../../screens/base/HmiLineMarker.js";
 import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
@@ -676,7 +677,9 @@ function appendLine(html: string[], line: HmiLine, context: HmiHtmlConvertContex
   appendSvgAttribute(html, "x2", toSvgLineX(line, getStaticValueOrDefault(line.x2, width)));
   appendSvgAttribute(html, "y2", toSvgLineY(line, getStaticValueOrDefault(line.y2, height)));
   appendStrokeAttributes(html, line, undefined, context);
-  html.push("></line></svg>");
+  html.push("></line>");
+  appendSvgMarkerDefinitions(html, line, context);
+  html.push("</svg>");
 }
 
 function appendPointShape(html: string[], shape: HmiPointBasedShapeBase, elementName: string, fill: boolean, context: HmiHtmlConvertContext): void {
@@ -686,6 +689,7 @@ function appendPointShape(html: string[], shape: HmiPointBasedShapeBase, element
   appendStrokeAttributes(html, shape, fill ? getFillColor(shape, context) : undefined, context);
   html.push(`></${elementName}>`);
   appendSvgFillDefinition(html, shape, fill ? getFillColor(shape, context) : undefined, context);
+  appendSvgMarkerDefinitions(html, shape, context);
   html.push("</svg>");
 }
 
@@ -700,6 +704,7 @@ function appendCircle(html: string[], circle: HmiCircle, context: HmiHtmlConvert
   appendStrokeAttributes(html, circle, getFillColor(circle, context), context);
   html.push("></circle>");
   appendSvgFillDefinition(html, circle, getFillColor(circle, context), context);
+  appendSvgMarkerDefinitions(html, circle, context);
   html.push("</svg>");
 }
 
@@ -715,6 +720,7 @@ function appendEllipse(html: string[], ellipse: HmiEllipse, context: HmiHtmlConv
   appendStrokeAttributes(html, ellipse, getFillColor(ellipse, context), context);
   html.push("></ellipse>");
   appendSvgFillDefinition(html, ellipse, getFillColor(ellipse, context), context);
+  appendSvgMarkerDefinitions(html, ellipse, context);
   html.push("</svg>");
 }
 
@@ -804,6 +810,7 @@ function appendArcPath(
   appendStrokeAttributes(html, item, segment ? getFillColor(item, context) : undefined, context);
   html.push("></path>");
   appendSvgFillDefinition(html, item, segment ? getFillColor(item, context) : undefined, context);
+  appendSvgMarkerDefinitions(html, item, context);
   html.push("</svg>");
 }
 
@@ -858,6 +865,10 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
   appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context));
   const lineCap = context.effectiveProperties.tryGetStaticValue<HmiLineCap>(item, "LineCap", item.lineCap).value;
   if (lineCap !== undefined) appendAttribute(html, "stroke-linecap", lineCapToCss(lineCap));
+  if (getLineMarker(item, "StartMarker", item.startMarker, context) !== HmiLineMarker.None)
+    appendAttribute(html, "marker-start", `url(#${getLineMarkerId(item, true)})`);
+  if (getLineMarker(item, "EndMarker", item.endMarker, context) !== HmiLineMarker.None)
+    appendAttribute(html, "marker-end", `url(#${getLineMarkerId(item, false)})`);
 
   switch (lineStyle) {
     case HmiLineStyle.Dash:
@@ -934,6 +945,70 @@ function appendSvgColorGradientDefinition(html: string[], item: HmiShapeBase, gr
     html.push("></stop>");
   }
   html.push("</linearGradient></defs>");
+}
+
+function appendSvgMarkerDefinitions(html: string[], item: HmiShapeBase, context: HmiHtmlConvertContext): void {
+  const start = getLineMarker(item, "StartMarker", item.startMarker, context);
+  const end = getLineMarker(item, "EndMarker", item.endMarker, context);
+  if (start === HmiLineMarker.None && end === HmiLineMarker.None) return;
+
+  const color = colorToCss(getStrokeColor(item, context));
+  html.push("<defs>");
+  if (start !== HmiLineMarker.None) appendSvgMarkerDefinition(html, getLineMarkerId(item, true), start, color);
+  if (end !== HmiLineMarker.None) appendSvgMarkerDefinition(html, getLineMarkerId(item, false), end, color);
+  html.push("</defs>");
+}
+
+function appendSvgMarkerDefinition(html: string[], id: string, marker: HmiLineMarker, color: string): void {
+  const reversed = marker === HmiLineMarker.FilledArrowReversed;
+  html.push("<marker");
+  appendAttribute(html, "id", id);
+  appendAttribute(html, "viewBox", "-1 -1 12 12");
+  appendAttribute(html, "markerWidth", "6");
+  appendAttribute(html, "markerHeight", "6");
+  appendAttribute(html, "refX", marker === HmiLineMarker.Circle || marker === HmiLineMarker.FilledCircle || marker === HmiLineMarker.Line ? "5" : reversed ? "0" : "10");
+  appendAttribute(html, "refY", "5");
+  appendAttribute(html, "orient", "auto-start-reverse");
+  appendAttribute(html, "markerUnits", "strokeWidth");
+  html.push(">");
+  switch (marker) {
+    case HmiLineMarker.Arrow:
+      appendMarkerPath(html, "M0 0L10 5L0 10", "none", color);
+      break;
+    case HmiLineMarker.FilledArrow:
+    case HmiLineMarker.FilledArrowReversed:
+      appendMarkerPath(html, reversed ? "M10 0L0 5L10 10Z" : "M0 0L10 5L0 10Z", color, color);
+      break;
+    case HmiLineMarker.Line:
+      appendMarkerPath(html, "M5 0V10", "none", color);
+      break;
+    case HmiLineMarker.Circle:
+    case HmiLineMarker.FilledCircle:
+      html.push("<circle cx=\"5\" cy=\"5\" r=\"4\"");
+      appendAttribute(html, "fill", marker === HmiLineMarker.FilledCircle ? color : "none");
+      appendAttribute(html, "stroke", color);
+      html.push("></circle>");
+      break;
+  }
+  html.push("</marker>");
+}
+
+function appendMarkerPath(html: string[], data: string, fill: string, stroke: string): void {
+  html.push("<path");
+  appendAttribute(html, "d", data);
+  appendAttribute(html, "fill", fill);
+  appendAttribute(html, "stroke", stroke);
+  html.push("></path>");
+}
+
+function getLineMarker(
+  item: HmiShapeBase,
+  propertyName: string,
+  property: HmiProperty<HmiLineMarker> | undefined,
+  context: HmiHtmlConvertContext,
+): HmiLineMarker {
+  return context.effectiveProperties.tryGetStaticValue<HmiLineMarker>(item, propertyName, property).value
+    ?? HmiLineMarker.None;
 }
 
 function appendSvgPatternDefinition(html: string[], item: HmiShapeBase, fillColor: HmiColor, context: HmiHtmlConvertContext): void {
@@ -1057,6 +1132,10 @@ function getFillPatternId(item: HmiShapeBase): string {
 
 function getColorGradientId(item: HmiShapeBase): string {
   return getFillGradientId(item).replace("hmi-fill-", "hmi-color-gradient-");
+}
+
+function getLineMarkerId(item: HmiShapeBase, start: boolean): string {
+  return getFillGradientId(item).replace("hmi-fill-", start ? "hmi-marker-start-" : "hmi-marker-end-");
 }
 
 function getFillPattern(item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): HmiFillPattern | undefined {
