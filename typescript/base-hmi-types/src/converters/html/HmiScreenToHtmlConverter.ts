@@ -3063,7 +3063,17 @@ function hasThicknessEdges(value: unknown): value is {
 function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): void {
   const suppressBorderStyle = item instanceof HmiCheckBoxGroup || item instanceof HmiRadioButtonGroup;
   const borderStyle = getBorderStyleCss(item, context);
-  appendColorStyle(html, "color", context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor));
+  const foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
+  const foregroundBlink = foregroundColor?.kind === HmiPropertyKind.Blink
+    ? foregroundColor as HmiBlinkProperty<HmiColor>
+    : undefined;
+  if (foregroundBlink?.staticValue !== undefined && foregroundBlink.blinkValue !== undefined) {
+    html.push(`--hmi-foreground-color-off: ${colorToCss(foregroundBlink.staticValue)};`);
+    html.push(`--hmi-foreground-color-on: ${colorToCss(foregroundBlink.blinkValue)};`);
+    html.push(`animation: hmi-foreground-color-flash ${getBlinkDuration(foregroundBlink.rate)}s steps(1, end) infinite;`);
+  } else {
+    appendColorStyle(html, "color", foregroundColor);
+  }
   if (!(item instanceof HmiGauge)) {
     appendColorStyle(html, "background-color", context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor));
   }
