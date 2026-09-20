@@ -360,9 +360,36 @@ test("HTML converter renders slider thumb color", async () => {
 
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
 
-  assert.match(html, /input\[data-hmi-slider\]\{accent-color:var\(--hmi-slider-thumb-background,auto\);\}/);
+  assert.match(html, /input\[data-hmi-slider\]\{accent-color:var\(--hmi-slider-thumb-background,auto\);/);
   assert.match(html, /--hmi-slider-thumb-background: #0C2238;/);
   assert.match(html, /data-hmi-slider="true"/);
+});
+
+test("HTML converter renders direction-aware slider track colors", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+
+  for (const [name, orientation] of [["VerticalSlider", 0], ["HorizontalSlider", 3]]) {
+    const slider = new HmiSlider();
+    slider.name = name;
+    slider.width = staticProperty(100);
+    slider.height = staticProperty(20);
+    slider.orientation = staticProperty(orientation);
+    slider.trackHighBackgroundColor = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+    slider.trackLowBackgroundColor = staticProperty(hmiColorFromArgb(255, 0, 0, 255));
+    layer.items.push(slider);
+  }
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /--hmi-slider-track-background: linear-gradient\(to bottom, #FF0000, #0000FF\);/);
+  assert.match(html, /--hmi-slider-track-background: linear-gradient\(to left, #FF0000, #0000FF\);/);
+  assert.match(html, /::-webkit-slider-runnable-track/);
+  assert.match(html, /::-moz-range-track/);
 });
 
 test("HTML converter renders a clock preview", async () => {
