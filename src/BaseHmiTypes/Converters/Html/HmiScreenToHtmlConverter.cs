@@ -3331,6 +3331,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "chart-title", trendControl.ChartTitle);
         AppendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.DisplayChartTitle);
         AppendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.ShowToolbar);
+        AppendStaticAttribute(html, "toolbar-alignment", trendControl.ToolbarAlignment);
         AppendStaticBooleanValueAttribute(html, "use-toolbar-background-color", trendControl.UseToolbarBackgroundColor);
         AppendStaticAttribute(html, "toolbar-background-color", trendControl.ToolbarBackgroundColor);
         AppendStaticAttribute(html, "toolbar-button-size", trendControl.ToolbarButtonSize);

@@ -5,6 +5,7 @@ const trendControlProperties = {
   pens: String,
   displayChartTitle: String,
   showToolbar: String,
+  toolbarAlignment: String,
   toolbarButtonSize: String,
   showStatusBar: String,
   displayPenIcons: String,
@@ -145,6 +146,7 @@ export class HmiTrendControl extends HTMLElement {
       : configuredDecimalPlaces;
     const displayChartTitle = readBooleanAttribute(this, "display-chart-title", false);
     const showToolbar = readBooleanAttribute(this, "show-toolbar", true);
+    const toolbarAtBottom = this.getAttribute("toolbar-alignment")?.toLowerCase() === "bottom";
     const configuredToolbarButtonSize = readNumberAttribute(this, "toolbar-button-size", 28);
     const toolbarButtonSize = Math.max(1, configuredToolbarButtonSize === 0 ? 28 : configuredToolbarButtonSize);
     const showStatusBar = readBooleanAttribute(this, "show-status-bar", false);
@@ -180,8 +182,8 @@ export class HmiTrendControl extends HTMLElement {
     const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
     const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat);
     if (xAxisFlipped) labels.reverse();
-    const plotTop = displayChartTitle ? (showToolbar ? 29 : 15) : (showToolbar ? 23 : 7);
-    const plotBottom = (displayScrollMechanism ? 22 : 16) + (showStatusBar ? 10 : 0);
+    const plotTop = displayChartTitle ? (showToolbar && !toolbarAtBottom ? 29 : 15) : (showToolbar && !toolbarAtBottom ? 23 : 7);
+    const plotBottom = (displayScrollMechanism ? 22 : 16) + (showStatusBar ? 10 : 0) + (showToolbar && toolbarAtBottom ? 12 : 0);
 
     this.root.innerHTML = `
       <style>
@@ -232,7 +234,8 @@ export class HmiTrendControl extends HTMLElement {
 
         .toolbar {
           position: absolute;
-          top: ${displayChartTitle ? 11 : 3}%;
+          top: ${toolbarAtBottom ? "auto" : `${displayChartTitle ? 11 : 3}%`};
+          bottom: ${toolbarAtBottom ? `${showStatusBar ? 10 : 3}%` : "auto"};
           left: 10%;
           right: 2.5%;
           min-height: var(--hmi-trend-toolbar-button-size, ${toCss(toolbarButtonSize)}px);

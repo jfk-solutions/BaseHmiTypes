@@ -3025,6 +3025,7 @@ public class HmiScreenToHtmlConverterTests
                 Italic = true
             },
             ShowToolbar = true,
+            ToolbarAlignment = HmiVerticalAlignment.Bottom,
             UseToolbarBackgroundColor = true,
             ToolbarBackgroundColor = HmiColor.FromArgb(255, 0x44, 0x33, 0x22),
             ToolbarButtonSize = 42,
@@ -3122,6 +3123,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "--hmi-trend-content-font-family: Arial;--hmi-trend-content-font-size: 9px;--hmi-trend-content-font-weight: 400;");
         StringAssert.Contains(html, "--hmi-trend-header-font-family: Siemens Sans;--hmi-trend-header-font-size: 11px;--hmi-trend-header-font-weight: 700;--hmi-trend-header-font-style: italic;");
         StringAssert.Contains(html, "show-toolbar=\"true\"");
+        StringAssert.Contains(html, "toolbar-alignment=\"Bottom\"");
         StringAssert.Contains(html, "use-toolbar-background-color=\"true\"");
         StringAssert.Contains(html, "toolbar-background-color=\"#443322\"");
         StringAssert.Contains(html, "--hmi-trend-toolbar-background: #443322;");
