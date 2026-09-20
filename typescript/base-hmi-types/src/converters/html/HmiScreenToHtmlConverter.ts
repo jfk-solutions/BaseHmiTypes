@@ -12,6 +12,8 @@ import { HmiCustomWidgetContainer } from "../../screens/base/HmiCustomWidgetCont
 import { HmiDynamicSvg } from "../../screens/base/HmiDynamicSvg.js";
 import { HmiDotNetControlContainer } from "../../screens/base/HmiDotNetControlContainer.js";
 import { HmiFont } from "../../screens/base/HmiFont.js";
+import { HmiFillAnimation } from "../../screens/base/HmiFillAnimation.js";
+import { HmiFillDirection } from "../../screens/base/HmiFillDirection.js";
 import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
@@ -678,7 +680,9 @@ function appendPointShape(html: string[], shape: HmiPointBasedShapeBase, element
   html.push(`<${elementName}`);
   appendAttribute(html, "points", shape.points.map((point) => toSvgPoint(shape, point)).join(" "));
   appendStrokeAttributes(html, shape, fill ? getFillColor(shape, context) : undefined, context);
-  html.push(`></${elementName}></svg>`);
+  html.push(`></${elementName}>`);
+  appendSvgFillDefinition(html, shape, fill ? getFillColor(shape, context) : undefined);
+  html.push("</svg>");
 }
 
 function appendCircle(html: string[], circle: HmiCircle, context: HmiHtmlConvertContext): void {
@@ -690,7 +694,9 @@ function appendCircle(html: string[], circle: HmiCircle, context: HmiHtmlConvert
   appendSvgAttribute(html, "cy", getStaticValueOrDefault(circle.centerY, height / 2));
   appendSvgAttribute(html, "r", getStaticValueOrDefault(circle.radius, Math.min(width, height) / 2));
   appendStrokeAttributes(html, circle, getFillColor(circle, context), context);
-  html.push("></circle></svg>");
+  html.push("></circle>");
+  appendSvgFillDefinition(html, circle, getFillColor(circle, context));
+  html.push("</svg>");
 }
 
 function appendEllipse(html: string[], ellipse: HmiEllipse, context: HmiHtmlConvertContext): void {
@@ -703,7 +709,9 @@ function appendEllipse(html: string[], ellipse: HmiEllipse, context: HmiHtmlConv
   appendSvgAttribute(html, "rx", getStaticValueOrDefault(ellipse.radiusX, width / 2));
   appendSvgAttribute(html, "ry", getStaticValueOrDefault(ellipse.radiusY, height / 2));
   appendStrokeAttributes(html, ellipse, getFillColor(ellipse, context), context);
-  html.push("></ellipse></svg>");
+  html.push("></ellipse>");
+  appendSvgFillDefinition(html, ellipse, getFillColor(ellipse, context));
+  html.push("</svg>");
 }
 
 function appendCircularArc(html: string[], arc: HmiCircularArc, context: HmiHtmlConvertContext): void {
@@ -790,7 +798,9 @@ function appendArcPath(
   html.push("<path");
   appendAttribute(html, "d", createArcPath(centerX, centerY, radiusX, radiusY, startAngle, sweepAngle, segment));
   appendStrokeAttributes(html, item, segment ? getFillColor(item, context) : undefined, context);
-  html.push("></path></svg>");
+  html.push("></path>");
+  appendSvgFillDefinition(html, item, segment ? getFillColor(item, context) : undefined);
+  html.push("</svg>");
 }
 
 function createArcPath(
@@ -828,7 +838,10 @@ function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, h
 
 function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined, context: HmiHtmlConvertContext): void {
   const lineStyle = getLineStyle(item, context);
-  appendAttribute(html, "fill", fillColor === undefined ? "none" : colorToCss(fillColor));
+  const fill = fillColor === undefined
+    ? "none"
+    : tryGetFillPercentage(item.fillAnimation) !== undefined ? `url(#${getFillGradientId(item)})` : colorToCss(fillColor);
+  appendAttribute(html, "fill", fill);
   appendAttribute(html, "stroke", lineStyle === HmiLineStyle.None ? "none" : colorToCss(getStrokeColor(item, context)));
   appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context));
 
@@ -849,6 +862,60 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
       appendAttribute(html, "stroke-linecap", "round");
       break;
   }
+}
+
+function appendSvgFillDefinition(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined): void {
+  const percentage = tryGetFillPercentage(item.fillAnimation);
+  if (fillColor === undefined || percentage === undefined) return;
+
+  const [x1, y1, x2, y2] = getSvgFillVector(item.fillAnimation?.direction);
+  html.push("<defs><linearGradient");
+  appendAttribute(html, "id", getFillGradientId(item));
+  appendAttribute(html, "x1", x1);
+  appendAttribute(html, "y1", y1);
+  appendAttribute(html, "x2", x2);
+  appendAttribute(html, "y2", y2);
+  html.push("><stop");
+  appendAttribute(html, "offset", `${toCss(percentage)}%`);
+  appendAttribute(html, "stop-color", colorToCss(fillColor));
+  html.push("></stop><stop");
+  appendAttribute(html, "offset", `${toCss(percentage)}%`);
+  appendAttribute(html, "stop-color", "transparent");
+  html.push("></stop></linearGradient></defs>");
+}
+
+function getSvgFillVector(direction: HmiFillDirection | undefined): [string, string, string, string] {
+  switch (direction) {
+    case HmiFillDirection.Up:
+      return ["0%", "100%", "0%", "0%"];
+    case HmiFillDirection.Down:
+      return ["0%", "0%", "0%", "100%"];
+    case HmiFillDirection.Left:
+      return ["100%", "0%", "0%", "0%"];
+    default:
+      return ["0%", "0%", "100%", "0%"];
+  }
+}
+
+function getFillGradientId(item: HmiShapeBase): string {
+  const sanitized = (item.id ?? item.name ?? "shape").replace(/[^A-Za-z0-9_-]/g, "-");
+  return `hmi-fill-${sanitized || "shape"}`;
+}
+
+function tryGetFillPercentage(animation: HmiFillAnimation | undefined): number | undefined {
+  if (animation === undefined) return undefined;
+  const parsed = animation.expression === undefined ? Number.NaN : Number(animation.expression);
+  const value = animation.expressionFallback ?? (Number.isFinite(parsed) ? parsed : undefined);
+  if (value === undefined) return undefined;
+
+  const expressionMinimum = animation.expressionMinimum ?? 0;
+  const expressionMaximum = animation.expressionMaximum ?? 100;
+  const normalized = expressionMaximum === expressionMinimum
+    ? 0
+    : (value - expressionMinimum) / (expressionMaximum - expressionMinimum);
+  const fillMinimum = animation.fillMinimum ?? 0;
+  const fillMaximum = animation.fillMaximum ?? 100;
+  return Math.min(Math.max(fillMinimum + (fillMaximum - fillMinimum) * normalized, 0), 100);
 }
 
 function getStrokeColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor {
@@ -1698,6 +1765,7 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
   appendStyle(html, rectangle, context);
+  appendFillAnimationStyle(html, rectangle, context);
   appendRectangleRadius(html, rectangle);
   if (
     rectangle.borderColor === undefined &&
@@ -1708,6 +1776,31 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
     html.push("border: 1px solid #000000;");
   }
   html.push("\"></div>");
+}
+
+function appendFillAnimationStyle(html: string[], item: HmiShapeBase, context: HmiHtmlConvertContext): void {
+  const percentage = tryGetFillPercentage(item.fillAnimation);
+  const fillColor = getFillColor(item, context);
+  if (percentage === undefined || fillColor === undefined) return;
+
+  let direction: string;
+  switch (item.fillAnimation?.direction) {
+    case HmiFillDirection.Up:
+      direction = "to top";
+      break;
+    case HmiFillDirection.Down:
+      direction = "to bottom";
+      break;
+    case HmiFillDirection.Left:
+      direction = "to left";
+      break;
+    default:
+      direction = "to right";
+      break;
+  }
+  const color = colorToCss(fillColor);
+  html.push("background-color: transparent;");
+  html.push(`background-image: linear-gradient(${direction}, ${color} 0%, ${color} ${toCss(percentage)}%, transparent ${toCss(percentage)}%, transparent 100%);`);
 }
 
 function appendRectangleRadius(html: string[], rectangle: HmiRectangle): void {
