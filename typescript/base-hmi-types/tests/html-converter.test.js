@@ -1542,6 +1542,9 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.statusBarFont.weight = staticProperty(600);
   trend.statusBarFont.italic = staticProperty(true);
   trend.displayPenIcons = staticProperty(true);
+  trend.displayValueBar = staticProperty(true);
+  trend.valueBarColor = staticProperty(hmiColorFromArgb(255, 0x65, 0x43, 0x21));
+  trend.valueBarWidth = staticProperty(3);
   trend.displayScrollMechanism = staticProperty(true);
   trend.chartLiveMode = staticProperty(true);
   trend.autoScale = staticProperty(false);
@@ -1594,6 +1597,11 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /--hmi-trend-status-foreground: #E0D0C0;/);
   assert.match(html, /--hmi-trend-status-font-family: Tahoma;--hmi-trend-status-font-size: 8px;--hmi-trend-status-font-weight: 600;--hmi-trend-status-font-style: italic;/);
   assert.match(html, /display-pen-icons="true"/);
+  assert.match(html, /display-value-bar="true"/);
+  assert.match(html, /value-bar-color="#654321"/);
+  assert.match(html, /value-bar-width="3"/);
+  assert.match(html, /--hmi-trend-value-bar-color: #654321;/);
+  assert.match(html, /--hmi-trend-value-bar-width: 3px;/);
   assert.match(html, /display-scroll-mechanism="true"/);
   assert.match(html, /chart-live-mode="true"/);
   assert.match(html, /auto-scale="false"/);
