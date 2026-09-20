@@ -6,6 +6,7 @@ import {
   hmiColorFromArgb,
   HmiArrowIndicator,
   HmiAlarmIndicator,
+  HmiAlarmIndicatorSegment,
   HmiAlarmColumn,
   HmiAlarmColumnType,
   HmiAlarmControl,
@@ -465,6 +466,47 @@ test("HTML converter renders alarm indicator font", async () => {
   assert.match(html, /text-align: right;/);
   assert.match(html, /justify-content: flex-end;/);
   assert.match(html, /align-items: flex-end;/);
+});
+
+test("HTML converter renders alarm indicator segments", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const indicator = new HmiAlarmIndicator();
+  indicator.name = "GroupDisplay";
+  indicator.width = staticProperty(80);
+  indicator.height = staticProperty(30);
+  indicator.text = staticProperty("A");
+  indicator.useEqualSegmentWidths = staticProperty(false);
+  const first = new HmiAlarmIndicatorSegment();
+  first.index = 1;
+  first.width = staticProperty(15);
+  first.messageClasses = staticProperty([1, 2]);
+  indicator.segments.push(first);
+  const second = new HmiAlarmIndicatorSegment();
+  second.index = 2;
+  second.width = staticProperty(25);
+  second.messageClasses = staticProperty([3]);
+  indicator.segments.push(second);
+  const hidden = new HmiAlarmIndicatorSegment();
+  hidden.index = 3;
+  hidden.width = staticProperty(0);
+  indicator.segments.push(hidden);
+  const layer = new HmiLayer();
+  layer.name = "Layer 1";
+  layer.items.push(indicator);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /data-equal-segment-widths="false"/);
+  assert.match(html, /data-segment-count="3"/);
+  assert.match(html, /data-segment-index="1" data-message-classes="1,2" style="flex: 0 0 15px;/);
+  assert.match(html, /data-segment-index="2" data-message-classes="3" style="flex: 0 0 25px;/);
+  assert.match(html, /data-segment-index="3" style="display: none;/);
+  assert.match(html, /class="hmi-alarm-indicator-label"/);
+  assert.match(html, />A<\/span><\/div>/);
 });
 
 test("HTML converter renders bar slider and scale previews", async () => {

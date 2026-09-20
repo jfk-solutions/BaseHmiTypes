@@ -49,3 +49,4 @@ export * from "./widgets/HmiLabel.js";
 export * from "./widgets/HmiTextBox.js";
 export * from "./widgets/HmiSymbolicIOField.js";
 export * from "./widgets/HmiAlarmIndicator.js";
+export * from "./widgets/HmiAlarmIndicatorSegment.js";
