@@ -1528,7 +1528,9 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.headerFont.size = staticProperty(11);
   trend.headerFont.weight = staticProperty(700);
   trend.headerFont.italic = staticProperty(true);
-  trend.showToolbar = staticProperty(false);
+  trend.showToolbar = staticProperty(true);
+  trend.useToolbarBackgroundColor = staticProperty(true);
+  trend.toolbarBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x33, 0x22));
   trend.showStatusBar = staticProperty(true);
   trend.statusBarBackgroundColor = staticProperty(hmiColorFromArgb(255, 16, 32, 48));
   trend.statusBarForegroundColor = staticProperty(hmiColorFromArgb(255, 224, 208, 192));
@@ -1577,7 +1579,10 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /resize: both;/);
   assert.match(html, /--hmi-trend-content-font-family: Arial;--hmi-trend-content-font-size: 9px;--hmi-trend-content-font-weight: 400;/);
   assert.match(html, /--hmi-trend-header-font-family: Siemens Sans;--hmi-trend-header-font-size: 11px;--hmi-trend-header-font-weight: 700;--hmi-trend-header-font-style: italic;/);
-  assert.match(html, /show-toolbar="false"/);
+  assert.match(html, /show-toolbar="true"/);
+  assert.match(html, /use-toolbar-background-color="true"/);
+  assert.match(html, /toolbar-background-color="#443322"/);
+  assert.match(html, /--hmi-trend-toolbar-background: #443322;/);
   assert.match(html, /show-status-bar="true"/);
   assert.match(html, /--hmi-trend-status-background: #102030;/);
   assert.match(html, /--hmi-trend-status-foreground: #E0D0C0;/);
