@@ -2168,6 +2168,25 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_ScalesScreenFillPatternWithViewport()
+    {
+        var screen = new HmiScreen
+        {
+            Name = "StretchPattern",
+            Width = 320,
+            Height = 200,
+            PatternColor = HmiColor.FromArgb(255, 0, 64, 128),
+            FillPattern = HmiFillPattern.Checkers,
+            FillPatternAlignment = HmiFillPatternAlignment.StretchToViewport
+        };
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-fill-pattern-alignment=\"StretchToViewport\"");
+        StringAssert.Contains(html, "background-size: 2.5% 4%;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersConfiguredColorGradients()
     {
         var screen = new HmiScreen
