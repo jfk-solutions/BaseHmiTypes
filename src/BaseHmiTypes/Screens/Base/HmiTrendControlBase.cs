@@ -107,6 +107,14 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? XAxisGridVisible { get; set; }
 
+    public HmiProperty<bool>? MajorGridVisible { get; set; }
+
+    public HmiProperty<HmiColor>? MajorGridColor { get; set; }
+
+    public HmiProperty<bool>? MinorGridVisible { get; set; }
+
+    public HmiProperty<HmiColor>? MinorGridColor { get; set; }
+
     public HmiProperty<int>? XAxisMajorGridLineCount { get; set; }
 
     public HmiProperty<int>? XAxisMinorGridLineCount { get; set; }

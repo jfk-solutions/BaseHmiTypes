@@ -3346,6 +3346,10 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "x-axis-scale-visible", trendControl.XAxisScaleVisible);
         AppendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.XAxisDateVisible);
         AppendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.XAxisGridVisible);
+        AppendStaticBooleanValueAttribute(html, "major-grid-visible", trendControl.MajorGridVisible);
+        AppendStaticAttribute(html, "major-grid-color", trendControl.MajorGridColor);
+        AppendStaticBooleanValueAttribute(html, "minor-grid-visible", trendControl.MinorGridVisible);
+        AppendStaticAttribute(html, "minor-grid-color", trendControl.MinorGridColor);
         AppendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.YAxisScaleVisible);
         AppendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.YAxisGridVisible);
         AppendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.ShowPercentageAxis);
@@ -3502,6 +3506,12 @@ public class HmiScreenToHtmlConverter
             style.Append("--hmi-trend-value-bar-width: ")
                 .Append(Math.Max(0, ResolveStaticValue(trendControl.ValueBarWidth, context)).ToString(System.Globalization.CultureInfo.InvariantCulture))
                 .Append("px;");
+        if (trendControl.MajorGridColor is not null)
+            style.Append("--hmi-trend-major-grid-color: ")
+                .Append(ToCss(ResolveStaticValue(trendControl.MajorGridColor, context))).Append(';');
+        if (trendControl.MinorGridColor is not null)
+            style.Append("--hmi-trend-minor-grid-color: ")
+                .Append(ToCss(ResolveStaticValue(trendControl.MinorGridColor, context))).Append(';');
         return style.ToString();
     }
 

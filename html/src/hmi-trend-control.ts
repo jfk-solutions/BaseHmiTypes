@@ -15,6 +15,8 @@ const trendControlProperties = {
   xAxisScaleVisible: String,
   xAxisDateVisible: String,
   xAxisGridVisible: String,
+  majorGridVisible: String,
+  minorGridVisible: String,
   yAxisScaleVisible: String,
   yAxisGridVisible: String,
   showPercentageAxis: String,
@@ -119,6 +121,8 @@ export class HmiTrendControl extends HTMLElement {
     const xAxisVisible = readBooleanAttribute(this, "x-axis-scale-visible", true);
     const xAxisDateVisible = readBooleanAttribute(this, "x-axis-date-visible", true);
     const xAxisGridVisible = readBooleanAttribute(this, "x-axis-grid-visible", true);
+    const majorGridVisible = readBooleanAttribute(this, "major-grid-visible", true);
+    const minorGridVisible = readBooleanAttribute(this, "minor-grid-visible", true);
     const yAxisVisible = readBooleanAttribute(this, "y-axis-scale-visible", true);
     const yAxisGridVisible = readBooleanAttribute(this, "y-axis-grid-visible", true);
     const showPercentageAxis = readBooleanAttribute(this, "show-percentage-axis", false);
@@ -327,7 +331,7 @@ export class HmiTrendControl extends HTMLElement {
         ${showStatusBar ? `<div class="status">${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}</div>` : ""}
         <div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            ${renderGrid(xAxisGridVisible, yAxisGridVisible)}
+            ${renderGrid(xAxisGridVisible, yAxisGridVisible, majorGridVisible, minorGridVisible)}
             ${xAxisVisible ? `<line x1="0" y1="100" x2="100" y2="100" stroke="#444850" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible ? `<line x1="0" y1="0" x2="0" y2="100" stroke="#444850" stroke-width="0.55"></line>` : ""}
             ${renderPens(visiblePens)}
@@ -342,18 +346,27 @@ export class HmiTrendControl extends HTMLElement {
   }
 }
 
-function renderGrid(verticalVisible: boolean, horizontalVisible: boolean): string {
+function renderGrid(
+  verticalVisible: boolean,
+  horizontalVisible: boolean,
+  majorVisible: boolean,
+  minorVisible: boolean,
+): string {
   const lines: string[] = [];
   if (horizontalVisible) {
     for (let index = 0; index <= 10; index++) {
+      const major = index % 2 === 0;
+      if ((major && !majorVisible) || (!major && !minorVisible)) continue;
       const y = index * 10;
-      lines.push(`<line x1="0" y1="${y}" x2="100" y2="${y}" stroke="#dedede" stroke-width="0.32"></line>`);
+      lines.push(`<line x1="0" y1="${y}" x2="100" y2="${y}" stroke="var(--hmi-trend-${major ? "major" : "minor"}-grid-color, ${major ? "#c8c8c8" : "#dedede"})" stroke-width="${major ? "0.42" : "0.25"}"></line>`);
     }
   }
   if (verticalVisible) {
     for (let index = 0; index <= 7; index++) {
+      const major = index % 2 === 0;
+      if ((major && !majorVisible) || (!major && !minorVisible)) continue;
       const x = (index / 7) * 100;
-      lines.push(`<line x1="${toCss(x)}" y1="0" x2="${toCss(x)}" y2="100" stroke="#dedede" stroke-width="0.32"></line>`);
+      lines.push(`<line x1="${toCss(x)}" y1="0" x2="${toCss(x)}" y2="100" stroke="var(--hmi-trend-${major ? "major" : "minor"}-grid-color, ${major ? "#c8c8c8" : "#dedede"})" stroke-width="${major ? "0.42" : "0.25"}"></line>`);
     }
   }
   return lines.join("");
