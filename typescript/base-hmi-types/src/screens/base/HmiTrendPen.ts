@@ -2,6 +2,7 @@ import { HmiColor } from "./HmiColor.js";
 import { HmiLineStyle } from "./HmiLineStyle.js";
 import { HmiProperty } from "./HmiProperty.js";
 import { HmiTrendPenType } from "./HmiTrendPenType.js";
+import { HmiTrendLineType } from "./HmiTrendLineType.js";
 
 export class HmiTrendPen {
   /** One-based pen number as exposed by the engineering system. */
@@ -12,6 +13,7 @@ export class HmiTrendPen {
   visible?: HmiProperty<boolean>;
   width?: HmiProperty<number>;
   type?: HmiProperty<HmiTrendPenType>;
+  lineType?: HmiProperty<HmiTrendLineType>;
   style?: HmiProperty<HmiLineStyle>;
   /** Whether the area below the trend line is filled. */
   fillVisible?: HmiProperty<boolean>;

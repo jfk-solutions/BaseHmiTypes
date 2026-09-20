@@ -3296,6 +3296,8 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     if (visible !== undefined) result.visible = visible;
     const width = getStaticValue(pen.width);
     if (width !== undefined) result.width = width;
+    const lineType = getStaticValue(pen.lineType);
+    if (lineType !== undefined) result.lineType = lineType;
     const style = getStaticValue(pen.style);
     if (style !== undefined) result.style = style;
     const fill = getStaticValue(pen.fillVisible);
