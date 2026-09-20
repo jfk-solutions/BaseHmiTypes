@@ -19,6 +19,7 @@ import { HmiGradientDirection } from "../../screens/base/HmiGradientDirection.js
 import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
+import { HmiBackgroundImageLayout } from "../../screens/base/HmiBackgroundImageLayout.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
 import { HmiLineStyle } from "../../screens/base/HmiLineStyle.js";
 import { HmiLineCap } from "../../screens/base/HmiLineCap.js";
@@ -178,14 +179,17 @@ export class HmiScreenToHtmlConverter {
         appendRuntimeModule(html);
       }
 
+      const backgroundImageUri = await resolveImageUri(screen.backgroundImage, project, signal);
       html.push("<div");
       appendAttribute(html, "id", screen.name);
+      appendAttribute(html, "data-background-image", screen.backgroundImage?.imageName ?? screen.backgroundImage?.imageId);
+      appendStaticAttribute(html, "data-background-image-layout", screen.backgroundImageLayout);
       if (includeInspectionAttributes) {
         appendAttribute(html, "data-hmi-node-key", key);
       }
       html.push(" style=\"position: relative; overflow: hidden;");
       appendSize(html, getStaticValueOrDefault(screen.width, 0), getStaticValueOrDefault(screen.height, 0));
-      appendScreenStyle(html, screen);
+      appendScreenStyle(html, screen, backgroundImageUri);
       html.push("\">");
 
       const template = await resolveTemplateAsync(screen, project, screenStack, signal);
@@ -3246,13 +3250,28 @@ function appendSize(html: string[], width: number, height: number): void {
   }
 }
 
-function appendScreenStyle(html: string[], screen: HmiScreenBase): void {
+function appendScreenStyle(html: string[], screen: HmiScreenBase, backgroundImageUri: string | undefined): void {
   appendColorStyle(html, "background-color", screen.backgroundColor);
   const pattern = getStaticValue(screen.fillPattern);
   if (pattern !== undefined) {
     appendFillPatternCss(html, pattern, getStaticValue(screen.patternColor) ?? hmiColorFromArgb(255, 0, 0, 0));
   }
   appendColorGradientStyle(html, getColorGradient(screen));
+  if (backgroundImageUri?.trim()) {
+    html.push(`background-image: url(&quot;${escapeHtml(backgroundImageUri)}&quot;);`);
+    switch (getStaticValue(screen.backgroundImageLayout) ?? HmiBackgroundImageLayout.Normal) {
+      case HmiBackgroundImageLayout.Tile:
+        html.push("background-repeat: repeat;background-size: auto;");
+        break;
+      case HmiBackgroundImageLayout.StretchToViewport:
+      case HmiBackgroundImageLayout.StretchToScreen:
+        html.push("background-repeat: no-repeat;background-size: 100% 100%;");
+        break;
+      default:
+        html.push("background-repeat: no-repeat;background-size: auto;");
+        break;
+    }
+  }
 }
 
 function hasThicknessEdges(value: unknown): value is {

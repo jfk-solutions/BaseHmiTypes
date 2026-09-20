@@ -9,6 +9,8 @@ import { HmiScreenKind } from "./HmiScreenKind.js";
 import { HmiUpdateCycle } from "./HmiUpdateCycle.js";
 import { HmiScreenParameter } from "./HmiScreenParameter.js";
 import { HmiScreenRuntimeSettings } from "./HmiScreenRuntimeSettings.js";
+import { HmiImageSource } from "./HmiImageSource.js";
+import { HmiBackgroundImageLayout } from "./HmiBackgroundImageLayout.js";
 
 export abstract class HmiScreenBase extends HmiScreenModelBase {
   kind: HmiScreenKind = HmiScreenKind.Screen;
@@ -19,6 +21,8 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   width: HmiProperty<number> = staticProperty(0);
   height: HmiProperty<number> = staticProperty(0);
   backgroundColor?: HmiProperty<HmiColor>;
+  backgroundImage?: HmiImageSource;
+  backgroundImageLayout?: HmiProperty<HmiBackgroundImageLayout>;
   patternColor?: HmiProperty<HmiColor>;
   fillPattern?: HmiProperty<HmiFillPattern>;
   firstGradientColor?: HmiProperty<HmiColor>;

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   HmiButton,
+  HmiBackgroundImageLayout,
   HmiBlinkRate,
   HmiChildCoordinateSpace,
   HmiCircle,
@@ -333,6 +334,25 @@ test("HTML conversion renders screen fill patterns", async () => {
   assert.match(html, /background-color: #FFFFFF;/);
   assert.match(html, /background-image: conic-gradient\(#004080 25%, transparent 0 50%, #004080 0 75%, transparent 0\);/);
   assert.match(html, /background-size: 8px 8px;/);
+});
+
+test("HTML conversion renders screen background images", async () => {
+  const screen = createScreen("main", "BackgroundScreen");
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  screen.backgroundImage = {
+    imageName: "background.svg",
+    uri: "data:image/svg+xml;base64,PHN2Zy8+",
+    kind: HmiImageSourceKind.DataUri,
+  };
+  screen.backgroundImageLayout = staticProperty(HmiBackgroundImageLayout.Tile);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /data-background-image="background.svg"/);
+  assert.match(html, /data-background-image-layout="Tile"/);
+  assert.match(html, /background-image: url\(&quot;data:image\/svg\+xml;base64,PHN2Zy8\+&quot;\);/);
+  assert.match(html, /background-repeat: repeat;background-size: auto;/);
 });
 
 test("HTML conversion renders configured color gradients", async () => {
