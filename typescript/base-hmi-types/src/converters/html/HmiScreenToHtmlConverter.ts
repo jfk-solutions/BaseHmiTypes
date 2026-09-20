@@ -3112,6 +3112,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.chartLiveMode);
   appendStaticBooleanValueAttribute(html, "auto-scale", trendControl.autoScale);
   appendStaticBooleanValueAttribute(html, "x-axis-scale-visible", trendControl.xAxisScaleVisible);
+  appendStaticAttribute(html, "x-axis-color", trendControl.xAxisColor);
   appendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.xAxisDateVisible);
   appendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.xAxisGridVisible);
   appendStaticBooleanValueAttribute(html, "major-grid-visible", trendControl.majorGridVisible);
@@ -3119,6 +3120,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "minor-grid-visible", trendControl.minorGridVisible);
   appendStaticAttribute(html, "minor-grid-color", trendControl.minorGridColor);
   appendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.yAxisScaleVisible);
+  appendStaticAttribute(html, "y-axis-color", trendControl.yAxisColor);
   appendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.yAxisGridVisible);
   appendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.showPercentageAxis);
   appendStaticAttribute(html, "percentage-axis-color", trendControl.percentageAxisColor);
@@ -3242,6 +3244,12 @@ function createTrendControlStyle(trendControl: HmiTrendControl): string {
   const minorGridColor = getStaticValue(trendControl.minorGridColor);
   if (minorGridColor !== undefined)
     parts.push(`--hmi-trend-minor-grid-color: ${colorToCss(minorGridColor)};`);
+  const xAxisColor = getStaticValue(trendControl.xAxisColor);
+  if (xAxisColor !== undefined)
+    parts.push(`--hmi-trend-x-axis-color: ${colorToCss(xAxisColor)};`);
+  const yAxisColor = getStaticValue(trendControl.yAxisColor);
+  if (yAxisColor !== undefined)
+    parts.push(`--hmi-trend-y-axis-color: ${colorToCss(yAxisColor)};`);
   return parts.join("");
 }
 
