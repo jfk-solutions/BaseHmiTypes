@@ -193,6 +193,27 @@ test("HTML converter renders rectangle rotation", async () => {
   assert.match(html, /transform: rotate\(45deg\);transform-origin: 10px 20px;/);
 });
 
+test("HTML converter exposes item hotkeys", async () => {
+  const button = new HmiToggleSwitch();
+  button.name = "ShortcutButton";
+  button.width = staticProperty(100);
+  button.height = staticProperty(50);
+  button.hotKey = staticProperty("Ctrl+F11");
+
+  const layer = new HmiLayer();
+  layer.name = "Layer0";
+  layer.items.push(button);
+  const screen = new HmiScreen();
+  screen.name = "Main";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /id="ShortcutButton" data-hmi-hot-key="Ctrl\+F11" aria-keyshortcuts="Control\+F11"/);
+});
+
 test("HTML converter renders toggle states and project images", async () => {
   const screen = new HmiScreen();
   screen.id = "main";
