@@ -1341,6 +1341,9 @@ public class HmiScreenToHtmlConverterTests
             ViewKind = HmiAlarmViewKind.AlarmAndEventSummary,
             ShowHeader = true,
             ShowTitle = true,
+            Resizable = true,
+            Movable = true,
+            Closeable = true,
             ListMode = HmiAlarmListMode.Active,
             ActiveAlarmsTitle = HmiMultilingualText.FromText("Active process alarms"),
             NumberOfRows = 8,
@@ -1386,11 +1389,17 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<div id=\"ActiveAlarms\"");
         StringAssert.Contains(html, "data-view-kind=\"AlarmAndEventSummary\"");
         StringAssert.Contains(html, "data-list-mode=\"Active\"");
+        StringAssert.Contains(html, "data-window-resizable=\"true\"");
+        StringAssert.Contains(html, "data-window-movable=\"true\"");
+        StringAssert.Contains(html, "data-window-closeable=\"true\"");
+        StringAssert.Contains(html, "resize: both;");
+        StringAssert.Contains(html, "cursor: move;");
+        StringAssert.Contains(html, "aria-label=\"Close\" disabled");
         StringAssert.Contains(html, "data-number-of-rows=\"8\"");
         StringAssert.Contains(html, "data-show-waiting-message=\"true\"");
         StringAssert.Contains(html, "data-show-out-of-scope-alarms=\"false\"");
         StringAssert.Contains(html, "data-filtered-triggers=\"Motor*\"");
-        StringAssert.Contains(html, ">Active process alarms</div>");
+        StringAssert.Contains(html, ">Active process alarms</span>");
         StringAssert.Contains(html, "data-column-type=\"AlarmTime\" data-time-format=\"HH:mm:ss\">Time</th>");
         StringAssert.Contains(html, "data-column-type=\"Message\">Message</th>");
         Assert.IsFalse(html.Contains("data-column-type=\"AlarmState\"", StringComparison.Ordinal));
@@ -2883,6 +2892,9 @@ public class HmiScreenToHtmlConverterTests
             Height = 180,
             ChartTitle = "Pressure & temperature",
             DisplayChartTitle = true,
+            Resizable = true,
+            Movable = false,
+            Closeable = false,
             ShowToolbar = false,
             DisplayPenIcons = true,
             DisplayScrollMechanism = true,
@@ -2918,6 +2930,10 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<hmi-trend-control id=\"ProcessTrend\"");
         StringAssert.Contains(html, "chart-title=\"Pressure &amp; temperature\"");
         StringAssert.Contains(html, "display-chart-title=\"true\"");
+        StringAssert.Contains(html, "data-window-resizable=\"true\"");
+        StringAssert.Contains(html, "data-window-movable=\"false\"");
+        StringAssert.Contains(html, "data-window-closeable=\"false\"");
+        StringAssert.Contains(html, "resize: both;");
         StringAssert.Contains(html, "show-toolbar=\"false\"");
         StringAssert.Contains(html, "display-pen-icons=\"true\"");
         StringAssert.Contains(html, "display-scroll-mechanism=\"true\"");

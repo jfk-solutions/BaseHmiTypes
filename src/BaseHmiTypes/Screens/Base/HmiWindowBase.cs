@@ -2,6 +2,12 @@ namespace BaseHmiTypes.Screens.Base;
 
 public abstract class HmiWindowBase : HmiPaintedScreenItemBase
 {
+    public HmiProperty<bool>? Resizable { get; set; }
+
+    public HmiProperty<bool>? Movable { get; set; }
+
+    public HmiProperty<bool>? Closeable { get; set; }
+
     public HmiProperty<HmiColor>? CaptionColor { get; set; }
 
     public HmiProperty<HmiColor>? CaptionBackgroundColor { get; set; }
