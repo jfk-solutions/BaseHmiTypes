@@ -6,6 +6,12 @@ public abstract class HmiPaintedScreenItemBase : HmiScreenItemBase
 
     public HmiProperty<HmiColor>? AlternateForegroundColor { get; set; }
 
+    public HmiProperty<HmiColor>? DisabledForegroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? DisabledForegroundShadowColor { get; set; }
+
+    public HmiProperty<bool>? UseDisabledForegroundColor { get; set; }
+
     public HmiProperty<HmiColor>? BackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? AlternateBackgroundColor { get; set; }

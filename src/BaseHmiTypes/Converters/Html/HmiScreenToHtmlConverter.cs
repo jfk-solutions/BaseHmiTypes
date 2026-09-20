@@ -1267,6 +1267,15 @@ public class HmiScreenToHtmlConverter
         if (borderColor?.StaticValue is not null)
             return borderColor;
         var foregroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.ForegroundColor), item.ForegroundColor);
+        var useDisabledForegroundColor = !ResolveStaticValue(item.Enabled, context) &&
+            ResolveStaticValue(item.UseDisabledForegroundColor, context);
+        if (useDisabledForegroundColor)
+        {
+            foregroundColor = context.EffectiveProperties.Resolve(
+                item,
+                nameof(HmiPaintedScreenItemBase.DisabledForegroundColor),
+                item.DisabledForegroundColor) ?? foregroundColor;
+        }
         return foregroundColor?.StaticValue is not null ? foregroundColor : null;
     }
 
@@ -3514,6 +3523,12 @@ public class HmiScreenToHtmlConverter
     {
         if (!ResolveStaticValue(item.Enabled, context))
             AppendAttribute(html, "aria-disabled", "true");
+        if (item is HmiPaintedScreenItemBase paintedItem)
+        {
+            AppendStaticValueAttribute(html, "data-disabled-foreground-color", paintedItem.DisabledForegroundColor, context);
+            AppendStaticValueAttribute(html, "data-disabled-foreground-shadow-color", paintedItem.DisabledForegroundShadowColor, context);
+            AppendStaticValueAttribute(html, "data-use-disabled-foreground-color", paintedItem.UseDisabledForegroundColor, context);
+        }
     }
 
     private static void AppendDisabledStyle(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
@@ -3620,6 +3635,15 @@ public class HmiScreenToHtmlConverter
     private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
         var foregroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.ForegroundColor), item.ForegroundColor);
+        var useDisabledForegroundColor = !ResolveStaticValue(item.Enabled, context) &&
+            ResolveStaticValue(item.UseDisabledForegroundColor, context);
+        if (useDisabledForegroundColor)
+        {
+            foregroundColor = context.EffectiveProperties.Resolve(
+                item,
+                nameof(HmiPaintedScreenItemBase.DisabledForegroundColor),
+                item.DisabledForegroundColor) ?? foregroundColor;
+        }
         var backgroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
         var borderColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderColor), item.BorderColor);
         var borderWidth = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderWidth), item.BorderWidth);
@@ -3643,6 +3667,14 @@ public class HmiScreenToHtmlConverter
         else if (foregroundColor?.StaticValue != null)
         {
             html.Append("color: ").Append(ToCss(foregroundColor.StaticValue)).Append(";");
+        }
+        if (useDisabledForegroundColor &&
+            context.EffectiveProperties.Resolve(
+                item,
+                nameof(HmiPaintedScreenItemBase.DisabledForegroundShadowColor),
+                item.DisabledForegroundShadowColor)?.StaticValue is HmiColor disabledShadowColor)
+        {
+            html.Append("text-shadow: 1px 1px ").Append(ToCss(disabledShadowColor)).Append(';');
         }
         if (backgroundColor is HmiBlinkProperty<HmiColor> backgroundBlink &&
             backgroundBlink.StaticValue is HmiColor backgroundOff &&
