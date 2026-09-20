@@ -3334,6 +3334,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "use-toolbar-background-color", trendControl.UseToolbarBackgroundColor);
         AppendStaticAttribute(html, "toolbar-background-color", trendControl.ToolbarBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.ShowStatusBar);
+        AppendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.UseStatusBarBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
         AppendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.DisplayScrollMechanism);
         AppendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.ChartLiveMode);
@@ -3473,7 +3474,8 @@ public class HmiScreenToHtmlConverter
             (trendControl.UseToolbarBackgroundColor is null || ResolveStaticValue(trendControl.UseToolbarBackgroundColor, context)))
             style.Append("--hmi-trend-toolbar-background: ")
                 .Append(ToCss(ResolveStaticValue(trendControl.ToolbarBackgroundColor, context))).Append(';');
-        if (trendControl.StatusBarBackgroundColor is not null)
+        if (trendControl.StatusBarBackgroundColor is not null &&
+            (trendControl.UseStatusBarBackgroundColor is null || ResolveStaticValue(trendControl.UseStatusBarBackgroundColor, context)))
             style.Append("--hmi-trend-status-background: ")
                 .Append(ToCss(ResolveStaticValue(trendControl.StatusBarBackgroundColor, context))).Append(';');
         if (trendControl.StatusBarForegroundColor is not null)
