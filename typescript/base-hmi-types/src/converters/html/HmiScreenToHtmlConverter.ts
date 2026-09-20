@@ -1,3 +1,4 @@
+import { HmiCharacterScreen } from "../../screens/screen/HmiCharacterScreen.js";
 import { IHmiProject } from "../../projects/IHmiProject.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiImage } from "../../images/HmiImage.js";
@@ -136,6 +137,16 @@ export class HmiScreenToHtmlConverter {
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<string> {
+    if (screen instanceof HmiCharacterScreen) {
+      const html = [context.options.includeMetaCharset ? '<meta charset="utf-8">' : '',
+        `<section class="hmi-character-screen" aria-label="${escapeHtml(screen.name ?? "")}">`];
+      for (const entry of screen.entries) {
+        const text = entry.text.getText(context.options.cultureLcid);
+        html.push(`<figure><figcaption>Entry ${escapeHtml(entry.id)}</figcaption><pre style="white-space:pre;overflow:auto;font:16px/1.4 monospace;padding:1em;background:#dce5bc;color:#182018;">`,
+          escapeHtml(text).replaceAll("\uFFFC", '<span title="Unresolved field">&#9633;</span>'), '</pre></figure>');
+      }
+      return html.join("") + '</section>';
+    }
     const currentKeys = getScreenReferenceKeys(screen);
     for (const key of currentKeys) {
       screenStack.add(key);

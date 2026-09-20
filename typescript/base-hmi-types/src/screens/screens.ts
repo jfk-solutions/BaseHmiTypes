@@ -3,3 +3,4 @@ export * from "./screen/HmiScreen.js";
 export * from "./screen/HmiScreenMaster.js";
 export * from "./screen/HmiScreenWindow.js";
 export * from "./screen/HmiPopupScreenWindow.js";
+export * from "./screen/HmiCharacterScreen.js";
