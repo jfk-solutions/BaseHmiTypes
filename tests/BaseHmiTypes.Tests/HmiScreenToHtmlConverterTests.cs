@@ -1343,6 +1343,49 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersSvgLineMarkers()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiLine
+        {
+            Name = "FlowLine",
+            Width = 100,
+            Height = 20,
+            X1 = 0,
+            Y1 = 10,
+            X2 = 100,
+            Y2 = 10,
+            LineColor = HmiColor.FromArgb(255, 0, 64, 128),
+            StartMarker = HmiLineMarker.Arrow,
+            EndMarker = HmiLineMarker.FilledCircle
+        });
+        var polyline = new HmiPolyline
+        {
+            Name = "ReturnLine",
+            Width = 100,
+            Height = 20,
+            StartMarker = HmiLineMarker.FilledArrowReversed,
+            EndMarker = HmiLineMarker.Line
+        };
+        polyline.Points.Add(new HmiPoint(0, 10));
+        polyline.Points.Add(new HmiPoint(100, 10));
+        layer.Items.Add(polyline);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "marker-start=\"url(#hmi-marker-start-FlowLine)\"");
+        StringAssert.Contains(html, "marker-end=\"url(#hmi-marker-end-FlowLine)\"");
+        StringAssert.Contains(html, "<marker id=\"hmi-marker-start-FlowLine\"");
+        StringAssert.Contains(html, "d=\"M0 0L10 5L0 10\" fill=\"none\" stroke=\"#004080\"");
+        StringAssert.Contains(html, "<marker id=\"hmi-marker-end-FlowLine\"");
+        StringAssert.Contains(html, "<circle cx=\"5\" cy=\"5\" r=\"4\" fill=\"#004080\" stroke=\"#004080\"");
+        StringAssert.Contains(html, "d=\"M10 0L0 5L10 10Z\"");
+        StringAssert.Contains(html, "d=\"M5 0V10\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersScreenAbsolutePolygonPointsAsLocalSvgPoints()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };

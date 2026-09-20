@@ -687,7 +687,9 @@ public class HmiScreenToHtmlConverter
         AppendSvgAttribute(html, "x2", ToSvgLineX(line, line.X2.GetStaticValueOrDefault(width)));
         AppendSvgAttribute(html, "y2", ToSvgLineY(line, line.Y2.GetStaticValueOrDefault(height)));
         AppendStrokeAttributes(html, line, null, context);
-        html.Append("></line></svg>");
+        html.Append("></line>");
+        AppendSvgMarkerDefinitions(html, line, context);
+        html.Append("</svg>");
     }
 
     private static void AppendPointShape(StringBuilder html, HmiPointBasedShapeBase shape, string elementName, bool fill, HmiHtmlConvertContext context)
@@ -698,6 +700,7 @@ public class HmiScreenToHtmlConverter
         AppendStrokeAttributes(html, shape, fill ? GetFillColor(shape, context) : null, context);
         html.Append("></").Append(elementName).Append('>');
         AppendSvgFillDefinition(html, shape, fill ? GetFillColor(shape, context) : null, context);
+        AppendSvgMarkerDefinitions(html, shape, context);
         html.Append("</svg>");
     }
 
@@ -714,6 +717,7 @@ public class HmiScreenToHtmlConverter
         AppendStrokeAttributes(html, circle, GetFillColor(circle, context), context);
         html.Append("></circle>");
         AppendSvgFillDefinition(html, circle, GetFillColor(circle, context), context);
+        AppendSvgMarkerDefinitions(html, circle, context);
         html.Append("</svg>");
     }
 
@@ -730,6 +734,7 @@ public class HmiScreenToHtmlConverter
         AppendStrokeAttributes(html, ellipse, GetFillColor(ellipse, context), context);
         html.Append("></ellipse>");
         AppendSvgFillDefinition(html, ellipse, GetFillColor(ellipse, context), context);
+        AppendSvgMarkerDefinitions(html, ellipse, context);
         html.Append("</svg>");
     }
 
@@ -809,6 +814,7 @@ public class HmiScreenToHtmlConverter
         AppendStrokeAttributes(html, item, segment ? GetFillColor(item, context) : null, context);
         html.Append("></path>");
         AppendSvgFillDefinition(html, item, segment ? GetFillColor(item, context) : null, context);
+        AppendSvgMarkerDefinitions(html, item, context);
         html.Append("</svg>");
     }
 
@@ -841,6 +847,10 @@ public class HmiScreenToHtmlConverter
         var hasLineCap = context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineCap), item.LineCap, out var lineCap);
         if (hasLineCap)
             AppendAttribute(html, "stroke-linecap", ToCss(lineCap));
+        if (GetLineMarker(item, nameof(HmiShapeBase.StartMarker), item.StartMarker, context) is not HmiLineMarker.None)
+            AppendAttribute(html, "marker-start", $"url(#{GetLineMarkerId(item, true)})");
+        if (GetLineMarker(item, nameof(HmiShapeBase.EndMarker), item.EndMarker, context) is not HmiLineMarker.None)
+            AppendAttribute(html, "marker-end", $"url(#{GetLineMarkerId(item, false)})");
 
         switch (lineStyle)
         {
@@ -945,6 +955,82 @@ public class HmiScreenToHtmlConverter
         html.Append("</pattern></defs>");
     }
 
+    private static void AppendSvgMarkerDefinitions(
+        StringBuilder html,
+        HmiShapeBase item,
+        HmiHtmlConvertContext context)
+    {
+        var start = GetLineMarker(item, nameof(HmiShapeBase.StartMarker), item.StartMarker, context);
+        var end = GetLineMarker(item, nameof(HmiShapeBase.EndMarker), item.EndMarker, context);
+        if (start == HmiLineMarker.None && end == HmiLineMarker.None)
+            return;
+
+        var color = ToCss(GetStrokeColor(item, context));
+        html.Append("<defs>");
+        if (start != HmiLineMarker.None)
+            AppendSvgMarkerDefinition(html, GetLineMarkerId(item, true), start, color);
+        if (end != HmiLineMarker.None)
+            AppendSvgMarkerDefinition(html, GetLineMarkerId(item, false), end, color);
+        html.Append("</defs>");
+    }
+
+    private static void AppendSvgMarkerDefinition(StringBuilder html, string id, HmiLineMarker marker, string color)
+    {
+        var reversed = marker == HmiLineMarker.FilledArrowReversed;
+        html.Append("<marker");
+        AppendAttribute(html, "id", id);
+        AppendAttribute(html, "viewBox", "-1 -1 12 12");
+        AppendAttribute(html, "markerWidth", "6");
+        AppendAttribute(html, "markerHeight", "6");
+        AppendAttribute(html, "refX", marker is HmiLineMarker.Circle or HmiLineMarker.FilledCircle or HmiLineMarker.Line ? "5" : reversed ? "0" : "10");
+        AppendAttribute(html, "refY", "5");
+        AppendAttribute(html, "orient", "auto-start-reverse");
+        AppendAttribute(html, "markerUnits", "strokeWidth");
+        html.Append('>');
+        switch (marker)
+        {
+            case HmiLineMarker.Arrow:
+                html.Append("<path d=\"M0 0L10 5L0 10\"");
+                AppendAttribute(html, "fill", "none");
+                AppendAttribute(html, "stroke", color);
+                html.Append("></path>");
+                break;
+            case HmiLineMarker.FilledArrow:
+            case HmiLineMarker.FilledArrowReversed:
+                AppendMarkerPath(html, reversed ? "M10 0L0 5L10 10Z" : "M0 0L10 5L0 10Z", color, color);
+                break;
+            case HmiLineMarker.Line:
+                AppendMarkerPath(html, "M5 0V10", "none", color);
+                break;
+            case HmiLineMarker.Circle:
+            case HmiLineMarker.FilledCircle:
+                html.Append("<circle cx=\"5\" cy=\"5\" r=\"4\"");
+                AppendAttribute(html, "fill", marker == HmiLineMarker.FilledCircle ? color : "none");
+                AppendAttribute(html, "stroke", color);
+                html.Append("></circle>");
+                break;
+        }
+        html.Append("</marker>");
+    }
+
+    private static void AppendMarkerPath(StringBuilder html, string data, string fill, string stroke)
+    {
+        html.Append("<path");
+        AppendAttribute(html, "d", data);
+        AppendAttribute(html, "fill", fill);
+        AppendAttribute(html, "stroke", stroke);
+        html.Append("></path>");
+    }
+
+    private static HmiLineMarker GetLineMarker(
+        HmiShapeBase item,
+        string propertyName,
+        HmiProperty<HmiLineMarker>? property,
+        HmiHtmlConvertContext context) =>
+        context.EffectiveProperties.TryGetStaticValue(item, propertyName, property, out var marker)
+            ? marker
+            : HmiLineMarker.None;
+
     private static void AppendSvgPatternMarks(StringBuilder html, HmiFillPattern pattern, int size, HmiColor color)
     {
         var cssColor = ToCss(color);
@@ -1034,6 +1120,9 @@ public class HmiScreenToHtmlConverter
     private static string GetFillPatternId(HmiShapeBase item) => GetFillGradientId(item).Replace("hmi-fill-", "hmi-pattern-");
 
     private static string GetColorGradientId(HmiShapeBase item) => GetFillGradientId(item).Replace("hmi-fill-", "hmi-color-gradient-");
+
+    private static string GetLineMarkerId(HmiShapeBase item, bool start) =>
+        GetFillGradientId(item).Replace("hmi-fill-", start ? "hmi-marker-start-" : "hmi-marker-end-");
 
     private static HmiFillPattern? GetFillPattern(HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
