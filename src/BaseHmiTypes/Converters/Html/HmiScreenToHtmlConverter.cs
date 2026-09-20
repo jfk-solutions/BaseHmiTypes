@@ -2434,6 +2434,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", rectangle.Name);
         AppendTextAttribute(html, "title", rectangle.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", rectangle.TabIndex, context);
+        AppendAttribute(html, "data-hmi-security-code", rectangle.SecurityCode);
         AppendDisabledAttribute(html, rectangle, context);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, rectangle, context);
@@ -2752,6 +2753,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", symbolLibraryControl.Name);
         AppendTextAttribute(html, "title", symbolLibraryControl.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", symbolLibraryControl.TabIndex, context);
+        AppendAttribute(html, "data-hmi-security-code", symbolLibraryControl.SecurityCode);
         AppendDisabledAttribute(html, symbolLibraryControl, context);
         AppendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.SymbolId);
         AppendAttribute(html, "data-hmi-symbol-appearance", FormatAttributeValue(symbolLibraryControl.SymbolAppearance?.StaticValue));
@@ -3279,6 +3281,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", item.Name);
         AppendTextAttribute(html, "title", item.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", item.TabIndex, context);
+        AppendAttribute(html, "data-hmi-security-code", item.SecurityCode);
         AppendDisabledAttribute(html, item, context);
         AppendHotKeyAttributes(html, item, context);
         html.Append(" style=\"position: absolute;");
@@ -3319,6 +3322,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", symbolContainer.Name);
         AppendTextAttribute(html, "title", symbolContainer.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", symbolContainer.TabIndex, context);
+        AppendAttribute(html, "data-hmi-security-code", symbolContainer.SecurityCode);
         AppendDisabledAttribute(html, symbolContainer, context);
         AppendAttribute(html, "data-hmi-fill-color-mode", symbolContainer.FillColorMode == null ? null : symbolContainer.FillColorMode.StaticValue.ToString());
         AppendAttribute(html, "data-hmi-flip", symbolContainer.Flip == null ? null : symbolContainer.Flip.StaticValue.ToString());
