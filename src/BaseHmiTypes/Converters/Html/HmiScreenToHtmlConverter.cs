@@ -3605,6 +3605,7 @@ public class HmiScreenToHtmlConverter
             AddTrendJsonString(properties, "color", pen.Color?.StaticValue is HmiColor color ? ToCss(color) : null);
             AddTrendJsonBoolean(properties, "visible", pen.Visible?.StaticValue);
             AddTrendJsonNumber(properties, "width", pen.Width?.StaticValue);
+            AddTrendJsonNumber(properties, "lineType", pen.LineType?.StaticValue is HmiTrendLineType lineType ? (int)lineType : null);
             AddTrendJsonNumber(properties, "style", pen.Style?.StaticValue is HmiLineStyle style ? (int)style : null);
             AddTrendJsonBoolean(properties, "fill", pen.FillVisible?.StaticValue);
             AddTrendJsonString(properties, "fillColor", pen.FillColor?.StaticValue is HmiColor fillColor ? ToCss(fillColor) : null);

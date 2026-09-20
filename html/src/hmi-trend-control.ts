@@ -44,6 +44,7 @@ interface TrendPen {
   color?: string;
   visible?: boolean;
   width?: number;
+  lineType?: number;
   style?: number;
   fill?: boolean;
   fillColor?: string;
@@ -513,7 +514,7 @@ function renderPens(pens: readonly TrendPen[], minimumValue: number, maximumValu
       const clippedY = clamp(y, 3, 97);
       points.push({ x, y: clippedY, value: maximumValue - clippedY / 100 * (maximumValue - minimumValue) });
     }
-    const pointText = points.map(point => `${toCss(point.x)},${toCss(point.y)}`).join(" ");
+    const pointText = trendPointText(points, pen.lineType);
     const markerColor = pen.markerColor ?? color;
     const area = pen.fill === true
       ? `<polygon points="0,100 ${pointText} 100,100" fill="${escapeHtml(pen.fillColor ?? color)}" fill-opacity="0.3"></polygon>`
@@ -523,15 +524,53 @@ function renderPens(pens: readonly TrendPen[], minimumValue: number, maximumValu
       : points.filter((_point, pointIndex) => pointIndex % 5 === 0)
         .map(point => renderMarker(pen, markerColor, point.x, point.y, markerRadius(pen, clamp(width + 1, 2, 5))))
         .join("");
-    const line = hasLimitColoring(pen)
-      ? points.slice(1).map((point, pointIndex) => {
-        const previous = points[pointIndex]!;
-        const segmentColor = trendSegmentColor(pen, color, (previous.value + point.value) / 2);
-        return `<line x1="${toCss(previous.x)}" y1="${toCss(previous.y)}" x2="${toCss(point.x)}" y2="${toCss(point.y)}" stroke="${escapeHtml(segmentColor)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></line>`;
-      }).join("")
-      : `<polyline points="${pointText}" fill="none" stroke="${escapeHtml(color)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></polyline>`;
+    const line = renderTrendLine(pen, points, pointText, color, width);
     return `${area}${line}${markers}`;
   }).join("");
+}
+
+function trendPointText(points: ReadonlyArray<{ x: number; y: number }>, lineType: number | undefined): string {
+  if (lineType !== 2)
+    return points.map(point => `${toCss(point.x)},${toCss(point.y)}`).join(" ");
+  const result = [`${toCss(points[0]?.x ?? 0)},${toCss(points[0]?.y ?? 0)}`];
+  for (let index = 1; index < points.length; index++) {
+    const previous = points[index - 1]!;
+    const point = points[index]!;
+    result.push(`${toCss(point.x)},${toCss(previous.y)}`, `${toCss(point.x)},${toCss(point.y)}`);
+  }
+  return result.join(" ");
+}
+
+function renderTrendLine(
+  pen: TrendPen,
+  points: ReadonlyArray<{ x: number; y: number; value: number }>,
+  pointText: string,
+  color: string,
+  width: number,
+): string {
+  const lineType = pen.lineType ?? 1;
+  if (lineType === 0) return "";
+  if (lineType === 3) {
+    return points.filter((_point, index) => index % 5 === 0).map(point => {
+      const valueColor = trendSegmentColor(pen, color, point.value);
+      return `<text x="${toCss(point.x)}" y="${toCss(point.y)}" fill="${escapeHtml(valueColor)}" font-size="4" text-anchor="middle">${escapeHtml(toCss(point.value))}</text>`;
+    }).join("");
+  }
+  if (!hasLimitColoring(pen))
+    return `<polyline points="${pointText}" fill="none" stroke="${escapeHtml(color)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></polyline>`;
+  return points.slice(1).map((point, pointIndex) => {
+    const previous = points[pointIndex]!;
+    if (lineType === 2) {
+      const horizontalColor = trendSegmentColor(pen, color, previous.value);
+      const verticalColor = trendSegmentColor(pen, color, (previous.value + point.value) / 2);
+      return `${renderTrendSegment(previous.x, previous.y, point.x, previous.y, horizontalColor, width, pen.style)}${renderTrendSegment(point.x, previous.y, point.x, point.y, verticalColor, width, pen.style)}`;
+    }
+    return renderTrendSegment(previous.x, previous.y, point.x, point.y, trendSegmentColor(pen, color, (previous.value + point.value) / 2), width, pen.style);
+  }).join("");
+}
+
+function renderTrendSegment(x1: number, y1: number, x2: number, y2: number, color: string, width: number, style: number | undefined): string {
+  return `<line x1="${toCss(x1)}" y1="${toCss(y1)}" x2="${toCss(x2)}" y2="${toCss(y2)}" stroke="${escapeHtml(color)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(style)}></line>`;
 }
 
 function hasLimitColoring(pen: TrendPen): boolean {
@@ -581,6 +620,7 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.color === "string") pen.color = source.color;
       if (typeof source.visible === "boolean") pen.visible = source.visible;
       if (typeof source.width === "number" && Number.isFinite(source.width)) pen.width = source.width;
+      if (typeof source.lineType === "number" && Number.isFinite(source.lineType)) pen.lineType = source.lineType;
       if (typeof source.style === "number" && Number.isFinite(source.style)) pen.style = source.style;
       if (typeof source.fill === "boolean") pen.fill = source.fill;
       if (typeof source.fillColor === "string") pen.fillColor = source.fillColor;
