@@ -1829,22 +1829,31 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendAttribute(html, "control-name", trendControl.name);
   appendAttribute(html, "type-name", "Trend control");
   appendAttribute(html, "chart-title", trendControl.chartTitle);
-  appendStaticAttribute(html, "display-chart-title", trendControl.displayChartTitle);
-  appendStaticAttribute(html, "show-toolbar", trendControl.showToolbar);
-  appendStaticAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
-  appendStaticAttribute(html, "display-scroll-mechanism", trendControl.displayScrollMechanism);
-  appendStaticAttribute(html, "chart-live-mode", trendControl.chartLiveMode);
-  appendStaticAttribute(html, "auto-scale", trendControl.autoScale);
-  appendStaticAttribute(html, "x-axis-scale-visible", trendControl.xAxisScaleVisible);
-  appendStaticAttribute(html, "x-axis-date-visible", trendControl.xAxisDateVisible);
-  appendStaticAttribute(html, "x-axis-grid-visible", trendControl.xAxisGridVisible);
-  appendStaticAttribute(html, "y-axis-scale-visible", trendControl.yAxisScaleVisible);
-  appendStaticAttribute(html, "y-axis-grid-visible", trendControl.yAxisGridVisible);
+  appendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.displayChartTitle);
+  appendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.showToolbar);
+  appendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
+  appendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.displayScrollMechanism);
+  appendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.chartLiveMode);
+  appendStaticBooleanValueAttribute(html, "auto-scale", trendControl.autoScale);
+  appendStaticBooleanValueAttribute(html, "x-axis-scale-visible", trendControl.xAxisScaleVisible);
+  appendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.xAxisDateVisible);
+  appendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.xAxisGridVisible);
+  appendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.yAxisScaleVisible);
+  appendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.yAxisGridVisible);
   appendStaticAttribute(html, "minimum-value", trendControl.minimumValue);
   appendStaticAttribute(html, "maximum-value", trendControl.maximumValue);
   appendStaticAttribute(html, "y-axis-decimal-places", trendControl.yAxisDecimalPlaces);
   appendAttribute(html, "pens", formatTrendPens(trendControl.pens));
   html.push("></hmi-trend-control>");
+}
+
+function appendStaticBooleanValueAttribute(
+  html: string[],
+  name: string,
+  property: HmiProperty<boolean> | undefined,
+): void {
+  const value = getStaticValue(property);
+  if (value !== undefined) appendAttribute(html, name, value ? "true" : "false");
 }
 
 function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
