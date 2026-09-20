@@ -14,6 +14,11 @@ input[data-hmi-slider]::-moz-range-track {
   background: var(--hmi-slider-track-background, initial);
 }
 
+.hmi-alarm-table tbody tr:nth-child(even) > td {
+  background-color: var(--hmi-alarm-alternating-row-background, inherit);
+  color: var(--hmi-alarm-alternating-row-foreground, inherit);
+}
+
 @keyframes hmi-caption-color-flash {
   0%, 49.999% { color: var(--hmi-caption-color-off); }
   50%, 100% { color: var(--hmi-caption-color-on); }
