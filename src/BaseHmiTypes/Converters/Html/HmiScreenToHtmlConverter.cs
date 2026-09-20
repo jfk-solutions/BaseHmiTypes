@@ -1740,11 +1740,38 @@ public class HmiScreenToHtmlConverter
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, rectangle, context);
         AppendStyle(html, rectangle, context);
+        AppendRectangleRadius(html, rectangle, context);
         if (rectangle.BorderColor == null && rectangle.BorderWidth == null && rectangle.LineColor == null && rectangle.LineWidth == null)
             html.Append("border: 1px solid #000000;");
         html.Append("\"");
         html.Append(">");
         html.Append("</div>");
+    }
+
+    private static void AppendRectangleRadius(StringBuilder html, HmiRectangle rectangle, HmiHtmlConvertContext context)
+    {
+        if (rectangle.CornerRadius is null && rectangle.TopLeftRadius is null && rectangle.TopRightRadius is null &&
+            rectangle.BottomRightRadius is null && rectangle.BottomLeftRadius is null)
+            return;
+
+        var uniform = rectangle.CornerRadius is null
+            ? 0d
+            : Math.Max(0d, ResolveStaticValue(rectangle.CornerRadius, context));
+        var fallback = (x: uniform, y: uniform);
+        var topLeft = rectangle.TopLeftRadius is null ? fallback : ResolveStaticValue(rectangle.TopLeftRadius, context);
+        var topRight = rectangle.TopRightRadius is null ? fallback : ResolveStaticValue(rectangle.TopRightRadius, context);
+        var bottomRight = rectangle.BottomRightRadius is null ? fallback : ResolveStaticValue(rectangle.BottomRightRadius, context);
+        var bottomLeft = rectangle.BottomLeftRadius is null ? fallback : ResolveStaticValue(rectangle.BottomLeftRadius, context);
+
+        html.Append("border-radius: ")
+            .Append(ToCss(Math.Max(0d, topLeft.x))).Append("px ")
+            .Append(ToCss(Math.Max(0d, topRight.x))).Append("px ")
+            .Append(ToCss(Math.Max(0d, bottomRight.x))).Append("px ")
+            .Append(ToCss(Math.Max(0d, bottomLeft.x))).Append("px / ")
+            .Append(ToCss(Math.Max(0d, topLeft.y))).Append("px ")
+            .Append(ToCss(Math.Max(0d, topRight.y))).Append("px ")
+            .Append(ToCss(Math.Max(0d, bottomRight.y))).Append("px ")
+            .Append(ToCss(Math.Max(0d, bottomLeft.y))).Append("px;");
     }
 
     private static async ValueTask AppendGraphicViewAsync(
