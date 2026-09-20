@@ -871,6 +871,27 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersAlarmIndicatorText()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiAlarmIndicator
+        {
+            Name = "GroupDisplay",
+            Width = 80,
+            Height = 30,
+            AlarmState = 5,
+            Text = "<Alarm>"
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-text=\"&lt;Alarm&gt;\"");
+        StringAssert.Contains(html, ">&lt;Alarm&gt;</div>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersClockPreview()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };

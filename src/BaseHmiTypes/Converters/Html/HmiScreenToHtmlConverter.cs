@@ -2869,10 +2869,13 @@ public class HmiScreenToHtmlConverter
         var alarmState = indicator.AlarmState is null ? (int?)null : ResolveStaticValue(indicator.AlarmState, context);
         var noAlarmState = indicator.NoAlarmState is null ? 0 : ResolveStaticValue(indicator.NoAlarmState, context);
         var numberOfAlarms = indicator.NumberOfAlarms is null ? (int?)null : ResolveStaticValue(indicator.NumberOfAlarms, context);
+        var text = indicator.Text is null ? null : ResolveStaticValue(indicator.Text, context);
         var isActive = alarmState.HasValue && alarmState.Value != noAlarmState;
         var content = numberOfAlarms is > 0
             ? numberOfAlarms.Value.ToString(CultureInfo.InvariantCulture)
-            : alarmState.HasValue && isActive ? "!" : string.Empty;
+            : !string.IsNullOrEmpty(text)
+                ? text
+                : alarmState.HasValue && isActive ? "!" : string.Empty;
 
         var style = new StringBuilder("display: flex; align-items: center; justify-content: center; overflow: hidden;");
         if (isActive && indicator.FlashingColor is not null)
@@ -2893,9 +2896,10 @@ public class HmiScreenToHtmlConverter
         AppendStaticValueAttribute(html, "data-alarm-state", indicator.AlarmState, context);
         AppendStaticValueAttribute(html, "data-no-alarm-state", indicator.NoAlarmState, context);
         AppendStaticValueAttribute(html, "data-number-of-alarms", indicator.NumberOfAlarms, context);
+        AppendStaticValueAttribute(html, "data-text", indicator.Text, context);
         AppendIntegerListAttribute(html, "data-show-acknowledged-alarm-classes", indicator.ShowAcknowledgedAlarmClasses, context);
         AppendIntegerListAttribute(html, "data-show-pending-alarm-classes", indicator.ShowPendingAlarmClasses, context);
-        html.Append('>').Append(content).Append("</div>");
+        html.Append('>').Append(WebUtility.HtmlEncode(content)).Append("</div>");
     }
 
     private static void AppendStaticValueAttribute<T>(
