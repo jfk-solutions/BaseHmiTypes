@@ -492,6 +492,27 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersSliderOrientations()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiSlider { Name = "TopSlider", Width = 20, Height = 100, Orientation = 0 });
+        layer.Items.Add(new HmiSlider { Name = "BottomSlider", X = 30, Width = 20, Height = 100, Orientation = 1 });
+        layer.Items.Add(new HmiSlider { Name = "LeftSlider", Y = 110, Width = 100, Height = 20, Orientation = 2 });
+        layer.Items.Add(new HmiSlider { Name = "RightSlider", Y = 140, Width = 100, Height = 20, Orientation = 3 });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "writing-mode: vertical-lr; direction: rtl;\" data-orientation=\"Up\"");
+        StringAssert.Contains(html, "writing-mode: vertical-lr; direction: ltr;\" data-orientation=\"Down\"");
+        StringAssert.Contains(html, "id=\"LeftSlider\"");
+        StringAssert.Contains(html, "direction: rtl;\" data-orientation=\"Left\"");
+        StringAssert.Contains(html, "id=\"RightSlider\"");
+        StringAssert.Contains(html, "direction: ltr;\" data-orientation=\"Right\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersAlarmIndicatorState()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
