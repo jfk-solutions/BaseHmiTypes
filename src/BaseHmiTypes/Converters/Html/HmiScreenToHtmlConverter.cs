@@ -2885,6 +2885,7 @@ public class HmiScreenToHtmlConverter
                     : alarmState.HasValue && isActive ? "!" : string.Empty;
 
         var style = new StringBuilder("display: flex; overflow: hidden;");
+        var animations = new List<string>();
         if (indicator.VerticalAlignment is null)
             style.Append("align-items: center;");
         if (indicator.HorizontalAlignment is null)
@@ -2901,16 +2902,41 @@ public class HmiScreenToHtmlConverter
                     ? 1000
                     : ResolveStaticValue(indicator.FlashingRate, context);
                 style.Append("--hmi-background-color-off: ").Append(backgroundColor).Append(';')
-                    .Append("--hmi-background-color-on: ").Append(ToCss(flashingColor)).Append(';')
-                    .Append("animation: hmi-background-color-flash ")
-                    .Append(ToCss(flashingRate > 0 ? flashingRate / 1000d : 1d))
-                    .Append("s steps(1, end) infinite;");
+                    .Append("--hmi-background-color-on: ").Append(ToCss(flashingColor)).Append(';');
+                animations.Add("hmi-background-color-flash " +
+                    ToCss(flashingRate > 0 ? flashingRate / 1000d : 1d) +
+                    "s steps(1, end) infinite");
             }
             else
             {
                 style.Append("box-shadow: inset 0 0 0 0.35em ").Append(ToCss(flashingColor)).Append(';');
             }
         }
+        if (isActive && indicator.FlashingForegroundColor is not null)
+        {
+            var flashingForegroundColor = ResolveStaticValue(indicator.FlashingForegroundColor, context);
+            if (indicator.IsForegroundFlashingRequired is not null &&
+                ResolveStaticValue(indicator.IsForegroundFlashingRequired, context))
+            {
+                var foregroundColor = indicator.ForegroundColor is null
+                    ? "inherit"
+                    : ToCss(ResolveStaticValue(indicator.ForegroundColor, context));
+                var flashingRate = indicator.FlashingRate is null
+                    ? 1000
+                    : ResolveStaticValue(indicator.FlashingRate, context);
+                style.Append("--hmi-foreground-color-off: ").Append(foregroundColor).Append(';')
+                    .Append("--hmi-foreground-color-on: ").Append(ToCss(flashingForegroundColor)).Append(';');
+                animations.Add("hmi-foreground-color-flash " +
+                    ToCss(flashingRate > 0 ? flashingRate / 1000d : 1d) +
+                    "s steps(1, end) infinite");
+            }
+            else
+            {
+                style.Append("color: ").Append(ToCss(flashingForegroundColor)).Append(';');
+            }
+        }
+        if (animations.Count > 0)
+            style.Append("animation: ").Append(string.Join(", ", animations)).Append(';');
         if (isLocked && indicator.LockedForegroundColor is not null)
             style.Append("color: ").Append(ToCss(ResolveStaticValue(indicator.LockedForegroundColor, context))).Append(';');
         if (isLocked && indicator.LockedBackgroundColor is not null)
@@ -2924,6 +2950,8 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-active", isActive ? "true" : "false");
         AppendStaticValueAttribute(html, "data-flashing-required", indicator.IsFlashingRequired, context);
         AppendStaticValueAttribute(html, "data-flashing-color", indicator.FlashingColor, context);
+        AppendStaticValueAttribute(html, "data-foreground-flashing-required", indicator.IsForegroundFlashingRequired, context);
+        AppendStaticValueAttribute(html, "data-flashing-foreground-color", indicator.FlashingForegroundColor, context);
         AppendStaticValueAttribute(html, "data-flashing-rate", indicator.FlashingRate, context);
         AppendStaticValueAttribute(html, "data-alarm-state", indicator.AlarmState, context);
         AppendStaticValueAttribute(html, "data-no-alarm-state", indicator.NoAlarmState, context);
