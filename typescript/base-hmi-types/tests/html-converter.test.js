@@ -1226,6 +1226,7 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.resizable = staticProperty(true);
   alarms.movable = staticProperty(true);
   alarms.closeable = staticProperty(true);
+  alarms.gridLineColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x55, 0x66));
   alarms.listMode = staticProperty(HmiAlarmListMode.Active);
   alarms.activeAlarmsTitle = HmiMultilingualText.fromText("Active process alarms");
   alarms.numberOfRows = staticProperty(8);
@@ -1269,6 +1270,9 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-window-resizable="true"/);
   assert.match(html, /data-window-movable="true"/);
   assert.match(html, /data-window-closeable="true"/);
+  assert.match(html, /data-grid-line-color="#445566"/);
+  assert.match(html, /--hmi-grid-line-color: #445566;/);
+  assert.match(html, /border: 1px solid var\(--hmi-grid-line-color, currentColor\);/);
   assert.match(html, /resize: both;/);
   assert.match(html, /cursor: move;/);
   assert.match(html, /aria-label="Close" disabled/);

@@ -2016,7 +2016,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     alarmControl,
     context,
     true,
-    createControlWindowStyle(alarmControl, "display: flex; flex-direction: column; overflow: hidden;"),
+    createAlarmControlStyle(alarmControl),
   );
   appendAttribute(html, "data-window-resizable", resolvePropertyPreview(alarmControl.resizable));
   appendAttribute(html, "data-window-movable", resolvePropertyPreview(alarmControl.movable));
@@ -2031,6 +2031,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-show-out-of-scope-alarms", resolvePropertyPreview(alarmControl.showOutOfScopeAlarms));
   appendAttribute(html, "data-filtered-triggers", alarmControl.filteredTriggers.length === 0 ? undefined : alarmControl.filteredTriggers.join(","));
   appendAttribute(html, "data-alarm-identifier", resolvePropertyPreview(alarmControl.alarmIdentifier));
+  appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(alarmControl.gridLineColor));
   html.push(">");
 
   if (showTitle) {
@@ -2048,9 +2049,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (showHeader) {
     html.push("<thead><tr>");
     if (visibleColumns.length === 0)
-      html.push("<th style=\"border: 1px solid currentColor;\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
+      html.push("<th style=\"border: 1px solid var(--hmi-grid-line-color, currentColor);\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
     for (const column of visibleColumns) {
-      html.push("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
+      html.push("<th style=\"border: 1px solid var(--hmi-grid-line-color, currentColor); overflow: hidden; text-overflow: ellipsis;\"");
       appendAttribute(html, "data-column-type", column.type);
       appendAttribute(html, "data-time-format", column.timeAndDateFormat);
       appendAttribute(html, "data-symbol", column.symbol);
@@ -3064,6 +3065,14 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
 
 function createControlWindowStyle(window: HmiWindowBase, baseStyle: string): string {
   return getStaticValue(window.resizable) === true ? `${baseStyle}resize: both;` : baseStyle;
+}
+
+function createAlarmControlStyle(alarmControl: HmiAlarmControl): string {
+  let style = createControlWindowStyle(alarmControl, "display: flex; flex-direction: column; overflow: hidden;");
+  const gridLineColor = getStaticValue(alarmControl.gridLineColor);
+  if (gridLineColor !== undefined)
+    style += `--hmi-grid-line-color: ${colorToCss(gridLineColor)};`;
+  return style;
 }
 
 function appendStaticBooleanValueAttribute(
