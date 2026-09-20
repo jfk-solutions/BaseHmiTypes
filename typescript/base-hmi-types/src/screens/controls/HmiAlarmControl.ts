@@ -1,4 +1,4 @@
-import { HmiColor, HmiFont, HmiLineStyle, HmiProperty } from "../base.js";
+import { HmiColor, HmiFont, HmiHorizontalAlignment, HmiLineStyle, HmiProperty } from "../base.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
@@ -142,6 +142,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   useAlarmColors?: HmiProperty<boolean>;
   tableHeaderBackgroundColor?: HmiProperty<HmiColor>;
   tableHeaderForegroundColor?: HmiProperty<HmiColor>;
+  tableHeaderHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   tableHeaderBorderBackgroundColor?: HmiProperty<HmiColor>;
   tableHeaderBorderColor?: HmiProperty<HmiColor>;
   tableHeaderBorderWidth?: HmiProperty<number>;
