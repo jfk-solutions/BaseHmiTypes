@@ -1531,6 +1531,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.showToolbar = staticProperty(true);
   trend.useToolbarBackgroundColor = staticProperty(true);
   trend.toolbarBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x33, 0x22));
+  trend.toolbarButtonSize = staticProperty(42);
   trend.showStatusBar = staticProperty(true);
   trend.useStatusBarBackgroundColor = staticProperty(true);
   trend.statusBarBackgroundColor = staticProperty(hmiColorFromArgb(255, 16, 32, 48));
@@ -1585,6 +1586,8 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /use-toolbar-background-color="true"/);
   assert.match(html, /toolbar-background-color="#443322"/);
   assert.match(html, /--hmi-trend-toolbar-background: #443322;/);
+  assert.match(html, /toolbar-button-size="42"/);
+  assert.match(html, /--hmi-trend-toolbar-button-size: 42px;/);
   assert.match(html, /show-status-bar="true"/);
   assert.match(html, /use-status-bar-background-color="true"/);
   assert.match(html, /--hmi-trend-status-background: #102030;/);

@@ -3101,6 +3101,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.showToolbar);
   appendStaticBooleanValueAttribute(html, "use-toolbar-background-color", trendControl.useToolbarBackgroundColor);
   appendStaticAttribute(html, "toolbar-background-color", trendControl.toolbarBackgroundColor);
+  appendStaticAttribute(html, "toolbar-button-size", trendControl.toolbarButtonSize);
   appendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.showStatusBar);
   appendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.useStatusBarBackgroundColor);
   appendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
@@ -3208,6 +3209,11 @@ function createTrendControlStyle(trendControl: HmiTrendControl): string {
   const toolbarBackground = getStaticValue(trendControl.toolbarBackgroundColor);
   if (toolbarBackground !== undefined && getStaticValue(trendControl.useToolbarBackgroundColor) !== false)
     parts.push(`--hmi-trend-toolbar-background: ${colorToCss(toolbarBackground)};`);
+  const configuredToolbarButtonSize = getStaticValue(trendControl.toolbarButtonSize);
+  if (configuredToolbarButtonSize !== undefined) {
+    const toolbarButtonSize = Math.max(1, configuredToolbarButtonSize === 0 ? 28 : configuredToolbarButtonSize);
+    parts.push(`--hmi-trend-toolbar-button-size: ${toCss(toolbarButtonSize)}px;`);
+  }
   const statusBackground = getStaticValue(trendControl.statusBarBackgroundColor);
   if (statusBackground !== undefined && getStaticValue(trendControl.useStatusBarBackgroundColor) !== false)
     parts.push(`--hmi-trend-status-background: ${colorToCss(statusBackground)};`);
