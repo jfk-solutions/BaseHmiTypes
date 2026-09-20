@@ -47,6 +47,12 @@ interface TrendPen {
   style?: number;
   fill?: boolean;
   fillColor?: string;
+  lowerLimitColoring?: boolean;
+  lowerLimit?: number;
+  lowerLimitColor?: string;
+  upperLimitColoring?: boolean;
+  upperLimit?: number;
+  upperLimitColor?: string;
   marker?: string;
   markerColor?: string;
   markerSize?: number;
@@ -371,7 +377,7 @@ export class HmiTrendControl extends HTMLElement {
             ${renderGrid(xAxisGridVisible, yAxisGridVisible, majorGridVisible, minorGridVisible)}
             ${xAxisVisible ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
-            ${renderPens(visiblePens)}
+            ${renderPens(visiblePens, minimumValue, maximumValue)}
           </svg>
           ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
@@ -495,29 +501,50 @@ function renderPenLegend(pens: readonly TrendPen[], displayIcons: boolean): stri
   }).join("");
 }
 
-function renderPens(pens: readonly TrendPen[]): string {
+function renderPens(pens: readonly TrendPen[], minimumValue: number, maximumValue: number): string {
   return pens.map((pen, index) => {
     const color = normalizePenColor(pen.color, index);
     const width = clamp(pen.width ?? 2, 1, 8);
     const amplitude = Math.max(6, 24 - (index % 8) * 2);
-    const points: string[] = [];
+    const points: Array<{ x: number; y: number; value: number }> = [];
     for (let point = 0; point <= 20; point++) {
       const x = point * 5;
       const y = 50 - Math.sin((point + index * 3) * 0.55) * amplitude + (index % 8) * 3;
-      points.push(`${toCss(x)},${toCss(clamp(y, 3, 97))}`);
+      const clippedY = clamp(y, 3, 97);
+      points.push({ x, y: clippedY, value: maximumValue - clippedY / 100 * (maximumValue - minimumValue) });
     }
+    const pointText = points.map(point => `${toCss(point.x)},${toCss(point.y)}`).join(" ");
     const markerColor = pen.markerColor ?? color;
     const area = pen.fill === true
-      ? `<polygon points="0,100 ${points.join(" ")} 100,100" fill="${escapeHtml(pen.fillColor ?? color)}" fill-opacity="0.3"></polygon>`
+      ? `<polygon points="0,100 ${pointText} 100,100" fill="${escapeHtml(pen.fillColor ?? color)}" fill-opacity="0.3"></polygon>`
       : "";
     const markers = pen.marker === undefined || pen.marker === "0"
       ? ""
-      : points.filter((_point, pointIndex) => pointIndex % 5 === 0).map(point => {
-        const [x, y] = point.split(",").map(Number);
-        return renderMarker(pen, markerColor, x ?? 0, y ?? 0, markerRadius(pen, clamp(width + 1, 2, 5)));
-      }).join("");
-    return `${area}<polyline points="${points.join(" ")}" fill="none" stroke="${escapeHtml(color)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></polyline>${markers}`;
+      : points.filter((_point, pointIndex) => pointIndex % 5 === 0)
+        .map(point => renderMarker(pen, markerColor, point.x, point.y, markerRadius(pen, clamp(width + 1, 2, 5))))
+        .join("");
+    const line = hasLimitColoring(pen)
+      ? points.slice(1).map((point, pointIndex) => {
+        const previous = points[pointIndex]!;
+        const segmentColor = trendSegmentColor(pen, color, (previous.value + point.value) / 2);
+        return `<line x1="${toCss(previous.x)}" y1="${toCss(previous.y)}" x2="${toCss(point.x)}" y2="${toCss(point.y)}" stroke="${escapeHtml(segmentColor)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></line>`;
+      }).join("")
+      : `<polyline points="${pointText}" fill="none" stroke="${escapeHtml(color)}" stroke-width="${toCss(width)}" vector-effect="non-scaling-stroke"${dashAttribute(pen.style)}></polyline>`;
+    return `${area}${line}${markers}`;
   }).join("");
+}
+
+function hasLimitColoring(pen: TrendPen): boolean {
+  return pen.lowerLimitColoring === true && pen.lowerLimit !== undefined && pen.lowerLimitColor !== undefined
+    || pen.upperLimitColoring === true && pen.upperLimit !== undefined && pen.upperLimitColor !== undefined;
+}
+
+function trendSegmentColor(pen: TrendPen, fallback: string, value: number): string {
+  if (pen.lowerLimitColoring === true && pen.lowerLimit !== undefined && value < pen.lowerLimit)
+    return pen.lowerLimitColor ?? fallback;
+  if (pen.upperLimitColoring === true && pen.upperLimit !== undefined && value > pen.upperLimit)
+    return pen.upperLimitColor ?? fallback;
+  return fallback;
 }
 
 function renderMarker(pen: TrendPen, color: string, x: number, y: number, size: number): string {
@@ -557,6 +584,12 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.style === "number" && Number.isFinite(source.style)) pen.style = source.style;
       if (typeof source.fill === "boolean") pen.fill = source.fill;
       if (typeof source.fillColor === "string") pen.fillColor = source.fillColor;
+      if (typeof source.lowerLimitColoring === "boolean") pen.lowerLimitColoring = source.lowerLimitColoring;
+      if (typeof source.lowerLimit === "number" && Number.isFinite(source.lowerLimit)) pen.lowerLimit = source.lowerLimit;
+      if (typeof source.lowerLimitColor === "string") pen.lowerLimitColor = source.lowerLimitColor;
+      if (typeof source.upperLimitColoring === "boolean") pen.upperLimitColoring = source.upperLimitColoring;
+      if (typeof source.upperLimit === "number" && Number.isFinite(source.upperLimit)) pen.upperLimit = source.upperLimit;
+      if (typeof source.upperLimitColor === "string") pen.upperLimitColor = source.upperLimitColor;
       if (typeof source.marker === "string") pen.marker = source.marker;
       if (typeof source.markerColor === "string") pen.markerColor = source.markerColor;
       if (typeof source.markerSize === "number" && Number.isFinite(source.markerSize)) pen.markerSize = source.markerSize;
