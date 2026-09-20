@@ -1226,6 +1226,9 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.resizable = staticProperty(true);
   alarms.movable = staticProperty(true);
   alarms.closeable = staticProperty(true);
+  alarms.headerBackgroundColor = staticProperty(hmiColorFromArgb(255, 0xe3, 0xe3, 0xe3));
+  alarms.headerForegroundColor = staticProperty(hmiColorFromArgb(255, 0x01, 0x02, 0x03));
+  alarms.headerBorderColor = staticProperty(hmiColorFromArgb(255, 0x66, 0x77, 0x88));
   alarms.gridLineColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x55, 0x66));
   alarms.gridLineWidth = staticProperty(2);
   alarms.showHorizontalGridLines = staticProperty(false);
@@ -1296,6 +1299,9 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-window-resizable="true"/);
   assert.match(html, /data-window-movable="true"/);
   assert.match(html, /data-window-closeable="true"/);
+  assert.match(html, /data-header-background-color="#E3E3E3"/);
+  assert.match(html, /data-header-foreground-color="#010203"/);
+  assert.match(html, /data-header-border-color="#667788"/);
   assert.match(html, /data-grid-line-color="#445566"/);
   assert.match(html, /data-grid-line-width="2"/);
   assert.match(html, /data-show-horizontal-grid-lines="false"/);
@@ -1313,6 +1319,7 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /background-color: #708090;color: #F1F2F3;/);
   assert.match(html, /font-family: Arial;font-size: 9.75px;font-weight: 400;/);
   assert.match(html, /font-family: Siemens Sans;font-size: 10px;font-weight: 700;font-style: italic;text-decoration: underline line-through;/);
+  assert.match(html, /background-color: #E3E3E3;color: #010203;border-bottom-color: #667788;/);
   assert.match(html, /resize: both;/);
   assert.match(html, /cursor: move;/);
   assert.match(html, /aria-label="Close" disabled/);
