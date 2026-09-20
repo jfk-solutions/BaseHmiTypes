@@ -2776,9 +2776,35 @@ function appendAlarmIndicator(
   appendStaticValueAttribute(html, "data-no-alarm-state", indicator.noAlarmState);
   appendStaticValueAttribute(html, "data-number-of-alarms", indicator.numberOfAlarms);
   appendStaticValueAttribute(html, "data-text", indicator.text);
+  appendStaticValueAttribute(html, "data-equal-segment-widths", indicator.useEqualSegmentWidths);
+  if (indicator.segments.length > 0) appendAttribute(html, "data-segment-count", indicator.segments.length.toString());
   appendIntegerListAttribute(html, "data-show-acknowledged-alarm-classes", indicator.showAcknowledgedAlarmClasses);
   appendIntegerListAttribute(html, "data-show-pending-alarm-classes", indicator.showPendingAlarmClasses);
-  html.push(">", escapeHtml(content), "</div>");
+  html.push(">");
+  if (indicator.segments.length > 0) {
+    const useEqualWidths = getStaticValue(indicator.useEqualSegmentWidths) === true;
+    for (const segment of [...indicator.segments].sort((left, right) => left.index - right.index)) {
+      const width = getStaticValue(segment.width) ?? 0;
+      html.push("<span");
+      appendAttribute(html, "class", "hmi-alarm-indicator-segment");
+      appendAttribute(html, "data-segment-index", segment.index.toString());
+      appendIntegerListAttribute(html, "data-message-classes", segment.messageClasses);
+      html.push(" style=\"");
+      if (width <= 0) html.push("display: none;");
+      else if (useEqualWidths) html.push("flex: 1 1 0;");
+      else html.push(`flex: 0 0 ${toCss(width)}px;`);
+      html.push("height: 100%; min-width: 0; border-right: 1px solid currentColor;\"></span>");
+    }
+    const horizontalAlignment = getStaticValue(indicator.horizontalAlignment) ?? HmiHorizontalAlignment.Center;
+    const verticalAlignment = getStaticValue(indicator.verticalAlignment) ?? HmiVerticalAlignment.Center;
+    html.push("<span class=\"hmi-alarm-indicator-label\" style=\"position: absolute; inset: 0; display: flex; pointer-events: none; ");
+    html.push(`justify-content: ${horizontalAlignmentToFlexCss(horizontalAlignment)}; `);
+    html.push(`align-items: ${verticalAlignmentToCss(verticalAlignment)};\">`);
+    html.push(escapeHtml(content), "</span>");
+  } else {
+    html.push(escapeHtml(content));
+  }
+  html.push("</div>");
 }
 
 function appendStaticValueAttribute<T>(html: string[], name: string, property: HmiProperty<T> | undefined): void {
