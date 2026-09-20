@@ -13,6 +13,8 @@ import {
   HmiImageType,
   HmiIOField,
   HmiLayer,
+  HmiLine,
+  HmiLineStyle,
   HmiMultilingualText,
   HmiPropertyKind,
   HmiRectangle,
@@ -30,6 +32,27 @@ import {
   staticProperty,
   tagProperty,
 } from "../dist/index.js";
+
+test("HTML conversion renders SVG line dash styles", async () => {
+  const line = new HmiLine();
+  line.name = "PipeLine";
+  line.width = staticProperty(100);
+  line.height = staticProperty(40);
+  line.x2 = staticProperty(100);
+  line.y2 = staticProperty(40);
+  line.lineColor = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+  line.lineWidth = staticProperty(3);
+  line.dashType = staticProperty(HmiLineStyle.DashDot);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(line);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /stroke="#FF0000"/);
+  assert.match(html, /stroke-width="3"/);
+  assert.match(html, /stroke-dasharray="6 3 1 3"/);
+  assert.match(html, /stroke-linecap="round"/);
+});
 
 test("HTML conversion keeps screen-absolute group children at their source position", async () => {
   const group = new HmiGroup();

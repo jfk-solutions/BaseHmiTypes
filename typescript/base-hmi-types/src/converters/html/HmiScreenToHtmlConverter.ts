@@ -827,9 +827,28 @@ function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, h
 }
 
 function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined, context: HmiHtmlConvertContext): void {
+  const lineStyle = getLineStyle(item, context);
   appendAttribute(html, "fill", fillColor === undefined ? "none" : colorToCss(fillColor));
-  appendAttribute(html, "stroke", colorToCss(getStrokeColor(item, context)));
+  appendAttribute(html, "stroke", lineStyle === HmiLineStyle.None ? "none" : colorToCss(getStrokeColor(item, context)));
   appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context));
+
+  switch (lineStyle) {
+    case HmiLineStyle.Dash:
+      appendAttribute(html, "stroke-dasharray", "6 4");
+      break;
+    case HmiLineStyle.Dot:
+      appendAttribute(html, "stroke-dasharray", "1 3");
+      appendAttribute(html, "stroke-linecap", "round");
+      break;
+    case HmiLineStyle.DashDot:
+      appendAttribute(html, "stroke-dasharray", "6 3 1 3");
+      appendAttribute(html, "stroke-linecap", "round");
+      break;
+    case HmiLineStyle.DashDotDot:
+      appendAttribute(html, "stroke-dasharray", "6 3 1 3 1 3");
+      appendAttribute(html, "stroke-linecap", "round");
+      break;
+  }
 }
 
 function getStrokeColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor {
@@ -857,6 +876,10 @@ function getStrokeWidth(item: HmiShapeBase, context: HmiHtmlConvertContext): num
       : undefined) ??
     1
   );
+}
+
+function getLineStyle(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiLineStyle {
+  return context.effectiveProperties.tryGetStaticValue<number>(item, "DashType", item.dashType).value ?? HmiLineStyle.Solid;
 }
 
 async function appendButton(
