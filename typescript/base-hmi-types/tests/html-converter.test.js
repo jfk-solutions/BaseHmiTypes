@@ -20,6 +20,7 @@ import {
   HmiBar,
   HmiClock,
   HmiComboBox,
+  HmiCustomWidgetContainer,
   HmiDataGridControl,
   HmiDataGridDataSourceKind,
   HmiDataGridSortDirection,
@@ -629,6 +630,27 @@ test("HTML converter renders inert opaque host control previews", async () => {
   assert.match(html, />Metadata preserved<\/div>/);
   assert.doesNotMatch(html, /<object/);
   assert.doesNotMatch(html, /<embed/);
+});
+
+test("HTML converter renders an empty custom widget preview", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const widget = new HmiCustomWidgetContainer();
+  widget.name = "External application";
+  widget.width = staticProperty(200);
+  widget.height = staticProperty(80);
+  const layer = new HmiLayer();
+  layer.name = "Layer 1";
+  layer.items.push(widget);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<div id="External application"/);
+  assert.match(html, /data-hmi-custom-widget-type="HmiCustomWidgetContainer"/);
+  assert.match(html, /<span aria-hidden="true">External application<\/span>/);
 });
 
 test("HTML converter exposes trend configuration to the web component", async () => {
