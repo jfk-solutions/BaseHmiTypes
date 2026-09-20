@@ -36,6 +36,28 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_AdaptsTextBorderToContent()
+    {
+        var screen = new HmiScreen { Name = "Main" };
+        var layer = new HmiLayer { Name = "Default" };
+        layer.Items.Add(new HmiText
+        {
+            Name = "AdaptiveText",
+            Width = 200,
+            Height = 80,
+            Text = HmiMultilingualText.FromText("Variable caption"),
+            AdaptBorderToContent = true
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-adapt-border-to-content");
+        StringAssert.Contains(html, "width: 200px;height: 80px;width: max-content;height: max-content;white-space: nowrap;");
+        StringAssert.Contains(html, "Variable caption");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersDesignShadow()
     {
         var rectangle = new HmiRectangle

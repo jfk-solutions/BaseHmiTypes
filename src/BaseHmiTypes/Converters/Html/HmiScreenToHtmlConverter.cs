@@ -3559,10 +3559,12 @@ public class HmiScreenToHtmlConverter
         AppendTextAttribute(html, "title", item.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", item.TabIndex, context);
         AppendAttribute(html, "data-hmi-security-code", item.SecurityCode);
+        AppendStaticAttribute(html, "data-adapt-border-to-content", item.AdaptBorderToContent, context);
         AppendDisabledAttribute(html, item, context);
         AppendHotKeyAttributes(html, item, context);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, item, context);
+        AppendAdaptBorderToContentStyle(html, item, context);
         AppendDisabledStyle(html, item, context);
         AppendOpacity(html, item, context);
         AppendDesignShadow(html, item, context);
@@ -3649,6 +3651,15 @@ public class HmiScreenToHtmlConverter
         var opacity = context.EffectiveProperties.Resolve(item, nameof(HmiScreenItemBase.Opacity), item.Opacity);
         if (opacity?.StaticValue is double value)
             html.Append("opacity: ").Append(ToCss(Math.Clamp(value, 0d, 1d))).Append(';');
+    }
+
+    private static void AppendAdaptBorderToContentStyle(
+        StringBuilder html,
+        HmiScreenItemBase item,
+        HmiHtmlConvertContext context)
+    {
+        if (ResolveStaticValue(item.AdaptBorderToContent, context))
+            html.Append("width: max-content;height: max-content;white-space: nowrap;");
     }
 
     private static void AppendDisabledAttribute(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
