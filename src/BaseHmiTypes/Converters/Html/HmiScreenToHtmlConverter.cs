@@ -2246,7 +2246,7 @@ public class HmiScreenToHtmlConverter
         if (showTitle)
         {
             var title = ResolveAlarmTitle(alarmControl, listMode, context);
-            html.Append("<div style=\"flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;");
+            html.Append("<div style=\"").Append(CreateAlarmHeaderStyle(alarmControl));
             if (alarmControl.Movable is not null && ResolveStaticValue(alarmControl.Movable, context))
                 html.Append("cursor: move;");
             html.Append("\"><span style=\"flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\">")
@@ -3315,7 +3315,39 @@ public class HmiScreenToHtmlConverter
             var gridLineColor = ResolveStaticValue(alarmControl.GridLineColor, context);
             style.Append("--hmi-grid-line-color: ").Append(ToCss(gridLineColor)).Append(';');
         }
+        AppendFontStyle(style, alarmControl.ContentFont);
         return style.ToString();
+    }
+
+    private static string CreateAlarmHeaderStyle(HmiAlarmControl alarmControl)
+    {
+        var style = new StringBuilder("flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;");
+        AppendFontStyle(style, alarmControl.HeaderFont);
+        return style.ToString();
+    }
+
+    private static void AppendFontStyle(StringBuilder style, HmiFont? font)
+    {
+        if (font is null)
+            return;
+        var name = font.Name.GetStaticValue();
+        if (!string.IsNullOrWhiteSpace(name))
+            style.Append("font-family: ").Append(WebUtility.HtmlEncode(name)).Append(';');
+        if (TryGetStaticValue(font.Size, out var size))
+            style.Append("font-size: ").Append(ToCss(size)).Append("px;");
+        if (font.Weight.GetStaticValue() is { } weight && weight > 0)
+            style.Append("font-weight: ").Append(weight.ToString(CultureInfo.InvariantCulture)).Append(';');
+        else if (font.Bold.GetStaticValueOrDefault())
+            style.Append("font-weight: bold;");
+        if (font.Italic.GetStaticValueOrDefault())
+            style.Append("font-style: italic;");
+        var decorations = new List<string>();
+        if (font.Underline.GetStaticValueOrDefault())
+            decorations.Add("underline");
+        if (font.Strikethrough.GetStaticValueOrDefault())
+            decorations.Add("line-through");
+        if (decorations.Count > 0)
+            style.Append("text-decoration: ").Append(string.Join(' ', decorations)).Append(';');
     }
 
     private static void AppendStaticBooleanValueAttribute(
