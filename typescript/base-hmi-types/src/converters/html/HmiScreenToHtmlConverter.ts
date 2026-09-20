@@ -3203,6 +3203,11 @@ function appendDisabledAttribute(html: string[], item: HmiScreenItemBase): void 
   if (!getStaticValueOrDefault(item.enabled, true)) {
     appendAttribute(html, "aria-disabled", "true");
   }
+  if (item instanceof HmiPaintedScreenItemBase) {
+    appendAttribute(html, "data-disabled-foreground-color", formatAttributeValue(getStaticValue(item.disabledForegroundColor)));
+    appendAttribute(html, "data-disabled-foreground-shadow-color", formatAttributeValue(getStaticValue(item.disabledForegroundShadowColor)));
+    appendAttribute(html, "data-use-disabled-foreground-color", formatAttributeValue(getStaticValue(item.useDisabledForegroundColor)));
+  }
 }
 
 function appendDisabledStyle(html: string[], item: HmiScreenItemBase): void {
@@ -3314,7 +3319,16 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   const suppressBorderStyle = item instanceof HmiCheckBoxGroup || item instanceof HmiRadioButtonGroup;
   const borderStyle = getBorderStyleCss(item, context);
   const animations: string[] = [];
-  const foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
+  const useDisabledForegroundColor = !getStaticValueOrDefault(item.enabled, true) &&
+    getStaticValueOrDefault(item.useDisabledForegroundColor, false);
+  let foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
+  if (useDisabledForegroundColor) {
+    foregroundColor = context.effectiveProperties.resolve(
+      item,
+      "DisabledForegroundColor",
+      item.disabledForegroundColor,
+    ) ?? foregroundColor;
+  }
   const foregroundBlink = foregroundColor?.kind === HmiPropertyKind.Blink
     ? foregroundColor as HmiBlinkProperty<HmiColor>
     : undefined;
@@ -3324,6 +3338,14 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     animations.push(`hmi-foreground-color-flash ${getBlinkDuration(foregroundBlink.rate)}s steps(1, end) infinite`);
   } else {
     appendColorStyle(html, "color", foregroundColor);
+  }
+  if (useDisabledForegroundColor) {
+    const shadow = getStaticValue(context.effectiveProperties.resolve(
+      item,
+      "DisabledForegroundShadowColor",
+      item.disabledForegroundShadowColor,
+    ));
+    if (shadow !== undefined) html.push(`text-shadow: 1px 1px ${colorToCss(shadow)};`);
   }
   if (!(item instanceof HmiGauge)) {
     const backgroundColor = context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor);
