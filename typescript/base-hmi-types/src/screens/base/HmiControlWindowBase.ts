@@ -8,6 +8,7 @@ import { HmiWindowBase } from "./HmiWindowBase.js";
 export abstract class HmiControlWindowBase extends HmiWindowBase {
   headerBackgroundColor?: HmiProperty<HmiColor>;
   headerForegroundColor?: HmiProperty<HmiColor>;
+  headerBorderColor?: HmiProperty<HmiColor>;
   contentBackgroundColor?: HmiProperty<HmiColor>;
   contentForegroundColor?: HmiProperty<HmiColor>;
   contentHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;

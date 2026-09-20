@@ -2021,6 +2021,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-window-resizable", resolvePropertyPreview(alarmControl.resizable));
   appendAttribute(html, "data-window-movable", resolvePropertyPreview(alarmControl.movable));
   appendAttribute(html, "data-window-closeable", resolvePropertyPreview(alarmControl.closeable));
+  appendAttribute(html, "data-header-background-color", resolvePropertyPreview(alarmControl.headerBackgroundColor));
+  appendAttribute(html, "data-header-foreground-color", resolvePropertyPreview(alarmControl.headerForegroundColor));
+  appendAttribute(html, "data-header-border-color", resolvePropertyPreview(alarmControl.headerBorderColor));
   appendAttribute(html, "data-view-kind", alarmControl.viewKind);
   appendAttribute(html, "data-list-mode", listMode);
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmControl.numberOfRows));
@@ -3103,6 +3106,9 @@ function createAlarmControlStyle(alarmControl: HmiAlarmControl): string {
 
 function createAlarmHeaderStyle(alarmControl: HmiAlarmControl): string {
   const parts = ["flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;"];
+  appendColorStyle(parts, "background-color", alarmControl.headerBackgroundColor);
+  appendColorStyle(parts, "color", alarmControl.headerForegroundColor);
+  appendColorStyle(parts, "border-bottom-color", alarmControl.headerBorderColor);
   if (alarmControl.headerFont !== undefined)
     appendFont(parts, alarmControl.headerFont);
   return parts.join("");
