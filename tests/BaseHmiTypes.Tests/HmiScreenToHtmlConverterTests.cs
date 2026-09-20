@@ -1403,6 +1403,52 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersShapeFillAnimationPreview()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiRectangle
+        {
+            Id = "tank",
+            Name = "Tank",
+            Width = 100,
+            Height = 50,
+            BackgroundColor = HmiColor.FromArgb(255, 0, 128, 255),
+            FillAnimation = new HmiFillAnimation
+            {
+                Expression = "Tank.Level",
+                ExpressionFallback = 35,
+                ExpressionMinimum = 0,
+                ExpressionMaximum = 100,
+                FillMinimum = 0,
+                FillMaximum = 100,
+                Direction = HmiFillDirection.Right
+            }
+        });
+        layer.Items.Add(new HmiCircle
+        {
+            Id = "level",
+            Name = "Level",
+            Width = 50,
+            Height = 50,
+            BackgroundColor = HmiColor.FromArgb(255, 0, 200, 0),
+            FillAnimation = new HmiFillAnimation
+            {
+                ExpressionFallback = 60,
+                Direction = HmiFillDirection.Up
+            }
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "background-image: linear-gradient(to right, #0080FF 0%, #0080FF 35%, transparent 35%, transparent 100%);");
+        StringAssert.Contains(html, "fill=\"url(#hmi-fill-level)\"");
+        StringAssert.Contains(html, "<linearGradient id=\"hmi-fill-level\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"");
+        StringAssert.Contains(html, "<stop offset=\"60%\" stop-color=\"#00C800\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersPaintedItemPadding()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };

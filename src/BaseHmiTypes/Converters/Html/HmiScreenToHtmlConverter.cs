@@ -696,7 +696,9 @@ public class HmiScreenToHtmlConverter
         html.Append('<').Append(elementName);
         AppendAttribute(html, "points", string.Join(" ", shape.Points.Select(point => ToSvgPoint(shape, point))));
         AppendStrokeAttributes(html, shape, fill ? GetFillColor(shape, context) : null, context);
-        html.Append("></").Append(elementName).Append("></svg>");
+        html.Append("></").Append(elementName).Append('>');
+        AppendSvgFillDefinition(html, shape, fill ? GetFillColor(shape, context) : null, context);
+        html.Append("</svg>");
     }
 
     private static void AppendCircle(StringBuilder html, HmiCircle circle, HmiHtmlConvertContext context)
@@ -710,7 +712,9 @@ public class HmiScreenToHtmlConverter
         AppendSvgAttribute(html, "cy", circle.CenterY.GetStaticValueOrDefault(height / 2d));
         AppendSvgAttribute(html, "r", radius);
         AppendStrokeAttributes(html, circle, GetFillColor(circle, context), context);
-        html.Append("></circle></svg>");
+        html.Append("></circle>");
+        AppendSvgFillDefinition(html, circle, GetFillColor(circle, context), context);
+        html.Append("</svg>");
     }
 
     private static void AppendEllipse(StringBuilder html, HmiEllipse ellipse, HmiHtmlConvertContext context)
@@ -724,7 +728,9 @@ public class HmiScreenToHtmlConverter
         AppendSvgAttribute(html, "rx", ellipse.RadiusX.GetStaticValueOrDefault(width / 2d));
         AppendSvgAttribute(html, "ry", ellipse.RadiusY.GetStaticValueOrDefault(height / 2d));
         AppendStrokeAttributes(html, ellipse, GetFillColor(ellipse, context), context);
-        html.Append("></ellipse></svg>");
+        html.Append("></ellipse>");
+        AppendSvgFillDefinition(html, ellipse, GetFillColor(ellipse, context), context);
+        html.Append("</svg>");
     }
 
     private static void AppendCircularArc(StringBuilder html, HmiCircularArc arc, HmiHtmlConvertContext context)
@@ -801,7 +807,9 @@ public class HmiScreenToHtmlConverter
         html.Append("<path");
         AppendAttribute(html, "d", CreateArcPath(centerX, centerY, radiusX, radiusY, startAngle, sweepAngle, segment));
         AppendStrokeAttributes(html, item, segment ? GetFillColor(item, context) : null, context);
-        html.Append("></path></svg>");
+        html.Append("></path>");
+        AppendSvgFillDefinition(html, item, segment ? GetFillColor(item, context) : null, context);
+        html.Append("</svg>");
     }
 
     private static void AppendSvgOpen(StringBuilder html, HmiScreenItemBase item, double width, double height, HmiHtmlConvertContext context)
@@ -816,7 +824,10 @@ public class HmiScreenToHtmlConverter
     private static void AppendStrokeAttributes(StringBuilder html, HmiShapeBase item, HmiColor? fillColor, HmiHtmlConvertContext context)
     {
         var lineStyle = GetLineStyle(item, context);
-        AppendAttribute(html, "fill", fillColor == null ? "none" : ToCss(fillColor.Value));
+        var fill = fillColor == null
+            ? "none"
+            : TryGetFillPercentage(item.FillAnimation, out _) ? $"url(#{GetFillGradientId(item)})" : ToCss(fillColor.Value);
+        AppendAttribute(html, "fill", fill);
         AppendAttribute(html, "stroke", lineStyle == HmiLineStyle.None ? "none" : ToCss(GetStrokeColor(item, context)));
         AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item, context));
 
@@ -838,6 +849,69 @@ public class HmiScreenToHtmlConverter
                 AppendAttribute(html, "stroke-linecap", "round");
                 break;
         }
+    }
+
+    private static void AppendSvgFillDefinition(
+        StringBuilder html,
+        HmiShapeBase item,
+        HmiColor? fillColor,
+        HmiHtmlConvertContext context)
+    {
+        if (fillColor is null || !TryGetFillPercentage(item.FillAnimation, out var percentage))
+            return;
+
+        var (x1, y1, x2, y2) = GetSvgFillVector(item.FillAnimation?.Direction);
+        html.Append("<defs><linearGradient");
+        AppendAttribute(html, "id", GetFillGradientId(item));
+        AppendAttribute(html, "x1", x1);
+        AppendAttribute(html, "y1", y1);
+        AppendAttribute(html, "x2", x2);
+        AppendAttribute(html, "y2", y2);
+        html.Append("><stop");
+        AppendAttribute(html, "offset", ToCss(percentage) + "%");
+        AppendAttribute(html, "stop-color", ToCss(fillColor.Value));
+        html.Append("></stop><stop");
+        AppendAttribute(html, "offset", ToCss(percentage) + "%");
+        AppendAttribute(html, "stop-color", "transparent");
+        html.Append("></stop></linearGradient></defs>");
+    }
+
+    private static (string x1, string y1, string x2, string y2) GetSvgFillVector(HmiFillDirection? direction) => direction switch
+    {
+        HmiFillDirection.Up => ("0%", "100%", "0%", "0%"),
+        HmiFillDirection.Down => ("0%", "0%", "0%", "100%"),
+        HmiFillDirection.Left => ("100%", "0%", "0%", "0%"),
+        _ => ("0%", "0%", "100%", "0%")
+    };
+
+    private static string GetFillGradientId(HmiShapeBase item)
+    {
+        var source = item.Id ?? item.Name ?? "shape";
+        var sanitized = new string(source.Select(character => char.IsLetterOrDigit(character) || character is '-' or '_' ? character : '-').ToArray());
+        return "hmi-fill-" + (string.IsNullOrEmpty(sanitized) ? "shape" : sanitized);
+    }
+
+    private static bool TryGetFillPercentage(HmiFillAnimation? animation, out double percentage)
+    {
+        percentage = 0d;
+        if (animation is null)
+            return false;
+
+        double value;
+        if (animation.ExpressionFallback is double fallback)
+            value = fallback;
+        else if (!double.TryParse(animation.Expression, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+            return false;
+
+        var expressionMinimum = animation.ExpressionMinimum ?? 0d;
+        var expressionMaximum = animation.ExpressionMaximum ?? 100d;
+        var normalized = expressionMaximum == expressionMinimum
+            ? 0d
+            : (value - expressionMinimum) / (expressionMaximum - expressionMinimum);
+        var fillMinimum = animation.FillMinimum ?? 0d;
+        var fillMaximum = animation.FillMaximum ?? 100d;
+        percentage = Math.Min(Math.Max(fillMinimum + (fillMaximum - fillMinimum) * normalized, 0d), 100d);
+        return true;
     }
 
     private static string CreateArcPath(
@@ -1796,12 +1870,33 @@ public class HmiScreenToHtmlConverter
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, rectangle, context);
         AppendStyle(html, rectangle, context);
+        AppendFillAnimationStyle(html, rectangle, context);
         AppendRectangleRadius(html, rectangle, context);
         if (rectangle.BorderColor == null && rectangle.BorderWidth == null && rectangle.LineColor == null && rectangle.LineWidth == null)
             html.Append("border: 1px solid #000000;");
         html.Append("\"");
         html.Append(">");
         html.Append("</div>");
+    }
+
+    private static void AppendFillAnimationStyle(StringBuilder html, HmiShapeBase item, HmiHtmlConvertContext context)
+    {
+        if (!TryGetFillPercentage(item.FillAnimation, out var percentage) || GetFillColor(item, context) is not HmiColor fillColor)
+            return;
+
+        var direction = item.FillAnimation?.Direction switch
+        {
+            HmiFillDirection.Up => "to top",
+            HmiFillDirection.Down => "to bottom",
+            HmiFillDirection.Left => "to left",
+            _ => "to right"
+        };
+        html.Append("background-color: transparent;");
+        html.Append("background-image: linear-gradient(")
+            .Append(direction).Append(", ")
+            .Append(ToCss(fillColor)).Append(" 0%, ")
+            .Append(ToCss(fillColor)).Append(' ').Append(ToCss(percentage)).Append("%, transparent ")
+            .Append(ToCss(percentage)).Append("%, transparent 100%);");
     }
 
     private static void AppendRectangleRadius(StringBuilder html, HmiRectangle rectangle, HmiHtmlConvertContext context)
