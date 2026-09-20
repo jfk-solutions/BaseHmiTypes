@@ -53,6 +53,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   /** Whether the chart time label shows elapsed time instead of clock time. */
   displayElapsedTime?: HmiProperty<boolean>;
   displayPenIcons?: HmiProperty<boolean>;
+  useTrendNameAsLabel?: HmiProperty<boolean>;
   allowScrolling?: HmiProperty<boolean>;
   scrollMode?: HmiProperty<HmiTrendScrollMode>;
   displayScrollMechanism?: HmiProperty<boolean>;

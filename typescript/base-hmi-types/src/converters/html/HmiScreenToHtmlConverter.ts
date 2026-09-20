@@ -3105,6 +3105,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.showStatusBar);
   appendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.useStatusBarBackgroundColor);
   appendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
+  appendStaticBooleanValueAttribute(html, "use-trend-name-as-label", trendControl.useTrendNameAsLabel);
   appendStaticBooleanValueAttribute(html, "display-value-bar", trendControl.displayValueBar);
   appendStaticAttribute(html, "value-bar-color", trendControl.valueBarColor);
   appendStaticAttribute(html, "value-bar-width", trendControl.valueBarWidth);
@@ -3290,6 +3291,7 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
   return JSON.stringify(pens.map(pen => {
     const result: Record<string, string | number | boolean> = { number: pen.number };
     if (pen.name !== undefined) result.name = pen.name;
+    if (pen.label !== undefined) result.label = pen.label;
     const color = getStaticValue(pen.color);
     if (color !== undefined) result.color = colorToCss(color);
     const visible = getStaticValue(pen.visible);
