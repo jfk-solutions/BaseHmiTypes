@@ -3624,6 +3624,7 @@ public class HmiScreenToHtmlConverter
             AddTrendJsonNumber(properties, "markerSize", pen.MarkerSize?.StaticValue);
             AddTrendJsonNumber(properties, "minimum", pen.MinimumValue?.StaticValue);
             AddTrendJsonNumber(properties, "maximum", pen.MaximumValue?.StaticValue);
+            AddTrendJsonNumber(properties, "axisScaleType", pen.AxisScaleType?.StaticValue is HmiTrendAxisScaleType axisScaleType ? (int)axisScaleType : null);
             AddTrendJsonString(properties, "unit", pen.EngineeringUnit);
             return "{" + string.Join(",", properties) + "}";
         }).ToArray();

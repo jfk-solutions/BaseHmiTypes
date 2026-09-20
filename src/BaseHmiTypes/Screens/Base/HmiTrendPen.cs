@@ -58,6 +58,9 @@ public sealed class HmiTrendPen
 
     public HmiProperty<double>? MaximumValue { get; set; }
 
+    /// <summary>Gets or sets the scaling type of the value axis assigned to this pen.</summary>
+    public HmiProperty<HmiTrendAxisScaleType>? AxisScaleType { get; set; }
+
     /// <summary>
     /// Gets or sets the current minimum value used to scale this pen.
     /// </summary>
