@@ -52,6 +52,20 @@ test("HTML conversion keeps screen-absolute group children at their source posit
   assert.match(html, /id="PumpBody" style="position: absolute;left: 10px;top: 20px;width: 100px;height: 50px;/);
 });
 
+test("HTML conversion renders rectangle corner radii", async () => {
+  const rectangle = createRectangle("RoundedFrame");
+  rectangle.topLeftRadius = staticProperty({ x: 10, y: 5 });
+  rectangle.topRightRadius = staticProperty({ x: 20, y: 6 });
+  rectangle.bottomRightRadius = staticProperty({ x: 30, y: 7 });
+  rectangle.bottomLeftRadius = staticProperty({ x: 40, y: 8 });
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(rectangle);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /border-radius: 10px 20px 30px 40px \/ 5px 6px 7px 8px;/);
+});
+
 test("HTML conversion serializes dynamic SVG colors in HMI format", async () => {
   const dynamicSvg = new HmiDynamicSvg();
   dynamicSvg.name = "Valve";

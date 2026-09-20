@@ -1647,6 +1647,7 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
   appendStyle(html, rectangle, context);
+  appendRectangleRadius(html, rectangle);
   if (
     rectangle.borderColor === undefined &&
     rectangle.borderWidth === undefined &&
@@ -1656,6 +1657,26 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
     html.push("border: 1px solid #000000;");
   }
   html.push("\"></div>");
+}
+
+function appendRectangleRadius(html: string[], rectangle: HmiRectangle): void {
+  if (rectangle.cornerRadius === undefined && rectangle.topLeftRadius === undefined &&
+      rectangle.topRightRadius === undefined && rectangle.bottomRightRadius === undefined &&
+      rectangle.bottomLeftRadius === undefined) return;
+
+  const uniform = Math.max(0, getStaticValue(rectangle.cornerRadius) ?? 0);
+  const fallback = { x: uniform, y: uniform };
+  const topLeft = getStaticValue(rectangle.topLeftRadius) ?? fallback;
+  const topRight = getStaticValue(rectangle.topRightRadius) ?? fallback;
+  const bottomRight = getStaticValue(rectangle.bottomRightRadius) ?? fallback;
+  const bottomLeft = getStaticValue(rectangle.bottomLeftRadius) ?? fallback;
+  html.push(
+    "border-radius: ",
+    `${toCss(Math.max(0, topLeft.x))}px ${toCss(Math.max(0, topRight.x))}px `,
+    `${toCss(Math.max(0, bottomRight.x))}px ${toCss(Math.max(0, bottomLeft.x))}px / `,
+    `${toCss(Math.max(0, topLeft.y))}px ${toCss(Math.max(0, topRight.y))}px `,
+    `${toCss(Math.max(0, bottomRight.y))}px ${toCss(Math.max(0, bottomLeft.y))}px;`,
+  );
 }
 
 function appendImage(
