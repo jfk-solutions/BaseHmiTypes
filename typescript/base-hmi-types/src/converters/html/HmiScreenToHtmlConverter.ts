@@ -3112,8 +3112,9 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.xAxisGridVisible);
   appendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.yAxisScaleVisible);
   appendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.yAxisGridVisible);
-  appendStaticBooleanValueAttribute(html, "y-axis-scale-as-percent", trendControl.yAxisScaleAsPercent);
-  appendStaticAttribute(html, "y-axis-percentage-color", trendControl.yAxisPercentageColor);
+  appendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.showPercentageAxis);
+  appendStaticAttribute(html, "percentage-axis-color", trendControl.percentageAxisColor);
+  appendStaticAttribute(html, "percentage-axis-alignment", trendControl.percentageAxisAlignment);
   appendStaticAttribute(html, "minimum-value", trendControl.minimumValue);
   appendStaticAttribute(html, "maximum-value", trendControl.maximumValue);
   appendStaticAttribute(html, "y-axis-decimal-places", trendControl.yAxisDecimalPlaces);
@@ -3213,9 +3214,9 @@ function createTrendControlStyle(trendControl: HmiTrendControl): string {
   const statusForeground = getStaticValue(trendControl.statusBarForegroundColor);
   if (statusForeground !== undefined)
     parts.push(`--hmi-trend-status-foreground: ${colorToCss(statusForeground)};`);
-  const percentageColor = getStaticValue(trendControl.yAxisPercentageColor);
+  const percentageColor = getStaticValue(trendControl.percentageAxisColor);
   if (percentageColor !== undefined)
-    parts.push(`--hmi-trend-y-axis-percentage-color: ${colorToCss(percentageColor)};`);
+    parts.push(`--hmi-trend-percentage-axis-color: ${colorToCss(percentageColor)};`);
   return parts.join("");
 }
 

@@ -1,6 +1,7 @@
 import { HmiControlWindowBase } from "./HmiControlWindowBase.js";
 import { HmiColor } from "./HmiColor.js";
 import { HmiFont } from "./HmiFont.js";
+import { HmiHorizontalAlignment } from "./HmiHorizontalAlignment.js";
 import { HmiLineStyle } from "./HmiLineStyle.js";
 import { HmiProperty } from "./HmiProperty.js";
 import { HmiThickness } from "./HmiThickness.js";
@@ -103,8 +104,15 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   yAxisGridColor?: HmiProperty<HmiColor>;
   yAxisScaleMode?: HmiProperty<HmiTrendYAxisScaleMode>;
   yAxisScalePenNumber?: HmiProperty<number>;
-  yAxisScaleAsPercent?: HmiProperty<boolean>;
-  yAxisPercentageColor?: HmiProperty<HmiColor>;
+  showPercentageAxis?: HmiProperty<boolean>;
+  percentageAxisColor?: HmiProperty<HmiColor>;
+  percentageAxisAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  /** @deprecated Use showPercentageAxis instead. */
+  get yAxisScaleAsPercent(): HmiProperty<boolean> | undefined { return this.showPercentageAxis; }
+  set yAxisScaleAsPercent(value: HmiProperty<boolean> | undefined) { this.showPercentageAxis = value; }
+  /** @deprecated Use percentageAxisColor instead. */
+  get yAxisPercentageColor(): HmiProperty<HmiColor> | undefined { return this.percentageAxisColor; }
+  set yAxisPercentageColor(value: HmiProperty<HmiColor> | undefined) { this.percentageAxisColor = value; }
   yAxisSelectedPenScale?: HmiProperty<number>;
   readonly runtimePropertyTabs: string[] = [];
   runtimeAttributesEnabledMask?: HmiProperty<number>;
