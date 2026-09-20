@@ -3345,6 +3345,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "auto-scale", trendControl.AutoScale);
         AppendStaticBooleanValueAttribute(html, "x-axis-scale-visible", trendControl.XAxisScaleVisible);
         AppendStaticAttribute(html, "x-axis-color", trendControl.XAxisColor);
+        AppendStaticAttribute(html, "x-axis-alignment", trendControl.XAxisAlignment);
         AppendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.XAxisDateVisible);
         AppendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.XAxisGridVisible);
         AppendStaticBooleanValueAttribute(html, "major-grid-visible", trendControl.MajorGridVisible);
@@ -3353,6 +3354,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "minor-grid-color", trendControl.MinorGridColor);
         AppendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.YAxisScaleVisible);
         AppendStaticAttribute(html, "y-axis-color", trendControl.YAxisColor);
+        AppendStaticAttribute(html, "y-axis-alignment", trendControl.YAxisAlignment);
         AppendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.YAxisGridVisible);
         AppendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.ShowPercentageAxis);
         AppendStaticAttribute(html, "percentage-axis-color", trendControl.PercentageAxisColor);

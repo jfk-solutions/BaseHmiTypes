@@ -13,11 +13,13 @@ const trendControlProperties = {
   chartLiveMode: String,
   autoScale: String,
   xAxisScaleVisible: String,
+  xAxisAlignment: String,
   xAxisDateVisible: String,
   xAxisGridVisible: String,
   majorGridVisible: String,
   minorGridVisible: String,
   yAxisScaleVisible: String,
+  yAxisAlignment: String,
   yAxisGridVisible: String,
   showPercentageAxis: String,
   percentageAxisAlignment: String,
@@ -119,11 +121,13 @@ export class HmiTrendControl extends HTMLElement {
     const chartLiveMode = readBooleanAttribute(this, "chart-live-mode", false);
     const autoScale = readBooleanAttribute(this, "auto-scale", false);
     const xAxisVisible = readBooleanAttribute(this, "x-axis-scale-visible", true);
+    const xAxisAlignment = this.getAttribute("x-axis-alignment")?.toLowerCase() === "top" ? "top" : "bottom";
     const xAxisDateVisible = readBooleanAttribute(this, "x-axis-date-visible", true);
     const xAxisGridVisible = readBooleanAttribute(this, "x-axis-grid-visible", true);
     const majorGridVisible = readBooleanAttribute(this, "major-grid-visible", true);
     const minorGridVisible = readBooleanAttribute(this, "minor-grid-visible", true);
     const yAxisVisible = readBooleanAttribute(this, "y-axis-scale-visible", true);
+    const yAxisAlignment = this.getAttribute("y-axis-alignment")?.toLowerCase() === "right" ? "right" : "left";
     const yAxisGridVisible = readBooleanAttribute(this, "y-axis-grid-visible", true);
     const showPercentageAxis = readBooleanAttribute(this, "show-percentage-axis", false);
     const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
@@ -246,9 +250,9 @@ export class HmiTrendControl extends HTMLElement {
         }
 
         .y-label {
-          left: -4.4em;
+          ${yAxisAlignment}: -4.4em;
           transform: translateY(50%);
-          text-align: right;
+          text-align: ${yAxisAlignment === "left" ? "right" : "left"};
           width: 3.6em;
           color: var(--hmi-trend-y-axis-color, ${escapeCss(foregroundColor)});
         }
@@ -282,7 +286,7 @@ export class HmiTrendControl extends HTMLElement {
         }
 
         .x-label {
-          top: calc(100% + 0.9em);
+          ${xAxisAlignment}: calc(100% + 0.9em);
           transform: translateX(-50%);
           text-align: center;
           min-width: 5.2em;
@@ -334,8 +338,8 @@ export class HmiTrendControl extends HTMLElement {
         <div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             ${renderGrid(xAxisGridVisible, yAxisGridVisible, majorGridVisible, minorGridVisible)}
-            ${xAxisVisible ? `<line x1="0" y1="100" x2="100" y2="100" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
-            ${yAxisVisible ? `<line x1="0" y1="0" x2="0" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
+            ${xAxisVisible ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
+            ${yAxisVisible ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${renderPens(visiblePens)}
           </svg>
           ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces) : ""}
