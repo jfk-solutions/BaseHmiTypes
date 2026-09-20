@@ -1576,6 +1576,8 @@ test("HTML converter exposes trend configuration to the web component", async ()
   pen.visible = staticProperty(true);
   pen.width = staticProperty(3);
   pen.style = staticProperty(HmiLineStyle.Dash);
+  pen.fillVisible = staticProperty(true);
+  pen.fillColor = staticProperty(hmiColorFromArgb(255, 0x33, 0x66, 0x99));
   pen.marker = staticProperty("2");
   pen.markerColor = staticProperty(hmiColorFromArgb(255, 0xaa, 0xbb, 0xcc));
   pen.markerSize = staticProperty(5);
@@ -1643,7 +1645,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /minimum-value="-5"/);
   assert.match(html, /maximum-value="100"/);
   assert.match(html, /y-axis-decimal-places="2"/);
-  assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}\]"/);
+  assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}\]"/);
 });
 
 test("HTML converter does not render disabled trend status backgrounds", async () => {
