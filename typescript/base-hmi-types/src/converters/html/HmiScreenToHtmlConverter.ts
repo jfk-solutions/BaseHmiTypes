@@ -15,6 +15,7 @@ import { HmiFont } from "../../screens/base/HmiFont.js";
 import { HmiFillAnimation } from "../../screens/base/HmiFillAnimation.js";
 import { HmiFillDirection } from "../../screens/base/HmiFillDirection.js";
 import { HmiFillPattern } from "../../screens/base/HmiFillPattern.js";
+import { HmiGradientDirection } from "../../screens/base/HmiGradientDirection.js";
 import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
@@ -841,10 +842,13 @@ function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, h
 function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined, context: HmiHtmlConvertContext): void {
   const lineStyle = getLineStyle(item, context);
   const fillPattern = getFillPattern(item, context);
+  const colorGradient = getColorGradient(item);
   const fill = fillColor === undefined || fillPattern === HmiFillPattern.Transparent
     ? "none"
     : tryGetFillPercentage(item.fillAnimation) !== undefined
       ? `url(#${getFillGradientId(item)})`
+      : colorGradient !== undefined
+        ? `url(#${getColorGradientId(item)})`
       : fillPattern !== undefined && fillPattern !== HmiFillPattern.Solid
         ? `url(#${getFillPatternId(item)})`
         : colorToCss(fillColor);
@@ -875,6 +879,11 @@ function appendSvgFillDefinition(html: string[], item: HmiShapeBase, fillColor: 
   const percentage = tryGetFillPercentage(item.fillAnimation);
   if (fillColor === undefined) return;
   if (percentage === undefined) {
+    const colorGradient = getColorGradient(item);
+    if (colorGradient !== undefined) {
+      appendSvgColorGradientDefinition(html, item, colorGradient);
+      return;
+    }
     appendSvgPatternDefinition(html, item, fillColor, context);
     return;
   }
@@ -893,6 +902,24 @@ function appendSvgFillDefinition(html: string[], item: HmiShapeBase, fillColor: 
   appendAttribute(html, "offset", `${toCss(percentage)}%`);
   appendAttribute(html, "stop-color", "transparent");
   html.push("></stop></linearGradient></defs>");
+}
+
+function appendSvgColorGradientDefinition(html: string[], item: HmiShapeBase, gradient: ColorGradient): void {
+  const [x1, y1, x2, y2] = getSvgGradientVector(gradient.direction);
+  html.push("<defs><linearGradient");
+  appendAttribute(html, "id", getColorGradientId(item));
+  appendAttribute(html, "x1", x1);
+  appendAttribute(html, "y1", y1);
+  appendAttribute(html, "x2", x2);
+  appendAttribute(html, "y2", y2);
+  html.push(">");
+  for (const stop of gradient.stops) {
+    html.push("<stop");
+    appendAttribute(html, "offset", `${toCss(stop.offset)}%`);
+    appendAttribute(html, "stop-color", colorToCss(stop.color));
+    html.push("></stop>");
+  }
+  html.push("</linearGradient></defs>");
 }
 
 function appendSvgPatternDefinition(html: string[], item: HmiShapeBase, fillColor: HmiColor, context: HmiHtmlConvertContext): void {
@@ -987,6 +1014,24 @@ function getSvgFillVector(direction: HmiFillDirection | undefined): [string, str
   }
 }
 
+function getSvgGradientVector(direction: HmiGradientDirection): [string, string, string, string] {
+  switch (direction) {
+    case HmiGradientDirection.HorizontalFromRight:
+      return ["100%", "0%", "0%", "0%"];
+    case HmiGradientDirection.VerticalFromTop:
+    case HmiGradientDirection.VerticalFromCenter:
+      return ["0%", "0%", "0%", "100%"];
+    case HmiGradientDirection.VerticalFromBottom:
+      return ["0%", "100%", "0%", "0%"];
+    case HmiGradientDirection.DiagonalUp:
+      return ["0%", "100%", "100%", "0%"];
+    case HmiGradientDirection.DiagonalDown:
+      return ["0%", "0%", "100%", "100%"];
+    default:
+      return ["0%", "0%", "100%", "0%"];
+  }
+}
+
 function getFillGradientId(item: HmiShapeBase): string {
   const sanitized = (item.name ?? item.id ?? "shape").replace(/[^A-Za-z0-9_-]/g, "-");
   return `hmi-fill-${sanitized || "shape"}`;
@@ -994,6 +1039,10 @@ function getFillGradientId(item: HmiShapeBase): string {
 
 function getFillPatternId(item: HmiShapeBase): string {
   return getFillGradientId(item).replace("hmi-fill-", "hmi-pattern-");
+}
+
+function getColorGradientId(item: HmiShapeBase): string {
+  return getFillGradientId(item).replace("hmi-fill-", "hmi-color-gradient-");
 }
 
 function getFillPattern(item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): HmiFillPattern | undefined {
@@ -1938,6 +1987,84 @@ function appendFillPatternCss(html: string[], pattern: HmiFillPattern, patternCo
   html.push(`background-size: ${pattern === HmiFillPattern.CheckersFiner || pattern === HmiFillPattern.DiagonalCrossFiner ? "4px 4px" : "8px 8px"};`);
 }
 
+interface ColorGradientSource {
+  backgroundColor?: HmiProperty<HmiColor>;
+  firstGradientColor?: HmiProperty<HmiColor>;
+  firstGradientOffset?: HmiProperty<number>;
+  middleGradientColor?: HmiProperty<HmiColor>;
+  secondGradientColor?: HmiProperty<HmiColor>;
+  secondGradientOffset?: HmiProperty<number>;
+  useFirstGradient?: HmiProperty<boolean>;
+  useSecondGradient?: HmiProperty<boolean>;
+  gradientDirection?: HmiProperty<HmiGradientDirection>;
+}
+
+interface ColorGradient {
+  direction: HmiGradientDirection;
+  stops: Array<{ color: HmiColor; offset: number }>;
+}
+
+function getColorGradient(item: HmiPaintedScreenItemBase | HmiScreenBase): ColorGradient | undefined {
+  if (item instanceof HmiScreenBase || item instanceof HmiShapeBase || item instanceof HmiWidgetBase || item instanceof HmiWindowBase)
+    return createColorGradient(item);
+  return undefined;
+}
+
+function createColorGradient(source: ColorGradientSource): ColorGradient | undefined {
+  const firstColor = getStaticValue(source.firstGradientColor);
+  const secondColor = getStaticValue(source.secondGradientColor);
+  const firstEnabled = getStaticValueOrDefault(source.useFirstGradient, false) && firstColor !== undefined;
+  const secondEnabled = getStaticValueOrDefault(source.useSecondGradient, false) && secondColor !== undefined;
+  if (!firstEnabled && !secondEnabled) return undefined;
+
+  const middle = getStaticValue(source.middleGradientColor)
+    ?? getStaticValue(source.backgroundColor)
+    ?? firstColor
+    ?? secondColor;
+  if (middle === undefined) return undefined;
+
+  const firstOffset = Math.min(Math.max(getStaticValueOrDefault(source.firstGradientOffset, 50), 0), 100);
+  const secondOffset = Math.min(Math.max(getStaticValueOrDefault(source.secondGradientOffset, 50), 0), 100);
+  const stops: ColorGradient["stops"] = [
+    { color: firstEnabled ? firstColor! : middle, offset: 0 },
+  ];
+  if (firstEnabled && secondEnabled) {
+    stops.push({ color: middle, offset: Math.min(firstOffset, secondOffset) });
+    stops.push({ color: middle, offset: Math.max(firstOffset, secondOffset) });
+  } else {
+    stops.push({ color: middle, offset: firstEnabled ? firstOffset : secondOffset });
+  }
+  stops.push({ color: secondEnabled ? secondColor! : middle, offset: 100 });
+  return {
+    direction: getStaticValue(source.gradientDirection) ?? HmiGradientDirection.HorizontalFromLeft,
+    stops,
+  };
+}
+
+function appendColorGradientStyle(html: string[], gradient: ColorGradient | undefined): void {
+  if (gradient === undefined) return;
+  const stops = gradient.stops.map(stop => `${colorToCss(stop.color)} ${toCss(stop.offset)}%`).join(", ");
+  html.push(`background-image: linear-gradient(${gradientDirectionToCss(gradient.direction)}, ${stops});`);
+}
+
+function gradientDirectionToCss(direction: HmiGradientDirection): string {
+  switch (direction) {
+    case HmiGradientDirection.HorizontalFromRight:
+      return "to left";
+    case HmiGradientDirection.VerticalFromTop:
+    case HmiGradientDirection.VerticalFromCenter:
+      return "to bottom";
+    case HmiGradientDirection.VerticalFromBottom:
+      return "to top";
+    case HmiGradientDirection.DiagonalUp:
+      return "to top right";
+    case HmiGradientDirection.DiagonalDown:
+      return "to bottom right";
+    default:
+      return "to right";
+  }
+}
+
 function appendFillAnimationStyle(html: string[], item: HmiShapeBase, context: HmiHtmlConvertContext): void {
   const percentage = tryGetFillPercentage(item.fillAnimation);
   const fillColor = getFillColor(item, context);
@@ -2586,6 +2713,7 @@ function appendScreenStyle(html: string[], screen: HmiScreenBase): void {
   if (pattern !== undefined) {
     appendFillPatternCss(html, pattern, getStaticValue(screen.patternColor) ?? hmiColorFromArgb(255, 0, 0, 0));
   }
+  appendColorGradientStyle(html, getColorGradient(screen));
 }
 
 function hasThicknessEdges(value: unknown): value is {
@@ -2618,6 +2746,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     appendWidthStyle(html, item.lineWidth, borderStyle);
   }
   appendFillPatternStyle(html, item, context);
+  appendColorGradientStyle(html, getColorGradient(item));
   if (item.margin !== undefined) {
     html.push(
       `margin: ${toCss(getStaticValueOrDefault(item.margin.top, 0))}px ${toCss(

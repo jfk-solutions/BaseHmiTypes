@@ -11,6 +11,7 @@ import {
   HmiFillAnimation,
   HmiFillDirection,
   HmiFillPattern,
+  HmiGradientDirection,
   HmiDisabledImageMode,
   HmiGroup,
   HmiImage,
@@ -186,6 +187,57 @@ test("HTML conversion renders screen fill patterns", async () => {
   assert.match(html, /background-color: #FFFFFF;/);
   assert.match(html, /background-image: conic-gradient\(#004080 25%, transparent 0 50%, #004080 0 75%, transparent 0\);/);
   assert.match(html, /background-size: 8px 8px;/);
+});
+
+test("HTML conversion renders configured color gradients", async () => {
+  const screen = createScreen("main", "GradientScreen");
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(200);
+  screen.backgroundColor = staticProperty(hmiColorFromArgb(255, 34, 34, 34));
+  screen.firstGradientColor = staticProperty(hmiColorFromArgb(255, 17, 17, 17));
+  screen.firstGradientOffset = staticProperty(25);
+  screen.middleGradientColor = staticProperty(hmiColorFromArgb(255, 34, 34, 34));
+  screen.secondGradientColor = staticProperty(hmiColorFromArgb(255, 51, 51, 51));
+  screen.secondGradientOffset = staticProperty(75);
+  screen.useFirstGradient = staticProperty(true);
+  screen.useSecondGradient = staticProperty(true);
+  screen.gradientDirection = staticProperty(HmiGradientDirection.VerticalFromTop);
+
+  const rectangle = createRectangle("GradientRectangle");
+  rectangle.backgroundColor = staticProperty(hmiColorFromArgb(255, 0, 128, 0));
+  rectangle.firstGradientColor = staticProperty(hmiColorFromArgb(255, 0, 255, 0));
+  rectangle.firstGradientOffset = staticProperty(40);
+  rectangle.useFirstGradient = staticProperty(true);
+  rectangle.gradientDirection = staticProperty(HmiGradientDirection.HorizontalFromRight);
+
+  const circle = new HmiCircle();
+  circle.name = "GradientCircle";
+  circle.width = staticProperty(50);
+  circle.height = staticProperty(50);
+  circle.backgroundColor = staticProperty(hmiColorFromArgb(255, 0, 0, 128));
+  circle.secondGradientColor = staticProperty(hmiColorFromArgb(255, 0, 128, 255));
+  circle.secondGradientOffset = staticProperty(60);
+  circle.useSecondGradient = staticProperty(true);
+  circle.gradientDirection = staticProperty(HmiGradientDirection.DiagonalUp);
+
+  const button = new HmiButton();
+  button.name = "GradientButton";
+  button.width = staticProperty(80);
+  button.height = staticProperty(30);
+  button.backgroundColor = staticProperty(hmiColorFromArgb(255, 128, 0, 0));
+  button.secondGradientColor = staticProperty(hmiColorFromArgb(255, 255, 128, 0));
+  button.secondGradientOffset = staticProperty(30);
+  button.useSecondGradient = staticProperty(true);
+  screen.layers[0].items.push(rectangle, circle, button);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /background-image: linear-gradient\(to bottom, #111111 0%, #222222 25%, #222222 75%, #333333 100%\);/);
+  assert.match(html, /background-image: linear-gradient\(to left, #00FF00 0%, #008000 40%, #008000 100%\);/);
+  assert.match(html, /fill="url\(#hmi-color-gradient-GradientCircle\)"/);
+  assert.match(html, /<linearGradient id="hmi-color-gradient-GradientCircle" x1="0%" y1="100%" x2="100%" y2="0%"/);
+  assert.match(html, /<stop offset="60%" stop-color="#000080"/);
+  assert.match(html, /background-image: linear-gradient\(to right, #800000 0%, #800000 30%, #FF8000 100%\);/);
 });
 
 test("HTML conversion serializes dynamic SVG colors in HMI format", async () => {
