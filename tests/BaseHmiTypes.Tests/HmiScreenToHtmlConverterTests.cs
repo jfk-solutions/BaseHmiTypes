@@ -2389,6 +2389,50 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersExtendedFillPatterns()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiRectangle
+        {
+            Name = "LargeBoxes",
+            Width = 100,
+            Height = 50,
+            BackgroundColor = HmiColor.FromArgb(255, 255, 255, 255),
+            PatternColor = HmiColor.FromArgb(255, 0, 0, 0),
+            FillPattern = HmiFillPattern.LargeBoxes
+        });
+        layer.Items.Add(new HmiCircle
+        {
+            Name = "Ovals",
+            Width = 50,
+            Height = 50,
+            BackgroundColor = HmiColor.FromArgb(255, 255, 255, 255),
+            PatternColor = HmiColor.FromArgb(255, 0, 128, 255),
+            FillPattern = HmiFillPattern.Ovals
+        });
+        layer.Items.Add(new HmiButton
+        {
+            Name = "WideDiagonal",
+            Width = 80,
+            Height = 30,
+            BackgroundColor = HmiColor.FromArgb(255, 255, 255, 255),
+            PatternColor = HmiColor.FromArgb(255, 255, 0, 0),
+            FillPattern = HmiFillPattern.WideDiagonalRightToLeft
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "background-image: linear-gradient(#000000 1px, transparent 1px), linear-gradient(90deg, #000000 1px, transparent 1px);");
+        StringAssert.Contains(html, "background-size: 12px 12px;");
+        StringAssert.Contains(html, "<pattern id=\"hmi-pattern-Ovals\"");
+        StringAssert.Contains(html, "width=\"12\" height=\"12\"");
+        StringAssert.Contains(html, "<ellipse");
+        StringAssert.Contains(html, "background-image: repeating-linear-gradient(45deg, #FF0000 0 2px, transparent 2px 6px);");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersScreenFillPattern()
     {
         var screen = new HmiScreen
