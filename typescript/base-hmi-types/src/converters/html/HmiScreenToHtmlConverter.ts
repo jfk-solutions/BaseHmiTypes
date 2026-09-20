@@ -3038,7 +3038,7 @@ function appendIntegerListAttribute(
 
 function appendTrendControl(html: string[], trendControl: HmiTrendControl, context: HmiHtmlConvertContext): void {
   html.push("<hmi-trend-control");
-  appendCommonAttributes(html, trendControl, context, true, createControlWindowStyle(trendControl, "overflow: hidden;"));
+  appendCommonAttributes(html, trendControl, context, true, createTrendControlStyle(trendControl));
   appendAttribute(html, "data-window-resizable", resolvePropertyPreview(trendControl.resizable));
   appendAttribute(html, "data-window-movable", resolvePropertyPreview(trendControl.movable));
   appendAttribute(html, "data-window-closeable", resolvePropertyPreview(trendControl.closeable));
@@ -3083,6 +3083,30 @@ function createAlarmHeaderStyle(alarmControl: HmiAlarmControl): string {
   if (alarmControl.headerFont !== undefined)
     appendFont(parts, alarmControl.headerFont);
   return parts.join("");
+}
+
+function createTrendControlStyle(trendControl: HmiTrendControl): string {
+  const parts = [createControlWindowStyle(trendControl, "overflow: hidden;")];
+  appendFontVariables(parts, "content", trendControl.contentFont);
+  appendFontVariables(parts, "header", trendControl.headerFont);
+  return parts.join("");
+}
+
+function appendFontVariables(html: string[], role: string, font: HmiFont | undefined): void {
+  if (font === undefined) return;
+  const prefix = `--hmi-trend-${role}-`;
+  const name = getStaticValue(font.name);
+  const size = getStaticValue(font.size);
+  const weight = getStaticValue(font.weight);
+  if (name?.trim()) html.push(`${prefix}font-family: ${escapeHtml(name)};`);
+  if (size !== undefined) html.push(`${prefix}font-size: ${toCss(size)}px;`);
+  if (weight !== undefined && weight > 0) html.push(`${prefix}font-weight: ${weight};`);
+  else if (getStaticValueOrDefault(font.bold, false)) html.push(`${prefix}font-weight: bold;`);
+  if (getStaticValueOrDefault(font.italic, false)) html.push(`${prefix}font-style: italic;`);
+  const decorations = [];
+  if (getStaticValueOrDefault(font.underline, false)) decorations.push("underline");
+  if (getStaticValueOrDefault(font.strikethrough, false)) decorations.push("line-through");
+  if (decorations.length > 0) html.push(`${prefix}text-decoration: ${decorations.join(" ")};`);
 }
 
 function appendStaticBooleanValueAttribute(

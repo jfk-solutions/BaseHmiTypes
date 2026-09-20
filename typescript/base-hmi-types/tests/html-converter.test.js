@@ -1423,6 +1423,15 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.resizable = staticProperty(true);
   trend.movable = staticProperty(false);
   trend.closeable = staticProperty(false);
+  trend.contentFont = new HmiFont();
+  trend.contentFont.name = staticProperty("Arial");
+  trend.contentFont.size = staticProperty(9);
+  trend.contentFont.weight = staticProperty(400);
+  trend.headerFont = new HmiFont();
+  trend.headerFont.name = staticProperty("Siemens Sans");
+  trend.headerFont.size = staticProperty(11);
+  trend.headerFont.weight = staticProperty(700);
+  trend.headerFont.italic = staticProperty(true);
   trend.showToolbar = staticProperty(false);
   trend.displayPenIcons = staticProperty(true);
   trend.displayScrollMechanism = staticProperty(true);
@@ -1460,6 +1469,8 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /data-window-movable="false"/);
   assert.match(html, /data-window-closeable="false"/);
   assert.match(html, /resize: both;/);
+  assert.match(html, /--hmi-trend-content-font-family: Arial;--hmi-trend-content-font-size: 9px;--hmi-trend-content-font-weight: 400;/);
+  assert.match(html, /--hmi-trend-header-font-family: Siemens Sans;--hmi-trend-header-font-size: 11px;--hmi-trend-header-font-weight: 700;--hmi-trend-header-font-style: italic;/);
   assert.match(html, /show-toolbar="false"/);
   assert.match(html, /display-pen-icons="true"/);
   assert.match(html, /display-scroll-mechanism="true"/);
