@@ -142,6 +142,10 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   alternatingRowForegroundColor?: HmiProperty<HmiColor>;
   selectionBackgroundColor?: HmiProperty<HmiColor>;
   selectionForegroundColor?: HmiProperty<HmiColor>;
+  selectionRectangleMode?: HmiProperty<number>;
+  useAutomaticSelectionRectangleColor?: HmiProperty<boolean>;
+  selectionRectangleColor?: HmiProperty<HmiColor>;
+  selectionRectangleWidth?: HmiProperty<number>;
   useAlarmColors?: HmiProperty<boolean>;
   tableHeaderBackgroundColor?: HmiProperty<HmiColor>;
   tableHeaderForegroundColor?: HmiProperty<HmiColor>;

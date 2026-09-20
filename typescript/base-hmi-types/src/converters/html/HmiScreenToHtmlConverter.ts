@@ -2054,6 +2054,10 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-table-header-border-color", resolvePropertyPreview(alarmControl.tableHeaderBorderColor));
   appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(alarmControl.selectionBackgroundColor));
   appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(alarmControl.selectionForegroundColor));
+  appendAttribute(html, "data-selection-rectangle-mode", resolvePropertyPreview(alarmControl.selectionRectangleMode));
+  appendAttribute(html, "data-use-automatic-selection-rectangle-color", resolvePropertyPreview(alarmControl.useAutomaticSelectionRectangleColor));
+  appendAttribute(html, "data-selection-rectangle-color", resolvePropertyPreview(alarmControl.selectionRectangleColor));
+  appendAttribute(html, "data-selection-rectangle-width", resolvePropertyPreview(alarmControl.selectionRectangleWidth));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(alarmControl.showStatusBar));
   appendAttribute(html, "data-status-bar-background-color", resolvePropertyPreview(alarmControl.statusBarBackgroundColor));
   appendAttribute(html, "data-status-bar-foreground-color", resolvePropertyPreview(alarmControl.statusBarForegroundColor));
@@ -2094,6 +2098,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   html.push(" style=\"text-align: center;", gridCellStyle);
   appendColorStyle(html, "background-color", alarmControl.selectionBackgroundColor);
   appendColorStyle(html, "color", alarmControl.selectionForegroundColor);
+  appendAlarmSelectionRectangleStyle(html, alarmControl);
   html.push("\">Alarm data not loaded</td></tr></tbody></table>");
 
   const showAcknowledgeButton = getStaticValue(alarmControl.showAcknowledgeButton) === true;
@@ -3159,6 +3164,20 @@ function createAlarmGridCellStyle(alarmControl: HmiAlarmControl): string {
   const vertical = getStaticValue(alarmControl.showVerticalGridLines) !== false;
   const width = Math.max(0, getStaticValue(alarmControl.gridLineWidth) ?? 1);
   return `border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: ${horizontal ? toCss(width) : "0"}px ${vertical ? toCss(width) : "0"}px;`;
+}
+
+function appendAlarmSelectionRectangleStyle(parts: string[], alarmControl: HmiAlarmControl): void {
+  if ((getStaticValue(alarmControl.selectionRectangleMode) ?? 0) === 0)
+    return;
+
+  const width = Math.max(0, getStaticValue(alarmControl.selectionRectangleWidth) ?? 1);
+  let color = "currentColor";
+  if (getStaticValue(alarmControl.useAutomaticSelectionRectangleColor) !== true) {
+    const configuredColor = getStaticValue(alarmControl.selectionRectangleColor);
+    if (configuredColor !== undefined)
+      color = colorToCss(configuredColor);
+  }
+  parts.push(`outline: ${toCss(width)}px solid ${color};outline-offset: -${toCss(width)}px;`);
 }
 
 function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCellStyle: string): string {

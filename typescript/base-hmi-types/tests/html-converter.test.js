@@ -1250,6 +1250,10 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.tableHeaderBorderWidth = staticProperty(3);
   alarms.selectionBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x70, 0x80, 0x90));
   alarms.selectionForegroundColor = staticProperty(hmiColorFromArgb(255, 0xf1, 0xf2, 0xf3));
+  alarms.selectionRectangleMode = staticProperty(2);
+  alarms.useAutomaticSelectionRectangleColor = staticProperty(false);
+  alarms.selectionRectangleColor = staticProperty(hmiColorFromArgb(255, 0x0a, 0x0b, 0x0c));
+  alarms.selectionRectangleWidth = staticProperty(2);
   alarms.showStatusBar = staticProperty(true);
   alarms.statusBarBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x21, 0x32, 0x43));
   alarms.statusBarForegroundColor = staticProperty(hmiColorFromArgb(255, 0xfe, 0xdc, 0xba));
@@ -1336,6 +1340,10 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-table-header-border-color="#667788"/);
   assert.match(html, /data-selection-background-color="#708090"/);
   assert.match(html, /data-selection-foreground-color="#F1F2F3"/);
+  assert.match(html, /data-selection-rectangle-mode="2"/);
+  assert.match(html, /data-use-automatic-selection-rectangle-color="false"/);
+  assert.match(html, /data-selection-rectangle-color="#0A0B0C"/);
+  assert.match(html, /data-selection-rectangle-width="2"/);
   assert.match(html, /data-show-status-bar="true"/);
   assert.match(html, /data-status-bar-background-color="#213243"/);
   assert.match(html, /data-status-bar-foreground-color="#FEDCBA"/);
@@ -1343,7 +1351,7 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /class="hmi-alarm-table hmi-alarm-table--alternating" style="width: 100%; border-collapse: collapse; table-layout: fixed;background-color: #102030;color: #E0D0C0;--hmi-alarm-alternating-row-background: #123456;--hmi-alarm-alternating-row-foreground: #ABCDEF;/);
   assert.match(html, /\.hmi-alarm-table--alternating tbody tr:nth-child\(even\)>td\{background-color:var\(--hmi-alarm-alternating-row-background,inherit\);color:var\(--hmi-alarm-alternating-row-foreground,inherit\);/);
   assert.match(html, /border-style: solid; border-color: var\(--hmi-grid-line-color, currentColor\); border-width: 0px 2px;/);
-  assert.match(html, /background-color: #708090;color: #F1F2F3;/);
+  assert.match(html, /background-color: #708090;color: #F1F2F3;outline: 2px solid #0A0B0C;outline-offset: -2px;/);
   assert.match(html, /font-family: Arial;font-size: 9.75px;font-weight: 400;/);
   assert.match(html, /font-family: Siemens Sans;font-size: 10px;font-weight: 700;font-style: italic;text-decoration: underline line-through;/);
   assert.match(html, /background-color: #E3E3E3;color: #010203;border-bottom-color: #667788;/);
