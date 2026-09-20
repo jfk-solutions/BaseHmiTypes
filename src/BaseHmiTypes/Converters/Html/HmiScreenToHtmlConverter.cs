@@ -3337,6 +3337,9 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.ShowStatusBar);
         AppendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.UseStatusBarBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
+        AppendStaticBooleanValueAttribute(html, "display-value-bar", trendControl.DisplayValueBar);
+        AppendStaticAttribute(html, "value-bar-color", trendControl.ValueBarColor);
+        AppendStaticAttribute(html, "value-bar-width", trendControl.ValueBarWidth);
         AppendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.DisplayScrollMechanism);
         AppendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.ChartLiveMode);
         AppendStaticBooleanValueAttribute(html, "auto-scale", trendControl.AutoScale);
@@ -3492,6 +3495,13 @@ public class HmiScreenToHtmlConverter
         if (trendControl.PercentageAxisColor is not null)
             style.Append("--hmi-trend-percentage-axis-color: ")
                 .Append(ToCss(ResolveStaticValue(trendControl.PercentageAxisColor, context))).Append(';');
+        if (trendControl.ValueBarColor is not null)
+            style.Append("--hmi-trend-value-bar-color: ")
+                .Append(ToCss(ResolveStaticValue(trendControl.ValueBarColor, context))).Append(';');
+        if (trendControl.ValueBarWidth is not null)
+            style.Append("--hmi-trend-value-bar-width: ")
+                .Append(Math.Max(0, ResolveStaticValue(trendControl.ValueBarWidth, context)).ToString(System.Globalization.CultureInfo.InvariantCulture))
+                .Append("px;");
         return style.ToString();
     }
 

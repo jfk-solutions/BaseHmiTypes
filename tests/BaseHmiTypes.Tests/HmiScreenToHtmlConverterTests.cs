@@ -3040,6 +3040,9 @@ public class HmiScreenToHtmlConverterTests
                 Italic = true
             },
             DisplayPenIcons = true,
+            DisplayValueBar = true,
+            ValueBarColor = HmiColor.FromArgb(255, 0x65, 0x43, 0x21),
+            ValueBarWidth = 3,
             DisplayScrollMechanism = true,
             ChartLiveMode = true,
             AutoScale = false,
@@ -3094,6 +3097,11 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "--hmi-trend-status-foreground: #E0D0C0;");
         StringAssert.Contains(html, "--hmi-trend-status-font-family: Tahoma;--hmi-trend-status-font-size: 8px;--hmi-trend-status-font-weight: 600;--hmi-trend-status-font-style: italic;");
         StringAssert.Contains(html, "display-pen-icons=\"true\"");
+        StringAssert.Contains(html, "display-value-bar=\"true\"");
+        StringAssert.Contains(html, "value-bar-color=\"#654321\"");
+        StringAssert.Contains(html, "value-bar-width=\"3\"");
+        StringAssert.Contains(html, "--hmi-trend-value-bar-color: #654321;");
+        StringAssert.Contains(html, "--hmi-trend-value-bar-width: 3px;");
         StringAssert.Contains(html, "display-scroll-mechanism=\"true\"");
         StringAssert.Contains(html, "chart-live-mode=\"true\"");
         StringAssert.Contains(html, "auto-scale=\"false\"");
