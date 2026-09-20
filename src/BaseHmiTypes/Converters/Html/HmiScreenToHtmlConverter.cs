@@ -3341,6 +3341,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "display-value-bar", trendControl.DisplayValueBar);
         AppendStaticAttribute(html, "value-bar-color", trendControl.ValueBarColor);
         AppendStaticAttribute(html, "value-bar-width", trendControl.ValueBarWidth);
+        AppendStaticBooleanValueAttribute(html, "show-value-bar-in-x-axis", trendControl.ShowValueBarInXAxis);
         AppendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.DisplayScrollMechanism);
         AppendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.ChartLiveMode);
         AppendStaticBooleanValueAttribute(html, "auto-scale", trendControl.AutoScale);
