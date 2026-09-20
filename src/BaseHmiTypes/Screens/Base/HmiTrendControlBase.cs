@@ -162,6 +162,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     /// </summary>
     public HmiProperty<bool>? YAxisScaleAsPercent { get; set; }
 
+    public HmiProperty<HmiColor>? YAxisPercentageColor { get; set; }
+
     /// <summary>
     /// Gets or sets the one-based pen whose scale is selected for the Y axis.
     /// </summary>

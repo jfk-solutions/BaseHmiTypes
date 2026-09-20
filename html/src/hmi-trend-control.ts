@@ -15,6 +15,7 @@ const trendControlProperties = {
   xAxisGridVisible: String,
   yAxisScaleVisible: String,
   yAxisGridVisible: String,
+  yAxisScaleAsPercent: String,
   minimumValue: String,
   maximumValue: String,
   yAxisDecimalPlaces: String,
@@ -114,6 +115,7 @@ export class HmiTrendControl extends HTMLElement {
     const xAxisGridVisible = readBooleanAttribute(this, "x-axis-grid-visible", true);
     const yAxisVisible = readBooleanAttribute(this, "y-axis-scale-visible", true);
     const yAxisGridVisible = readBooleanAttribute(this, "y-axis-grid-visible", true);
+    const yAxisScaleAsPercent = readBooleanAttribute(this, "y-axis-scale-as-percent", false);
     const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
     const now = new Date();
     const labels = createTimeLabels(now, xAxisDateVisible);
@@ -235,6 +237,7 @@ export class HmiTrendControl extends HTMLElement {
           transform: translateY(50%);
           text-align: right;
           width: 3.6em;
+          color: var(--hmi-trend-y-axis-percentage-color, ${escapeCss(foregroundColor)});
         }
 
         .x-label {
@@ -293,7 +296,7 @@ export class HmiTrendControl extends HTMLElement {
             ${yAxisVisible ? `<line x1="0" y1="0" x2="0" y2="100" stroke="#444850" stroke-width="0.55"></line>` : ""}
             ${renderPens(visiblePens)}
           </svg>
-          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces) : ""}
+          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, yAxisScaleAsPercent) : ""}
           ${xAxisVisible ? renderXLabels(labels) : ""}
         </div>
         ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"></div></div>` : ""}
@@ -318,12 +321,13 @@ function renderGrid(verticalVisible: boolean, horizontalVisible: boolean): strin
   return lines.join("");
 }
 
-function renderYLabels(minimum: number, maximum: number, decimalPlaces: number): string {
+function renderYLabels(minimum: number, maximum: number, decimalPlaces: number, asPercent: boolean): string {
   const labels: string[] = [];
   for (let index = 0; index <= 5; index++) {
     const ratio = index / 5;
     const value = maximum - (maximum - minimum) * ratio;
-    labels.push(`<span class="axis-label y-label" style="top:${toCss(ratio * 100)}%">${escapeHtml(value.toFixed(decimalPlaces))}</span>`);
+    const suffix = asPercent ? "%" : "";
+    labels.push(`<span class="axis-label y-label" style="top:${toCss(ratio * 100)}%">${escapeHtml(value.toFixed(decimalPlaces))}${suffix}</span>`);
   }
   return labels.join("");
 }
