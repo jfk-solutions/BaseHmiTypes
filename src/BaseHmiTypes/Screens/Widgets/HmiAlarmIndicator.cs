@@ -21,6 +21,8 @@ public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 
     public HmiProperty<int>? AlarmState { get; set; }
 
+    public HmiProperty<HmiAlarmIndicatorState>? VisualState { get; set; }
+
     public HmiProperty<int>? NoAlarmState { get; set; }
 
     public HmiProperty<int>? NumberOfAlarms { get; set; }

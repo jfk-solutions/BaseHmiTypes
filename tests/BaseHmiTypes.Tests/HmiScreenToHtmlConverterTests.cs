@@ -841,6 +841,7 @@ public class HmiScreenToHtmlConverterTests
             Width = 80,
             Height = 30,
             AlarmState = 5,
+            VisualState = HmiAlarmIndicatorState.CameIn,
             NoAlarmState = 0,
             NumberOfAlarms = 2,
             IsFlashingRequired = true,
@@ -861,6 +862,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<div id=\"GroupDisplay\"");
         StringAssert.Contains(html, "class=\"hmi-alarm-indicator\"");
         StringAssert.Contains(html, "data-active=\"true\"");
+        StringAssert.Contains(html, "data-visual-state=\"CameIn\"");
         StringAssert.Contains(html, "data-flashing-required=\"true\"");
         StringAssert.Contains(html, "data-flashing-color=\"#FF0000\"");
         StringAssert.Contains(html, "data-foreground-flashing-required=\"true\"");
