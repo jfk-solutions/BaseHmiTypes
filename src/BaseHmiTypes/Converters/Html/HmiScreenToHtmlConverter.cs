@@ -2256,6 +2256,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-table-foreground-color", ResolvePropertyPreview(alarmControl.TableForegroundColor, context));
         AppendAttribute(html, "data-table-header-background-color", ResolvePropertyPreview(alarmControl.TableHeaderBackgroundColor, context));
         AppendAttribute(html, "data-table-header-foreground-color", ResolvePropertyPreview(alarmControl.TableHeaderForegroundColor, context));
+        AppendAttribute(html, "data-table-header-horizontal-alignment", ResolvePropertyPreview(alarmControl.TableHeaderHorizontalAlignment, context));
         AppendAttribute(html, "data-table-header-border-color", ResolvePropertyPreview(alarmControl.TableHeaderBorderColor, context));
         AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(alarmControl.SelectionBackgroundColor, context));
         AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(alarmControl.SelectionForegroundColor, context));
@@ -3406,6 +3407,9 @@ public class HmiScreenToHtmlConverter
         var style = new StringBuilder(gridCellStyle);
         AppendColorStyle(style, "background-color", alarmControl.TableHeaderBackgroundColor);
         AppendColorStyle(style, "color", alarmControl.TableHeaderForegroundColor);
+        if (alarmControl.TableHeaderHorizontalAlignment is not null)
+            style.Append("text-align: ")
+                .Append(ToCss(ResolveStaticValue(alarmControl.TableHeaderHorizontalAlignment, context))).Append(';');
         AppendColorStyle(style, "border-color", alarmControl.TableHeaderBorderColor);
         if (alarmControl.TableHeaderBorderWidth is not null)
             style.Append("border-width: ")

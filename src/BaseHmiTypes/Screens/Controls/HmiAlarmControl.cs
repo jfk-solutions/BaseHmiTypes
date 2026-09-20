@@ -242,6 +242,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? TableHeaderForegroundColor { get; set; }
 
+    public HmiProperty<HmiHorizontalAlignment>? TableHeaderHorizontalAlignment { get; set; }
+
     public HmiProperty<HmiColor>? TableHeaderBorderBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? TableHeaderBorderColor { get; set; }
