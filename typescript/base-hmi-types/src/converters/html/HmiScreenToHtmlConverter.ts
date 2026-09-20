@@ -1272,6 +1272,20 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   const [minimum, maximum] = resolveScaleRange(bar);
   const value = resolveScaleValue(bar, minimum, maximum);
   const direction = getStaticValue(bar.fillDirection) ?? HmiFillDirection.Right;
+  if (getStaticValue(bar.showScale) === true) {
+    const vertical = direction === HmiFillDirection.Up || direction === HmiFillDirection.Down;
+    html.push("<div");
+    appendCommonAttributes(html, bar, context, true, vertical
+      ? "display: flex; flex-direction: row; align-items: stretch; gap: 4px;"
+      : "display: flex; flex-direction: column; align-items: stretch; gap: 2px;");
+    appendAttribute(html, "data-hmi-bar", "true");
+    appendAttribute(html, "data-fill-direction", HmiFillDirection[direction]);
+    html.push(">");
+    appendBarMeter(html, minimum, maximum, value, direction, vertical);
+    appendBarScale(html, bar, minimum, maximum, direction, vertical);
+    html.push("</div>");
+    return;
+  }
   html.push("<meter");
   appendCommonAttributes(html, bar, context, true, getBarDirectionStyle(direction));
   appendAttribute(html, "data-fill-direction", HmiFillDirection[direction]);
@@ -1279,6 +1293,80 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   appendAttribute(html, "max", toCss(maximum));
   appendAttribute(html, "value", toCss(value));
   html.push(`>${toCss(value)}</meter>`);
+}
+
+function appendBarMeter(
+  html: string[],
+  minimum: number,
+  maximum: number,
+  value: number,
+  direction: HmiFillDirection,
+  vertical: boolean,
+): void {
+  html.push("<meter");
+  appendAttribute(html, "style",
+    `${vertical ? "height: 100%;" : "width: 100%;"} flex: 1; min-width: 0; min-height: 0;${getBarDirectionStyle(direction)}`);
+  appendAttribute(html, "min", toCss(minimum));
+  appendAttribute(html, "max", toCss(maximum));
+  appendAttribute(html, "value", toCss(value));
+  html.push(`>${toCss(value)}</meter>`);
+}
+
+function appendBarScale(
+  html: string[],
+  bar: HmiBar,
+  minimum: number,
+  maximum: number,
+  direction: HmiFillDirection,
+  vertical: boolean,
+): void {
+  const tickCount = Math.max(2, getStaticValue(bar.divisionCount) ?? 2);
+  const configuredDecimalPlaces = getStaticValue(bar.tickLabelDecimalPlaces);
+  const decimalPlaces = configuredDecimalPlaces === undefined
+    ? undefined
+    : Math.max(0, Math.min(15, configuredDecimalPlaces));
+  const reverse = direction === HmiFillDirection.Up || direction === HmiFillDirection.Left;
+  let style = vertical
+    ? "display: flex; flex-direction: column; justify-content: space-between; height: 100%;"
+    : "display: flex; justify-content: space-between; width: 100%;";
+  const labelColor = getStaticValue(bar.labelColor);
+  if (labelColor !== undefined)
+    style += ` color: ${colorToCss(labelColor)};`;
+  style += getBarScaleFontStyle(bar);
+
+  html.push("<div");
+  appendAttribute(html, "data-hmi-bar-scale", "true");
+  appendAttribute(html, "style", style);
+  html.push(">");
+  for (let index = 0; index < tickCount; index++) {
+    let ratio = index / (tickCount - 1);
+    if (reverse)
+      ratio = 1 - ratio;
+    const tick = minimum + ((maximum - minimum) * ratio);
+    const label = decimalPlaces === undefined ? toCss(tick) : tick.toFixed(decimalPlaces);
+    html.push(`<span>${label}</span>`);
+  }
+  html.push("</div>");
+}
+
+function getBarScaleFontStyle(bar: HmiBar): string {
+  const font = bar.labelFont;
+  if (font === undefined)
+    return "";
+  let style = "";
+  const name = getStaticValue(font.name);
+  if (name !== undefined)
+    style += ` font-family: ${name};`;
+  const size = getStaticValue(font.size);
+  if (size !== undefined)
+    style += ` font-size: ${toCss(size)}px;`;
+  if (getStaticValue(font.bold) === true)
+    style += " font-weight: bold;";
+  if (getStaticValue(font.italic) === true)
+    style += " font-style: italic;";
+  if (getStaticValue(font.underline) === true)
+    style += " text-decoration: underline;";
+  return style;
 }
 
 function getBarDirectionStyle(direction: HmiFillDirection): string {
