@@ -352,6 +352,39 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersComboBoxStates()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var comboBox = new HmiComboBox
+        {
+            Name = "ModeCombo",
+            Width = 120,
+            Height = 28,
+            SelectedIndex = 1
+        };
+        comboBox.States.Add(new HmiState
+        {
+            Value = 10,
+            Text = HmiMultilingualText.FromText("Automatic")
+        });
+        comboBox.States.Add(new HmiState
+        {
+            Value = 20,
+            Text = HmiMultilingualText.FromText("Manual")
+        });
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(comboBox);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<select id=\"ModeCombo\"");
+        StringAssert.Contains(html, "<option value=\"10\">Automatic</option>");
+        StringAssert.Contains(html, "<option value=\"20\" selected=\"selected\">Manual</option>");
+        Assert.IsFalse(html.Contains("HmiComboBox", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersBarSliderAndScalePreviews()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
