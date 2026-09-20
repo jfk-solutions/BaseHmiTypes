@@ -603,21 +603,21 @@ test("HTML converter exposes trend configuration to the web component", async ()
 
   assert.match(html, /<hmi-trend-control id="ProcessTrend"/);
   assert.match(html, /chart-title="Pressure &amp; temperature"/);
-  assert.match(html, / display-chart-title/);
-  assert.match(html, / display-pen-icons/);
-  assert.match(html, / display-scroll-mechanism/);
-  assert.match(html, / chart-live-mode/);
-  assert.match(html, / x-axis-scale-visible/);
-  assert.match(html, / x-axis-grid-visible/);
-  assert.match(html, / y-axis-scale-visible/);
+  assert.match(html, /display-chart-title="true"/);
+  assert.match(html, /show-toolbar="false"/);
+  assert.match(html, /display-pen-icons="true"/);
+  assert.match(html, /display-scroll-mechanism="true"/);
+  assert.match(html, /chart-live-mode="true"/);
+  assert.match(html, /auto-scale="false"/);
+  assert.match(html, /x-axis-scale-visible="true"/);
+  assert.match(html, /x-axis-date-visible="false"/);
+  assert.match(html, /x-axis-grid-visible="true"/);
+  assert.match(html, /y-axis-scale-visible="true"/);
+  assert.match(html, /y-axis-grid-visible="false"/);
   assert.match(html, /minimum-value="-5"/);
   assert.match(html, /maximum-value="100"/);
   assert.match(html, /y-axis-decimal-places="2"/);
   assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;marker&quot;:&quot;2&quot;,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}\]"/);
-  assert.doesNotMatch(html, / show-toolbar/);
-  assert.doesNotMatch(html, / auto-scale/);
-  assert.doesNotMatch(html, / x-axis-date-visible/);
-  assert.doesNotMatch(html, / y-axis-grid-visible/);
 });
 
 test("HTML converter renders an inert radar chart preview", async () => {
