@@ -50,6 +50,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? DisplayPenIcons { get; set; }
 
+    /// <summary>Gets or sets whether the pen name is used instead of its configured label.</summary>
+    public HmiProperty<bool>? UseTrendNameAsLabel { get; set; }
+
     public HmiProperty<bool>? AllowScrolling { get; set; }
 
     public HmiProperty<HmiTrendScrollMode>? ScrollMode { get; set; }

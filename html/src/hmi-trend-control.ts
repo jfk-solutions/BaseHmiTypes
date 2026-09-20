@@ -8,6 +8,7 @@ const trendControlProperties = {
   toolbarButtonSize: String,
   showStatusBar: String,
   displayPenIcons: String,
+  useTrendNameAsLabel: String,
   displayValueBar: String,
   displayScrollMechanism: String,
   chartLiveMode: String,
@@ -41,6 +42,7 @@ type TimeLabel = {
 interface TrendPen {
   number: number;
   name?: string;
+  label?: string;
   color?: string;
   visible?: boolean;
   width?: number;
@@ -131,6 +133,7 @@ export class HmiTrendControl extends HTMLElement {
     const toolbarButtonSize = Math.max(1, configuredToolbarButtonSize === 0 ? 28 : configuredToolbarButtonSize);
     const showStatusBar = readBooleanAttribute(this, "show-status-bar", false);
     const displayPenIcons = readBooleanAttribute(this, "display-pen-icons", true);
+    const useTrendNameAsLabel = readBooleanAttribute(this, "use-trend-name-as-label", true);
     const displayValueBar = readBooleanAttribute(this, "display-value-bar", false);
     const displayScrollMechanism = readBooleanAttribute(this, "display-scroll-mechanism", false);
     const chartLiveMode = readBooleanAttribute(this, "chart-live-mode", false);
@@ -371,7 +374,7 @@ export class HmiTrendControl extends HTMLElement {
       </style>
       <div class="frame">
         ${displayChartTitle ? `<div class="title">${escapeHtml(chartTitle)}</div>` : ""}
-        ${showToolbar ? `<div class="toolbar">${renderPenLegend(visiblePens, displayPenIcons)}</div>` : ""}
+        ${showToolbar ? `<div class="toolbar">${renderPenLegend(visiblePens, displayPenIcons, useTrendNameAsLabel)}</div>` : ""}
         ${showStatusBar ? `<div class="status">${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}</div>` : ""}
         <div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -485,11 +488,11 @@ function formatTimeLabel(date: Date, includeDate: boolean): TimeLabel {
   };
 }
 
-function renderPenLegend(pens: readonly TrendPen[], displayIcons: boolean): string {
+function renderPenLegend(pens: readonly TrendPen[], displayIcons: boolean, useTrendNameAsLabel: boolean): string {
   if (pens.length === 0) return `<div class="pen-chip"><span class="pen-name">No configured pens</span></div>`;
   return pens.map((pen, index) => {
     const color = normalizePenColor(pen.color, index);
-    const label = pen.name || `Pen ${pen.number || index + 1}`;
+    const label = (useTrendNameAsLabel ? pen.name : pen.label) || pen.name || `Pen ${pen.number || index + 1}`;
     const unit = pen.unit ? ` (${pen.unit})` : "";
     const markerColor = pen.markerColor ?? color;
     const marker = pen.marker === undefined || pen.marker === "0"
@@ -617,6 +620,7 @@ function parsePens(value: string | null): TrendPen[] {
       const source = entry as Record<string, unknown>;
       const pen: TrendPen = { number: finiteNumber(source.number, index + 1) };
       if (typeof source.name === "string") pen.name = source.name;
+      if (typeof source.label === "string") pen.label = source.label;
       if (typeof source.color === "string") pen.color = source.color;
       if (typeof source.visible === "boolean") pen.visible = source.visible;
       if (typeof source.width === "number" && Number.isFinite(source.width)) pen.width = source.width;
