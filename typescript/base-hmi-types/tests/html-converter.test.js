@@ -128,6 +128,27 @@ test("HTML converter renders item tooltips", async () => {
   assert.match(html, /id="Pump" title="Pump &amp; valve"/);
 });
 
+test("HTML converter renders item tab order", async () => {
+  const rectangle = new HmiRectangle();
+  rectangle.name = "FocusableRectangle";
+  rectangle.width = staticProperty(100);
+  rectangle.height = staticProperty(50);
+  rectangle.tabIndex = staticProperty(7);
+
+  const layer = new HmiLayer();
+  layer.name = "Layer0";
+  layer.items.push(rectangle);
+  const screen = new HmiScreen();
+  screen.name = "Main";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /id="FocusableRectangle" tabindex="7"/);
+});
+
 test("HTML converter renders toggle states and project images", async () => {
   const screen = new HmiScreen();
   screen.id = "main";
