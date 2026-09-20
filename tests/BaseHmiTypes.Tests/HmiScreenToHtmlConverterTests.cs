@@ -845,6 +845,9 @@ public class HmiScreenToHtmlConverterTests
             NumberOfAlarms = 2,
             IsFlashingRequired = true,
             FlashingColor = HmiColor.FromArgb(255, 255, 0, 0),
+            ForegroundColor = HmiColor.FromArgb(255, 32, 48, 64),
+            IsForegroundFlashingRequired = true,
+            FlashingForegroundColor = HmiColor.FromArgb(255, 255, 255, 0),
             FlashingRate = 500,
             ShowAcknowledgedAlarmClasses = new List<int> { 1, 3 },
             ShowPendingAlarmClasses = new List<int> { 2, 4 }
@@ -860,10 +863,14 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-active=\"true\"");
         StringAssert.Contains(html, "data-flashing-required=\"true\"");
         StringAssert.Contains(html, "data-flashing-color=\"#FF0000\"");
+        StringAssert.Contains(html, "data-foreground-flashing-required=\"true\"");
+        StringAssert.Contains(html, "data-flashing-foreground-color=\"#FFFF00\"");
         StringAssert.Contains(html, "data-flashing-rate=\"500\"");
         StringAssert.Contains(html, "--hmi-background-color-off: transparent;");
         StringAssert.Contains(html, "--hmi-background-color-on: #FF0000;");
-        StringAssert.Contains(html, "animation: hmi-background-color-flash 0.5s steps(1, end) infinite;");
+        StringAssert.Contains(html, "--hmi-foreground-color-off: #203040;");
+        StringAssert.Contains(html, "--hmi-foreground-color-on: #FFFF00;");
+        StringAssert.Contains(html, "animation: hmi-background-color-flash 0.5s steps(1, end) infinite, hmi-foreground-color-flash 0.5s steps(1, end) infinite;");
         StringAssert.Contains(html, "data-alarm-state=\"5\"");
         StringAssert.Contains(html, "data-no-alarm-state=\"0\"");
         StringAssert.Contains(html, "data-number-of-alarms=\"2\"");

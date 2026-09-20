@@ -13,6 +13,10 @@ public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 
     public HmiProperty<HmiColor>? FlashingColor { get; set; }
 
+    public HmiProperty<bool>? IsForegroundFlashingRequired { get; set; }
+
+    public HmiProperty<HmiColor>? FlashingForegroundColor { get; set; }
+
     public HmiProperty<int>? FlashingRate { get; set; }
 
     public HmiProperty<int>? AlarmState { get; set; }
