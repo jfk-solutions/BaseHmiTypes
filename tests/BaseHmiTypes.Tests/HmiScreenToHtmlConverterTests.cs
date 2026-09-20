@@ -1933,6 +1933,33 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersSvgBorderFlashing()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiCircle
+        {
+            Name = "FlashingBorder",
+            Width = 100,
+            Height = 40,
+            BorderColor = HmiProperty.Blink(
+                HmiColor.FromArgb(255, 1, 2, 3),
+                HmiColor.FromArgb(255, 4, 5, 6),
+                HmiBlinkRate.Fast),
+            BorderWidth = 2
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "stroke=\"#010203\"");
+        StringAssert.Contains(html, "--hmi-border-color-off: #010203;");
+        StringAssert.Contains(html, "--hmi-border-color-on: #040506;");
+        StringAssert.Contains(html, "animation: hmi-border-color-flash 0.5s steps(1, end) infinite;");
+        StringAssert.Contains(html, "@keyframes hmi-border-color-flash");
+    }
+
+    [TestMethod]
     public void AdvancedDefaults_ResolveTextBorderWidthWithoutMaterializingItOnItem()
     {
         var text = new HmiText
