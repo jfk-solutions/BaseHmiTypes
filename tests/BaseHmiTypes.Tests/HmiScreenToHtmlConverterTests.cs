@@ -56,6 +56,26 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersItemToolTip()
+    {
+        var rectangle = new HmiRectangle
+        {
+            Name = "Pump",
+            Width = 100,
+            Height = 50,
+            ToolTipText = HmiMultilingualText.FromText("Pump & valve")
+        };
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(rectangle);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"Pump\" title=\"Pump &amp; valve\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSymbolicIoFieldStates()
     {
         var symbolicIoField = new HmiSymbolicIOField
