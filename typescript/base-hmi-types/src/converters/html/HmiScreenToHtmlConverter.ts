@@ -2796,6 +2796,15 @@ function appendAlarmIndicator(
   appendAttribute(html, "aria-label", "Alarm indicator");
   appendAttribute(html, "data-active", isActive ? "true" : "false");
   appendStaticValueAttribute(html, "data-visual-state", indicator.visualState);
+  appendStaticValueAttribute(html, "data-group-relevant", indicator.isGroupRelevant);
+  appendStaticValueAttribute(html, "data-significant-mask", indicator.significantMask);
+  appendStaticValueAttribute(html, "data-event-acknowledgement-mask", indicator.eventAcknowledgementMask);
+  appendStaticValueAttribute(html, "data-use-global-alarm-classes", indicator.useGlobalAlarmClasses);
+  appendStaticValueAttribute(html, "data-use-global-settings", indicator.useGlobalSettings);
+  appendStaticValueAttribute(html, "data-user-value-1", indicator.userValue1);
+  appendStaticValueAttribute(html, "data-user-value-2", indicator.userValue2);
+  appendStaticValueAttribute(html, "data-user-value-3", indicator.userValue3);
+  appendStaticValueAttribute(html, "data-user-value-4", indicator.userValue4);
   appendStaticValueAttribute(html, "data-flashing-required", indicator.isFlashingRequired);
   appendStaticValueAttribute(html, "data-flashing-color", indicator.flashingColor);
   appendStaticValueAttribute(html, "data-foreground-flashing-required", indicator.isForegroundFlashingRequired);
