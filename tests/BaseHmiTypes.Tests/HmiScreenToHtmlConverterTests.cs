@@ -3046,6 +3046,10 @@ public class HmiScreenToHtmlConverterTests
             ValueBarColor = HmiColor.FromArgb(255, 0x65, 0x43, 0x21),
             ValueBarWidth = 3,
             ShowValueBarInXAxis = true,
+            DisplayStatisticRulers = true,
+            UseGraphicStatisticRulers = true,
+            StatisticRulerColor = HmiColor.FromArgb(255, 0x22, 0xAA, 0x66),
+            StatisticRulerWidth = 4,
             DisplayScrollMechanism = true,
             ChartLiveMode = true,
             AutoScale = false,
@@ -3140,6 +3144,10 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "value-bar-color=\"#654321\"");
         StringAssert.Contains(html, "value-bar-width=\"3\"");
         StringAssert.Contains(html, "show-value-bar-in-x-axis=\"true\"");
+        StringAssert.Contains(html, "display-statistic-rulers=\"true\"");
+        StringAssert.Contains(html, "use-graphic-statistic-rulers=\"true\"");
+        StringAssert.Contains(html, "statistic-ruler-color=\"#22AA66\"");
+        StringAssert.Contains(html, "statistic-ruler-width=\"4\"");
         StringAssert.Contains(html, "--hmi-trend-value-bar-color: #654321;");
         StringAssert.Contains(html, "--hmi-trend-value-bar-width: 3px;");
         StringAssert.Contains(html, "display-scroll-mechanism=\"true\"");
