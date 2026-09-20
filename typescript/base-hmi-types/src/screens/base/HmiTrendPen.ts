@@ -31,6 +31,8 @@ export class HmiTrendPen {
   uncertainColoring?: HmiProperty<boolean>;
   /** Color used for uncertain-quality values. */
   uncertainColor?: HmiProperty<HmiColor>;
+  /** Whether alarm symbols are displayed for limit violations. */
+  showAlarms?: HmiProperty<boolean>;
   /** Engineering-system marker name or numeric marker identifier. */
   marker?: HmiProperty<string>;
   /** Marker color independently of the trend line color. */
