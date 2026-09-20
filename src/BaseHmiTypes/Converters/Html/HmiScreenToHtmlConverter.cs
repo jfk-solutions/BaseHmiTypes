@@ -234,6 +234,9 @@ public class HmiScreenToHtmlConverter
             case HmiArrowIndicator arrowIndicator:
                 AppendArrowIndicator(html, arrowIndicator, context);
                 break;
+            case HmiAlarmIndicator alarmIndicator:
+                AppendAlarmIndicator(html, alarmIndicator, context);
+                break;
             case HmiGauge gauge:
                 AppendGauge(html, gauge, context);
                 break;
@@ -1925,6 +1928,60 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "tick-color", gauge.TickColor);
         AppendAttribute(html, "label-font", FormatFont(gauge.LabelFont));
         html.Append("></hmi-gauge>");
+    }
+
+    private static void AppendAlarmIndicator(StringBuilder html, HmiAlarmIndicator indicator, HmiHtmlConvertContext context)
+    {
+        var alarmState = indicator.AlarmState is null ? (int?)null : ResolveStaticValue(indicator.AlarmState, context);
+        var noAlarmState = indicator.NoAlarmState is null ? 0 : ResolveStaticValue(indicator.NoAlarmState, context);
+        var numberOfAlarms = indicator.NumberOfAlarms is null ? (int?)null : ResolveStaticValue(indicator.NumberOfAlarms, context);
+        var isActive = alarmState.HasValue && alarmState.Value != noAlarmState;
+        var content = numberOfAlarms is > 0
+            ? numberOfAlarms.Value.ToString(CultureInfo.InvariantCulture)
+            : alarmState.HasValue && isActive ? "!" : string.Empty;
+
+        var style = new StringBuilder("display: flex; align-items: center; justify-content: center; overflow: hidden;");
+        if (isActive && indicator.FlashingColor is not null)
+        {
+            var flashingColor = ResolveStaticValue(indicator.FlashingColor, context);
+            style.Append("box-shadow: inset 0 0 0 0.35em ").Append(ToCss(flashingColor)).Append(';');
+        }
+
+        html.Append("<div");
+        AppendCommonAttributes(html, indicator, context, additionalStyle: style.ToString());
+        AppendAttribute(html, "class", "hmi-alarm-indicator");
+        AppendAttribute(html, "role", "status");
+        AppendAttribute(html, "aria-label", "Alarm indicator");
+        AppendAttribute(html, "data-active", isActive ? "true" : "false");
+        AppendStaticValueAttribute(html, "data-flashing-required", indicator.IsFlashingRequired, context);
+        AppendStaticValueAttribute(html, "data-flashing-color", indicator.FlashingColor, context);
+        AppendStaticValueAttribute(html, "data-flashing-rate", indicator.FlashingRate, context);
+        AppendStaticValueAttribute(html, "data-alarm-state", indicator.AlarmState, context);
+        AppendStaticValueAttribute(html, "data-no-alarm-state", indicator.NoAlarmState, context);
+        AppendStaticValueAttribute(html, "data-number-of-alarms", indicator.NumberOfAlarms, context);
+        AppendIntegerListAttribute(html, "data-show-acknowledged-alarm-classes", indicator.ShowAcknowledgedAlarmClasses, context);
+        AppendIntegerListAttribute(html, "data-show-pending-alarm-classes", indicator.ShowPendingAlarmClasses, context);
+        html.Append('>').Append(content).Append("</div>");
+    }
+
+    private static void AppendStaticValueAttribute<T>(
+        StringBuilder html,
+        string name,
+        HmiProperty<T>? property,
+        HmiHtmlConvertContext context)
+    {
+        if (property is not null)
+            AppendAttribute(html, name, FormatAttributeValue(ResolveStaticValue(property, context)));
+    }
+
+    private static void AppendIntegerListAttribute(
+        StringBuilder html,
+        string name,
+        HmiProperty<IList<int>>? property,
+        HmiHtmlConvertContext context)
+    {
+        if (property is not null)
+            AppendAttribute(html, name, string.Join(",", ResolveStaticValue(property, context) ?? Array.Empty<int>()));
     }
 
     private static void AppendTrendControl(StringBuilder html, HmiTrendControl trendControl, HmiHtmlConvertContext context)
