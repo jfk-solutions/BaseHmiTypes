@@ -2002,7 +2002,14 @@ public class HmiScreenToHtmlConverter
     private static void AppendFillPatternStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
         var pattern = GetFillPattern(item, context);
-        if (pattern is null or HmiFillPattern.Solid)
+        if (pattern is null)
+            return;
+        AppendFillPatternStyle(html, pattern.Value, GetPatternColor(item, context));
+    }
+
+    private static void AppendFillPatternStyle(StringBuilder html, HmiFillPattern pattern, HmiColor patternColor)
+    {
+        if (pattern == HmiFillPattern.Solid)
             return;
         if (pattern == HmiFillPattern.Transparent)
         {
@@ -2010,7 +2017,7 @@ public class HmiScreenToHtmlConverter
             return;
         }
 
-        var color = ToCss(GetPatternColor(item, context));
+        var color = ToCss(patternColor);
         var image = pattern switch
         {
             HmiFillPattern.Checkers => $"conic-gradient({color} 25%, transparent 0 50%, {color} 0 75%, transparent 0)",
@@ -2812,6 +2819,11 @@ public class HmiScreenToHtmlConverter
     {
         if (screen.BackgroundColor != null)
             html.Append("background-color: ").Append(ToCss(screen.BackgroundColor.StaticValue)).Append(";");
+        if (screen.FillPattern is not null)
+            AppendFillPatternStyle(
+                html,
+                screen.FillPattern.StaticValue,
+                screen.PatternColor?.StaticValue ?? HmiColor.FromArgb(255, 0, 0, 0));
     }
 
     private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)

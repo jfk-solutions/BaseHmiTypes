@@ -1492,6 +1492,27 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersScreenFillPattern()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "main",
+            Name = "Main",
+            Width = 320,
+            Height = 200,
+            BackgroundColor = HmiColor.FromArgb(255, 255, 255, 255),
+            PatternColor = HmiColor.FromArgb(255, 0, 64, 128),
+            FillPattern = HmiFillPattern.Checkers
+        };
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "background-color: #FFFFFF;");
+        StringAssert.Contains(html, "background-image: conic-gradient(#004080 25%, transparent 0 50%, #004080 0 75%, transparent 0);");
+        StringAssert.Contains(html, "background-size: 8px 8px;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersPaintedItemPadding()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
