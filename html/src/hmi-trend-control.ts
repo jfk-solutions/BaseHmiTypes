@@ -63,6 +63,7 @@ interface TrendPen {
   markerSize?: number;
   minimum?: number;
   maximum?: number;
+  axisScaleType?: number;
   unit?: string;
 }
 
@@ -128,6 +129,7 @@ export class HmiTrendControl extends HTMLElement {
     const minimumValue = readNumberAttribute(this, "minimum-value", firstPen?.minimum ?? 0);
     const maximumCandidate = readNumberAttribute(this, "maximum-value", firstPen?.maximum ?? 100);
     const maximumValue = maximumCandidate === minimumValue ? minimumValue + 1 : maximumCandidate;
+    const axisScaleType = firstPen?.axisScaleType ?? 0;
     const decimalPlaces = clamp(Math.trunc(readNumberAttribute(this, "y-axis-decimal-places", 0)), 0, 12);
     const displayChartTitle = readBooleanAttribute(this, "display-chart-title", false);
     const showToolbar = readBooleanAttribute(this, "show-toolbar", true);
@@ -388,9 +390,9 @@ export class HmiTrendControl extends HTMLElement {
             ${renderGrid(xAxisGridVisible, yAxisGridVisible, majorGridVisible, minorGridVisible)}
             ${xAxisVisible ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
-            ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped)}
+            ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, axisScaleType)}
           </svg>
-          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces) : ""}
+          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, axisScaleType) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
           ${xAxisVisible ? renderXLabels(labels) : ""}
@@ -428,11 +430,11 @@ function renderGrid(
   return lines.join("");
 }
 
-function renderYLabels(minimum: number, maximum: number, decimalPlaces: number): string {
+function renderYLabels(minimum: number, maximum: number, decimalPlaces: number, axisScaleType: number): string {
   const labels: string[] = [];
   for (let index = 0; index <= 5; index++) {
     const ratio = index / 5;
-    const value = maximum - (maximum - minimum) * ratio;
+    const value = valueAtYAxisPosition(ratio * 100, minimum, maximum, axisScaleType);
     labels.push(`<span class="axis-label y-label" style="top:${toCss(ratio * 100)}%">${escapeHtml(value.toFixed(decimalPlaces))}</span>`);
   }
   return labels.join("");
@@ -528,6 +530,7 @@ function renderPens(
   minimumValue: number,
   maximumValue: number,
   xAxisFlipped: boolean,
+  axisScaleType: number,
 ): string {
   return pens.map((pen, index) => {
     const color = normalizePenColor(pen.color, index);
@@ -538,7 +541,11 @@ function renderPens(
       const x = xAxisFlipped ? 100 - point * 5 : point * 5;
       const y = 50 - Math.sin((point + index * 3) * 0.55) * amplitude + (index % 8) * 3;
       const clippedY = clamp(y, 3, 97);
-      points.push({ x, y: clippedY, value: maximumValue - clippedY / 100 * (maximumValue - minimumValue) });
+      points.push({
+        x,
+        y: clippedY,
+        value: valueAtYAxisPosition(clippedY, minimumValue, maximumValue, axisScaleType),
+      });
     }
     const pointText = trendPointText(points, pen.lineType);
     const markerColor = pen.markerColor ?? color;
@@ -553,6 +560,22 @@ function renderPens(
     const line = renderTrendLine(pen, points, pointText, color, width);
     return `${area}${line}${markers}`;
   }).join("");
+}
+
+function valueAtYAxisPosition(
+  y: number,
+  minimumValue: number,
+  maximumValue: number,
+  axisScaleType: number,
+): number {
+  const ratio = y / 100;
+  if (axisScaleType === 1 && minimumValue > 0 && maximumValue > 0) {
+    return Math.exp(Math.log(maximumValue) - ratio * (Math.log(maximumValue) - Math.log(minimumValue)));
+  }
+  if (axisScaleType === 2 && minimumValue < 0 && maximumValue < 0) {
+    return -Math.exp(Math.log(Math.abs(maximumValue)) + ratio * (Math.log(Math.abs(minimumValue)) - Math.log(Math.abs(maximumValue))));
+  }
+  return maximumValue - ratio * (maximumValue - minimumValue);
 }
 
 function trendPointText(points: ReadonlyArray<{ x: number; y: number }>, lineType: number | undefined): string {
@@ -662,6 +685,7 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.markerSize === "number" && Number.isFinite(source.markerSize)) pen.markerSize = source.markerSize;
       if (typeof source.minimum === "number" && Number.isFinite(source.minimum)) pen.minimum = source.minimum;
       if (typeof source.maximum === "number" && Number.isFinite(source.maximum)) pen.maximum = source.maximum;
+      if (typeof source.axisScaleType === "number" && Number.isFinite(source.axisScaleType)) pen.axisScaleType = source.axisScaleType;
       if (typeof source.unit === "string") pen.unit = source.unit;
       return [pen];
     });
