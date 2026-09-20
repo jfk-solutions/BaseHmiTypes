@@ -51,6 +51,7 @@ import {
   HmiSystemDiagnosisViewKind,
   HmiScale,
   HmiScreen,
+  HmiScreenWindow,
   HmiScreenToHtmlConverter,
   HmiState,
   HmiSlider,
@@ -71,6 +72,69 @@ class ImageProject extends HmiProjectBase {
     return this.images.get(id);
   }
 }
+
+class ScreenProject extends HmiProjectBase {
+  screensById = new Map();
+
+  async getScreen(id) {
+    return this.screensById.get(id);
+  }
+}
+
+test("HTML converter renders screen-window viewport modes", async () => {
+  const main = new HmiScreen();
+  main.name = "Main";
+  const layer = new HmiLayer();
+  layer.name = "Default";
+
+  const fitPicture = new HmiScreenWindow();
+  fitPicture.name = "FitPicture";
+  fitPicture.screenId = staticProperty("detail");
+  fitPicture.width = staticProperty(200);
+  fitPicture.height = staticProperty(100);
+  fitPicture.fitScreenToWindow = staticProperty(true);
+  fitPicture.showScrollBars = staticProperty(true);
+  layer.items.push(fitPicture);
+
+  const fitWindow = new HmiScreenWindow();
+  fitWindow.name = "FitWindow";
+  fitWindow.screenId = staticProperty("detail");
+  fitWindow.width = staticProperty(50);
+  fitWindow.height = staticProperty(50);
+  fitWindow.fitWindowToScreen = staticProperty(true);
+  fitWindow.zoomPercent = staticProperty(150);
+  layer.items.push(fitWindow);
+
+  const scrollWindow = new HmiScreenWindow();
+  scrollWindow.name = "ScrollWindow";
+  scrollWindow.screenId = staticProperty("detail");
+  scrollWindow.width = staticProperty(50);
+  scrollWindow.height = staticProperty(50);
+  scrollWindow.showScrollBars = staticProperty(true);
+  scrollWindow.zoomPercent = staticProperty(125);
+  layer.items.push(scrollWindow);
+  main.layers.push(layer);
+
+  const detail = new HmiScreen();
+  detail.id = "detail";
+  detail.name = "Detail";
+  detail.width = staticProperty(400);
+  detail.height = staticProperty(200);
+  const project = new ScreenProject();
+  project.screensById.set("detail", detail);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(main, project);
+
+  assert.match(html, /data-fit-screen-to-window data-show-scrollbars id="FitPicture"/);
+  assert.match(html, /width: 200px; height: 100px; overflow: hidden;/);
+  assert.match(html, /transform: scale\(0\.5, 0\.5\);/);
+  assert.match(html, /data-fit-window-to-screen data-zoom-percent="150" id="FitWindow"/);
+  assert.match(html, /width: 600px;height: 300px;overflow: hidden;/);
+  assert.match(html, /transform: scale\(1\.5, 1\.5\);/);
+  assert.match(html, /data-show-scrollbars data-zoom-percent="125" id="ScrollWindow"/);
+  assert.match(html, /overflow: auto;/);
+  assert.match(html, /transform: scale\(1\.25, 1\.25\);/);
+});
 
 test("HTML converter renders item opacity", async () => {
   const rectangle = new HmiRectangle();

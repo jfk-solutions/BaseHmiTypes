@@ -608,7 +608,11 @@ export class HmiScreenToHtmlConverter {
       resolved = await project.getScreen(screenName, signal);
     }
     html.push("<div");
-    appendCommonAttributes(html, screenWindow, context);
+    appendStaticAttribute(html, "data-fit-screen-to-window", screenWindow.fitScreenToWindow);
+    appendStaticAttribute(html, "data-fit-window-to-screen", screenWindow.fitWindowToScreen);
+    appendStaticAttribute(html, "data-show-scrollbars", screenWindow.showScrollBars);
+    appendStaticAttribute(html, "data-zoom-percent", screenWindow.zoomPercent);
+    appendCommonAttributes(html, screenWindow, context, true, createScreenWindowStyle(screenWindow, resolved));
     html.push(">");
     if (resolved === undefined) {
       html.push("<div");
@@ -621,19 +625,87 @@ export class HmiScreenToHtmlConverter {
       appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);
       html.push(">Recursive screen reference</div>");
     } else {
+      const contentStyle = createScreenWindowContentStyle(screenWindow, resolved);
+      if (contentStyle !== undefined) {
+        html.push('<div class="hmi-screen-window-content"');
+        appendAttribute(html, "style", contentStyle);
+        html.push("<div");
+        appendAttribute(html, "style", createScreenWindowTransformStyle(screenWindow, resolved));
+        html.push(">");
+      }
       html.push(await this.convertCoreAsync(
-        resolved,
-        project,
-        context,
-        false,
-        screenStack,
-        `${key}/subscreen`,
-        includeInspectionAttributes,
-        signal,
-      ));
+          resolved,
+          project,
+          context,
+          false,
+          screenStack,
+          `${key}/subscreen`,
+          includeInspectionAttributes,
+          signal,
+        ));
+      if (contentStyle !== undefined) {
+        html.push("</div></div>");
+      }
     }
     html.push("</div>");
   }
+}
+
+function createScreenWindowStyle(screenWindow: HmiScreenWindow, resolved: HmiScreenBase | undefined): string {
+  const fitScreen = getStaticValueOrDefault(screenWindow.fitScreenToWindow, false);
+  const fitWindow = getStaticValueOrDefault(screenWindow.fitWindowToScreen, false);
+  const showScrollBars = getStaticValueOrDefault(screenWindow.showScrollBars, false);
+  const zoom = getScreenWindowZoom(screenWindow);
+  let style = "";
+  if (fitWindow && !fitScreen && resolved !== undefined) {
+    style += `width: ${toCss(getStaticValueOrDefault(resolved.width, 0) * zoom)}px;`;
+    style += `height: ${toCss(getStaticValueOrDefault(resolved.height, 0) * zoom)}px;`;
+  }
+  style += showScrollBars && !fitScreen && !fitWindow ? "overflow: auto;" : "overflow: hidden;";
+  return style;
+}
+
+function createScreenWindowContentStyle(
+  screenWindow: HmiScreenWindow,
+  resolved: HmiScreenBase,
+): string | undefined {
+  const fitScreen = getStaticValueOrDefault(screenWindow.fitScreenToWindow, false);
+  const zoom = getScreenWindowZoom(screenWindow);
+  const screenWidth = getStaticValueOrDefault(resolved.width, 0);
+  const screenHeight = getStaticValueOrDefault(resolved.height, 0);
+  const windowWidth = getStaticValueOrDefault(screenWindow.width, 0);
+  const windowHeight = getStaticValueOrDefault(screenWindow.height, 0);
+  let scaleX: number;
+  let scaleY: number;
+  if (fitScreen && screenWidth > 0 && screenHeight > 0) {
+    scaleX = windowWidth / screenWidth;
+    scaleY = windowHeight / screenHeight;
+  } else if (Math.abs(zoom - 1) > 0.000001) {
+    scaleX = zoom;
+    scaleY = zoom;
+  } else {
+    return undefined;
+  }
+  return `position: relative; width: ${toCss(screenWidth * scaleX)}px; height: ${toCss(screenHeight * scaleY)}px; overflow: hidden;`;
+}
+
+function createScreenWindowTransformStyle(screenWindow: HmiScreenWindow, resolved: HmiScreenBase): string {
+  const fitScreen = getStaticValueOrDefault(screenWindow.fitScreenToWindow, false);
+  const screenWidth = getStaticValueOrDefault(resolved.width, 0);
+  const screenHeight = getStaticValueOrDefault(resolved.height, 0);
+  const zoom = getScreenWindowZoom(screenWindow);
+  const scaleX = fitScreen && screenWidth > 0
+    ? getStaticValueOrDefault(screenWindow.width, 0) / screenWidth
+    : zoom;
+  const scaleY = fitScreen && screenHeight > 0
+    ? getStaticValueOrDefault(screenWindow.height, 0) / screenHeight
+    : zoom;
+  return `position: absolute; left: 0; top: 0; transform-origin: top left; transform: scale(${toCss(scaleX)}, ${toCss(scaleY)});`;
+}
+
+function getScreenWindowZoom(screenWindow: HmiScreenWindow): number {
+  const zoomPercent = getStaticValueOrDefault(screenWindow.zoomPercent, 0);
+  return zoomPercent > 0 ? zoomPercent / 100 : 1;
 }
 
 async function resolveTemplateAsync(

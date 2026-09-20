@@ -16,4 +16,8 @@ export class HmiScreenWindow extends HmiWindowBase {
   isModal?: HmiProperty<boolean>;
   offsetLeft?: HmiProperty<number>;
   offsetTop?: HmiProperty<number>;
+  fitScreenToWindow?: HmiProperty<boolean>;
+  fitWindowToScreen?: HmiProperty<boolean>;
+  showScrollBars?: HmiProperty<boolean>;
+  zoomPercent?: HmiProperty<number>;
 }
