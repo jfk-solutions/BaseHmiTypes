@@ -2254,6 +2254,8 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-vertical-scrollbar", ResolvePropertyPreview(alarmControl.ShowVerticalScrollbar, context));
         AppendAttribute(html, "data-table-background-color", ResolvePropertyPreview(alarmControl.TableBackgroundColor, context));
         AppendAttribute(html, "data-table-foreground-color", ResolvePropertyPreview(alarmControl.TableForegroundColor, context));
+        AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(alarmControl.AlternatingRowBackgroundColor, context));
+        AppendAttribute(html, "data-alternating-row-foreground-color", ResolvePropertyPreview(alarmControl.AlternatingRowForegroundColor, context));
         AppendAttribute(html, "data-table-header-background-color", ResolvePropertyPreview(alarmControl.TableHeaderBackgroundColor, context));
         AppendAttribute(html, "data-table-header-foreground-color", ResolvePropertyPreview(alarmControl.TableHeaderForegroundColor, context));
         AppendAttribute(html, "data-table-header-horizontal-alignment", ResolvePropertyPreview(alarmControl.TableHeaderHorizontalAlignment, context));
@@ -2279,7 +2281,7 @@ public class HmiScreenToHtmlConverter
             html.Append("</div>");
         }
 
-        html.Append("<table style=\"").Append(CreateAlarmTableStyle(alarmControl, context)).Append("\">");
+        html.Append("<table class=\"hmi-alarm-table\" style=\"").Append(CreateAlarmTableStyle(alarmControl, context)).Append("\">");
         var gridCellStyle = CreateAlarmGridCellStyle(alarmControl, context);
         if (showHeader)
         {
@@ -3386,6 +3388,12 @@ public class HmiScreenToHtmlConverter
             style.Append("background-color: ").Append(ToCss(ResolveStaticValue(alarmControl.TableBackgroundColor, context))).Append(';');
         if (alarmControl.TableForegroundColor is not null)
             style.Append("color: ").Append(ToCss(ResolveStaticValue(alarmControl.TableForegroundColor, context))).Append(';');
+        if (alarmControl.AlternatingRowBackgroundColor is not null)
+            style.Append("--hmi-alarm-alternating-row-background: ")
+                .Append(ToCss(ResolveStaticValue(alarmControl.AlternatingRowBackgroundColor, context))).Append(';');
+        if (alarmControl.AlternatingRowForegroundColor is not null)
+            style.Append("--hmi-alarm-alternating-row-foreground: ")
+                .Append(ToCss(ResolveStaticValue(alarmControl.AlternatingRowForegroundColor, context))).Append(';');
         return style.ToString();
     }
 

@@ -1358,6 +1358,8 @@ public class HmiScreenToHtmlConverterTests
             ShowVerticalScrollbar = false,
             TableBackgroundColor = HmiColor.FromArgb(255, 0x10, 0x20, 0x30),
             TableForegroundColor = HmiColor.FromArgb(255, 0xE0, 0xD0, 0xC0),
+            AlternatingRowBackgroundColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56),
+            AlternatingRowForegroundColor = HmiColor.FromArgb(255, 0xAB, 0xCD, 0xEF),
             TableHeaderBackgroundColor = HmiColor.FromArgb(255, 0xE3, 0xE3, 0xE3),
             TableHeaderForegroundColor = HmiColor.FromArgb(255, 0x01, 0x02, 0x03),
             TableHeaderHorizontalAlignment = HmiHorizontalAlignment.Center,
@@ -1453,6 +1455,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "overflow-x: auto;overflow-y: hidden;");
         StringAssert.Contains(html, "data-table-background-color=\"#102030\"");
         StringAssert.Contains(html, "data-table-foreground-color=\"#E0D0C0\"");
+        StringAssert.Contains(html, "data-alternating-row-background-color=\"#123456\"");
+        StringAssert.Contains(html, "data-alternating-row-foreground-color=\"#ABCDEF\"");
         StringAssert.Contains(html, "data-table-header-background-color=\"#E3E3E3\"");
         StringAssert.Contains(html, "data-table-header-foreground-color=\"#010203\"");
         StringAssert.Contains(html, "data-table-header-horizontal-alignment=\"Center\"");
@@ -1463,7 +1467,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-status-bar-background-color=\"#213243\"");
         StringAssert.Contains(html, "data-status-bar-foreground-color=\"#FEDCBA\"");
         StringAssert.Contains(html, "--hmi-grid-line-color: #445566;");
-        StringAssert.Contains(html, "background-color: #102030;color: #E0D0C0;");
+        StringAssert.Contains(html, "class=\"hmi-alarm-table\" style=\"width: 100%; border-collapse: collapse; table-layout: fixed;background-color: #102030;color: #E0D0C0;--hmi-alarm-alternating-row-background: #123456;--hmi-alarm-alternating-row-foreground: #ABCDEF;");
+        StringAssert.Contains(html, ".hmi-alarm-table tbody tr:nth-child(even)>td{background-color:var(--hmi-alarm-alternating-row-background,inherit);color:var(--hmi-alarm-alternating-row-foreground,inherit);");
         StringAssert.Contains(html, "border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: 0px 2px;");
         StringAssert.Contains(html, "background-color: #708090;color: #F1F2F3;");
         StringAssert.Contains(html, "font-family: Arial;font-size: 9.75px;font-weight: 400;");
