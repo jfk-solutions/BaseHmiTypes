@@ -851,6 +851,7 @@ public class HmiScreenToHtmlConverterTests
             UserValue2 = 12,
             UserValue3 = 13,
             UserValue4 = 14,
+            SelectedMessageClass = 3,
             NoAlarmState = 0,
             NumberOfAlarms = 2,
             IsFlashingRequired = true,
@@ -862,6 +863,18 @@ public class HmiScreenToHtmlConverterTests
             ShowAcknowledgedAlarmClasses = new List<int> { 1, 3 },
             ShowPendingAlarmClasses = new List<int> { 2, 4 }
         };
+        indicator.MessageClassAppearances.Add(new HmiAlarmIndicatorMessageClassAppearance
+        {
+            Index = 1,
+            IsTextFlashingRequired = true,
+            IsBackgroundFlashingRequired = false
+        });
+        indicator.MessageClassAppearances.Add(new HmiAlarmIndicatorMessageClassAppearance
+        {
+            Index = 2,
+            IsTextFlashingRequired = false,
+            IsBackgroundFlashingRequired = true
+        });
         var layer = new HmiLayer { Name = "Layer 1" };
         layer.Items.Add(indicator);
         screen.Layers.Add(layer);
@@ -881,6 +894,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-user-value-2=\"12\"");
         StringAssert.Contains(html, "data-user-value-3=\"13\"");
         StringAssert.Contains(html, "data-user-value-4=\"14\"");
+        StringAssert.Contains(html, "data-selected-message-class=\"3\"");
+        StringAssert.Contains(html, "data-text-flashing-message-classes=\"1\"");
+        StringAssert.Contains(html, "data-background-flashing-message-classes=\"2\"");
         StringAssert.Contains(html, "data-flashing-required=\"true\"");
         StringAssert.Contains(html, "data-flashing-color=\"#FF0000\"");
         StringAssert.Contains(html, "data-foreground-flashing-required=\"true\"");

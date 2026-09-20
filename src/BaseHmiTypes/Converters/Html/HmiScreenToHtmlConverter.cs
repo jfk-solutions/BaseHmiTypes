@@ -2963,6 +2963,15 @@ public class HmiScreenToHtmlConverter
         AppendStaticValueAttribute(html, "data-user-value-2", indicator.UserValue2, context);
         AppendStaticValueAttribute(html, "data-user-value-3", indicator.UserValue3, context);
         AppendStaticValueAttribute(html, "data-user-value-4", indicator.UserValue4, context);
+        AppendStaticValueAttribute(html, "data-selected-message-class", indicator.SelectedMessageClass, context);
+        AppendAttribute(html, "data-text-flashing-message-classes", string.Join(",", indicator.MessageClassAppearances
+            .Where(x => x.IsTextFlashingRequired is not null && ResolveStaticValue(x.IsTextFlashingRequired, context))
+            .OrderBy(x => x.Index)
+            .Select(x => x.Index.ToString(CultureInfo.InvariantCulture))));
+        AppendAttribute(html, "data-background-flashing-message-classes", string.Join(",", indicator.MessageClassAppearances
+            .Where(x => x.IsBackgroundFlashingRequired is not null && ResolveStaticValue(x.IsBackgroundFlashingRequired, context))
+            .OrderBy(x => x.Index)
+            .Select(x => x.Index.ToString(CultureInfo.InvariantCulture))));
         AppendStaticValueAttribute(html, "data-flashing-required", indicator.IsFlashingRequired, context);
         AppendStaticValueAttribute(html, "data-flashing-color", indicator.FlashingColor, context);
         AppendStaticValueAttribute(html, "data-foreground-flashing-required", indicator.IsForegroundFlashingRequired, context);

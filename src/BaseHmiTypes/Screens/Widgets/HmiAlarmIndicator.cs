@@ -41,6 +41,10 @@ public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 
     public HmiProperty<int>? UserValue4 { get; set; }
 
+    public HmiProperty<int>? SelectedMessageClass { get; set; }
+
+    public IList<HmiAlarmIndicatorMessageClassAppearance> MessageClassAppearances { get; } = [];
+
     public HmiProperty<int>? NoAlarmState { get; set; }
 
     public HmiProperty<int>? NumberOfAlarms { get; set; }
