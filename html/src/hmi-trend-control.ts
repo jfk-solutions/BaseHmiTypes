@@ -11,6 +11,7 @@ const trendControlProperties = {
   displayPenIcons: String,
   useTrendNameAsLabel: String,
   displayValueBar: String,
+  useGraphicValueBar: String,
   showValueBarInXAxis: String,
   displayStatisticRulers: String,
   useGraphicStatisticRulers: String,
@@ -157,6 +158,13 @@ export class HmiTrendControl extends HTMLElement {
     const displayPenIcons = readBooleanAttribute(this, "display-pen-icons", true);
     const useTrendNameAsLabel = readBooleanAttribute(this, "use-trend-name-as-label", true);
     const displayValueBar = readBooleanAttribute(this, "display-value-bar", false);
+    const useGraphicValueBar = readBooleanAttribute(this, "use-graphic-value-bar", false);
+    const valueBarColor = useGraphicValueBar
+      ? normalizeTransparent(this.getAttribute("value-bar-color") ?? "", "#000000")
+      : "#000000";
+    const valueBarWidth = useGraphicValueBar
+      ? Math.max(1, readNumberAttribute(this, "value-bar-width", 1))
+      : 1;
     const showValueBarInXAxis = readBooleanAttribute(this, "show-value-bar-in-x-axis", false);
     const displayStatisticRulers = readBooleanAttribute(this, "display-statistic-rulers", false);
     const useGraphicStatisticRulers = readBooleanAttribute(this, "use-graphic-statistic-rulers", false);
@@ -340,9 +348,9 @@ export class HmiTrendControl extends HTMLElement {
           top: ${showValueBarInXAxis && xAxisVisible && xAxisAlignment === "top" ? "-2.4em" : "0"};
           bottom: ${showValueBarInXAxis && xAxisVisible && xAxisAlignment === "bottom" ? "-2.4em" : "0"};
           left: 50%;
-          width: var(--hmi-trend-value-bar-width, 1px);
+          width: ${toCss(valueBarWidth)}px;
           transform: translateX(-50%);
-          background: var(--hmi-trend-value-bar-color, ${escapeCss(foregroundColor)});
+          background: ${escapeCss(valueBarColor)};
           pointer-events: none;
         }
 
