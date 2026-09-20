@@ -2738,13 +2738,17 @@ function appendAlarmIndicator(
   const noAlarmState = getStaticValue(indicator.noAlarmState) ?? 0;
   const numberOfAlarms = getStaticValue(indicator.numberOfAlarms);
   const text = getStaticValue(indicator.text);
+  const isLocked = getStaticValue(indicator.isLocked) === true;
+  const lockedText = getStaticValue(indicator.lockedText);
   const isActive = alarmState !== undefined && alarmState !== noAlarmState;
   const isFlashingRequired = getStaticValue(indicator.isFlashingRequired) === true;
-  const content = numberOfAlarms !== undefined && numberOfAlarms > 0
-    ? numberOfAlarms.toString()
-    : text
-      ? text
-      : alarmState !== undefined && isActive ? "!" : "";
+  const content = isLocked && lockedText
+    ? lockedText
+    : numberOfAlarms !== undefined && numberOfAlarms > 0
+      ? numberOfAlarms.toString()
+      : text
+        ? text
+        : alarmState !== undefined && isActive ? "!" : "";
 
   let style = "display: flex; overflow: hidden;";
   if (indicator.verticalAlignment === undefined) style += "align-items: center;";
@@ -2762,6 +2766,10 @@ function appendAlarmIndicator(
       style += `box-shadow: inset 0 0 0 0.35em ${colorToCss(flashingColor)};`;
     }
   }
+  const lockedForegroundColor = getStaticValue(indicator.lockedForegroundColor);
+  if (isLocked && lockedForegroundColor !== undefined) style += `color: ${colorToCss(lockedForegroundColor)};`;
+  const lockedBackgroundColor = getStaticValue(indicator.lockedBackgroundColor);
+  if (isLocked && lockedBackgroundColor !== undefined) style += `background-color: ${colorToCss(lockedBackgroundColor)};`;
 
   html.push("<div");
   appendCommonAttributes(html, indicator, context, true, style);
@@ -2777,6 +2785,10 @@ function appendAlarmIndicator(
   appendStaticValueAttribute(html, "data-number-of-alarms", indicator.numberOfAlarms);
   appendStaticValueAttribute(html, "data-text", indicator.text);
   appendStaticValueAttribute(html, "data-equal-segment-widths", indicator.useEqualSegmentWidths);
+  appendStaticValueAttribute(html, "data-locked", indicator.isLocked);
+  appendStaticValueAttribute(html, "data-locked-text", indicator.lockedText);
+  appendStaticValueAttribute(html, "data-locked-foreground-color", indicator.lockedForegroundColor);
+  appendStaticValueAttribute(html, "data-locked-background-color", indicator.lockedBackgroundColor);
   if (indicator.segments.length > 0) appendAttribute(html, "data-segment-count", indicator.segments.length.toString());
   appendIntegerListAttribute(html, "data-show-acknowledged-alarm-classes", indicator.showAcknowledgedAlarmClasses);
   appendIntegerListAttribute(html, "data-show-pending-alarm-classes", indicator.showPendingAlarmClasses);
