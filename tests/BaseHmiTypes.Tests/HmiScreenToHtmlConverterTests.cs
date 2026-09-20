@@ -2944,6 +2944,16 @@ public class HmiScreenToHtmlConverterTests
                 Italic = true
             },
             ShowToolbar = false,
+            ShowStatusBar = true,
+            StatusBarBackgroundColor = HmiColor.FromArgb(255, 16, 32, 48),
+            StatusBarForegroundColor = HmiColor.FromArgb(255, 224, 208, 192),
+            StatusBarFont = new HmiFont
+            {
+                Name = "Tahoma",
+                Size = 8,
+                Weight = 600,
+                Italic = true
+            },
             DisplayPenIcons = true,
             DisplayScrollMechanism = true,
             ChartLiveMode = true,
@@ -2985,6 +2995,10 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "--hmi-trend-content-font-family: Arial;--hmi-trend-content-font-size: 9px;--hmi-trend-content-font-weight: 400;");
         StringAssert.Contains(html, "--hmi-trend-header-font-family: Siemens Sans;--hmi-trend-header-font-size: 11px;--hmi-trend-header-font-weight: 700;--hmi-trend-header-font-style: italic;");
         StringAssert.Contains(html, "show-toolbar=\"false\"");
+        StringAssert.Contains(html, "show-status-bar=\"true\"");
+        StringAssert.Contains(html, "--hmi-trend-status-background: #102030;");
+        StringAssert.Contains(html, "--hmi-trend-status-foreground: #E0D0C0;");
+        StringAssert.Contains(html, "--hmi-trend-status-font-family: Tahoma;--hmi-trend-status-font-size: 8px;--hmi-trend-status-font-weight: 600;--hmi-trend-status-font-style: italic;");
         StringAssert.Contains(html, "display-pen-icons=\"true\"");
         StringAssert.Contains(html, "display-scroll-mechanism=\"true\"");
         StringAssert.Contains(html, "chart-live-mode=\"true\"");
