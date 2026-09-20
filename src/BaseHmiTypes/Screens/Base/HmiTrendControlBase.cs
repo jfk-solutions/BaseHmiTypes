@@ -124,6 +124,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? MinorGridColor { get; set; }
 
+    /// <summary>Gets or sets whether the main grid uses the foreground pen color.</summary>
+    public HmiProperty<bool>? GridInTrendColor { get; set; }
+
     public HmiProperty<int>? XAxisMajorGridLineCount { get; set; }
 
     public HmiProperty<int>? XAxisMinorGridLineCount { get; set; }

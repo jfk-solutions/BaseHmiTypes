@@ -24,6 +24,7 @@ const trendControlProperties = {
   xAxisGridVisible: String,
   majorGridVisible: String,
   minorGridVisible: String,
+  gridInTrendColor: String,
   yAxisScaleVisible: String,
   yAxisAlignment: String,
   yAxisLabel: String,
@@ -167,6 +168,7 @@ export class HmiTrendControl extends HTMLElement {
     const xAxisGridVisible = readBooleanAttribute(this, "x-axis-grid-visible", true);
     const majorGridVisible = readBooleanAttribute(this, "major-grid-visible", true);
     const minorGridVisible = readBooleanAttribute(this, "minor-grid-visible", true);
+    const gridInTrendColor = readBooleanAttribute(this, "grid-in-trend-color", false);
     const yAxisVisible = readBooleanAttribute(this, "y-axis-scale-visible", true);
     const yAxisAlignment = this.getAttribute("y-axis-alignment")?.toLowerCase() === "right" ? "right" : "left";
     const yAxisLabel = this.getAttribute("y-axis-label") ?? "";
@@ -397,7 +399,13 @@ export class HmiTrendControl extends HTMLElement {
         ${showStatusBar ? `<div class="status">${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}</div>` : ""}
         <div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            ${renderGrid(xAxisGridVisible, yAxisGridVisible, majorGridVisible, minorGridVisible)}
+            ${renderGrid(
+              xAxisGridVisible,
+              yAxisGridVisible,
+              majorGridVisible,
+              minorGridVisible,
+              gridInTrendColor && firstPen !== undefined ? normalizePenColor(firstPen.color, 0) : undefined,
+            )}
             ${xAxisVisible ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, axisScaleType, exponentialFormat, decimalPlaces)}
@@ -419,6 +427,7 @@ function renderGrid(
   horizontalVisible: boolean,
   majorVisible: boolean,
   minorVisible: boolean,
+  trendColor: string | undefined,
 ): string {
   const lines: string[] = [];
   if (horizontalVisible) {
@@ -426,7 +435,10 @@ function renderGrid(
       const major = index % 2 === 0;
       if ((major && !majorVisible) || (!major && !minorVisible)) continue;
       const y = index * 10;
-      lines.push(`<line x1="0" y1="${y}" x2="100" y2="${y}" stroke="var(--hmi-trend-${major ? "major" : "minor"}-grid-color, ${major ? "#c8c8c8" : "#dedede"})" stroke-width="${major ? "0.42" : "0.25"}"></line>`);
+      const color = major && trendColor !== undefined
+        ? escapeHtml(trendColor)
+        : `var(--hmi-trend-${major ? "major" : "minor"}-grid-color, ${major ? "#c8c8c8" : "#dedede"})`;
+      lines.push(`<line x1="0" y1="${y}" x2="100" y2="${y}" stroke="${color}" stroke-width="${major ? "0.42" : "0.25"}"></line>`);
     }
   }
   if (verticalVisible) {
@@ -434,7 +446,10 @@ function renderGrid(
       const major = index % 2 === 0;
       if ((major && !majorVisible) || (!major && !minorVisible)) continue;
       const x = (index / 7) * 100;
-      lines.push(`<line x1="${toCss(x)}" y1="0" x2="${toCss(x)}" y2="100" stroke="var(--hmi-trend-${major ? "major" : "minor"}-grid-color, ${major ? "#c8c8c8" : "#dedede"})" stroke-width="${major ? "0.42" : "0.25"}"></line>`);
+      const color = major && trendColor !== undefined
+        ? escapeHtml(trendColor)
+        : `var(--hmi-trend-${major ? "major" : "minor"}-grid-color, ${major ? "#c8c8c8" : "#dedede"})`;
+      lines.push(`<line x1="${toCss(x)}" y1="0" x2="${toCss(x)}" y2="100" stroke="${color}" stroke-width="${major ? "0.42" : "0.25"}"></line>`);
     }
   }
   return lines.join("");

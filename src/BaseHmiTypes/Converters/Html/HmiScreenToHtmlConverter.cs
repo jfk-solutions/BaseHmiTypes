@@ -3358,6 +3358,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "major-grid-color", trendControl.MajorGridColor);
         AppendStaticBooleanValueAttribute(html, "minor-grid-visible", trendControl.MinorGridVisible);
         AppendStaticAttribute(html, "minor-grid-color", trendControl.MinorGridColor);
+        AppendStaticBooleanValueAttribute(html, "grid-in-trend-color", trendControl.GridInTrendColor);
         AppendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.YAxisScaleVisible);
         AppendStaticAttribute(html, "y-axis-color", trendControl.YAxisColor);
         AppendStaticAttribute(html, "y-axis-alignment", trendControl.YAxisAlignment);

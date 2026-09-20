@@ -3061,6 +3061,7 @@ public class HmiScreenToHtmlConverterTests
             MajorGridColor = HmiColor.FromArgb(255, 0x20, 0x40, 0x60),
             MinorGridVisible = false,
             MinorGridColor = HmiColor.FromArgb(255, 0x80, 0x90, 0xA0),
+            GridInTrendColor = true,
             YAxisScaleVisible = true,
             YAxisColor = HmiColor.FromArgb(255, 0x44, 0x55, 0x66),
             YAxisAlignment = HmiHorizontalAlignment.Right,
@@ -3155,6 +3156,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "major-grid-color=\"#204060\"");
         StringAssert.Contains(html, "minor-grid-visible=\"false\"");
         StringAssert.Contains(html, "minor-grid-color=\"#8090A0\"");
+        StringAssert.Contains(html, "grid-in-trend-color=\"true\"");
         StringAssert.Contains(html, "--hmi-trend-major-grid-color: #204060;");
         StringAssert.Contains(html, "--hmi-trend-minor-grid-color: #8090A0;");
         StringAssert.Contains(html, "y-axis-scale-visible=\"true\"");
