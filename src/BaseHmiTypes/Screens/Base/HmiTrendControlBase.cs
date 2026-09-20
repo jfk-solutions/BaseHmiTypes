@@ -205,6 +205,10 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowToolbar { get; set; }
 
+    public HmiProperty<bool>? UseToolbarBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }
+
     public HmiProperty<bool>? ShowStatusBar { get; set; }
 
     public HmiProperty<HmiColor>? StatusBarBackgroundColor { get; set; }

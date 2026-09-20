@@ -3331,6 +3331,8 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "chart-title", trendControl.ChartTitle);
         AppendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.DisplayChartTitle);
         AppendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.ShowToolbar);
+        AppendStaticBooleanValueAttribute(html, "use-toolbar-background-color", trendControl.UseToolbarBackgroundColor);
+        AppendStaticAttribute(html, "toolbar-background-color", trendControl.ToolbarBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.ShowStatusBar);
         AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
         AppendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.DisplayScrollMechanism);
@@ -3467,6 +3469,10 @@ public class HmiScreenToHtmlConverter
         AppendFontVariables(style, "content", trendControl.ContentFont);
         AppendFontVariables(style, "header", trendControl.HeaderFont);
         AppendFontVariables(style, "status", trendControl.StatusBarFont);
+        if (trendControl.ToolbarBackgroundColor is not null &&
+            (trendControl.UseToolbarBackgroundColor is null || ResolveStaticValue(trendControl.UseToolbarBackgroundColor, context)))
+            style.Append("--hmi-trend-toolbar-background: ")
+                .Append(ToCss(ResolveStaticValue(trendControl.ToolbarBackgroundColor, context))).Append(';');
         if (trendControl.StatusBarBackgroundColor is not null)
             style.Append("--hmi-trend-status-background: ")
                 .Append(ToCss(ResolveStaticValue(trendControl.StatusBarBackgroundColor, context))).Append(';');

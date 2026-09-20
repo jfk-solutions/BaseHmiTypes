@@ -180,6 +180,7 @@ export class HmiTrendControl extends HTMLElement {
           gap: 6px;
           overflow: hidden;
           color: #20242a;
+          background: var(--hmi-trend-toolbar-background, transparent);
           font-size: clamp(10px, 1.8vmin, 16px);
         }
 

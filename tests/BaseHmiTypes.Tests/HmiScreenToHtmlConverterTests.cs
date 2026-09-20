@@ -3024,7 +3024,9 @@ public class HmiScreenToHtmlConverterTests
                 Weight = 700,
                 Italic = true
             },
-            ShowToolbar = false,
+            ShowToolbar = true,
+            UseToolbarBackgroundColor = true,
+            ToolbarBackgroundColor = HmiColor.FromArgb(255, 0x44, 0x33, 0x22),
             ShowStatusBar = true,
             StatusBarBackgroundColor = HmiColor.FromArgb(255, 16, 32, 48),
             StatusBarForegroundColor = HmiColor.FromArgb(255, 224, 208, 192),
@@ -3077,7 +3079,10 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "resize: both;");
         StringAssert.Contains(html, "--hmi-trend-content-font-family: Arial;--hmi-trend-content-font-size: 9px;--hmi-trend-content-font-weight: 400;");
         StringAssert.Contains(html, "--hmi-trend-header-font-family: Siemens Sans;--hmi-trend-header-font-size: 11px;--hmi-trend-header-font-weight: 700;--hmi-trend-header-font-style: italic;");
-        StringAssert.Contains(html, "show-toolbar=\"false\"");
+        StringAssert.Contains(html, "show-toolbar=\"true\"");
+        StringAssert.Contains(html, "use-toolbar-background-color=\"true\"");
+        StringAssert.Contains(html, "toolbar-background-color=\"#443322\"");
+        StringAssert.Contains(html, "--hmi-trend-toolbar-background: #443322;");
         StringAssert.Contains(html, "show-status-bar=\"true\"");
         StringAssert.Contains(html, "--hmi-trend-status-background: #102030;");
         StringAssert.Contains(html, "--hmi-trend-status-foreground: #E0D0C0;");
