@@ -1307,6 +1307,42 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersSvgLineCaps()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiLine
+        {
+            Name = "SquareLine",
+            Width = 100,
+            Height = 20,
+            X1 = 0,
+            Y1 = 10,
+            X2 = 100,
+            Y2 = 10,
+            LineCap = HmiLineCap.Square
+        });
+        var polyline = new HmiPolyline
+        {
+            Name = "RoundedPolyline",
+            Width = 100,
+            Height = 20,
+            LineCap = HmiLineCap.Round
+        };
+        polyline.Points.Add(new HmiPoint(0, 10));
+        polyline.Points.Add(new HmiPoint(100, 10));
+        layer.Items.Add(polyline);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"SquareLine\"");
+        StringAssert.Contains(html, "stroke-linecap=\"square\"");
+        StringAssert.Contains(html, "id=\"RoundedPolyline\"");
+        StringAssert.Contains(html, "stroke-linecap=\"round\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersScreenAbsolutePolygonPointsAsLocalSvgPoints()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };

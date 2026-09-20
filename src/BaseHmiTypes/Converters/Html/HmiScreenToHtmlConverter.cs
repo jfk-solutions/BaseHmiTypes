@@ -838,6 +838,9 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "fill", fill);
         AppendAttribute(html, "stroke", lineStyle == HmiLineStyle.None ? "none" : ToCss(GetStrokeColor(item, context)));
         AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item, context));
+        var hasLineCap = context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineCap), item.LineCap, out var lineCap);
+        if (hasLineCap)
+            AppendAttribute(html, "stroke-linecap", ToCss(lineCap));
 
         switch (lineStyle)
         {
@@ -846,15 +849,18 @@ public class HmiScreenToHtmlConverter
                 break;
             case HmiLineStyle.Dot:
                 AppendAttribute(html, "stroke-dasharray", "1 3");
-                AppendAttribute(html, "stroke-linecap", "round");
+                if (!hasLineCap)
+                    AppendAttribute(html, "stroke-linecap", "round");
                 break;
             case HmiLineStyle.DashDot:
                 AppendAttribute(html, "stroke-dasharray", "6 3 1 3");
-                AppendAttribute(html, "stroke-linecap", "round");
+                if (!hasLineCap)
+                    AppendAttribute(html, "stroke-linecap", "round");
                 break;
             case HmiLineStyle.DashDotDot:
                 AppendAttribute(html, "stroke-dasharray", "6 3 1 3 1 3");
-                AppendAttribute(html, "stroke-linecap", "round");
+                if (!hasLineCap)
+                    AppendAttribute(html, "stroke-linecap", "round");
                 break;
         }
     }
@@ -3162,6 +3168,13 @@ public class HmiScreenToHtmlConverter
         HmiGradientDirection.DiagonalUp => "to top right",
         HmiGradientDirection.DiagonalDown => "to bottom right",
         _ => "to right"
+    };
+
+    private static string ToCss(HmiLineCap lineCap) => lineCap switch
+    {
+        HmiLineCap.Round => "round",
+        HmiLineCap.Square => "square",
+        _ => "butt"
     };
 
     private static string ToFlexCss(HmiHorizontalAlignment alignment)
