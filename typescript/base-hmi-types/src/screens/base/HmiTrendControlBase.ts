@@ -2,6 +2,7 @@ import { HmiControlWindowBase } from "./HmiControlWindowBase.js";
 import { HmiColor } from "./HmiColor.js";
 import { HmiFont } from "./HmiFont.js";
 import { HmiHorizontalAlignment } from "./HmiHorizontalAlignment.js";
+import { HmiVerticalAlignment } from "./HmiVerticalAlignment.js";
 import { HmiLineStyle } from "./HmiLineStyle.js";
 import { HmiProperty } from "./HmiProperty.js";
 import { HmiThickness } from "./HmiThickness.js";
@@ -79,6 +80,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   valueBarWidth?: HmiProperty<number>;
   xAxisScaleVisible?: HmiProperty<boolean>;
   xAxisColor?: HmiProperty<HmiColor>;
+  xAxisAlignment?: HmiProperty<HmiVerticalAlignment>;
   xAxisDateVisible?: HmiProperty<boolean>;
   xAxisGridVisible?: HmiProperty<boolean>;
   majorGridVisible?: HmiProperty<boolean>;
@@ -105,6 +107,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   yAxisIsolationPercent?: HmiProperty<number>;
   yAxisScaleVisible?: HmiProperty<boolean>;
   yAxisColor?: HmiProperty<HmiColor>;
+  yAxisAlignment?: HmiProperty<HmiHorizontalAlignment>;
   yAxisDecimalPlaces?: HmiProperty<number>;
   yAxisGridVisible?: HmiProperty<boolean>;
   yAxisMajorGridLineCount?: HmiProperty<number>;
