@@ -14,6 +14,10 @@ public abstract class HmiShapeBase : HmiSimpleScreenItemBase
 
     public HmiProperty<HmiLineCap>? LineCap { get; set; }
 
+    public HmiProperty<HmiLineMarker>? StartMarker { get; set; }
+
+    public HmiProperty<HmiLineMarker>? EndMarker { get; set; }
+
     public HmiProperty<int>? BackFillPattern { get; set; }
 
     public HmiProperty<HmiFillPattern>? FillPattern { get; set; }
