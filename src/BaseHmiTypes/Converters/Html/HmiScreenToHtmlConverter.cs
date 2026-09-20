@@ -628,7 +628,11 @@ public class HmiScreenToHtmlConverter
             resolved = await project.GetScreenAsync(screenWindow.ScreenId!.StaticValue!, cancellationToken).ConfigureAwait(false);
 
         html.Append("<div");
-        AppendCommonAttributes(html, screenWindow, context);
+        AppendStaticAttribute(html, "data-fit-screen-to-window", screenWindow.FitScreenToWindow, context);
+        AppendStaticAttribute(html, "data-fit-window-to-screen", screenWindow.FitWindowToScreen, context);
+        AppendStaticAttribute(html, "data-show-scrollbars", screenWindow.ShowScrollBars, context);
+        AppendStaticAttribute(html, "data-zoom-percent", screenWindow.ZoomPercent, context);
+        AppendCommonAttributes(html, screenWindow, context, additionalStyle: CreateScreenWindowStyle(screenWindow, resolved, context));
         html.Append(">");
 
         if (resolved == null)
@@ -641,10 +645,102 @@ public class HmiScreenToHtmlConverter
         }
         else
         {
-            html.Append(await ConvertCoreAsync(resolved, project, context, false, screenStack, cancellationToken).ConfigureAwait(false));
+            var contentStyle = CreateScreenWindowContentStyle(screenWindow, resolved, context);
+            if (contentStyle == null)
+            {
+                html.Append(await ConvertCoreAsync(resolved, project, context, false, screenStack, cancellationToken).ConfigureAwait(false));
+            }
+            else
+            {
+                html.Append("<div class=\"hmi-screen-window-content\"");
+                AppendAttribute(html, "style", contentStyle);
+                html.Append("><div");
+                AppendAttribute(html, "style", CreateScreenWindowTransformStyle(screenWindow, resolved, context));
+                html.Append(">");
+                html.Append(await ConvertCoreAsync(resolved, project, context, false, screenStack, cancellationToken).ConfigureAwait(false));
+                html.Append("</div></div>");
+            }
         }
 
         html.Append("</div>");
+    }
+
+    private static string CreateScreenWindowStyle(
+        HmiScreenWindow screenWindow,
+        HmiScreenBase? resolved,
+        HmiHtmlConvertContext context)
+    {
+        var style = new StringBuilder();
+        var fitScreen = ResolveStaticValue(screenWindow.FitScreenToWindow, context);
+        var fitWindow = ResolveStaticValue(screenWindow.FitWindowToScreen, context);
+        var showScrollBars = ResolveStaticValue(screenWindow.ShowScrollBars, context);
+        var zoom = GetScreenWindowZoom(screenWindow, context);
+
+        if (fitWindow && !fitScreen && resolved != null)
+        {
+            style.Append("width: ").Append(ToCss(resolved.Width.GetStaticValueOrDefault() * zoom)).Append("px;")
+                .Append("height: ").Append(ToCss(resolved.Height.GetStaticValueOrDefault() * zoom)).Append("px;");
+        }
+
+        style.Append(showScrollBars && !fitScreen && !fitWindow ? "overflow: auto;" : "overflow: hidden;");
+        return style.ToString();
+    }
+
+    private static string? CreateScreenWindowContentStyle(
+        HmiScreenWindow screenWindow,
+        HmiScreenBase resolved,
+        HmiHtmlConvertContext context)
+    {
+        var fitScreen = ResolveStaticValue(screenWindow.FitScreenToWindow, context);
+        var zoom = GetScreenWindowZoom(screenWindow, context);
+        var screenWidth = resolved.Width.GetStaticValueOrDefault();
+        var screenHeight = resolved.Height.GetStaticValueOrDefault();
+        var windowWidth = screenWindow.Width.GetStaticValueOrDefault();
+        var windowHeight = screenWindow.Height.GetStaticValueOrDefault();
+
+        double scaleX;
+        double scaleY;
+        if (fitScreen && screenWidth > 0d && screenHeight > 0d)
+        {
+            scaleX = windowWidth / screenWidth;
+            scaleY = windowHeight / screenHeight;
+        }
+        else if (Math.Abs(zoom - 1d) > 0.000001d)
+        {
+            scaleX = zoom;
+            scaleY = zoom;
+        }
+        else
+        {
+            return null;
+        }
+
+        return "position: relative; width: " + ToCss(screenWidth * scaleX) + "px; height: " +
+            ToCss(screenHeight * scaleY) + "px; overflow: hidden;";
+    }
+
+    private static string CreateScreenWindowTransformStyle(
+        HmiScreenWindow screenWindow,
+        HmiScreenBase resolved,
+        HmiHtmlConvertContext context)
+    {
+        var fitScreen = ResolveStaticValue(screenWindow.FitScreenToWindow, context);
+        var screenWidth = resolved.Width.GetStaticValueOrDefault();
+        var screenHeight = resolved.Height.GetStaticValueOrDefault();
+        var scaleX = fitScreen && screenWidth > 0d
+            ? screenWindow.Width.GetStaticValueOrDefault() / screenWidth
+            : GetScreenWindowZoom(screenWindow, context);
+        var scaleY = fitScreen && screenHeight > 0d
+            ? screenWindow.Height.GetStaticValueOrDefault() / screenHeight
+            : GetScreenWindowZoom(screenWindow, context);
+        return "position: absolute; left: 0; top: 0; transform-origin: top left; transform: scale(" +
+            ToCss(scaleX) + ", " + ToCss(scaleY) + ");";
+    }
+
+    private static double GetScreenWindowZoom(HmiScreenWindow screenWindow, HmiHtmlConvertContext context)
+    {
+        var zoomPercent = ResolveStaticValue(screenWindow.ZoomPercent, context);
+        return zoomPercent > 0d ? zoomPercent / 100d : 1d;
     }
 
     private static async ValueTask<HmiScreenBase?> ResolveTemplateAsync(
