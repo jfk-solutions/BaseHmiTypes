@@ -967,6 +967,35 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersLockedAlarmIndicator()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiAlarmIndicator
+        {
+            Name = "GroupDisplay",
+            Width = 80,
+            Height = 30,
+            Text = "Alarm",
+            IsLocked = true,
+            LockedText = "LOCKED",
+            LockedForegroundColor = HmiColor.FromArgb(255, 255, 255, 0),
+            LockedBackgroundColor = HmiColor.FromArgb(255, 32, 48, 64)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "data-locked=\"true\"");
+        StringAssert.Contains(html, "data-locked-text=\"LOCKED\"");
+        StringAssert.Contains(html, "data-locked-foreground-color=\"#FFFF00\"");
+        StringAssert.Contains(html, "data-locked-background-color=\"#203040\"");
+        StringAssert.Contains(html, "color: #FFFF00;");
+        StringAssert.Contains(html, "background-color: #203040;");
+        StringAssert.Contains(html, ">LOCKED</div>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersClockPreview()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };

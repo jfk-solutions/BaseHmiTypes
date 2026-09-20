@@ -2870,14 +2870,18 @@ public class HmiScreenToHtmlConverter
         var noAlarmState = indicator.NoAlarmState is null ? 0 : ResolveStaticValue(indicator.NoAlarmState, context);
         var numberOfAlarms = indicator.NumberOfAlarms is null ? (int?)null : ResolveStaticValue(indicator.NumberOfAlarms, context);
         var text = indicator.Text is null ? null : ResolveStaticValue(indicator.Text, context);
+        var isLocked = indicator.IsLocked is not null && ResolveStaticValue(indicator.IsLocked, context);
+        var lockedText = indicator.LockedText is null ? null : ResolveStaticValue(indicator.LockedText, context);
         var isActive = alarmState.HasValue && alarmState.Value != noAlarmState;
         var isFlashingRequired = indicator.IsFlashingRequired is not null &&
             ResolveStaticValue(indicator.IsFlashingRequired, context);
-        var content = numberOfAlarms is > 0
-            ? numberOfAlarms.Value.ToString(CultureInfo.InvariantCulture)
-            : !string.IsNullOrEmpty(text)
-                ? text
-                : alarmState.HasValue && isActive ? "!" : string.Empty;
+        var content = isLocked && !string.IsNullOrEmpty(lockedText)
+            ? lockedText
+            : numberOfAlarms is > 0
+                ? numberOfAlarms.Value.ToString(CultureInfo.InvariantCulture)
+                : !string.IsNullOrEmpty(text)
+                    ? text
+                    : alarmState.HasValue && isActive ? "!" : string.Empty;
 
         var style = new StringBuilder("display: flex; overflow: hidden;");
         if (indicator.VerticalAlignment is null)
@@ -2906,6 +2910,10 @@ public class HmiScreenToHtmlConverter
                 style.Append("box-shadow: inset 0 0 0 0.35em ").Append(ToCss(flashingColor)).Append(';');
             }
         }
+        if (isLocked && indicator.LockedForegroundColor is not null)
+            style.Append("color: ").Append(ToCss(ResolveStaticValue(indicator.LockedForegroundColor, context))).Append(';');
+        if (isLocked && indicator.LockedBackgroundColor is not null)
+            style.Append("background-color: ").Append(ToCss(ResolveStaticValue(indicator.LockedBackgroundColor, context))).Append(';');
 
         html.Append("<div");
         AppendCommonAttributes(html, indicator, context, additionalStyle: style.ToString());
@@ -2921,6 +2929,10 @@ public class HmiScreenToHtmlConverter
         AppendStaticValueAttribute(html, "data-number-of-alarms", indicator.NumberOfAlarms, context);
         AppendStaticValueAttribute(html, "data-text", indicator.Text, context);
         AppendStaticValueAttribute(html, "data-equal-segment-widths", indicator.UseEqualSegmentWidths, context);
+        AppendStaticValueAttribute(html, "data-locked", indicator.IsLocked, context);
+        AppendStaticValueAttribute(html, "data-locked-text", indicator.LockedText, context);
+        AppendStaticValueAttribute(html, "data-locked-foreground-color", indicator.LockedForegroundColor, context);
+        AppendStaticValueAttribute(html, "data-locked-background-color", indicator.LockedBackgroundColor, context);
         if (indicator.Segments.Count > 0)
             AppendAttribute(html, "data-segment-count", indicator.Segments.Count.ToString(CultureInfo.InvariantCulture));
         AppendIntegerListAttribute(html, "data-show-acknowledged-alarm-classes", indicator.ShowAcknowledgedAlarmClasses, context);
