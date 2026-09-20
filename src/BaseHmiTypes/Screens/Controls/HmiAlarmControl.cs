@@ -168,6 +168,10 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiFont? StatusBarFont { get; set; }
 
+    public HmiProperty<HmiColor>? StatusBarBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? StatusBarForegroundColor { get; set; }
+
     public HmiProperty<string>? StatusBarIconSize { get; set; }
 
     public IList<HmiAlarmEventSubscription> EventSubscriptions { get; } = new List<HmiAlarmEventSubscription>();

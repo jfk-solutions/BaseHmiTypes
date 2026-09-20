@@ -2247,6 +2247,9 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-table-foreground-color", ResolvePropertyPreview(alarmControl.TableForegroundColor, context));
         AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(alarmControl.SelectionBackgroundColor, context));
         AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(alarmControl.SelectionForegroundColor, context));
+        AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(alarmControl.ShowStatusBar, context));
+        AppendAttribute(html, "data-status-bar-background-color", ResolvePropertyPreview(alarmControl.StatusBarBackgroundColor, context));
+        AppendAttribute(html, "data-status-bar-foreground-color", ResolvePropertyPreview(alarmControl.StatusBarForegroundColor, context));
         html.Append('>');
 
         if (showTitle)
@@ -2303,6 +2306,15 @@ public class HmiScreenToHtmlConverter
             if (showHelpButton)
                 html.Append("Help");
             html.Append("</div>");
+        }
+        if (alarmControl.ShowStatusBar is not null && ResolveStaticValue(alarmControl.ShowStatusBar, context))
+        {
+            var statusStyle = new StringBuilder("flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;");
+            AppendColorStyle(statusStyle, "background-color", alarmControl.StatusBarBackgroundColor);
+            AppendColorStyle(statusStyle, "color", alarmControl.StatusBarForegroundColor);
+            AppendFontStyle(statusStyle, alarmControl.StatusBarFont);
+            html.Append("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"")
+                .Append(statusStyle).Append("\">Status</div>");
         }
         html.Append("</div>");
     }
