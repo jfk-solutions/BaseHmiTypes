@@ -59,6 +59,47 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersSymbolicIoFieldImageState()
+    {
+        var symbolicIoField = new HmiSymbolicIOField
+        {
+            Name = "PumpState",
+            Width = 80,
+            Height = 60,
+            Value = 7
+        };
+        symbolicIoField.States.Add(new HmiState
+        {
+            Name = "Running",
+            Value = 7,
+            ImageName = "pump-running.svg",
+            Image = new HmiImageSource
+            {
+                ImageName = "pump-running.svg",
+                Uri = "data:image/svg+xml,%3Csvg%2F%3E"
+            },
+            ImageScaled = true,
+            ImageBlink = true,
+            ImageBackgroundColor = HmiColor.FromArgb(255, 17, 34, 51)
+        });
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(symbolicIoField);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<div id=\"PumpState\"");
+        StringAssert.Contains(html, "class=\"hmi-symbolic-image-state\"");
+        StringAssert.Contains(html, "data-state-value=\"7\"");
+        StringAssert.Contains(html, "data-image-name=\"pump-running.svg\"");
+        StringAssert.Contains(html, "data-image-blink=\"true\"");
+        StringAssert.Contains(html, "background-color: #112233;");
+        StringAssert.Contains(html, "<img src=\"data:image/svg+xml,%3Csvg%2F%3E\" alt=\"Running\"");
+        Assert.IsFalse(html.Contains("<select id=\"PumpState\"", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersIoFieldPreviewAndInputSettings()
     {
         var field = new HmiIOField
