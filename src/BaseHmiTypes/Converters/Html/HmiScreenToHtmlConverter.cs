@@ -832,6 +832,9 @@ public class HmiScreenToHtmlConverter
         var lineStyle = GetLineStyle(item, context);
         var fillPattern = GetFillPattern(item, context);
         var colorGradient = GetColorGradient(item);
+        var usesSolidFill = fillColor is not null && fillPattern != HmiFillPattern.Transparent &&
+            !TryGetFillPercentage(item.FillAnimation, out _) && colorGradient is null &&
+            fillPattern is null or HmiFillPattern.Solid;
         var fill = fillColor == null || fillPattern == HmiFillPattern.Transparent
             ? "none"
             : TryGetFillPercentage(item.FillAnimation, out _)
@@ -842,6 +845,15 @@ public class HmiScreenToHtmlConverter
                     ? $"url(#{GetFillPatternId(item)})"
                     : ToCss(fillColor.Value);
         AppendAttribute(html, "fill", fill);
+        var svgStyle = new StringBuilder();
+        var svgAnimations = new List<string>();
+        if (usesSolidFill && GetFillColorProperty(item, context) is HmiBlinkProperty<HmiColor> fillBlink &&
+            fillBlink.StaticValue is HmiColor fillOff && fillBlink.BlinkValue is HmiColor fillOn)
+        {
+            svgStyle.Append("--hmi-background-color-off: ").Append(ToCss(fillOff)).Append(';')
+                .Append("--hmi-background-color-on: ").Append(ToCss(fillOn)).Append(';');
+            svgAnimations.Add($"hmi-background-color-flash {GetBlinkDuration(fillBlink.Rate)}s steps(1, end) infinite");
+        }
         var strokeColor = GetStrokeColorProperty(item, context);
         AppendAttribute(html, "stroke", lineStyle == HmiLineStyle.None
             ? "none"
@@ -849,10 +861,14 @@ public class HmiScreenToHtmlConverter
         if (lineStyle != HmiLineStyle.None && strokeColor is HmiBlinkProperty<HmiColor> strokeBlink &&
             strokeBlink.StaticValue is HmiColor strokeOff && strokeBlink.BlinkValue is HmiColor strokeOn)
         {
-            AppendAttribute(html, "style",
-                $"--hmi-border-color-off: {ToCss(strokeOff)};--hmi-border-color-on: {ToCss(strokeOn)};" +
-                $"animation: hmi-border-color-flash {GetBlinkDuration(strokeBlink.Rate)}s steps(1, end) infinite;");
+            svgStyle.Append("--hmi-border-color-off: ").Append(ToCss(strokeOff)).Append(';')
+                .Append("--hmi-border-color-on: ").Append(ToCss(strokeOn)).Append(';');
+            svgAnimations.Add($"hmi-border-color-flash {GetBlinkDuration(strokeBlink.Rate)}s steps(1, end) infinite");
         }
+        if (svgAnimations.Count > 0)
+            svgStyle.Append("animation: ").Append(string.Join(", ", svgAnimations)).Append(';');
+        if (svgStyle.Length > 0)
+            AppendAttribute(html, "style", svgStyle.ToString());
         AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item, context));
         var hasLineCap = context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineCap), item.LineCap, out var lineCap);
         if (hasLineCap)
@@ -1254,10 +1270,11 @@ public class HmiScreenToHtmlConverter
 
     private static HmiColor? GetFillColor(HmiShapeBase item, HmiHtmlConvertContext context)
     {
-        return context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor, out var backgroundColor)
-            ? backgroundColor
-            : (HmiColor?)null;
+        return GetFillColorProperty(item, context)?.StaticValue;
     }
+
+    private static HmiProperty<HmiColor>? GetFillColorProperty(HmiShapeBase item, HmiHtmlConvertContext context) =>
+        context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
 
     private static double GetStrokeWidth(HmiShapeBase item, HmiHtmlConvertContext context)
     {
