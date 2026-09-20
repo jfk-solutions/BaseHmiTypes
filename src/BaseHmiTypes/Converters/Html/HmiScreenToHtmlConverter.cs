@@ -842,7 +842,17 @@ public class HmiScreenToHtmlConverter
                     ? $"url(#{GetFillPatternId(item)})"
                     : ToCss(fillColor.Value);
         AppendAttribute(html, "fill", fill);
-        AppendAttribute(html, "stroke", lineStyle == HmiLineStyle.None ? "none" : ToCss(GetStrokeColor(item, context)));
+        var strokeColor = GetStrokeColorProperty(item, context);
+        AppendAttribute(html, "stroke", lineStyle == HmiLineStyle.None
+            ? "none"
+            : ToCss(strokeColor?.StaticValue ?? HmiColor.FromArgb(255, 0, 0, 0)));
+        if (lineStyle != HmiLineStyle.None && strokeColor is HmiBlinkProperty<HmiColor> strokeBlink &&
+            strokeBlink.StaticValue is HmiColor strokeOff && strokeBlink.BlinkValue is HmiColor strokeOn)
+        {
+            AppendAttribute(html, "style",
+                $"--hmi-border-color-off: {ToCss(strokeOff)};--hmi-border-color-on: {ToCss(strokeOn)};" +
+                $"animation: hmi-border-color-flash {GetBlinkDuration(strokeBlink.Rate)}s steps(1, end) infinite;");
+        }
         AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item, context));
         var hasLineCap = context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineCap), item.LineCap, out var lineCap);
         if (hasLineCap)
@@ -1227,19 +1237,20 @@ public class HmiScreenToHtmlConverter
         return item.Height.GetStaticValueOrDefault(1d);
     }
 
-    private static HmiColor GetStrokeColor(HmiShapeBase item, HmiHtmlConvertContext context)
+    private static HmiProperty<HmiColor>? GetStrokeColorProperty(HmiShapeBase item, HmiHtmlConvertContext context)
     {
-        if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineColor), item.LineColor, out var lineColor))
+        var lineColor = context.EffectiveProperties.Resolve(item, nameof(HmiShapeBase.LineColor), item.LineColor);
+        if (lineColor?.StaticValue is not null)
             return lineColor;
-        if (item is HmiPaintedScreenItemBase paintedItem
-            && context.EffectiveProperties.TryGetStaticValue(paintedItem, nameof(HmiPaintedScreenItemBase.BorderColor), paintedItem.BorderColor, out var borderColor))
+        var borderColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderColor), item.BorderColor);
+        if (borderColor?.StaticValue is not null)
             return borderColor;
-        if (item is HmiPaintedScreenItemBase foregroundItem
-            && context.EffectiveProperties.TryGetStaticValue(foregroundItem, nameof(HmiPaintedScreenItemBase.ForegroundColor), foregroundItem.ForegroundColor, out var foregroundColor))
-            return foregroundColor;
-
-        return HmiColor.FromArgb(255, 0, 0, 0);
+        var foregroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.ForegroundColor), item.ForegroundColor);
+        return foregroundColor?.StaticValue is not null ? foregroundColor : null;
     }
+
+    private static HmiColor GetStrokeColor(HmiShapeBase item, HmiHtmlConvertContext context) =>
+        GetStrokeColorProperty(item, context)?.StaticValue ?? HmiColor.FromArgb(255, 0, 0, 0);
 
     private static HmiColor? GetFillColor(HmiShapeBase item, HmiHtmlConvertContext context)
     {
@@ -3369,10 +3380,19 @@ public class HmiScreenToHtmlConverter
         {
             html.Append("background-color: ").Append(ToCss(backgroundColor.StaticValue)).Append(";");
         }
+        if (borderColor is HmiBlinkProperty<HmiColor> borderBlink &&
+            borderBlink.StaticValue is HmiColor borderOff && borderBlink.BlinkValue is HmiColor borderOn)
+        {
+            html.Append("--hmi-border-color-off: ").Append(ToCss(borderOff)).Append(';')
+                .Append("--hmi-border-color-on: ").Append(ToCss(borderOn)).Append(';');
+            animations.Add($"hmi-border-color-flash {GetBlinkDuration(borderBlink.Rate)}s steps(1, end) infinite");
+        }
+        else if (borderColor?.StaticValue != null)
+        {
+            html.Append("border-color: ").Append(ToCss(borderColor.StaticValue)).Append(";");
+        }
         if (animations.Count > 0)
             html.Append("animation: ").Append(string.Join(", ", animations)).Append(';');
-        if (borderColor?.StaticValue != null)
-            html.Append("border-color: ").Append(ToCss(borderColor.StaticValue)).Append(";");
         if (borderWidth?.StaticValue != null)
         {
             if (!suppressBorderStyle)
