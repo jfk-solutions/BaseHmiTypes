@@ -3047,8 +3047,9 @@ public class HmiScreenToHtmlConverterTests
             XAxisGridVisible = true,
             YAxisScaleVisible = true,
             YAxisGridVisible = false,
-            YAxisScaleAsPercent = true,
-            YAxisPercentageColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56),
+            ShowPercentageAxis = true,
+            PercentageAxisColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56),
+            PercentageAxisAlignment = HmiHorizontalAlignment.Right,
             MinimumValue = -5,
             MaximumValue = 100,
             YAxisDecimalPlaces = 2
@@ -3098,9 +3099,10 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "x-axis-grid-visible=\"true\"");
         StringAssert.Contains(html, "y-axis-scale-visible=\"true\"");
         StringAssert.Contains(html, "y-axis-grid-visible=\"false\"");
-        StringAssert.Contains(html, "y-axis-scale-as-percent=\"true\"");
-        StringAssert.Contains(html, "y-axis-percentage-color=\"#123456\"");
-        StringAssert.Contains(html, "--hmi-trend-y-axis-percentage-color: #123456;");
+        StringAssert.Contains(html, "show-percentage-axis=\"true\"");
+        StringAssert.Contains(html, "percentage-axis-color=\"#123456\"");
+        StringAssert.Contains(html, "percentage-axis-alignment=\"Right\"");
+        StringAssert.Contains(html, "--hmi-trend-percentage-axis-color: #123456;");
         StringAssert.Contains(html, "minimum-value=\"-5\"");
         StringAssert.Contains(html, "maximum-value=\"100\"");
         StringAssert.Contains(html, "y-axis-decimal-places=\"2\"");

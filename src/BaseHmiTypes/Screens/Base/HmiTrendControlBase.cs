@@ -158,11 +158,33 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<int>? YAxisScalePenNumber { get; set; }
 
     /// <summary>
-    /// Gets or sets whether Y-axis values are presented as percentages.
+    /// Gets or sets whether an additional axis with a percentage scale is displayed.
     /// </summary>
-    public HmiProperty<bool>? YAxisScaleAsPercent { get; set; }
+    public HmiProperty<bool>? ShowPercentageAxis { get; set; }
 
-    public HmiProperty<HmiColor>? YAxisPercentageColor { get; set; }
+    /// <summary>
+    /// Gets or sets the font and line color of the percentage axis.
+    /// </summary>
+    public HmiProperty<HmiColor>? PercentageAxisColor { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the percentage axis is aligned to the left or right.
+    /// </summary>
+    public HmiProperty<HmiHorizontalAlignment>? PercentageAxisAlignment { get; set; }
+
+    [Obsolete("Use ShowPercentageAxis instead.")]
+    public HmiProperty<bool>? YAxisScaleAsPercent
+    {
+        get => ShowPercentageAxis;
+        set => ShowPercentageAxis = value;
+    }
+
+    [Obsolete("Use PercentageAxisColor instead.")]
+    public HmiProperty<HmiColor>? YAxisPercentageColor
+    {
+        get => PercentageAxisColor;
+        set => PercentageAxisColor = value;
+    }
 
     /// <summary>
     /// Gets or sets the one-based pen whose scale is selected for the Y axis.
