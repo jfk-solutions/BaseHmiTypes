@@ -2916,6 +2916,19 @@ public class HmiScreenToHtmlConverterTests
             Resizable = true,
             Movable = false,
             Closeable = false,
+            ContentFont = new HmiFont
+            {
+                Name = "Arial",
+                Size = 9,
+                Weight = 400
+            },
+            HeaderFont = new HmiFont
+            {
+                Name = "Siemens Sans",
+                Size = 11,
+                Weight = 700,
+                Italic = true
+            },
             ShowToolbar = false,
             DisplayPenIcons = true,
             DisplayScrollMechanism = true,
@@ -2955,6 +2968,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-window-movable=\"false\"");
         StringAssert.Contains(html, "data-window-closeable=\"false\"");
         StringAssert.Contains(html, "resize: both;");
+        StringAssert.Contains(html, "--hmi-trend-content-font-family: Arial;--hmi-trend-content-font-size: 9px;--hmi-trend-content-font-weight: 400;");
+        StringAssert.Contains(html, "--hmi-trend-header-font-family: Siemens Sans;--hmi-trend-header-font-size: 11px;--hmi-trend-header-font-weight: 700;--hmi-trend-header-font-style: italic;");
         StringAssert.Contains(html, "show-toolbar=\"false\"");
         StringAssert.Contains(html, "display-pen-icons=\"true\"");
         StringAssert.Contains(html, "display-scroll-mechanism=\"true\"");

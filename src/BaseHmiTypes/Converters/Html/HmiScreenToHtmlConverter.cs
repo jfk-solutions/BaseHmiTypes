@@ -3269,7 +3269,7 @@ public class HmiScreenToHtmlConverter
     private static void AppendTrendControl(StringBuilder html, HmiTrendControl trendControl, HmiHtmlConvertContext context)
     {
         html.Append("<hmi-trend-control");
-        AppendCommonAttributes(html, trendControl, context, additionalStyle: CreateControlWindowStyle(trendControl, context, "overflow: hidden;"));
+        AppendCommonAttributes(html, trendControl, context, additionalStyle: CreateTrendControlStyle(trendControl, context));
         AppendAttribute(html, "data-window-resizable", ResolvePropertyPreview(trendControl.Resizable, context));
         AppendAttribute(html, "data-window-movable", ResolvePropertyPreview(trendControl.Movable, context));
         AppendAttribute(html, "data-window-closeable", ResolvePropertyPreview(trendControl.Closeable, context));
@@ -3324,6 +3324,39 @@ public class HmiScreenToHtmlConverter
         var style = new StringBuilder("flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;");
         AppendFontStyle(style, alarmControl.HeaderFont);
         return style.ToString();
+    }
+
+    private static string CreateTrendControlStyle(HmiTrendControl trendControl, HmiHtmlConvertContext context)
+    {
+        var style = new StringBuilder(CreateControlWindowStyle(trendControl, context, "overflow: hidden;"));
+        AppendFontVariables(style, "content", trendControl.ContentFont);
+        AppendFontVariables(style, "header", trendControl.HeaderFont);
+        return style.ToString();
+    }
+
+    private static void AppendFontVariables(StringBuilder style, string role, HmiFont? font)
+    {
+        if (font is null)
+            return;
+        var prefix = $"--hmi-trend-{role}-";
+        var name = font.Name.GetStaticValue();
+        if (!string.IsNullOrWhiteSpace(name))
+            style.Append(prefix).Append("font-family: ").Append(WebUtility.HtmlEncode(name)).Append(';');
+        if (TryGetStaticValue(font.Size, out var size))
+            style.Append(prefix).Append("font-size: ").Append(ToCss(size)).Append("px;");
+        if (font.Weight.GetStaticValue() is { } weight && weight > 0)
+            style.Append(prefix).Append("font-weight: ").Append(weight.ToString(CultureInfo.InvariantCulture)).Append(';');
+        else if (font.Bold.GetStaticValueOrDefault())
+            style.Append(prefix).Append("font-weight: bold;");
+        if (font.Italic.GetStaticValueOrDefault())
+            style.Append(prefix).Append("font-style: italic;");
+        var decorations = new List<string>();
+        if (font.Underline.GetStaticValueOrDefault())
+            decorations.Add("underline");
+        if (font.Strikethrough.GetStaticValueOrDefault())
+            decorations.Add("line-through");
+        if (decorations.Count > 0)
+            style.Append(prefix).Append("text-decoration: ").Append(string.Join(' ', decorations)).Append(';');
     }
 
     private static void AppendFontStyle(StringBuilder style, HmiFont? font)

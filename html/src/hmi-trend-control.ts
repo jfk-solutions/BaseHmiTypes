@@ -126,7 +126,11 @@ export class HmiTrendControl extends HTMLElement {
           min-width: 140px;
           min-height: 90px;
           overflow: hidden;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--hmi-trend-content-font-family, Arial, Helvetica, sans-serif);
+          font-size: var(--hmi-trend-content-font-size, initial);
+          font-weight: var(--hmi-trend-content-font-weight, normal);
+          font-style: var(--hmi-trend-content-font-style, normal);
+          text-decoration: var(--hmi-trend-content-text-decoration, none);
           color: ${escapeCss(foregroundColor)};
           background: ${escapeCss(backgroundColor)};
         }
@@ -150,8 +154,11 @@ export class HmiTrendControl extends HTMLElement {
           left: 4%;
           right: 4%;
           color: ${escapeCss(foregroundColor)};
-          font-size: clamp(12px, 2.5vmin, 22px);
-          font-weight: 600;
+          font-family: var(--hmi-trend-header-font-family, inherit);
+          font-size: var(--hmi-trend-header-font-size, clamp(12px, 2.5vmin, 22px));
+          font-weight: var(--hmi-trend-header-font-weight, 600);
+          font-style: var(--hmi-trend-header-font-style, inherit);
+          text-decoration: var(--hmi-trend-header-text-decoration, inherit);
           text-align: center;
           overflow: hidden;
           text-overflow: ellipsis;
