@@ -1,3 +1,4 @@
+import { HmiProjectDevice } from "./HmiProjectDevice.js";
 import { HmiAlarmList } from "../alarms/HmiAlarm.js";
 import { HmiConnectionList } from "../connections/HmiConnectionList.js";
 import { HmiCycle } from "../cycles/HmiCycle.js";
@@ -29,6 +30,7 @@ export interface IHmiProject
     IHmiRecipeProvider,
     IHmiDataLogProvider {
   readonly info: HmiProjectInfo;
+  readonly devices: readonly HmiProjectDevice[];
 }
 
 export interface IHmiProjectFolder {

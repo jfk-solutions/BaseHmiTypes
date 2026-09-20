@@ -58,3 +58,21 @@ The first model slice covers screen-related objects:
 - common HMI controls
 - screen window layout
 - monitor metadata
+
+## Multi-device projects
+
+`HmiProjectDevice` is a folder with `FolderType.Device` and `HmiDeviceInfo`
+metadata (`Id`, `Name`, `DeviceType`, `StartScreenId`, `Author`, and `Comment`).
+Place each device's Screens, Tags, Alarms, Connections, and other owned folders
+under that node; keep shared resources at project level.
+
+`IHmiProject.Devices` / `devices` exposes these typed nodes. `HmiProjectBase`
+derives this list from its root folders and recursively enumerates screens
+through devices. Readers without device metadata can keep their existing flat
+folders and receive an empty device list. Classes implementing `IHmiProject`
+directly must now supply the device-list property (an empty list is valid).
+
+Item descriptors must use IDs unique within the project. Resolve them through
+the project provider, including descriptors found below device nodes. A reader
+may qualify device-local table IDs while retaining globally unique screen IDs.
+The TypeScript model mirrors these types and uses camel-case properties.

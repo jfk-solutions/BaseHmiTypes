@@ -1,3 +1,4 @@
+import { HmiProjectDevice } from "./HmiProjectDevice.js";
 import { HmiAlarmList } from "../alarms/HmiAlarm.js";
 import { HmiConnectionList } from "../connections/HmiConnectionList.js";
 import { HmiCycle } from "../cycles/HmiCycle.js";
@@ -19,6 +20,10 @@ import { HmiScreenDescriptor } from "./HmiScreenDescriptor.js";
 
 export abstract class HmiProjectBase implements IHmiProject {
   readonly info = new HmiProjectInfo();
+
+  get devices(): readonly HmiProjectDevice[] {
+    return this.folders.filter((folder): folder is HmiProjectDevice => folder instanceof HmiProjectDevice);
+  }
 
   get id(): string | undefined {
     return undefined;
@@ -158,12 +163,7 @@ export abstract class HmiProjectBase implements IHmiProject {
 
   async getScreens(signal?: AbortSignal): Promise<readonly HmiScreenDescriptor[]> {
     const result: HmiScreenDescriptor[] = [];
-    const screens = this.screens;
-    if (screens === undefined) {
-      return result;
-    }
-
-    await collectScreens(screens, result, signal);
+    await collectScreens(this, result, signal);
     return result;
   }
 
