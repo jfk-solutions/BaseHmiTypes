@@ -852,6 +852,9 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
   const lineStyle = getLineStyle(item, context);
   const fillPattern = getFillPattern(item, context);
   const colorGradient = getColorGradient(item);
+  const usesSolidFill = fillColor !== undefined && fillPattern !== HmiFillPattern.Transparent &&
+    tryGetFillPercentage(item.fillAnimation) === undefined && colorGradient === undefined &&
+    (fillPattern === undefined || fillPattern === HmiFillPattern.Solid);
   const fill = fillColor === undefined || fillPattern === HmiFillPattern.Transparent
     ? "none"
     : tryGetFillPercentage(item.fillAnimation) !== undefined
@@ -862,6 +865,17 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
         ? `url(#${getFillPatternId(item)})`
         : colorToCss(fillColor);
   appendAttribute(html, "fill", fill);
+  const svgStyle: string[] = [];
+  const svgAnimations: string[] = [];
+  const fillColorProperty = usesSolidFill ? getFillColorProperty(item, context) : undefined;
+  const fillBlink = fillColorProperty?.kind === HmiPropertyKind.Blink
+    ? fillColorProperty as HmiBlinkProperty<HmiColor>
+    : undefined;
+  if (fillBlink?.staticValue !== undefined && fillBlink.blinkValue !== undefined) {
+    svgStyle.push(`--hmi-background-color-off: ${colorToCss(fillBlink.staticValue)};`);
+    svgStyle.push(`--hmi-background-color-on: ${colorToCss(fillBlink.blinkValue)};`);
+    svgAnimations.push(`hmi-background-color-flash ${getBlinkDuration(fillBlink.rate)}s steps(1, end) infinite`);
+  }
   const strokeColor = getStrokeColorProperty(item, context);
   appendAttribute(html, "stroke", lineStyle === HmiLineStyle.None
     ? "none"
@@ -870,11 +884,14 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
     ? strokeColor as HmiBlinkProperty<HmiColor>
     : undefined;
   if (lineStyle !== HmiLineStyle.None && strokeBlink?.staticValue !== undefined && strokeBlink.blinkValue !== undefined) {
-    appendAttribute(html, "style",
-      `--hmi-border-color-off: ${colorToCss(strokeBlink.staticValue)};` +
-      `--hmi-border-color-on: ${colorToCss(strokeBlink.blinkValue)};` +
-      `animation: hmi-border-color-flash ${getBlinkDuration(strokeBlink.rate)}s steps(1, end) infinite;`);
+    svgStyle.push(`--hmi-border-color-off: ${colorToCss(strokeBlink.staticValue)};`);
+    svgStyle.push(`--hmi-border-color-on: ${colorToCss(strokeBlink.blinkValue)};`);
+    svgAnimations.push(`hmi-border-color-flash ${getBlinkDuration(strokeBlink.rate)}s steps(1, end) infinite`);
   }
+  if (svgAnimations.length > 0)
+    svgStyle.push(`animation: ${svgAnimations.join(", ")};`);
+  if (svgStyle.length > 0)
+    appendAttribute(html, "style", svgStyle.join(""));
   appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context));
   const lineCap = context.effectiveProperties.tryGetStaticValue<HmiLineCap>(item, "LineCap", item.lineCap).value;
   if (lineCap !== undefined) appendAttribute(html, "stroke-linecap", lineCapToCss(lineCap));
@@ -1194,7 +1211,11 @@ function getStrokeColor(item: HmiShapeBase, context: HmiHtmlConvertContext): Hmi
 }
 
 function getFillColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor | undefined {
-  return context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "BackgroundColor", item.backgroundColor).value;
+  return getFillColorProperty(item, context)?.staticValue;
+}
+
+function getFillColorProperty(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiProperty<HmiColor> | undefined {
+  return context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor);
 }
 
 function getStrokeWidth(item: HmiShapeBase, context: HmiHtmlConvertContext): number {
