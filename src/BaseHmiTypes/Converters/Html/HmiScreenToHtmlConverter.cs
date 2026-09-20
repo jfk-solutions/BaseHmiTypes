@@ -2233,6 +2233,9 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-header-background-color", ResolvePropertyPreview(alarmControl.HeaderBackgroundColor, context));
         AppendAttribute(html, "data-header-foreground-color", ResolvePropertyPreview(alarmControl.HeaderForegroundColor, context));
         AppendAttribute(html, "data-header-border-color", ResolvePropertyPreview(alarmControl.HeaderBorderColor, context));
+        AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(alarmControl.ShowToolbar, context));
+        AppendAttribute(html, "data-toolbar-background-color", ResolvePropertyPreview(alarmControl.ToolbarBackgroundColor, context));
+        AppendAttribute(html, "data-toolbar-foreground-color", ResolvePropertyPreview(alarmControl.ToolbarForegroundColor, context));
         AppendAttribute(html, "data-view-kind", alarmControl.ViewKind.ToString());
         AppendAttribute(html, "data-list-mode", listMode.ToString());
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmControl.NumberOfRows, context));
@@ -2300,15 +2303,21 @@ public class HmiScreenToHtmlConverter
 
         var showAcknowledgeButton = alarmControl.ShowAcknowledgeButton is not null && ResolveStaticValue(alarmControl.ShowAcknowledgeButton, context);
         var showHelpButton = alarmControl.ShowHelpButton is not null && ResolveStaticValue(alarmControl.ShowHelpButton, context);
-        if (showAcknowledgeButton || showHelpButton)
+        var showToolbar = alarmControl.ShowToolbar is not null && ResolveStaticValue(alarmControl.ShowToolbar, context);
+        if (showToolbar || showAcknowledgeButton || showHelpButton)
         {
-            html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">");
+            var toolbarStyle = new StringBuilder("flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;");
+            AppendColorStyle(toolbarStyle, "background-color", alarmControl.ToolbarBackgroundColor);
+            AppendColorStyle(toolbarStyle, "color", alarmControl.ToolbarForegroundColor);
+            html.Append("<div class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"").Append(toolbarStyle).Append("\">");
             if (showAcknowledgeButton)
                 html.Append("Acknowledge");
             if (showAcknowledgeButton && showHelpButton)
                 html.Append(" · ");
             if (showHelpButton)
                 html.Append("Help");
+            if (!showAcknowledgeButton && !showHelpButton)
+                html.Append("Toolbar");
             html.Append("</div>");
         }
         if (alarmControl.ShowStatusBar is not null && ResolveStaticValue(alarmControl.ShowStatusBar, context))

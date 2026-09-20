@@ -1347,6 +1347,9 @@ public class HmiScreenToHtmlConverterTests
             HeaderBackgroundColor = HmiColor.FromArgb(255, 0xE3, 0xE3, 0xE3),
             HeaderForegroundColor = HmiColor.FromArgb(255, 0x01, 0x02, 0x03),
             HeaderBorderColor = HmiColor.FromArgb(255, 0x66, 0x77, 0x88),
+            ShowToolbar = true,
+            ToolbarBackgroundColor = HmiColor.FromArgb(255, 0x44, 0x33, 0x22),
+            ToolbarForegroundColor = HmiColor.FromArgb(255, 0xFA, 0xFB, 0xFC),
             GridLineColor = HmiColor.FromArgb(255, 0x44, 0x55, 0x66),
             GridLineWidth = 2,
             ShowHorizontalGridLines = false,
@@ -1431,6 +1434,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-header-background-color=\"#E3E3E3\"");
         StringAssert.Contains(html, "data-header-foreground-color=\"#010203\"");
         StringAssert.Contains(html, "data-header-border-color=\"#667788\"");
+        StringAssert.Contains(html, "data-show-toolbar=\"true\"");
+        StringAssert.Contains(html, "data-toolbar-background-color=\"#443322\"");
+        StringAssert.Contains(html, "data-toolbar-foreground-color=\"#FAFBFC\"");
         StringAssert.Contains(html, "data-grid-line-color=\"#445566\"");
         StringAssert.Contains(html, "data-grid-line-width=\"2\"");
         StringAssert.Contains(html, "data-show-horizontal-grid-lines=\"false\"");
@@ -1461,7 +1467,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-column-type=\"Message\">Message</th>");
         Assert.IsFalse(html.Contains("data-column-type=\"AlarmState\"", StringComparison.Ordinal));
         StringAssert.Contains(html, ">Alarm data not loaded</td>");
-        StringAssert.Contains(html, ">Acknowledge · Help</div>");
+        StringAssert.Contains(html, "class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #443322;color: #FAFBFC;\">Acknowledge · Help</div>");
         StringAssert.Contains(html, "class=\"hmi-alarm-status-bar\" role=\"status\" style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #213243;color: #FEDCBA;font-family: Tahoma;font-size: 8px;font-weight: 600;font-style: italic;\">Status</div>");
         StringAssert.Contains(html, "<div id=\"AlarmBanner\"");
         StringAssert.Contains(html, "data-view-kind=\"AlarmBanner\"");
