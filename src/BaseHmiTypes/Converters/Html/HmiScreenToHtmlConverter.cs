@@ -2871,6 +2871,8 @@ public class HmiScreenToHtmlConverter
         var numberOfAlarms = indicator.NumberOfAlarms is null ? (int?)null : ResolveStaticValue(indicator.NumberOfAlarms, context);
         var text = indicator.Text is null ? null : ResolveStaticValue(indicator.Text, context);
         var isActive = alarmState.HasValue && alarmState.Value != noAlarmState;
+        var isFlashingRequired = indicator.IsFlashingRequired is not null &&
+            ResolveStaticValue(indicator.IsFlashingRequired, context);
         var content = numberOfAlarms is > 0
             ? numberOfAlarms.Value.ToString(CultureInfo.InvariantCulture)
             : !string.IsNullOrEmpty(text)
@@ -2881,7 +2883,24 @@ public class HmiScreenToHtmlConverter
         if (isActive && indicator.FlashingColor is not null)
         {
             var flashingColor = ResolveStaticValue(indicator.FlashingColor, context);
-            style.Append("box-shadow: inset 0 0 0 0.35em ").Append(ToCss(flashingColor)).Append(';');
+            if (isFlashingRequired)
+            {
+                var backgroundColor = indicator.BackgroundColor is null
+                    ? "transparent"
+                    : ToCss(ResolveStaticValue(indicator.BackgroundColor, context));
+                var flashingRate = indicator.FlashingRate is null
+                    ? 1000
+                    : ResolveStaticValue(indicator.FlashingRate, context);
+                style.Append("--hmi-background-color-off: ").Append(backgroundColor).Append(';')
+                    .Append("--hmi-background-color-on: ").Append(ToCss(flashingColor)).Append(';')
+                    .Append("animation: hmi-background-color-flash ")
+                    .Append(ToCss(flashingRate > 0 ? flashingRate / 1000d : 1d))
+                    .Append("s steps(1, end) infinite;");
+            }
+            else
+            {
+                style.Append("box-shadow: inset 0 0 0 0.35em ").Append(ToCss(flashingColor)).Append(';');
+            }
         }
 
         html.Append("<div");

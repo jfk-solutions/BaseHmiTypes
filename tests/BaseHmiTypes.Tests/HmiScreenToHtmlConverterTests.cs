@@ -861,6 +861,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-flashing-required=\"true\"");
         StringAssert.Contains(html, "data-flashing-color=\"#FF0000\"");
         StringAssert.Contains(html, "data-flashing-rate=\"500\"");
+        StringAssert.Contains(html, "--hmi-background-color-off: transparent;");
+        StringAssert.Contains(html, "--hmi-background-color-on: #FF0000;");
+        StringAssert.Contains(html, "animation: hmi-background-color-flash 0.5s steps(1, end) infinite;");
         StringAssert.Contains(html, "data-alarm-state=\"5\"");
         StringAssert.Contains(html, "data-no-alarm-state=\"0\"");
         StringAssert.Contains(html, "data-number-of-alarms=\"2\"");
