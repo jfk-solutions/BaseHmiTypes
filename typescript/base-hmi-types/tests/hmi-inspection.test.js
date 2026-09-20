@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   HmiButton,
+  HmiBlinkRate,
   HmiChildCoordinateSpace,
   HmiDynamicSvg,
   HmiDynamicSvgProperty,
@@ -170,8 +171,15 @@ test("HTML conversion renders a symbolic IO field image state", async () => {
     uri: "data:image/svg+xml,%3Csvg%2F%3E",
     kind: HmiImageSourceKind.Uri,
   };
+  state.alternateImageName = "pump-warning.svg";
+  state.alternateImage = {
+    imageName: "pump-warning.svg",
+    uri: "data:image/svg+xml,%3Csvg%20id%3D%22warning%22%2F%3E",
+    kind: HmiImageSourceKind.Uri,
+  };
   state.imageScaled = true;
   state.imageBlink = true;
+  state.imageBlinkRate = HmiBlinkRate.Fast;
   state.imageBackgroundColor = hmiColorFromArgb(255, 17, 34, 51);
   symbolicIoField.states.push(state);
   const screen = createScreen("main", "Main");
@@ -184,8 +192,13 @@ test("HTML conversion renders a symbolic IO field image state", async () => {
   assert.match(html, /data-state-value="7"/);
   assert.match(html, /data-image-name="pump-running.svg"/);
   assert.match(html, /data-image-blink="true"/);
+  assert.match(html, /data-alternate-image-name="pump-warning.svg"/);
+  assert.match(html, /data-image-blink-rate="Fast"/);
   assert.match(html, /background-color: #112233;/);
-  assert.match(html, /<img src="data:image\/svg\+xml,%3Csvg%2F%3E" alt="Running"/);
+  assert.match(html, /<img src="data:image\/svg\+xml,%3Csvg%2F%3E" alt="Running" class="hmi-symbolic-image-base"/);
+  assert.match(html, /animation: hmi-symbolic-base-flash 0.5s steps\(1, end\) infinite;/);
+  assert.match(html, /<img src="data:image\/svg\+xml,%3Csvg%20id%3D%22warning%22%2F%3E" alt="Running" class="hmi-symbolic-image-alternate"/);
+  assert.match(html, /animation: hmi-symbolic-alternate-flash 0.5s steps\(1, end\) infinite;/);
   assert.doesNotMatch(html, /<select id="PumpState"/);
 });
 
