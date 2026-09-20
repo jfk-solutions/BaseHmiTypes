@@ -50,6 +50,8 @@ import {
   HmiToggleSwitch,
   HmiTrendControl,
   HmiTrendPen,
+  HmiThreshold,
+  HmiThresholdValueMode,
   HmiWebControl,
   staticProperty,
 } from "../dist/index.js";
@@ -348,6 +350,44 @@ test("HTML converter renders bar scale ticks and appearance", async () => {
   assert.match(html, /data-hmi-bar-scale="true"/);
   assert.match(html, /color: #0C2238; font-family: Arial; font-size: 9px; font-weight: bold;/);
   assert.match(html, /<span>0.0&nbsp;bar<\/span><span>50.0&nbsp;bar<\/span><span>100.0&nbsp;bar<\/span>/);
+});
+
+test("HTML converter renders enabled bar threshold markers", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.name = "ThresholdBar";
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(20);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(100);
+  bar.value = staticProperty(35);
+  bar.fillDirection = staticProperty(HmiFillDirection.Right);
+  bar.thresholdValueMode = staticProperty(HmiThresholdValueMode.Absolute);
+  const active = new HmiThreshold();
+  active.index = 4;
+  active.enabled = staticProperty(true);
+  active.value = staticProperty(25);
+  active.color = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+  bar.thresholds.push(active);
+  const disabled = new HmiThreshold();
+  disabled.index = 5;
+  disabled.enabled = staticProperty(false);
+  disabled.value = staticProperty(75);
+  disabled.color = staticProperty(hmiColorFromArgb(255, 255, 255, 0));
+  bar.thresholds.push(disabled);
+  layer.items.push(bar);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /data-hmi-bar-meter="true"/);
+  assert.match(html, /data-hmi-bar-threshold="4" data-threshold-value="25"/);
+  assert.match(html, /background-color: #FF0000; top: 0; bottom: 0; left: 25%; width: 2px;/);
+  assert.doesNotMatch(html, /data-hmi-bar-threshold="5"/);
 });
 
 test("HTML converter renders slider orientations", async () => {

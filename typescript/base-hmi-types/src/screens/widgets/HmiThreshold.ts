@@ -7,6 +7,7 @@ export enum HmiThresholdValueMode {
 
 export class HmiThreshold {
   index?: number;
+  enabled?: HmiProperty<boolean>;
   value?: HmiProperty<number>;
   color?: HmiProperty<HmiColor>;
   blink?: HmiProperty<boolean>;

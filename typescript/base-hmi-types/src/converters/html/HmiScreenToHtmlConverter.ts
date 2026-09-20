@@ -77,6 +77,7 @@ import { HmiListBox } from "../../screens/widgets/HmiListBox.js";
 import { HmiRadioButtonGroup } from "../../screens/widgets/HmiRadioButtonGroup.js";
 import { HmiScale } from "../../screens/widgets/HmiScale.js";
 import { HmiScaleWidgetBase } from "../../screens/widgets/HmiScaleWidgetBase.js";
+import { HmiThresholdValueMode } from "../../screens/widgets/HmiThreshold.js";
 import { HmiSelectionGroupBase, HmiSelectionGroupItem } from "../../screens/widgets/HmiSelectionGroupBase.js";
 import { HmiSwitchType } from "../../screens/widgets/HmiSwitchType.js";
 import { HmiSymbolicIOField } from "../../screens/widgets/HmiSymbolicIOField.js";
@@ -1272,17 +1273,23 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   const [minimum, maximum] = resolveScaleRange(bar);
   const value = resolveScaleValue(bar, minimum, maximum);
   const direction = getStaticValue(bar.fillDirection) ?? HmiFillDirection.Right;
-  if (getStaticValue(bar.showScale) === true) {
+  const showScale = getStaticValue(bar.showScale) === true;
+  const showThresholds = bar.thresholds.some(threshold =>
+    threshold.value !== undefined && getStaticValue(threshold.enabled) !== false);
+  if (showScale || showThresholds) {
     const vertical = direction === HmiFillDirection.Up || direction === HmiFillDirection.Down;
     html.push("<div");
-    appendCommonAttributes(html, bar, context, true, vertical
-      ? "display: flex; flex-direction: row; align-items: stretch; gap: 4px;"
-      : "display: flex; flex-direction: column; align-items: stretch; gap: 2px;");
+    appendCommonAttributes(html, bar, context, true, showScale
+      ? vertical
+        ? "display: flex; flex-direction: row; align-items: stretch; gap: 4px;"
+        : "display: flex; flex-direction: column; align-items: stretch; gap: 2px;"
+      : "display: flex; align-items: stretch;");
     appendAttribute(html, "data-hmi-bar", "true");
     appendAttribute(html, "data-fill-direction", HmiFillDirection[direction]);
     html.push(">");
-    appendBarMeter(html, minimum, maximum, value, direction, vertical);
-    appendBarScale(html, bar, minimum, maximum, direction, vertical);
+    appendBarMeterRegion(html, bar, minimum, maximum, value, direction, vertical);
+    if (showScale)
+      appendBarScale(html, bar, minimum, maximum, direction, vertical);
     html.push("</div>");
     return;
   }
@@ -1293,6 +1300,24 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   appendAttribute(html, "max", toCss(maximum));
   appendAttribute(html, "value", toCss(value));
   html.push(`>${toCss(value)}</meter>`);
+}
+
+function appendBarMeterRegion(
+  html: string[],
+  bar: HmiBar,
+  minimum: number,
+  maximum: number,
+  value: number,
+  direction: HmiFillDirection,
+  vertical: boolean,
+): void {
+  html.push("<div");
+  appendAttribute(html, "data-hmi-bar-meter", "true");
+  appendAttribute(html, "style", "position: relative; display: flex; flex: 1; min-width: 0; min-height: 0;");
+  html.push(">");
+  appendBarMeter(html, minimum, maximum, value, direction, vertical);
+  appendBarThresholds(html, bar, minimum, maximum, direction);
+  html.push("</div>");
 }
 
 function appendBarMeter(
@@ -1310,6 +1335,40 @@ function appendBarMeter(
   appendAttribute(html, "max", toCss(maximum));
   appendAttribute(html, "value", toCss(value));
   html.push(`>${toCss(value)}</meter>`);
+}
+
+function appendBarThresholds(
+  html: string[],
+  bar: HmiBar,
+  minimum: number,
+  maximum: number,
+  direction: HmiFillDirection,
+): void {
+  const percentageMode = getStaticValue(bar.thresholdValueMode) === HmiThresholdValueMode.Percentage;
+  for (let index = 0; index < bar.thresholds.length; index++) {
+    const threshold = bar.thresholds[index]!;
+    const thresholdValue = getStaticValue(threshold.value);
+    if (thresholdValue === undefined || getStaticValue(threshold.enabled) === false)
+      continue;
+    let percentage = percentageMode
+      ? thresholdValue
+      : maximum === minimum ? 0 : (thresholdValue - minimum) * 100 / (maximum - minimum);
+    percentage = Math.max(0, Math.min(100, percentage));
+    const position = direction === HmiFillDirection.Up
+      ? `left: 0; right: 0; bottom: ${toCss(percentage)}%; height: 2px;`
+      : direction === HmiFillDirection.Down
+        ? `left: 0; right: 0; top: ${toCss(percentage)}%; height: 2px;`
+        : direction === HmiFillDirection.Left
+          ? `top: 0; bottom: 0; right: ${toCss(percentage)}%; width: 2px;`
+          : `top: 0; bottom: 0; left: ${toCss(percentage)}%; width: 2px;`;
+    const color = getStaticValue(threshold.color);
+    html.push("<span");
+    appendAttribute(html, "data-hmi-bar-threshold", (threshold.index ?? index).toString());
+    appendAttribute(html, "data-threshold-value", toCss(thresholdValue));
+    appendAttribute(html, "style",
+      `position: absolute; pointer-events: none; z-index: 1; background-color: ${color === undefined ? "currentColor" : colorToCss(color)}; ${position}`);
+    html.push("></span>");
+  }
 }
 
 function appendBarScale(
