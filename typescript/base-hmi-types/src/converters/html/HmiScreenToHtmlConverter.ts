@@ -8,6 +8,7 @@ import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js
 import { HmiColor } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
+import { HmiCustomWidgetContainer } from "../../screens/base/HmiCustomWidgetContainer.js";
 import { HmiDynamicSvg } from "../../screens/base/HmiDynamicSvg.js";
 import { HmiDotNetControlContainer } from "../../screens/base/HmiDotNetControlContainer.js";
 import { HmiFont } from "../../screens/base/HmiFont.js";
@@ -442,9 +443,22 @@ export class HmiScreenToHtmlConverter {
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<void> {
+    const isEmptyCustomWidget = container instanceof HmiCustomWidgetContainer && items.length === 0;
     html.push("<div");
-    appendCommonAttributes(html, container, context);
+    appendCommonAttributes(
+      html,
+      container,
+      context,
+      true,
+      isEmptyCustomWidget
+        ? "display: flex; align-items: center; justify-content: center; overflow: hidden;"
+        : undefined,
+    );
+    if (container instanceof HmiCustomWidgetContainer)
+      appendAttribute(html, "data-hmi-custom-widget-type", container.constructor.name);
     html.push(">");
+    if (isEmptyCustomWidget)
+      html.push(`<span aria-hidden="true">${escapeHtml(container.name ?? "")}</span>`);
     if (container instanceof HmiLayoutContainerBase && container.childCoordinateSpace === HmiChildCoordinateSpace.ScreenAbsolute) {
       const childContext = context.withPositionOffset(-getStaticValueOrDefault(container.x, 0), -getStaticValueOrDefault(container.y, 0));
       for (let childIndex = 0; childIndex < items.length; childIndex++) {
