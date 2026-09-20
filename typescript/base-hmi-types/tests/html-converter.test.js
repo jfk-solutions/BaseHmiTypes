@@ -1532,6 +1532,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.useToolbarBackgroundColor = staticProperty(true);
   trend.toolbarBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x33, 0x22));
   trend.showStatusBar = staticProperty(true);
+  trend.useStatusBarBackgroundColor = staticProperty(true);
   trend.statusBarBackgroundColor = staticProperty(hmiColorFromArgb(255, 16, 32, 48));
   trend.statusBarForegroundColor = staticProperty(hmiColorFromArgb(255, 224, 208, 192));
   trend.statusBarFont = new HmiFont();
@@ -1584,6 +1585,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /toolbar-background-color="#443322"/);
   assert.match(html, /--hmi-trend-toolbar-background: #443322;/);
   assert.match(html, /show-status-bar="true"/);
+  assert.match(html, /use-status-bar-background-color="true"/);
   assert.match(html, /--hmi-trend-status-background: #102030;/);
   assert.match(html, /--hmi-trend-status-foreground: #E0D0C0;/);
   assert.match(html, /--hmi-trend-status-font-family: Tahoma;--hmi-trend-status-font-size: 8px;--hmi-trend-status-font-weight: 600;--hmi-trend-status-font-style: italic;/);
@@ -1603,6 +1605,29 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /maximum-value="100"/);
   assert.match(html, /y-axis-decimal-places="2"/);
   assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;marker&quot;:&quot;2&quot;,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}\]"/);
+});
+
+test("HTML converter does not render disabled trend status backgrounds", async () => {
+  const screen = new HmiScreen();
+  screen.name = "Main";
+  screen.width = staticProperty(400);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.name = "Default";
+  const trend = new HmiTrendControl();
+  trend.name = "Trend";
+  trend.width = staticProperty(320);
+  trend.height = staticProperty(180);
+  trend.showStatusBar = staticProperty(true);
+  trend.useStatusBarBackgroundColor = staticProperty(false);
+  trend.statusBarBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x10, 0x20, 0x30));
+  layer.items.push(trend);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /use-status-bar-background-color="false"/);
+  assert.doesNotMatch(html, /--hmi-trend-status-background:/);
 });
 
 test("HTML converter renders an inert radar chart preview", async () => {

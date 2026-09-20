@@ -3102,6 +3102,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "use-toolbar-background-color", trendControl.useToolbarBackgroundColor);
   appendStaticAttribute(html, "toolbar-background-color", trendControl.toolbarBackgroundColor);
   appendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.showStatusBar);
+  appendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.useStatusBarBackgroundColor);
   appendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
   appendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.displayScrollMechanism);
   appendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.chartLiveMode);
@@ -3207,7 +3208,7 @@ function createTrendControlStyle(trendControl: HmiTrendControl): string {
   if (toolbarBackground !== undefined && getStaticValue(trendControl.useToolbarBackgroundColor) !== false)
     parts.push(`--hmi-trend-toolbar-background: ${colorToCss(toolbarBackground)};`);
   const statusBackground = getStaticValue(trendControl.statusBarBackgroundColor);
-  if (statusBackground !== undefined)
+  if (statusBackground !== undefined && getStaticValue(trendControl.useStatusBarBackgroundColor) !== false)
     parts.push(`--hmi-trend-status-background: ${colorToCss(statusBackground)};`);
   const statusForeground = getStaticValue(trendControl.statusBarForegroundColor);
   if (statusForeground !== undefined)
