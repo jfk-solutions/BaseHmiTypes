@@ -44,6 +44,8 @@ import {
   HmiState,
   HmiSlider,
   HmiToggleSwitch,
+  HmiTrendControl,
+  HmiTrendPen,
   HmiWebControl,
   staticProperty,
 } from "../dist/index.js";
@@ -554,6 +556,68 @@ test("HTML converter renders inert opaque host control previews", async () => {
   assert.match(html, />Metadata preserved<\/div>/);
   assert.doesNotMatch(html, /<object/);
   assert.doesNotMatch(html, /<embed/);
+});
+
+test("HTML converter exposes trend configuration to the web component", async () => {
+  const screen = new HmiScreen();
+  screen.name = "Main";
+  screen.width = staticProperty(400);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+  layer.name = "Default";
+  const trend = new HmiTrendControl();
+  trend.name = "ProcessTrend";
+  trend.width = staticProperty(320);
+  trend.height = staticProperty(180);
+  trend.chartTitle = "Pressure & temperature";
+  trend.displayChartTitle = staticProperty(true);
+  trend.showToolbar = staticProperty(false);
+  trend.displayPenIcons = staticProperty(true);
+  trend.displayScrollMechanism = staticProperty(true);
+  trend.chartLiveMode = staticProperty(true);
+  trend.autoScale = staticProperty(false);
+  trend.xAxisScaleVisible = staticProperty(true);
+  trend.xAxisDateVisible = staticProperty(false);
+  trend.xAxisGridVisible = staticProperty(true);
+  trend.yAxisScaleVisible = staticProperty(true);
+  trend.yAxisGridVisible = staticProperty(false);
+  trend.minimumValue = staticProperty(-5);
+  trend.maximumValue = staticProperty(100);
+  trend.yAxisDecimalPlaces = staticProperty(2);
+  const pen = new HmiTrendPen();
+  pen.number = 1;
+  pen.name = 'Pressure "A"';
+  pen.color = staticProperty(hmiColorFromArgb(255, 17, 34, 51));
+  pen.visible = staticProperty(true);
+  pen.width = staticProperty(3);
+  pen.style = staticProperty(HmiLineStyle.Dash);
+  pen.marker = staticProperty("2");
+  pen.minimumValue = staticProperty(0);
+  pen.maximumValue = staticProperty(100);
+  pen.engineeringUnit = "bar";
+  trend.pens.push(pen);
+  layer.items.push(trend);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /<hmi-trend-control id="ProcessTrend"/);
+  assert.match(html, /chart-title="Pressure &amp; temperature"/);
+  assert.match(html, / display-chart-title/);
+  assert.match(html, / display-pen-icons/);
+  assert.match(html, / display-scroll-mechanism/);
+  assert.match(html, / chart-live-mode/);
+  assert.match(html, / x-axis-scale-visible/);
+  assert.match(html, / x-axis-grid-visible/);
+  assert.match(html, / y-axis-scale-visible/);
+  assert.match(html, /minimum-value="-5"/);
+  assert.match(html, /maximum-value="100"/);
+  assert.match(html, /y-axis-decimal-places="2"/);
+  assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;style&quot;:1,&quot;marker&quot;:&quot;2&quot;,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;unit&quot;:&quot;bar&quot;}\]"/);
+  assert.doesNotMatch(html, / show-toolbar/);
+  assert.doesNotMatch(html, / auto-scale/);
+  assert.doesNotMatch(html, / x-axis-date-visible/);
+  assert.doesNotMatch(html, / y-axis-grid-visible/);
 });
 
 test("HTML converter renders an inert radar chart preview", async () => {
