@@ -48,6 +48,9 @@ public class HmiScreenToHtmlConverter
         ISet<string> screenStack,
         CancellationToken cancellationToken)
     {
+        if (screen is HmiCharacterScreen characterScreen)
+            return ConvertCharacterScreen(characterScreen, context.Options);
+
         var currentKeys = GetScreenReferenceKeys(screen).ToList();
         foreach (var key in currentKeys)
             screenStack.Add(key);
@@ -97,6 +100,24 @@ public class HmiScreenToHtmlConverter
             foreach (var key in currentKeys)
                 screenStack.Remove(key);
         }
+    }
+
+    private static string ConvertCharacterScreen(HmiCharacterScreen screen, HmiHtmlConvertOptions options)
+    {
+        var html = new StringBuilder();
+        if (options.IncludeMetaCharset) html.Append("<meta charset=\"utf-8\">");
+        html.Append("<section class=\"hmi-character-screen\" aria-label=\"")
+            .Append(WebUtility.HtmlEncode(screen.Name)).Append("\">");
+        foreach (var entry in screen.Entries)
+        {
+            var text = options.CultureLcid is int lcid && entry.Text.Texts.TryGetValue(lcid, out var translated)
+                ? translated : entry.Text.GetDefaultText();
+            html.Append("<figure><figcaption>Entry ").Append(WebUtility.HtmlEncode(entry.Id))
+                .Append("</figcaption><pre style=\"white-space:pre;overflow:auto;font:16px/1.4 monospace;padding:1em;background:#dce5bc;color:#182018;\">")
+                .Append(WebUtility.HtmlEncode(text).Replace("\uFFFC", "<span title=\"Unresolved field\">&#9633;</span>"))
+                .Append("</pre></figure>");
+        }
+        return html.Append("</section>").ToString();
     }
 
     private async ValueTask AppendItemAsync(
