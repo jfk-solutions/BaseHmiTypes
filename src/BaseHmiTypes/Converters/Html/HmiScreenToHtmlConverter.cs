@@ -2241,6 +2241,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-filtered-triggers", alarmControl.FilteredTriggers.Count == 0 ? null : string.Join(",", alarmControl.FilteredTriggers));
         AppendAttribute(html, "data-alarm-identifier", ResolvePropertyPreview(alarmControl.AlarmIdentifier, context));
         AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(alarmControl.GridLineColor, context));
+        AppendAttribute(html, "data-grid-line-width", ResolvePropertyPreview(alarmControl.GridLineWidth, context));
         AppendAttribute(html, "data-show-horizontal-grid-lines", ResolvePropertyPreview(alarmControl.ShowHorizontalGridLines, context));
         AppendAttribute(html, "data-show-vertical-grid-lines", ResolvePropertyPreview(alarmControl.ShowVerticalGridLines, context));
         AppendAttribute(html, "data-table-background-color", ResolvePropertyPreview(alarmControl.TableBackgroundColor, context));
@@ -3363,7 +3364,10 @@ public class HmiScreenToHtmlConverter
     {
         var horizontal = alarmControl.ShowHorizontalGridLines is null || ResolveStaticValue(alarmControl.ShowHorizontalGridLines, context);
         var vertical = alarmControl.ShowVerticalGridLines is null || ResolveStaticValue(alarmControl.ShowVerticalGridLines, context);
-        return $"border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: {(horizontal ? 1 : 0)}px {(vertical ? 1 : 0)}px;";
+        var width = alarmControl.GridLineWidth is null
+            ? 1d
+            : Math.Max(0d, ResolveStaticValue(alarmControl.GridLineWidth, context));
+        return $"border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: {(horizontal ? ToCss(width) : "0")}px {(vertical ? ToCss(width) : "0")}px;";
     }
 
     private static string CreateTrendControlStyle(HmiTrendControl trendControl, HmiHtmlConvertContext context)
