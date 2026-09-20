@@ -2036,7 +2036,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
 
   if (showTitle) {
     const title = resolveAlarmTitle(alarmControl, listMode, context);
-    html.push("<div style=\"flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;");
+    html.push("<div style=\"", createAlarmHeaderStyle(alarmControl));
     if (getStaticValue(alarmControl.movable) === true)
       html.push("cursor: move;");
     html.push("\"><span style=\"flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\">", escapeHtml(title), "</span>");
@@ -3072,7 +3072,17 @@ function createAlarmControlStyle(alarmControl: HmiAlarmControl): string {
   const gridLineColor = getStaticValue(alarmControl.gridLineColor);
   if (gridLineColor !== undefined)
     style += `--hmi-grid-line-color: ${colorToCss(gridLineColor)};`;
-  return style;
+  const parts = [style];
+  if (alarmControl.contentFont !== undefined)
+    appendFont(parts, alarmControl.contentFont);
+  return parts.join("");
+}
+
+function createAlarmHeaderStyle(alarmControl: HmiAlarmControl): string {
+  const parts = ["flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;"];
+  if (alarmControl.headerFont !== undefined)
+    appendFont(parts, alarmControl.headerFont);
+  return parts.join("");
 }
 
 function appendStaticBooleanValueAttribute(
@@ -3667,21 +3677,25 @@ function getVerticalAlignment(item: HmiScreenItemBase): HmiProperty<HmiVerticalA
 function appendFont(html: string[], font: HmiFont): void {
   const name = getStaticValue(font.name);
   const size = getStaticValue(font.size);
+  const weight = getStaticValue(font.weight);
   if (name?.trim()) {
     html.push(`font-family: ${escapeHtml(name)};`);
   }
   if (size !== undefined) {
     html.push(`font-size: ${toCss(size)}px;`);
   }
-  if (getStaticValueOrDefault(font.bold, false)) {
+  if (weight !== undefined && weight > 0) {
+    html.push(`font-weight: ${weight};`);
+  } else if (getStaticValueOrDefault(font.bold, false)) {
     html.push("font-weight: bold;");
   }
   if (getStaticValueOrDefault(font.italic, false)) {
     html.push("font-style: italic;");
   }
-  if (getStaticValueOrDefault(font.underline, false)) {
-    html.push("text-decoration: underline;");
-  }
+  const decorations = [];
+  if (getStaticValueOrDefault(font.underline, false)) decorations.push("underline");
+  if (getStaticValueOrDefault(font.strikethrough, false)) decorations.push("line-through");
+  if (decorations.length > 0) html.push(`text-decoration: ${decorations.join(" ")};`);
 }
 
 function appendColorStyle(html: string[], name: string, property: HmiProperty<HmiColor> | undefined): void {

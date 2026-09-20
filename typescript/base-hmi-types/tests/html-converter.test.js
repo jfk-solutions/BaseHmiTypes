@@ -1227,6 +1227,17 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.movable = staticProperty(true);
   alarms.closeable = staticProperty(true);
   alarms.gridLineColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x55, 0x66));
+  alarms.contentFont = new HmiFont();
+  alarms.contentFont.name = staticProperty("Arial");
+  alarms.contentFont.size = staticProperty(9.75);
+  alarms.contentFont.weight = staticProperty(400);
+  alarms.headerFont = new HmiFont();
+  alarms.headerFont.name = staticProperty("Siemens Sans");
+  alarms.headerFont.size = staticProperty(10);
+  alarms.headerFont.weight = staticProperty(700);
+  alarms.headerFont.italic = staticProperty(true);
+  alarms.headerFont.underline = staticProperty(true);
+  alarms.headerFont.strikethrough = staticProperty(true);
   alarms.listMode = staticProperty(HmiAlarmListMode.Active);
   alarms.activeAlarmsTitle = HmiMultilingualText.fromText("Active process alarms");
   alarms.numberOfRows = staticProperty(8);
@@ -1273,6 +1284,8 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-grid-line-color="#445566"/);
   assert.match(html, /--hmi-grid-line-color: #445566;/);
   assert.match(html, /border: 1px solid var\(--hmi-grid-line-color, currentColor\);/);
+  assert.match(html, /font-family: Arial;font-size: 9.75px;font-weight: 400;/);
+  assert.match(html, /font-family: Siemens Sans;font-size: 10px;font-weight: 700;font-style: italic;text-decoration: underline line-through;/);
   assert.match(html, /resize: both;/);
   assert.match(html, /cursor: move;/);
   assert.match(html, /aria-label="Close" disabled/);
