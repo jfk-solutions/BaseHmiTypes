@@ -14,6 +14,7 @@ import { HmiDotNetControlContainer } from "../../screens/base/HmiDotNetControlCo
 import { HmiFont } from "../../screens/base/HmiFont.js";
 import { HmiFillAnimation } from "../../screens/base/HmiFillAnimation.js";
 import { HmiFillDirection } from "../../screens/base/HmiFillDirection.js";
+import { HmiFillPattern } from "../../screens/base/HmiFillPattern.js";
 import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
 import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
@@ -681,7 +682,7 @@ function appendPointShape(html: string[], shape: HmiPointBasedShapeBase, element
   appendAttribute(html, "points", shape.points.map((point) => toSvgPoint(shape, point)).join(" "));
   appendStrokeAttributes(html, shape, fill ? getFillColor(shape, context) : undefined, context);
   html.push(`></${elementName}>`);
-  appendSvgFillDefinition(html, shape, fill ? getFillColor(shape, context) : undefined);
+  appendSvgFillDefinition(html, shape, fill ? getFillColor(shape, context) : undefined, context);
   html.push("</svg>");
 }
 
@@ -695,7 +696,7 @@ function appendCircle(html: string[], circle: HmiCircle, context: HmiHtmlConvert
   appendSvgAttribute(html, "r", getStaticValueOrDefault(circle.radius, Math.min(width, height) / 2));
   appendStrokeAttributes(html, circle, getFillColor(circle, context), context);
   html.push("></circle>");
-  appendSvgFillDefinition(html, circle, getFillColor(circle, context));
+  appendSvgFillDefinition(html, circle, getFillColor(circle, context), context);
   html.push("</svg>");
 }
 
@@ -710,7 +711,7 @@ function appendEllipse(html: string[], ellipse: HmiEllipse, context: HmiHtmlConv
   appendSvgAttribute(html, "ry", getStaticValueOrDefault(ellipse.radiusY, height / 2));
   appendStrokeAttributes(html, ellipse, getFillColor(ellipse, context), context);
   html.push("></ellipse>");
-  appendSvgFillDefinition(html, ellipse, getFillColor(ellipse, context));
+  appendSvgFillDefinition(html, ellipse, getFillColor(ellipse, context), context);
   html.push("</svg>");
 }
 
@@ -799,7 +800,7 @@ function appendArcPath(
   appendAttribute(html, "d", createArcPath(centerX, centerY, radiusX, radiusY, startAngle, sweepAngle, segment));
   appendStrokeAttributes(html, item, segment ? getFillColor(item, context) : undefined, context);
   html.push("></path>");
-  appendSvgFillDefinition(html, item, segment ? getFillColor(item, context) : undefined);
+  appendSvgFillDefinition(html, item, segment ? getFillColor(item, context) : undefined, context);
   html.push("</svg>");
 }
 
@@ -838,9 +839,14 @@ function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, h
 
 function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined, context: HmiHtmlConvertContext): void {
   const lineStyle = getLineStyle(item, context);
-  const fill = fillColor === undefined
+  const fillPattern = getFillPattern(item, context);
+  const fill = fillColor === undefined || fillPattern === HmiFillPattern.Transparent
     ? "none"
-    : tryGetFillPercentage(item.fillAnimation) !== undefined ? `url(#${getFillGradientId(item)})` : colorToCss(fillColor);
+    : tryGetFillPercentage(item.fillAnimation) !== undefined
+      ? `url(#${getFillGradientId(item)})`
+      : fillPattern !== undefined && fillPattern !== HmiFillPattern.Solid
+        ? `url(#${getFillPatternId(item)})`
+        : colorToCss(fillColor);
   appendAttribute(html, "fill", fill);
   appendAttribute(html, "stroke", lineStyle === HmiLineStyle.None ? "none" : colorToCss(getStrokeColor(item, context)));
   appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context));
@@ -864,9 +870,13 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
   }
 }
 
-function appendSvgFillDefinition(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined): void {
+function appendSvgFillDefinition(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined, context: HmiHtmlConvertContext): void {
   const percentage = tryGetFillPercentage(item.fillAnimation);
-  if (fillColor === undefined || percentage === undefined) return;
+  if (fillColor === undefined) return;
+  if (percentage === undefined) {
+    appendSvgPatternDefinition(html, item, fillColor, context);
+    return;
+  }
 
   const [x1, y1, x2, y2] = getSvgFillVector(item.fillAnimation?.direction);
   html.push("<defs><linearGradient");
@@ -882,6 +892,85 @@ function appendSvgFillDefinition(html: string[], item: HmiShapeBase, fillColor: 
   appendAttribute(html, "offset", `${toCss(percentage)}%`);
   appendAttribute(html, "stop-color", "transparent");
   html.push("></stop></linearGradient></defs>");
+}
+
+function appendSvgPatternDefinition(html: string[], item: HmiShapeBase, fillColor: HmiColor, context: HmiHtmlConvertContext): void {
+  const pattern = getFillPattern(item, context);
+  if (pattern === undefined || pattern === HmiFillPattern.Transparent || pattern === HmiFillPattern.Solid) return;
+
+  const patternColor = colorToCss(getPatternColor(item, context));
+  const size = pattern === HmiFillPattern.DottedEvenOddFiner || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.CheckersFiner ? 4 : 8;
+  html.push("<defs><pattern");
+  appendAttribute(html, "id", getFillPatternId(item));
+  appendAttribute(html, "patternUnits", "userSpaceOnUse");
+  appendAttribute(html, "width", size.toString());
+  appendAttribute(html, "height", size.toString());
+  html.push("><rect width=\"100%\" height=\"100%\"");
+  appendAttribute(html, "fill", colorToCss(fillColor));
+  html.push("></rect>");
+  appendSvgPatternMarks(html, pattern, size, patternColor);
+  html.push("</pattern></defs>");
+}
+
+function appendSvgPatternMarks(html: string[], pattern: HmiFillPattern, size: number, color: string): void {
+  switch (pattern) {
+    case HmiFillPattern.Checkers:
+    case HmiFillPattern.CheckersFiner:
+      html.push("<path");
+      appendAttribute(html, "d", `M0 0H${size / 2}V${size / 2}H0ZM${size / 2} ${size / 2}H${size}V${size}H${size / 2}Z`);
+      appendAttribute(html, "fill", color);
+      html.push("></path>");
+      break;
+    case HmiFillPattern.Horizontal:
+    case HmiFillPattern.HorizontalDifferentLines:
+      appendPatternPath(html, `M0 1H${size} M0 ${size / 2 + 1}H${size}`, color, pattern === HmiFillPattern.HorizontalDifferentLines ? 2 : 1);
+      break;
+    case HmiFillPattern.Vertical:
+      appendPatternPath(html, `M1 0V${size} M${size / 2 + 1} 0V${size}`, color, 1);
+      break;
+    case HmiFillPattern.DottedHorizontal:
+    case HmiFillPattern.DottedEvenOdd:
+    case HmiFillPattern.DottedEvenOddFiner:
+    case HmiFillPattern.DottedEvenOddFinest:
+    case HmiFillPattern.DottedHorizontalInverted: {
+      const radius = pattern === HmiFillPattern.DottedHorizontalInverted ? "2" : "1";
+      html.push("<circle");
+      appendAttribute(html, "cx", (size / 4).toString());
+      appendAttribute(html, "cy", (size / 4).toString());
+      appendAttribute(html, "r", radius);
+      appendAttribute(html, "fill", color);
+      html.push("></circle><circle");
+      appendAttribute(html, "cx", (size * 0.75).toString());
+      appendAttribute(html, "cy", (size * 0.75).toString());
+      appendAttribute(html, "r", radius);
+      appendAttribute(html, "fill", color);
+      html.push("></circle>");
+      break;
+    }
+    case HmiFillPattern.Bricks:
+    case HmiFillPattern.BricksDiagonal:
+      appendPatternPath(html, `M0 0H${size} M0 ${size / 2}H${size} M${size / 2} 0V${size / 2} M0 ${size / 2}V${size}`, color, 1);
+      break;
+    default: {
+      const leftToRight = pattern === HmiFillPattern.DiagonalLeftToRight || pattern === HmiFillPattern.Diagonal || pattern === HmiFillPattern.DiagonalCross || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.DiagonalCrossBold;
+      const rightToLeft = pattern === HmiFillPattern.DiagonalRightToLeft || pattern === HmiFillPattern.DiagonalCross || pattern === HmiFillPattern.DiagonalCrossFiner || pattern === HmiFillPattern.DiagonalCrossBold;
+      const width = pattern === HmiFillPattern.DiagonalCrossBold ? 2 : 1;
+      if (leftToRight)
+        appendPatternPath(html, `M-${size / 4} ${size / 4}L${size / 4} -${size / 4} M0 ${size}L${size} 0 M${size * 3 / 4} ${size + size / 4}L${size + size / 4} ${size * 3 / 4}`, color, width);
+      if (rightToLeft)
+        appendPatternPath(html, `M-${size / 4} ${size * 3 / 4}L${size / 4} ${size + size / 4} M0 0L${size} ${size} M${size * 3 / 4} -${size / 4}L${size + size / 4} ${size / 4}`, color, width);
+      break;
+    }
+  }
+}
+
+function appendPatternPath(html: string[], data: string, color: string, width: number): void {
+  html.push("<path");
+  appendAttribute(html, "d", data);
+  appendAttribute(html, "stroke", color);
+  appendAttribute(html, "stroke-width", width.toString());
+  appendAttribute(html, "fill", "none");
+  html.push("></path>");
 }
 
 function getSvgFillVector(direction: HmiFillDirection | undefined): [string, string, string, string] {
@@ -900,6 +989,19 @@ function getSvgFillVector(direction: HmiFillDirection | undefined): [string, str
 function getFillGradientId(item: HmiShapeBase): string {
   const sanitized = (item.name ?? item.id ?? "shape").replace(/[^A-Za-z0-9_-]/g, "-");
   return `hmi-fill-${sanitized || "shape"}`;
+}
+
+function getFillPatternId(item: HmiShapeBase): string {
+  return getFillGradientId(item).replace("hmi-fill-", "hmi-pattern-");
+}
+
+function getFillPattern(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiFillPattern | undefined {
+  return context.effectiveProperties.tryGetStaticValue<HmiFillPattern>(item, "FillPattern", item.fillPattern).value;
+}
+
+function getPatternColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor {
+  return context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "PatternColor", item.patternColor).value
+    ?? getStrokeColor(item, context);
 }
 
 function tryGetFillPercentage(animation: HmiFillAnimation | undefined): number | undefined {
@@ -1765,6 +1867,7 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
   appendStyle(html, rectangle, context);
+  appendFillPatternStyle(html, rectangle, context);
   appendFillAnimationStyle(html, rectangle, context);
   appendRectangleRadius(html, rectangle);
   if (
@@ -1776,6 +1879,54 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
     html.push("border: 1px solid #000000;");
   }
   html.push("\"></div>");
+}
+
+function appendFillPatternStyle(html: string[], item: HmiShapeBase, context: HmiHtmlConvertContext): void {
+  const pattern = getFillPattern(item, context);
+  if (pattern === undefined || pattern === HmiFillPattern.Solid) return;
+  if (pattern === HmiFillPattern.Transparent) {
+    html.push("background-color: transparent;");
+    return;
+  }
+
+  const color = colorToCss(getPatternColor(item, context));
+  let image: string;
+  switch (pattern) {
+    case HmiFillPattern.Checkers:
+    case HmiFillPattern.CheckersFiner:
+      image = `conic-gradient(${color} 25%, transparent 0 50%, ${color} 0 75%, transparent 0)`;
+      break;
+    case HmiFillPattern.Horizontal:
+      image = `repeating-linear-gradient(to bottom, ${color} 0 1px, transparent 1px 6px)`;
+      break;
+    case HmiFillPattern.Vertical:
+      image = `repeating-linear-gradient(to right, ${color} 0 1px, transparent 1px 6px)`;
+      break;
+    case HmiFillPattern.DiagonalLeftToRight:
+    case HmiFillPattern.Diagonal:
+      image = `repeating-linear-gradient(135deg, ${color} 0 1px, transparent 1px 6px)`;
+      break;
+    case HmiFillPattern.DiagonalRightToLeft:
+      image = `repeating-linear-gradient(45deg, ${color} 0 1px, transparent 1px 6px)`;
+      break;
+    case HmiFillPattern.DiagonalCross:
+    case HmiFillPattern.DiagonalCrossFiner:
+    case HmiFillPattern.DiagonalCrossBold:
+      image = `repeating-linear-gradient(45deg, ${color} 0 1px, transparent 1px 6px), repeating-linear-gradient(135deg, ${color} 0 1px, transparent 1px 6px)`;
+      break;
+    case HmiFillPattern.Bricks:
+    case HmiFillPattern.BricksDiagonal:
+      image = `linear-gradient(${color} 1px, transparent 1px), linear-gradient(90deg, ${color} 1px, transparent 1px)`;
+      break;
+    case HmiFillPattern.HorizontalDifferentLines:
+      image = `repeating-linear-gradient(to bottom, ${color} 0 1px, transparent 1px 4px, ${color} 4px 6px, transparent 6px 10px)`;
+      break;
+    default:
+      image = `radial-gradient(circle, ${color} 0 1px, transparent 1px)`;
+      break;
+  }
+  html.push(`background-image: ${image};`);
+  html.push(`background-size: ${pattern === HmiFillPattern.CheckersFiner || pattern === HmiFillPattern.DiagonalCrossFiner ? "4px 4px" : "8px 8px"};`);
 }
 
 function appendFillAnimationStyle(html: string[], item: HmiShapeBase, context: HmiHtmlConvertContext): void {

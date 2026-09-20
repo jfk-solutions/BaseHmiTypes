@@ -10,6 +10,7 @@ import {
   HmiDynamicSvgProperty,
   HmiFillAnimation,
   HmiFillDirection,
+  HmiFillPattern,
   HmiDisabledImageMode,
   HmiGroup,
   HmiImage,
@@ -139,6 +140,29 @@ test("HTML conversion renders shape fill animation previews", async () => {
   assert.match(html, /fill="url\(#hmi-fill-Level\)"/);
   assert.match(html, /<linearGradient id="hmi-fill-Level" x1="0%" y1="100%" x2="0%" y2="0%"/);
   assert.match(html, /<stop offset="60%" stop-color="#00C800"/);
+});
+
+test("HTML conversion renders shape fill patterns", async () => {
+  const rectangle = createRectangle("CheckedTank");
+  rectangle.backgroundColor = staticProperty(hmiColorFromArgb(255, 255, 255, 255));
+  rectangle.patternColor = staticProperty(hmiColorFromArgb(255, 0, 0, 0));
+  rectangle.fillPattern = staticProperty(HmiFillPattern.Checkers);
+  const circle = new HmiCircle();
+  circle.name = "StripedLevel";
+  circle.width = staticProperty(50);
+  circle.height = staticProperty(50);
+  circle.backgroundColor = staticProperty(hmiColorFromArgb(255, 255, 255, 255));
+  circle.patternColor = staticProperty(hmiColorFromArgb(255, 0, 128, 255));
+  circle.fillPattern = staticProperty(HmiFillPattern.Horizontal);
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(rectangle, circle);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /background-image: conic-gradient\(#000000 25%, transparent 0 50%, #000000 0 75%, transparent 0\);/);
+  assert.match(html, /fill="url\(#hmi-pattern-StripedLevel\)"/);
+  assert.match(html, /<pattern id="hmi-pattern-StripedLevel" patternUnits="userSpaceOnUse"/);
+  assert.match(html, /stroke="#0080FF"/);
 });
 
 test("HTML conversion serializes dynamic SVG colors in HMI format", async () => {
