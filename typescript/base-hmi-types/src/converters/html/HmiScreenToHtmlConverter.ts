@@ -460,21 +460,39 @@ export class HmiScreenToHtmlConverter {
     signal?: AbortSignal,
   ): Promise<void> {
     const isEmptyCustomWidget = container instanceof HmiCustomWidgetContainer && items.length === 0;
+    const customWidget = container instanceof HmiCustomWidgetContainer ? container : undefined;
+    const hasWindowChrome = customWidget !== undefined && hasHostedWindowSettings(customWidget);
     html.push("<div");
     appendCommonAttributes(
       html,
       container,
       context,
       true,
-      isEmptyCustomWidget
+      hasWindowChrome
+        ? createHostedWindowStyle(customWidget)
+        : isEmptyCustomWidget
         ? "display: flex; align-items: center; justify-content: center; overflow: hidden;"
         : undefined,
     );
-    if (container instanceof HmiCustomWidgetContainer)
+    if (customWidget !== undefined) {
       appendAttribute(html, "data-hmi-custom-widget-type", container.constructor.name);
+      appendStaticAttribute(html, "data-window-resizable", customWidget.resizable);
+      appendStaticAttribute(html, "data-window-movable", customWidget.movable);
+      appendStaticAttribute(html, "data-window-border", customWidget.showWindowBorder);
+      appendStaticAttribute(html, "data-window-caption", customWidget.showCaption);
+      appendStaticAttribute(html, "data-window-maximize", customWidget.showMaximizeButton);
+      appendStaticAttribute(html, "data-window-close", customWidget.showCloseButton);
+      appendStaticAttribute(html, "data-window-always-on-top", customWidget.alwaysOnTop);
+      appendStaticAttribute(html, "data-hosted-application", customWidget.hostedApplication);
+      appendStaticAttribute(html, "data-hosted-template", customWidget.hostedTemplate);
+    }
     html.push(">");
-    if (isEmptyCustomWidget)
+    if (hasWindowChrome && getStaticValueOrDefault(customWidget.showCaption, false))
+      appendHostedWindowCaption(html, customWidget);
+    if (isEmptyCustomWidget && !hasWindowChrome)
       html.push(`<span aria-hidden="true">${escapeHtml(container.name ?? "")}</span>`);
+    else if (isEmptyCustomWidget)
+      html.push(`<div class="hmi-hosted-window-content" style="flex: 1 1 auto; display: grid; place-items: center; min-height: 0; overflow: hidden;">${escapeHtml(getStaticValue(customWidget!.hostedTemplate) ?? getStaticValue(customWidget!.hostedApplication) ?? container.name ?? "")}</div>`);
     if (container instanceof HmiLayoutContainerBase && container.childCoordinateSpace === HmiChildCoordinateSpace.ScreenAbsolute) {
       const childContext = context.withPositionOffset(-getStaticValueOrDefault(container.x, 0), -getStaticValueOrDefault(container.y, 0));
       for (let childIndex = 0; childIndex < items.length; childIndex++) {
@@ -654,6 +672,36 @@ export class HmiScreenToHtmlConverter {
     html.push("</div>");
     appendScreenWindowScrollInitializer(html, screenWindow);
   }
+}
+
+function hasHostedWindowSettings(container: HmiCustomWidgetContainer): boolean {
+  return container.resizable !== undefined || container.movable !== undefined ||
+    container.showWindowBorder !== undefined || container.showCaption !== undefined ||
+    container.showMaximizeButton !== undefined || container.showCloseButton !== undefined ||
+    container.alwaysOnTop !== undefined || container.hostedApplication !== undefined ||
+    container.hostedTemplate !== undefined;
+}
+
+function createHostedWindowStyle(container: HmiCustomWidgetContainer): string {
+  let style = "display: flex; flex-direction: column; overflow: hidden;";
+  style += getStaticValueOrDefault(container.showWindowBorder, false)
+    ? "border: 1px solid #6b7280;"
+    : "border: none;";
+  if (getStaticValueOrDefault(container.resizable, false)) style += "resize: both;";
+  if (getStaticValueOrDefault(container.alwaysOnTop, false)) style += "z-index: 2147483647;";
+  return style;
+}
+
+function appendHostedWindowCaption(html: string[], container: HmiCustomWidgetContainer): void {
+  const title = getStaticValue(container.hostedTemplate) ?? getStaticValue(container.hostedApplication) ?? container.name ?? "";
+  html.push('<div class="hmi-hosted-window-caption" style="flex: 0 0 auto; display: flex; align-items: center; min-height: 22px; padding: 2px 4px; background: #d7dce3; color: #111827;');
+  if (getStaticValueOrDefault(container.movable, false)) html.push("cursor: move;");
+  html.push(`"><span style="flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(title)}</span>`);
+  if (getStaticValueOrDefault(container.showMaximizeButton, false))
+    html.push('<button type="button" aria-label="Maximize" disabled style="flex: 0 0 auto;">□</button>');
+  if (getStaticValueOrDefault(container.showCloseButton, false))
+    html.push('<button type="button" aria-label="Close" disabled style="flex: 0 0 auto;">×</button>');
+  html.push("</div>");
 }
 
 function createScreenWindowStyle(screenWindow: HmiScreenWindow, resolved: HmiScreenBase | undefined): string {
