@@ -1546,6 +1546,8 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.xAxisGridVisible = staticProperty(true);
   trend.yAxisScaleVisible = staticProperty(true);
   trend.yAxisGridVisible = staticProperty(false);
+  trend.yAxisScaleAsPercent = staticProperty(true);
+  trend.yAxisPercentageColor = staticProperty(hmiColorFromArgb(255, 0x12, 0x34, 0x56));
   trend.minimumValue = staticProperty(-5);
   trend.maximumValue = staticProperty(100);
   trend.yAxisDecimalPlaces = staticProperty(2);
@@ -1589,6 +1591,9 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /x-axis-grid-visible="true"/);
   assert.match(html, /y-axis-scale-visible="true"/);
   assert.match(html, /y-axis-grid-visible="false"/);
+  assert.match(html, /y-axis-scale-as-percent="true"/);
+  assert.match(html, /y-axis-percentage-color="#123456"/);
+  assert.match(html, /--hmi-trend-y-axis-percentage-color: #123456;/);
   assert.match(html, /minimum-value="-5"/);
   assert.match(html, /maximum-value="100"/);
   assert.match(html, /y-axis-decimal-places="2"/);

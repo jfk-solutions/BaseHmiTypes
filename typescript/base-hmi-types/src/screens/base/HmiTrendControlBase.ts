@@ -104,6 +104,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   yAxisScaleMode?: HmiProperty<HmiTrendYAxisScaleMode>;
   yAxisScalePenNumber?: HmiProperty<number>;
   yAxisScaleAsPercent?: HmiProperty<boolean>;
+  yAxisPercentageColor?: HmiProperty<HmiColor>;
   yAxisSelectedPenScale?: HmiProperty<number>;
   readonly runtimePropertyTabs: string[] = [];
   runtimeAttributesEnabledMask?: HmiProperty<number>;
