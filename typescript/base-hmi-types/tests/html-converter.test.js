@@ -509,6 +509,36 @@ test("HTML converter renders alarm indicator segments", async () => {
   assert.match(html, />A<\/span><\/div>/);
 });
 
+test("HTML converter renders locked alarm indicator", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const indicator = new HmiAlarmIndicator();
+  indicator.name = "GroupDisplay";
+  indicator.width = staticProperty(80);
+  indicator.height = staticProperty(30);
+  indicator.text = staticProperty("Alarm");
+  indicator.isLocked = staticProperty(true);
+  indicator.lockedText = staticProperty("LOCKED");
+  indicator.lockedForegroundColor = staticProperty(hmiColorFromArgb(255, 255, 255, 0));
+  indicator.lockedBackgroundColor = staticProperty(hmiColorFromArgb(255, 32, 48, 64));
+  const layer = new HmiLayer();
+  layer.name = "Layer 1";
+  layer.items.push(indicator);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /data-locked="true"/);
+  assert.match(html, /data-locked-text="LOCKED"/);
+  assert.match(html, /data-locked-foreground-color="#FFFF00"/);
+  assert.match(html, /data-locked-background-color="#203040"/);
+  assert.match(html, /color: #FFFF00;/);
+  assert.match(html, /background-color: #203040;/);
+  assert.match(html, />LOCKED<\/div>/);
+});
+
 test("HTML converter renders bar slider and scale previews", async () => {
   const screen = new HmiScreen();
   screen.id = "main";

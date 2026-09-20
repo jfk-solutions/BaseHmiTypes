@@ -21,6 +21,10 @@ export class HmiAlarmIndicator extends HmiSimpleScreenItemBase {
   verticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   useEqualSegmentWidths?: HmiProperty<boolean>;
   segments: HmiAlarmIndicatorSegment[] = [];
+  isLocked?: HmiProperty<boolean>;
+  lockedText?: HmiProperty<string>;
+  lockedForegroundColor?: HmiProperty<HmiColor>;
+  lockedBackgroundColor?: HmiProperty<HmiColor>;
   showAcknowledgedAlarmClasses?: HmiProperty<number[]>;
   showPendingAlarmClasses?: HmiProperty<number[]>;
 }
