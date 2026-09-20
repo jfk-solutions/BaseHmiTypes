@@ -17,6 +17,15 @@ export class HmiAlarmIndicator extends HmiSimpleScreenItemBase {
   flashingRate?: HmiProperty<number>;
   alarmState?: HmiProperty<number>;
   visualState?: HmiProperty<HmiAlarmIndicatorState>;
+  isGroupRelevant?: HmiProperty<boolean>;
+  significantMask?: HmiProperty<number>;
+  eventAcknowledgementMask?: HmiProperty<number>;
+  useGlobalAlarmClasses?: HmiProperty<boolean>;
+  useGlobalSettings?: HmiProperty<boolean>;
+  userValue1?: HmiProperty<number>;
+  userValue2?: HmiProperty<number>;
+  userValue3?: HmiProperty<number>;
+  userValue4?: HmiProperty<number>;
   noAlarmState?: HmiProperty<number>;
   numberOfAlarms?: HmiProperty<number>;
   text?: HmiProperty<string>;
