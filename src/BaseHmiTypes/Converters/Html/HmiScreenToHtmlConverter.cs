@@ -3337,6 +3337,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.ShowStatusBar);
         AppendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.UseStatusBarBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
+        AppendStaticBooleanValueAttribute(html, "use-trend-name-as-label", trendControl.UseTrendNameAsLabel);
         AppendStaticBooleanValueAttribute(html, "display-value-bar", trendControl.DisplayValueBar);
         AppendStaticAttribute(html, "value-bar-color", trendControl.ValueBarColor);
         AppendStaticAttribute(html, "value-bar-width", trendControl.ValueBarWidth);
@@ -3602,6 +3603,7 @@ public class HmiScreenToHtmlConverter
                 "\"number\":" + pen.Number.ToString(CultureInfo.InvariantCulture)
             };
             AddTrendJsonString(properties, "name", pen.Name);
+            AddTrendJsonString(properties, "label", pen.Label);
             AddTrendJsonString(properties, "color", pen.Color?.StaticValue is HmiColor color ? ToCss(color) : null);
             AddTrendJsonBoolean(properties, "visible", pen.Visible?.StaticValue);
             AddTrendJsonNumber(properties, "width", pen.Width?.StaticValue);

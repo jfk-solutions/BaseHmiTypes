@@ -9,6 +9,8 @@ public sealed class HmiTrendPen
 
     public string? Name { get; set; }
 
+    public string? Label { get; set; }
+
     public HmiProperty<double>? Value { get; set; }
 
     public HmiProperty<HmiColor>? Color { get; set; }
