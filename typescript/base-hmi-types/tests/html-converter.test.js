@@ -1240,6 +1240,8 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.showVerticalScrollbar = staticProperty(false);
   alarms.tableBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x10, 0x20, 0x30));
   alarms.tableForegroundColor = staticProperty(hmiColorFromArgb(255, 0xe0, 0xd0, 0xc0));
+  alarms.alternatingRowBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x12, 0x34, 0x56));
+  alarms.alternatingRowForegroundColor = staticProperty(hmiColorFromArgb(255, 0xab, 0xcd, 0xef));
   alarms.tableHeaderBackgroundColor = staticProperty(hmiColorFromArgb(255, 0xe3, 0xe3, 0xe3));
   alarms.tableHeaderForegroundColor = staticProperty(hmiColorFromArgb(255, 0x01, 0x02, 0x03));
   alarms.tableHeaderHorizontalAlignment = staticProperty(HmiHorizontalAlignment.Center);
@@ -1324,6 +1326,8 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /overflow-x: auto;overflow-y: hidden;/);
   assert.match(html, /data-table-background-color="#102030"/);
   assert.match(html, /data-table-foreground-color="#E0D0C0"/);
+  assert.match(html, /data-alternating-row-background-color="#123456"/);
+  assert.match(html, /data-alternating-row-foreground-color="#ABCDEF"/);
   assert.match(html, /data-table-header-background-color="#E3E3E3"/);
   assert.match(html, /data-table-header-foreground-color="#010203"/);
   assert.match(html, /data-table-header-horizontal-alignment="Center"/);
@@ -1334,7 +1338,8 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-status-bar-background-color="#213243"/);
   assert.match(html, /data-status-bar-foreground-color="#FEDCBA"/);
   assert.match(html, /--hmi-grid-line-color: #445566;/);
-  assert.match(html, /background-color: #102030;color: #E0D0C0;/);
+  assert.match(html, /class="hmi-alarm-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;background-color: #102030;color: #E0D0C0;--hmi-alarm-alternating-row-background: #123456;--hmi-alarm-alternating-row-foreground: #ABCDEF;/);
+  assert.match(html, /\.hmi-alarm-table tbody tr:nth-child\(even\)>td\{background-color:var\(--hmi-alarm-alternating-row-background,inherit\);color:var\(--hmi-alarm-alternating-row-foreground,inherit\);/);
   assert.match(html, /border-style: solid; border-color: var\(--hmi-grid-line-color, currentColor\); border-width: 0px 2px;/);
   assert.match(html, /background-color: #708090;color: #F1F2F3;/);
   assert.match(html, /font-family: Arial;font-size: 9.75px;font-weight: 400;/);
