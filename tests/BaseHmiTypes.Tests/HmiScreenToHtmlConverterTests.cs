@@ -3048,6 +3048,7 @@ public class HmiScreenToHtmlConverterTests
             AutoScale = false,
             XAxisScaleVisible = true,
             XAxisColor = HmiColor.FromArgb(255, 0x11, 0x22, 0x33),
+            XAxisAlignment = HmiVerticalAlignment.Top,
             XAxisDateVisible = false,
             XAxisGridVisible = true,
             MajorGridVisible = true,
@@ -3056,6 +3057,7 @@ public class HmiScreenToHtmlConverterTests
             MinorGridColor = HmiColor.FromArgb(255, 0x80, 0x90, 0xA0),
             YAxisScaleVisible = true,
             YAxisColor = HmiColor.FromArgb(255, 0x44, 0x55, 0x66),
+            YAxisAlignment = HmiHorizontalAlignment.Right,
             YAxisGridVisible = false,
             ShowPercentageAxis = true,
             PercentageAxisColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56),
@@ -3114,6 +3116,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "x-axis-scale-visible=\"true\"");
         StringAssert.Contains(html, "x-axis-color=\"#112233\"");
         StringAssert.Contains(html, "--hmi-trend-x-axis-color: #112233;");
+        StringAssert.Contains(html, "x-axis-alignment=\"Top\"");
         StringAssert.Contains(html, "x-axis-date-visible=\"false\"");
         StringAssert.Contains(html, "x-axis-grid-visible=\"true\"");
         StringAssert.Contains(html, "major-grid-visible=\"true\"");
@@ -3125,6 +3128,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "y-axis-scale-visible=\"true\"");
         StringAssert.Contains(html, "y-axis-color=\"#445566\"");
         StringAssert.Contains(html, "--hmi-trend-y-axis-color: #445566;");
+        StringAssert.Contains(html, "y-axis-alignment=\"Right\"");
         StringAssert.Contains(html, "y-axis-grid-visible=\"false\"");
         StringAssert.Contains(html, "show-percentage-axis=\"true\"");
         StringAssert.Contains(html, "percentage-axis-color=\"#123456\"");

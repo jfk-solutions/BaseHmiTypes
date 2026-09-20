@@ -105,6 +105,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? XAxisColor { get; set; }
 
+    public HmiProperty<HmiVerticalAlignment>? XAxisAlignment { get; set; }
+
     public HmiProperty<bool>? XAxisDateVisible { get; set; }
 
     public HmiProperty<bool>? XAxisGridVisible { get; set; }
@@ -158,6 +160,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? YAxisScaleVisible { get; set; }
 
     public HmiProperty<HmiColor>? YAxisColor { get; set; }
+
+    public HmiProperty<HmiHorizontalAlignment>? YAxisAlignment { get; set; }
 
     public HmiProperty<int>? YAxisDecimalPlaces { get; set; }
 
