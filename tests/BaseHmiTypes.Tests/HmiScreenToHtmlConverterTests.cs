@@ -1345,6 +1345,21 @@ public class HmiScreenToHtmlConverterTests
             Movable = true,
             Closeable = true,
             GridLineColor = HmiColor.FromArgb(255, 0x44, 0x55, 0x66),
+            ContentFont = new HmiFont
+            {
+                Name = "Arial",
+                Size = 9.75,
+                Weight = 400
+            },
+            HeaderFont = new HmiFont
+            {
+                Name = "Siemens Sans",
+                Size = 10,
+                Weight = 700,
+                Italic = true,
+                Underline = true,
+                Strikethrough = true
+            },
             ListMode = HmiAlarmListMode.Active,
             ActiveAlarmsTitle = HmiMultilingualText.FromText("Active process alarms"),
             NumberOfRows = 8,
@@ -1396,6 +1411,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-grid-line-color=\"#445566\"");
         StringAssert.Contains(html, "--hmi-grid-line-color: #445566;");
         StringAssert.Contains(html, "border: 1px solid var(--hmi-grid-line-color, currentColor);");
+        StringAssert.Contains(html, "font-family: Arial;font-size: 9.75px;font-weight: 400;");
+        StringAssert.Contains(html, "font-family: Siemens Sans;font-size: 10px;font-weight: 700;font-style: italic;text-decoration: underline line-through;");
         StringAssert.Contains(html, "resize: both;");
         StringAssert.Contains(html, "cursor: move;");
         StringAssert.Contains(html, "aria-label=\"Close\" disabled");
