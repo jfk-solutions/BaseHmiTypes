@@ -3342,22 +3342,35 @@ public class HmiScreenToHtmlConverter
         var horizontalAlignment = context.EffectiveProperties.Resolve(item, "HorizontalAlignment", GetHorizontalAlignment(item));
         var verticalAlignment = context.EffectiveProperties.Resolve(item, "VerticalAlignment", GetVerticalAlignment(item));
         var suppressBorderStyle = item is HmiCheckBoxGroup or HmiRadioButtonGroup;
+        var animations = new List<string>();
 
         if (foregroundColor is HmiBlinkProperty<HmiColor> foregroundBlink &&
             foregroundBlink.StaticValue is HmiColor foregroundOff &&
             foregroundBlink.BlinkValue is HmiColor foregroundOn)
         {
             html.Append("--hmi-foreground-color-off: ").Append(ToCss(foregroundOff)).Append(';')
-                .Append("--hmi-foreground-color-on: ").Append(ToCss(foregroundOn)).Append(';')
-                .Append("animation: hmi-foreground-color-flash ").Append(GetBlinkDuration(foregroundBlink.Rate))
-                .Append("s steps(1, end) infinite;");
+                .Append("--hmi-foreground-color-on: ").Append(ToCss(foregroundOn)).Append(';');
+            animations.Add($"hmi-foreground-color-flash {GetBlinkDuration(foregroundBlink.Rate)}s steps(1, end) infinite");
         }
         else if (foregroundColor?.StaticValue != null)
         {
             html.Append("color: ").Append(ToCss(foregroundColor.StaticValue)).Append(";");
         }
-        if (backgroundColor?.StaticValue != null && item is not HmiGauge)
+        if (backgroundColor is HmiBlinkProperty<HmiColor> backgroundBlink &&
+            backgroundBlink.StaticValue is HmiColor backgroundOff &&
+            backgroundBlink.BlinkValue is HmiColor backgroundOn &&
+            item is not HmiGauge)
+        {
+            html.Append("--hmi-background-color-off: ").Append(ToCss(backgroundOff)).Append(';')
+                .Append("--hmi-background-color-on: ").Append(ToCss(backgroundOn)).Append(';');
+            animations.Add($"hmi-background-color-flash {GetBlinkDuration(backgroundBlink.Rate)}s steps(1, end) infinite");
+        }
+        else if (backgroundColor?.StaticValue != null && item is not HmiGauge)
+        {
             html.Append("background-color: ").Append(ToCss(backgroundColor.StaticValue)).Append(";");
+        }
+        if (animations.Count > 0)
+            html.Append("animation: ").Append(string.Join(", ", animations)).Append(';');
         if (borderColor?.StaticValue != null)
             html.Append("border-color: ").Append(ToCss(borderColor.StaticValue)).Append(";");
         if (borderWidth?.StaticValue != null)

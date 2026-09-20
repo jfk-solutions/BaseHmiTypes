@@ -1908,6 +1908,31 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersPaintedItemBackgroundFlashing()
+    {
+        var screen = new HmiScreen { Id = "main", Name = "Main" };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiRectangle
+        {
+            Name = "FlashingRectangle",
+            Width = 100,
+            Height = 40,
+            BackgroundColor = HmiProperty.Blink(
+                HmiColor.FromArgb(255, 10, 20, 30),
+                HmiColor.FromArgb(255, 40, 50, 60),
+                HmiBlinkRate.Slow)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "--hmi-background-color-off: #0A141E;");
+        StringAssert.Contains(html, "--hmi-background-color-on: #28323C;");
+        StringAssert.Contains(html, "animation: hmi-background-color-flash 2s steps(1, end) infinite;");
+        StringAssert.Contains(html, "@keyframes hmi-background-color-flash");
+    }
+
+    [TestMethod]
     public void AdvancedDefaults_ResolveTextBorderWidthWithoutMaterializingItOnItem()
     {
         var text = new HmiText
