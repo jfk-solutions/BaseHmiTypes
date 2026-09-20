@@ -9,6 +9,7 @@ export * from "./base/HmiLineStyle.js";
 export * from "./base/HmiLineCap.js";
 export * from "./base/HmiLineMarker.js";
 export * from "./base/HmiFillPattern.js";
+export * from "./base/HmiFillPatternAlignment.js";
 export * from "./base/HmiGradientDirection.js";
 export * from "./base/HmiFont.js";
 export * from "./base/HmiHorizontalAlignment.js";

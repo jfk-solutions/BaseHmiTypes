@@ -4,6 +4,7 @@ import { HmiCursorMode } from "./HmiCursorMode.js";
 import { HmiColor } from "./HmiColor.js";
 import { HmiGradientDirection } from "./HmiGradientDirection.js";
 import { HmiFillPattern } from "./HmiFillPattern.js";
+import { HmiFillPatternAlignment } from "./HmiFillPatternAlignment.js";
 import { HmiScreenModelBase } from "./HmiScreenModelBase.js";
 import { HmiScreenKind } from "./HmiScreenKind.js";
 import { HmiUpdateCycle } from "./HmiUpdateCycle.js";
@@ -25,6 +26,7 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   backgroundImageLayout?: HmiProperty<HmiBackgroundImageLayout>;
   patternColor?: HmiProperty<HmiColor>;
   fillPattern?: HmiProperty<HmiFillPattern>;
+  fillPatternAlignment?: HmiProperty<HmiFillPatternAlignment>;
   firstGradientColor?: HmiProperty<HmiColor>;
   firstGradientOffset?: HmiProperty<number>;
   middleGradientColor?: HmiProperty<HmiColor>;

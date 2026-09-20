@@ -12,6 +12,7 @@ import {
   HmiFillAnimation,
   HmiFillDirection,
   HmiFillPattern,
+  HmiFillPatternAlignment,
   HmiGradientDirection,
   HmiDisabledImageMode,
   HmiGroup,
@@ -353,6 +354,20 @@ test("HTML conversion renders screen background images", async () => {
   assert.match(html, /data-background-image-layout="Tile"/);
   assert.match(html, /background-image: url\(&quot;data:image\/svg\+xml;base64,PHN2Zy8\+&quot;\);/);
   assert.match(html, /background-repeat: repeat;background-size: auto;/);
+});
+
+test("HTML conversion scales screen fill patterns with the viewport", async () => {
+  const screen = createScreen("main", "StretchPattern");
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(200);
+  screen.patternColor = staticProperty(hmiColorFromArgb(255, 0, 64, 128));
+  screen.fillPattern = staticProperty(HmiFillPattern.Checkers);
+  screen.fillPatternAlignment = staticProperty(HmiFillPatternAlignment.StretchToViewport);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /data-fill-pattern-alignment="StretchToViewport"/);
+  assert.match(html, /background-size: 2.5% 4%;/);
 });
 
 test("HTML conversion renders configured color gradients", async () => {

@@ -15,6 +15,7 @@ import { HmiFont } from "../../screens/base/HmiFont.js";
 import { HmiFillAnimation } from "../../screens/base/HmiFillAnimation.js";
 import { HmiFillDirection } from "../../screens/base/HmiFillDirection.js";
 import { HmiFillPattern } from "../../screens/base/HmiFillPattern.js";
+import { HmiFillPatternAlignment } from "../../screens/base/HmiFillPatternAlignment.js";
 import { HmiGradientDirection } from "../../screens/base/HmiGradientDirection.js";
 import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
@@ -184,6 +185,7 @@ export class HmiScreenToHtmlConverter {
       appendAttribute(html, "id", screen.name);
       appendAttribute(html, "data-background-image", screen.backgroundImage?.imageName ?? screen.backgroundImage?.imageId);
       appendStaticAttribute(html, "data-background-image-layout", screen.backgroundImageLayout);
+      appendStaticAttribute(html, "data-fill-pattern-alignment", screen.fillPatternAlignment);
       if (includeInspectionAttributes) {
         appendAttribute(html, "data-hmi-node-key", key);
       }
@@ -3255,6 +3257,7 @@ function appendScreenStyle(html: string[], screen: HmiScreenBase, backgroundImag
   const pattern = getStaticValue(screen.fillPattern);
   if (pattern !== undefined) {
     appendFillPatternCss(html, pattern, getStaticValue(screen.patternColor) ?? hmiColorFromArgb(255, 0, 0, 0));
+    appendScreenFillPatternAlignment(html, screen, pattern);
   }
   appendColorGradientStyle(html, getColorGradient(screen));
   if (backgroundImageUri?.trim()) {
@@ -3272,6 +3275,23 @@ function appendScreenStyle(html: string[], screen: HmiScreenBase, backgroundImag
         break;
     }
   }
+}
+
+function appendScreenFillPatternAlignment(
+  html: string[],
+  screen: HmiScreenBase,
+  pattern: HmiFillPattern,
+): void {
+  if (getStaticValue(screen.fillPatternAlignment) !== HmiFillPatternAlignment.StretchToViewport ||
+      pattern === HmiFillPattern.Solid || pattern === HmiFillPattern.Transparent) {
+    return;
+  }
+
+  const width = getStaticValueOrDefault(screen.width, 0);
+  const height = getStaticValueOrDefault(screen.height, 0);
+  if (width <= 0 || height <= 0) return;
+  const tileSize = pattern === HmiFillPattern.CheckersFiner || pattern === HmiFillPattern.DiagonalCrossFiner ? 4 : 8;
+  html.push(`background-size: ${toCss(tileSize / width * 100)}% ${toCss(tileSize / height * 100)}%;`);
 }
 
 function hasThicknessEdges(value: unknown): value is {
