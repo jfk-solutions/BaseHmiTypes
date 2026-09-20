@@ -2433,6 +2433,7 @@ public class HmiScreenToHtmlConverter
         html.Append("<div");
         AppendAttribute(html, "id", rectangle.Name);
         AppendTextAttribute(html, "title", rectangle.ToolTipText, context);
+        AppendStaticAttribute(html, "tabindex", rectangle.TabIndex, context);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, rectangle, context);
         AppendOpacity(html, rectangle, context);
@@ -2747,6 +2748,7 @@ public class HmiScreenToHtmlConverter
     {
         AppendAttribute(html, "id", symbolLibraryControl.Name);
         AppendTextAttribute(html, "title", symbolLibraryControl.ToolTipText, context);
+        AppendStaticAttribute(html, "tabindex", symbolLibraryControl.TabIndex, context);
         AppendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.SymbolId);
         AppendAttribute(html, "data-hmi-symbol-appearance", FormatAttributeValue(symbolLibraryControl.SymbolAppearance?.StaticValue));
         AppendAttribute(html, "data-hmi-fill-color-mode", FormatAttributeValue(symbolLibraryControl.FillColorMode?.StaticValue));
@@ -3271,6 +3273,7 @@ public class HmiScreenToHtmlConverter
     {
         AppendAttribute(html, "id", item.Name);
         AppendTextAttribute(html, "title", item.ToolTipText, context);
+        AppendStaticAttribute(html, "tabindex", item.TabIndex, context);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, item, context);
         AppendOpacity(html, item, context);
@@ -3307,6 +3310,7 @@ public class HmiScreenToHtmlConverter
     {
         AppendAttribute(html, "id", symbolContainer.Name);
         AppendTextAttribute(html, "title", symbolContainer.ToolTipText, context);
+        AppendStaticAttribute(html, "tabindex", symbolContainer.TabIndex, context);
         AppendAttribute(html, "data-hmi-fill-color-mode", symbolContainer.FillColorMode == null ? null : symbolContainer.FillColorMode.StaticValue.ToString());
         AppendAttribute(html, "data-hmi-flip", symbolContainer.Flip == null ? null : symbolContainer.Flip.StaticValue.ToString());
         html.Append(" style=\"position: absolute; overflow: hidden;");

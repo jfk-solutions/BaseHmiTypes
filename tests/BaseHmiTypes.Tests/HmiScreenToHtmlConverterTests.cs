@@ -76,6 +76,26 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersItemTabIndex()
+    {
+        var rectangle = new HmiRectangle
+        {
+            Name = "FocusableRectangle",
+            Width = 100,
+            Height = 50,
+            TabIndex = 7
+        };
+        var screen = new HmiScreen { Name = "Main", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer0" };
+        layer.Items.Add(rectangle);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "id=\"FocusableRectangle\" tabindex=\"7\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersSymbolicIoFieldStates()
     {
         var symbolicIoField = new HmiSymbolicIOField
