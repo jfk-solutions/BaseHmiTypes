@@ -2298,6 +2298,7 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   ) {
     html.push("border: 1px solid #000000;");
   }
+  appendItemTransform(html, rectangle);
   html.push("\"></div>");
 }
 

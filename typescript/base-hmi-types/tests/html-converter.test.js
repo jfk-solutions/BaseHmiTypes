@@ -170,6 +170,29 @@ test("HTML converter renders disabled item semantics", async () => {
   assert.match(html, /id="DisabledRectangle" aria-disabled="true"[^>]*style="position: absolute;left: 0px;top: 0px;width: 100px;height: 50px;pointer-events: none;/);
 });
 
+test("HTML converter renders rectangle rotation", async () => {
+  const rectangle = new HmiRectangle();
+  rectangle.name = "RotatedRectangle";
+  rectangle.width = staticProperty(100);
+  rectangle.height = staticProperty(50);
+  rectangle.rotationAngle = staticProperty(45);
+  rectangle.rotationCenterX = staticProperty(10);
+  rectangle.rotationCenterY = staticProperty(20);
+
+  const layer = new HmiLayer();
+  layer.name = "Layer0";
+  layer.items.push(rectangle);
+  const screen = new HmiScreen();
+  screen.name = "Main";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /transform: rotate\(45deg\);transform-origin: 10px 20px;/);
+});
+
 test("HTML converter renders toggle states and project images", async () => {
   const screen = new HmiScreen();
   screen.id = "main";
