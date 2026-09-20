@@ -24,6 +24,11 @@ input[data-hmi-slider]::-moz-range-track {
   50%, 100% { color: var(--hmi-foreground-color-on); }
 }
 
+@keyframes hmi-background-color-flash {
+  0%, 49.999% { background-color: var(--hmi-background-color-off); }
+  50%, 100% { background-color: var(--hmi-background-color-on); }
+}
+
 @keyframes hmi-symbolic-base-flash {
   0%, 49.999% { opacity: 1; }
   50%, 100% { opacity: 0; }
