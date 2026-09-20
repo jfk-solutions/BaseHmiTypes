@@ -1357,7 +1357,10 @@ public class HmiScreenToHtmlConverter
         HmiState? state,
         HmiHtmlConvertContext context)
     {
-        var style = new StringBuilder(CreateStateStyle(state));
+        var style = new StringBuilder();
+        if (button.CaptionColor is not null)
+            style.Append("color: ").Append(ToCss(ResolveStaticValue(button.CaptionColor, context))).Append(';');
+        style.Append(CreateStateStyle(state));
         var borderWidth = button.ThreeDBorderWidth is null
             ? 0d
             : ResolveStaticValue(button.ThreeDBorderWidth, context);
