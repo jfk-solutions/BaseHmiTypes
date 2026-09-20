@@ -60,6 +60,7 @@ interface TrendPen {
   upperLimitColor?: string;
   uncertainColoring?: boolean;
   uncertainColor?: string;
+  showAlarms?: boolean;
   marker?: string;
   markerColor?: string;
   markerSize?: number;
@@ -581,7 +582,24 @@ function renderPens(
         ))
         .join("");
     const line = renderTrendLine(pen, points, pointText, color, width, exponentialFormat, decimalPlaces);
-    return `${area}${line}${markers}`;
+    const alarms = renderAlarmSymbols(pen, points);
+    return `${area}${line}${markers}${alarms}`;
+  }).join("");
+}
+
+function renderAlarmSymbols(
+  pen: TrendPen,
+  points: ReadonlyArray<{ x: number; y: number; value: number }>,
+): string {
+  if (pen.showAlarms !== true) return "";
+  return points.filter((_point, index) => index % 4 === 0).flatMap(point => {
+    const low = pen.lowerLimit !== undefined && point.value < pen.lowerLimit;
+    const high = pen.upperLimit !== undefined && point.value > pen.upperLimit;
+    if (!low && !high) return [];
+    const size = 3;
+    const y = clamp(point.y - 5, size, 100 - size);
+    const pointsText = `${toCss(point.x)},${toCss(y - size)} ${toCss(point.x - size)},${toCss(y + size)} ${toCss(point.x + size)},${toCss(y + size)}`;
+    return [`<g class="trend-alarm-symbol"><polygon points="${pointsText}" fill="#D71920" stroke="#FFFFFF" stroke-width="0.6"></polygon><title>${high ? "High" : "Low"} limit alarm</title></g>`];
   }).join("");
 }
 
@@ -722,6 +740,7 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.upperLimitColor === "string") pen.upperLimitColor = source.upperLimitColor;
       if (typeof source.uncertainColoring === "boolean") pen.uncertainColoring = source.uncertainColoring;
       if (typeof source.uncertainColor === "string") pen.uncertainColor = source.uncertainColor;
+      if (typeof source.showAlarms === "boolean") pen.showAlarms = source.showAlarms;
       if (typeof source.marker === "string") pen.marker = source.marker;
       if (typeof source.markerColor === "string") pen.markerColor = source.markerColor;
       if (typeof source.markerSize === "number" && Number.isFinite(source.markerSize)) pen.markerSize = source.markerSize;
