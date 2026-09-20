@@ -326,19 +326,42 @@ public class HmiScreenToHtmlConverter
     {
         var itemList = items as IReadOnlyCollection<HmiScreenItemBase> ?? items.ToArray();
         var isEmptyCustomWidget = container is HmiCustomWidgetContainer && itemList.Count == 0;
+        var customWidget = container as HmiCustomWidgetContainer;
+        var hasWindowChrome = customWidget != null && HasHostedWindowSettings(customWidget);
         html.Append("<div");
         AppendCommonAttributes(
             html,
             container,
             context,
-            additionalStyle: isEmptyCustomWidget
+            additionalStyle: hasWindowChrome
+                ? CreateHostedWindowStyle(customWidget!, context)
+                : isEmptyCustomWidget
                 ? "display: flex; align-items: center; justify-content: center; overflow: hidden;"
                 : null);
-        if (container is HmiCustomWidgetContainer)
+        if (customWidget != null)
+        {
             AppendAttribute(html, "data-hmi-custom-widget-type", container.GetType().Name);
+            AppendStaticAttribute(html, "data-window-resizable", customWidget.Resizable, context);
+            AppendStaticAttribute(html, "data-window-movable", customWidget.Movable, context);
+            AppendStaticAttribute(html, "data-window-border", customWidget.ShowWindowBorder, context);
+            AppendStaticAttribute(html, "data-window-caption", customWidget.ShowCaption, context);
+            AppendStaticAttribute(html, "data-window-maximize", customWidget.ShowMaximizeButton, context);
+            AppendStaticAttribute(html, "data-window-close", customWidget.ShowCloseButton, context);
+            AppendStaticAttribute(html, "data-window-always-on-top", customWidget.AlwaysOnTop, context);
+            AppendStaticAttribute(html, "data-hosted-application", customWidget.HostedApplication, context);
+            AppendStaticAttribute(html, "data-hosted-template", customWidget.HostedTemplate, context);
+        }
         html.Append(">");
-        if (isEmptyCustomWidget)
+        if (hasWindowChrome && ResolveStaticValue(customWidget!.ShowCaption, context))
+            AppendHostedWindowCaption(html, customWidget, context);
+        if (isEmptyCustomWidget && !hasWindowChrome)
             html.Append("<span aria-hidden=\"true\">").Append(WebUtility.HtmlEncode(container.Name)).Append("</span>");
+        else if (isEmptyCustomWidget)
+            html.Append("<div class=\"hmi-hosted-window-content\" style=\"flex: 1 1 auto; display: grid; place-items: center; min-height: 0; overflow: hidden;\">")
+                .Append(WebUtility.HtmlEncode(ResolveStaticValue(customWidget!.HostedTemplate, context)
+                    ?? ResolveStaticValue(customWidget.HostedApplication, context)
+                    ?? container.Name))
+                .Append("</div>");
         if (container is HmiLayoutContainerBase { ChildCoordinateSpace: HmiChildCoordinateSpace.ScreenAbsolute } layoutContainer)
         {
             var childContext = context.WithPositionOffset(
@@ -352,6 +375,44 @@ public class HmiScreenToHtmlConverter
             foreach (var child in itemList)
                 await AppendItemAsync(html, child, project, context, screenStack, cancellationToken).ConfigureAwait(false);
         }
+        html.Append("</div>");
+    }
+
+    private static bool HasHostedWindowSettings(HmiCustomWidgetContainer container) =>
+        container.Resizable != null || container.Movable != null || container.ShowWindowBorder != null ||
+        container.ShowCaption != null || container.ShowMaximizeButton != null || container.ShowCloseButton != null ||
+        container.AlwaysOnTop != null || container.HostedApplication != null || container.HostedTemplate != null;
+
+    private static string CreateHostedWindowStyle(HmiCustomWidgetContainer container, HmiHtmlConvertContext context)
+    {
+        var style = new StringBuilder("display: flex; flex-direction: column; overflow: hidden;");
+        style.Append(ResolveStaticValue(container.ShowWindowBorder, context)
+            ? "border: 1px solid #6b7280;"
+            : "border: none;");
+        if (ResolveStaticValue(container.Resizable, context))
+            style.Append("resize: both;");
+        if (ResolveStaticValue(container.AlwaysOnTop, context))
+            style.Append("z-index: 2147483647;");
+        return style.ToString();
+    }
+
+    private static void AppendHostedWindowCaption(
+        StringBuilder html,
+        HmiCustomWidgetContainer container,
+        HmiHtmlConvertContext context)
+    {
+        var title = ResolveStaticValue(container.HostedTemplate, context)
+            ?? ResolveStaticValue(container.HostedApplication, context)
+            ?? container.Name;
+        html.Append("<div class=\"hmi-hosted-window-caption\" style=\"flex: 0 0 auto; display: flex; align-items: center; min-height: 22px; padding: 2px 4px; background: #d7dce3; color: #111827;");
+        if (ResolveStaticValue(container.Movable, context))
+            html.Append("cursor: move;");
+        html.Append("\"><span style=\"flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\">")
+            .Append(WebUtility.HtmlEncode(title)).Append("</span>");
+        if (ResolveStaticValue(container.ShowMaximizeButton, context))
+            html.Append("<button type=\"button\" aria-label=\"Maximize\" disabled style=\"flex: 0 0 auto;\">□</button>");
+        if (ResolveStaticValue(container.ShowCloseButton, context))
+            html.Append("<button type=\"button\" aria-label=\"Close\" disabled style=\"flex: 0 0 auto;\">×</button>");
         html.Append("</div>");
     }
 
