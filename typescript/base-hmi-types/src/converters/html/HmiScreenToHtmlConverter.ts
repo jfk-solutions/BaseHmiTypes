@@ -2032,6 +2032,12 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-filtered-triggers", alarmControl.filteredTriggers.length === 0 ? undefined : alarmControl.filteredTriggers.join(","));
   appendAttribute(html, "data-alarm-identifier", resolvePropertyPreview(alarmControl.alarmIdentifier));
   appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(alarmControl.gridLineColor));
+  appendAttribute(html, "data-show-horizontal-grid-lines", resolvePropertyPreview(alarmControl.showHorizontalGridLines));
+  appendAttribute(html, "data-show-vertical-grid-lines", resolvePropertyPreview(alarmControl.showVerticalGridLines));
+  appendAttribute(html, "data-table-background-color", resolvePropertyPreview(alarmControl.tableBackgroundColor));
+  appendAttribute(html, "data-table-foreground-color", resolvePropertyPreview(alarmControl.tableForegroundColor));
+  appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(alarmControl.selectionBackgroundColor));
+  appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(alarmControl.selectionForegroundColor));
   html.push(">");
 
   if (showTitle) {
@@ -2045,13 +2051,14 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     html.push("</div>");
   }
 
-  html.push("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
+  html.push("<table style=\"", createAlarmTableStyle(alarmControl), "\">");
+  const gridCellStyle = createAlarmGridCellStyle(alarmControl);
   if (showHeader) {
     html.push("<thead><tr>");
     if (visibleColumns.length === 0)
-      html.push("<th style=\"border: 1px solid var(--hmi-grid-line-color, currentColor);\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
+      html.push("<th style=\"", gridCellStyle, "\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
     for (const column of visibleColumns) {
-      html.push("<th style=\"border: 1px solid var(--hmi-grid-line-color, currentColor); overflow: hidden; text-overflow: ellipsis;\"");
+      html.push("<th style=\"", gridCellStyle, "overflow: hidden; text-overflow: ellipsis;\"");
       appendAttribute(html, "data-column-type", column.type);
       appendAttribute(html, "data-time-format", column.timeAndDateFormat);
       appendAttribute(html, "data-symbol", column.symbol);
@@ -2061,7 +2068,10 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   }
   html.push("<tbody><tr><td");
   appendAttribute(html, "colspan", Math.max(visibleColumns.length, 1).toString());
-  html.push(" style=\"text-align: center;\">Alarm data not loaded</td></tr></tbody></table>");
+  html.push(" style=\"text-align: center;", gridCellStyle);
+  appendColorStyle(html, "background-color", alarmControl.selectionBackgroundColor);
+  appendColorStyle(html, "color", alarmControl.selectionForegroundColor);
+  html.push("\">Alarm data not loaded</td></tr></tbody></table>");
 
   const showAcknowledgeButton = getStaticValue(alarmControl.showAcknowledgeButton) === true;
   const showHelpButton = getStaticValue(alarmControl.showHelpButton) === true;
@@ -3083,6 +3093,19 @@ function createAlarmHeaderStyle(alarmControl: HmiAlarmControl): string {
   if (alarmControl.headerFont !== undefined)
     appendFont(parts, alarmControl.headerFont);
   return parts.join("");
+}
+
+function createAlarmTableStyle(alarmControl: HmiAlarmControl): string {
+  const parts = ["width: 100%; border-collapse: collapse; table-layout: fixed;"];
+  appendColorStyle(parts, "background-color", alarmControl.tableBackgroundColor);
+  appendColorStyle(parts, "color", alarmControl.tableForegroundColor);
+  return parts.join("");
+}
+
+function createAlarmGridCellStyle(alarmControl: HmiAlarmControl): string {
+  const horizontal = getStaticValue(alarmControl.showHorizontalGridLines) !== false;
+  const vertical = getStaticValue(alarmControl.showVerticalGridLines) !== false;
+  return `border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: ${horizontal ? 1 : 0}px ${vertical ? 1 : 0}px;`;
 }
 
 function createTrendControlStyle(trendControl: HmiTrendControl): string {
