@@ -2045,6 +2045,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-show-vertical-scrollbar", resolvePropertyPreview(alarmControl.showVerticalScrollbar));
   appendAttribute(html, "data-table-background-color", resolvePropertyPreview(alarmControl.tableBackgroundColor));
   appendAttribute(html, "data-table-foreground-color", resolvePropertyPreview(alarmControl.tableForegroundColor));
+  appendAttribute(html, "data-use-alternating-row-colors", resolvePropertyPreview(alarmControl.useAlternatingRowColors));
   appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(alarmControl.alternatingRowBackgroundColor));
   appendAttribute(html, "data-alternating-row-foreground-color", resolvePropertyPreview(alarmControl.alternatingRowForegroundColor));
   appendAttribute(html, "data-table-header-background-color", resolvePropertyPreview(alarmControl.tableHeaderBackgroundColor));
@@ -2069,7 +2070,10 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     html.push("</div>");
   }
 
-  html.push("<table class=\"hmi-alarm-table\" style=\"", createAlarmTableStyle(alarmControl), "\">");
+  html.push("<table class=\"hmi-alarm-table");
+  if (getStaticValue(alarmControl.useAlternatingRowColors) === true)
+    html.push(" hmi-alarm-table--alternating");
+  html.push("\" style=\"", createAlarmTableStyle(alarmControl), "\">");
   const gridCellStyle = createAlarmGridCellStyle(alarmControl);
   if (showHeader) {
     const headerCellStyle = createAlarmTableHeaderCellStyle(alarmControl, gridCellStyle);
