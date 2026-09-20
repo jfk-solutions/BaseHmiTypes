@@ -3332,6 +3332,8 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     if (maximum !== undefined) result.maximum = maximum;
     const axisScaleType = getStaticValue(pen.axisScaleType);
     if (axisScaleType !== undefined) result.axisScaleType = axisScaleType;
+    const exponentialFormat = getStaticValue(pen.exponentialFormat);
+    if (exponentialFormat !== undefined) result.exponentialFormat = exponentialFormat;
     if (pen.engineeringUnit !== undefined) result.unit = pen.engineeringUnit;
     return result;
   }));
