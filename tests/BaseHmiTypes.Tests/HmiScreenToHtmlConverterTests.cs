@@ -1354,6 +1354,8 @@ public class HmiScreenToHtmlConverterTests
             GridLineWidth = 2,
             ShowHorizontalGridLines = false,
             ShowVerticalGridLines = true,
+            ShowHorizontalScrollbar = true,
+            ShowVerticalScrollbar = false,
             TableBackgroundColor = HmiColor.FromArgb(255, 0x10, 0x20, 0x30),
             TableForegroundColor = HmiColor.FromArgb(255, 0xE0, 0xD0, 0xC0),
             SelectionBackgroundColor = HmiColor.FromArgb(255, 0x70, 0x80, 0x90),
@@ -1441,6 +1443,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-grid-line-width=\"2\"");
         StringAssert.Contains(html, "data-show-horizontal-grid-lines=\"false\"");
         StringAssert.Contains(html, "data-show-vertical-grid-lines=\"true\"");
+        StringAssert.Contains(html, "data-show-horizontal-scrollbar=\"true\"");
+        StringAssert.Contains(html, "data-show-vertical-scrollbar=\"false\"");
+        StringAssert.Contains(html, "overflow-x: auto;overflow-y: hidden;");
         StringAssert.Contains(html, "data-table-background-color=\"#102030\"");
         StringAssert.Contains(html, "data-table-foreground-color=\"#E0D0C0\"");
         StringAssert.Contains(html, "data-selection-background-color=\"#708090\"");

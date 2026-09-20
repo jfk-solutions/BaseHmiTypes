@@ -2250,6 +2250,8 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-grid-line-width", ResolvePropertyPreview(alarmControl.GridLineWidth, context));
         AppendAttribute(html, "data-show-horizontal-grid-lines", ResolvePropertyPreview(alarmControl.ShowHorizontalGridLines, context));
         AppendAttribute(html, "data-show-vertical-grid-lines", ResolvePropertyPreview(alarmControl.ShowVerticalGridLines, context));
+        AppendAttribute(html, "data-show-horizontal-scrollbar", ResolvePropertyPreview(alarmControl.ShowHorizontalScrollbar, context));
+        AppendAttribute(html, "data-show-vertical-scrollbar", ResolvePropertyPreview(alarmControl.ShowVerticalScrollbar, context));
         AppendAttribute(html, "data-table-background-color", ResolvePropertyPreview(alarmControl.TableBackgroundColor, context));
         AppendAttribute(html, "data-table-foreground-color", ResolvePropertyPreview(alarmControl.TableForegroundColor, context));
         AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(alarmControl.SelectionBackgroundColor, context));
@@ -3345,7 +3347,13 @@ public class HmiScreenToHtmlConverter
         var style = new StringBuilder(CreateControlWindowStyle(
             alarmControl,
             context,
-            "display: flex; flex-direction: column; overflow: hidden;"));
+            "display: flex; flex-direction: column;"));
+        var horizontalOverflow = alarmControl.ShowHorizontalScrollbar is not null &&
+            ResolveStaticValue(alarmControl.ShowHorizontalScrollbar, context) ? "auto" : "hidden";
+        var verticalOverflow = alarmControl.ShowVerticalScrollbar is not null &&
+            ResolveStaticValue(alarmControl.ShowVerticalScrollbar, context) ? "auto" : "hidden";
+        style.Append("overflow-x: ").Append(horizontalOverflow).Append(';')
+            .Append("overflow-y: ").Append(verticalOverflow).Append(';');
         if (alarmControl.GridLineColor is not null)
         {
             var gridLineColor = ResolveStaticValue(alarmControl.GridLineColor, context);
