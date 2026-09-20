@@ -2454,6 +2454,27 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersButtonCaptionColor()
+    {
+        var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
+        var layer = new HmiLayer { Name = "Layer 1" };
+        layer.Items.Add(new HmiButton
+        {
+            Name = "ColoredCaption",
+            Width = 100,
+            Height = 30,
+            Text = HmiMultilingualText.FromText("Start"),
+            CaptionColor = HmiColor.FromArgb(255, 12, 34, 56)
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "<button id=\"ColoredCaption\"");
+        StringAssert.Contains(html, "color: #0C2238;");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersStaticDisabledButtonAppearance()
     {
         var disabled = new HmiButton
