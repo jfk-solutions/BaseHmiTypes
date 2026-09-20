@@ -1233,6 +1233,14 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.tableForegroundColor = staticProperty(hmiColorFromArgb(255, 0xe0, 0xd0, 0xc0));
   alarms.selectionBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x70, 0x80, 0x90));
   alarms.selectionForegroundColor = staticProperty(hmiColorFromArgb(255, 0xf1, 0xf2, 0xf3));
+  alarms.showStatusBar = staticProperty(true);
+  alarms.statusBarBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x21, 0x32, 0x43));
+  alarms.statusBarForegroundColor = staticProperty(hmiColorFromArgb(255, 0xfe, 0xdc, 0xba));
+  alarms.statusBarFont = new HmiFont();
+  alarms.statusBarFont.name = staticProperty("Tahoma");
+  alarms.statusBarFont.size = staticProperty(8);
+  alarms.statusBarFont.weight = staticProperty(600);
+  alarms.statusBarFont.italic = staticProperty(true);
   alarms.contentFont = new HmiFont();
   alarms.contentFont.name = staticProperty("Arial");
   alarms.contentFont.size = staticProperty(9.75);
@@ -1294,6 +1302,9 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-table-foreground-color="#E0D0C0"/);
   assert.match(html, /data-selection-background-color="#708090"/);
   assert.match(html, /data-selection-foreground-color="#F1F2F3"/);
+  assert.match(html, /data-show-status-bar="true"/);
+  assert.match(html, /data-status-bar-background-color="#213243"/);
+  assert.match(html, /data-status-bar-foreground-color="#FEDCBA"/);
   assert.match(html, /--hmi-grid-line-color: #445566;/);
   assert.match(html, /background-color: #102030;color: #E0D0C0;/);
   assert.match(html, /border-style: solid; border-color: var\(--hmi-grid-line-color, currentColor\); border-width: 0px 1px;/);
@@ -1313,6 +1324,7 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.doesNotMatch(html, /data-column-type="AlarmState"/);
   assert.match(html, />Alarm data not loaded<\/td>/);
   assert.match(html, />Acknowledge · Help<\/div>/);
+  assert.match(html, /class="hmi-alarm-status-bar" role="status" style="flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #213243;color: #FEDCBA;font-family: Tahoma;font-size: 8px;font-weight: 600;font-style: italic;">Status<\/div>/);
   assert.match(html, /<div id="AlarmBanner"/);
   assert.match(html, /data-view-kind="AlarmBanner"/);
   assert.match(html, /data-queue-new-alarms="true"/);
