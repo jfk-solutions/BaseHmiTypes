@@ -34,6 +34,7 @@ import {
   HmiState,
   HmiSymbolicIOField,
   HmiTagTriggerMode,
+  HmiText,
   HmiTriggerKind,
   blinkProperty,
   expressionProperty,
@@ -170,6 +171,26 @@ test("HTML conversion renders painted shape border styles", async () => {
 
   assert.match(html, /border-style: dotted;/);
   assert.match(html, /border-width: 3px;/);
+});
+
+test("HTML conversion renders painted item foreground flashing", async () => {
+  const text = new HmiText();
+  text.name = "FlashingText";
+  text.text = staticProperty(HmiMultilingualText.fromText("Alarm"));
+  text.foregroundColor = blinkProperty(
+    hmiColorFromArgb(255, 1, 2, 3),
+    hmiColorFromArgb(255, 4, 5, 6),
+    HmiBlinkRate.Fast,
+  );
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(text);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /--hmi-foreground-color-off: #010203;/);
+  assert.match(html, /--hmi-foreground-color-on: #040506;/);
+  assert.match(html, /animation: hmi-foreground-color-flash 0.5s steps\(1, end\) infinite;/);
+  assert.match(html, /@keyframes hmi-foreground-color-flash/);
 });
 
 test("HTML conversion renders shape fill animation previews", async () => {
