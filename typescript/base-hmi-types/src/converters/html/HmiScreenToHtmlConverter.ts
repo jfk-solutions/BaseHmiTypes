@@ -2751,6 +2751,7 @@ function appendAlarmIndicator(
         : alarmState !== undefined && isActive ? "!" : "";
 
   let style = "display: flex; overflow: hidden;";
+  const animations: string[] = [];
   if (indicator.verticalAlignment === undefined) style += "align-items: center;";
   if (indicator.horizontalAlignment === undefined) style += "justify-content: center;";
   const flashingColor = getStaticValue(indicator.flashingColor);
@@ -2761,11 +2762,25 @@ function appendAlarmIndicator(
       const duration = flashingRate > 0 ? flashingRate / 1000 : 1;
       style += `--hmi-background-color-off: ${backgroundColor === undefined ? "transparent" : colorToCss(backgroundColor)};`;
       style += `--hmi-background-color-on: ${colorToCss(flashingColor)};`;
-      style += `animation: hmi-background-color-flash ${toCss(duration)}s steps(1, end) infinite;`;
+      animations.push(`hmi-background-color-flash ${toCss(duration)}s steps(1, end) infinite`);
     } else {
       style += `box-shadow: inset 0 0 0 0.35em ${colorToCss(flashingColor)};`;
     }
   }
+  const flashingForegroundColor = getStaticValue(indicator.flashingForegroundColor);
+  if (isActive && flashingForegroundColor !== undefined) {
+    if (getStaticValue(indicator.isForegroundFlashingRequired) === true) {
+      const foregroundColor = getStaticValue(indicator.foregroundColor);
+      const flashingRate = getStaticValue(indicator.flashingRate) ?? 1000;
+      const duration = flashingRate > 0 ? flashingRate / 1000 : 1;
+      style += `--hmi-foreground-color-off: ${foregroundColor === undefined ? "inherit" : colorToCss(foregroundColor)};`;
+      style += `--hmi-foreground-color-on: ${colorToCss(flashingForegroundColor)};`;
+      animations.push(`hmi-foreground-color-flash ${toCss(duration)}s steps(1, end) infinite`);
+    } else {
+      style += `color: ${colorToCss(flashingForegroundColor)};`;
+    }
+  }
+  if (animations.length > 0) style += `animation: ${animations.join(", ")};`;
   const lockedForegroundColor = getStaticValue(indicator.lockedForegroundColor);
   if (isLocked && lockedForegroundColor !== undefined) style += `color: ${colorToCss(lockedForegroundColor)};`;
   const lockedBackgroundColor = getStaticValue(indicator.lockedBackgroundColor);
@@ -2779,6 +2794,8 @@ function appendAlarmIndicator(
   appendAttribute(html, "data-active", isActive ? "true" : "false");
   appendStaticValueAttribute(html, "data-flashing-required", indicator.isFlashingRequired);
   appendStaticValueAttribute(html, "data-flashing-color", indicator.flashingColor);
+  appendStaticValueAttribute(html, "data-foreground-flashing-required", indicator.isForegroundFlashingRequired);
+  appendStaticValueAttribute(html, "data-flashing-foreground-color", indicator.flashingForegroundColor);
   appendStaticValueAttribute(html, "data-flashing-rate", indicator.flashingRate);
   appendStaticValueAttribute(html, "data-alarm-state", indicator.alarmState);
   appendStaticValueAttribute(html, "data-no-alarm-state", indicator.noAlarmState);

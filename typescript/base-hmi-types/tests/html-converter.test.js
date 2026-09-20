@@ -388,6 +388,9 @@ test("HTML converter renders alarm indicator state", async () => {
   indicator.numberOfAlarms = staticProperty(2);
   indicator.isFlashingRequired = staticProperty(true);
   indicator.flashingColor = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+  indicator.foregroundColor = staticProperty(hmiColorFromArgb(255, 32, 48, 64));
+  indicator.isForegroundFlashingRequired = staticProperty(true);
+  indicator.flashingForegroundColor = staticProperty(hmiColorFromArgb(255, 255, 255, 0));
   indicator.flashingRate = staticProperty(500);
   indicator.showAcknowledgedAlarmClasses = staticProperty([1, 3]);
   indicator.showPendingAlarmClasses = staticProperty([2, 4]);
@@ -403,10 +406,14 @@ test("HTML converter renders alarm indicator state", async () => {
   assert.match(html, /data-active="true"/);
   assert.match(html, /data-flashing-required="true"/);
   assert.match(html, /data-flashing-color="#FF0000"/);
+  assert.match(html, /data-foreground-flashing-required="true"/);
+  assert.match(html, /data-flashing-foreground-color="#FFFF00"/);
   assert.match(html, /data-flashing-rate="500"/);
   assert.match(html, /--hmi-background-color-off: transparent;/);
   assert.match(html, /--hmi-background-color-on: #FF0000;/);
-  assert.match(html, /animation: hmi-background-color-flash 0.5s steps\(1, end\) infinite;/);
+  assert.match(html, /--hmi-foreground-color-off: #203040;/);
+  assert.match(html, /--hmi-foreground-color-on: #FFFF00;/);
+  assert.match(html, /animation: hmi-background-color-flash 0.5s steps\(1, end\) infinite, hmi-foreground-color-flash 0.5s steps\(1, end\) infinite;/);
   assert.match(html, /data-alarm-state="5"/);
   assert.match(html, /data-no-alarm-state="0"/);
   assert.match(html, /data-number-of-alarms="2"/);

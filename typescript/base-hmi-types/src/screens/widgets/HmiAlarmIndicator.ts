@@ -11,6 +11,8 @@ export class HmiAlarmIndicator extends HmiSimpleScreenItemBase {
 
   isFlashingRequired?: HmiProperty<boolean>;
   flashingColor?: HmiProperty<HmiColor>;
+  isForegroundFlashingRequired?: HmiProperty<boolean>;
+  flashingForegroundColor?: HmiProperty<HmiColor>;
   flashingRate?: HmiProperty<number>;
   alarmState?: HmiProperty<number>;
   noAlarmState?: HmiProperty<number>;
