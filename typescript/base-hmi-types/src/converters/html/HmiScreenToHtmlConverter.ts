@@ -3320,6 +3320,10 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     if (upperLimit !== undefined) result.upperLimit = upperLimit;
     const upperLimitColor = getStaticValue(pen.upperLimitColor);
     if (upperLimitColor !== undefined) result.upperLimitColor = colorToCss(upperLimitColor);
+    const uncertainColoring = getStaticValue(pen.uncertainColoring);
+    if (uncertainColoring !== undefined) result.uncertainColoring = uncertainColoring;
+    const uncertainColor = getStaticValue(pen.uncertainColor);
+    if (uncertainColor !== undefined) result.uncertainColor = colorToCss(uncertainColor);
     const marker = getStaticValue(pen.marker);
     if (marker !== undefined) result.marker = marker;
     const markerColor = getStaticValue(pen.markerColor);
