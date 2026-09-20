@@ -152,6 +152,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   tableHeaderMiddleGradientColor?: HmiProperty<HmiColor>;
   tableHeaderSecondGradientColor?: HmiProperty<HmiColor>;
   gridLineColor?: HmiProperty<HmiColor>;
+  gridLineWidth?: HmiProperty<number>;
   buttonBackgroundColor?: HmiProperty<HmiColor>;
   buttonBorderBackgroundColor?: HmiProperty<HmiColor>;
   buttonBorderColor?: HmiProperty<HmiColor>;
