@@ -3105,6 +3105,9 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.showStatusBar);
   appendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.useStatusBarBackgroundColor);
   appendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
+  appendStaticBooleanValueAttribute(html, "display-value-bar", trendControl.displayValueBar);
+  appendStaticAttribute(html, "value-bar-color", trendControl.valueBarColor);
+  appendStaticAttribute(html, "value-bar-width", trendControl.valueBarWidth);
   appendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.displayScrollMechanism);
   appendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.chartLiveMode);
   appendStaticBooleanValueAttribute(html, "auto-scale", trendControl.autoScale);
@@ -3223,6 +3226,12 @@ function createTrendControlStyle(trendControl: HmiTrendControl): string {
   const percentageColor = getStaticValue(trendControl.percentageAxisColor);
   if (percentageColor !== undefined)
     parts.push(`--hmi-trend-percentage-axis-color: ${colorToCss(percentageColor)};`);
+  const valueBarColor = getStaticValue(trendControl.valueBarColor);
+  if (valueBarColor !== undefined)
+    parts.push(`--hmi-trend-value-bar-color: ${colorToCss(valueBarColor)};`);
+  const valueBarWidth = getStaticValue(trendControl.valueBarWidth);
+  if (valueBarWidth !== undefined)
+    parts.push(`--hmi-trend-value-bar-width: ${toCss(Math.max(0, valueBarWidth))}px;`);
   return parts.join("");
 }
 
