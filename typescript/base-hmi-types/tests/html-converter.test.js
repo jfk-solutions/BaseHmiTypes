@@ -49,6 +49,7 @@ import {
   HmiLineStyle,
   HmiSystemDiagnosisControl,
   HmiSystemDiagnosisViewKind,
+  HmiText,
   HmiScale,
   HmiScreen,
   HmiScreenWindow,
@@ -162,6 +163,28 @@ test("HTML converter renders item opacity", async () => {
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
 
   assert.match(html, /id="TransparentRectangle"[^>]*style="position: absolute;left: 0px;top: 0px;width: 100px;height: 50px;opacity: 0.25;/);
+});
+
+test("HTML converter adapts text borders to content", async () => {
+  const text = new HmiText();
+  text.name = "AdaptiveText";
+  text.width = staticProperty(200);
+  text.height = staticProperty(80);
+  text.text = staticProperty(HmiMultilingualText.fromText("Variable caption"));
+  text.adaptBorderToContent = staticProperty(true);
+
+  const layer = new HmiLayer();
+  layer.name = "Default";
+  layer.items.push(text);
+  const screen = new HmiScreen();
+  screen.name = "Main";
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /data-adapt-border-to-content/);
+  assert.match(html, /width: 200px;height: 80px;width: max-content;height: max-content;white-space: nowrap;/);
+  assert.match(html, /Variable caption/);
 });
 
 test("HTML converter renders design shadows", async () => {

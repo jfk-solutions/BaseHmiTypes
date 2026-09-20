@@ -36,6 +36,7 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   /** Source polarity for an optional enabled-state expression. */
   enabledWhenExpressionIsTrue?: boolean;
   opacity?: HmiProperty<number>;
+  adaptBorderToContent?: HmiProperty<boolean>;
   rotationAngle?: HmiProperty<number>;
   rotationCenterX?: HmiProperty<number>;
   rotationCenterY?: HmiProperty<number>;

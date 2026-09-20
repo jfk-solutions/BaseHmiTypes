@@ -3214,11 +3214,13 @@ function appendCommonAttributes(
   appendTextAttribute(html, "title", item.toolTipText, context);
   appendStaticAttribute(html, "tabindex", item.tabIndex);
   appendAttribute(html, "data-hmi-security-code", item.securityCode);
+  appendStaticAttribute(html, "data-adapt-border-to-content", item.adaptBorderToContent);
   appendDisabledAttribute(html, item);
   appendHotKeyAttributes(html, item);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
+  appendAdaptBorderToContentStyle(html, item);
   appendDisabledStyle(html, item);
   appendOpacity(html, item, context);
   appendDesignShadow(html, item, context);
@@ -3299,6 +3301,12 @@ function appendOpacity(html: string[], item: HmiScreenItemBase, context: HmiHtml
   const opacity = getStaticValue(context.effectiveProperties.resolve(item, "Opacity", item.opacity));
   if (opacity !== undefined) {
     html.push(`opacity: ${toCss(Math.min(Math.max(opacity, 0), 1))};`);
+  }
+}
+
+function appendAdaptBorderToContentStyle(html: string[], item: HmiScreenItemBase): void {
+  if (getStaticValueOrDefault(item.adaptBorderToContent, false)) {
+    html.push("width: max-content;height: max-content;white-space: nowrap;");
   }
 }
 
