@@ -1229,6 +1229,9 @@ test("HTML converter renders inert alarm previews", async () => {
   alarms.headerBackgroundColor = staticProperty(hmiColorFromArgb(255, 0xe3, 0xe3, 0xe3));
   alarms.headerForegroundColor = staticProperty(hmiColorFromArgb(255, 0x01, 0x02, 0x03));
   alarms.headerBorderColor = staticProperty(hmiColorFromArgb(255, 0x66, 0x77, 0x88));
+  alarms.showToolbar = staticProperty(true);
+  alarms.toolbarBackgroundColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x33, 0x22));
+  alarms.toolbarForegroundColor = staticProperty(hmiColorFromArgb(255, 0xfa, 0xfb, 0xfc));
   alarms.gridLineColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x55, 0x66));
   alarms.gridLineWidth = staticProperty(2);
   alarms.showHorizontalGridLines = staticProperty(false);
@@ -1302,6 +1305,9 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-header-background-color="#E3E3E3"/);
   assert.match(html, /data-header-foreground-color="#010203"/);
   assert.match(html, /data-header-border-color="#667788"/);
+  assert.match(html, /data-show-toolbar="true"/);
+  assert.match(html, /data-toolbar-background-color="#443322"/);
+  assert.match(html, /data-toolbar-foreground-color="#FAFBFC"/);
   assert.match(html, /data-grid-line-color="#445566"/);
   assert.match(html, /data-grid-line-width="2"/);
   assert.match(html, /data-show-horizontal-grid-lines="false"/);
@@ -1332,7 +1338,7 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-column-type="Message">Message<\/th>/);
   assert.doesNotMatch(html, /data-column-type="AlarmState"/);
   assert.match(html, />Alarm data not loaded<\/td>/);
-  assert.match(html, />Acknowledge · Help<\/div>/);
+  assert.match(html, /class="hmi-alarm-toolbar" role="toolbar" style="flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #443322;color: #FAFBFC;">Acknowledge · Help<\/div>/);
   assert.match(html, /class="hmi-alarm-status-bar" role="status" style="flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #213243;color: #FEDCBA;font-family: Tahoma;font-size: 8px;font-weight: 600;font-style: italic;">Status<\/div>/);
   assert.match(html, /<div id="AlarmBanner"/);
   assert.match(html, /data-view-kind="AlarmBanner"/);
