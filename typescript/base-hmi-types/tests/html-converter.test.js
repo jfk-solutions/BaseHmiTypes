@@ -314,6 +314,36 @@ test("HTML converter renders bar fill directions", async () => {
   assert.match(html, /id="RightBar"[^>]*direction: ltr;" data-fill-direction="Right"/);
 });
 
+test("HTML converter renders slider orientations", async () => {
+  const screen = new HmiScreen();
+  screen.name = "MainScreen";
+  screen.width = staticProperty(320);
+  screen.height = staticProperty(240);
+  const layer = new HmiLayer();
+
+  for (const [name, orientation] of [
+    ["TopSlider", 0],
+    ["BottomSlider", 1],
+    ["LeftSlider", 2],
+    ["RightSlider", 3],
+  ]) {
+    const slider = new HmiSlider();
+    slider.name = name;
+    slider.width = staticProperty(100);
+    slider.height = staticProperty(20);
+    slider.orientation = staticProperty(orientation);
+    layer.items.push(slider);
+  }
+  screen.layers.push(layer);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /writing-mode: vertical-lr; direction: rtl;" data-orientation="Up"/);
+  assert.match(html, /writing-mode: vertical-lr; direction: ltr;" data-orientation="Down"/);
+  assert.match(html, /id="LeftSlider"[^>]*direction: rtl;" data-orientation="Left"/);
+  assert.match(html, /id="RightSlider"[^>]*direction: ltr;" data-orientation="Right"/);
+});
+
 test("HTML converter renders a clock preview", async () => {
   const screen = new HmiScreen();
   screen.id = "main";
