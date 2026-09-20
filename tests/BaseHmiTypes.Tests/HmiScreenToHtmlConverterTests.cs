@@ -1471,6 +1471,15 @@ public class HmiScreenToHtmlConverterTests
             PatternColor = HmiColor.FromArgb(255, 0, 128, 255),
             FillPattern = HmiFillPattern.Horizontal
         });
+        layer.Items.Add(new HmiButton
+        {
+            Name = "CheckedButton",
+            Width = 80,
+            Height = 30,
+            BackgroundColor = HmiColor.FromArgb(255, 255, 255, 255),
+            PatternColor = HmiColor.FromArgb(255, 255, 0, 0),
+            FillPattern = HmiFillPattern.Checkers
+        });
         screen.Layers.Add(layer);
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
@@ -1479,6 +1488,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "fill=\"url(#hmi-pattern-StripedLevel)\"");
         StringAssert.Contains(html, "<pattern id=\"hmi-pattern-StripedLevel\" patternUnits=\"userSpaceOnUse\"");
         StringAssert.Contains(html, "stroke=\"#0080FF\"");
+        StringAssert.Contains(html, "background-image: conic-gradient(#FF0000 25%, transparent 0 50%, #FF0000 0 75%, transparent 0);");
     }
 
     [TestMethod]
