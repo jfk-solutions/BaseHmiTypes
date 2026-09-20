@@ -3288,6 +3288,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "chart-title", trendControl.ChartTitle);
         AppendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.DisplayChartTitle);
         AppendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.ShowToolbar);
+        AppendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.ShowStatusBar);
         AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
         AppendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.DisplayScrollMechanism);
         AppendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.ChartLiveMode);
@@ -3358,6 +3359,13 @@ public class HmiScreenToHtmlConverter
         var style = new StringBuilder(CreateControlWindowStyle(trendControl, context, "overflow: hidden;"));
         AppendFontVariables(style, "content", trendControl.ContentFont);
         AppendFontVariables(style, "header", trendControl.HeaderFont);
+        AppendFontVariables(style, "status", trendControl.StatusBarFont);
+        if (trendControl.StatusBarBackgroundColor is not null)
+            style.Append("--hmi-trend-status-background: ")
+                .Append(ToCss(ResolveStaticValue(trendControl.StatusBarBackgroundColor, context))).Append(';');
+        if (trendControl.StatusBarForegroundColor is not null)
+            style.Append("--hmi-trend-status-foreground: ")
+                .Append(ToCss(ResolveStaticValue(trendControl.StatusBarForegroundColor, context))).Append(';');
         return style.ToString();
     }
 

@@ -5,6 +5,7 @@ const trendControlProperties = {
   pens: String,
   displayChartTitle: String,
   showToolbar: String,
+  showStatusBar: String,
   displayPenIcons: String,
   displayScrollMechanism: String,
   chartLiveMode: String,
@@ -103,6 +104,7 @@ export class HmiTrendControl extends HTMLElement {
     const decimalPlaces = clamp(Math.trunc(readNumberAttribute(this, "y-axis-decimal-places", 0)), 0, 12);
     const displayChartTitle = readBooleanAttribute(this, "display-chart-title", false);
     const showToolbar = readBooleanAttribute(this, "show-toolbar", true);
+    const showStatusBar = readBooleanAttribute(this, "show-status-bar", false);
     const displayPenIcons = readBooleanAttribute(this, "display-pen-icons", true);
     const displayScrollMechanism = readBooleanAttribute(this, "display-scroll-mechanism", false);
     const chartLiveMode = readBooleanAttribute(this, "chart-live-mode", false);
@@ -116,7 +118,7 @@ export class HmiTrendControl extends HTMLElement {
     const now = new Date();
     const labels = createTimeLabels(now, xAxisDateVisible);
     const plotTop = displayChartTitle ? (showToolbar ? 29 : 15) : (showToolbar ? 23 : 7);
-    const plotBottom = displayScrollMechanism ? 22 : 16;
+    const plotBottom = (displayScrollMechanism ? 22 : 16) + (showStatusBar ? 10 : 0);
 
     this.root.innerHTML = `
       <style>
@@ -244,10 +246,21 @@ export class HmiTrendControl extends HTMLElement {
 
         .status {
           position: absolute;
-          top: 3%;
-          right: 2.5%;
-          color: #4f5967;
-          font-size: clamp(9px, 1.5vmin, 13px);
+          left: 0;
+          right: 0;
+          bottom: 0;
+          min-height: 18px;
+          padding: 2px 6px;
+          overflow: hidden;
+          color: var(--hmi-trend-status-foreground, #4f5967);
+          background: var(--hmi-trend-status-background, #eef0f3);
+          border-top: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+          font-family: var(--hmi-trend-status-font-family, inherit);
+          font-size: var(--hmi-trend-status-font-size, clamp(9px, 1.5vmin, 13px));
+          font-weight: var(--hmi-trend-status-font-weight, normal);
+          font-style: var(--hmi-trend-status-font-style, inherit);
+          text-decoration: var(--hmi-trend-status-text-decoration, inherit);
+          white-space: nowrap;
         }
 
         .scrollbar {
@@ -272,7 +285,7 @@ export class HmiTrendControl extends HTMLElement {
       <div class="frame">
         ${displayChartTitle ? `<div class="title">${escapeHtml(chartTitle)}</div>` : ""}
         ${showToolbar ? `<div class="toolbar">${renderPenLegend(visiblePens, displayPenIcons)}</div>` : ""}
-        <div class="status">${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}</div>
+        ${showStatusBar ? `<div class="status">${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}</div>` : ""}
         <div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             ${renderGrid(xAxisGridVisible, yAxisGridVisible)}
