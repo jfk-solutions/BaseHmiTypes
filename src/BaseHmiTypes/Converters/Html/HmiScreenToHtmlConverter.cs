@@ -825,10 +825,13 @@ public class HmiScreenToHtmlConverter
     {
         var lineStyle = GetLineStyle(item, context);
         var fillPattern = GetFillPattern(item, context);
+        var colorGradient = GetColorGradient(item);
         var fill = fillColor == null || fillPattern == HmiFillPattern.Transparent
             ? "none"
             : TryGetFillPercentage(item.FillAnimation, out _)
                 ? $"url(#{GetFillGradientId(item)})"
+                : colorGradient is not null
+                    ? $"url(#{GetColorGradientId(item)})"
                 : fillPattern is not null and not HmiFillPattern.Solid
                     ? $"url(#{GetFillPatternId(item)})"
                     : ToCss(fillColor.Value);
@@ -867,6 +870,11 @@ public class HmiScreenToHtmlConverter
 
         if (!TryGetFillPercentage(item.FillAnimation, out var percentage))
         {
+            if (GetColorGradient(item) is { } colorGradient)
+            {
+                AppendSvgColorGradientDefinition(html, item, colorGradient);
+                return;
+            }
             AppendSvgPatternDefinition(html, item, fillColor.Value, context);
             return;
         }
@@ -885,6 +893,26 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "offset", ToCss(percentage) + "%");
         AppendAttribute(html, "stop-color", "transparent");
         html.Append("></stop></linearGradient></defs>");
+    }
+
+    private static void AppendSvgColorGradientDefinition(StringBuilder html, HmiShapeBase item, ColorGradient gradient)
+    {
+        var (x1, y1, x2, y2) = GetSvgGradientVector(gradient.Direction);
+        html.Append("<defs><linearGradient");
+        AppendAttribute(html, "id", GetColorGradientId(item));
+        AppendAttribute(html, "x1", x1);
+        AppendAttribute(html, "y1", y1);
+        AppendAttribute(html, "x2", x2);
+        AppendAttribute(html, "y2", y2);
+        html.Append('>');
+        foreach (var (color, offset) in gradient.Stops)
+        {
+            html.Append("<stop");
+            AppendAttribute(html, "offset", ToCss(offset) + "%");
+            AppendAttribute(html, "stop-color", ToCss(color));
+            html.Append("></stop>");
+        }
+        html.Append("</linearGradient></defs>");
     }
 
     private static void AppendSvgPatternDefinition(
@@ -980,6 +1008,16 @@ public class HmiScreenToHtmlConverter
         _ => ("0%", "0%", "100%", "0%")
     };
 
+    private static (string x1, string y1, string x2, string y2) GetSvgGradientVector(HmiGradientDirection direction) => direction switch
+    {
+        HmiGradientDirection.HorizontalFromRight => ("100%", "0%", "0%", "0%"),
+        HmiGradientDirection.VerticalFromTop or HmiGradientDirection.VerticalFromCenter => ("0%", "0%", "0%", "100%"),
+        HmiGradientDirection.VerticalFromBottom => ("0%", "100%", "0%", "0%"),
+        HmiGradientDirection.DiagonalUp => ("0%", "100%", "100%", "0%"),
+        HmiGradientDirection.DiagonalDown => ("0%", "0%", "100%", "100%"),
+        _ => ("0%", "0%", "100%", "0%")
+    };
+
     private static string GetFillGradientId(HmiShapeBase item)
     {
         var source = item.Name ?? item.Id ?? "shape";
@@ -988,6 +1026,8 @@ public class HmiScreenToHtmlConverter
     }
 
     private static string GetFillPatternId(HmiShapeBase item) => GetFillGradientId(item).Replace("hmi-fill-", "hmi-pattern-");
+
+    private static string GetColorGradientId(HmiShapeBase item) => GetFillGradientId(item).Replace("hmi-fill-", "hmi-color-gradient-");
 
     private static HmiFillPattern? GetFillPattern(HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
@@ -2037,6 +2077,91 @@ public class HmiScreenToHtmlConverter
         html.Append("background-size: ").Append(pattern is HmiFillPattern.CheckersFiner or HmiFillPattern.DiagonalCrossFiner ? "4px 4px" : "8px 8px").Append(';');
     }
 
+    private readonly record struct ColorGradient(
+        HmiGradientDirection Direction,
+        IReadOnlyList<(HmiColor Color, double Offset)> Stops);
+
+    private static ColorGradient? GetColorGradient(HmiPaintedScreenItemBase item)
+    {
+        return item switch
+        {
+            HmiShapeBase shape => CreateColorGradient(
+                shape.BackgroundColor, shape.FirstGradientColor, shape.FirstGradientOffset,
+                shape.MiddleGradientColor, shape.SecondGradientColor, shape.SecondGradientOffset,
+                shape.UseFirstGradient, shape.UseSecondGradient, shape.GradientDirection),
+            HmiWidgetBase widget => CreateColorGradient(
+                widget.BackgroundColor, widget.FirstGradientColor, widget.FirstGradientOffset,
+                widget.MiddleGradientColor, widget.SecondGradientColor, widget.SecondGradientOffset,
+                widget.UseFirstGradient, widget.UseSecondGradient, widget.GradientDirection),
+            HmiWindowBase window => CreateColorGradient(
+                window.BackgroundColor, window.FirstGradientColor, window.FirstGradientOffset,
+                window.MiddleGradientColor, window.SecondGradientColor, window.SecondGradientOffset,
+                window.UseFirstGradient, window.UseSecondGradient, window.GradientDirection),
+            _ => null
+        };
+    }
+
+    private static ColorGradient? GetColorGradient(HmiScreenBase screen) => CreateColorGradient(
+        screen.BackgroundColor, screen.FirstGradientColor, screen.FirstGradientOffset,
+        screen.MiddleGradientColor, screen.SecondGradientColor, screen.SecondGradientOffset,
+        screen.UseFirstGradient, screen.UseSecondGradient, screen.GradientDirection);
+
+    private static ColorGradient? CreateColorGradient(
+        HmiProperty<HmiColor>? backgroundColor,
+        HmiProperty<HmiColor>? firstColor,
+        HmiProperty<double>? firstOffset,
+        HmiProperty<HmiColor>? middleColor,
+        HmiProperty<HmiColor>? secondColor,
+        HmiProperty<double>? secondOffset,
+        HmiProperty<bool>? useFirst,
+        HmiProperty<bool>? useSecond,
+        HmiProperty<HmiGradientDirection>? direction)
+    {
+        var firstEnabled = useFirst.GetStaticValueOrDefault() && firstColor is not null;
+        var secondEnabled = useSecond.GetStaticValueOrDefault() && secondColor is not null;
+        if (!firstEnabled && !secondEnabled)
+            return null;
+
+        var middle = middleColor?.StaticValue
+            ?? backgroundColor?.StaticValue
+            ?? firstColor?.StaticValue
+            ?? secondColor?.StaticValue;
+        if (middle is null)
+            return null;
+
+        var firstStop = Math.Clamp(firstOffset.GetStaticValueOrDefault(50d), 0d, 100d);
+        var secondStop = Math.Clamp(secondOffset.GetStaticValueOrDefault(50d), 0d, 100d);
+        var stops = new List<(HmiColor Color, double Offset)>();
+        if (firstEnabled)
+            stops.Add((firstColor!.StaticValue, 0d));
+        else
+            stops.Add((middle.Value, 0d));
+
+        if (firstEnabled && secondEnabled)
+        {
+            stops.Add((middle.Value, Math.Min(firstStop, secondStop)));
+            stops.Add((middle.Value, Math.Max(firstStop, secondStop)));
+        }
+        else
+        {
+            stops.Add((middle.Value, firstEnabled ? firstStop : secondStop));
+        }
+
+        stops.Add((secondEnabled ? secondColor!.StaticValue : middle.Value, 100d));
+        return new ColorGradient(direction?.StaticValue ?? HmiGradientDirection.HorizontalFromLeft, stops);
+    }
+
+    private static void AppendColorGradientStyle(StringBuilder html, ColorGradient? gradient)
+    {
+        if (gradient is not { } value)
+            return;
+
+        html.Append("background-image: linear-gradient(").Append(ToCss(value.Direction));
+        foreach (var (color, offset) in value.Stops)
+            html.Append(", ").Append(ToCss(color)).Append(' ').Append(ToCss(offset)).Append('%');
+        html.Append(");");
+    }
+
     private static void AppendFillAnimationStyle(StringBuilder html, HmiShapeBase item, HmiHtmlConvertContext context)
     {
         if (!TryGetFillPercentage(item.FillAnimation, out var percentage) || GetFillColor(item, context) is not HmiColor fillColor)
@@ -2824,6 +2949,7 @@ public class HmiScreenToHtmlConverter
                 html,
                 screen.FillPattern.StaticValue,
                 screen.PatternColor?.StaticValue ?? HmiColor.FromArgb(255, 0, 0, 0));
+        AppendColorGradientStyle(html, GetColorGradient(screen));
     }
 
     private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
@@ -2864,6 +2990,7 @@ public class HmiScreenToHtmlConverter
             }
         }
         AppendFillPatternStyle(html, item, context);
+        AppendColorGradientStyle(html, GetColorGradient(item));
         if (margin != null)
         {
             html.Append("margin: ")
@@ -3026,6 +3153,16 @@ public class HmiScreenToHtmlConverter
                 return "center";
         }
     }
+
+    private static string ToCss(HmiGradientDirection direction) => direction switch
+    {
+        HmiGradientDirection.HorizontalFromRight => "to left",
+        HmiGradientDirection.VerticalFromTop or HmiGradientDirection.VerticalFromCenter => "to bottom",
+        HmiGradientDirection.VerticalFromBottom => "to top",
+        HmiGradientDirection.DiagonalUp => "to top right",
+        HmiGradientDirection.DiagonalDown => "to bottom right",
+        _ => "to right"
+    };
 
     private static string ToFlexCss(HmiHorizontalAlignment alignment)
     {

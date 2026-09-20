@@ -1513,6 +1513,70 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersConfiguredColorGradients()
+    {
+        var screen = new HmiScreen
+        {
+            Id = "main",
+            Name = "GradientScreen",
+            Width = 320,
+            Height = 200,
+            BackgroundColor = HmiColor.FromArgb(255, 34, 34, 34),
+            FirstGradientColor = HmiColor.FromArgb(255, 17, 17, 17),
+            FirstGradientOffset = 25,
+            MiddleGradientColor = HmiColor.FromArgb(255, 34, 34, 34),
+            SecondGradientColor = HmiColor.FromArgb(255, 51, 51, 51),
+            SecondGradientOffset = 75,
+            UseFirstGradient = true,
+            UseSecondGradient = true,
+            GradientDirection = HmiGradientDirection.VerticalFromTop
+        };
+        var layer = new HmiLayer { Id = "default", Name = "Default" };
+        layer.Items.Add(new HmiRectangle
+        {
+            Name = "GradientRectangle",
+            Width = 100,
+            Height = 50,
+            BackgroundColor = HmiColor.FromArgb(255, 0, 128, 0),
+            FirstGradientColor = HmiColor.FromArgb(255, 0, 255, 0),
+            FirstGradientOffset = 40,
+            UseFirstGradient = true,
+            GradientDirection = HmiGradientDirection.HorizontalFromRight
+        });
+        layer.Items.Add(new HmiCircle
+        {
+            Name = "GradientCircle",
+            Width = 50,
+            Height = 50,
+            BackgroundColor = HmiColor.FromArgb(255, 0, 0, 128),
+            SecondGradientColor = HmiColor.FromArgb(255, 0, 128, 255),
+            SecondGradientOffset = 60,
+            UseSecondGradient = true,
+            GradientDirection = HmiGradientDirection.DiagonalUp
+        });
+        layer.Items.Add(new HmiButton
+        {
+            Name = "GradientButton",
+            Width = 80,
+            Height = 30,
+            BackgroundColor = HmiColor.FromArgb(255, 128, 0, 0),
+            SecondGradientColor = HmiColor.FromArgb(255, 255, 128, 0),
+            SecondGradientOffset = 30,
+            UseSecondGradient = true
+        });
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+
+        StringAssert.Contains(html, "background-image: linear-gradient(to bottom, #111111 0%, #222222 25%, #222222 75%, #333333 100%);");
+        StringAssert.Contains(html, "background-image: linear-gradient(to left, #00FF00 0%, #008000 40%, #008000 100%);");
+        StringAssert.Contains(html, "fill=\"url(#hmi-color-gradient-GradientCircle)\"");
+        StringAssert.Contains(html, "<linearGradient id=\"hmi-color-gradient-GradientCircle\" x1=\"0%\" y1=\"100%\" x2=\"100%\" y2=\"0%\"");
+        StringAssert.Contains(html, "<stop offset=\"60%\" stop-color=\"#000080\"");
+        StringAssert.Contains(html, "background-image: linear-gradient(to right, #800000 0%, #800000 30%, #FF8000 100%);");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersPaintedItemPadding()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
