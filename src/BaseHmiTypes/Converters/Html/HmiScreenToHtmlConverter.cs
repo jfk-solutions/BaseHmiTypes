@@ -2434,6 +2434,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", rectangle.Name);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, rectangle, context);
+        AppendOpacity(html, rectangle, context);
         AppendStyle(html, rectangle, context);
         AppendFillAnimationStyle(html, rectangle, context);
         AppendRectangleRadius(html, rectangle, context);
@@ -2749,6 +2750,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-hmi-blink-mode", FormatAttributeValue(symbolLibraryControl.BlinkMode?.StaticValue));
         html.Append(" style=\"position: absolute; overflow: hidden;");
         AppendPosition(html, symbolLibraryControl, context);
+        AppendOpacity(html, symbolLibraryControl, context);
         if (symbolLibraryControl.BackFillStyle.GetStaticValueOrDefault() == HmiSymbolLibraryBackFillStyle.Solid && symbolLibraryControl.BackColor?.StaticValue != null)
             html.Append("background-color: ").Append(ToCss(symbolLibraryControl.BackColor.StaticValue)).Append(";");
         AppendSymbolLibraryTransform(html, symbolLibraryControl);
@@ -3266,6 +3268,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", item.Name);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, item, context);
+        AppendOpacity(html, item, context);
         if (includePaintedStyle && item is HmiPaintedScreenItemBase paintedItem)
             AppendStyle(html, paintedItem, context);
         if (!string.IsNullOrWhiteSpace(additionalStyle))
@@ -3301,6 +3304,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-hmi-flip", symbolContainer.Flip == null ? null : symbolContainer.Flip.StaticValue.ToString());
         html.Append(" style=\"position: absolute; overflow: hidden;");
         AppendPosition(html, symbolContainer, context);
+        AppendOpacity(html, symbolContainer, context);
         AppendStyle(html, symbolContainer, context);
         AppendSymbolTransform(html, symbolContainer);
         html.Append("\"");
@@ -3335,6 +3339,13 @@ public class HmiScreenToHtmlConverter
         html.Append("left: ").Append(ToCss(item.X.GetStaticValueOrDefault() + context.PositionOffsetX)).Append("px;");
         html.Append("top: ").Append(ToCss(item.Y.GetStaticValueOrDefault() + context.PositionOffsetY)).Append("px;");
         AppendSize(html, item.Width.GetStaticValueOrDefault(), item.Height.GetStaticValueOrDefault());
+    }
+
+    private static void AppendOpacity(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
+    {
+        var opacity = context.EffectiveProperties.Resolve(item, nameof(HmiScreenItemBase.Opacity), item.Opacity);
+        if (opacity?.StaticValue is double value)
+            html.Append("opacity: ").Append(ToCss(Math.Clamp(value, 0d, 1d))).Append(';');
     }
 
     private static void AppendSize(StringBuilder html, double width, double height)
