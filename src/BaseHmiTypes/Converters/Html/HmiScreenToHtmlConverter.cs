@@ -159,6 +159,9 @@ public class HmiScreenToHtmlConverter
             case HmiRadioButtonGroup radioButtonGroup:
                 await AppendSelectionGroupAsync(html, "hmi-radio-button-group", radioButtonGroup, project, context, cancellationToken).ConfigureAwait(false);
                 break;
+            case HmiComboBox comboBox:
+                AppendComboBox(html, comboBox, context);
+                break;
             case HmiListBox listBox:
                 AppendListBox(html, listBox, context);
                 break;
@@ -1613,16 +1616,30 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendListBox(StringBuilder html, HmiListBox listBox, HmiHtmlConvertContext context)
     {
-        var selectedValue = listBox.Indicator is not null
-            ? ResolveStaticValue(listBox.Indicator, context)
-            : ResolveStaticValue(listBox.Value, context);
-        var selectedState = listBox.States.FirstOrDefault(candidate => candidate.Value == selectedValue)
-            ?? listBox.States.FirstOrDefault();
+        AppendSelectionList(html, listBox, context);
+    }
+
+    private static void AppendComboBox(StringBuilder html, HmiComboBox comboBox, HmiHtmlConvertContext context)
+    {
+        AppendSelectionList(html, comboBox, context);
+    }
+
+    private static void AppendSelectionList(StringBuilder html, HmiSelectionGroupBase selectionGroup, HmiHtmlConvertContext context)
+    {
+        var selectedValue = selectionGroup.Indicator is not null
+            ? ResolveStaticValue(selectionGroup.Indicator, context)
+            : ResolveStaticValue(selectionGroup.Value, context);
+        var selectedIndex = selectionGroup.SelectedIndex is null
+            ? -1
+            : ResolveStaticValue(selectionGroup.SelectedIndex, context);
+        var selectedState = selectionGroup.States.FirstOrDefault(candidate => candidate.Value == selectedValue)
+            ?? (selectedIndex >= 0 && selectedIndex < selectionGroup.States.Count ? selectionGroup.States[selectedIndex] : null)
+            ?? selectionGroup.States.FirstOrDefault();
 
         html.Append("<select");
-        AppendCommonAttributes(html, listBox, context, additionalStyle: CreateStateStyle(selectedState));
+        AppendCommonAttributes(html, selectionGroup, context, additionalStyle: CreateStateStyle(selectedState));
         html.Append('>');
-        foreach (var state in listBox.States)
+        foreach (var state in selectionGroup.States)
         {
             html.Append("<option");
             if (state.Value is double value)
