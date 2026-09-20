@@ -5,8 +5,11 @@ import {
   HmiButton,
   HmiBlinkRate,
   HmiChildCoordinateSpace,
+  HmiCircle,
   HmiDynamicSvg,
   HmiDynamicSvgProperty,
+  HmiFillAnimation,
+  HmiFillDirection,
   HmiDisabledImageMode,
   HmiGroup,
   HmiImage,
@@ -102,6 +105,40 @@ test("HTML conversion renders painted shape border styles", async () => {
 
   assert.match(html, /border-style: dotted;/);
   assert.match(html, /border-width: 3px;/);
+});
+
+test("HTML conversion renders shape fill animation previews", async () => {
+  const rectangle = createRectangle("Tank");
+  rectangle.id = "tank";
+  rectangle.backgroundColor = staticProperty(hmiColorFromArgb(255, 0, 128, 255));
+  rectangle.fillAnimation = Object.assign(new HmiFillAnimation(), {
+    expression: "Tank.Level",
+    expressionFallback: 35,
+    expressionMinimum: 0,
+    expressionMaximum: 100,
+    fillMinimum: 0,
+    fillMaximum: 100,
+    direction: HmiFillDirection.Right,
+  });
+  const circle = new HmiCircle();
+  circle.id = "level";
+  circle.name = "Level";
+  circle.width = staticProperty(50);
+  circle.height = staticProperty(50);
+  circle.backgroundColor = staticProperty(hmiColorFromArgb(255, 0, 200, 0));
+  circle.fillAnimation = Object.assign(new HmiFillAnimation(), {
+    expressionFallback: 60,
+    direction: HmiFillDirection.Up,
+  });
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(rectangle, circle);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /background-image: linear-gradient\(to right, #0080FF 0%, #0080FF 35%, transparent 35%, transparent 100%\);/);
+  assert.match(html, /fill="url\(#hmi-fill-level\)"/);
+  assert.match(html, /<linearGradient id="hmi-fill-level" x1="0%" y1="100%" x2="0%" y2="0%"/);
+  assert.match(html, /<stop offset="60%" stop-color="#00C800"/);
 });
 
 test("HTML conversion serializes dynamic SVG colors in HMI format", async () => {
