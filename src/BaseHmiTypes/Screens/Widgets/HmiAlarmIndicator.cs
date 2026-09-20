@@ -25,6 +25,10 @@ public class HmiAlarmIndicator : HmiSimpleScreenItemBase
 
     public HmiFont? Font { get; set; }
 
+    public HmiProperty<HmiHorizontalAlignment>? HorizontalAlignment { get; set; }
+
+    public HmiProperty<HmiVerticalAlignment>? VerticalAlignment { get; set; }
+
     public HmiProperty<IList<int>>? ShowAcknowledgedAlarmClasses { get; set; }
 
     public HmiProperty<IList<int>>? ShowPendingAlarmClasses { get; set; }
