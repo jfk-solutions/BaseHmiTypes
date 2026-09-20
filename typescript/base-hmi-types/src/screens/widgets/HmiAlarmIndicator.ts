@@ -14,6 +14,7 @@ export class HmiAlarmIndicator extends HmiSimpleScreenItemBase {
   alarmState?: HmiProperty<number>;
   noAlarmState?: HmiProperty<number>;
   numberOfAlarms?: HmiProperty<number>;
+  text?: HmiProperty<string>;
   showAcknowledgedAlarmClasses?: HmiProperty<number[]>;
   showPendingAlarmClasses?: HmiProperty<number[]>;
 }

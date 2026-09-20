@@ -2737,10 +2737,13 @@ function appendAlarmIndicator(
   const alarmState = getStaticValue(indicator.alarmState);
   const noAlarmState = getStaticValue(indicator.noAlarmState) ?? 0;
   const numberOfAlarms = getStaticValue(indicator.numberOfAlarms);
+  const text = getStaticValue(indicator.text);
   const isActive = alarmState !== undefined && alarmState !== noAlarmState;
   const content = numberOfAlarms !== undefined && numberOfAlarms > 0
     ? numberOfAlarms.toString()
-    : alarmState !== undefined && isActive ? "!" : "";
+    : text
+      ? text
+      : alarmState !== undefined && isActive ? "!" : "";
 
   let style = "display: flex; align-items: center; justify-content: center; overflow: hidden;";
   const flashingColor = getStaticValue(indicator.flashingColor);
@@ -2759,9 +2762,10 @@ function appendAlarmIndicator(
   appendStaticValueAttribute(html, "data-alarm-state", indicator.alarmState);
   appendStaticValueAttribute(html, "data-no-alarm-state", indicator.noAlarmState);
   appendStaticValueAttribute(html, "data-number-of-alarms", indicator.numberOfAlarms);
+  appendStaticValueAttribute(html, "data-text", indicator.text);
   appendIntegerListAttribute(html, "data-show-acknowledged-alarm-classes", indicator.showAcknowledgedAlarmClasses);
   appendIntegerListAttribute(html, "data-show-pending-alarm-classes", indicator.showPendingAlarmClasses);
-  html.push(">", content, "</div>");
+  html.push(">", escapeHtml(content), "</div>");
 }
 
 function appendStaticValueAttribute<T>(html: string[], name: string, property: HmiProperty<T> | undefined): void {
