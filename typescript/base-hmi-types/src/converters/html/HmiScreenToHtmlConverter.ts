@@ -3057,6 +3057,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendAttribute(html, "chart-title", trendControl.chartTitle);
   appendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.displayChartTitle);
   appendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.showToolbar);
+  appendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.showStatusBar);
   appendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
   appendStaticBooleanValueAttribute(html, "display-scroll-mechanism", trendControl.displayScrollMechanism);
   appendStaticBooleanValueAttribute(html, "chart-live-mode", trendControl.chartLiveMode);
@@ -3112,6 +3113,13 @@ function createTrendControlStyle(trendControl: HmiTrendControl): string {
   const parts = [createControlWindowStyle(trendControl, "overflow: hidden;")];
   appendFontVariables(parts, "content", trendControl.contentFont);
   appendFontVariables(parts, "header", trendControl.headerFont);
+  appendFontVariables(parts, "status", trendControl.statusBarFont);
+  const statusBackground = getStaticValue(trendControl.statusBarBackgroundColor);
+  if (statusBackground !== undefined)
+    parts.push(`--hmi-trend-status-background: ${colorToCss(statusBackground)};`);
+  const statusForeground = getStaticValue(trendControl.statusBarForegroundColor);
+  if (statusForeground !== undefined)
+    parts.push(`--hmi-trend-status-foreground: ${colorToCss(statusForeground)};`);
   return parts.join("");
 }
 

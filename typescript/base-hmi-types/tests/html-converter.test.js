@@ -1447,6 +1447,14 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.headerFont.weight = staticProperty(700);
   trend.headerFont.italic = staticProperty(true);
   trend.showToolbar = staticProperty(false);
+  trend.showStatusBar = staticProperty(true);
+  trend.statusBarBackgroundColor = staticProperty(hmiColorFromArgb(255, 16, 32, 48));
+  trend.statusBarForegroundColor = staticProperty(hmiColorFromArgb(255, 224, 208, 192));
+  trend.statusBarFont = new HmiFont();
+  trend.statusBarFont.name = staticProperty("Tahoma");
+  trend.statusBarFont.size = staticProperty(8);
+  trend.statusBarFont.weight = staticProperty(600);
+  trend.statusBarFont.italic = staticProperty(true);
   trend.displayPenIcons = staticProperty(true);
   trend.displayScrollMechanism = staticProperty(true);
   trend.chartLiveMode = staticProperty(true);
@@ -1486,6 +1494,10 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /--hmi-trend-content-font-family: Arial;--hmi-trend-content-font-size: 9px;--hmi-trend-content-font-weight: 400;/);
   assert.match(html, /--hmi-trend-header-font-family: Siemens Sans;--hmi-trend-header-font-size: 11px;--hmi-trend-header-font-weight: 700;--hmi-trend-header-font-style: italic;/);
   assert.match(html, /show-toolbar="false"/);
+  assert.match(html, /show-status-bar="true"/);
+  assert.match(html, /--hmi-trend-status-background: #102030;/);
+  assert.match(html, /--hmi-trend-status-foreground: #E0D0C0;/);
+  assert.match(html, /--hmi-trend-status-font-family: Tahoma;--hmi-trend-status-font-size: 8px;--hmi-trend-status-font-weight: 600;--hmi-trend-status-font-style: italic;/);
   assert.match(html, /display-pen-icons="true"/);
   assert.match(html, /display-scroll-mechanism="true"/);
   assert.match(html, /chart-live-mode="true"/);
