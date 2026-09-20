@@ -1165,7 +1165,12 @@ public class HmiScreenToHtmlConverter
             return;
 
         var patternColor = GetPatternColor(item, context);
-        var size = pattern is HmiFillPattern.DottedEvenOddFiner or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.CheckersFiner ? 4 : 8;
+        var size = pattern switch
+        {
+            HmiFillPattern.DottedEvenOddFiner or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.CheckersFiner or HmiFillPattern.SmallBoxes => 4,
+            HmiFillPattern.LargeBoxes or HmiFillPattern.Ovals or HmiFillPattern.Scales or HmiFillPattern.Waves => 12,
+            _ => 8
+        };
         html.Append("<defs><pattern");
         AppendAttribute(html, "id", GetFillPatternId(item));
         AppendAttribute(html, "patternUnits", "userSpaceOnUse");
@@ -1268,16 +1273,24 @@ public class HmiScreenToHtmlConverter
                 break;
             case HmiFillPattern.Horizontal:
             case HmiFillPattern.HorizontalDifferentLines:
-                AppendPatternPath(html, $"M0 1H{size} M0 {size / 2 + 1}H{size}", cssColor, pattern == HmiFillPattern.HorizontalDifferentLines ? 2 : 1);
+            case HmiFillPattern.WideHorizontal:
+                AppendPatternPath(html, $"M0 1H{size} M0 {size / 2 + 1}H{size}", cssColor, pattern is HmiFillPattern.HorizontalDifferentLines or HmiFillPattern.WideHorizontal ? 2 : 1);
                 break;
             case HmiFillPattern.Vertical:
-                AppendPatternPath(html, $"M1 0V{size} M{size / 2 + 1} 0V{size}", cssColor, 1);
+            case HmiFillPattern.WideVertical:
+                AppendPatternPath(html, $"M1 0V{size} M{size / 2 + 1} 0V{size}", cssColor, pattern == HmiFillPattern.WideVertical ? 2 : 1);
+                break;
+            case HmiFillPattern.SmallBoxes:
+            case HmiFillPattern.MediumBoxes:
+            case HmiFillPattern.LargeBoxes:
+                AppendPatternPath(html, $"M0 0H{size}V{size}H0Z", cssColor, 1);
                 break;
             case HmiFillPattern.DottedHorizontal:
             case HmiFillPattern.DottedEvenOdd:
             case HmiFillPattern.DottedEvenOddFiner:
             case HmiFillPattern.DottedEvenOddFinest:
             case HmiFillPattern.DottedHorizontalInverted:
+            case HmiFillPattern.Dots:
                 html.Append("<circle");
                 AppendAttribute(html, "cx", (size / 4d).ToString(CultureInfo.InvariantCulture));
                 AppendAttribute(html, "cy", (size / 4d).ToString(CultureInfo.InvariantCulture));
@@ -1290,17 +1303,37 @@ public class HmiScreenToHtmlConverter
                 AppendAttribute(html, "fill", cssColor);
                 html.Append("></circle>");
                 break;
+            case HmiFillPattern.Ovals:
+                html.Append("<ellipse");
+                AppendAttribute(html, "cx", (size / 2d).ToString(CultureInfo.InvariantCulture));
+                AppendAttribute(html, "cy", (size / 2d).ToString(CultureInfo.InvariantCulture));
+                AppendAttribute(html, "rx", (size / 3d).ToString(CultureInfo.InvariantCulture));
+                AppendAttribute(html, "ry", (size / 4d).ToString(CultureInfo.InvariantCulture));
+                AppendAttribute(html, "fill", "none");
+                AppendAttribute(html, "stroke", cssColor);
+                html.Append("></ellipse>");
+                break;
+            case HmiFillPattern.Diamonds:
+                AppendPatternPath(html, $"M{size / 2} 0L{size} {size / 2}L{size / 2} {size}L0 {size / 2}Z", cssColor, 1);
+                break;
+            case HmiFillPattern.Scales:
+                AppendPatternPath(html, $"M0 {size / 2}Q{size / 4} 0 {size / 2} {size / 2}T{size} {size / 2} M-{size / 2} {size}Q-{size / 4} {size / 2} 0 {size}T{size / 2} {size}", cssColor, 1);
+                break;
+            case HmiFillPattern.Waves:
+                AppendPatternPath(html, $"M0 {size / 2}Q{size / 4} 0 {size / 2} {size / 2}T{size} {size / 2}", cssColor, 1);
+                break;
             case HmiFillPattern.Bricks:
             case HmiFillPattern.BricksDiagonal:
                 AppendPatternPath(html, $"M0 0H{size} M0 {size / 2}H{size} M{size / 2} 0V{size / 2} M0 {size / 2}V{size}", cssColor, 1);
                 break;
             default:
-                var leftToRight = pattern is HmiFillPattern.DiagonalLeftToRight or HmiFillPattern.Diagonal or HmiFillPattern.DiagonalCross or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.DiagonalCrossBold;
-                var rightToLeft = pattern is HmiFillPattern.DiagonalRightToLeft or HmiFillPattern.DiagonalCross or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.DiagonalCrossBold;
+                var leftToRight = pattern is HmiFillPattern.DiagonalLeftToRight or HmiFillPattern.Diagonal or HmiFillPattern.DiagonalCross or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.DiagonalCrossBold or HmiFillPattern.WideDiagonalLeftToRight;
+                var rightToLeft = pattern is HmiFillPattern.DiagonalRightToLeft or HmiFillPattern.DiagonalCross or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.DiagonalCrossBold or HmiFillPattern.WideDiagonalRightToLeft;
+                var lineWidth = pattern is HmiFillPattern.DiagonalCrossBold or HmiFillPattern.WideDiagonalLeftToRight or HmiFillPattern.WideDiagonalRightToLeft ? 2 : 1;
                 if (leftToRight)
-                    AppendPatternPath(html, $"M-{size / 4} {size / 4}L{size / 4} -{size / 4} M0 {size}L{size} 0 M{size * 3 / 4} {size + size / 4}L{size + size / 4} {size * 3 / 4}", cssColor, pattern == HmiFillPattern.DiagonalCrossBold ? 2 : 1);
+                    AppendPatternPath(html, $"M-{size / 4} {size / 4}L{size / 4} -{size / 4} M0 {size}L{size} 0 M{size * 3 / 4} {size + size / 4}L{size + size / 4} {size * 3 / 4}", cssColor, lineWidth);
                 if (rightToLeft)
-                    AppendPatternPath(html, $"M-{size / 4} {size * 3 / 4}L{size / 4} {size + size / 4} M0 0L{size} {size} M{size * 3 / 4} -{size / 4}L{size + size / 4} {size / 4}", cssColor, pattern == HmiFillPattern.DiagonalCrossBold ? 2 : 1);
+                    AppendPatternPath(html, $"M-{size / 4} {size * 3 / 4}L{size / 4} {size + size / 4} M0 0L{size} {size} M{size * 3 / 4} -{size / 4}L{size + size / 4} {size / 4}", cssColor, lineWidth);
                 break;
         }
     }
@@ -2746,18 +2779,34 @@ public class HmiScreenToHtmlConverter
             HmiFillPattern.Checkers => $"conic-gradient({color} 25%, transparent 0 50%, {color} 0 75%, transparent 0)",
             HmiFillPattern.CheckersFiner => $"conic-gradient({color} 25%, transparent 0 50%, {color} 0 75%, transparent 0)",
             HmiFillPattern.Horizontal => $"repeating-linear-gradient(to bottom, {color} 0 1px, transparent 1px 6px)",
+            HmiFillPattern.WideHorizontal => $"repeating-linear-gradient(to bottom, {color} 0 2px, transparent 2px 6px)",
             HmiFillPattern.Vertical => $"repeating-linear-gradient(to right, {color} 0 1px, transparent 1px 6px)",
+            HmiFillPattern.WideVertical => $"repeating-linear-gradient(to right, {color} 0 2px, transparent 2px 6px)",
             HmiFillPattern.DiagonalLeftToRight or HmiFillPattern.Diagonal => $"repeating-linear-gradient(135deg, {color} 0 1px, transparent 1px 6px)",
+            HmiFillPattern.WideDiagonalLeftToRight => $"repeating-linear-gradient(135deg, {color} 0 2px, transparent 2px 6px)",
             HmiFillPattern.DiagonalRightToLeft => $"repeating-linear-gradient(45deg, {color} 0 1px, transparent 1px 6px)",
+            HmiFillPattern.WideDiagonalRightToLeft => $"repeating-linear-gradient(45deg, {color} 0 2px, transparent 2px 6px)",
             HmiFillPattern.DiagonalCross or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.DiagonalCrossBold =>
                 $"repeating-linear-gradient(45deg, {color} 0 1px, transparent 1px 6px), repeating-linear-gradient(135deg, {color} 0 1px, transparent 1px 6px)",
             HmiFillPattern.Bricks or HmiFillPattern.BricksDiagonal =>
                 $"linear-gradient({color} 1px, transparent 1px), linear-gradient(90deg, {color} 1px, transparent 1px)",
             HmiFillPattern.HorizontalDifferentLines => $"repeating-linear-gradient(to bottom, {color} 0 1px, transparent 1px 4px, {color} 4px 6px, transparent 6px 10px)",
+            HmiFillPattern.SmallBoxes or HmiFillPattern.MediumBoxes or HmiFillPattern.LargeBoxes =>
+                $"linear-gradient({color} 1px, transparent 1px), linear-gradient(90deg, {color} 1px, transparent 1px)",
+            HmiFillPattern.Ovals => $"radial-gradient(ellipse at center, transparent 0 35%, {color} 36% 45%, transparent 46%)",
+            HmiFillPattern.Diamonds => $"linear-gradient(45deg, transparent 42%, {color} 43% 57%, transparent 58%), linear-gradient(-45deg, transparent 42%, {color} 43% 57%, transparent 58%)",
+            HmiFillPattern.Scales => $"radial-gradient(ellipse at 50% 0%, transparent 0 45%, {color} 46% 52%, transparent 53%)",
+            HmiFillPattern.Waves => $"radial-gradient(ellipse at 50% 100%, transparent 0 42%, {color} 43% 50%, transparent 51%)",
             _ => $"radial-gradient(circle, {color} 0 1px, transparent 1px)"
         };
         html.Append("background-image: ").Append(image).Append(';');
-        html.Append("background-size: ").Append(pattern is HmiFillPattern.CheckersFiner or HmiFillPattern.DiagonalCrossFiner ? "4px 4px" : "8px 8px").Append(';');
+        var size = pattern switch
+        {
+            HmiFillPattern.CheckersFiner or HmiFillPattern.DiagonalCrossFiner or HmiFillPattern.SmallBoxes => "4px 4px",
+            HmiFillPattern.LargeBoxes or HmiFillPattern.Ovals or HmiFillPattern.Scales or HmiFillPattern.Waves => "12px 12px",
+            _ => "8px 8px"
+        };
+        html.Append("background-size: ").Append(size).Append(';');
     }
 
     private readonly record struct ColorGradient(

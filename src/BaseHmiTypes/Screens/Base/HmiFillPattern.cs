@@ -21,5 +21,17 @@ public enum HmiFillPattern
     DottedHorizontalInverted,
     Bricks,
     BricksDiagonal,
-    Diagonal
+    Diagonal,
+    Dots,
+    SmallBoxes,
+    MediumBoxes,
+    LargeBoxes,
+    WideVertical,
+    WideHorizontal,
+    WideDiagonalRightToLeft,
+    WideDiagonalLeftToRight,
+    Ovals,
+    Diamonds,
+    Scales,
+    Waves
 }
