@@ -89,6 +89,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   majorGridColor?: HmiProperty<HmiColor>;
   minorGridVisible?: HmiProperty<boolean>;
   minorGridColor?: HmiProperty<HmiColor>;
+  /** Whether the main grid uses the foreground pen color. */
+  gridInTrendColor?: HmiProperty<boolean>;
   xAxisMajorGridLineCount?: HmiProperty<number>;
   xAxisMinorGridLineCount?: HmiProperty<number>;
   xAxisGridColor?: HmiProperty<HmiColor>;

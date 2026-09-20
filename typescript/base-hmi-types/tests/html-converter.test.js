@@ -1566,6 +1566,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.majorGridColor = staticProperty(hmiColorFromArgb(255, 0x20, 0x40, 0x60));
   trend.minorGridVisible = staticProperty(false);
   trend.minorGridColor = staticProperty(hmiColorFromArgb(255, 0x80, 0x90, 0xa0));
+  trend.gridInTrendColor = staticProperty(true);
   trend.yAxisScaleVisible = staticProperty(true);
   trend.yAxisColor = staticProperty(hmiColorFromArgb(255, 0x44, 0x55, 0x66));
   trend.yAxisAlignment = staticProperty(HmiHorizontalAlignment.Right);
@@ -1655,6 +1656,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /major-grid-color="#204060"/);
   assert.match(html, /minor-grid-visible="false"/);
   assert.match(html, /minor-grid-color="#8090A0"/);
+  assert.match(html, /grid-in-trend-color="true"/);
   assert.match(html, /--hmi-trend-major-grid-color: #204060;/);
   assert.match(html, /--hmi-trend-minor-grid-color: #8090A0;/);
   assert.match(html, /y-axis-scale-visible="true"/);

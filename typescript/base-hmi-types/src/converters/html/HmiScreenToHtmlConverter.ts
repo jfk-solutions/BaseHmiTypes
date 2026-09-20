@@ -3126,6 +3126,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticAttribute(html, "major-grid-color", trendControl.majorGridColor);
   appendStaticBooleanValueAttribute(html, "minor-grid-visible", trendControl.minorGridVisible);
   appendStaticAttribute(html, "minor-grid-color", trendControl.minorGridColor);
+  appendStaticBooleanValueAttribute(html, "grid-in-trend-color", trendControl.gridInTrendColor);
   appendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.yAxisScaleVisible);
   appendStaticAttribute(html, "y-axis-color", trendControl.yAxisColor);
   appendStaticAttribute(html, "y-axis-alignment", trendControl.yAxisAlignment);
