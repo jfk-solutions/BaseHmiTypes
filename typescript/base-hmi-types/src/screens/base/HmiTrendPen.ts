@@ -4,6 +4,7 @@ import { HmiProperty } from "./HmiProperty.js";
 import { HmiTrendPenType } from "./HmiTrendPenType.js";
 import { HmiTrendLineType } from "./HmiTrendLineType.js";
 import { HmiTrendAxisScaleType } from "./HmiTrendAxisScaleType.js";
+import { HmiVerticalAlignment } from "./HmiVerticalAlignment.js";
 
 export class HmiTrendPen {
   /** One-based pen number as exposed by the engineering system. */
@@ -33,6 +34,8 @@ export class HmiTrendPen {
   uncertainColor?: HmiProperty<HmiColor>;
   /** Whether alarm symbols are displayed for limit violations. */
   showAlarms?: HmiProperty<boolean>;
+  /** Vertical alignment of labels for the values-only trend type. */
+  valueAlignment?: HmiProperty<HmiVerticalAlignment>;
   /** Engineering-system marker name or numeric marker identifier. */
   marker?: HmiProperty<string>;
   /** Marker color independently of the trend line color. */

@@ -3326,6 +3326,8 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     if (uncertainColor !== undefined) result.uncertainColor = colorToCss(uncertainColor);
     const showAlarms = getStaticValue(pen.showAlarms);
     if (showAlarms !== undefined) result.showAlarms = showAlarms;
+    const valueAlignment = getStaticValue(pen.valueAlignment);
+    if (valueAlignment !== undefined) result.valueAlignment = valueAlignment;
     const marker = getStaticValue(pen.marker);
     if (marker !== undefined) result.marker = marker;
     const markerColor = getStaticValue(pen.markerColor);
