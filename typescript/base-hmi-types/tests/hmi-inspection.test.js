@@ -21,6 +21,7 @@ import {
   HmiLayer,
   HmiLine,
   HmiLineCap,
+  HmiLineMarker,
   HmiLineStyle,
   HmiPolyline,
   HmiMultilingualText,
@@ -85,6 +86,40 @@ test("HTML conversion renders SVG line caps", async () => {
 
   assert.match(html, /id="SquareLine"[^>]*><line[^>]*stroke-linecap="square"/);
   assert.match(html, /id="RoundedPolyline"[^>]*><polyline[^>]*stroke-linecap="round"/);
+});
+
+test("HTML conversion renders SVG line markers", async () => {
+  const line = new HmiLine();
+  line.name = "FlowLine";
+  line.width = staticProperty(100);
+  line.height = staticProperty(20);
+  line.x1 = staticProperty(0);
+  line.y1 = staticProperty(10);
+  line.x2 = staticProperty(100);
+  line.y2 = staticProperty(10);
+  line.lineColor = staticProperty(hmiColorFromArgb(255, 0, 64, 128));
+  line.startMarker = staticProperty(HmiLineMarker.Arrow);
+  line.endMarker = staticProperty(HmiLineMarker.FilledCircle);
+  const polyline = new HmiPolyline();
+  polyline.name = "ReturnLine";
+  polyline.width = staticProperty(100);
+  polyline.height = staticProperty(20);
+  polyline.startMarker = staticProperty(HmiLineMarker.FilledArrowReversed);
+  polyline.endMarker = staticProperty(HmiLineMarker.Line);
+  polyline.points.push({ x: 0, y: 10 }, { x: 100, y: 10 });
+  const screen = createScreen("main", "Main");
+  screen.layers[0].items.push(line, polyline);
+
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+
+  assert.match(html, /marker-start="url\(#hmi-marker-start-FlowLine\)"/);
+  assert.match(html, /marker-end="url\(#hmi-marker-end-FlowLine\)"/);
+  assert.match(html, /<marker id="hmi-marker-start-FlowLine"/);
+  assert.match(html, /d="M0 0L10 5L0 10" fill="none" stroke="#004080"/);
+  assert.match(html, /<marker id="hmi-marker-end-FlowLine"/);
+  assert.match(html, /<circle cx="5" cy="5" r="4" fill="#004080" stroke="#004080"/);
+  assert.match(html, /d="M10 0L0 5L10 10Z"/);
+  assert.match(html, /d="M5 0V10"/);
 });
 
 test("HTML conversion keeps screen-absolute group children at their source position", async () => {
