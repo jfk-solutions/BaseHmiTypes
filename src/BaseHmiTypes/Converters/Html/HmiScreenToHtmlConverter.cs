@@ -3440,6 +3440,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "auto-scale", trendControl.AutoScale);
         AppendStaticBooleanValueAttribute(html, "x-axis-scale-visible", trendControl.XAxisScaleVisible);
         AppendStaticAttribute(html, "x-axis-color", trendControl.XAxisColor);
+        AppendStaticBooleanValueAttribute(html, "x-axis-in-trend-color", trendControl.XAxisInTrendColor);
         AppendStaticAttribute(html, "x-axis-alignment", trendControl.XAxisAlignment);
         AppendAttribute(html, "x-axis-label", trendControl.XAxisLabel);
         AppendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.XAxisDateVisible);
@@ -3455,6 +3456,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "grid-in-trend-color", trendControl.GridInTrendColor);
         AppendStaticBooleanValueAttribute(html, "y-axis-scale-visible", trendControl.YAxisScaleVisible);
         AppendStaticAttribute(html, "y-axis-color", trendControl.YAxisColor);
+        AppendStaticBooleanValueAttribute(html, "y-axis-in-trend-color", trendControl.YAxisInTrendColor);
         AppendStaticAttribute(html, "y-axis-alignment", trendControl.YAxisAlignment);
         AppendAttribute(html, "y-axis-label", trendControl.YAxisLabel);
         AppendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.YAxisGridVisible);

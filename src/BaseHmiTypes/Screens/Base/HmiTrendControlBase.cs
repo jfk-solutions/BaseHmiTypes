@@ -124,6 +124,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? XAxisColor { get; set; }
 
+    /// <summary>Whether the time axis uses the first configured trend's color.</summary>
+    public HmiProperty<bool>? XAxisInTrendColor { get; set; }
+
     public HmiProperty<HmiVerticalAlignment>? XAxisAlignment { get; set; }
 
     public string? XAxisLabel { get; set; }
@@ -184,6 +187,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? YAxisScaleVisible { get; set; }
 
     public HmiProperty<HmiColor>? YAxisColor { get; set; }
+
+    /// <summary>Whether the value axis uses the first configured trend's color.</summary>
+    public HmiProperty<bool>? YAxisInTrendColor { get; set; }
 
     public HmiProperty<HmiHorizontalAlignment>? YAxisAlignment { get; set; }
 

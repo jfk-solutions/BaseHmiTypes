@@ -3087,6 +3087,8 @@ public class HmiScreenToHtmlConverterTests
             DisplayPenIcons = true,
             UseTrendNameAsLabel = false,
             DisplayValueBar = true,
+            XAxisInTrendColor = true,
+            YAxisInTrendColor = false,
             UseGraphicValueBar = true,
             ValueBarColor = HmiColor.FromArgb(255, 0x65, 0x43, 0x21),
             ValueBarWidth = 3,
@@ -3186,6 +3188,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "display-pen-icons=\"true\"");
         StringAssert.Contains(html, "use-trend-name-as-label=\"false\"");
         StringAssert.Contains(html, "display-value-bar=\"true\"");
+        StringAssert.Contains(html, "x-axis-in-trend-color=\"true\"");
+        StringAssert.Contains(html, "y-axis-in-trend-color=\"false\"");
         StringAssert.Contains(html, "use-graphic-value-bar=\"true\"");
         StringAssert.Contains(html, "value-bar-color=\"#654321\"");
         StringAssert.Contains(html, "value-bar-width=\"3\"");
