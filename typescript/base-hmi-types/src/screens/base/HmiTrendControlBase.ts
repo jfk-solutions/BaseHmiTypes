@@ -91,6 +91,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   statisticRulerWidth?: HmiProperty<number>;
   xAxisScaleVisible?: HmiProperty<boolean>;
   xAxisColor?: HmiProperty<HmiColor>;
+  /** Whether the time axis uses the first configured trend's color. */
+  xAxisInTrendColor?: HmiProperty<boolean>;
   xAxisAlignment?: HmiProperty<HmiVerticalAlignment>;
   xAxisLabel?: string;
   xAxisDateVisible?: HmiProperty<boolean>;
@@ -121,6 +123,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   yAxisIsolationPercent?: HmiProperty<number>;
   yAxisScaleVisible?: HmiProperty<boolean>;
   yAxisColor?: HmiProperty<HmiColor>;
+  /** Whether the value axis uses the first configured trend's color. */
+  yAxisInTrendColor?: HmiProperty<boolean>;
   yAxisAlignment?: HmiProperty<HmiHorizontalAlignment>;
   yAxisLabel?: string;
   yAxisDecimalPlaces?: HmiProperty<number>;
