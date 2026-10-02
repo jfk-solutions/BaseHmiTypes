@@ -3192,6 +3192,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.xAxisDateVisible);
   appendStaticBooleanValueAttribute(html, "x-axis-flipped", trendControl.xAxisFlipped);
   appendStaticAttribute(html, "time-format", trendControl.timeFormat);
+  appendStaticBooleanValueAttribute(html, "display-milliseconds", trendControl.displayMilliseconds);
   appendStaticAttribute(html, "x-axis-time-span", trendControl.xAxisTimeSpan);
   appendAttribute(html, "x-axis-time-span-unit", trendControl.xAxisTimeSpanUnit);
   appendStaticBooleanValueAttribute(html, "x-axis-grid-visible", trendControl.xAxisGridVisible);
