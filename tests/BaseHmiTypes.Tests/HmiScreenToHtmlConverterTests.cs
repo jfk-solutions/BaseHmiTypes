@@ -3087,6 +3087,7 @@ public class HmiScreenToHtmlConverterTests
             DisplayPenIcons = true,
             UseTrendNameAsLabel = false,
             DisplayValueBar = true,
+            DisplayMilliseconds = true,
             XAxisInTrendColor = true,
             YAxisInTrendColor = false,
             UseGraphicValueBar = true,
@@ -3188,6 +3189,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "display-pen-icons=\"true\"");
         StringAssert.Contains(html, "use-trend-name-as-label=\"false\"");
         StringAssert.Contains(html, "display-value-bar=\"true\"");
+        StringAssert.Contains(html, "display-milliseconds=\"true\"");
         StringAssert.Contains(html, "x-axis-in-trend-color=\"true\"");
         StringAssert.Contains(html, "y-axis-in-trend-color=\"false\"");
         StringAssert.Contains(html, "use-graphic-value-bar=\"true\"");

@@ -27,6 +27,7 @@ const trendControlProperties = {
   xAxisDateVisible: String,
   xAxisFlipped: String,
   timeFormat: String,
+  displayMilliseconds: String,
   xAxisTimeSpan: String,
   xAxisTimeSpanUnit: String,
   xAxisGridVisible: String,
@@ -205,7 +206,8 @@ export class HmiTrendControl extends HTMLElement {
     const showPercentageAxis = readBooleanAttribute(this, "show-percentage-axis", false);
     const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
     const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
-    const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat);
+    const displayMilliseconds = readBooleanAttribute(this, "display-milliseconds", false);
+    const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat, displayMilliseconds);
     if (xAxisFlipped) labels.reverse();
     const plotTop = displayChartTitle ? (showToolbar && !toolbarAtBottom ? 29 : 15) : (showToolbar && !toolbarAtBottom ? 23 : 7);
     const plotBottom = (displayScrollMechanism ? 22 : 16) + (showStatusBar ? 10 : 0) + (showToolbar && toolbarAtBottom ? 12 : 0);
@@ -540,11 +542,12 @@ function createTimeLabels(
   includeDate: boolean,
   timeSpanMilliseconds: number,
   timeFormat: "twelve-hour" | "twenty-four-hour",
+  displayMilliseconds: boolean,
 ): TimeLabel[] {
   const labels: TimeLabel[] = [];
   for (let index = 0; index < 8; index++) {
     const date = new Date(start.getTime() + index * timeSpanMilliseconds / 7);
-    labels.push(formatTimeLabel(date, includeDate, timeFormat));
+    labels.push(formatTimeLabel(date, includeDate, timeFormat, displayMilliseconds));
   }
   return labels;
 }
@@ -568,6 +571,7 @@ function formatTimeLabel(
   date: Date,
   includeDate: boolean,
   timeFormat: "twelve-hour" | "twenty-four-hour",
+  displayMilliseconds: boolean,
 ): TimeLabel {
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -575,13 +579,14 @@ function formatTimeLabel(
   const hours = date.getHours();
   const minutes = date.getMinutes().toString().padStart(2, "0");
   const seconds = date.getSeconds().toString().padStart(2, "0");
+  const milliseconds = displayMilliseconds ? `.${date.getMilliseconds().toString().padStart(3, "0")}` : "";
   const hour12 = hours % 12 === 0 ? 12 : hours % 12;
   const suffix = hours >= 12 ? "PM" : "AM";
   return {
     primary: includeDate ? `${month}/${day}/${year}` : "",
     secondary: timeFormat === "twenty-four-hour"
-      ? `${hours.toString().padStart(2, "0")}:${minutes}:${seconds}`
-      : `${hour12}:${minutes}:${seconds}${suffix}`,
+      ? `${hours.toString().padStart(2, "0")}:${minutes}:${seconds}${milliseconds}`
+      : `${hour12}:${minutes}:${seconds}${milliseconds}${suffix}`,
   };
 }
 

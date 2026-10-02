@@ -17,6 +17,27 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("time labels retain three-digit milliseconds in both clock formats", () => {
+  const originalNow = Date.now;
+  Date.now = () => new Date(2020, 0, 1, 15, 4, 6, 12).getTime();
+  try {
+    const control = new HmiTrendControl();
+    control.setAttribute("x-axis-time-span", "7");
+    control.setAttribute("x-axis-time-span-unit", "Milliseconds");
+    control.setAttribute("time-format", "TwentyFourHour");
+    control.setAttribute("display-milliseconds", "true");
+    assert.match(control.shadowRoot.innerHTML, /15:04:06\.005/);
+    assert.match(control.shadowRoot.innerHTML, /15:04:06\.012/);
+    control.setAttribute("time-format", "TwelveHour");
+    assert.match(control.shadowRoot.innerHTML, /3:04:06\.005PM/);
+    control.setAttribute("display-milliseconds", "false");
+    assert.match(control.shadowRoot.innerHTML, /3:04:06PM/);
+    assert.doesNotMatch(control.shadowRoot.innerHTML, /3:04:06\.\d{3}PM/);
+  } finally {
+    Date.now = originalNow;
+  }
+});
+
 test("trend-colored axes follow configured order even when the first pen is hidden", () => {
   const control = new HmiTrendControl();
   control.setAttribute("pens", JSON.stringify([
