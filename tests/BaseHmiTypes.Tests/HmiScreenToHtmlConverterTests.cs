@@ -3244,6 +3244,20 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    public async Task ConvertAsync_RendersPerPenDecimalPlaces()
+    {
+        var screen = new HmiScreen { Name = "Main", Width = 400, Height = 240 };
+        var layer = new HmiLayer { Name = "Default" };
+        var trend = new HmiTrendControl { Name = "Trend", Width = 320, Height = 180 };
+        trend.Pens.Add(new HmiTrendPen { Number = 1, DecimalPlaces = 4 });
+        layer.Items.Add(trend);
+        screen.Layers.Add(layer);
+
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        StringAssert.Contains(html, "&quot;decimalPlaces&quot;:4");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_DoesNotRenderDisabledTrendStatusBarBackground()
     {
         var screen = new HmiScreen { Name = "Main", Width = 400, Height = 240 };

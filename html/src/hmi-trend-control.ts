@@ -83,6 +83,7 @@ interface TrendPen {
   axisScaleType?: number;
   exponentialFormat?: boolean;
   autoDecimalPlaces?: boolean;
+  decimalPlaces?: number;
   unit?: string;
 }
 
@@ -154,7 +155,7 @@ export class HmiTrendControl extends HTMLElement {
     const maximumValue = maximumCandidate === minimumValue ? minimumValue + 1 : maximumCandidate;
     const axisScaleType = firstPen?.axisScaleType ?? 0;
     const exponentialFormat = firstPen?.exponentialFormat === true;
-    const configuredDecimalPlaces = clamp(Math.trunc(readNumberAttribute(this, "y-axis-decimal-places", 0)), 0, 12);
+    const configuredDecimalPlaces = clamp(Math.trunc(readNumberAttribute(this, "y-axis-decimal-places", firstPen?.decimalPlaces ?? 0)), 0, 12);
     const decimalPlaces = firstPen?.autoDecimalPlaces === true
       ? automaticDecimalPlaces(minimumValue, maximumValue, axisScaleType)
       : configuredDecimalPlaces;
@@ -461,7 +462,7 @@ export class HmiTrendControl extends HTMLElement {
             )}
             ${xAxisVisible ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
-            ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, axisScaleType, exponentialFormat, decimalPlaces)}
+            ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, configuredDecimalPlaces)}
           </svg>
           ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, axisScaleType, exponentialFormat) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
@@ -632,13 +633,19 @@ function renderPens(
   minimumValue: number,
   maximumValue: number,
   xAxisFlipped: boolean,
-  axisScaleType: number,
-  exponentialFormat: boolean,
   decimalPlaces: number,
 ): string {
   return pens.map((pen, index) => {
     const color = normalizePenColor(pen.color, index);
     const width = clamp(pen.width ?? 2, 1, 8);
+    const penMinimum = pen.minimum ?? minimumValue;
+    const penMaximumCandidate = pen.maximum ?? maximumValue;
+    const penMaximum = penMaximumCandidate === penMinimum ? penMinimum + 1 : penMaximumCandidate;
+    const penScaleType = pen.axisScaleType ?? 0;
+    const penExponentialFormat = pen.exponentialFormat === true;
+    const penDecimalPlaces = pen.autoDecimalPlaces === true
+      ? automaticDecimalPlaces(penMinimum, penMaximum, penScaleType)
+      : clamp(Math.trunc(pen.decimalPlaces ?? decimalPlaces), 0, 12);
     const amplitude = Math.max(6, 24 - (index % 8) * 2);
     const points: Array<{ x: number; y: number; value: number; uncertain: boolean }> = [];
     for (let point = 0; point <= 20; point++) {
@@ -648,7 +655,7 @@ function renderPens(
       points.push({
         x,
         y: clippedY,
-        value: valueAtYAxisPosition(clippedY, minimumValue, maximumValue, axisScaleType),
+        value: valueAtYAxisPosition(clippedY, penMinimum, penMaximum, penScaleType),
         uncertain: pen.uncertainColoring === true && point >= 8 && point <= 11,
       });
     }
@@ -668,7 +675,7 @@ function renderPens(
           markerRadius(pen, clamp(width + 1, 2, 5)),
         ))
         .join("");
-    const line = renderTrendLine(pen, points, pointText, color, width, exponentialFormat, decimalPlaces);
+    const line = renderTrendLine(pen, points, pointText, color, width, penExponentialFormat, penDecimalPlaces);
     const alarms = renderAlarmSymbols(pen, points);
     return `${area}${line}${markers}${alarms}`;
   }).join("");
@@ -839,6 +846,7 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.axisScaleType === "number" && Number.isFinite(source.axisScaleType)) pen.axisScaleType = source.axisScaleType;
       if (typeof source.exponentialFormat === "boolean") pen.exponentialFormat = source.exponentialFormat;
       if (typeof source.autoDecimalPlaces === "boolean") pen.autoDecimalPlaces = source.autoDecimalPlaces;
+      if (typeof source.decimalPlaces === "number" && Number.isFinite(source.decimalPlaces)) pen.decimalPlaces = source.decimalPlaces;
       if (typeof source.unit === "string") pen.unit = source.unit;
       return [pen];
     });

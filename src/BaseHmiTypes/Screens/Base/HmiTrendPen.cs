@@ -79,6 +79,9 @@ public sealed class HmiTrendPen
     /// <summary>Gets or sets whether decimal precision is derived automatically from the axis range.</summary>
     public HmiProperty<bool>? AutoDecimalPlaces { get; set; }
 
+    /// <summary>Gets or sets the fixed decimal precision of the value axis assigned to this pen.</summary>
+    public HmiProperty<int>? DecimalPlaces { get; set; }
+
     /// <summary>
     /// Gets or sets the current minimum value used to scale this pen.
     /// </summary>
