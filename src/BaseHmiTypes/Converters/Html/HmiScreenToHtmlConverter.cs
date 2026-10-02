@@ -24,7 +24,7 @@ public class HmiScreenToHtmlConverter
     {
         options ??= new HmiHtmlConvertOptions();
         var context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(ResolveDefaultProfile(project)));
-        return await ConvertCoreAsync(screen, project, context, true, new HashSet<string>(StringComparer.OrdinalIgnoreCase), cancellationToken).ConfigureAwait(false);
+        return await ConvertCoreAsync(screen, project, context, true, new List<HmiScreenBase>(), cancellationToken).ConfigureAwait(false);
     }
 
     private static HmiDefaultProfile ResolveDefaultProfile(IHmiProject? project)
@@ -45,15 +45,25 @@ public class HmiScreenToHtmlConverter
         IHmiProject? project,
         HmiHtmlConvertContext context,
         bool includeRuntime,
-        ISet<string> screenStack,
+        IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
         if (screen is HmiCharacterScreen characterScreen)
             return ConvertCharacterScreen(characterScreen, context.Options);
 
-        var currentKeys = GetScreenReferenceKeys(screen).ToList();
-        foreach (var key in currentKeys)
-            screenStack.Add(key);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (IsScreenInStack(screen, screenStack))
+        {
+            var placeholder = new StringBuilder("<div");
+            AppendAttribute(placeholder, "class", context.Options.MissingScreenPlaceholderCssClass);
+            AppendAttribute(placeholder, "data-hmi-recursive-screen", screen.Id ?? screen.Name ?? "anonymous");
+            placeholder.Append(">Recursive screen reference: ")
+                .Append(WebUtility.HtmlEncode(screen.Name ?? screen.Id ?? "Unnamed screen"))
+                .Append("</div>");
+            return placeholder.ToString();
+        }
+
+        screenStack.Add(screen);
 
         try
         {
@@ -101,8 +111,7 @@ public class HmiScreenToHtmlConverter
         }
         finally
         {
-            foreach (var key in currentKeys)
-                screenStack.Remove(key);
+            screenStack.RemoveAt(screenStack.Count - 1);
         }
     }
 
@@ -129,7 +138,7 @@ public class HmiScreenToHtmlConverter
         HmiScreenItemBase item,
         IHmiProject? project,
         HmiHtmlConvertContext context,
-        ISet<string> screenStack,
+        IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
         if (!item.Visible.GetStaticValueOrDefault(true))
@@ -321,7 +330,7 @@ public class HmiScreenToHtmlConverter
         IEnumerable<HmiScreenItemBase> items,
         IHmiProject? project,
         HmiHtmlConvertContext context,
-        ISet<string> screenStack,
+        IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
         var itemList = items as IReadOnlyCollection<HmiScreenItemBase> ?? items.ToArray();
@@ -421,7 +430,7 @@ public class HmiScreenToHtmlConverter
         HmiOcxControl ocxControl,
         IHmiProject? project,
         HmiHtmlConvertContext context,
-        ISet<string> screenStack,
+        IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
         html.Append("<div");
@@ -449,7 +458,7 @@ public class HmiScreenToHtmlConverter
         HmiDotNetControlContainer dotNetControl,
         IHmiProject? project,
         HmiHtmlConvertContext context,
-        ISet<string> screenStack,
+        IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
         html.Append("<div");
@@ -466,7 +475,7 @@ public class HmiScreenToHtmlConverter
         HmiFaceplateContainer faceplateContainer,
         IHmiProject? project,
         HmiHtmlConvertContext context,
-        ISet<string> screenStack,
+        IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
         HmiFaceplateType? resolved = null;
@@ -510,7 +519,7 @@ public class HmiScreenToHtmlConverter
         HmiSymbolContainer symbolContainer,
         IHmiProject? project,
         HmiHtmlConvertContext context,
-        ISet<string> screenStack,
+        IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
         var image = symbolContainer.Image.GetStaticValue();
@@ -681,7 +690,7 @@ public class HmiScreenToHtmlConverter
         HmiScreenWindow screenWindow,
         IHmiProject? project,
         HmiHtmlConvertContext context,
-        ISet<string> screenStack,
+        IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
         HmiScreenBase? resolved = null;
@@ -843,7 +852,7 @@ public class HmiScreenToHtmlConverter
     private static async ValueTask<HmiScreenBase?> ResolveTemplateAsync(
         HmiScreenBase screen,
         IHmiProject? project,
-        ISet<string> screenStack,
+        IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
         if (project == null)
@@ -859,18 +868,22 @@ public class HmiScreenToHtmlConverter
         if (template == null && !string.IsNullOrWhiteSpace(templateName))
             template = await project.GetScreenAsync(templateName!, cancellationToken).ConfigureAwait(false);
 
-        if (template == null || GetScreenReferenceKeys(template).Any(screenStack.Contains))
+        if (template == null || IsScreenInStack(template, screenStack))
             return null;
 
         return template;
     }
 
-    private static IEnumerable<string> GetScreenReferenceKeys(HmiScreenBase screen)
+    private static bool IsScreenInStack(HmiScreenBase screen, IEnumerable<HmiScreenBase> screenStack)
     {
-        if (!string.IsNullOrWhiteSpace(screen.Id))
-            yield return "id:" + screen.Id;
-        if (!string.IsNullOrWhiteSpace(screen.Name))
-            yield return "name:" + screen.Name;
+        return screenStack.Any(active =>
+            ReferenceEquals(active, screen) ||
+            (!string.IsNullOrWhiteSpace(screen.Id) &&
+             string.Equals(active.Id, screen.Id, StringComparison.OrdinalIgnoreCase)) ||
+            (string.IsNullOrWhiteSpace(screen.Id) && string.IsNullOrWhiteSpace(active.Id) &&
+             !string.IsNullOrWhiteSpace(screen.Name) && active.Kind == screen.Kind &&
+             string.Equals(active.Name, screen.Name, StringComparison.OrdinalIgnoreCase) &&
+             string.Equals((active as HmiFaceplateType)?.Version, (screen as HmiFaceplateType)?.Version, StringComparison.OrdinalIgnoreCase)));
     }
 
     private static void AppendLine(StringBuilder html, HmiLine line, HmiHtmlConvertContext context)
