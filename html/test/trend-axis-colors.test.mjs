@@ -17,6 +17,40 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("each pen uses its own axis range, scaling and precision", () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("minimum-value", "0");
+  control.setAttribute("maximum-value", "100");
+  control.setAttribute("y-axis-decimal-places", "0");
+  const pens = [
+    { number: 1, lineType: 3, minimum: 0, maximum: 100, decimalPlaces: 0, exponentialFormat: false },
+    { number: 2, lineType: 3, minimum: 1000, maximum: 2000, decimalPlaces: 3, exponentialFormat: false },
+    { number: 3, lineType: 3, minimum: 1, maximum: 100, axisScaleType: 1, decimalPlaces: 2, exponentialFormat: true },
+    { number: 4, lineType: 3, minimum: -100, maximum: -1, axisScaleType: 2, decimalPlaces: 1, exponentialFormat: false },
+  ];
+  control.setAttribute("pens", JSON.stringify(pens));
+  const values = [...control.shadowRoot.innerHTML.matchAll(/<text\b[^>]*>([^<]+)<\/text>/gu)].map(match => match[1]);
+  assert.equal(values[0], "50");
+  const y = index => Math.min(97, Math.max(3, 50 - Math.sin(index * 3 * 0.55) * (24 - index * 2) + index * 3));
+  assert.equal(values[5], (2000 - y(1) / 100 * 1000).toFixed(3));
+  assert.equal(values[10], Math.exp(Math.log(100) * (1 - y(2) / 100)).toExponential(2));
+  assert.equal(values[15], (-Math.exp(y(3) / 100 * Math.log(100))).toFixed(1));
+  // A high-limit alarm on a later pen must use its range, not the first pen's 0..100 axis.
+  pens[1] = { ...pens[1], showAlarms: true, upperLimit: 500, upperLimitColoring: true, upperLimitColor: "#ff0000" };
+  control.setAttribute("pens", JSON.stringify(pens));
+  assert.match(control.shadowRoot.innerHTML, /High limit alarm/);
+  assert.match(control.shadowRoot.innerHTML, /<text[^>]*fill="#ff0000"/u);
+  pens[0] = { ...pens[0], minimum: 1, axisScaleType: 1, exponentialFormat: true, autoDecimalPlaces: true };
+  delete pens[1].exponentialFormat;
+  control.setAttribute("pens", JSON.stringify(pens));
+  const independentValues = [...control.shadowRoot.innerHTML.matchAll(/<text\b[^>]*>([^<]+)<\/text>/gu)].map(match => match[1]);
+  assert.equal(independentValues[5], (2000 - y(1) / 100 * 1000).toFixed(3));
+  pens[1] = { ...pens[1], minimum: 0, maximum: 0.01, autoDecimalPlaces: true, decimalPlaces: 0 };
+  control.setAttribute("pens", JSON.stringify(pens));
+  const automaticValues = [...control.shadowRoot.innerHTML.matchAll(/<text\b[^>]*>([^<]+)<\/text>/gu)].map(match => match[1]);
+  assert.equal(automaticValues[5], (0.01 * (1 - y(1) / 100)).toFixed(3));
+});
+
 test("plot background is independent, reactive and rejects CSS injection", () => {
   const control = new HmiTrendControl();
   control.connectedCallback();
