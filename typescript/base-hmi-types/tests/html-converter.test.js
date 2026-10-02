@@ -1594,6 +1594,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   trend.xAxisAlignment = staticProperty(HmiVerticalAlignment.Top);
   trend.xAxisLabel = "Recorded time";
   trend.xAxisDateVisible = staticProperty(false);
+  trend.xAxisDateFormat = staticProperty("dd.MMM.yyyy");
   trend.xAxisFlipped = staticProperty(true);
   trend.timeFormat = staticProperty(HmiTrendTimeFormat.TwentyFourHour);
   trend.xAxisTimeSpan = staticProperty(120000);
@@ -1696,6 +1697,7 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /x-axis-alignment="Top"/);
   assert.match(html, /x-axis-label="Recorded time"/);
   assert.match(html, /x-axis-date-visible="false"/);
+  assert.match(html, /x-axis-date-format="dd.MMM.yyyy"/);
   assert.match(html, /x-axis-time-span="120000"/);
   assert.match(html, /x-axis-time-span-unit="Milliseconds"/);
   assert.match(html, /x-axis-grid-visible="true"/);

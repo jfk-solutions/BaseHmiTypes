@@ -96,6 +96,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   xAxisAlignment?: HmiProperty<HmiVerticalAlignment>;
   xAxisLabel?: string;
   xAxisDateVisible?: HmiProperty<boolean>;
+  /** Time-axis date format using dd, MM, MMM, yy and yyyy tokens. */
+  xAxisDateFormat?: HmiProperty<string>;
   xAxisGridVisible?: HmiProperty<boolean>;
   majorGridVisible?: HmiProperty<boolean>;
   majorGridColor?: HmiProperty<HmiColor>;
