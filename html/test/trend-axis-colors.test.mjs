@@ -17,6 +17,23 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("plot background is independent, reactive and rejects CSS injection", () => {
+  const control = new HmiTrendControl();
+  control.connectedCallback();
+  const plotBackground = () => control.shadowRoot.innerHTML.match(/\.plot\s*\{[^}]*background: ([^;]+);/u)?.[1];
+  assert.equal(plotBackground(), "#ffffff");
+  control.setAttribute("window-background-color", "#123456");
+  assert.equal(plotBackground(), "#123456");
+  assert.match(control.shadowRoot.innerHTML, /\.frame\s*\{[^}]*background: #ffffff;/u);
+  control.setAttribute("window-background-color", "rgba(12, 34, 56, 0.5)");
+  assert.equal(plotBackground(), "rgba(12, 34, 56, 0.5)");
+  control.setAttribute("window-background-color", "transparent");
+  assert.equal(plotBackground(), "transparent");
+  control.setAttribute("window-background-color", "#000; background:url(https://example.com)");
+  assert.equal(plotBackground(), "#ffffff");
+  assert.ok(!control.shadowRoot.innerHTML.includes("https://example.com"));
+});
+
 test("time-axis date formats preserve token order, padding and localized month names", () => {
   const originalNow = Date.now;
   Date.now = () => new Date(2007, 11, 24, 15, 4, 6).getTime();
