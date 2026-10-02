@@ -2,6 +2,7 @@ const trendControlProperties = {
   controlName: String,
   typeName: String,
   chartTitle: String,
+  windowBackgroundColor: String,
   pens: String,
   displayChartTitle: String,
   showToolbar: String,
@@ -137,6 +138,7 @@ export class HmiTrendControl extends HTMLElement {
   private render(): void {
     const computed = getComputedStyle(this);
     const backgroundColor = normalizeTransparent(computed.backgroundColor, "#ffffff");
+    const windowBackgroundColor = normalizeCssColor(this.getAttribute("window-background-color"), backgroundColor, true);
     const foregroundColor = normalizeTransparent(computed.color, "#5a5d64");
     const borderColor = normalizeTransparent(computed.borderTopColor, "#a8acb2");
     const rawBorderWidth = parseFloat(computed.borderTopWidth);
@@ -309,6 +311,7 @@ export class HmiTrendControl extends HTMLElement {
 
         .plot {
           position: absolute;
+          background: ${escapeCss(windowBackgroundColor)};
           left: 10%;
           right: 2.5%;
           top: ${plotTop}%;
@@ -863,7 +866,12 @@ function finiteNumber(value: unknown, fallback: number): number {
 
 function normalizePenColor(value: string | undefined, index: number): string {
   const fallback = ["#0C66B0", "#D04A35", "#299447", "#8A55B4", "#D18B17"][index % 5]!;
+  return normalizeCssColor(value, fallback);
+}
+
+function normalizeCssColor(value: string | null | undefined, fallback: string, allowTransparent = false): string {
   if (!value) return fallback;
+  if (allowTransparent && value.toLowerCase() === "transparent") return "transparent";
   return /^(?:#[0-9a-f]{3}|#[0-9a-f]{4}|#[0-9a-f]{6}|#[0-9a-f]{8}|rgba?\([\d.,%\s]+\))$/iu.test(value) ? value : fallback;
 }
 

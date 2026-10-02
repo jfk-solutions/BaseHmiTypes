@@ -3089,6 +3089,7 @@ public class HmiScreenToHtmlConverterTests
             DisplayValueBar = true,
             DisplayMilliseconds = true,
             XAxisDateFormat = "dd.MMM.yyyy",
+            WindowBackgroundColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56),
             XAxisInTrendColor = true,
             YAxisInTrendColor = false,
             UseGraphicValueBar = true,
@@ -3192,6 +3193,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "display-value-bar=\"true\"");
         StringAssert.Contains(html, "display-milliseconds=\"true\"");
         StringAssert.Contains(html, "x-axis-date-format=\"dd.MMM.yyyy\"");
+        StringAssert.Contains(html, "window-background-color=\"#123456\"");
         StringAssert.Contains(html, "x-axis-in-trend-color=\"true\"");
         StringAssert.Contains(html, "y-axis-in-trend-color=\"false\"");
         StringAssert.Contains(html, "use-graphic-value-bar=\"true\"");
