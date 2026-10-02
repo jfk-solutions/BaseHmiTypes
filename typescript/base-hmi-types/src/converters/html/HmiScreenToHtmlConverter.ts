@@ -3422,6 +3422,8 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     if (exponentialFormat !== undefined) result.exponentialFormat = exponentialFormat;
     const autoDecimalPlaces = getStaticValue(pen.autoDecimalPlaces);
     if (autoDecimalPlaces !== undefined) result.autoDecimalPlaces = autoDecimalPlaces;
+    const decimalPlaces = getStaticValue(pen.decimalPlaces);
+    if (decimalPlaces !== undefined) result.decimalPlaces = decimalPlaces;
     if (pen.engineeringUnit !== undefined) result.unit = pen.engineeringUnit;
     return result;
   }));

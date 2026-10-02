@@ -50,6 +50,8 @@ export class HmiTrendPen {
   exponentialFormat?: HmiProperty<boolean>;
   /** Whether decimal precision is derived automatically from the axis range. */
   autoDecimalPlaces?: HmiProperty<boolean>;
+  /** Fixed decimal precision of the value axis assigned to this pen. */
+  decimalPlaces?: HmiProperty<number>;
   /** Current minimum value used to scale this pen. */
   currentScaleMinimumValue?: HmiProperty<number>;
   /** Current maximum value used to scale this pen. */
