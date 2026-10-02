@@ -3088,6 +3088,7 @@ public class HmiScreenToHtmlConverterTests
             UseTrendNameAsLabel = false,
             DisplayValueBar = true,
             DisplayMilliseconds = true,
+            XAxisDateFormat = "dd.MMM.yyyy",
             XAxisInTrendColor = true,
             YAxisInTrendColor = false,
             UseGraphicValueBar = true,
@@ -3190,6 +3191,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "use-trend-name-as-label=\"false\"");
         StringAssert.Contains(html, "display-value-bar=\"true\"");
         StringAssert.Contains(html, "display-milliseconds=\"true\"");
+        StringAssert.Contains(html, "x-axis-date-format=\"dd.MMM.yyyy\"");
         StringAssert.Contains(html, "x-axis-in-trend-color=\"true\"");
         StringAssert.Contains(html, "y-axis-in-trend-color=\"false\"");
         StringAssert.Contains(html, "use-graphic-value-bar=\"true\"");

@@ -133,6 +133,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? XAxisDateVisible { get; set; }
 
+    /// <summary>Gets or sets the time-axis date format, using dd, MM, MMM, yy and yyyy tokens.</summary>
+    public HmiProperty<string>? XAxisDateFormat { get; set; }
+
     public HmiProperty<bool>? XAxisGridVisible { get; set; }
 
     public HmiProperty<bool>? MajorGridVisible { get; set; }
