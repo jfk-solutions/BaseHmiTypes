@@ -1729,6 +1729,20 @@ test("HTML converter exposes trend configuration to the web component", async ()
   assert.match(html, /pens="\[{&quot;number&quot;:1,&quot;name&quot;:&quot;Pressure \\&quot;A\\&quot;&quot;,&quot;label&quot;:&quot;Vessel pressure&quot;,&quot;color&quot;:&quot;#112233&quot;,&quot;visible&quot;:true,&quot;width&quot;:3,&quot;lineType&quot;:2,&quot;style&quot;:1,&quot;fill&quot;:true,&quot;fillColor&quot;:&quot;#336699&quot;,&quot;lowerLimitColoring&quot;:true,&quot;lowerLimit&quot;:10,&quot;lowerLimitColor&quot;:&quot;#0044CC&quot;,&quot;upperLimitColoring&quot;:true,&quot;upperLimit&quot;:90,&quot;upperLimitColor&quot;:&quot;#CC2211&quot;,&quot;uncertainColoring&quot;:true,&quot;uncertainColor&quot;:&quot;#8844CC&quot;,&quot;showAlarms&quot;:true,&quot;valueAlignment&quot;:&quot;Bottom&quot;,&quot;marker&quot;:&quot;2&quot;,&quot;markerColor&quot;:&quot;#AABBCC&quot;,&quot;markerSize&quot;:5,&quot;minimum&quot;:0,&quot;maximum&quot;:100,&quot;axisScaleType&quot;:1,&quot;exponentialFormat&quot;:true,&quot;autoDecimalPlaces&quot;:true,&quot;unit&quot;:&quot;bar&quot;}\]"/);
 });
 
+test("HTML converter exposes per-pen decimal precision", async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const trend = new HmiTrendControl();
+  const pen = new HmiTrendPen();
+  pen.number = 1;
+  pen.decimalPlaces = staticProperty(4);
+  trend.pens.push(pen);
+  layer.items.push(trend);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  assert.match(html, /&quot;decimalPlaces&quot;:4/);
+});
+
 test("HTML converter does not render disabled trend status backgrounds", async () => {
   const screen = new HmiScreen();
   screen.name = "Main";
