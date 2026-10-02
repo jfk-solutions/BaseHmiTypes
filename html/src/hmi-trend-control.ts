@@ -21,6 +21,7 @@ const trendControlProperties = {
   chartLiveMode: String,
   autoScale: String,
   xAxisScaleVisible: String,
+  xAxisInTrendColor: String,
   xAxisAlignment: String,
   xAxisLabel: String,
   xAxisDateVisible: String,
@@ -33,6 +34,7 @@ const trendControlProperties = {
   minorGridVisible: String,
   gridInTrendColor: String,
   yAxisScaleVisible: String,
+  yAxisInTrendColor: String,
   yAxisAlignment: String,
   yAxisLabel: String,
   yAxisGridVisible: String,
@@ -140,6 +142,9 @@ export class HmiTrendControl extends HTMLElement {
     const pens = parsePens(this.getAttribute("pens"));
     const visiblePens = pens.filter(pen => pen.visible !== false);
     const firstPen = visiblePens[0] ?? pens[0];
+    const axisTrendColor = pens.length > 0 ? normalizePenColor(pens[0].color, 0) : undefined;
+    const xAxisInTrendColor = readBooleanAttribute(this, "x-axis-in-trend-color", false);
+    const yAxisInTrendColor = readBooleanAttribute(this, "y-axis-in-trend-color", false);
     const minimumValue = readNumberAttribute(this, "minimum-value", firstPen?.minimum ?? 0);
     const maximumCandidate = readNumberAttribute(this, "maximum-value", firstPen?.maximum ?? 100);
     const maximumValue = maximumCandidate === minimumValue ? minimumValue + 1 : maximumCandidate;
@@ -227,6 +232,8 @@ export class HmiTrendControl extends HTMLElement {
         }
 
         .frame {
+          ${xAxisInTrendColor && axisTrendColor !== undefined ? `--hmi-trend-x-axis-color: ${escapeCss(axisTrendColor)};` : ""}
+          ${yAxisInTrendColor && axisTrendColor !== undefined ? `--hmi-trend-y-axis-color: ${escapeCss(axisTrendColor)};` : ""}
           width: 100%;
           height: 100%;
           position: relative;
