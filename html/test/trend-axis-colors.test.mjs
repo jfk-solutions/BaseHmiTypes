@@ -17,6 +17,31 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("time-axis date formats preserve token order, padding and localized month names", () => {
+  const originalNow = Date.now;
+  Date.now = () => new Date(2007, 11, 24, 15, 4, 6).getTime();
+  try {
+    const control = new HmiTrendControl();
+    control.setAttribute("lang", "en-US");
+    control.setAttribute("x-axis-time-span", "1");
+    for (const [format, expected] of [
+      ["dd.MM.yy", "24.12.07"], ["dd.MM.yyyy", "24.12.2007"],
+      ["dd/MM/yy", "24/12/07"], ["dd/MM/yyyy", "24/12/2007"],
+      ["dd.MMM.yy", "24.Dec.07"], ["dd.MMM.yyyy", "24.Dec.2007"],
+      ["MM.dd.yy", "12.24.07"], ["MM.dd.yyyy", "12.24.2007"],
+      ["MMM.dd.yy", "Dec.24.07"], ["MMM.dd.yyyy", "Dec.24.2007"],
+      ["yyyy/MM/dd", "2007/12/24"], ["Automatic", "12/24/2007"],
+    ]) {
+      control.setAttribute("x-axis-date-format", format);
+      assert.ok(control.shadowRoot.innerHTML.includes(`>${expected}<br>`), format);
+    }
+    control.setAttribute("x-axis-date-format", "<dd/MM/yyyy>");
+    assert.ok(control.shadowRoot.innerHTML.includes("&lt;24/12/2007&gt;"));
+    control.setAttribute("x-axis-date-visible", "false");
+    assert.ok(!control.shadowRoot.innerHTML.includes("24/12/2007"));
+  } finally { Date.now = originalNow; }
+});
+
 test("time labels retain three-digit milliseconds in both clock formats", () => {
   const originalNow = Date.now;
   Date.now = () => new Date(2020, 0, 1, 15, 4, 6, 12).getTime();

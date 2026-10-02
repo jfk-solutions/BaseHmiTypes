@@ -25,6 +25,7 @@ const trendControlProperties = {
   xAxisAlignment: String,
   xAxisLabel: String,
   xAxisDateVisible: String,
+  xAxisDateFormat: String,
   xAxisFlipped: String,
   timeFormat: String,
   displayMilliseconds: String,
@@ -207,7 +208,9 @@ export class HmiTrendControl extends HTMLElement {
     const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
     const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
     const displayMilliseconds = readBooleanAttribute(this, "display-milliseconds", false);
-    const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat, displayMilliseconds);
+    const xAxisDateFormat = this.getAttribute("x-axis-date-format");
+    const locale = this.getAttribute("lang") || (typeof document === "undefined" ? undefined : document.documentElement.lang) || undefined;
+    const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat, displayMilliseconds, xAxisDateFormat, locale);
     if (xAxisFlipped) labels.reverse();
     const plotTop = displayChartTitle ? (showToolbar && !toolbarAtBottom ? 29 : 15) : (showToolbar && !toolbarAtBottom ? 23 : 7);
     const plotBottom = (displayScrollMechanism ? 22 : 16) + (showStatusBar ? 10 : 0) + (showToolbar && toolbarAtBottom ? 12 : 0);
@@ -543,11 +546,13 @@ function createTimeLabels(
   timeSpanMilliseconds: number,
   timeFormat: "twelve-hour" | "twenty-four-hour",
   displayMilliseconds: boolean,
+  dateFormat: string | null,
+  locale: string | undefined,
 ): TimeLabel[] {
   const labels: TimeLabel[] = [];
   for (let index = 0; index < 8; index++) {
     const date = new Date(start.getTime() + index * timeSpanMilliseconds / 7);
-    labels.push(formatTimeLabel(date, includeDate, timeFormat, displayMilliseconds));
+    labels.push(formatTimeLabel(date, includeDate, timeFormat, displayMilliseconds, dateFormat, locale));
   }
   return labels;
 }
@@ -572,10 +577,9 @@ function formatTimeLabel(
   includeDate: boolean,
   timeFormat: "twelve-hour" | "twenty-four-hour",
   displayMilliseconds: boolean,
+  dateFormat: string | null,
+  locale: string | undefined,
 ): TimeLabel {
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const year = date.getFullYear();
   const hours = date.getHours();
   const minutes = date.getMinutes().toString().padStart(2, "0");
   const seconds = date.getSeconds().toString().padStart(2, "0");
@@ -583,11 +587,24 @@ function formatTimeLabel(
   const hour12 = hours % 12 === 0 ? 12 : hours % 12;
   const suffix = hours >= 12 ? "PM" : "AM";
   return {
-    primary: includeDate ? `${month}/${day}/${year}` : "",
+    primary: includeDate ? formatDateLabel(date, dateFormat, locale) : "",
     secondary: timeFormat === "twenty-four-hour"
       ? `${hours.toString().padStart(2, "0")}:${minutes}:${seconds}${milliseconds}`
       : `${hour12}:${minutes}:${seconds}${milliseconds}${suffix}`,
   };
+}
+
+function formatDateLabel(date: Date, format: string | null, locale: string | undefined): string {
+  if (!format) return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+  if (format.toLowerCase() === "automatic") return new Intl.DateTimeFormat(locale).format(date);
+  const tokens: Record<string, string> = {
+    dd: date.getDate().toString().padStart(2, "0"),
+    MM: (date.getMonth() + 1).toString().padStart(2, "0"),
+    MMM: new Intl.DateTimeFormat(locale, { month: "short" }).format(date),
+    yy: (date.getFullYear() % 100).toString().padStart(2, "0"),
+    yyyy: date.getFullYear().toString().padStart(4, "0"),
+  };
+  return format.replace(/yyyy|yy|MMM|MM|dd/gu, token => tokens[token]);
 }
 
 function renderPenLegend(pens: readonly TrendPen[], displayIcons: boolean, useTrendNameAsLabel: boolean): string {

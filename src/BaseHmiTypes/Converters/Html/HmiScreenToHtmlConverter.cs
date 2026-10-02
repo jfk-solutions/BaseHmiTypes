@@ -3444,6 +3444,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "x-axis-alignment", trendControl.XAxisAlignment);
         AppendAttribute(html, "x-axis-label", trendControl.XAxisLabel);
         AppendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.XAxisDateVisible);
+        AppendStaticAttribute(html, "x-axis-date-format", trendControl.XAxisDateFormat);
         AppendStaticBooleanValueAttribute(html, "x-axis-flipped", trendControl.XAxisFlipped);
         AppendStaticAttribute(html, "time-format", trendControl.TimeFormat);
         AppendStaticBooleanValueAttribute(html, "display-milliseconds", trendControl.DisplayMilliseconds);
