@@ -16,6 +16,22 @@ namespace BaseHmiTypes.Converters.Html;
 
 public class HmiScreenToHtmlConverter
 {
+    private static double Clamp(double value, double min, double max)
+    {
+        if (min > max)
+            throw new ArgumentException("The minimum must not exceed the maximum.");
+
+        return value < min ? min : value > max ? max : value;
+    }
+
+    private static int Clamp(int value, int min, int max)
+    {
+        if (min > max)
+            throw new ArgumentException("The minimum must not exceed the maximum.");
+
+        return value < min ? min : value > max ? max : value;
+    }
+
     public async ValueTask<string> ConvertAsync(
         HmiScreenBase screen,
         IHmiProject? project = null,
@@ -810,8 +826,8 @@ public class HmiScreenToHtmlConverter
         var scaleY = fitScreen && screenHeight > 0d
             ? screenWindow.Height.GetStaticValueOrDefault() / screenHeight
             : GetScreenWindowZoom(screenWindow, context);
-        var offsetX = Math.Clamp(ResolveStaticValue(screenWindow.OffsetLeft, context), 0d, resolved.Width.GetStaticValueOrDefault());
-        var offsetY = Math.Clamp(ResolveStaticValue(screenWindow.OffsetTop, context), 0d, resolved.Height.GetStaticValueOrDefault());
+        var offsetX = Clamp(ResolveStaticValue(screenWindow.OffsetLeft, context), 0d, resolved.Width.GetStaticValueOrDefault());
+        var offsetY = Clamp(ResolveStaticValue(screenWindow.OffsetTop, context), 0d, resolved.Height.GetStaticValueOrDefault());
         return "position: absolute; left: " + ToCss(-offsetX * scaleX) + "px; top: " +
             ToCss(-offsetY * scaleY) + "px; transform-origin: top left; transform: scale(" +
             ToCss(scaleX) + ", " + ToCss(scaleY) + ");";
@@ -827,7 +843,7 @@ public class HmiScreenToHtmlConverter
         double screenExtent,
         HmiProperty<double>? offset,
         HmiHtmlConvertContext context) =>
-        Math.Max(0d, screenExtent - Math.Clamp(ResolveStaticValue(offset, context), 0d, screenExtent));
+        Math.Max(0d, screenExtent - Clamp(ResolveStaticValue(offset, context), 0d, screenExtent));
 
     private static void AppendScreenWindowScrollInitializer(
         StringBuilder html,
@@ -1812,7 +1828,7 @@ public class HmiScreenToHtmlConverter
             var percentage = percentageMode
                 ? thresholdValue
                 : maximum == minimum ? 0d : (thresholdValue - minimum) * 100d / (maximum - minimum);
-            percentage = Math.Clamp(percentage, 0d, 100d);
+            percentage = Clamp(percentage, 0d, 100d);
             var position = direction switch
             {
                 HmiFillDirection.Up => $"left: 0; right: 0; bottom: {ToCss(percentage)}%; height: 2px;",
@@ -1846,7 +1862,7 @@ public class HmiScreenToHtmlConverter
             : Math.Max(2, ResolveStaticValue(bar.DivisionCount, context));
         var decimalPlaces = bar.TickLabelDecimalPlaces is null
             ? (int?)null
-            : Math.Clamp(ResolveStaticValue(bar.TickLabelDecimalPlaces, context), 0, 15);
+            : Clamp(ResolveStaticValue(bar.TickLabelDecimalPlaces, context), 0, 15);
         var engineeringUnit = bar.EngineeringUnit is null
             ? null
             : ResolveStaticValue(bar.EngineeringUnit, context);
@@ -2822,9 +2838,18 @@ public class HmiScreenToHtmlConverter
         html.Append("background-size: ").Append(size).Append(';');
     }
 
-    private readonly record struct ColorGradient(
-        HmiGradientDirection Direction,
-        IReadOnlyList<(HmiColor Color, double Offset)> Stops);
+    private readonly struct ColorGradient
+    {
+        public ColorGradient(HmiGradientDirection direction, IReadOnlyList<(HmiColor Color, double Offset)> stops)
+        {
+            Direction = direction;
+            Stops = stops;
+        }
+
+        public HmiGradientDirection Direction { get; }
+
+        public IReadOnlyList<(HmiColor Color, double Offset)> Stops { get; }
+    }
 
     private static ColorGradient? GetColorGradient(HmiPaintedScreenItemBase item)
     {
@@ -2874,8 +2899,8 @@ public class HmiScreenToHtmlConverter
         if (middle is null)
             return null;
 
-        var firstStop = Math.Clamp(firstOffset.GetStaticValueOrDefault(50d), 0d, 100d);
-        var secondStop = Math.Clamp(secondOffset.GetStaticValueOrDefault(50d), 0d, 100d);
+        var firstStop = Clamp(firstOffset.GetStaticValueOrDefault(50d), 0d, 100d);
+        var secondStop = Clamp(secondOffset.GetStaticValueOrDefault(50d), 0d, 100d);
         var stops = new List<(HmiColor Color, double Offset)>();
         if (firstEnabled)
             stops.Add((firstColor!.StaticValue, 0d));
@@ -3624,7 +3649,7 @@ public class HmiScreenToHtmlConverter
         if (font.Strikethrough.GetStaticValueOrDefault())
             decorations.Add("line-through");
         if (decorations.Count > 0)
-            style.Append(prefix).Append("text-decoration: ").Append(string.Join(' ', decorations)).Append(';');
+            style.Append(prefix).Append("text-decoration: ").Append(string.Join(" ", decorations)).Append(';');
     }
 
     private static void AppendFontStyle(StringBuilder style, HmiFont? font)
@@ -3648,7 +3673,7 @@ public class HmiScreenToHtmlConverter
         if (font.Strikethrough.GetStaticValueOrDefault())
             decorations.Add("line-through");
         if (decorations.Count > 0)
-            style.Append("text-decoration: ").Append(string.Join(' ', decorations)).Append(';');
+            style.Append("text-decoration: ").Append(string.Join(" ", decorations)).Append(';');
     }
 
     private static void AppendColorStyle(StringBuilder style, string propertyName, HmiProperty<HmiColor>? property)
@@ -4106,7 +4131,7 @@ public class HmiScreenToHtmlConverter
     {
         var opacity = context.EffectiveProperties.Resolve(item, nameof(HmiScreenItemBase.Opacity), item.Opacity);
         if (opacity?.StaticValue is double value)
-            html.Append("opacity: ").Append(ToCss(Math.Clamp(value, 0d, 1d))).Append(';');
+            html.Append("opacity: ").Append(ToCss(Clamp(value, 0d, 1d))).Append(';');
     }
 
     private static void AppendAdaptBorderToContentStyle(
