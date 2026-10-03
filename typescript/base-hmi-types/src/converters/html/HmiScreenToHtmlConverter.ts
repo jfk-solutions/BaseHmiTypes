@@ -1666,9 +1666,12 @@ function appendBarScale(
   let style = vertical
     ? "display: flex; flex-direction: column; justify-content: space-between; height: 100%;"
     : "display: flex; justify-content: space-between; width: 100%;";
-  const labelColor = getStaticValue(bar.labelColor);
+  const labelColor = getStaticValue(bar.labelColor ?? bar.scaleForegroundColor);
   if (labelColor !== undefined)
     style += ` color: ${colorToCss(labelColor)};`;
+  const scaleBackgroundColor = getStaticValue(bar.scaleBackgroundColor);
+  if (scaleBackgroundColor !== undefined)
+    style += ` background-color: ${colorToCss(scaleBackgroundColor)};`;
   style += getBarScaleFontStyle(bar);
 
   const tickLength = Math.max(0, getStaticValue(bar.majorTickLength) ?? 6);
@@ -1712,7 +1715,7 @@ function appendBarScale(
   html.push('<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-hmi-bar-ticks="true"');
   appendAttribute(html, "style", `position: absolute; pointer-events: none; overflow: visible; ${edge}: 0; ` +
     (vertical ? `top: 0; width: ${tickLength}px; height: 100%;` : `left: 0; width: 100%; height: ${tickLength}px;`));
-  const tickColor = getStaticValue(bar.tickColor);
+  const tickColor = getStaticValue(bar.tickColor ?? bar.scaleForegroundColor);
   appendAttribute(html, "stroke", tickColor === undefined ? "currentColor" : colorToCss(tickColor));
   appendAttribute(html, "stroke-width", tickWidth.toString());
   html.push(">");

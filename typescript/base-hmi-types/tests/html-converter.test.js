@@ -871,6 +871,37 @@ test("HTML converter renders bar scale ticks and appearance", async () => {
   assert.match(html, /<span>0.0&nbsp;bar<\/span><span>50.0&nbsp;bar<\/span><span>100.0&nbsp;bar<\/span>/);
 });
 
+for (const direction of [HmiFillDirection.Right, HmiFillDirection.Up]) {
+test(`HTML converter renders bar scale colors (${direction})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(80);
+  bar.showScale = staticProperty(true);
+  bar.fillDirection = staticProperty(direction);
+  bar.scaleForegroundColor = staticProperty(hmiColorFromArgb(255, 12, 34, 56));
+  bar.scaleBackgroundColor = staticProperty(hmiColorFromArgb(255, 65, 43, 21));
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const converter = new HmiScreenToHtmlConverter();
+  let html = await converter.convertAsync(screen);
+  assert.ok(html.includes("color: #0C2238; background-color: #412B15;"));
+  assert.ok(html.includes('stroke="#0C2238"'));
+  bar.labelColor = staticProperty(hmiColorFromArgb(255, 1, 2, 3));
+  html = await converter.convertAsync(screen);
+  assert.ok(html.includes("color: #010203; background-color: #412B15;"));
+  assert.ok(html.includes('stroke="#0C2238"'));
+  bar.tickColor = staticProperty(hmiColorFromArgb(255, 4, 5, 6));
+  html = await converter.convertAsync(screen);
+  assert.ok(html.includes('stroke="#040506"'));
+  bar.showScale = staticProperty(false);
+  html = await converter.convertAsync(screen);
+  assert.ok(!html.includes("#412B15"));
+  assert.ok(!html.includes("data-hmi-bar-ticks"));
+});
+}
+
 for (const [direction, after, edge, bold] of [
   [HmiFillDirection.Up, true, "left", true],
   [HmiFillDirection.Down, false, "right", false],
