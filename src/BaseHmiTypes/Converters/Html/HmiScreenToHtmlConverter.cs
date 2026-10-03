@@ -1968,6 +1968,24 @@ public class HmiScreenToHtmlConverter
                 ? $"<line x1=\"0\" x2=\"{tickLength}\" y1=\"{percentage}%\" y2=\"{percentage}%\"></line>"
                 : $"<line y1=\"0\" y2=\"{tickLength}\" x1=\"{percentage}%\" x2=\"{percentage}%\"></line>");
         }
+        var subdivisions = bar.SubDivisionCount is null ? 0 : Clamp(ResolveStaticValue(bar.SubDivisionCount, context), 0, 100);
+        var majorOnly = bar.MajorTicksOnly is not null && ResolveStaticValue(bar.MajorTicksOnly, context);
+        if (!majorOnly && subdivisions > 1)
+        {
+            var shortStart = ToCss(afterBar ? 0 : tickLength / 2d);
+            var shortEnd = ToCss(afterBar ? tickLength / 2d : tickLength);
+            for (var index = 0; index < tickCount - 1; index++)
+            {
+                for (var subdivision = 1; subdivision < subdivisions; subdivision++)
+                {
+                    var ratio = ratios[index] + (ratios[index + 1] - ratios[index]) * subdivision / subdivisions;
+                    var percentage = ToCss(100d * (reverse ? 1d - ratio : ratio));
+                    html.Append(vertical
+                        ? $"<line data-hmi-minor-tick=\"true\" stroke-width=\"1\" x1=\"{shortStart}\" x2=\"{shortEnd}\" y1=\"{percentage}%\" y2=\"{percentage}%\"></line>"
+                        : $"<line data-hmi-minor-tick=\"true\" stroke-width=\"1\" y1=\"{shortStart}\" y2=\"{shortEnd}\" x1=\"{percentage}%\" x2=\"{percentage}%\"></line>");
+                }
+            }
+        }
         html.Append("</svg>");
         html.Append("</div>");
 
