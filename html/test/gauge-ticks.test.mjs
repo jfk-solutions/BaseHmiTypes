@@ -82,3 +82,42 @@ test("gauge label visibility and interval affect labels only and update dynamica
   gauge.hideTickLabels = true;
   assert.equal(count(/<text /gu), 1); // Independent value readout remains visible.
 });
+
+test("gauge tick number formatting is reactive and leaves the value readout unchanged", () => {
+  const gauge = createGauge();
+  gauge.beginValue = 0;
+  gauge.endValue = 0.5;
+  gauge.value = 0.25;
+  gauge.showValue = true;
+  const labels = () => [...gauge.svg.innerHTML.matchAll(/<text\b[^>]*>([^<]*)<\/text>/gu)].map(match => match[1]);
+  assert.deepEqual(labels(), ["0", "0.25", "0.5", "0.25"]);
+  gauge.attributeChangedCallback("tick-label-decimal-places", null, "2");
+  assert.deepEqual(labels(), ["0.00", "0.25", "0.50", "0.25"]);
+  gauge.attributeChangedCallback("tick-label-exponential-format", null, "");
+  assert.deepEqual(labels(), ["0.00e+000", "2.50e-001", "5.00e-001", "0.25"]);
+  gauge.beginValue = -0.5;
+  assert.deepEqual(labels(), ["-5.00e-001", "0.00e+000", "5.00e-001", "0.25"]);
+  gauge.attributeChangedCallback("tick-label-exponential-format", "", null);
+  gauge.attributeChangedCallback("tick-label-decimal-places", "2", null);
+  assert.deepEqual(labels(), ["-0.5", "0", "0.5", "0.25"]);
+  gauge.tickLabelExponentialFormat = true;
+  assert.equal(labels()[2], "5.00e-001"); // Unconfigured scientific precision defaults to two.
+});
+
+for (const [precision, digits] of [[-1, 0], [0, 0], [16, 16], [20, 20], [25, 20]]) {
+  for (const exponential of [false, true]) {
+    test(`gauge tick precision is clamped (${precision}, ${exponential})`, () => {
+      const gauge = createGauge();
+      gauge.beginValue = 0;
+      gauge.endValue = 1;
+      gauge.tickLabelDecimalPlaces = precision;
+      gauge.tickLabelExponentialFormat = exponential;
+      const labels = [...gauge.svg.innerHTML.matchAll(/<text\b[^>]*>([^<]*)<\/text>/gu)].map(match => match[1]);
+      const expected = exponential
+        ? (1).toExponential(digits).replace("e+0", "e+000")
+        : (1).toFixed(digits);
+      assert.equal(labels[2], expected);
+      assert.equal([...gauge.svg.innerHTML.matchAll(/stroke-width="0.7"/gu)].length, 3);
+    });
+  }
+}

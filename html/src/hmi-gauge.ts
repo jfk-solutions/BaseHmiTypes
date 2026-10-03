@@ -26,6 +26,8 @@ const gaugeProperties = {
   majorTicksOnly: Boolean,
   hideTickLabels: Boolean,
   tickLabelInterval: Number,
+  tickLabelDecimalPlaces: Number,
+  tickLabelExponentialFormat: Boolean,
   barMode: Number,
   scaleMode: Number,
   orientation: Number,
@@ -91,6 +93,8 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   private _majorTicksOnly = false;
   private _hideTickLabels = false;
   private _tickLabelInterval = 1;
+  private _tickLabelDecimalPlaces = Number.NaN;
+  private _tickLabelExponentialFormat = false;
   private _barMode = 0;
   private _scaleMode = 0;
   private _orientation = 0;
@@ -179,6 +183,20 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   }
   set tickLabelInterval(value: number) {
     this.setNumberProperty("_tickLabelInterval", value, 1);
+  }
+
+  get tickLabelDecimalPlaces(): number {
+    return this._tickLabelDecimalPlaces;
+  }
+  set tickLabelDecimalPlaces(value: number) {
+    this.setNumberProperty("_tickLabelDecimalPlaces", value, Number.NaN);
+  }
+
+  get tickLabelExponentialFormat(): boolean {
+    return this._tickLabelExponentialFormat;
+  }
+  set tickLabelExponentialFormat(value: boolean) {
+    this.setBooleanProperty("_tickLabelExponentialFormat", value);
   }
 
   get barMode(): number {
@@ -391,7 +409,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
       const labelPoint = polarPoint(50, 55, 44.5, angle);
       if (!this.hideTickLabels && division % labelInterval === 0) {
         parts.push(
-          `<text x="${formatNumber(labelPoint.x)}" y="${formatNumber(labelPoint.y)}" ${labelStyle}>${formatLabel(value)}</text>`,
+          `<text x="${formatNumber(labelPoint.x)}" y="${formatNumber(labelPoint.y)}" ${labelStyle}>${this.formatTickLabel(value)}</text>`,
         );
       }
 
@@ -405,6 +423,17 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     }
 
     return parts.join("");
+  }
+
+  private formatTickLabel(value: number): string {
+    const precision = Number.isFinite(this.tickLabelDecimalPlaces)
+      ? clamp(Math.round(this.tickLabelDecimalPlaces), 0, 20)
+      : undefined;
+    if (this.tickLabelExponentialFormat) {
+      return value.toExponential(precision ?? 2).replace(/e([+-])(\d+)$/, (_, sign, exponent) =>
+        `e${sign}${exponent.padStart(3, "0")}`);
+    }
+    return precision === undefined ? formatLabel(value) : value.toFixed(precision);
   }
 
   private renderTick(angle: number, innerRadius: number, outerRadius: number, width: number): string {

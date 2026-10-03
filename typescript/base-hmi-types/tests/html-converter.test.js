@@ -925,6 +925,22 @@ test(`HTML converter exposes gauge tick label visibility and interval (${show})`
 });
 }
 
+for (const [precision, exponential] of [[0, false], [2, false], [20, true], [25, true]]) {
+test(`HTML converter exposes gauge tick label number formatting (${precision}, ${exponential})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const gauge = new HmiGauge();
+  gauge.tickLabelDecimalPlaces = staticProperty(precision);
+  gauge.tickLabelExponentialFormat = staticProperty(exponential);
+  layer.items.push(gauge);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const markup = html.match(/<hmi-gauge[^>]*>/)?.[0] ?? "";
+  assert.ok(markup.includes(`tick-label-decimal-places="${precision}"`));
+  assert.equal(markup.includes("tick-label-exponential-format"), exponential);
+});
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
