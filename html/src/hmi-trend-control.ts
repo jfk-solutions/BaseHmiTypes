@@ -166,6 +166,8 @@ export class HmiTrendControl extends HTMLElement {
     const trendWindows = parseTrendWindows(this.getAttribute("trend-windows"));
     const firstPen = visiblePens[0] ?? pens[0];
     const timeAxes = parseTimeAxes(this.getAttribute("time-axes"));
+    const topTimeAxisCount = timeAxes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false" && axis.attributes["x-axis-alignment"]?.toLowerCase() === "top").length;
+    const bottomTimeAxisCount = timeAxes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false" && axis.attributes["x-axis-alignment"]?.toLowerCase() !== "top").length;
     const selectedTimeAxis = timeAxes.find(axis => axis.name === pens[0]?.timeAxisName) ?? timeAxes[0];
     const timeSource = { getAttribute: (name: string) => selectedTimeAxis?.attributes[name] ?? this.getAttribute(name) };
     const axisTrendColor = pens.length > 0 ? normalizePenColor(pens[0].color, 0) : undefined;
@@ -338,16 +340,18 @@ export class HmiTrendControl extends HTMLElement {
         .plot {
           position: absolute;
           background: ${escapeCss(windowBackgroundColor)};
-          ${namedValueAxes.length ? "font-size: clamp(10px, 2vmin, 18px);" : ""}
+          ${namedValueAxes.length || timeAxes.length ? "font-size: clamp(10px, 2vmin, 18px);" : ""}
           left: 10%;
           right: 2.5%;
           ${namedValueAxes.length ? `left: calc(2.5% + ${toCss(leftAxisCount * 4.4)}em); right: calc(2.5% + ${toCss(rightAxisCount * 4.4)}em);` : ""}
           top: ${plotTop}%;
           bottom: ${plotBottom}%;
+          ${timeAxes.length ? `top: calc(${plotTop}% + ${toCss(topTimeAxisCount * 3.6)}em); bottom: calc(${plotBottom}% + ${toCss(bottomTimeAxisCount * 3.6)}em);` : ""}
         }
 
         .window-layout {
           left: 2.5%; right: 2.5%; display: grid;
+          top: ${plotTop}%; bottom: ${plotBottom}%;
           grid-template-rows: ${trendWindows.filter(window => window.visible).map(window => `${toCss(window.spacePortion)}fr`).join(" ") || "1fr"};
           gap: 1px;
         }
@@ -399,6 +403,14 @@ export class HmiTrendControl extends HTMLElement {
         .value-axis .y-label { left: 0; right: auto; color: inherit; text-align: right; }
         .value-axis.right .y-label { left: 0.8em; text-align: left; }
         .value-axis-title { position: absolute; top: -1.4em; left: 0; color: inherit; white-space: nowrap; }
+
+        .time-axis { position: absolute; left: 0; right: 0; height: 3.6em; color: inherit; }
+        .time-axis.bottom { border-top: 1px solid currentColor; }
+        .time-axis.top { border-bottom: 1px solid currentColor; }
+        .time-axis .x-label { top: 0.35em; bottom: auto; color: inherit; }
+        .time-axis.top .x-label { top: auto; bottom: 0.35em; }
+        .time-axis .x-axis-title { top: 2.6em; bottom: auto; color: inherit; }
+        .time-axis.top .x-axis-title { top: auto; bottom: 2.6em; }
 
         .percentage-label {
           ${percentageAxisAlignment}: -4.4em;
@@ -509,7 +521,7 @@ export class HmiTrendControl extends HTMLElement {
               minorGridVisible,
               gridInTrendColor && firstPen !== undefined ? normalizePenColor(firstPen.color, 0) : undefined,
             )}
-            ${xAxisVisible ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
+            ${xAxisVisible && !timeAxes.length ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible && !namedValueAxes.length ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, configuredDecimalPlaces)}
           </svg>
@@ -517,8 +529,8 @@ export class HmiTrendControl extends HTMLElement {
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
           ${displayStatisticRulers ? `<div class="statistic-ruler start" title="Statistics range start"></div><div class="statistic-ruler end" title="Statistics range end"></div>` : ""}
-          ${xAxisVisible ? renderXLabels(labels) : ""}
-          ${xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
+          ${timeAxes.length ? renderTimeAxes(timeAxes, pens, xAxisFlipped, locale) : xAxisVisible ? renderXLabels(labels) : ""}
+          ${!timeAxes.length && xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
           ${yAxisVisible && yAxisLabel && !namedValueAxes.length ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
         </div>`}
         ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"${xAxisFlipped && chartLiveMode ? ' style="margin-left: 0"' : ""}></div></div>` : ""}
@@ -539,10 +551,13 @@ function parseTimeAxes(value: string | null): TimeAxis[] {
   try {
     const parsed: unknown = JSON.parse(value);
     if (!Array.isArray(parsed)) return [];
+    const names = new Set<string>();
     return parsed.flatMap(entry => {
       if (!entry || typeof entry !== "object") return [];
       const source = entry as Record<string, unknown>;
       if (typeof source.name !== "string" || !source.name) return [];
+      if (names.has(source.name)) return [];
+      names.add(source.name);
       const attributes: Record<string, string> = {
         "x-axis-scale-visible": "true", "x-axis-date-visible": "true", "x-axis-in-trend-color": "false",
         "x-axis-alignment": "Bottom", "x-axis-label": "", "x-axis-date-format": "",
@@ -733,6 +748,26 @@ function renderXLabels(values: TimeLabel[]): string {
       return `<span class="axis-label x-label" style="left:${toCss(left)}%">${escapeHtml(value.primary)}<br>${escapeHtml(value.secondary)}</span>`;
     })
     .join("");
+}
+
+function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], flipped: boolean, locale: string | undefined): string {
+  const columns = { top: 0, bottom: 0 };
+  const now = Date.now();
+  return axes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false").map(axis => {
+    const source = { getAttribute: (name: string) => axis.attributes[name] ?? null };
+    const alignment = source.getAttribute("x-axis-alignment")?.toLowerCase() === "top" ? "top" : "bottom";
+    const column = columns[alignment]++;
+    const span = readDurationMilliseconds(readNumberAttribute(source, "x-axis-time-span", 63_000), source.getAttribute("x-axis-time-span-unit"));
+    const labels = createTimeLabels(new Date(now - span), readBooleanAttribute(source, "x-axis-date-visible", true), span,
+      source.getAttribute("time-format")?.toLowerCase() === "twentyfourhour" ? "twenty-four-hour" : "twelve-hour",
+      readBooleanAttribute(source, "display-milliseconds", false), source.getAttribute("x-axis-date-format"), locale);
+    if (flipped) labels.reverse();
+    const trendIndex = axis.trendWindowName ? pens.findIndex(pen => (pen.renderWindowName ?? pen.trendWindowName) === axis.trendWindowName) : 0;
+    const color = readBooleanAttribute(source, "x-axis-in-trend-color", false) && trendIndex >= 0 && pens[trendIndex]
+      ? normalizePenColor(pens[trendIndex]!.color, trendIndex) : axis.color;
+    const label = source.getAttribute("x-axis-label");
+    return `<div class="time-axis ${alignment}" data-axis-name="${escapeHtml(axis.name)}" style="${alignment}:calc(-${toCss((column + 1) * 3.6)}em - 1px);color:${escapeHtml(color)}">${renderXLabels(labels)}${label ? `<span class="axis-label x-axis-title">${escapeHtml(label)}</span>` : ""}</div>`;
+  }).join("");
 }
 
 function createTimeLabels(

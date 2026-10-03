@@ -3256,6 +3256,7 @@ public class HmiScreenToHtmlConverterTests
             TimeSpan = 120000, TimeSpanUnit = "Milliseconds", Alignment = HmiVerticalAlignment.Top,
             Color = HmiColor.FromArgb(255, 0x12, 0x34, 0x56), InTrendColor = false, Label = "Recorded time"
         });
+        trend.TimeAxes.Add(new HmiTrendTimeAxis { Name = "Time B", Visible = true, Alignment = HmiVerticalAlignment.Bottom, Label = "Second time axis" });
         trend.TrendWindows.Add(new HmiTrendWindow
         {
             Name = "Window A", Visible = false, SpacePortion = 3, XAxisGridVisible = false,
@@ -3290,6 +3291,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "&quot;valueAxisLabel&quot;:&quot;Standalone&quot;");
         StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Axis window&quot;");
         StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Time window&quot;");
+        StringAssert.Contains(html, "&quot;name&quot;:&quot;Time B&quot;");
+        StringAssert.Contains(html, "&quot;label&quot;:&quot;Second time axis&quot;");
         StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Pen window&quot;");
         StringAssert.Contains(html, "&quot;timeAxisName&quot;:&quot;Time A&quot;");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Axis A&quot;");
