@@ -45,6 +45,7 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<double>? OriginValue { get; set; }
 
+    /// <summary>Number of major scale sections between adjacent tick marks; zero requests automatic selection.</summary>
     public HmiProperty<int>? DivisionCount { get; set; }
 
     public HmiProperty<int>? SubDivisionCount { get; set; }

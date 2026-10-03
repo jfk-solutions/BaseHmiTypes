@@ -1862,9 +1862,8 @@ public class HmiScreenToHtmlConverter
         bool vertical,
         HmiHtmlConvertContext context)
     {
-        var tickCount = bar.DivisionCount is null
-            ? 2
-            : Math.Max(2, ResolveStaticValue(bar.DivisionCount, context));
+        var sections = bar.DivisionCount is null ? 0 : ResolveStaticValue(bar.DivisionCount, context);
+        var tickCount = sections > 0 ? Math.Min(100, sections) + 1 : 2;
         var decimalPlaces = bar.TickLabelDecimalPlaces is null
             ? (int?)null
             : Clamp(ResolveStaticValue(bar.TickLabelDecimalPlaces, context), 0, 15);
