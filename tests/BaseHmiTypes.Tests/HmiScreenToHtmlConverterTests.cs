@@ -740,6 +740,35 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(HmiFillDirection.Right, false)]
+    [DataRow(HmiFillDirection.Down, false)]
+    [DataRow(HmiFillDirection.Left, true)]
+    [DataRow(HmiFillDirection.Up, true)]
+    public async Task ConvertAsync_RendersBarTickLabelIntervals(HmiFillDirection direction, bool reversed)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        var bar = new HmiBar { Width = 120, Height = 40, BeginValue = 0, EndValue = 100, Value = 35,
+            ShowScale = true, DivisionCount = 5, TickLabelInterval = 3, EngineeringUnit = "a&b", FillDirection = direction };
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var converter = new HmiScreenToHtmlConverter();
+        var html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, reversed
+            ? "<span></span><span>75&nbsp;a&amp;b</span><span></span><span></span><span>0&nbsp;a&amp;b</span>"
+            : "<span>0&nbsp;a&amp;b</span><span></span><span></span><span>75&nbsp;a&amp;b</span><span></span>");
+        bar.ShowTickLabels = false;
+        html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, "<span></span><span></span><span></span><span></span><span></span>");
+        Assert.IsFalse(html.Contains("&nbsp;a&amp;b", StringComparison.Ordinal));
+        bar.ShowTickLabels = true;
+        bar.TickLabelInterval = 0;
+        html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, "<span>25&nbsp;a&amp;b</span>");
+        StringAssert.Contains(html, "<span>50&nbsp;a&amp;b</span>");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersEnabledBarThresholdMarkers()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };

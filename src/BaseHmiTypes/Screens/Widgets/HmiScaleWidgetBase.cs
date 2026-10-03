@@ -22,6 +22,9 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<bool>? ShowTickLabels { get; set; }
 
+    /// <summary>Label every nth major tick; omitted or nonpositive values use every tick.</summary>
+    public HmiProperty<int>? TickLabelInterval { get; set; }
+
     public HmiProperty<int>? TickLabelFieldLength { get; set; }
 
     public HmiProperty<int>? TickLabelDecimalPlaces { get; set; }

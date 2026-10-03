@@ -1867,6 +1867,8 @@ public class HmiScreenToHtmlConverter
             ? null
             : ResolveStaticValue(bar.EngineeringUnit, context);
         var reverse = direction is HmiFillDirection.Up or HmiFillDirection.Left;
+        var labelInterval = bar.TickLabelInterval is null ? 1 : Math.Max(1, ResolveStaticValue(bar.TickLabelInterval, context));
+        var showLabels = bar.ShowTickLabels is null || ResolveStaticValue(bar.ShowTickLabels, context);
         var style = new StringBuilder(vertical
             ? "display: flex; flex-direction: column; justify-content: space-between; height: 100%;"
             : "display: flex; justify-content: space-between; width: 100%;");
@@ -1887,9 +1889,14 @@ public class HmiScreenToHtmlConverter
             var label = decimalPlaces is int places
                 ? tick.ToString($"F{places}", CultureInfo.InvariantCulture)
                 : ToCss(tick);
-            html.Append("<span>").Append(label);
-            if (!string.IsNullOrWhiteSpace(engineeringUnit))
-                html.Append("&nbsp;").Append(WebUtility.HtmlEncode(engineeringUnit));
+            html.Append("<span>");
+            var tickIndex = reverse ? tickCount - 1 - index : index;
+            if (showLabels && tickIndex % labelInterval == 0)
+            {
+                html.Append(label);
+                if (!string.IsNullOrWhiteSpace(engineeringUnit))
+                    html.Append("&nbsp;").Append(WebUtility.HtmlEncode(engineeringUnit));
+            }
             html.Append("</span>");
         }
         html.Append("</div>");
