@@ -1577,7 +1577,7 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   const showScale = getStaticValue(bar.showScale) === true;
   const showThresholds = getStaticValue(bar.showLimitRanges) !== false && bar.thresholds.some(threshold =>
     threshold.value !== undefined && getStaticValue(threshold.enabled) !== false);
-  if (showScale || showThresholds || getBarOutOfRange(bar) !== 0) {
+  if (showScale || showThresholds || getBarOutOfRange(bar) !== 0 || getBarFillOrigin(bar, minimum, maximum, value) !== undefined) {
     const vertical = direction === HmiFillDirection.Up || direction === HmiFillDirection.Down;
     const scaleBefore = showScale && getStaticValue(bar.scaleAfterBar) === false;
     html.push("<div");
@@ -1639,6 +1639,11 @@ function appendBarMeter(
   vertical: boolean,
   context: HmiHtmlConvertContext,
 ): void {
+  const origin = getBarFillOrigin(bar, minimum, maximum, value);
+  if (origin !== undefined) {
+    appendBarOriginMeter(html, bar, minimum, maximum, value, origin, direction, context);
+    return;
+  }
   html.push("<meter");
   appendBarColorAttributes(html, bar, context);
   let meterStyle = `${vertical ? "height: 100%;" : "width: 100%;"} flex: 1; min-width: 0; min-height: 0;${getBarDirectionStyle(direction)}`;
@@ -1655,6 +1660,49 @@ function appendBarMeter(
   appendAttribute(html, "max", toCss(maximum));
   appendAttribute(html, "value", toCss(value));
   html.push(`>${toCss(value)}</meter>`);
+}
+
+function getBarFillOrigin(bar: HmiBar, minimum: number, maximum: number, value: number): number | undefined {
+  const origin = getStaticValue(bar.originValue);
+  if (origin === undefined || !Number.isFinite(origin) || !Number.isFinite(minimum) || !Number.isFinite(maximum) ||
+      !Number.isFinite(value) || !Number.isFinite(maximum - minimum) || maximum <= minimum)
+    return undefined;
+  return origin;
+}
+
+function appendBarOriginMeter(html: string[], bar: HmiBar, minimum: number, maximum: number,
+  value: number, origin: number, direction: HmiFillDirection, context: HmiHtmlConvertContext): void {
+  const originPercent = Math.min(100, Math.max(0, (origin - minimum) / (maximum - minimum) * 100));
+  const valuePercent = Math.min(100, Math.max(0, (value - minimum) / (maximum - minimum) * 100));
+  const start = Math.min(originPercent, valuePercent);
+  const length = Math.abs(valuePercent - originPercent);
+  const position = direction === HmiFillDirection.Up
+    ? `left: 0; right: 0; bottom: ${toCss(start)}%; height: ${toCss(length)}%;`
+    : direction === HmiFillDirection.Down
+      ? `left: 0; right: 0; top: ${toCss(start)}%; height: ${toCss(length)}%;`
+      : direction === HmiFillDirection.Left
+        ? `top: 0; bottom: 0; right: ${toCss(start)}%; width: ${toCss(length)}%;`
+        : `top: 0; bottom: 0; left: ${toCss(start)}%; width: ${toCss(length)}%;`;
+  html.push("<div");
+  appendAttribute(html, "data-hmi-bar-origin-meter", "true");
+  appendAttribute(html, "style", "position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; background: var(--hmi-bar-track-background, #eeeeee);");
+  html.push("><meter");
+  appendAttribute(html, "style", "position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;");
+  appendAttribute(html, "min", toCss(minimum));
+  appendAttribute(html, "max", toCss(maximum));
+  appendAttribute(html, "value", toCss(value));
+  html.push(`>${toCss(value)}</meter><span`);
+  appendAttribute(html, "aria-hidden", "true");
+  appendAttribute(html, "data-hmi-bar-origin-fill", "true");
+  appendAttribute(html, "data-origin-value", toCss(origin));
+  const style = ["position: absolute; pointer-events: none; background: currentColor; " + position];
+  const disabledColor = getStaticValue(bar.enabled) === false && getStaticValue(bar.useDisabledForegroundColor) === true
+    ? context.effectiveProperties.resolve(bar, "DisabledForegroundColor", bar.disabledForegroundColor) : undefined;
+  const thresholdColor = getBarThresholdFillColor(bar);
+  if (disabledColor !== undefined) appendColorStyle(style, "color", disabledColor);
+  else if (thresholdColor !== undefined) appendColorStyle(style, "color", thresholdColor);
+  appendAttribute(html, "style", style.join(""));
+  html.push("></span></div>");
 }
 
 function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
