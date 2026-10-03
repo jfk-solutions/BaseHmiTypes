@@ -13,6 +13,8 @@ export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   showScale?: HmiProperty<boolean>;
   drawInsideFrame?: HmiProperty<boolean>;
   showTickLabels?: HmiProperty<boolean>;
+  /** Label every nth major tick; omitted or nonpositive values use every tick. */
+  tickLabelInterval?: HmiProperty<number>;
   tickLabelFieldLength?: HmiProperty<number>;
   tickLabelDecimalPlaces?: HmiProperty<number>;
   engineeringUnit?: HmiProperty<string>;
