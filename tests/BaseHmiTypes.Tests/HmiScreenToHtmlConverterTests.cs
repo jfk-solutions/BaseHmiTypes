@@ -3249,6 +3249,13 @@ public class HmiScreenToHtmlConverterTests
         var screen = new HmiScreen { Name = "Main", Width = 400, Height = 240 };
         var layer = new HmiLayer { Name = "Default" };
         var trend = new HmiTrendControl { Name = "Trend", Width = 320, Height = 180 };
+        trend.TimeAxes.Add(new HmiTrendTimeAxis
+        {
+            Name = "Time A", Visible = false, ShowDate = true, DateFormat = "yyyy/MM/dd",
+            TimeFormat = HmiTrendTimeFormat.TwentyFourHour, DisplayMilliseconds = true,
+            TimeSpan = 120000, TimeSpanUnit = "Milliseconds", Alignment = HmiVerticalAlignment.Top,
+            Color = HmiColor.FromArgb(255, 0x12, 0x34, 0x56), InTrendColor = false, Label = "Recorded time"
+        });
         trend.TrendWindows.Add(new HmiTrendWindow
         {
             Name = "Window A", Visible = false, SpacePortion = 3, XAxisGridVisible = false,
@@ -3274,6 +3281,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "&quot;decimalPlaces&quot;:4");
         StringAssert.Contains(html, "value-axes=\"");
         StringAssert.Contains(html, "trend-windows=\"");
+        StringAssert.Contains(html, "time-axes=\"");
+        StringAssert.Contains(html, "&quot;dateFormat&quot;:&quot;yyyy/MM/dd&quot;");
+        StringAssert.Contains(html, "&quot;timeSpan&quot;:120000");
         StringAssert.Contains(html, "&quot;spacePortion&quot;:3");
         StringAssert.Contains(html, "&quot;majorGridColor&quot;:&quot;#123456&quot;");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Unused&quot;");

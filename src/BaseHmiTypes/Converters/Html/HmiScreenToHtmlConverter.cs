@@ -3472,6 +3472,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens));
         AppendAttribute(html, "value-axes", FormatTrendValueAxes(trendControl.ValueAxes));
         AppendAttribute(html, "trend-windows", FormatTrendWindows(trendControl.TrendWindows));
+        AppendAttribute(html, "time-axes", FormatTrendTimeAxes(trendControl.TimeAxes));
         html.Append("></hmi-trend-control>");
     }
 
@@ -3696,6 +3697,28 @@ public class HmiScreenToHtmlConverter
     {
         if (property != null)
             AppendAttribute(html, name, property.StaticValue ? "true" : "false");
+    }
+
+    private static string? FormatTrendTimeAxes(IEnumerable<HmiTrendTimeAxis> axes)
+    {
+        var entries = axes.Select(axis =>
+        {
+            var properties = new List<string>();
+            AddTrendJsonString(properties, "name", axis.Name);
+            AddTrendJsonBoolean(properties, "visible", axis.Visible?.StaticValue);
+            AddTrendJsonBoolean(properties, "showDate", axis.ShowDate?.StaticValue);
+            AddTrendJsonString(properties, "dateFormat", axis.DateFormat?.StaticValue);
+            AddTrendJsonString(properties, "color", axis.Color?.StaticValue is HmiColor color ? ToCss(color) : null);
+            AddTrendJsonBoolean(properties, "inTrendColor", axis.InTrendColor?.StaticValue);
+            AddTrendJsonString(properties, "alignment", axis.Alignment?.StaticValue.ToString());
+            AddTrendJsonString(properties, "label", axis.Label);
+            AddTrendJsonString(properties, "timeFormat", axis.TimeFormat?.StaticValue.ToString());
+            AddTrendJsonBoolean(properties, "displayMilliseconds", axis.DisplayMilliseconds?.StaticValue);
+            AddTrendJsonNumber(properties, "timeSpan", axis.TimeSpan?.StaticValue);
+            AddTrendJsonString(properties, "timeSpanUnit", axis.TimeSpanUnit);
+            return "{" + string.Join(",", properties) + "}";
+        }).ToArray();
+        return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";
     }
 
     private static string? FormatTrendWindows(IEnumerable<HmiTrendWindow> windows)
