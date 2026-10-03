@@ -1846,7 +1846,10 @@ function getBarScaleFontStyle(bar: HmiScaleWidgetBase): string {
   const size = getStaticValue(font.size);
   if (size !== undefined)
     style += ` font-size: ${toCss(size)}px;`;
-  if (getStaticValue(font.bold) === true)
+  const weight = getStaticValue(font.weight);
+  if (weight !== undefined && weight > 0)
+    style += ` font-weight: ${weight};`;
+  else if (getStaticValue(font.bold) === true)
     style += " font-weight: bold;";
   if (getStaticValue(font.italic) === true)
     style += " font-style: italic;";
