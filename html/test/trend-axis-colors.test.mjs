@@ -50,12 +50,54 @@ test("separate windows use their assigned time-axis format, range, alignment and
     assert.match(plots[1].shadowRoot.innerHTML, /1:04:06PM/u);
     assert.match(plots[1].shadowRoot.innerHTML, /Slow time/u);
     assert.match(plots[1].shadowRoot.innerHTML, /--hmi-trend-x-axis-color: #778899;/u);
-    assert.match(plots[1].shadowRoot.innerHTML, /y1="0" x2="100" y2="0"/u);
+    assert.match(plots[1].shadowRoot.innerHTML, /class="time-axis top" data-axis-name="Time B"/u);
     axes[0].visible = false;
     parent.setAttribute("time-axes", JSON.stringify(axes));
     plots = children();
     assert.ok(!plots[0].shadowRoot.innerHTML.includes("class=\"axis-label x-label\""));
     assert.match(plots[1].shadowRoot.innerHTML, /Slow time/u);
+  } finally { Date.now = originalNow; }
+});
+
+test("multiple time axes render independent rows without duplicating shared or hidden axes", () => {
+  const originalNow = Date.now;
+  Date.now = () => new Date(2020, 11, 24, 15, 4, 6, 12).getTime();
+  try {
+    const control = new HmiTrendControl();
+    control.setAttribute("pens", JSON.stringify([
+      { number: 1, timeAxisName: "Fast", visible: false, color: "#112233" },
+      { number: 2, timeAxisName: "Fast", color: "#778899" },
+    ]));
+    const axes = [
+      { name: "Fast", timeFormat: "TwentyFourHour", showDate: false, displayMilliseconds: true, timeSpan: 1, timeSpanUnit: "Milliseconds", inTrendColor: true, label: "Fast & time" },
+      { name: "Slow", timeFormat: "TwelveHour", dateFormat: "dd/MM/yyyy", timeSpan: 2, timeSpanUnit: "Hours", color: "#445566", label: "Slow" },
+      { name: "Top", alignment: "Top", label: "Top axis" },
+      { name: "Hidden", visible: false, label: "Hidden axis" },
+      { name: "Fast", label: "Duplicate axis" },
+    ];
+    control.setAttribute("time-axes", JSON.stringify(axes));
+    let html = control.shadowRoot.innerHTML;
+    assert.equal([...html.matchAll(/class="time-axis /gu)].length, 3);
+    const rows = [...html.matchAll(/<div class="time-axis [^>]+>[\s\S]*?<\/div>/gu)].map(match => match[0]);
+    assert.match(rows[0], /bottom:calc\(-3.6em - 1px\);color:#112233/u);
+    assert.match(rows[0], /15:04:06.012/u);
+    assert.match(rows[0], /Fast &amp; time/u);
+    assert.ok(!rows[0].includes("24/12/2020"));
+    assert.match(rows[1], /bottom:calc\(-7.2em - 1px\);color:#445566/u);
+    assert.match(rows[1], /24\/12\/2020/u);
+    assert.match(rows[1], /1:04:06PM/u);
+    assert.match(rows[2], /class="time-axis top"/u);
+    assert.match(html, /top: calc\(23% \+ 3.6em\); bottom: calc\(16% \+ 7.2em\);/u);
+    assert.ok(!html.includes("Hidden axis"));
+    assert.ok(!html.includes("Duplicate axis"));
+    control.setAttribute("x-axis-flipped", "true");
+    html = control.shadowRoot.innerHTML;
+    const slow = html.match(/<div class="time-axis bottom" data-axis-name="Slow"[^>]*>([\s\S]*?)<\/div>/u)[1];
+    assert.match(slow, /left:0%">24\/12\/2020<br>3:04:06PM/u);
+    // Hiding a row collapses the remaining row spacing, without changing other axes.
+    axes[0].visible = false;
+    control.setAttribute("time-axes", JSON.stringify(axes));
+    assert.match(control.shadowRoot.innerHTML, /data-axis-name="Slow" style="bottom:calc\(-3.6em - 1px\)/u);
   } finally { Date.now = originalNow; }
 });
 
