@@ -90,6 +90,35 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const [kind, Shape] of [HmiCircle, HmiEllipse, HmiCircularArc, HmiEllipticalArc, HmiCircleSegment, HmiEllipseSegment].entries())
+for (const inside of [false, true]) for (const width of [1, 10]) {
+test(`HTML renderer supports curved inside strokes (${kind}, ${inside}, ${width})`, async () => {
+  const shape = new Shape();
+  shape.name = "Curved";
+  shape.width = staticProperty(100); shape.height = staticProperty(100);
+  shape.centerX = staticProperty(50); shape.centerY = staticProperty(50);
+  if (kind % 2 === 0) shape.radius = staticProperty(50);
+  else { shape.radiusX = staticProperty(50); shape.radiusY = staticProperty(40); }
+  if (kind >= 2) shape.sweepAngle = staticProperty(90);
+  shape.lineWidth = tagProperty("Stroke.Width", width);
+  shape.drawStrokeInsideFrame = tagProperty("Stroke.Inside", inside);
+  const layer = new HmiLayer(); layer.items.push(shape);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const svg = html.match(/<svg id="Curved"[^>]*>(.*?)<\/svg>/su)?.[1] ?? "";
+  const clipped = inside && width > 1;
+  assert.ok(svg.includes(`stroke-width="${clipped ? width * 2 : width}"`));
+  assert.equal(svg.includes("clip-path="), clipped);
+  assert.equal(svg.includes("<clipPath"), clipped);
+  if (clipped) {
+    assert.ok(svg.includes('clipPathUnits="userSpaceOnUse"'));
+    const clip = svg.match(/<clipPath[^>]*>(.*?)<\/clipPath>/su)?.[1] ?? "";
+    assert.ok(!clip.includes("stroke-width"));
+    assert.ok(clip.includes(kind < 2 ? (kind === 0 ? "<circle" : "<ellipse") : kind < 4 ? "<ellipse" : "<path"));
+  }
+});
+}
+
 for (const Shape of [HmiCircle, HmiEllipse, HmiCircularArc, HmiEllipticalArc,
   HmiCircleSegment, HmiEllipseSegment, HmiLine, HmiPolygon, HmiPolyline]) {
 test(`HTML renderer does not clip shape strokes or markers (${Shape.name})`, async () => {
