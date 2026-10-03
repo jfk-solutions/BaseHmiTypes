@@ -19,4 +19,6 @@ export class HmiGraphicView extends HmiSurfaceShapeBase {
   imageHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   imageVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   graphicStretchMode?: HmiProperty<number>;
+  /** Draws borders wider than one pixel inside the frame when true, or centered on it when false. */
+  drawStrokeInsideFrame?: HmiProperty<boolean>;
 }

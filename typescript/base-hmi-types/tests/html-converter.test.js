@@ -1,6 +1,56 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { HmiTextBox } from "../dist/index.js";
+import { HmiTextBox, HmiGraphicView } from "../dist/index.js";
+
+const graphicBorderCases = [
+  ...[false,true,undefined].flatMap(inside => [false,true].flatMap(line =>
+    [false,true].map(image => [inside,line,image,10]))),
+  ...[false,true].flatMap(inside => [false,true].map(line => [inside,line,true,1])),
+];
+for (const [inside,line,image,width] of graphicBorderCases) {
+test("HTML renderer supports graphic border placement ("+[inside,line,image,width].join(", ")+")", async () => {
+  const item = new HmiGraphicView(); item.name = "FramedGraphic";
+  item.width = staticProperty(100); item.height = staticProperty(80);
+  if (inside !== undefined) item.drawStrokeInsideFrame = tagProperty("Border.Inside",inside);
+  if (image) item.source = staticProperty("picture.svg");
+  if (line) {
+    item.lineWidth = tagProperty("Line.Width",width); item.lineColor = staticProperty(hmiColorFromArgb(255,12,34,56));
+    item.borderWidth = staticProperty(2); item.borderColor = staticProperty(hmiColorFromArgb(255,255,0,0));
+  } else {
+    item.borderWidth = tagProperty("Border.Width",width); item.borderColor = staticProperty(hmiColorFromArgb(255,12,34,56));
+  }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<(?:img|div) id="FramedGraphic"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening); assert.equal(opening.startsWith("<img"),image);
+  const centered = inside === false && width > 1;
+  assert.equal(opening.includes("outline-width:"),centered);
+  assert.ok(opening.includes("width: 100px;")); assert.ok(opening.includes("height: 80px;"));
+  assert.ok(opening.includes("border-width: "+(centered ? 0 : width)+"px;"));
+  if (image) assert.ok(opening.includes('src="picture.svg"'));
+  if (centered) {
+    assert.ok(opening.includes("outline-width: 10px;"));
+    assert.ok(opening.includes("outline-offset: -5px;"));
+    assert.ok(opening.includes("outline-color: #0C2238;"));
+  }
+});
+}
+for (const line of [false,true]) for (const inside of [false,true]) {
+test("HTML renderer supports flashing graphic borders ("+[line,inside].join(", ")+")", async () => {
+  const item = new HmiGraphicView(); item.name = "FlashingGraphic"; item.source = staticProperty("picture.svg");
+  item.drawStrokeInsideFrame = tagProperty("Border.Inside",inside);
+  const color = blinkProperty(hmiColorFromArgb(255,1,2,3),hmiColorFromArgb(255,4,5,6),HmiBlinkRate.Fast);
+  if (line) { item.lineWidth = staticProperty(10); item.lineColor = color; }
+  else { item.borderWidth = staticProperty(10); item.borderColor = color; }
+  const layer = new HmiLayer(); layer.items.push(item); const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<img id="FlashingGraphic"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening.includes("--hmi-border-color-off: #010203;"));
+  assert.ok(opening.includes("--hmi-border-color-on: #040506;"));
+  assert.ok(opening.includes("animation: hmi-"+(inside ? "border" : "outline")+"-color-flash 0.5s steps(1, end) infinite;"));
+});
+}
 
 for (const enabled of [false,true]) for (const readOnly of [false,true]) {
 test("HTML renderer renders native multiline editors ("+[enabled,readOnly].join(", ")+")", async () => {
