@@ -3471,6 +3471,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "y-axis-decimal-places", trendControl.YAxisDecimalPlaces);
         AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens));
         AppendAttribute(html, "value-axes", FormatTrendValueAxes(trendControl.ValueAxes));
+        AppendAttribute(html, "trend-windows", FormatTrendWindows(trendControl.TrendWindows));
         html.Append("></hmi-trend-control>");
     }
 
@@ -3695,6 +3696,32 @@ public class HmiScreenToHtmlConverter
     {
         if (property != null)
             AppendAttribute(html, name, property.StaticValue ? "true" : "false");
+    }
+
+    private static string? FormatTrendWindows(IEnumerable<HmiTrendWindow> windows)
+    {
+        var entries = windows.Select(window =>
+        {
+            var properties = new List<string>();
+            AddTrendJsonString(properties, "name", window.Name);
+            AddTrendJsonBoolean(properties, "visible", window.Visible?.StaticValue);
+            AddTrendJsonNumber(properties, "spacePortion", window.SpacePortion?.StaticValue);
+            AddTrendJsonBoolean(properties, "xAxisGridVisible", window.XAxisGridVisible?.StaticValue);
+            AddTrendJsonBoolean(properties, "yAxisGridVisible", window.YAxisGridVisible?.StaticValue);
+            AddTrendJsonBoolean(properties, "majorGridVisible", window.MajorGridVisible?.StaticValue);
+            AddTrendJsonString(properties, "majorGridColor", window.MajorGridColor?.StaticValue is HmiColor major ? ToCss(major) : null);
+            AddTrendJsonBoolean(properties, "minorGridVisible", window.MinorGridVisible?.StaticValue);
+            AddTrendJsonString(properties, "minorGridColor", window.MinorGridColor?.StaticValue is HmiColor minor ? ToCss(minor) : null);
+            AddTrendJsonBoolean(properties, "gridInTrendColor", window.GridInTrendColor?.StaticValue);
+            AddTrendJsonBoolean(properties, "useGraphicValueBar", window.UseGraphicValueBar?.StaticValue);
+            AddTrendJsonString(properties, "valueBarColor", window.ValueBarColor?.StaticValue is HmiColor ruler ? ToCss(ruler) : null);
+            AddTrendJsonNumber(properties, "valueBarWidth", window.ValueBarWidth?.StaticValue);
+            AddTrendJsonBoolean(properties, "useGraphicStatisticRulers", window.UseGraphicStatisticRulers?.StaticValue);
+            AddTrendJsonString(properties, "statisticRulerColor", window.StatisticRulerColor?.StaticValue is HmiColor statistic ? ToCss(statistic) : null);
+            AddTrendJsonNumber(properties, "statisticRulerWidth", window.StatisticRulerWidth?.StaticValue);
+            return "{" + string.Join(",", properties) + "}";
+        }).ToArray();
+        return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";
     }
 
     // Use the same axis wire fields as legacy per-pen configurations.
