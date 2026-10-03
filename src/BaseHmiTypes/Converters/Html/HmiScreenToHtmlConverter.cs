@@ -2089,7 +2089,9 @@ public class HmiScreenToHtmlConverter
             style.Append(" font-family: ").Append(ResolveStaticValue(font.Name, context)).Append(';');
         if (font.Size is not null)
             style.Append(" font-size: ").Append(ToCss(ResolveStaticValue(font.Size, context))).Append("px;");
-        if (font.Bold is not null && ResolveStaticValue(font.Bold, context))
+        if (font.Weight is not null && ResolveStaticValue(font.Weight, context) is var weight && weight > 0)
+            style.Append(" font-weight: ").Append(weight.ToString(CultureInfo.InvariantCulture)).Append(';');
+        else if (font.Bold is not null && ResolveStaticValue(font.Bold, context))
             style.Append(" font-weight: bold;");
         if (font.Italic is not null && ResolveStaticValue(font.Italic, context))
             style.Append(" font-style: italic;");
@@ -4677,7 +4679,9 @@ public class HmiScreenToHtmlConverter
                 html.Append("font-family: ").Append(WebUtility.HtmlEncode(name)).Append(";");
             if (TryGetStaticValue(font.Size, out var size))
                 html.Append("font-size: ").Append(ToCss(size)).Append("px;");
-            if (font.Bold.GetStaticValueOrDefault())
+            if (font.Weight.GetStaticValue() is { } weight && weight > 0)
+                html.Append("font-weight: ").Append(weight.ToString(CultureInfo.InvariantCulture)).Append(';');
+            else if (font.Bold.GetStaticValueOrDefault())
                 html.Append("font-weight: bold;");
             if (font.Italic.GetStaticValueOrDefault())
                 html.Append("font-style: italic;");
