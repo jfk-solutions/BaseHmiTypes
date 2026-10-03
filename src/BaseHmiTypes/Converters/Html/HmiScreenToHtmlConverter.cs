@@ -2004,10 +2004,15 @@ public class HmiScreenToHtmlConverter
         AppendCommonAttributes(html, slider, context, additionalStyle: sliderStyle);
         AppendAttribute(html, "data-hmi-slider", "true");
         AppendAttribute(html, "data-orientation", direction.ToString());
+        if (slider.StepSize is not null)
+            AppendAttribute(html, "data-small-change", ResolveStaticValue(slider.StepSize, context).ToString(CultureInfo.InvariantCulture));
         AppendAttribute(html, "type", "range");
         AppendAttribute(html, "min", ToCss(minimum));
         AppendAttribute(html, "max", ToCss(maximum));
         AppendAttribute(html, "value", ToCss(value));
+        // This is an inert process-value preview, not an operator setpoint editor.
+        // A native range step would quantize values that are not multiples of SmallChange.
+        AppendAttribute(html, "step", "any");
         AppendAttribute(html, "disabled", "disabled");
         html.Append('>');
     }

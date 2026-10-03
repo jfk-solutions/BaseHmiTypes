@@ -675,7 +675,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<meter id=\"LevelBar\"");
         StringAssert.Contains(html, "min=\"0\" max=\"100\" value=\"35\">35</meter>");
         StringAssert.Contains(html, "<input id=\"SetpointSlider\"");
-        StringAssert.Contains(html, "type=\"range\" min=\"-10\" max=\"10\" value=\"4\" disabled=\"disabled\"");
+        StringAssert.Contains(html, "type=\"range\" min=\"-10\" max=\"10\" value=\"4\" step=\"any\" disabled=\"disabled\"");
         StringAssert.Contains(html, "<div id=\"LevelScale\"");
         StringAssert.Contains(html, "><span>0</span><span>100</span></div>");
     }
@@ -1011,6 +1011,29 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "direction: rtl;\" data-hmi-slider=\"true\" data-orientation=\"Left\"");
         StringAssert.Contains(html, "id=\"RightSlider\"");
         StringAssert.Contains(html, "direction: ltr;\" data-hmi-slider=\"true\" data-orientation=\"Right\"");
+    }
+
+    [TestMethod]
+    [DataRow(0, 5)]
+    [DataRow(1, 0)]
+    [DataRow(2, -1)]
+    [DataRow(3, 5)]
+    public async Task ConvertAsync_PreservesSliderFractionalValueAndSmallChange(int orientation, int stepSize)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        var slider = new HmiSlider { Width = 120, Height = 80, BeginValue = -20, EndValue = 120,
+            Value = 35.25, Orientation = orientation, StepSize = stepSize };
+        layer.Items.Add(slider);
+        screen.Layers.Add(layer);
+        var converter = new HmiScreenToHtmlConverter();
+        var html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, $"data-small-change=\"{stepSize}\"");
+        StringAssert.Contains(html, "min=\"-20\" max=\"120\" value=\"35.25\" step=\"any\" disabled=\"disabled\"");
+        slider.StepSize = null;
+        html = await converter.ConvertAsync(screen);
+        Assert.IsFalse(html.Contains("data-small-change", StringComparison.Ordinal));
+        StringAssert.Contains(html, "value=\"35.25\" step=\"any\"");
     }
 
     [TestMethod]
