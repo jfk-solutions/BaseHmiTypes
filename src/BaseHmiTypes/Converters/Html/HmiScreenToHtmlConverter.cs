@@ -3017,6 +3017,12 @@ public class HmiScreenToHtmlConverter
     {
         html.Append('<').Append(elementName);
         AppendCommonAttributes(html, selectionGroup, context);
+        var surfaceBackground = context.EffectiveProperties.Resolve(selectionGroup,
+            nameof(HmiPaintedScreenItemBase.BackgroundColor), selectionGroup.BackgroundColor);
+        if (GetFillPattern(selectionGroup, context) == HmiFillPattern.Transparent)
+            AppendAttribute(html, "surface-background-color", "transparent");
+        else if (surfaceBackground?.StaticValue is HmiColor surfaceColor)
+            AppendAttribute(html, "surface-background-color", ToCss(surfaceColor));
         AppendAttribute(html, "frame-border-style", GetBorderStyleCss(selectionGroup, context));
         if (context.EffectiveProperties.Resolve(selectionGroup, nameof(HmiPaintedScreenItemBase.BorderColor), selectionGroup.BorderColor)
             is HmiBlinkProperty<HmiColor> { StaticValue: HmiColor, BlinkValue: HmiColor } borderBlink)
