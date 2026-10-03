@@ -3256,7 +3256,9 @@ public class HmiScreenToHtmlConverterTests
             TimeSpan = 120000, TimeSpanUnit = "Milliseconds", Alignment = HmiVerticalAlignment.Top,
             Color = HmiColor.FromArgb(255, 0x12, 0x34, 0x56), InTrendColor = false, Label = "Recorded time"
         });
-        trend.TimeAxes.Add(new HmiTrendTimeAxis { Name = "Time B", Visible = true, Alignment = HmiVerticalAlignment.Bottom, Label = "Second time axis" });
+        trend.TimeAxes.Add(new HmiTrendTimeAxis { Name = "Time B", Visible = true, Alignment = HmiVerticalAlignment.Bottom, Label = "Second time axis",
+            RangeType = HmiTrendTimeRangeType.StartEnd, StartTime = new DateTimeOffset(2018, 7, 19, 8, 51, 13, TimeSpan.Zero),
+            EndTime = new DateTimeOffset(2018, 7, 19, 8, 52, 13, TimeSpan.Zero), MeasurementPoints = 120, RefreshEnabled = false });
         trend.TimeAxes.Add(new HmiTrendTimeAxis { Name = "Time C", Visible = true, Alignment = HmiVerticalAlignment.Bottom });
         trend.TrendWindows.Add(new HmiTrendWindow
         {
@@ -3295,6 +3297,11 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Time window&quot;");
         StringAssert.Contains(html, "&quot;name&quot;:&quot;Time B&quot;");
         StringAssert.Contains(html, "&quot;label&quot;:&quot;Second time axis&quot;");
+        StringAssert.Contains(html, "&quot;rangeType&quot;:&quot;StartEnd&quot;");
+        StringAssert.Contains(html, "&quot;startTime&quot;:&quot;2018-07-19T08:51:13.0000000+00:00&quot;");
+        StringAssert.Contains(html, "&quot;endTime&quot;:&quot;2018-07-19T08:52:13.0000000+00:00&quot;");
+        StringAssert.Contains(html, "&quot;measurementPoints&quot;:120");
+        StringAssert.Contains(html, "&quot;refreshEnabled&quot;:false");
         StringAssert.Contains(html, "&quot;name&quot;:&quot;Time A&quot;");
         StringAssert.Contains(html, "&quot;name&quot;:&quot;Time C&quot;");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Second value&quot;");

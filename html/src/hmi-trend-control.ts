@@ -571,6 +571,11 @@ function parseTimeAxes(value: string | null): TimeAxis[] {
         if (typeof source[key!] === "string") attributes[attribute!] = source[key!] as string;
       }
       if (typeof source.timeSpan === "number" && Number.isFinite(source.timeSpan)) attributes["x-axis-time-span"] = String(source.timeSpan);
+      for (const key of ["rangeType", "startTime", "endTime"]) {
+        if (typeof source[key] === "string") attributes[key] = source[key] as string;
+      }
+      if (typeof source.refreshEnabled === "boolean") attributes.refreshEnabled = String(source.refreshEnabled);
+      if (typeof source.measurementPoints === "number" && Number.isFinite(source.measurementPoints)) attributes.measurementPoints = String(source.measurementPoints);
       return [{ name: source.name, trendWindowName: typeof source.trendWindowName === "string" ? source.trendWindowName : undefined, configuration: source, color: normalizeCssColor(typeof source.color === "string" ? source.color : undefined, "#444850"), attributes }];
     });
   } catch { return []; }
@@ -763,8 +768,13 @@ function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], fl
     const source = { getAttribute: (name: string) => axis.attributes[name] ?? null };
     const alignment = source.getAttribute("x-axis-alignment")?.toLowerCase() === "top" ? "top" : "bottom";
     const column = --columns[alignment];
-    const span = readDurationMilliseconds(readNumberAttribute(source, "x-axis-time-span", 63_000), source.getAttribute("x-axis-time-span-unit"));
-    const labels = createTimeLabels(new Date(now - span), readBooleanAttribute(source, "x-axis-date-visible", true), span,
+    const duration = readDurationMilliseconds(readNumberAttribute(source, "x-axis-time-span", 63_000), source.getAttribute("x-axis-time-span-unit"));
+    const startTime = parseAxisTimestamp(source.getAttribute("startTime"));
+    const endTime = parseAxisTimestamp(source.getAttribute("endTime"));
+    const fixedRange = source.getAttribute("rangeType") === "StartEnd" && startTime !== undefined && endTime !== undefined && endTime >= startTime;
+    const start = fixedRange ? startTime : source.getAttribute("refreshEnabled") === "false" && startTime !== undefined ? startTime : now - duration;
+    const span = fixedRange ? endTime - startTime : duration;
+    const labels = createTimeLabels(new Date(start), readBooleanAttribute(source, "x-axis-date-visible", true), span,
       source.getAttribute("time-format")?.toLowerCase() === "twentyfourhour" ? "twenty-four-hour" : "twelve-hour",
       readBooleanAttribute(source, "display-milliseconds", false), source.getAttribute("x-axis-date-format"), locale);
     if (flipped) labels.reverse();
@@ -772,8 +782,19 @@ function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], fl
     const color = readBooleanAttribute(source, "x-axis-in-trend-color", false) && trendIndex >= 0 && pens[trendIndex]
       ? normalizePenColor(pens[trendIndex]!.color, trendIndex) : axis.color;
     const label = source.getAttribute("x-axis-label");
-    return `<div class="time-axis ${alignment}" data-axis-name="${escapeHtml(axis.name)}" style="${alignment}:calc(-${toCss((column + 1) * 3.6)}em - 1px);color:${escapeHtml(color)}">${renderXLabels(labels)}${label ? `<span class="axis-label x-axis-title">${escapeHtml(label)}</span>` : ""}</div>`;
+    const measurementMode = source.getAttribute("rangeType") === "MeasurementPoints";
+    const rangeUnavailable = source.getAttribute("rangeType") === "StartEnd" && !fixedRange;
+    const rangeLabels = measurementMode ? `<span class="axis-label x-label" style="left:50%">${escapeHtml(source.getAttribute("measurementPoints") ?? "Unknown")} measurement points (timestamps unavailable)</span>`
+      : rangeUnavailable ? `<span class="axis-label x-label" style="left:50%">Time range unavailable</span>` : renderXLabels(labels);
+    return `<div class="time-axis ${alignment}" data-axis-name="${escapeHtml(axis.name)}" style="${alignment}:calc(-${toCss((column + 1) * 3.6)}em - 1px);color:${escapeHtml(color)}">${rangeLabels}${label ? `<span class="axis-label x-axis-title">${escapeHtml(label)}</span>` : ""}</div>`;
   }).join("");
+}
+
+function parseAxisTimestamp(value: string | null): number | undefined {
+  // Converters emit ISO 8601 with an explicit offset; reject browser-dependent date strings.
+  if (!value || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/u.test(value)) return undefined;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : undefined;
 }
 
 function createTimeLabels(
