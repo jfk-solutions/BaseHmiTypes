@@ -15,4 +15,8 @@ export class HmiButton extends HmiButtonBase {
   shape?: HmiProperty<HmiButtonShape>;
   /** For frames wider than one pixel, false centers the stroke on the bounds. True/omitted draws inside. The 3D bevel is separate. */
   drawStrokeInsideFrame?: HmiProperty<boolean>;
+  /** The configured pressed snapshot; preview rendering does not change tags or operate the button. */
+  pressed?: HmiProperty<boolean>;
+  /** True identifies a latching/toggle button, exposing its pressed snapshot as an accessible toggle state. */
+  toggle?: HmiProperty<boolean>;
 }
