@@ -10,4 +10,7 @@ public class HmiButton : HmiButtonBase
     }
 
     public HmiProperty<HmiButtonType>? Mode { get; set; }
+
+    /// <summary>Ellipse gives a circular outline when width and height are equal.</summary>
+    public HmiProperty<HmiButtonShape>? Shape { get; set; }
 }
