@@ -26,6 +26,7 @@ export * from "./widgets/HmiGaugeSweepStyle.js";
 export * from "./widgets/HmiDecimalPointMode.js";
 export * from "./widgets/HmiFixedPositionOutputMode.js";
 export * from "./widgets/HmiButtonType.js";
+export * from "./widgets/HmiButtonShape.js";
 export * from "./widgets/HmiSwitchType.js";
 export * from "./widgets/HmiButton.js";
 export * from "./widgets/HmiToggleSwitch.js";

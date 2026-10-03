@@ -79,6 +79,7 @@ import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
 import { HmiClock } from "../../screens/widgets/HmiClock.js";
 import { HmiComboBox } from "../../screens/widgets/HmiComboBox.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
+import { HmiButtonShape } from "../../screens/widgets/HmiButtonShape.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
 import { HmiListBox } from "../../screens/widgets/HmiListBox.js";
@@ -1520,6 +1521,14 @@ function createButtonStyle(button: HmiButton, state: HmiState | undefined): stri
     style += `color: ${colorToCss(captionColor)};`;
   } else if (!stateHasCaptionColor && captionColor !== undefined) {
     style = `color: ${colorToCss(captionColor)};`;
+  }
+  switch (getStaticValue(button.shape)) {
+    case HmiButtonShape.Rectangle:
+      style += "border-radius: 0px;";
+      break;
+    case HmiButtonShape.Ellipse:
+      style += "border-radius: 50%;overflow: hidden;";
+      break;
   }
   style += createStateStyle(state) ?? "";
   const borderWidth = getStaticValue(button.threeDBorderWidth) ?? 0;
