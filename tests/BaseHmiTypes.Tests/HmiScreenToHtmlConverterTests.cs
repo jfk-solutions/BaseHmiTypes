@@ -786,6 +786,37 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(HmiFillDirection.Right, "left: 90%", "x1=\"90%\"")]
+    [DataRow(HmiFillDirection.Left, "left: 10%", "x1=\"10%\"")]
+    [DataRow(HmiFillDirection.Down, "top: 90%", "y1=\"90%\"")]
+    [DataRow(HmiFillDirection.Up, "top: 10%", "y1=\"10%\"")]
+    public async Task ConvertAsync_RendersBarMajorTickInterval(HmiFillDirection direction, string labelPosition, string strokePosition)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        var bar = new HmiBar { Width = 120, Height = 80, ShowScale = true, DivisionCount = 2,
+            MajorTickInterval = 30, BeginValue = 0, EndValue = 100, FillDirection = direction };
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var converter = new HmiScreenToHtmlConverter();
+        var html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, labelPosition);
+        StringAssert.Contains(html, strokePosition);
+        StringAssert.Contains(html, ">30</span>");
+        StringAssert.Contains(html, ">60</span>");
+        StringAssert.Contains(html, ">90</span>");
+        Assert.IsFalse(html.Contains(">100</span>", StringComparison.Ordinal));
+        var fallbackLabels = direction is HmiFillDirection.Up or HmiFillDirection.Left
+            ? "<span>100</span><span>50</span><span>0</span>"
+            : "<span>0</span><span>50</span><span>100</span>";
+        bar.ScaleMode = 3;
+        StringAssert.Contains(await converter.ConvertAsync(screen), fallbackLabels);
+        bar.ScaleMode = 0;
+        bar.MajorTickInterval = 0;
+        StringAssert.Contains(await converter.ConvertAsync(screen), fallbackLabels);
+    }
+
+    [TestMethod]
     [DataRow(HmiFillDirection.Right, false)]
     [DataRow(HmiFillDirection.Down, false)]
     [DataRow(HmiFillDirection.Left, true)]

@@ -55,6 +55,9 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<bool>? MajorTicksBold { get; set; }
 
+    /// <summary>Spacing of major marks in scale units for a linear scale; zero requests automatic spacing.</summary>
+    public HmiProperty<double>? MajorTickInterval { get; set; }
+
     public HmiProperty<HmiTickDirection>? TickDirection { get; set; }
 
     public HmiProperty<int>? BarMode { get; set; }
