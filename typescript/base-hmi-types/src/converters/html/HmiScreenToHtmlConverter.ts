@@ -1597,8 +1597,14 @@ function appendBarMeter(
 ): void {
   html.push("<meter");
   appendBarColorAttributes(html, bar, context);
+  let meterStyle = `${vertical ? "height: 100%;" : "width: 100%;"} flex: 1; min-width: 0; min-height: 0;${getBarDirectionStyle(direction)}`;
+  const disabledColor = getStaticValue(bar.enabled) === false && getStaticValue(bar.useDisabledForegroundColor) === true
+    ? context.effectiveProperties.resolve(bar, "DisabledForegroundColor", bar.disabledForegroundColor)
+    : undefined;
+  const fillColor = disabledColor === undefined ? getStaticValue(getBarThresholdFillColor(bar)) : undefined;
+  if (fillColor !== undefined) meterStyle += `color: ${colorToCss(fillColor)};`;
   appendAttribute(html, "style",
-    `${vertical ? "height: 100%;" : "width: 100%;"} flex: 1; min-width: 0; min-height: 0;${getBarDirectionStyle(direction)}`);
+    meterStyle);
   appendAttribute(html, "min", toCss(minimum));
   appendAttribute(html, "max", toCss(maximum));
   appendAttribute(html, "value", toCss(value));
@@ -4054,7 +4060,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   const useDisabledForegroundColor = !getStaticValueOrDefault(item.enabled, true) &&
     getStaticValueOrDefault(item.useDisabledForegroundColor, false);
   let foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
-  if (item instanceof HmiBar)
+  if (item instanceof HmiBar && getStaticValue(item.showScale) !== true)
     foregroundColor = getBarThresholdFillColor(item) ?? foregroundColor;
   if (useDisabledForegroundColor) {
     foregroundColor = context.effectiveProperties.resolve(
