@@ -16,6 +16,30 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(0, false)]
+    [DataRow(0, true)]
+    [DataRow(1, false)]
+    [DataRow(1, true)]
+    [DataRow(2, false)]
+    [DataRow(2, true)]
+    [DataRow(3, false)]
+    [DataRow(3, true)]
+    public async Task ConvertAsync_DisablesNativeHtmlControls(int kind, bool enabled)
+    {
+        HmiScreenItemBase item = kind switch { 0 => new HmiIOField(), 1 => new HmiSymbolicIOField(),
+            2 => new HmiComboBox(), _ => new HmiListBox() };
+        item.Name = "NativeControl"; item.Width = 160; item.Height = 60;
+        item.Enabled = HmiProperty.Tag("Control.Enabled", enabled);
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<(?:input|select) id=\"NativeControl\"[^>]*>").Value;
+        Assert.IsFalse(string.IsNullOrEmpty(opening));
+        Assert.AreEqual(!enabled, opening.Contains(" disabled=\"disabled\"", StringComparison.Ordinal));
+        Assert.AreEqual(!enabled, opening.Contains("aria-disabled=\"true\"", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     [DataRow(false, false)]
     [DataRow(false, true)]
     [DataRow(true, false)]

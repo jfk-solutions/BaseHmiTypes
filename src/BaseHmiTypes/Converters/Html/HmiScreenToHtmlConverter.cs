@@ -1754,6 +1754,8 @@ public class HmiScreenToHtmlConverter
     {
         html.Append("<input");
         AppendCommonAttributes(html, ioField, context, additionalStyle: CreateFontWritingModeStyle(ioField.Font, context));
+        if (!ResolveStaticValue(ioField.Enabled, context))
+            AppendAttribute(html, "disabled", "disabled");
         var text = ResolveStaticValue(ioField.Text, context)?.GetDisplayText(context.CultureInfo);
         if (string.IsNullOrWhiteSpace(text) && ioField.Text is HmiExpressionProperty<HmiMultilingualText> expression)
             text = expression.Expression;
@@ -2877,6 +2879,8 @@ public class HmiScreenToHtmlConverter
         }
         html.Append("<select");
         AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: textStateStyle);
+        if (!ResolveStaticValue(symbolicIoField.Enabled, context))
+            AppendAttribute(html, "disabled", "disabled");
         html.Append('>');
         foreach (var state in symbolicIoField.States)
         {
@@ -2989,6 +2993,8 @@ public class HmiScreenToHtmlConverter
 
         html.Append("<select");
         AppendCommonAttributes(html, selectionGroup, context, additionalStyle: CreateStateStyle(selectedState));
+        if (!ResolveStaticValue(selectionGroup.Enabled, context))
+            AppendAttribute(html, "disabled", "disabled");
         html.Append('>');
         foreach (var state in selectionGroup.States)
         {
