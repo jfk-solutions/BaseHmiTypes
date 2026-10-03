@@ -2541,6 +2541,16 @@ function resolveScaleValue(scale: HmiScaleWidgetBase, minimum: number, maximum: 
   return Math.min(Math.max(value, minimum), maximum);
 }
 
+function createSymbolicStateStyle(field: HmiSymbolicIOField, state: HmiState | undefined, context: HmiHtmlConvertContext): string | undefined {
+  let style = createStateStyle(state) ?? undefined;
+  const width = context.effectiveProperties.resolve(field, "BorderWidth", field.borderWidth);
+  if (field.drawStrokeInsideFrame !== undefined &&
+      !getStaticValue(context.effectiveProperties.resolve(field, "DrawStrokeInsideFrame", field.drawStrokeInsideFrame)) &&
+      (getStaticValue(width) ?? 0) > 1 && state?.borderColor !== undefined)
+    style = appendCssDeclaration(style, "outline-color: " + colorToCss(state.borderColor) + ";");
+  return style;
+}
+
 async function appendSymbolicInput(
   html: string[],
   symbolicIoField: HmiSymbolicIOField,
@@ -2563,7 +2573,7 @@ async function appendSymbolicInput(
     const imageStyle = blinkAlternateImage
       ? appendCssDeclaration(imageLayoutStyle, `animation: hmi-symbolic-base-flash ${getBlinkDuration(selectedState.imageBlinkRate)}s steps(1, end) infinite;`)
       : imageLayoutStyle;
-    let stateStyle = createStateStyle(selectedState) ?? undefined;
+    let stateStyle = createSymbolicStateStyle(symbolicIoField, selectedState, context);
     if (selectedState.imageBackgroundTransparent !== true && selectedState.imageBackgroundColor !== undefined)
       stateStyle = appendCssDeclaration(stateStyle, `background-color: ${colorToCss(selectedState.imageBackgroundColor)};`);
     stateStyle = appendCssDeclaration(stateStyle, "overflow: hidden;");
@@ -2605,7 +2615,7 @@ async function appendSymbolicInput(
     return;
   }
 
-  const textStateStyle = (createStateStyle(selectedState) ?? "") + (createFontWritingModeStyle(symbolicIoField.font) ?? "");
+  const textStateStyle = (createSymbolicStateStyle(symbolicIoField, selectedState, context) ?? "") + (createFontWritingModeStyle(symbolicIoField.font) ?? "");
   if (getStaticValue(symbolicIoField.readOnly) === true) {
     html.push("<input");
     appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle);
@@ -4264,6 +4274,8 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     ((item instanceof HmiBar || item instanceof HmiSlider) && item.drawInsideFrame !== undefined &&
       !getStaticValue(context.effectiveProperties.resolve(item, "DrawInsideFrame", item.drawInsideFrame)) ||
      (item instanceof HmiRectangle || item instanceof HmiText || item instanceof HmiGraphicView) && item.drawStrokeInsideFrame !== undefined &&
+      !getStaticValue(context.effectiveProperties.resolve(item, "DrawStrokeInsideFrame", item.drawStrokeInsideFrame)) ||
+     item instanceof HmiSymbolicIOField && item.drawStrokeInsideFrame !== undefined &&
       !getStaticValue(context.effectiveProperties.resolve(item, "DrawStrokeInsideFrame", item.drawStrokeInsideFrame)));
   if (borderBlink?.staticValue !== undefined && borderBlink.blinkValue !== undefined) {
     html.push(`--hmi-border-color-off: ${colorToCss(borderBlink.staticValue)};`);
