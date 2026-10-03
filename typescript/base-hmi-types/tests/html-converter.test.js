@@ -92,6 +92,27 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const readOnly of [false,true]) for (const enabled of [false,true]) {
+test("HTML renderer renders read-only symbolic text (" + [readOnly,enabled].join(", ") + ")", async () => {
+  const item = new HmiSymbolicIOField(); item.name = "StatusList"; item.width = staticProperty(160); item.height = staticProperty(60);
+  item.value = staticProperty(1); item.enabled = staticProperty(enabled); item.readOnly = tagProperty("List.ReadOnly",readOnly);
+  item.font = new HmiFont(); item.font.orientationAngle = staticProperty(90);
+  const off = new HmiState(); off.value = 0; off.text = HmiMultilingualText.fromText("Stopped"); item.states.push(off);
+  const on = new HmiState(); on.value = 1; on.text = HmiMultilingualText.fromText("Running & ready");
+  on.captionColor = hmiColorFromArgb(255,1,2,3); item.states.push(on);
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<(?:input|select) id="StatusList"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening.includes("writing-mode: sideways-lr;")); assert.ok(opening.includes("color: #010203;"));
+  assert.equal(opening.startsWith("<input"),readOnly); assert.equal(opening.includes('readonly="readonly"'),readOnly);
+  if (readOnly) {
+    assert.ok(opening.includes('value="Running &amp; ready"')); assert.ok(opening.includes('data-state-value="1"'));
+    assert.equal(opening.includes(' disabled="disabled"'),!enabled);
+  } else assert.ok(html.includes('selected="selected">Running &amp; ready</option>'));
+});
+}
+
 for (const angle of [0,90,270]) for (const image of [false,true]) {
 test("HTML renderer renders symbolic text orientation without rotating images (" + [angle,image].join(", ") + ")", async () => {
   const item = new HmiSymbolicIOField(); item.name = "OrientedList"; item.width = staticProperty(80); item.height = staticProperty(160);
