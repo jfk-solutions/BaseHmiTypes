@@ -16,6 +16,35 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(false, 0, false)]
+    [DataRow(false, 1, false)]
+    [DataRow(false, 2, false)]
+    [DataRow(false, 0, true)]
+    [DataRow(false, 1, true)]
+    [DataRow(false, 2, true)]
+    [DataRow(true, 0, false)]
+    [DataRow(true, 1, false)]
+    [DataRow(true, 2, false)]
+    [DataRow(true, 0, true)]
+    [DataRow(true, 1, true)]
+    [DataRow(true, 2, true)]
+    public async Task ConvertAsync_UsesSelectedIndexWithoutInventingAValue(bool list, int index, bool explicitValue)
+    {
+        HmiSelectionGroupBase item = list ? new HmiListBox() : new HmiComboBox();
+        item.Name = "Ordinal"; item.SelectedIndex = index;
+        if (explicitValue) item.Value = 0;
+        for (var i = 0; i < 3; i++) item.States.Add(new HmiState {
+            Value = i, Text = HmiMultilingualText.FromText($"Entry {i}") });
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        for (var i = 0; i < 3; i++) {
+            var option = System.Text.RegularExpressions.Regex.Match(html, $"<option value=\"{i}\"[^>]*>").Value;
+            Assert.AreEqual(i == (explicitValue ? 0 : index), option.Contains("selected=\"selected\"", StringComparison.Ordinal));
+        }
+    }
+
+    [TestMethod]
     [DataRow(0, false)]
     [DataRow(0, true)]
     [DataRow(1, false)]

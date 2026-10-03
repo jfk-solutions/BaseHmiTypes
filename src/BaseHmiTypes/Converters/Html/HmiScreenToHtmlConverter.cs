@@ -2983,13 +2983,13 @@ public class HmiScreenToHtmlConverter
     {
         uint? selectedFields = selectionGroup is HmiListBox { SelectedFields: not null } listBox
             ? ResolveStaticValue(listBox.SelectedFields, context) : null;
-        var selectedValue = selectionGroup.Indicator is not null
+        double? selectedValue = selectionGroup.Indicator is not null
             ? ResolveStaticValue(selectionGroup.Indicator, context)
-            : ResolveStaticValue(selectionGroup.Value, context);
+            : selectionGroup.Value is null ? null : ResolveStaticValue(selectionGroup.Value, context);
         var selectedIndex = selectionGroup.SelectedIndex is null
             ? -1
             : ResolveStaticValue(selectionGroup.SelectedIndex, context);
-        var selectedState = selectionGroup.States.FirstOrDefault(candidate => candidate.Value == selectedValue)
+        var selectedState = selectionGroup.States.FirstOrDefault(candidate => selectedValue is not null && candidate.Value == selectedValue)
             ?? (selectedIndex >= 0 && selectedIndex < selectionGroup.States.Count ? selectionGroup.States[selectedIndex] : null)
             ?? selectionGroup.States.FirstOrDefault();
 
