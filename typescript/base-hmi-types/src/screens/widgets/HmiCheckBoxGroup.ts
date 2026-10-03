@@ -3,6 +3,8 @@ import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiProperty } from "../base.js";
 
 export class HmiCheckBoxGroup extends HmiSelectionGroupBase {
+  /** For borders wider than one pixel, false centers on the frame; true/omitted draws inside. */
+  drawStrokeInsideFrame?: HmiProperty<boolean>;
   /** A 32-bit selection mask; bit zero selects the first field. Overrides selectedIndex when set. */
   selectedFields?: HmiProperty<number>;
   constructor() {

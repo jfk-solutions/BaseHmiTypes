@@ -2708,6 +2708,8 @@ async function appendSelectionGroup(
   appendStaticAttribute(html, "selected-index", selectionGroup.selectedIndex);
   if (selectionGroup instanceof HmiCheckBoxGroup || selectionGroup instanceof HmiRadioButtonGroup)
     appendStaticAttribute(html, "selected-fields", selectionGroup.selectedFields);
+  if ((selectionGroup instanceof HmiCheckBoxGroup || selectionGroup instanceof HmiRadioButtonGroup) && selectionGroup.drawStrokeInsideFrame !== undefined)
+    appendAttribute(html, "draw-stroke-inside-frame", getStaticValue(selectionGroup.drawStrokeInsideFrame) ? "true" : "false");
   appendStaticAttribute(html, "selection-item-height", selectionGroup.selectionItemHeight);
   appendStaticAttribute(html, "selection-background-color", selectionGroup.selectionBackgroundColor);
   appendStaticAttribute(html, "selection-foreground-color", selectionGroup.selectionForegroundColor);
