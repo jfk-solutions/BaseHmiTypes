@@ -2725,7 +2725,7 @@ function appendSelectionList(
     ? getStaticValue(selectionGroup.indicator)
     : getStaticValue(selectionGroup.value);
   const selectedIndex = getStaticValue(selectionGroup.selectedIndex) ?? -1;
-  const selectedState = selectionGroup.states.find(candidate => candidate.value === selectedValue)
+  const selectedState = selectionGroup.states.find(candidate => selectedValue !== undefined && candidate.value === selectedValue)
     ?? (selectedIndex >= 0 && selectedIndex < selectionGroup.states.length ? selectionGroup.states[selectedIndex] : undefined)
     ?? selectionGroup.states[0];
 
