@@ -5,6 +5,7 @@ import { HmiTrendPenType } from "./HmiTrendPenType.js";
 import { HmiTrendLineType } from "./HmiTrendLineType.js";
 import { HmiTrendAxisScaleType } from "./HmiTrendAxisScaleType.js";
 import { HmiVerticalAlignment } from "./HmiVerticalAlignment.js";
+import { HmiHorizontalAlignment } from "./HmiHorizontalAlignment.js";
 
 export class HmiTrendPen {
   /** One-based pen number as exposed by the engineering system. */
@@ -52,6 +53,13 @@ export class HmiTrendPen {
   autoDecimalPlaces?: HmiProperty<boolean>;
   /** Fixed decimal precision of the value axis assigned to this pen. */
   decimalPlaces?: HmiProperty<number>;
+  /** Identity of the shared value axis assigned to this pen. */
+  valueAxisName?: string;
+  valueAxisVisible?: HmiProperty<boolean>;
+  valueAxisColor?: HmiProperty<HmiColor>;
+  valueAxisInTrendColor?: HmiProperty<boolean>;
+  valueAxisAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  valueAxisLabel?: string;
   /** Current minimum value used to scale this pen. */
   currentScaleMinimumValue?: HmiProperty<number>;
   /** Current maximum value used to scale this pen. */

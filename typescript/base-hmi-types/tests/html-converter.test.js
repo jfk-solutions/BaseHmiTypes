@@ -1736,11 +1736,23 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   const pen = new HmiTrendPen();
   pen.number = 1;
   pen.decimalPlaces = staticProperty(4);
+  pen.valueAxisName = "Axis A";
+  pen.valueAxisVisible = staticProperty(false);
+  pen.valueAxisColor = staticProperty(hmiColorFromArgb(255, 0x12, 0x34, 0x56));
+  pen.valueAxisInTrendColor = staticProperty(true);
+  pen.valueAxisAlignment = staticProperty(HmiHorizontalAlignment.Right);
+  pen.valueAxisLabel = "Pressure";
   trend.pens.push(pen);
   layer.items.push(trend);
   screen.layers.push(layer);
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
   assert.match(html, /&quot;decimalPlaces&quot;:4/);
+  assert.match(html, /&quot;valueAxisName&quot;:&quot;Axis A&quot;/);
+  assert.match(html, /&quot;valueAxisVisible&quot;:false/);
+  assert.match(html, /&quot;valueAxisColor&quot;:&quot;#123456&quot;/);
+  assert.match(html, /&quot;valueAxisInTrendColor&quot;:true/);
+  assert.match(html, /&quot;valueAxisAlignment&quot;:&quot;Right&quot;/);
+  assert.match(html, /&quot;valueAxisLabel&quot;:&quot;Pressure&quot;/);
 });
 
 test("HTML converter does not render disabled trend status backgrounds", async () => {
