@@ -1553,6 +1553,7 @@ function createStateStyle(state: HmiState | undefined): string | null {
 function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConvertContext): void {
   html.push("<input");
   appendCommonAttributes(html, ioField, context, undefined, createFontWritingModeStyle(ioField.font));
+  if (getStaticValue(ioField.enabled) === false) appendAttribute(html, "disabled", "disabled");
   let text = getStaticValue(ioField.text)?.getDisplayText(context.options.cultureLcid);
   if (!text?.trim() && ioField.text?.kind === HmiPropertyKind.Expression)
     text = (ioField.text as HmiExpressionProperty<HmiMultilingualText>).expression;
@@ -2616,6 +2617,7 @@ async function appendSymbolicInput(
   }
   html.push("<select");
   appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle);
+  if (getStaticValue(symbolicIoField.enabled) === false) appendAttribute(html, "disabled", "disabled");
   html.push(">");
   for (const state of symbolicIoField.states) {
     html.push("<option");
@@ -2727,6 +2729,7 @@ function appendSelectionList(
 
   html.push("<select");
   appendCommonAttributes(html, selectionGroup, context, true, createStateStyle(selectedState));
+  if (getStaticValue(selectionGroup.enabled) === false) appendAttribute(html, "disabled", "disabled");
   html.push(">");
   for (const state of selectionGroup.states) {
     html.push("<option");

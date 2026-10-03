@@ -92,6 +92,20 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const kind of [0,1,2,3]) for (const enabled of [false,true]) {
+test("HTML renderer disables native controls (" + [kind,enabled].join(", ") + ")", async () => {
+  const item = new [HmiIOField,HmiSymbolicIOField,HmiComboBox,HmiListBox][kind]();
+  item.name = "NativeControl"; item.width = staticProperty(160); item.height = staticProperty(60);
+  item.enabled = tagProperty("Control.Enabled",enabled);
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<(?:input|select) id="NativeControl"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening); assert.equal(opening.includes(' disabled="disabled"'),!enabled);
+  assert.equal(opening.includes('aria-disabled="true"'),!enabled);
+});
+}
+
 for (const readOnly of [false,true]) for (const enabled of [false,true]) {
 test("HTML renderer renders read-only symbolic text (" + [readOnly,enabled].join(", ") + ")", async () => {
   const item = new HmiSymbolicIOField(); item.name = "StatusList"; item.width = staticProperty(160); item.height = staticProperty(60);
