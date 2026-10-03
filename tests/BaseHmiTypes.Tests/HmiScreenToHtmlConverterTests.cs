@@ -17,6 +17,32 @@ public class HmiScreenToHtmlConverterTests
 {
 
     [TestMethod]
+    [DataRow(500, false)]
+    [DataRow(500, true)]
+    [DataRow(0, false)]
+    [DataRow(0, true)]
+    [DataRow(-1, false)]
+    [DataRow(-1, true)]
+    public async Task ConvertAsync_PreservesGaugeNumericFontWeight(int weight, bool bold)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(new HmiGauge { LabelFont = new HmiFont
+        {
+            Weight = HmiProperty.Tag("Gauge.Font.Weight", weight),
+            Bold = HmiProperty.Tag("Gauge.Font.Bold", bold)
+        } });
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<hmi-gauge[^>]*>").Value;
+        var attribute = System.Text.RegularExpressions.Regex.Match(opening, "label-font=\"([^\"]*)\"");
+        Assert.IsTrue(attribute.Success);
+        using var font = System.Text.Json.JsonDocument.Parse(System.Net.WebUtility.HtmlDecode(attribute.Groups[1].Value));
+        Assert.AreEqual(weight, font.RootElement.GetProperty("weight").GetInt32());
+        Assert.AreEqual(bold, font.RootElement.GetProperty("bold").GetBoolean());
+    }
+
+    [TestMethod]
     [DataRow(0, 500, false)]
     [DataRow(0, 500, true)]
     [DataRow(0, 0, false)]
