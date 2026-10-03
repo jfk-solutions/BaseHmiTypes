@@ -161,6 +161,52 @@ test("time-axis range modes retain fixed endpoints and distinguish missing sampl
   assert.match(control.shadowRoot.innerHTML, /left:0%">[^<]*<br>08:52:13/u);
 });
 
+test("UTC and resolved project zones control named time labels across date and DST boundaries", () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("lang", "en-US");
+  control.setAttribute("time-base", "Utc");
+  control.setAttribute("time-axes", JSON.stringify([{ name: "Clock", rangeType: "StartEnd", startTime: "2020-12-31T23:59:59.123Z", endTime: "2021-01-01T00:00:00.123Z", dateFormat: "dd.MMM.yyyy", timeFormat: "TwentyFourHour", displayMilliseconds: true }]));
+  assert.match(control.shadowRoot.innerHTML, /31.Dec.2020<br>23:59:59.123/u);
+  assert.match(control.shadowRoot.innerHTML, /01.Jan.2021<br>00:00:00.123/u);
+  control.setAttribute("time-base", "Project");
+  assert.match(control.shadowRoot.innerHTML, /Project time zone unavailable/u);
+  assert.ok(!control.shadowRoot.innerHTML.includes("23:59:59.123"));
+  control.setAttribute("project-time-zone", "Europe/Berlin");
+  assert.match(control.shadowRoot.innerHTML, /01.Jan.2021<br>00:59:59.123/u);
+  assert.match(control.shadowRoot.innerHTML, /01.Jan.2021<br>01:00:00.123/u);
+  control.setAttribute("time-axes", JSON.stringify([{ name: "DST", rangeType: "StartEnd", startTime: "2020-03-29T00:59:00Z", endTime: "2020-03-29T01:01:00Z", timeFormat: "TwentyFourHour" }]));
+  assert.match(control.shadowRoot.innerHTML, /01:59:00/u);
+  assert.match(control.shadowRoot.innerHTML, /03:01:00/u);
+  control.setAttribute("project-time-zone", "Invalid/Zone");
+  assert.match(control.shadowRoot.innerHTML, /Project time zone unavailable/u);
+  control.setAttribute("project-time-zone", "UTC");
+  assert.match(control.shadowRoot.innerHTML, /00:59:00/u);
+  const local = new Date("2020-03-29T00:59:00Z");
+  const localText = `${String(local.getHours()).padStart(2, "0")}:${String(local.getMinutes()).padStart(2, "0")}:00`;
+  control.setAttribute("time-base", "Local");
+  assert.ok(control.shadowRoot.innerHTML.includes(localText));
+});
+
+test("legacy and nested trend windows retain their time-base setting", () => {
+  const originalNow = Date.now;
+  Date.now = () => Date.parse("2021-01-01T00:00:00Z");
+  try {
+    const control = new HmiTrendControl();
+    control.setAttribute("time-base", "Utc");
+    control.setAttribute("time-format", "TwentyFourHour");
+    control.setAttribute("x-axis-time-span", "60000");
+    assert.match(control.shadowRoot.innerHTML, /00:00:00/u);
+    assert.match(control.shadowRoot.innerHTML, /23:59:00/u);
+    control.setAttribute("time-base", "Project");
+    assert.match(control.shadowRoot.innerHTML, /Project time zone unavailable/u);
+    control.setAttribute("project-time-zone", "Europe/Berlin");
+    control.setAttribute("trend-windows", JSON.stringify([{ name: "A" }]));
+    const attributes = control.shadowRoot.innerHTML.match(/<hmi-trend-control\s+([^>]+)>/u)[1];
+    assert.match(attributes, /time-base="Project"/u);
+    assert.match(attributes, /project-time-zone="Europe\/Berlin"/u);
+  } finally { Date.now = originalNow; }
+});
+
 test("time axes own their window independently of referencing pens", () => {
   const parent = new HmiTrendControl();
   parent.setAttribute("trend-windows", JSON.stringify([{ name: "A" }, { name: "B" }, { name: "Empty" }]));

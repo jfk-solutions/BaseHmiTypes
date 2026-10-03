@@ -3448,6 +3448,8 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "x-axis-date-format", trendControl.XAxisDateFormat);
         AppendStaticBooleanValueAttribute(html, "x-axis-flipped", trendControl.XAxisFlipped);
         AppendStaticAttribute(html, "time-format", trendControl.TimeFormat);
+        AppendStaticAttribute(html, "time-base", trendControl.TimeBase);
+        AppendAttribute(html, "project-time-zone", trendControl.ProjectTimeZoneId);
         AppendStaticBooleanValueAttribute(html, "display-milliseconds", trendControl.DisplayMilliseconds);
         AppendStaticAttribute(html, "x-axis-time-span", trendControl.XAxisTimeSpan);
         AppendAttribute(html, "x-axis-time-span-unit", trendControl.XAxisTimeSpanUnit);

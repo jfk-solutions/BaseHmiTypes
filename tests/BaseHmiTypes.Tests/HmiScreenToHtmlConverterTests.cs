@@ -3248,7 +3248,7 @@ public class HmiScreenToHtmlConverterTests
     {
         var screen = new HmiScreen { Name = "Main", Width = 400, Height = 240 };
         var layer = new HmiLayer { Name = "Default" };
-        var trend = new HmiTrendControl { Name = "Trend", Width = 320, Height = 180 };
+        var trend = new HmiTrendControl { Name = "Trend", Width = 320, Height = 180, TimeBase = HmiTrendTimeBase.Project, ProjectTimeZoneId = "Europe/Berlin" };
         trend.TimeAxes.Add(new HmiTrendTimeAxis
         {
             Name = "Time A", TrendWindowName = "Time window", Visible = false, ShowDate = true, DateFormat = "yyyy/MM/dd",
@@ -3302,6 +3302,8 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "&quot;endTime&quot;:&quot;2018-07-19T08:52:13.0000000+00:00&quot;");
         StringAssert.Contains(html, "&quot;measurementPoints&quot;:120");
         StringAssert.Contains(html, "&quot;refreshEnabled&quot;:false");
+        StringAssert.Contains(html, "time-base=\"Project\"");
+        StringAssert.Contains(html, "project-time-zone=\"Europe/Berlin\"");
         StringAssert.Contains(html, "&quot;name&quot;:&quot;Time A&quot;");
         StringAssert.Contains(html, "&quot;name&quot;:&quot;Time C&quot;");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Second value&quot;");
