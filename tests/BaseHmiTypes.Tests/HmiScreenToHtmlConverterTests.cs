@@ -17,6 +17,50 @@ public class HmiScreenToHtmlConverterTests
 {
 
     [TestMethod]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
+    [DataRow(4)]
+    [DataRow(5)]
+    [DataRow(6)]
+    [DataRow(7)]
+    [DataRow(8)]
+    [DataRow(9)]
+    public async Task ConvertAsync_DoesNotClipShapeStrokesOrMarkers(int kind)
+    {
+        HmiShapeBase shape = kind switch
+        {
+            1 => new HmiCircle { CenterX = 50, CenterY = 50, Radius = 50 },
+            2 => new HmiEllipse { CenterX = 50, CenterY = 50, RadiusX = 50, RadiusY = 50 },
+            3 => new HmiCircularArc { CenterX = 50, CenterY = 50, Radius = 50, SweepAngle = 360 },
+            4 => new HmiEllipticalArc { CenterX = 50, CenterY = 50, RadiusX = 50, RadiusY = 50, SweepAngle = 360 },
+            5 => new HmiCircleSegment { CenterX = 50, CenterY = 50, Radius = 50, SweepAngle = 90 },
+            6 => new HmiEllipseSegment { CenterX = 50, CenterY = 50, RadiusX = 50, RadiusY = 50, SweepAngle = 90 },
+            7 => new HmiLine(),
+            8 => new HmiPolygon(),
+            _ => new HmiPolyline()
+        };
+        shape.Name = "Bordered";
+        shape.Width = 100;
+        shape.Height = 100;
+        shape.LineWidth = HmiProperty.Tag("Stroke.Width", 10d);
+        shape.StartMarker = HmiLineMarker.FilledArrow;
+        shape.EndMarker = HmiLineMarker.FilledCircle;
+        var layer = new HmiLayer();
+        layer.Items.Add(shape);
+        var screen = new HmiScreen();
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<svg id=\"Bordered\"[^>]*>").Value;
+        StringAssert.Contains(opening, "overflow=\"visible\"");
+        StringAssert.Contains(opening, "viewBox=\"0 0 100 100\"");
+        var svg = System.Text.RegularExpressions.Regex.Match(html, "<svg id=\"Bordered\"[^>]*>(.*?)</svg>", System.Text.RegularExpressions.RegexOptions.Singleline).Groups[1].Value;
+        StringAssert.Contains(svg, "stroke-width=\"10\"");
+        StringAssert.Contains(svg, "marker-start=");
+        StringAssert.Contains(svg, "marker-end=");
+    }
+
+    [TestMethod]
     [DataRow(0, 360, 0)]
     [DataRow(0, -360, 0)]
     [DataRow(0, 360, 90)]
