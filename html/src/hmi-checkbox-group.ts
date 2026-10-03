@@ -4,6 +4,8 @@ const selectionGroupProperties = {
   drawStrokeInsideFrame: Boolean,
   frameBorderStyle: String,
   frameBorderFlashDuration: Number,
+  foregroundFlashDuration: Number,
+  backgroundFlashDuration: Number,
   selectionItemHeight: Number,
   selectionBackgroundColor: String,
   selectionForegroundColor: String,
@@ -31,6 +33,8 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   private _drawStrokeInsideFrame = true;
   private _frameBorderStyle = "solid";
   private _frameBorderFlashDuration = 0;
+  private _foregroundFlashDuration = 0;
+  private _backgroundFlashDuration = 0;
   private _selectionItemHeight = Number.NaN;
   private _selectionBackgroundColor = "";
   private _selectionForegroundColor = "";
@@ -83,6 +87,19 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   }
   set frameBorderFlashDuration(value: number | string | null | undefined) {
     this.setNumberProperty("_frameBorderFlashDuration", value, 0);
+  }
+
+  get foregroundFlashDuration(): number {
+    return this._foregroundFlashDuration;
+  }
+  set foregroundFlashDuration(value: number | string | null | undefined) {
+    this.setNumberProperty("_foregroundFlashDuration", value, 0);
+  }
+  get backgroundFlashDuration(): number {
+    return this._backgroundFlashDuration;
+  }
+  set backgroundFlashDuration(value: number | string | null | undefined) {
+    this.setNumberProperty("_backgroundFlashDuration", value, 0);
   }
 
   get selectionItemHeight(): number {
@@ -198,11 +215,21 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
       ? `${this._selectionItemHeight}px`
       : "1fr";
     const selectionBackgroundColor = this._selectionBackgroundColor || "transparent";
-    const selectionForegroundColor = this._selectionForegroundColor || foregroundColor;
+    const selectionForegroundColor = this._selectionForegroundColor || "inherit";
     const selectionBorderColor = this._selectionBorderColor || "#6d98c8";
     const selectionBorderWidth = Number.isFinite(this._selectionBorderWidth) && this._selectionBorderWidth > 0
       ? this._selectionBorderWidth
       : 0;
+
+    const animations: string[] = [];
+    for (const [channel, duration] of [
+      ["border", this._frameBorderFlashDuration],
+      ["foreground", this._foregroundFlashDuration],
+      ["background", this._backgroundFlashDuration],
+    ] as const) {
+      if (duration > 0)
+        animations.push(`hmi-selection-${channel}-flash ${toCss(duration)}s steps(1, end) infinite`);
+    }
 
     this.root.innerHTML = `
       <style>
@@ -243,7 +270,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
           display: grid;
           align-content: start;
           gap: 6px;
-          ${this._frameBorderFlashDuration > 0 ? `animation: hmi-selection-border-flash ${toCss(this._frameBorderFlashDuration)}s steps(1, end) infinite;` : ""}
+          ${animations.length > 0 ? `animation: ${animations.join(", ")};` : ""}
         }
 
         @keyframes hmi-selection-border-flash {
@@ -255,6 +282,15 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
             border-color: var(--hmi-border-color-on, ${escapeCss(borderColor)});
             outline-color: var(--hmi-border-color-on, ${escapeCss(borderColor)});
           }
+        }
+
+        @keyframes hmi-selection-foreground-flash {
+          0%, 49.999% { color: var(--hmi-foreground-color-off, ${escapeCss(foregroundColor)}); }
+          50%, 100% { color: var(--hmi-foreground-color-on, ${escapeCss(foregroundColor)}); }
+        }
+        @keyframes hmi-selection-background-flash {
+          0%, 49.999% { background-color: var(--hmi-background-color-off, ${escapeCss(backgroundColor)}); }
+          50%, 100% { background-color: var(--hmi-background-color-on, ${escapeCss(backgroundColor)}); }
         }
 
         .item {
