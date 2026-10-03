@@ -1574,15 +1574,21 @@ function createButtonStyle(button: HmiButton, state: HmiState | undefined): stri
   if (borderWidth <= 0)
     return style || null;
 
-  style += `border-style: solid;border-width: ${toCss(borderWidth)}px;`;
   let topColor = getStaticValue(button.threeDBorderTopColor);
   let bottomColor = getStaticValue(button.threeDBorderBottomColor);
   topColor ??= bottomColor;
   bottomColor ??= topColor;
-  if (topColor !== undefined && bottomColor !== undefined) {
-    style += `border-color: ${colorToCss(topColor)} ${colorToCss(bottomColor)} ` +
-      `${colorToCss(bottomColor)} ${colorToCss(topColor)};`;
-  }
+  const top = topColor === undefined ? "currentColor" : colorToCss(topColor);
+  const bottom = bottomColor === undefined ? "currentColor" : colorToCss(bottomColor);
+  const width = toCss(borderWidth);
+  // The bevel is an inner paint layer, not a replacement for the normal frame.
+  style += `box-shadow: inset ${width}px 0 0 ${top}, inset 0 ${width}px 0 ${top}, ` +
+    `inset -${width}px 0 0 ${bottom}, inset 0 -${width}px 0 ${bottom};`;
+  const padding = hasThicknessEdges(button.padding) ? button.padding : undefined;
+  style += `padding: ${toCss(borderWidth + (padding ? getStaticValueOrDefault(padding.top, 0) : 2))}px ` +
+    `${toCss(borderWidth + (padding ? getStaticValueOrDefault(padding.right, 0) : 6))}px ` +
+    `${toCss(borderWidth + (padding ? getStaticValueOrDefault(padding.bottom, 0) : 2))}px ` +
+    `${toCss(borderWidth + (padding ? getStaticValueOrDefault(padding.left, 0) : 6))}px;`;
   return style;
 }
 
@@ -4400,6 +4406,8 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
       !getStaticValue(context.effectiveProperties.resolve(item, "DrawInsideFrame", item.drawInsideFrame)) ||
      (item instanceof HmiRectangle || item instanceof HmiText || item instanceof HmiGraphicView) && item.drawStrokeInsideFrame !== undefined &&
       !getStaticValue(context.effectiveProperties.resolve(item, "DrawStrokeInsideFrame", item.drawStrokeInsideFrame)) ||
+     item instanceof HmiButton && item.drawStrokeInsideFrame !== undefined &&
+      !getStaticValue(item.drawStrokeInsideFrame) ||
      item instanceof HmiSymbolicIOField && item.drawStrokeInsideFrame !== undefined &&
       !getStaticValue(context.effectiveProperties.resolve(item, "DrawStrokeInsideFrame", item.drawStrokeInsideFrame)));
   if (borderBlink?.staticValue !== undefined && borderBlink.blinkValue !== undefined) {
