@@ -104,6 +104,34 @@ test("gauge tick number formatting is reactive and leaves the value readout unch
   assert.equal(labels()[2], "5.00e-001"); // Unconfigured scientific precision defaults to two.
 });
 
+test("gauge scale visibility hides scale graphics independently of body, fill and value", () => {
+  const gauge = createGauge();
+  gauge.showValue = true;
+  gauge.showFillLevel = true;
+  gauge.value = 25;
+  const count = expression => [...gauge.svg.innerHTML.matchAll(expression)].length;
+  assert.equal(count(/<text /gu), 4);
+  assert.ok(gauge.svg.innerHTML.includes("data-hmi-gauge-scale-background"));
+  const paths = count(/<path /gu);
+  gauge.attributeChangedCallback("hide-scale", null, "");
+  assert.equal(count(/<line /gu), 0);
+  assert.equal(count(/<text /gu), 1);
+  assert.ok(!gauge.svg.innerHTML.includes("data-hmi-gauge-scale-background"));
+  assert.equal(count(/<path /gu), paths - 1); // Fill arc, pointer and bevel remain.
+  assert.equal(count(/<circle /gu), 2);
+  gauge.tickLabelInterval = 2;
+  gauge.majorTicksOnly = true;
+  gauge.attributeChangedCallback("hide-scale", "", null);
+  assert.equal(count(/stroke-width="0.7"/gu), 3);
+  assert.equal(count(/stroke-width="0.45"/gu), 0);
+  assert.equal(count(/<text /gu), 3); // Two scale labels plus the value.
+  assert.ok(gauge.svg.innerHTML.includes("data-hmi-gauge-scale-background"));
+  gauge.hideScale = true;
+  assert.equal(count(/<line /gu), 0);
+  gauge.hideScale = false;
+  assert.equal(count(/stroke-width="0.7"/gu), 3);
+});
+
 for (const [precision, digits] of [[-1, 0], [0, 0], [16, 16], [20, 20], [25, 20]]) {
   for (const exponential of [false, true]) {
     test(`gauge tick precision is clamped (${precision}, ${exponential})`, () => {

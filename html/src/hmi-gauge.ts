@@ -24,6 +24,7 @@ const gaugeProperties = {
   divisionCount: Number,
   subDivisionCount: Number,
   majorTicksOnly: Boolean,
+  hideScale: Boolean,
   hideTickLabels: Boolean,
   tickLabelInterval: Number,
   tickLabelDecimalPlaces: Number,
@@ -91,6 +92,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   private _divisionCount = 5;
   private _subDivisionCount = 5;
   private _majorTicksOnly = false;
+  private _hideScale = false;
   private _hideTickLabels = false;
   private _tickLabelInterval = 1;
   private _tickLabelDecimalPlaces = Number.NaN;
@@ -169,6 +171,13 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   }
   set majorTicksOnly(value: boolean) {
     this.setBooleanProperty("_majorTicksOnly", value);
+  }
+
+  get hideScale(): boolean {
+    return this._hideScale;
+  }
+  set hideScale(value: boolean) {
+    this.setBooleanProperty("_hideScale", value);
   }
 
   get hideTickLabels(): boolean {
@@ -361,7 +370,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     const labelStyle = this.getLabelStyle();
     const bevel = getBevelColors(this.backgroundColor);
 
-    const majorTicks = this.renderMajorTicks(begin, range, divisionCount, subDivisionCount, labelStyle);
+    const majorTicks = this.hideScale ? "" : this.renderMajorTicks(begin, range, divisionCount, subDivisionCount, labelStyle);
     const fill = this.showFillLevel
       ? this.renderFillArc(origin, fillTarget, begin, range)
       : "";
@@ -381,9 +390,9 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
       <path d="${arcPath(50, 55, 40, startAngle, startAngle + sweepAngle)}"
             fill="none" stroke="url(#hmi-gauge-bevel)" stroke-width="18"
             stroke-linecap="butt"></path>
-      <path d="${arcPath(50, 55, 32, startAngle, startAngle + sweepAngle)}"
+      ${this.hideScale ? "" : `<path data-hmi-gauge-scale-background d="${arcPath(50, 55, 32, startAngle, startAngle + sweepAngle)}"
             fill="none" stroke="${escapeAttribute(this.scaleBackgroundColor)}"
-            stroke-width="7.5" stroke-linecap="butt"></path>
+            stroke-width="7.5" stroke-linecap="butt"></path>`}
       ${fill}
       ${majorTicks}
       <circle cx="50" cy="55" r="22" fill="#c9ccd3"></circle>

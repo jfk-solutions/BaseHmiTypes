@@ -941,6 +941,20 @@ test(`HTML converter exposes gauge tick label number formatting (${precision}, $
 });
 }
 
+for (const show of [false, true, undefined]) {
+test(`HTML converter exposes gauge scale visibility (${show})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const gauge = new HmiGauge();
+  if (show !== undefined) gauge.showScale = staticProperty(show);
+  layer.items.push(gauge);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const markup = html.match(/<hmi-gauge[^>]*>/)?.[0] ?? "";
+  assert.equal(markup.includes("hide-scale"), show === false);
+});
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
