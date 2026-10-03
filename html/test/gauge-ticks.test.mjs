@@ -59,3 +59,26 @@ test("gauge major-only property updates rendered ticks without changing subdivis
   gauge.majorTicksOnly = false;
   assert.equal([...gauge.svg.innerHTML.matchAll(/stroke-width="0.45"/gu)].length, 6);
 });
+
+test("gauge label visibility and interval affect labels only and update dynamically", () => {
+  const gauge = createGauge();
+  gauge.divisionCount = 5;
+  const count = expression => [...gauge.svg.innerHTML.matchAll(expression)].length;
+  assert.equal(count(/<text /gu), 6);
+  gauge.attributeChangedCallback("tick-label-interval", null, "2");
+  assert.equal(count(/<text /gu), 3);
+  assert.equal(count(/stroke-width="0.7"/gu), 6);
+  assert.equal(count(/stroke-width="0.45"/gu), 15);
+  gauge.attributeChangedCallback("hide-tick-labels", null, "");
+  assert.equal(count(/<text /gu), 0);
+  assert.equal(count(/stroke-width="0.7"/gu), 6);
+  gauge.attributeChangedCallback("hide-tick-labels", "", null);
+  assert.equal(count(/<text /gu), 3);
+  for (const interval of [0, -1, Number.NaN]) {
+    gauge.tickLabelInterval = interval;
+    assert.equal(count(/<text /gu), 6);
+  }
+  gauge.showValue = true;
+  gauge.hideTickLabels = true;
+  assert.equal(count(/<text /gu), 1); // Independent value readout remains visible.
+});

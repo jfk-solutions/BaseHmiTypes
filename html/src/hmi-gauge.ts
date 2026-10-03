@@ -24,6 +24,8 @@ const gaugeProperties = {
   divisionCount: Number,
   subDivisionCount: Number,
   majorTicksOnly: Boolean,
+  hideTickLabels: Boolean,
+  tickLabelInterval: Number,
   barMode: Number,
   scaleMode: Number,
   orientation: Number,
@@ -87,6 +89,8 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   private _divisionCount = 5;
   private _subDivisionCount = 5;
   private _majorTicksOnly = false;
+  private _hideTickLabels = false;
+  private _tickLabelInterval = 1;
   private _barMode = 0;
   private _scaleMode = 0;
   private _orientation = 0;
@@ -161,6 +165,20 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   }
   set majorTicksOnly(value: boolean) {
     this.setBooleanProperty("_majorTicksOnly", value);
+  }
+
+  get hideTickLabels(): boolean {
+    return this._hideTickLabels;
+  }
+  set hideTickLabels(value: boolean) {
+    this.setBooleanProperty("_hideTickLabels", value);
+  }
+
+  get tickLabelInterval(): number {
+    return this._tickLabelInterval;
+  }
+  set tickLabelInterval(value: number) {
+    this.setNumberProperty("_tickLabelInterval", value, 1);
   }
 
   get barMode(): number {
@@ -364,15 +382,18 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     labelStyle: string,
   ): string {
     const parts: string[] = [];
+    const labelInterval = Math.max(1, Math.round(this.tickLabelInterval));
     for (let division = 0; division <= divisionCount; division++) {
       const angle = valueToAngle(division / divisionCount);
       parts.push(this.renderTick(angle, 35, 38, 0.7));
 
       const value = begin + range * (division / divisionCount);
       const labelPoint = polarPoint(50, 55, 44.5, angle);
-      parts.push(
-        `<text x="${formatNumber(labelPoint.x)}" y="${formatNumber(labelPoint.y)}" ${labelStyle}>${formatLabel(value)}</text>`,
-      );
+      if (!this.hideTickLabels && division % labelInterval === 0) {
+        parts.push(
+          `<text x="${formatNumber(labelPoint.x)}" y="${formatNumber(labelPoint.y)}" ${labelStyle}>${formatLabel(value)}</text>`,
+        );
+      }
 
       if (division === divisionCount || this.majorTicksOnly)
         continue;
