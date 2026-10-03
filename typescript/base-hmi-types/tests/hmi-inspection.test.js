@@ -600,7 +600,7 @@ test("HTML conversion renders the selected button state caption and project imag
 
   assert.match(html, /<button id="Motor"/);
   assert.match(html, /<img src="data:image\/png;base64,BAUG"/);
-  assert.match(html, /Running<\/span><\/button>/);
+  assert.match(html, /Running<\/span><\/span><\/button>/);
   assert.match(html, /background-color: #0A141E;/);
   assert.match(html, /color: #F0F1F2;/);
   assert.match(html, /border-color: #646566;/);
@@ -704,7 +704,7 @@ test("HTML conversion renders static disabled button appearance", async () => {
 
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen, project);
 
-  assert.match(html, /<button id="Disabled"[^>]* disabled="disabled"><img src="data:image\/png;base64,Ag=="/);
+  assert.match(html, /<button id="Disabled"[^>]* disabled="disabled">.*?<img src="data:image\/png;base64,Ag=="/);
   assert.match(html, /<button id="Grayscale"/);
   assert.match(html, /src="data:image\/png;base64,AQ==" style="width: 100%; height: 100%; filter: grayscale\(1\);"/);
 });

@@ -80,6 +80,7 @@ import { HmiClock } from "../../screens/widgets/HmiClock.js";
 import { HmiComboBox } from "../../screens/widgets/HmiComboBox.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
 import { HmiButtonShape } from "../../screens/widgets/HmiButtonShape.js";
+import { HmiButtonType } from "../../screens/widgets/HmiButtonType.js";
 import { HmiIOField } from "../../screens/widgets/HmiIOField.js";
 import { HmiLabel } from "../../screens/widgets/HmiLabel.js";
 import { HmiListBox } from "../../screens/widgets/HmiListBox.js";
@@ -1466,13 +1467,15 @@ async function appendButton(
   const stateValue = getStaticValue(button.state);
   const state = button.states.find(candidate => candidate.value === stateValue)
     ?? button.states[0];
+  const mode = getStaticValue(button.mode);
+  const caption = state?.text ?? getStaticValue(button.text);
   html.push("<button");
   appendCommonAttributes(html, button, context, true, createButtonStyle(button, state));
+  appendAttribute(html, "aria-label", caption?.getDisplayText(context.options.cultureLcid));
   const enabled = button.enabled === undefined || getStaticValue(button.enabled) === true;
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
   }
-  html.push(">");
   let image = state?.image ?? getStaticValue(button.image);
   const disabledImageMode = getStaticValue(button.disabledImageMode);
   const showDisabledAppearance = !enabled && getStaticValue(button.showDisabledState) === true;
@@ -1483,24 +1486,43 @@ async function appendButton(
   ) {
     image = getStaticValue(button.disabledImage) ?? image;
   }
-  const imageUri = await resolveImageUri(image, project, signal);
-  if (imageUri) {
+  const imageUri = mode === HmiButtonType.Text ? undefined : await resolveImageUri(image, project, signal);
+  const hasImage = imageUri !== undefined && imageUri.trim() !== "";
+  const imageFallback = mode === HmiButtonType.GraphicOrText && hasImage;
+  if (imageFallback) html.push(" data-hmi-button-image-fallback");
+  html.push(">");
+  if (hasImage) {
+    html.push('<span data-hmi-button-content style="display: flex;flex-direction: column;width: 100%;height: 100%;min-width: 0;min-height: 0;align-items: center;justify-content: center;overflow: hidden;">',
+      '<span data-hmi-button-graphic style="flex: 1 1 0;min-width: 0;min-height: 0;width: 100%;">');
     appendInnerImage(
       html,
       imageUri,
       showDisabledAppearance && disabledImageMode === HmiDisabledImageMode.Grayscale,
     );
+    html.push("</span>");
   }
+  if (mode !== HmiButtonType.Graphic)
+    appendButtonCaption(html, button, state, caption, hasImage, imageFallback, context);
+  if (hasImage) html.push("</span>");
+  html.push("</button>");
+}
+
+function appendButtonCaption(html: string[], button: HmiButton, state: HmiState | undefined,
+  caption: HmiMultilingualText | undefined, boundedLayout: boolean, hidden: boolean, context: HmiHtmlConvertContext): void {
   const captionBlink = getButtonCaptionBlink(button, state);
   const captionColor = state?.captionColor ?? state?.foregroundColor ?? getStaticValue(button.captionColor);
-  if (captionBlink !== undefined)
-    html.push('<span data-hmi-button-caption style="animation: hmi-caption-color-flash ' +
-      getBlinkDuration(captionBlink.rate) + 's steps(1, end) infinite;">');
-  else if (captionColor !== undefined)
-    html.push('<span data-hmi-button-caption style="color: ' + colorToCss(captionColor) + ';">');
-  appendMultilingualText(html, state?.text ?? getStaticValue(button.text), context);
-  if (captionBlink !== undefined || captionColor !== undefined) html.push("</span>");
-  html.push("</button>");
+  const wrapped = boundedLayout || captionBlink !== undefined || captionColor !== undefined;
+  if (wrapped) {
+    html.push("<span data-hmi-button-caption");
+    if (hidden) html.push(" hidden");
+    html.push(' style="');
+    if (boundedLayout) html.push("flex: 0 0 auto;max-width: 100%;");
+    if (captionBlink !== undefined) html.push("animation: hmi-caption-color-flash " + getBlinkDuration(captionBlink.rate) + "s steps(1, end) infinite;");
+    else if (captionColor !== undefined) html.push("color: " + colorToCss(captionColor) + ";");
+    html.push('\">');
+  }
+  appendMultilingualText(html, caption, context);
+  if (wrapped) html.push("</span>");
 }
 
 function getButtonCaptionBlink(button: HmiButton, state: HmiState | undefined): HmiBlinkProperty<HmiColor> | undefined {
