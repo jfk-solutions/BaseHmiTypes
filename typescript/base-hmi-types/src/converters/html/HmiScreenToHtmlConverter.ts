@@ -1489,11 +1489,14 @@ async function appendButton(
     );
   }
   const captionBlink = getButtonCaptionBlink(button, state);
+  const captionColor = state?.captionColor ?? state?.foregroundColor ?? getStaticValue(button.captionColor);
   if (captionBlink !== undefined)
     html.push('<span data-hmi-button-caption style="animation: hmi-caption-color-flash ' +
       getBlinkDuration(captionBlink.rate) + 's steps(1, end) infinite;">');
+  else if (captionColor !== undefined)
+    html.push('<span data-hmi-button-caption style="color: ' + colorToCss(captionColor) + ';">');
   appendMultilingualText(html, state?.text ?? getStaticValue(button.text), context);
-  if (captionBlink !== undefined) html.push("</span>");
+  if (captionBlink !== undefined || captionColor !== undefined) html.push("</span>");
   html.push("</button>");
 }
 
