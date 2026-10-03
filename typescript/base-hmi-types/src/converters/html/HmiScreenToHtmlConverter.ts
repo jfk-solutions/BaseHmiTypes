@@ -2723,6 +2723,8 @@ async function appendSelectionGroup(
       appendAttribute(html, "frame-border-flash-duration", getBlinkDuration(blink.rate));
   }
   appendStaticAttribute(html, "selected-index", selectionGroup.selectedIndex);
+  if ((selectionGroup instanceof HmiCheckBoxGroup || selectionGroup instanceof HmiRadioButtonGroup) && selectionGroup.indicatorOnRight !== undefined)
+    appendAttribute(html, "indicator-on-right", getStaticValue(selectionGroup.indicatorOnRight) ? "true" : "false");
   if (selectionGroup instanceof HmiCheckBoxGroup || selectionGroup instanceof HmiRadioButtonGroup)
     appendStaticAttribute(html, "selected-fields", selectionGroup.selectedFields);
   if ((selectionGroup instanceof HmiCheckBoxGroup || selectionGroup instanceof HmiRadioButtonGroup) && selectionGroup.drawStrokeInsideFrame !== undefined)
