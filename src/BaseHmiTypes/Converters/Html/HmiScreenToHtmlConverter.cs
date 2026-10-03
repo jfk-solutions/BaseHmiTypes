@@ -936,11 +936,13 @@ public class HmiScreenToHtmlConverter
         var height = GetSvgHeight(circle);
         var radius = circle.Radius.GetStaticValueOrDefault(Math.Min(width, height) / 2d);
         AppendSvgOpen(html, circle, width, height, context);
+        var inside = AppendInsideStrokeClip(html, circle,
+            $"<circle cx=\"{ToCss(circle.CenterX.GetStaticValueOrDefault(width / 2d))}\" cy=\"{ToCss(circle.CenterY.GetStaticValueOrDefault(height / 2d))}\" r=\"{ToCss(radius)}\"></circle>", context);
         html.Append("<circle");
         AppendSvgAttribute(html, "cx", circle.CenterX.GetStaticValueOrDefault(width / 2d));
         AppendSvgAttribute(html, "cy", circle.CenterY.GetStaticValueOrDefault(height / 2d));
         AppendSvgAttribute(html, "r", radius);
-        AppendStrokeAttributes(html, circle, GetFillColor(circle, context), context);
+        AppendStrokeAttributes(html, circle, GetFillColor(circle, context), context, inside);
         html.Append("></circle>");
         AppendSvgFillDefinition(html, circle, GetFillColor(circle, context), context);
         AppendSvgMarkerDefinitions(html, circle, context);
@@ -952,12 +954,14 @@ public class HmiScreenToHtmlConverter
         var width = GetSvgWidth(ellipse);
         var height = GetSvgHeight(ellipse);
         AppendSvgOpen(html, ellipse, width, height, context);
+        var inside = AppendInsideStrokeClip(html, ellipse,
+            $"<ellipse cx=\"{ToCss(ellipse.CenterX.GetStaticValueOrDefault(width / 2d))}\" cy=\"{ToCss(ellipse.CenterY.GetStaticValueOrDefault(height / 2d))}\" rx=\"{ToCss(ellipse.RadiusX.GetStaticValueOrDefault(width / 2d))}\" ry=\"{ToCss(ellipse.RadiusY.GetStaticValueOrDefault(height / 2d))}\"></ellipse>", context);
         html.Append("<ellipse");
         AppendSvgAttribute(html, "cx", ellipse.CenterX.GetStaticValueOrDefault(width / 2d));
         AppendSvgAttribute(html, "cy", ellipse.CenterY.GetStaticValueOrDefault(height / 2d));
         AppendSvgAttribute(html, "rx", ellipse.RadiusX.GetStaticValueOrDefault(width / 2d));
         AppendSvgAttribute(html, "ry", ellipse.RadiusY.GetStaticValueOrDefault(height / 2d));
-        AppendStrokeAttributes(html, ellipse, GetFillColor(ellipse, context), context);
+        AppendStrokeAttributes(html, ellipse, GetFillColor(ellipse, context), context, inside);
         html.Append("></ellipse>");
         AppendSvgFillDefinition(html, ellipse, GetFillColor(ellipse, context), context);
         AppendSvgMarkerDefinitions(html, ellipse, context);
@@ -1035,9 +1039,13 @@ public class HmiScreenToHtmlConverter
         HmiHtmlConvertContext context)
     {
         AppendSvgOpen(html, item, GetSvgWidth(item), GetSvgHeight(item), context);
+        var path = CreateArcPath(centerX, centerY, radiusX, radiusY, startAngle, sweepAngle, segment);
+        var inside = AppendInsideStrokeClip(html, item, segment
+            ? $"<path d=\"{path}\"></path>"
+            : $"<ellipse cx=\"{ToCss(centerX)}\" cy=\"{ToCss(centerY)}\" rx=\"{ToCss(radiusX)}\" ry=\"{ToCss(radiusY)}\"></ellipse>", context);
         html.Append("<path");
-        AppendAttribute(html, "d", CreateArcPath(centerX, centerY, radiusX, radiusY, startAngle, sweepAngle, segment));
-        AppendStrokeAttributes(html, item, segment ? GetFillColor(item, context) : null, context);
+        AppendAttribute(html, "d", path);
+        AppendStrokeAttributes(html, item, segment ? GetFillColor(item, context) : null, context, inside);
         html.Append("></path>");
         AppendSvgFillDefinition(html, item, segment ? GetFillColor(item, context) : null, context);
         AppendSvgMarkerDefinitions(html, item, context);
@@ -1054,7 +1062,18 @@ public class HmiScreenToHtmlConverter
         html.Append(">");
     }
 
-    private static void AppendStrokeAttributes(StringBuilder html, HmiShapeBase item, HmiColor? fillColor, HmiHtmlConvertContext context)
+    private static bool AppendInsideStrokeClip(StringBuilder html, HmiShapeBase item, string geometry, HmiHtmlConvertContext context)
+    {
+        if (item is not HmiCentricShapeBase shape || !ResolveStaticValue(shape.DrawStrokeInsideFrame, context) || GetStrokeWidth(item, context) <= 1d)
+            return false;
+        html.Append("<defs><clipPath");
+        AppendAttribute(html, "id", GetFillGradientId(item) + "-inside-stroke");
+        AppendAttribute(html, "clipPathUnits", "userSpaceOnUse");
+        html.Append('>').Append(geometry).Append("</clipPath></defs>");
+        return true;
+    }
+
+    private static void AppendStrokeAttributes(StringBuilder html, HmiShapeBase item, HmiColor? fillColor, HmiHtmlConvertContext context, bool inside = false)
     {
         var lineStyle = GetLineStyle(item, context);
         var fillPattern = GetFillPattern(item, context);
@@ -1096,7 +1115,8 @@ public class HmiScreenToHtmlConverter
             svgStyle.Append("animation: ").Append(string.Join(", ", svgAnimations)).Append(';');
         if (svgStyle.Length > 0)
             AppendAttribute(html, "style", svgStyle.ToString());
-        AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item, context));
+        AppendSvgAttribute(html, "stroke-width", GetStrokeWidth(item, context) * (inside ? 2d : 1d));
+        if (inside) AppendAttribute(html, "clip-path", $"url(#{GetFillGradientId(item)}-inside-stroke)");
         var hasLineCap = context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineCap), item.LineCap, out var lineCap);
         if (hasLineCap)
             AppendAttribute(html, "stroke-linecap", ToCss(lineCap));

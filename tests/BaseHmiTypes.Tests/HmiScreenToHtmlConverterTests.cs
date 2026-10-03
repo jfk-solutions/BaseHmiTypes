@@ -17,6 +17,63 @@ public class HmiScreenToHtmlConverterTests
 {
 
     [TestMethod]
+    [DataRow(0, false, 1)]
+    [DataRow(0, false, 10)]
+    [DataRow(0, true, 1)]
+    [DataRow(0, true, 10)]
+    [DataRow(1, false, 1)]
+    [DataRow(1, false, 10)]
+    [DataRow(1, true, 1)]
+    [DataRow(1, true, 10)]
+    [DataRow(2, false, 1)]
+    [DataRow(2, false, 10)]
+    [DataRow(2, true, 1)]
+    [DataRow(2, true, 10)]
+    [DataRow(3, false, 1)]
+    [DataRow(3, false, 10)]
+    [DataRow(3, true, 1)]
+    [DataRow(3, true, 10)]
+    [DataRow(4, false, 1)]
+    [DataRow(4, false, 10)]
+    [DataRow(4, true, 1)]
+    [DataRow(4, true, 10)]
+    [DataRow(5, false, 1)]
+    [DataRow(5, false, 10)]
+    [DataRow(5, true, 1)]
+    [DataRow(5, true, 10)]
+    public async Task ConvertAsync_RendersCurvedInsideStrokes(int kind, bool inside, int width)
+    {
+        HmiCentricShapeBase shape = kind switch
+        {
+            0 => new HmiCircle { CenterX = 50, CenterY = 50, Radius = 50 },
+            1 => new HmiEllipse { CenterX = 50, CenterY = 50, RadiusX = 50, RadiusY = 40 },
+            2 => new HmiCircularArc { CenterX = 50, CenterY = 50, Radius = 50, SweepAngle = 90 },
+            3 => new HmiEllipticalArc { CenterX = 50, CenterY = 50, RadiusX = 50, RadiusY = 40, SweepAngle = 90 },
+            4 => new HmiCircleSegment { CenterX = 50, CenterY = 50, Radius = 50, SweepAngle = 90 },
+            _ => new HmiEllipseSegment { CenterX = 50, CenterY = 50, RadiusX = 50, RadiusY = 40, SweepAngle = 90 }
+        };
+        shape.Name = "Curved";
+        shape.Width = 100; shape.Height = 100;
+        shape.LineWidth = HmiProperty.Tag("Stroke.Width", (double)width);
+        shape.DrawStrokeInsideFrame = HmiProperty.Tag("Stroke.Inside", inside);
+        var layer = new HmiLayer(); layer.Items.Add(shape);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var svg = System.Text.RegularExpressions.Regex.Match(html, "<svg id=\"Curved\"[^>]*>(.*?)</svg>", System.Text.RegularExpressions.RegexOptions.Singleline).Groups[1].Value;
+        var clipped = inside && width > 1;
+        StringAssert.Contains(svg, $"stroke-width=\"{(clipped ? width * 2 : width)}\"");
+        Assert.AreEqual(clipped, svg.Contains("clip-path=", StringComparison.Ordinal));
+        Assert.AreEqual(clipped, svg.Contains("<clipPath", StringComparison.Ordinal));
+        if (clipped)
+        {
+            StringAssert.Contains(svg, "clipPathUnits=\"userSpaceOnUse\"");
+            var clip = System.Text.RegularExpressions.Regex.Match(svg, "<clipPath[^>]*>(.*?)</clipPath>").Groups[1].Value;
+            Assert.IsFalse(clip.Contains("stroke-width", StringComparison.Ordinal));
+            StringAssert.Contains(clip, kind < 2 ? (kind == 0 ? "<circle" : "<ellipse") : kind < 4 ? "<ellipse" : "<path");
+        }
+    }
+
+    [TestMethod]
     [DataRow(1)]
     [DataRow(2)]
     [DataRow(3)]
