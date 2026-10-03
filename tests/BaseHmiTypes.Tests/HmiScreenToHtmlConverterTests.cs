@@ -20,6 +20,55 @@ public class HmiScreenToHtmlConverterTests
     [DataRow(0, true)]
     [DataRow(1, false)]
     [DataRow(1, true)]
+    [DataRow(5, false)]
+    [DataRow(5, true)]
+    [DataRow(int.MinValue, false)]
+    [DataRow(int.MinValue, true)]
+    [DataRow(-1, false)]
+    [DataRow(-1, true)]
+    public async Task ConvertAsync_RendersListBoxSelectedFields(int signedMask, bool tag)
+    {
+        var mask = unchecked((uint)signedMask);
+        var item = new HmiListBox { Name = "MultiList", Width = 180, Height = 120,
+            SelectedFields = tag ? HmiProperty.Tag("List.Selected", mask) : HmiProperty.Static(mask) };
+        for (var index = 0; index < 33; index++) item.States.Add(new HmiState {
+            Value = 100 + index, Text = HmiMultilingualText.FromText($"Entry {index}") });
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<select id=\"MultiList\"[^>]*>").Value;
+        StringAssert.Contains(opening, "size=\"2\"");
+        StringAssert.Contains(opening, "multiple=\"multiple\"");
+        for (var index = 0; index < 33; index++)
+        {
+            var option = System.Text.RegularExpressions.Regex.Match(html, $"<option value=\"{100 + index}\"[^>]*>").Value;
+            Assert.AreEqual(index < 32 && (mask & (1u << index)) != 0, option.Contains("selected=\"selected\"", StringComparison.Ordinal));
+        }
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task ConvertAsync_DistinguishesSingleSelectListAndCombo(bool list)
+    {
+        HmiSelectionGroupBase item = list ? new HmiListBox() : new HmiComboBox();
+        item.Name = "SingleList"; item.Value = 101;
+        item.States.Add(new HmiState { Value = 100, Text = HmiMultilingualText.FromText("Stopped") });
+        item.States.Add(new HmiState { Value = 101, Text = HmiMultilingualText.FromText("Running") });
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<select id=\"SingleList\"[^>]*>").Value;
+        Assert.AreEqual(list, opening.Contains("size=\"2\"", StringComparison.Ordinal));
+        Assert.IsFalse(opening.Contains("multiple=", StringComparison.Ordinal));
+        StringAssert.Contains(html, "value=\"101\" selected=\"selected\">Running</option>");
+    }
+
+    [TestMethod]
+    [DataRow(0, false)]
+    [DataRow(0, true)]
+    [DataRow(1, false)]
+    [DataRow(1, true)]
     [DataRow(2, false)]
     [DataRow(2, true)]
     [DataRow(3, false)]
