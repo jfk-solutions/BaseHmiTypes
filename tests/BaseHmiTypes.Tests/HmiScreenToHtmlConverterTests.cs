@@ -16,6 +16,32 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(0d, false)]
+    [DataRow(90d, false)]
+    [DataRow(270d, false)]
+    [DataRow(0d, true)]
+    [DataRow(90d, true)]
+    [DataRow(270d, true)]
+    public async Task ConvertAsync_RendersSymbolicTextOrientationWithoutRotatingImages(double angle, bool image)
+    {
+        var item = new HmiSymbolicIOField { Name = "OrientedList", Width = 80, Height = 160,
+            Font = new HmiFont { OrientationAngle = HmiProperty.Tag("List.Angle", angle) }, Value = 1 };
+        item.States.Add(new HmiState { Value = 1, Text = HmiMultilingualText.FromText("Running"),
+            CaptionColor = HmiColor.FromArgb(255, 1, 2, 3),
+            Image = image ? new HmiImageSource { Kind = HmiImageSourceKind.DataUri, Uri = "data:image/png;base64,AQID" } : null });
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<(?:select|div) id=\"OrientedList\"[^>]*>").Value;
+        Assert.AreEqual(!image && angle != 0, opening.Contains("writing-mode:", StringComparison.Ordinal));
+        if (!image && angle != 0) StringAssert.Contains(opening, angle == 90 ? "writing-mode: sideways-lr;" : "writing-mode: sideways-rl;");
+        StringAssert.Contains(opening, "color: #010203;");
+        StringAssert.Contains(html, "Running");
+        if (image) StringAssert.Contains(html, "src=\"data:image/png;base64,AQID\"");
+        else StringAssert.Contains(html, "selected=\"selected\"");
+    }
+
+    [TestMethod]
     [DataRow(0d)]
     [DataRow(90d)]
     [DataRow(270d)]
