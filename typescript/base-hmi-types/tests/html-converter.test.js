@@ -31,6 +31,7 @@ import {
   HmiDataGridSortDirection,
   HmiDotNetControlContainer,
   HmiFillDirection,
+  HmiGradientDirection,
   HmiFillPattern,
   HmiFont,
   HmiGauge,
@@ -1063,6 +1064,38 @@ test(`HTML converter renders configured bar track color (${scale}, ${blink})`, a
     assert.ok(html.includes("--hmi-bar-track-background:var(--hmi-background-color-on);"));
   }
   bar.backgroundColor = undefined;
+  html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  meter = html.match(/<meter[^>]*>/)?.[0] ?? "";
+  assert.ok(!meter.includes("data-hmi-bar-track"));
+});
+}
+}
+
+for (const scale of [false, true]) {
+for (const [direction, cssDirection] of [[HmiGradientDirection.HorizontalFromLeft, "to right"],
+  [HmiGradientDirection.HorizontalFromRight, "to left"], [HmiGradientDirection.VerticalFromTop, "to bottom"],
+  [HmiGradientDirection.VerticalFromBottom, "to top"]]) {
+test(`HTML converter renders bar track gradient (${scale}, ${direction})`, async () => {
+  const bar = new HmiBar();
+  bar.showScale = staticProperty(scale);
+  bar.useFirstGradient = staticProperty(true);
+  bar.useSecondGradient = staticProperty(true);
+  bar.firstGradientColor = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+  bar.middleGradientColor = staticProperty(hmiColorFromArgb(255, 0, 255, 0));
+  bar.secondGradientColor = staticProperty(hmiColorFromArgb(255, 0, 0, 255));
+  bar.firstGradientOffset = staticProperty(25);
+  bar.secondGradientOffset = staticProperty(75);
+  bar.gradientDirection = staticProperty(direction);
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  let html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  let meter = html.match(/<meter[^>]*>/)?.[0] ?? "";
+  assert.ok(meter.includes('data-hmi-bar-track="true"'));
+  assert.ok(html.includes(`--hmi-bar-track-background: linear-gradient(${cssDirection}, #FF0000 0%, #00FF00 25%, #00FF00 75%, #0000FF 100%);`));
+  bar.useFirstGradient = staticProperty(false);
+  bar.useSecondGradient = staticProperty(false);
   html = await new HmiScreenToHtmlConverter().convertAsync(screen);
   meter = html.match(/<meter[^>]*>/)?.[0] ?? "";
   assert.ok(!meter.includes("data-hmi-bar-track"));
