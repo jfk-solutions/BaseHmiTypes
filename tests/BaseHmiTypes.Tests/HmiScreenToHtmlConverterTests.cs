@@ -3290,6 +3290,21 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task ConvertAsync_ExposesGaugeMajorTicksOnly(bool only)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(new HmiGauge { MajorTicksOnly = only, SubDivisionCount = 5 });
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var gauge = System.Text.RegularExpressions.Regex.Match(html, "<hmi-gauge[^>]*>").Value;
+        Assert.AreEqual(only, gauge.Contains("major-ticks-only", StringComparison.Ordinal));
+        StringAssert.Contains(gauge, "sub-division-count=\"5\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersGaugeAsGaugeWebComponent()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
