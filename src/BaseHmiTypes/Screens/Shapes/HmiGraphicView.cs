@@ -31,4 +31,7 @@ public class HmiGraphicView : HmiSurfaceShapeBase
     public HmiProperty<HmiVerticalAlignment>? ImageVerticalAlignment { get; set; }
 
     public HmiProperty<int>? GraphicStretchMode { get; set; }
+
+    /// <summary>Draws borders wider than one pixel inside the frame when true, or centered on it when false.</summary>
+    public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
 }

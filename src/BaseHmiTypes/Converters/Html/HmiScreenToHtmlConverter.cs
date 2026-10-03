@@ -4694,7 +4694,8 @@ public class HmiScreenToHtmlConverter
         var backgroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
         var borderColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderColor), item.BorderColor);
         var borderWidth = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderWidth), item.BorderWidth);
-        var framedShapeBorder = item is HmiRectangle { DrawStrokeInsideFrame: not null } or HmiText { DrawStrokeInsideFrame: not null };
+        var framedShapeBorder = item is HmiRectangle { DrawStrokeInsideFrame: not null } or HmiText { DrawStrokeInsideFrame: not null }
+            or HmiGraphicView { DrawStrokeInsideFrame: not null };
         if (framedShapeBorder && item is HmiShapeBase framedShape)
         {
             borderWidth = context.EffectiveProperties.Resolve(framedShape, nameof(HmiShapeBase.LineWidth), framedShape.LineWidth) ?? borderWidth;
@@ -4713,7 +4714,9 @@ public class HmiScreenToHtmlConverter
              item is HmiRectangle framedRectangle && framedRectangle.DrawStrokeInsideFrame is not null &&
                 !ResolveStaticValue(framedRectangle.DrawStrokeInsideFrame, context) ||
              item is HmiText framedText && framedText.DrawStrokeInsideFrame is not null &&
-                !ResolveStaticValue(framedText.DrawStrokeInsideFrame, context));
+                !ResolveStaticValue(framedText.DrawStrokeInsideFrame, context) ||
+             item is HmiGraphicView framedGraphic && framedGraphic.DrawStrokeInsideFrame is not null &&
+                !ResolveStaticValue(framedGraphic.DrawStrokeInsideFrame, context));
         var animations = new List<string>();
 
         if (foregroundColor is HmiBlinkProperty<HmiColor> foregroundBlink &&
