@@ -3375,6 +3375,7 @@ function formatTrendValueAxes(axes: readonly HmiTrendValueAxis[]): string | unde
     pen.number = index + 1;
     if (axis.name !== undefined) pen.valueAxisName = axis.name;
     if (axis.label !== undefined) pen.valueAxisLabel = axis.label;
+    if (axis.trendWindowName !== undefined) pen.trendWindowName = axis.trendWindowName;
     if (axis.minimumValue !== undefined) pen.minimumValue = axis.minimumValue;
     if (axis.maximumValue !== undefined) pen.maximumValue = axis.maximumValue;
     if (axis.decimalPlaces !== undefined) pen.decimalPlaces = axis.decimalPlaces;
@@ -3395,6 +3396,8 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     const result: Record<string, string | number | boolean> = { number: pen.number };
     if (pen.name !== undefined) result.name = pen.name;
     if (pen.label !== undefined) result.label = pen.label;
+    if (pen.trendWindowName !== undefined) result.trendWindowName = pen.trendWindowName;
+    if (pen.timeAxisName !== undefined) result.timeAxisName = pen.timeAxisName;
     const color = getStaticValue(pen.color);
     if (color !== undefined) result.color = colorToCss(color);
     const visible = getStaticValue(pen.visible);
