@@ -1780,7 +1780,8 @@ public class HmiScreenToHtmlConverter
         var showThresholds = bar.ShowLimitRanges.GetStaticValueOrDefault(true) && bar.Thresholds.Any(threshold =>
             threshold.Value is not null &&
             (threshold.Enabled is null || ResolveStaticValue(threshold.Enabled, context)));
-        if (showScale || showThresholds || GetBarOutOfRange(bar, context) != 0)
+        if (showScale || showThresholds || GetBarOutOfRange(bar, context) != 0 ||
+            GetBarFillOrigin(bar, minimum, maximum, value, context) is not null)
         {
             var vertical = direction is HmiFillDirection.Up or HmiFillDirection.Down;
             var scaleBefore = showScale && bar.ScaleAfterBar is not null && !ResolveStaticValue(bar.ScaleAfterBar, context);
@@ -1848,6 +1849,12 @@ public class HmiScreenToHtmlConverter
         bool vertical,
         HmiHtmlConvertContext context)
     {
+        var origin = GetBarFillOrigin(bar, minimum, maximum, value, context);
+        if (origin is not null)
+        {
+            AppendBarOriginMeter(html, bar, minimum, maximum, value, origin.Value, direction, context);
+            return;
+        }
         html.Append("<meter");
         AppendBarColorAttributes(html, bar, context);
         var meterStyle = new StringBuilder((vertical ? "height: 100%;" : "width: 100%;") +
@@ -1867,6 +1874,51 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "max", ToCss(maximum));
         AppendAttribute(html, "value", ToCss(value));
         html.Append('>').Append(ToCss(value)).Append("</meter>");
+    }
+
+    private static double? GetBarFillOrigin(HmiBar bar, double minimum, double maximum, double value, HmiHtmlConvertContext context)
+    {
+        if (bar.OriginValue is null || !double.IsFinite(minimum) || !double.IsFinite(maximum) ||
+            !double.IsFinite(value) || !double.IsFinite(maximum - minimum) || maximum <= minimum)
+            return null;
+        var origin = ResolveStaticValue(bar.OriginValue, context);
+        return double.IsFinite(origin) ? origin : null;
+    }
+
+    private static void AppendBarOriginMeter(StringBuilder html, HmiBar bar, double minimum, double maximum,
+        double value, double origin, HmiFillDirection direction, HmiHtmlConvertContext context)
+    {
+        var originPercent = Clamp((origin - minimum) / (maximum - minimum) * 100, 0, 100);
+        var valuePercent = Clamp((value - minimum) / (maximum - minimum) * 100, 0, 100);
+        var start = Math.Min(originPercent, valuePercent);
+        var length = Math.Abs(valuePercent - originPercent);
+        var position = direction switch
+        {
+            HmiFillDirection.Up => $"left: 0; right: 0; bottom: {ToCss(start)}%; height: {ToCss(length)}%;",
+            HmiFillDirection.Down => $"left: 0; right: 0; top: {ToCss(start)}%; height: {ToCss(length)}%;",
+            HmiFillDirection.Left => $"top: 0; bottom: 0; right: {ToCss(start)}%; width: {ToCss(length)}%;",
+            _ => $"top: 0; bottom: 0; left: {ToCss(start)}%; width: {ToCss(length)}%;"
+        };
+        html.Append("<div");
+        AppendAttribute(html, "data-hmi-bar-origin-meter", "true");
+        AppendAttribute(html, "style", "position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; background: var(--hmi-bar-track-background, #eeeeee);");
+        html.Append("><meter");
+        AppendAttribute(html, "style", "position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;");
+        AppendAttribute(html, "min", ToCss(minimum));
+        AppendAttribute(html, "max", ToCss(maximum));
+        AppendAttribute(html, "value", ToCss(value));
+        html.Append('>').Append(ToCss(value)).Append("</meter><span");
+        AppendAttribute(html, "aria-hidden", "true");
+        AppendAttribute(html, "data-hmi-bar-origin-fill", "true");
+        AppendAttribute(html, "data-origin-value", ToCss(origin));
+        var style = new StringBuilder("position: absolute; pointer-events: none; background: currentColor; " + position);
+        var disabledColor = !ResolveStaticValue(bar.Enabled, context) && ResolveStaticValue(bar.UseDisabledForegroundColor, context)
+            ? context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.DisabledForegroundColor), bar.DisabledForegroundColor) : null;
+        var thresholdColor = GetBarThresholdFillColor(bar, context);
+        if (disabledColor is not null) AppendColorStyle(style, "color", disabledColor);
+        else if (thresholdColor is not null) AppendColorStyle(style, "color", thresholdColor);
+        AppendAttribute(html, "style", style.ToString());
+        html.Append("></span></div>");
     }
 
     private static void AppendBarColorAttributes(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)
