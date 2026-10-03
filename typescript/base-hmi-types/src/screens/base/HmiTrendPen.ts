@@ -12,6 +12,10 @@ export class HmiTrendPen {
   number = 0;
   name?: string;
   label?: string;
+  /** Named trend window assigned to this pen. */
+  trendWindowName?: string;
+  /** Named time axis assigned to this pen. */
+  timeAxisName?: string;
   value?: HmiProperty<number>;
   color?: HmiProperty<HmiColor>;
   visible?: HmiProperty<boolean>;

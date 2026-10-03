@@ -1737,6 +1737,7 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   const axis = new HmiTrendValueAxis();
   axis.name = "Unused";
   axis.label = "Standalone";
+  axis.trendWindowName = "Axis window";
   axis.minimumValue = staticProperty(5);
   axis.maximumValue = staticProperty(15);
   axis.decimalPlaces = staticProperty(1);
@@ -1747,6 +1748,8 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   pen.number = 1;
   pen.decimalPlaces = staticProperty(4);
   pen.valueAxisName = "Axis A";
+  pen.trendWindowName = "Pen window";
+  pen.timeAxisName = "Time A";
   pen.valueAxisVisible = staticProperty(false);
   pen.valueAxisColor = staticProperty(hmiColorFromArgb(255, 0x12, 0x34, 0x56));
   pen.valueAxisInTrendColor = staticProperty(true);
@@ -1760,6 +1763,9 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   assert.match(html, /value-axes="/);
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Unused&quot;/);
   assert.match(html, /&quot;valueAxisLabel&quot;:&quot;Standalone&quot;/);
+  assert.match(html, /&quot;trendWindowName&quot;:&quot;Axis window&quot;/);
+  assert.match(html, /&quot;trendWindowName&quot;:&quot;Pen window&quot;/);
+  assert.match(html, /&quot;timeAxisName&quot;:&quot;Time A&quot;/);
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Axis A&quot;/);
   assert.match(html, /&quot;valueAxisVisible&quot;:false/);
   assert.match(html, /&quot;valueAxisColor&quot;:&quot;#123456&quot;/);
