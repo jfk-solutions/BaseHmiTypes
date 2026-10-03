@@ -59,6 +59,8 @@ interface TrendPen {
   number: number;
   name?: string;
   label?: string;
+  trendWindowName?: string;
+  timeAxisName?: string;
   color?: string;
   visible?: boolean;
   width?: number;
@@ -155,7 +157,7 @@ export class HmiTrendControl extends HTMLElement {
     const axesByName = new Map(configuredValueAxes.map(axis => [axis.valueAxisName, axis]));
     const pens = parsePens(this.getAttribute("pens")).map(pen => {
       const axis = pen.valueAxisName ? axesByName.get(pen.valueAxisName) : undefined;
-      return axis ? { ...pen, ...axis, number: pen.number } : pen;
+      return axis ? { ...pen, ...axis, number: pen.number, trendWindowName: pen.trendWindowName, timeAxisName: pen.timeAxisName } : pen;
     });
     const visiblePens = pens.filter(pen => pen.visible !== false);
     const firstPen = visiblePens[0] ?? pens[0];
@@ -559,15 +561,18 @@ function renderValueAxes(
   return axes.filter(axis => axis.valueAxisVisible !== false).map(axis => {
     const alignment = axis.valueAxisAlignment === "Right" ? "right" : "left";
     const column = alignment === "right" ? right++ : left++;
-    const color = axis.valueAxisInTrendColor === true && pens.length
-      ? normalizePenColor(pens[0]!.color, 0) : normalizeCssColor(axis.valueAxisColor, foregroundColor);
+    const trendPenIndex = axis.trendWindowName
+      ? pens.findIndex(pen => pen.trendWindowName === axis.trendWindowName)
+      : pens.length ? 0 : -1;
+    const color = axis.valueAxisInTrendColor === true && trendPenIndex >= 0
+      ? normalizePenColor(pens[trendPenIndex]!.color, trendPenIndex) : normalizeCssColor(axis.valueAxisColor, foregroundColor);
     const axisMinimum = axis.minimum ?? minimum;
     const axisMaximumCandidate = axis.maximum ?? maximum;
     const axisMaximum = axisMaximumCandidate === axisMinimum ? axisMinimum + 1 : axisMaximumCandidate;
     const scaleType = axis.axisScaleType ?? 0;
     const precision = axis.autoDecimalPlaces === true ? automaticDecimalPlaces(axisMinimum, axisMaximum, scaleType)
       : clamp(Math.trunc(axis.decimalPlaces ?? decimalPlaces), 0, 12);
-    return `<div class="value-axis ${alignment}" data-axis-name="${escapeHtml(axis.valueAxisName!)}" style="${alignment}:-${toCss((column + 1) * 4.4)}em;color:${escapeHtml(color)}">${renderYLabels(axisMinimum, axisMaximum, precision, scaleType, axis.exponentialFormat === true)}${axis.valueAxisLabel ? `<span class="value-axis-title">${escapeHtml(axis.valueAxisLabel)}</span>` : ""}</div>`;
+    return `<div class="value-axis ${alignment}" data-axis-name="${escapeHtml(axis.valueAxisName!)}"${axis.trendWindowName ? ` data-trend-window="${escapeHtml(axis.trendWindowName)}"` : ""} style="${alignment}:-${toCss((column + 1) * 4.4)}em;color:${escapeHtml(color)}">${renderYLabels(axisMinimum, axisMaximum, precision, scaleType, axis.exponentialFormat === true)}${axis.valueAxisLabel ? `<span class="value-axis-title">${escapeHtml(axis.valueAxisLabel)}</span>` : ""}</div>`;
   }).join("");
 }
 
@@ -738,7 +743,7 @@ function renderPens(
         .join("");
     const line = renderTrendLine(pen, points, pointText, color, width, penExponentialFormat, penDecimalPlaces);
     const alarms = renderAlarmSymbols(pen, points);
-    return `${area}${line}${markers}${alarms}`;
+    return `<g data-pen-number="${pen.number}"${pen.trendWindowName ? ` data-trend-window="${escapeHtml(pen.trendWindowName)}"` : ""}${pen.timeAxisName ? ` data-time-axis="${escapeHtml(pen.timeAxisName)}"` : ""}>${area}${line}${markers}${alarms}</g>`;
   }).join("");
 }
 
@@ -881,6 +886,8 @@ function parsePens(value: string | null): TrendPen[] {
       const pen: TrendPen = { number: finiteNumber(source.number, index + 1) };
       if (typeof source.name === "string") pen.name = source.name;
       if (typeof source.label === "string") pen.label = source.label;
+      if (typeof source.trendWindowName === "string") pen.trendWindowName = source.trendWindowName;
+      if (typeof source.timeAxisName === "string") pen.timeAxisName = source.timeAxisName;
       if (typeof source.color === "string") pen.color = source.color;
       if (typeof source.visible === "boolean") pen.visible = source.visible;
       if (typeof source.width === "number" && Number.isFinite(source.width)) pen.width = source.width;

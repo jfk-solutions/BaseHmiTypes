@@ -11,6 +11,12 @@ public sealed class HmiTrendPen
 
     public string? Label { get; set; }
 
+    /// <summary>The named trend window assigned to this pen.</summary>
+    public string? TrendWindowName { get; set; }
+
+    /// <summary>The named time axis assigned to this pen.</summary>
+    public string? TimeAxisName { get; set; }
+
     public HmiProperty<double>? Value { get; set; }
 
     public HmiProperty<HmiColor>? Color { get; set; }

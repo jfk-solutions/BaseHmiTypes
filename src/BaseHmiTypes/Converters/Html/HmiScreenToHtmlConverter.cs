@@ -3702,6 +3702,7 @@ public class HmiScreenToHtmlConverter
         FormatTrendPens(axes.Select((axis, index) => new HmiTrendPen
         {
             Number = index + 1, ValueAxisName = axis.Name, ValueAxisLabel = axis.Label,
+            TrendWindowName = axis.TrendWindowName,
             MinimumValue = axis.MinimumValue, MaximumValue = axis.MaximumValue,
             DecimalPlaces = axis.DecimalPlaces, AxisScaleType = axis.ScaleType,
             ExponentialFormat = axis.ExponentialFormat, AutoDecimalPlaces = axis.AutoDecimalPlaces,
@@ -3719,6 +3720,8 @@ public class HmiScreenToHtmlConverter
             };
             AddTrendJsonString(properties, "name", pen.Name);
             AddTrendJsonString(properties, "label", pen.Label);
+            AddTrendJsonString(properties, "trendWindowName", pen.TrendWindowName);
+            AddTrendJsonString(properties, "timeAxisName", pen.TimeAxisName);
             AddTrendJsonString(properties, "color", pen.Color?.StaticValue is HmiColor color ? ToCss(color) : null);
             AddTrendJsonBoolean(properties, "visible", pen.Visible?.StaticValue);
             AddTrendJsonNumber(properties, "width", pen.Width?.StaticValue);

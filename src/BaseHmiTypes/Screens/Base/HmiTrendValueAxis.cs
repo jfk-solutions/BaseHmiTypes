@@ -4,6 +4,8 @@ namespace BaseHmiTypes.Screens.Base;
 public sealed class HmiTrendValueAxis
 {
     public string? Name { get; set; }
+    /// <summary>The trend window assigned to this axis, independent of pen assignments.</summary>
+    public string? TrendWindowName { get; set; }
     public string? Label { get; set; }
     public HmiProperty<double>? MinimumValue { get; set; }
     public HmiProperty<double>? MaximumValue { get; set; }

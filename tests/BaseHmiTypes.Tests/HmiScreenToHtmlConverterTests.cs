@@ -3252,11 +3252,13 @@ public class HmiScreenToHtmlConverterTests
         trend.ValueAxes.Add(new HmiTrendValueAxis
         {
             Name = "Unused", Label = "Standalone", MinimumValue = 5, MaximumValue = 15,
+            TrendWindowName = "Axis window",
             DecimalPlaces = 1, Visible = true, Alignment = HmiHorizontalAlignment.Left
         });
         trend.Pens.Add(new HmiTrendPen
         {
             Number = 1, DecimalPlaces = 4, ValueAxisName = "Axis A", ValueAxisVisible = false,
+            TrendWindowName = "Pen window", TimeAxisName = "Time A",
             ValueAxisColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56), ValueAxisInTrendColor = true,
             ValueAxisAlignment = HmiHorizontalAlignment.Right, ValueAxisLabel = "Pressure"
         });
@@ -3268,6 +3270,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "value-axes=\"");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Unused&quot;");
         StringAssert.Contains(html, "&quot;valueAxisLabel&quot;:&quot;Standalone&quot;");
+        StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Axis window&quot;");
+        StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Pen window&quot;");
+        StringAssert.Contains(html, "&quot;timeAxisName&quot;:&quot;Time A&quot;");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Axis A&quot;");
         StringAssert.Contains(html, "&quot;valueAxisVisible&quot;:false");
         StringAssert.Contains(html, "&quot;valueAxisColor&quot;:&quot;#123456&quot;");
