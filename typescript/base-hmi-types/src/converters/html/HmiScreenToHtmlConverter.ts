@@ -1606,7 +1606,8 @@ function appendBarMeter(
 }
 
 function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
-  if (getStaticValue(context.effectiveProperties.resolve(bar, "BackgroundColor", bar.backgroundColor)) !== undefined)
+  if (getStaticValue(context.effectiveProperties.resolve(bar, "BackgroundColor", bar.backgroundColor)) !== undefined ||
+      getColorGradient(bar) !== undefined)
     appendAttribute(html, "data-hmi-bar-track", "true");
   if (context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor) !== undefined ||
       (getStaticValue(bar.enabled) === false && getStaticValue(bar.useDisabledForegroundColor) === true &&
@@ -2812,10 +2813,10 @@ function createColorGradient(source: ColorGradientSource): ColorGradient | undef
   };
 }
 
-function appendColorGradientStyle(html: string[], gradient: ColorGradient | undefined): void {
+function appendColorGradientStyle(html: string[], gradient: ColorGradient | undefined, property = "background-image"): void {
   if (gradient === undefined) return;
   const stops = gradient.stops.map(stop => `${colorToCss(stop.color)} ${toCss(stop.offset)}%`).join(", ");
-  html.push(`background-image: linear-gradient(${gradientDirectionToCss(gradient.direction)}, ${stops});`);
+  html.push(`${property}: linear-gradient(${gradientDirectionToCss(gradient.direction)}, ${stops});`);
 }
 
 function gradientDirectionToCss(direction: HmiGradientDirection): string {
@@ -4104,7 +4105,10 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     appendWidthStyle(html, item.lineWidth, borderStyle);
   }
   appendFillPatternStyle(html, item, context);
-  appendColorGradientStyle(html, getColorGradient(item));
+  const colorGradient = getColorGradient(item);
+  appendColorGradientStyle(html, colorGradient);
+  if (item instanceof HmiBar)
+    appendColorGradientStyle(html, colorGradient, "--hmi-bar-track-background");
   if (item.margin !== undefined) {
     html.push(
       `margin: ${toCss(getStaticValueOrDefault(item.margin.top, 0))}px ${toCss(
