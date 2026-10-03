@@ -3732,6 +3732,12 @@ public class HmiScreenToHtmlConverter
             AddTrendJsonBoolean(properties, "exponentialFormat", pen.ExponentialFormat?.StaticValue);
             AddTrendJsonBoolean(properties, "autoDecimalPlaces", pen.AutoDecimalPlaces?.StaticValue);
             AddTrendJsonNumber(properties, "decimalPlaces", pen.DecimalPlaces?.StaticValue);
+            AddTrendJsonString(properties, "valueAxisName", pen.ValueAxisName);
+            AddTrendJsonBoolean(properties, "valueAxisVisible", pen.ValueAxisVisible?.StaticValue);
+            AddTrendJsonString(properties, "valueAxisColor", pen.ValueAxisColor?.StaticValue is HmiColor valueAxisColor ? ToCss(valueAxisColor) : null);
+            AddTrendJsonBoolean(properties, "valueAxisInTrendColor", pen.ValueAxisInTrendColor?.StaticValue);
+            AddTrendJsonString(properties, "valueAxisAlignment", pen.ValueAxisAlignment?.StaticValue.ToString());
+            AddTrendJsonString(properties, "valueAxisLabel", pen.ValueAxisLabel);
             AddTrendJsonString(properties, "unit", pen.EngineeringUnit);
             return "{" + string.Join(",", properties) + "}";
         }).ToArray();

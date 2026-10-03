@@ -3249,12 +3249,23 @@ public class HmiScreenToHtmlConverterTests
         var screen = new HmiScreen { Name = "Main", Width = 400, Height = 240 };
         var layer = new HmiLayer { Name = "Default" };
         var trend = new HmiTrendControl { Name = "Trend", Width = 320, Height = 180 };
-        trend.Pens.Add(new HmiTrendPen { Number = 1, DecimalPlaces = 4 });
+        trend.Pens.Add(new HmiTrendPen
+        {
+            Number = 1, DecimalPlaces = 4, ValueAxisName = "Axis A", ValueAxisVisible = false,
+            ValueAxisColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56), ValueAxisInTrendColor = true,
+            ValueAxisAlignment = HmiHorizontalAlignment.Right, ValueAxisLabel = "Pressure"
+        });
         layer.Items.Add(trend);
         screen.Layers.Add(layer);
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
         StringAssert.Contains(html, "&quot;decimalPlaces&quot;:4");
+        StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Axis A&quot;");
+        StringAssert.Contains(html, "&quot;valueAxisVisible&quot;:false");
+        StringAssert.Contains(html, "&quot;valueAxisColor&quot;:&quot;#123456&quot;");
+        StringAssert.Contains(html, "&quot;valueAxisInTrendColor&quot;:true");
+        StringAssert.Contains(html, "&quot;valueAxisAlignment&quot;:&quot;Right&quot;");
+        StringAssert.Contains(html, "&quot;valueAxisLabel&quot;:&quot;Pressure&quot;");
     }
 
     [TestMethod]

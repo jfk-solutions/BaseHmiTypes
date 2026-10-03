@@ -82,6 +82,19 @@ public sealed class HmiTrendPen
     /// <summary>Gets or sets the fixed decimal precision of the value axis assigned to this pen.</summary>
     public HmiProperty<int>? DecimalPlaces { get; set; }
 
+    /// <summary>Gets or sets the identity of the shared value axis assigned to this pen.</summary>
+    public string? ValueAxisName { get; set; }
+
+    public HmiProperty<bool>? ValueAxisVisible { get; set; }
+
+    public HmiProperty<HmiColor>? ValueAxisColor { get; set; }
+
+    public HmiProperty<bool>? ValueAxisInTrendColor { get; set; }
+
+    public HmiProperty<HmiHorizontalAlignment>? ValueAxisAlignment { get; set; }
+
+    public string? ValueAxisLabel { get; set; }
+
     /// <summary>
     /// Gets or sets the current minimum value used to scale this pen.
     /// </summary>
