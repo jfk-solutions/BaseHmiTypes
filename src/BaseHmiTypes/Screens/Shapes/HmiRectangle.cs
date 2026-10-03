@@ -21,4 +21,7 @@ public class HmiRectangle : HmiSurfaceShapeBase
 
     public HmiProperty<int>? CornerStyle { get; set; }
 
+    /// <summary>Draws borders wider than one pixel inside the frame when true, or centered on it when false.</summary>
+    public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
+
 }

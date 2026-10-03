@@ -15,6 +15,86 @@ namespace BaseHmiTypes.Tests;
 [TestClass]
 public class HmiScreenToHtmlConverterTests
 {
+    [TestMethod]
+    [DataRow(false, false, 1, false)]
+    [DataRow(false, false, 10, false)]
+    [DataRow(false, true, 1, false)]
+    [DataRow(false, true, 10, false)]
+    [DataRow(false, null, 1, false)]
+    [DataRow(false, null, 10, false)]
+    [DataRow(true, false, 1, false)]
+    [DataRow(true, false, 10, false)]
+    [DataRow(true, true, 1, false)]
+    [DataRow(true, true, 10, false)]
+    [DataRow(true, null, 1, false)]
+    [DataRow(true, null, 10, false)]
+    [DataRow(false, false, 1, true)]
+    [DataRow(false, false, 10, true)]
+    [DataRow(false, true, 1, true)]
+    [DataRow(false, true, 10, true)]
+    [DataRow(false, null, 1, true)]
+    [DataRow(false, null, 10, true)]
+    [DataRow(true, false, 1, true)]
+    [DataRow(true, false, 10, true)]
+    [DataRow(true, true, 1, true)]
+    [DataRow(true, true, 10, true)]
+    [DataRow(true, null, 1, true)]
+    [DataRow(true, null, 10, true)]
+    public async Task ConvertAsync_RendersRectangleBorderPlacement(bool rounded, bool? inside, int width, bool line)
+    {
+        var item = new HmiRectangle { Name = "FramedRectangle", Width = 100, Height = 80 };
+        if (inside.HasValue) item.DrawStrokeInsideFrame = HmiProperty.Tag("Border.Inside", inside.Value);
+        if (rounded) item.TopLeftRadius = item.TopRightRadius = item.BottomLeftRadius = item.BottomRightRadius = HmiProperty.Static((x: 20d, y: 10d));
+        if (line)
+        {
+            item.LineWidth = HmiProperty.Tag("Line.Width", (double)width);
+            item.LineColor = HmiColor.FromArgb(255, 12, 34, 56);
+            item.BorderWidth = 2; // Shape line width retains precedence.
+            item.BorderColor = HmiColor.FromArgb(255, 255, 0, 0);
+        }
+        else
+        {
+            item.BorderWidth = HmiProperty.Tag("Border.Width", (double)width);
+            item.BorderColor = HmiColor.FromArgb(255, 12, 34, 56);
+        }
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<div id=\"FramedRectangle\"[^>]*>").Value;
+        Assert.IsFalse(string.IsNullOrEmpty(opening));
+        var centered = inside == false && width > 1;
+        Assert.AreEqual(centered, opening.Contains("outline-width:", StringComparison.Ordinal));
+        StringAssert.Contains(opening, "width: 100px;");
+        StringAssert.Contains(opening, "height: 80px;");
+        StringAssert.Contains(opening, $"border-width: {(centered ? 0 : width)}px;");
+        if (centered)
+        {
+            StringAssert.Contains(opening, "outline-width: 10px;");
+            StringAssert.Contains(opening, "outline-offset: -5px;");
+            StringAssert.Contains(opening, "outline-color: #0C2238;");
+        }
+        if (rounded) StringAssert.Contains(opening, "border-radius: 20px 20px 20px 20px / 10px 10px 10px 10px;");
+    }
+
+    [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public async Task ConvertAsync_RendersBlinkingRectangleBorderPlacement(bool line, bool inside)
+    {
+        var item = new HmiRectangle { Name = "FlashingRectangle", DrawStrokeInsideFrame = HmiProperty.Tag("Border.Inside", inside) };
+        var color = HmiProperty.Blink(HmiColor.FromArgb(255, 1, 2, 3), HmiColor.FromArgb(255, 4, 5, 6), HmiBlinkRate.Fast);
+        if (line) { item.LineWidth = 10; item.LineColor = color; }
+        else { item.BorderWidth = 10; item.BorderColor = color; }
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<div id=\"FlashingRectangle\"[^>]*>").Value;
+        StringAssert.Contains(opening, "--hmi-border-color-off: #010203;");
+        StringAssert.Contains(opening, "--hmi-border-color-on: #040506;");
+        StringAssert.Contains(opening, $"animation: hmi-{(inside ? "border" : "outline")}-color-flash 0.5s steps(1, end) infinite;");
+    }
 
     [TestMethod]
     [DataRow(0, false, 1)]
