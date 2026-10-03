@@ -3337,6 +3337,24 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    [DataRow(null)]
+    public async Task ConvertAsync_ExposesGaugeScaleVisibility(bool? show)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        var item = new HmiGauge();
+        if (show.HasValue)
+            item.ShowScale = show.Value;
+        layer.Items.Add(item);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var gauge = System.Text.RegularExpressions.Regex.Match(html, "<hmi-gauge[^>]*>").Value;
+        Assert.AreEqual(show == false, gauge.Contains("hide-scale", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersGaugeAsGaugeWebComponent()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
