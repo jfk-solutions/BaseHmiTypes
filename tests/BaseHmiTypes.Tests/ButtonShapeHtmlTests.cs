@@ -31,7 +31,7 @@ public class ButtonShapeHtmlTests
         StringAssert.Contains(opening, shape == HmiButtonShape.Ellipse ? "border-radius: 50%;overflow: hidden;" : "border-radius: 0px;");
         StringAssert.Contains(opening, "left: 10px;top: 20px;width: 100px;height: 100px;");
         Assert.AreEqual(!enabled, opening.Contains("disabled=", StringComparison.Ordinal));
-        if (beveled) { StringAssert.Contains(opening, "border-width: 3px;"); StringAssert.Contains(opening, "border-color: #EEEEEE #404040 #404040 #EEEEEE;"); }
+        if (beveled) { StringAssert.Contains(opening, "box-shadow: inset 3px 0 0 #EEEEEE"); StringAssert.Contains(opening, "inset -3px 0 0 #404040"); }
         StringAssert.Contains(html, ">Start</button>");
     }
     [TestMethod]
