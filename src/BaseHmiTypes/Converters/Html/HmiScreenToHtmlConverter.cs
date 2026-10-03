@@ -2795,6 +2795,16 @@ public class HmiScreenToHtmlConverter
         return Math.Min(Math.Max(value, minimum), maximum);
     }
 
+    private static string? CreateSymbolicStateStyle(HmiSymbolicIOField field, HmiState? state, HmiHtmlConvertContext context)
+    {
+        var style = CreateStateStyle(state);
+        var width = context.EffectiveProperties.Resolve(field, nameof(HmiPaintedScreenItemBase.BorderWidth), field.BorderWidth);
+        if (field.DrawStrokeInsideFrame is not null && !ResolveStaticValue(field.DrawStrokeInsideFrame, context) &&
+            ResolveStaticValue(width, context) > 1 && state?.BorderColor is HmiColor color)
+            style = AppendCssDeclaration(style, $"outline-color: {ToCss(color)};");
+        return style;
+    }
+
     private static async ValueTask AppendSymbolicInputAsync(
         StringBuilder html,
         HmiSymbolicIOField symbolicIoField,
@@ -2818,7 +2828,7 @@ public class HmiScreenToHtmlConverter
             var imageStyle = imageLayoutStyle;
             if (blinkAlternateImage)
                 imageStyle = AppendCssDeclaration(imageStyle, $"animation: hmi-symbolic-base-flash {GetBlinkDuration(selectedState.ImageBlinkRate)}s steps(1, end) infinite;");
-            var stateStyle = CreateStateStyle(selectedState);
+            var stateStyle = CreateSymbolicStateStyle(symbolicIoField, selectedState, context);
             if (selectedState.ImageBackgroundTransparent != true && selectedState.ImageBackgroundColor is HmiColor imageBackgroundColor)
                 stateStyle = AppendCssDeclaration(stateStyle, $"background-color: {ToCss(imageBackgroundColor)};");
             stateStyle = AppendCssDeclaration(stateStyle, "overflow: hidden;");
@@ -2863,7 +2873,7 @@ public class HmiScreenToHtmlConverter
             return;
         }
 
-        var textStateStyle = CreateStateStyle(selectedState) + CreateFontWritingModeStyle(symbolicIoField.Font, context);
+        var textStateStyle = CreateSymbolicStateStyle(symbolicIoField, selectedState, context) + CreateFontWritingModeStyle(symbolicIoField.Font, context);
         if (ResolveStaticValue(symbolicIoField.ReadOnly, context))
         {
             html.Append("<input");
@@ -4716,7 +4726,9 @@ public class HmiScreenToHtmlConverter
              item is HmiText framedText && framedText.DrawStrokeInsideFrame is not null &&
                 !ResolveStaticValue(framedText.DrawStrokeInsideFrame, context) ||
              item is HmiGraphicView framedGraphic && framedGraphic.DrawStrokeInsideFrame is not null &&
-                !ResolveStaticValue(framedGraphic.DrawStrokeInsideFrame, context));
+                !ResolveStaticValue(framedGraphic.DrawStrokeInsideFrame, context) ||
+             item is HmiSymbolicIOField framedSymbolic && framedSymbolic.DrawStrokeInsideFrame is not null &&
+                !ResolveStaticValue(framedSymbolic.DrawStrokeInsideFrame, context));
         var animations = new List<string>();
 
         if (foregroundColor is HmiBlinkProperty<HmiColor> foregroundBlink &&

@@ -16,6 +16,73 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(0, false, 10, false)]
+    [DataRow(0, false, 10, true)]
+    [DataRow(0, true, 10, false)]
+    [DataRow(0, true, 10, true)]
+    [DataRow(1, false, 10, false)]
+    [DataRow(1, false, 10, true)]
+    [DataRow(1, true, 10, false)]
+    [DataRow(1, true, 10, true)]
+    [DataRow(2, false, 10, false)]
+    [DataRow(2, false, 10, true)]
+    [DataRow(2, true, 10, false)]
+    [DataRow(2, true, 10, true)]
+    [DataRow(0, null, 10, true)]
+    [DataRow(1, null, 10, true)]
+    [DataRow(2, null, 10, true)]
+    [DataRow(0, false, 1, true)]
+    [DataRow(1, false, 1, true)]
+    [DataRow(2, false, 1, true)]
+    public async Task ConvertAsync_RendersSymbolicBorderPlacement(int kind, bool? inside, int width, bool stateColor)
+    {
+        var item = new HmiSymbolicIOField { Name = "FramedState", Width = 100, Height = 80,
+            BorderWidth = HmiProperty.Tag("Border.Width", (double)width), BorderColor = HmiColor.FromArgb(255, 1, 2, 3),
+            ReadOnly = kind == 1 };
+        if (inside.HasValue) item.DrawStrokeInsideFrame = HmiProperty.Tag("Border.Inside", inside.Value);
+        var state = new HmiState { Value = 7, Text = HmiMultilingualText.FromText("Seven"),
+            BorderColor = stateColor ? HmiColor.FromArgb(255, 12, 34, 56) : null };
+        if (kind == 0) state.Image = new HmiImageSource { Uri = "picture.svg" };
+        item.States.Add(state); item.Value = 7;
+        var layer = new HmiLayer(); layer.Items.Add(item); var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<(?:div|input|select) id=\"FramedState\"[^>]*>").Value;
+        Assert.IsFalse(string.IsNullOrEmpty(opening));
+        StringAssert.StartsWith(opening, kind == 0 ? "<div" : kind == 1 ? "<input" : "<select");
+        var centered = inside == false && width > 1;
+        Assert.AreEqual(centered, opening.Contains("outline-width:", StringComparison.Ordinal));
+        StringAssert.Contains(opening, $"border-width: {(centered ? 0 : width)}px;");
+        if (centered)
+        {
+            StringAssert.Contains(opening, "outline-offset: -5px;");
+            StringAssert.Contains(opening, stateColor ? "outline-color: #0C2238;" : "outline-color: #010203;");
+        }
+        if (kind == 0) StringAssert.Contains(html, "<img src=\"picture.svg\"");
+        if (kind == 1) StringAssert.Contains(opening, "value=\"Seven\"");
+        if (kind == 2) StringAssert.Contains(html, ">Seven</option>");
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task ConvertAsync_RendersFlashingSymbolicBorderAndImages(bool inside)
+    {
+        var item = new HmiSymbolicIOField { Name = "FlashingState", BorderWidth = 10,
+            DrawStrokeInsideFrame = HmiProperty.Tag("Border.Inside", inside),
+            BorderColor = HmiProperty.Blink(HmiColor.FromArgb(255, 1, 2, 3), HmiColor.FromArgb(255, 4, 5, 6), HmiBlinkRate.Fast) };
+        item.States.Add(new HmiState { Image = new HmiImageSource { Uri = "base.svg" },
+            AlternateImage = new HmiImageSource { Uri = "flash.svg" }, ImageBlink = true, ImageBlinkRate = HmiBlinkRate.Slow });
+        var layer = new HmiLayer(); layer.Items.Add(item); var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<div id=\"FlashingState\"[^>]*>").Value;
+        StringAssert.Contains(opening, $"animation: hmi-{(inside ? "border" : "outline")}-color-flash 0.5s steps(1, end) infinite;");
+        StringAssert.Contains(opening, "--hmi-border-color-off: #010203;");
+        StringAssert.Contains(opening, "--hmi-border-color-on: #040506;");
+        StringAssert.Contains(html, "animation: hmi-symbolic-base-flash 2s steps(1, end) infinite;");
+        StringAssert.Contains(html, "animation: hmi-symbolic-alternate-flash 2s steps(1, end) infinite;");
+    }
+
+    [TestMethod]
     [DataRow(false, false, false, 10)]
     [DataRow(false, false, true, 10)]
     [DataRow(false, true, false, 10)]

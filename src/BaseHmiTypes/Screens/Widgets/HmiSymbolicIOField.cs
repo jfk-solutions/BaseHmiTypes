@@ -33,4 +33,7 @@ public class HmiSymbolicIOField : HmiTextWidgetBase
     public HmiProperty<bool>? ShowDropDownButton { get; set; }
 
     public HmiProperty<bool>? ShowDropDownList { get; set; }
+
+    /// <summary>Draws borders wider than one pixel inside the frame when true, or centered on it when false.</summary>
+    public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
 }
