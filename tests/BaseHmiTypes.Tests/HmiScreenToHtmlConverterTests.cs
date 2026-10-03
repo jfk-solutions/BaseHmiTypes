@@ -717,6 +717,42 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false, HmiTickDirection.Down, "y1=\"0\" y2=\"6\" x1=\"12.5%\"")]
+    [DataRow(false, HmiTickDirection.Up, "y1=\"6\" y2=\"12\" x1=\"12.5%\"")]
+    [DataRow(false, HmiTickDirection.Right, "x1=\"0\" x2=\"6\" y1=\"12.5%\"")]
+    [DataRow(false, HmiTickDirection.Left, "x1=\"6\" x2=\"12\" y1=\"12.5%\"")]
+    [DataRow(true, HmiTickDirection.Down, "y1=\"0\" y2=\"6\" x1=\"12.5%\"")]
+    [DataRow(true, HmiTickDirection.Up, "y1=\"6\" y2=\"12\" x1=\"12.5%\"")]
+    [DataRow(true, HmiTickDirection.Right, "x1=\"0\" x2=\"6\" y1=\"12.5%\"")]
+    [DataRow(true, HmiTickDirection.Left, "x1=\"6\" x2=\"12\" y1=\"12.5%\"")]
+    public async Task ConvertAsync_RendersConfiguredMinorScaleTicks(bool standalone, HmiTickDirection direction, string geometry)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        HmiScaleWidgetBase scale = standalone ? new HmiScale { TickDirection = direction }
+            : new HmiBar { FillDirection = direction is HmiTickDirection.Left or HmiTickDirection.Right ? HmiFillDirection.Up : HmiFillDirection.Right,
+                ScaleAfterBar = direction is HmiTickDirection.Down or HmiTickDirection.Right };
+        scale.Width = 120;
+        scale.Height = 100;
+        scale.ShowScale = true;
+        scale.DivisionCount = 2;
+        scale.SubDivisionCount = 4;
+        scale.MajorTickLength = 12;
+        scale.MajorTicksBold = true;
+        layer.Items.Add(scale);
+        screen.Layers.Add(layer);
+        var converter = new HmiScreenToHtmlConverter();
+        var html = await converter.ConvertAsync(screen);
+        Assert.AreEqual(6, System.Text.RegularExpressions.Regex.Matches(html, "data-hmi-minor-tick=\"true\"").Count);
+        StringAssert.Contains(html, $"data-hmi-minor-tick=\"true\" stroke-width=\"1\" {geometry}");
+        scale.MajorTicksOnly = true;
+        Assert.IsFalse((await converter.ConvertAsync(screen)).Contains("data-hmi-minor-tick", StringComparison.Ordinal));
+        scale.MajorTicksOnly = false;
+        scale.SubDivisionCount = 1;
+        Assert.IsFalse((await converter.ConvertAsync(screen)).Contains("data-hmi-minor-tick", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersBarFillDirections()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };

@@ -50,6 +50,9 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<int>? SubDivisionCount { get; set; }
 
+    /// <summary>Suppress minor tick marks even when subdivisions are configured.</summary>
+    public HmiProperty<bool>? MajorTicksOnly { get; set; }
+
     /// <summary>Major tick length in pixels; omitted values use six pixels.</summary>
     public HmiProperty<int>? MajorTickLength { get; set; }
 
