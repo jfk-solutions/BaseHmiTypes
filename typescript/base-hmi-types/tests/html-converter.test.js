@@ -871,6 +871,42 @@ test("HTML converter renders bar scale ticks and appearance", async () => {
   assert.match(html, /<span>0.0&nbsp;bar<\/span><span>50.0&nbsp;bar<\/span><span>100.0&nbsp;bar<\/span>/);
 });
 
+for (const [direction, after, edge, bold] of [
+  [HmiFillDirection.Up, true, "left", true],
+  [HmiFillDirection.Down, false, "right", false],
+  [HmiFillDirection.Left, true, "top", true],
+  [HmiFillDirection.Right, false, "bottom", false],
+]) {
+test(`HTML converter renders bar major tick strokes (${edge})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(80);
+  bar.showScale = staticProperty(true);
+  bar.divisionCount = staticProperty(3);
+  bar.fillDirection = staticProperty(direction);
+  bar.scaleAfterBar = staticProperty(after);
+  bar.showTickLabels = staticProperty(false);
+  bar.majorTickLength = staticProperty(12);
+  bar.majorTicksBold = staticProperty(bold);
+  bar.tickColor = staticProperty(hmiColorFromArgb(255, 12, 34, 56));
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const converter = new HmiScreenToHtmlConverter();
+  const html = await converter.convertAsync(screen);
+  assert.ok(html.includes(`padding-${edge}: 14px;`));
+  assert.ok(html.includes('data-hmi-bar-ticks="true"'));
+  assert.ok(html.includes(`stroke="#0C2238" stroke-width="${bold ? 2 : 1}"`));
+  assert.ok(html.includes(direction === HmiFillDirection.Up || direction === HmiFillDirection.Down
+    ? '<line x1="0" x2="12" y1="50%" y2="50%"></line>'
+    : '<line y1="0" y2="12" x1="50%" x2="50%"></line>'));
+  assert.ok(html.includes("<span></span><span></span><span></span>"));
+  bar.showScale = staticProperty(false);
+  assert.ok(!(await converter.convertAsync(screen)).includes("data-hmi-bar-ticks"));
+});
+}
+
 for (const direction of [HmiFillDirection.Right, HmiFillDirection.Down, HmiFillDirection.Left, HmiFillDirection.Up]) {
 test(`HTML converter renders bar tick label intervals (${direction})`, async () => {
   const screen = new HmiScreen();
