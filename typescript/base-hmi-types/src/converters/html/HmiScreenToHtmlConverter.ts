@@ -1650,6 +1650,7 @@ function appendBarScale(
   const reverse = direction === HmiFillDirection.Up || direction === HmiFillDirection.Left;
   const labelInterval = Math.max(1, getStaticValue(bar.tickLabelInterval) ?? 1);
   const showLabels = getStaticValue(bar.showTickLabels) !== false;
+  const exponentialFormat = getStaticValue(bar.tickLabelExponentialFormat) === true;
   let style = vertical
     ? "display: flex; flex-direction: column; justify-content: space-between; height: 100%;"
     : "display: flex; justify-content: space-between; width: 100%;";
@@ -1667,7 +1668,9 @@ function appendBarScale(
     if (reverse)
       ratio = 1 - ratio;
     const tick = minimum + ((maximum - minimum) * ratio);
-    const label = decimalPlaces === undefined ? toCss(tick) : tick.toFixed(decimalPlaces);
+    const label = exponentialFormat
+      ? tick.toExponential(decimalPlaces ?? 2).replace(/e([+-])(\d+)$/u, (_match, sign: string, exponent: string) => `e${sign}${exponent.padStart(3, "0")}`)
+      : decimalPlaces === undefined ? toCss(tick) : tick.toFixed(decimalPlaces);
     html.push("<span>");
     const tickIndex = reverse ? tickCount - 1 - index : index;
     if (showLabels && tickIndex % labelInterval === 0) {

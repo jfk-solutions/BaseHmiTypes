@@ -938,6 +938,37 @@ test(`HTML converter renders bar scale alignment (${direction}, ${after})`, asyn
 }
 }
 
+for (const [minimum, maximum, first, middle, last] of [
+  [0, 100, "0.00e+000", "5.00e+001", "1.00e+002"],
+  [-100, 100, "-1.00e+002", "0.00e+000", "1.00e+002"],
+  [0, 0.004, "0.00e+000", "2.00e-003", "4.00e-003"],
+]) {
+test(`HTML converter renders bar exponential labels (${minimum}, ${maximum})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(40);
+  bar.beginValue = staticProperty(minimum);
+  bar.endValue = staticProperty(maximum);
+  bar.showScale = staticProperty(true);
+  bar.divisionCount = staticProperty(3);
+  bar.tickLabelDecimalPlaces = staticProperty(2);
+  bar.tickLabelExponentialFormat = staticProperty(true);
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const converter = new HmiScreenToHtmlConverter();
+  let html = await converter.convertAsync(screen);
+  assert.ok(html.includes(`<span>${first}</span><span>${middle}</span><span>${last}</span>`));
+  delete bar.tickLabelDecimalPlaces;
+  html = await converter.convertAsync(screen);
+  assert.ok(html.includes(`<span>${middle}</span>`));
+  bar.tickLabelExponentialFormat = staticProperty(false);
+  html = await converter.convertAsync(screen);
+  assert.ok(!html.includes(`<span>${middle}</span>`));
+});
+}
+
 test("HTML converter renders enabled bar threshold markers", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
