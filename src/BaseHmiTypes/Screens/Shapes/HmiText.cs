@@ -28,4 +28,7 @@ public class HmiText : HmiSurfaceShapeBase
     public HmiProperty<HmiHorizontalAlignment>? HorizontalAlignment { get; set; }
 
     public HmiProperty<HmiVerticalAlignment>? VerticalAlignment { get; set; }
+
+    /// <summary>Draws borders wider than one pixel inside the frame when true, or centered on it when false.</summary>
+    public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
 }

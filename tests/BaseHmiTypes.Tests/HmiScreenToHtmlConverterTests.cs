@@ -40,6 +40,86 @@ public class HmiScreenToHtmlConverterTests
     [DataRow(true, true, 10, true)]
     [DataRow(true, null, 1, true)]
     [DataRow(true, null, 10, true)]
+    public async Task ConvertAsync_RendersTextBorderPlacement(bool adapt, bool? inside, int width, bool line)
+    {
+        var item = new HmiText { Name = "FramedText", Width = 100, Height = 80,
+            Text = HmiMultilingualText.FromText("Tank level"), AdaptBorderToContent = adapt };
+        if (inside.HasValue) item.DrawStrokeInsideFrame = HmiProperty.Tag("Border.Inside", inside.Value);
+        if (line)
+        {
+            item.LineWidth = HmiProperty.Tag("Line.Width", (double)width);
+            item.LineColor = HmiColor.FromArgb(255, 12, 34, 56);
+            item.BorderWidth = 2;
+            item.BorderColor = HmiColor.FromArgb(255, 255, 0, 0);
+        }
+        else
+        {
+            item.BorderWidth = HmiProperty.Tag("Border.Width", (double)width);
+            item.BorderColor = HmiColor.FromArgb(255, 12, 34, 56);
+        }
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<div id=\"FramedText\"[^>]*>").Value;
+        Assert.IsFalse(string.IsNullOrEmpty(opening));
+        var centered = inside == false && width > 1;
+        Assert.AreEqual(centered, opening.Contains("outline-width:", StringComparison.Ordinal));
+        StringAssert.Contains(opening, $"border-width: {(centered ? 0 : width)}px;");
+        Assert.AreEqual(adapt, opening.Contains("width: max-content;height: max-content;white-space: nowrap;", StringComparison.Ordinal));
+        StringAssert.Contains(html, "Tank level");
+        if (centered)
+        {
+            StringAssert.Contains(opening, "outline-width: 10px;");
+            StringAssert.Contains(opening, "outline-offset: -5px;");
+            StringAssert.Contains(opening, "outline-color: #0C2238;");
+        }
+    }
+
+    [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public async Task ConvertAsync_RendersBlinkingTextBorderPlacement(bool line, bool inside)
+    {
+        var item = new HmiText { Name = "FlashingText", DrawStrokeInsideFrame = HmiProperty.Tag("Border.Inside", inside) };
+        var color = HmiProperty.Blink(HmiColor.FromArgb(255, 1, 2, 3), HmiColor.FromArgb(255, 4, 5, 6), HmiBlinkRate.Fast);
+        if (line) { item.LineWidth = 10; item.LineColor = color; }
+        else { item.BorderWidth = 10; item.BorderColor = color; }
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<div id=\"FlashingText\"[^>]*>").Value;
+        StringAssert.Contains(opening, "--hmi-border-color-off: #010203;");
+        StringAssert.Contains(opening, "--hmi-border-color-on: #040506;");
+        StringAssert.Contains(opening, $"animation: hmi-{(inside ? "border" : "outline")}-color-flash 0.5s steps(1, end) infinite;");
+    }
+
+    [TestMethod]
+    [DataRow(false, false, 1, false)]
+    [DataRow(false, false, 10, false)]
+    [DataRow(false, true, 1, false)]
+    [DataRow(false, true, 10, false)]
+    [DataRow(false, null, 1, false)]
+    [DataRow(false, null, 10, false)]
+    [DataRow(true, false, 1, false)]
+    [DataRow(true, false, 10, false)]
+    [DataRow(true, true, 1, false)]
+    [DataRow(true, true, 10, false)]
+    [DataRow(true, null, 1, false)]
+    [DataRow(true, null, 10, false)]
+    [DataRow(false, false, 1, true)]
+    [DataRow(false, false, 10, true)]
+    [DataRow(false, true, 1, true)]
+    [DataRow(false, true, 10, true)]
+    [DataRow(false, null, 1, true)]
+    [DataRow(false, null, 10, true)]
+    [DataRow(true, false, 1, true)]
+    [DataRow(true, false, 10, true)]
+    [DataRow(true, true, 1, true)]
+    [DataRow(true, true, 10, true)]
+    [DataRow(true, null, 1, true)]
+    [DataRow(true, null, 10, true)]
     public async Task ConvertAsync_RendersRectangleBorderPlacement(bool rounded, bool? inside, int width, bool line)
     {
         var item = new HmiRectangle { Name = "FramedRectangle", Width = 100, Height = 80 };
