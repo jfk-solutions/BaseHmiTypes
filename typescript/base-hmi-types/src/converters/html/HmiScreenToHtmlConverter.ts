@@ -2706,6 +2706,8 @@ async function appendSelectionGroup(
   html.push(`<${elementName}`);
   appendCommonAttributes(html, selectionGroup, context);
   appendStaticAttribute(html, "selected-index", selectionGroup.selectedIndex);
+  if (selectionGroup instanceof HmiCheckBoxGroup || selectionGroup instanceof HmiRadioButtonGroup)
+    appendStaticAttribute(html, "selected-fields", selectionGroup.selectedFields);
   appendStaticAttribute(html, "selection-item-height", selectionGroup.selectionItemHeight);
   appendStaticAttribute(html, "selection-background-color", selectionGroup.selectionBackgroundColor);
   appendStaticAttribute(html, "selection-foreground-color", selectionGroup.selectionForegroundColor);
