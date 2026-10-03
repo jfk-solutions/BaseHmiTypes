@@ -1659,6 +1659,14 @@ function appendBarScale(
     style += ` color: ${colorToCss(labelColor)};`;
   style += getBarScaleFontStyle(bar);
 
+  const tickLength = Math.max(0, getStaticValue(bar.majorTickLength) ?? 6);
+  const tickWidth = getStaticValue(bar.majorTicksBold) === true ? 2 : 1;
+  const afterBar = getStaticValue(bar.scaleAfterBar) !== false;
+  const edge = vertical ? (afterBar ? "left" : "right") : (afterBar ? "top" : "bottom");
+  style += ` position: relative; box-sizing: border-box; padding-${edge}: ${tickLength + 2}px;`;
+  if (!vertical)
+    style += ` min-height: ${tickLength + 2}px;`;
+
   html.push("<div");
   appendAttribute(html, "data-hmi-bar-scale", "true");
   appendAttribute(html, "style", style);
@@ -1680,6 +1688,20 @@ function appendBarScale(
     }
     html.push("</span>");
   }
+  html.push('<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-hmi-bar-ticks="true"');
+  appendAttribute(html, "style", `position: absolute; pointer-events: none; overflow: visible; ${edge}: 0; ` +
+    (vertical ? `top: 0; width: ${tickLength}px; height: 100%;` : `left: 0; width: 100%; height: ${tickLength}px;`));
+  const tickColor = getStaticValue(bar.tickColor);
+  appendAttribute(html, "stroke", tickColor === undefined ? "currentColor" : colorToCss(tickColor));
+  appendAttribute(html, "stroke-width", tickWidth.toString());
+  html.push(">");
+  for (let index = 0; index < tickCount; index++) {
+    const percentage = toCss(100 * index / (tickCount - 1));
+    html.push(vertical
+      ? `<line x1="0" x2="${tickLength}" y1="${percentage}%" y2="${percentage}%"></line>`
+      : `<line y1="0" y2="${tickLength}" x1="${percentage}%" x2="${percentage}%"></line>`);
+  }
+  html.push("</svg>");
   html.push("</div>");
 }
 

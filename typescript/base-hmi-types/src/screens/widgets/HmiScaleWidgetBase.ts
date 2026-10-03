@@ -27,6 +27,9 @@ export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   originValue?: HmiProperty<number>;
   divisionCount?: HmiProperty<number>;
   subDivisionCount?: HmiProperty<number>;
+  /** Major tick length in pixels; omitted values use six pixels. */
+  majorTickLength?: HmiProperty<number>;
+  majorTicksBold?: HmiProperty<boolean>;
   tickDirection?: HmiProperty<HmiTickDirection>;
   barMode?: HmiProperty<number>;
   scaleMode?: HmiProperty<number>;
