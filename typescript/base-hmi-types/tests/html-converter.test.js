@@ -90,6 +90,29 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const mode of [0,1,2,3]) for (const foregroundBlink of [false,true]) {
+test("HTML renderer preserves explicit button caption color (" + [mode,foregroundBlink].join(", ") + ")", async () => {
+  const item = new HmiButton(); item.name = "CaptionButton";
+  item.width = staticProperty(160); item.height = staticProperty(60);
+  item.text = staticProperty(HmiMultilingualText.fromText("Alarm"));
+  if (foregroundBlink) item.foregroundColor = blinkProperty(hmiColorFromArgb(255,11,12,13),hmiColorFromArgb(255,14,15,16),HmiBlinkRate.Fast);
+  if (mode > 0) item.captionColor = staticProperty(hmiColorFromArgb(255,1,2,3));
+  if (mode >= 2) {
+    const state = new HmiState(); state.value = 0;
+    if (mode === 2) state.captionColor = hmiColorFromArgb(255,4,5,6);
+    else state.foregroundColor = hmiColorFromArgb(255,4,5,6);
+    item.states.push(state);
+  }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<button id="CaptionButton"[^>]*>/u)?.[0] ?? "";
+  const body = html.match(/<button id="CaptionButton"[^>]*>(.*?)<\/button>/su)?.[1] ?? "";
+  assert.equal(opening.includes("hmi-foreground-color-flash"),foregroundBlink);
+  assert.equal(body,mode === 0 ? "Alarm" : '<span data-hmi-button-caption style="color: ' + (mode === 1 ? "#010203" : "#040506") + ';">Alarm</span>');
+});
+}
+
 for (const border of [false,true]) for (const background of [false,true]) for (const stateColor of [false,true]) {
 test("HTML renderer flashes button captions independently (" + [border,background,stateColor].join(", ") + ")", async () => {
   const item = new HmiButton(); item.name = "FlashingButton";

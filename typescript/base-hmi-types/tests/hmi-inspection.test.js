@@ -600,7 +600,7 @@ test("HTML conversion renders the selected button state caption and project imag
 
   assert.match(html, /<button id="Motor"/);
   assert.match(html, /<img src="data:image\/png;base64,BAUG"/);
-  assert.match(html, /Running<\/button>/);
+  assert.match(html, /Running<\/span><\/button>/);
   assert.match(html, /background-color: #0A141E;/);
   assert.match(html, /color: #F0F1F2;/);
   assert.match(html, /border-color: #646566;/);
