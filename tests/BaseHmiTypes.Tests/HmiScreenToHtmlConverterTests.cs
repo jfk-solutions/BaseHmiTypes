@@ -16,6 +16,35 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public async Task ConvertAsync_RendersReadOnlySymbolicText(bool readOnly, bool enabled)
+    {
+        var item = new HmiSymbolicIOField { Name = "StatusList", Width = 160, Height = 60,
+            Value = 1, Enabled = enabled, ReadOnly = HmiProperty.Tag("List.ReadOnly", readOnly),
+            Font = new HmiFont { OrientationAngle = 90 } };
+        item.States.Add(new HmiState { Value = 0, Text = HmiMultilingualText.FromText("Stopped") });
+        item.States.Add(new HmiState { Value = 1, Text = HmiMultilingualText.FromText("Running & ready"), CaptionColor = HmiColor.FromArgb(255, 1, 2, 3) });
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<(?:input|select) id=\"StatusList\"[^>]*>").Value;
+        StringAssert.Contains(opening, "writing-mode: sideways-lr;");
+        StringAssert.Contains(opening, "color: #010203;");
+        Assert.AreEqual(readOnly, opening.StartsWith("<input", StringComparison.Ordinal));
+        Assert.AreEqual(readOnly, opening.Contains("readonly=\"readonly\"", StringComparison.Ordinal));
+        if (readOnly)
+        {
+            StringAssert.Contains(opening, "value=\"Running &amp; ready\"");
+            StringAssert.Contains(opening, "data-state-value=\"1\"");
+            Assert.AreEqual(!enabled, opening.Contains(" disabled=\"disabled\"", StringComparison.Ordinal));
+        }
+        else StringAssert.Contains(html, "selected=\"selected\">Running &amp; ready</option>");
+    }
+
+    [TestMethod]
     [DataRow(0d, false)]
     [DataRow(90d, false)]
     [DataRow(270d, false)]

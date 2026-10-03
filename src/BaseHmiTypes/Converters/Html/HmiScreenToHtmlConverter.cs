@@ -2861,9 +2861,22 @@ public class HmiScreenToHtmlConverter
             return;
         }
 
+        var textStateStyle = CreateStateStyle(selectedState) + CreateFontWritingModeStyle(symbolicIoField.Font, context);
+        if (ResolveStaticValue(symbolicIoField.ReadOnly, context))
+        {
+            html.Append("<input");
+            AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: textStateStyle);
+            AppendAttribute(html, "type", "text");
+            AppendAttribute(html, "readonly", "readonly");
+            AppendAttribute(html, "value", selectedState?.Text?.GetDisplayText(context.CultureInfo) ?? string.Empty);
+            AppendAttribute(html, "data-state-value", selectedState?.Value is double readOnlyValue ? ToCss(readOnlyValue) : null);
+            if (!ResolveStaticValue(symbolicIoField.Enabled, context))
+                AppendAttribute(html, "disabled", "disabled");
+            html.Append('>');
+            return;
+        }
         html.Append("<select");
-        AppendCommonAttributes(html, symbolicIoField, context, additionalStyle:
-            CreateStateStyle(selectedState) + CreateFontWritingModeStyle(symbolicIoField.Font, context));
+        AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: textStateStyle);
         html.Append('>');
         foreach (var state in symbolicIoField.States)
         {
