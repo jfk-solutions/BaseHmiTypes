@@ -309,7 +309,9 @@ export class HmiScreenToHtmlConverter {
       appendInput(html, item, context);
     } else if (item instanceof HmiSymbolicIOField) {
       await appendSymbolicInput(html, item, project, context, signal);
-    } else if (item instanceof HmiTextBox || item instanceof HmiLabel || item instanceof HmiText) {
+    } else if (item instanceof HmiTextBox) {
+      appendTextBox(html, item, context);
+    } else if (item instanceof HmiLabel || item instanceof HmiText) {
       appendTextBlock(html, item, item.text, context);
     } else if (item instanceof HmiGraphicView) {
       await this.appendGraphicViewAsync(html, item, project, context, signal);
@@ -2765,6 +2767,21 @@ async function appendSelectionGroupItem(
   appendAttribute(html, "image", await resolveImageUri(item.image, project, signal));
   appendAttribute(html, "image-name", item.imageName ?? item.image?.imageName);
   html.push("></span>");
+}
+
+function appendTextBox(html: string[], item: HmiTextBox, context: HmiHtmlConvertContext): void {
+  html.push("<textarea");
+  const resize = getStaticValue(item.resizable) === true ? "both" : "none";
+  appendCommonAttributes(html, item, context, undefined,
+    `overflow: auto;resize: ${resize};` + (createTextOrientationStyle(item, context) ?? ""));
+  if (getStaticValueOrDefault(item.enabled, true) === false) appendAttribute(html, "disabled", "disabled");
+  if (getStaticValue(item.readOnly) === true) appendAttribute(html, "readonly", "readonly");
+  const length = getStaticValue(item.fieldLength);
+  if (length !== undefined && length > 0) appendAttribute(html, "maxlength", String(length));
+  html.push(">");
+  const text = getStaticValue(item.text)?.getText(context.options.cultureLcid) ?? "";
+  if (text.startsWith("\n") || text.startsWith("\r")) html.push("\n");
+  html.push(escapeHtml(text), "</textarea>");
 }
 
 function appendTextBlock(
