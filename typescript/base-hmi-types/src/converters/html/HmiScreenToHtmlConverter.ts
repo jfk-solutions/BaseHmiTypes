@@ -1468,15 +1468,20 @@ async function appendButton(
   const state = button.states.find(candidate => candidate.value === stateValue)
     ?? button.states[0];
   const mode = getStaticValue(button.mode);
-  const caption = state?.text ?? getStaticValue(button.text);
+  const down = isButtonDownVisual(button);
+  const caption = state?.text ?? (down ? getStaticValue(button.alternateText) : undefined)
+    ?? getStaticValue(button.text);
   html.push("<button");
   appendCommonAttributes(html, button, context, true, createButtonStyle(button, state));
   appendAttribute(html, "aria-label", caption?.getDisplayText(context.options.cultureLcid));
+  if (getStaticValue(button.toggle) === true)
+    appendAttribute(html, "aria-pressed", getStaticValue(button.pressed) === true ? "true" : "false");
   const enabled = button.enabled === undefined || getStaticValue(button.enabled) === true;
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
   }
-  let image = state?.image ?? getStaticValue(button.image);
+  let image = state?.image ?? (down ? getStaticValue(button.alternateImage) : undefined)
+    ?? getStaticValue(button.image);
   const disabledImageMode = getStaticValue(button.disabledImageMode);
   const showDisabledAppearance = !enabled && getStaticValue(button.showDisabledState) === true;
   if (
@@ -1506,6 +1511,10 @@ async function appendButton(
     appendButtonCaption(html, button, state, caption, hasImage, imageFallback, context);
   if (hasImage) html.push("</span>");
   html.push("</button>");
+}
+
+function isButtonDownVisual(button: HmiButton): boolean {
+  return getStaticValue(button.pressed) === true && getStaticValue(button.downStateSameAsUp) !== true;
 }
 
 function appendButtonCaption(html: string[], button: HmiButton, state: HmiState | undefined,
@@ -1578,6 +1587,7 @@ function createButtonStyle(button: HmiButton, state: HmiState | undefined): stri
   let bottomColor = getStaticValue(button.threeDBorderBottomColor);
   topColor ??= bottomColor;
   bottomColor ??= topColor;
+  if (isButtonDownVisual(button)) [topColor, bottomColor] = [bottomColor, topColor];
   const top = topColor === undefined ? "currentColor" : colorToCss(topColor);
   const bottom = bottomColor === undefined ? "currentColor" : colorToCss(bottomColor);
   const width = toCss(borderWidth);
