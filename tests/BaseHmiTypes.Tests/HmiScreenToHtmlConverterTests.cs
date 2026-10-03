@@ -17,6 +17,49 @@ public class HmiScreenToHtmlConverterTests
 {
 
     [TestMethod]
+    [DataRow(0, 360, 0)]
+    [DataRow(0, -360, 0)]
+    [DataRow(0, 360, 90)]
+    [DataRow(0, -360, 90)]
+    [DataRow(1, 360, 0)]
+    [DataRow(1, -360, 0)]
+    [DataRow(1, 360, 90)]
+    [DataRow(1, -360, 90)]
+    [DataRow(2, 360, 0)]
+    [DataRow(2, -360, 0)]
+    [DataRow(2, 360, 90)]
+    [DataRow(2, -360, 90)]
+    [DataRow(3, 360, 0)]
+    [DataRow(3, -360, 0)]
+    [DataRow(3, 360, 90)]
+    [DataRow(3, -360, 90)]
+    public async Task ConvertAsync_RendersFullTurnArc(int kind, int sweep, int start)
+    {
+        HmiShapeBase shape = kind switch
+        {
+            0 => new HmiCircularArc { CenterX = 50, CenterY = 40, Radius = 40, StartAngle = start, SweepAngle = sweep },
+            1 => new HmiEllipticalArc { CenterX = 50, CenterY = 40, RadiusX = 50, RadiusY = 40, StartAngle = start, SweepAngle = sweep },
+            2 => new HmiCircleSegment { CenterX = 50, CenterY = 40, Radius = 40, StartAngle = start, SweepAngle = sweep },
+            _ => new HmiEllipseSegment { CenterX = 50, CenterY = 40, RadiusX = 50, RadiusY = 40, StartAngle = start, SweepAngle = sweep }
+        };
+        shape.Width = 100;
+        shape.Height = 80;
+        shape.Name = "FullTurn";
+        var layer = new HmiLayer();
+        layer.Items.Add(shape);
+        var screen = new HmiScreen();
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var svg = System.Text.RegularExpressions.Regex.Match(html, "<svg id=\"FullTurn\"[^>]*>(.*?)</svg>", System.Text.RegularExpressions.RegexOptions.Singleline).Groups[1].Value;
+        var path = System.Text.RegularExpressions.Regex.Match(svg, "<path[^>]*d=\"([^\"]*)\"").Groups[1].Value;
+        var radiusX = kind % 2 == 0 ? 40 : 50;
+        var first = start == 0 ? $"{50 + radiusX} 40" : "50 80";
+        var opposite = start == 0 ? $"{50 - radiusX} 40" : "50 0";
+        var direction = sweep > 0 ? 1 : 0;
+        Assert.AreEqual($"M {first} A {radiusX} 40 0 0 {direction} {opposite} A {radiusX} 40 0 0 {direction} {first} Z", path);
+    }
+
+    [TestMethod]
     [DataRow(500, false)]
     [DataRow(500, true)]
     [DataRow(0, false)]

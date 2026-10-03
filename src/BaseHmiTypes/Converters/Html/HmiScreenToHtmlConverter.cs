@@ -1464,6 +1464,13 @@ public class HmiScreenToHtmlConverter
         double sweepAngle,
         bool segment)
     {
+        if (Math.Abs(sweepAngle) == 360d)
+        {
+            var first = GetEllipsePoint(centerX, centerY, radiusX, radiusY, startAngle);
+            var opposite = GetEllipsePoint(centerX, centerY, radiusX, radiusY, startAngle + sweepAngle / 2d);
+            var direction = sweepAngle > 0d ? 1 : 0;
+            return $"M {ToCss(first.X)} {ToCss(first.Y)} A {ToCss(radiusX)} {ToCss(radiusY)} 0 0 {direction} {ToCss(opposite.X)} {ToCss(opposite.Y)} A {ToCss(radiusX)} {ToCss(radiusY)} 0 0 {direction} {ToCss(first.X)} {ToCss(first.Y)} Z";
+        }
         var endAngle = startAngle + sweepAngle;
         var start = GetEllipsePoint(centerX, centerY, radiusX, radiusY, startAngle);
         var end = GetEllipsePoint(centerX, centerY, radiusX, radiusY, endAngle);
