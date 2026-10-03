@@ -1734,7 +1734,7 @@ public class HmiScreenToHtmlConverter
             ? HmiFillDirection.Right
             : ResolveStaticValue(bar.FillDirection, context);
         var showScale = bar.ShowScale is not null && ResolveStaticValue(bar.ShowScale, context);
-        var showThresholds = bar.Thresholds.Any(threshold =>
+        var showThresholds = bar.ShowLimitRanges.GetStaticValueOrDefault(true) && bar.Thresholds.Any(threshold =>
             threshold.Value is not null &&
             (threshold.Enabled is null || ResolveStaticValue(threshold.Enabled, context)));
         if (showScale || showThresholds)
@@ -1823,10 +1823,28 @@ public class HmiScreenToHtmlConverter
             GetColorGradient(bar) is not null)
             AppendAttribute(html, "data-hmi-bar-track", "true");
         if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) is not null ||
+            GetBarThresholdFillColor(bar, context) is not null ||
             (bar.Enabled is not null && !ResolveStaticValue(bar.Enabled, context) &&
              bar.UseDisabledForegroundColor is not null && ResolveStaticValue(bar.UseDisabledForegroundColor, context) &&
              bar.DisabledForegroundColor is not null))
             AppendAttribute(html, "data-hmi-bar-fill", "true");
+    }
+
+    private static HmiProperty<HmiColor>? GetBarThresholdFillColor(HmiBar bar, HmiHtmlConvertContext context)
+    {
+        if (!bar.UseThresholdFillColors.GetStaticValueOrDefault() || bar.Value is null)
+            return null;
+        var value = ResolveStaticValue(bar.Value, context);
+        if (double.IsNaN(value) || double.IsInfinity(value))
+            return null;
+        foreach (var threshold in bar.Thresholds.Where(x => x.Value is not null && x.Color is not null &&
+                     x.Enabled.GetStaticValueOrDefault(true)).OrderBy(x => ResolveStaticValue(x.Value, context)))
+        {
+            var limit = ResolveStaticValue(threshold.Value, context);
+            if (!double.IsNaN(limit) && !double.IsInfinity(limit) && value < limit)
+                return threshold.Color;
+        }
+        return null;
     }
 
     private static void AppendBarThresholds(
@@ -1837,6 +1855,8 @@ public class HmiScreenToHtmlConverter
         HmiFillDirection direction,
         HmiHtmlConvertContext context)
     {
+        if (!bar.ShowLimitRanges.GetStaticValueOrDefault(true))
+            return;
         var percentageMode = bar.ThresholdValueMode is not null &&
             ResolveStaticValue(bar.ThresholdValueMode, context) == HmiThresholdValueMode.Percentage;
         for (var index = 0; index < bar.Thresholds.Count; index++)
@@ -4476,6 +4496,8 @@ public class HmiScreenToHtmlConverter
     private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
         var foregroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.ForegroundColor), item.ForegroundColor);
+        if (item is HmiBar bar && GetBarThresholdFillColor(bar, context) is { } thresholdColor)
+            foregroundColor = thresholdColor;
         var useDisabledForegroundColor = !ResolveStaticValue(item.Enabled, context) &&
             ResolveStaticValue(item.UseDisabledForegroundColor, context);
         if (useDisabledForegroundColor)

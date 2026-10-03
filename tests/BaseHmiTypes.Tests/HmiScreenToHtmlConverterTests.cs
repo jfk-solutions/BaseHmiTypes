@@ -847,6 +847,30 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(5d, "#FF0000")]
+    [DataRow(10d, "#00FF00")]
+    [DataRow(15d, "#00FF00")]
+    [DataRow(20d, "#0000FF")]
+    [DataRow(25d, "#0000FF")]
+    public async Task ConvertAsync_RendersBarThresholdFillColors(double value, string expected)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        var bar = new HmiBar { Value = value, UseThresholdFillColors = true, ShowLimitRanges = false,
+            ForegroundColor = HmiColor.FromArgb(255, 0, 0, 255) };
+        bar.Thresholds.Add(new HmiThreshold { Value = 20, Enabled = true, Color = HmiColor.FromArgb(255, 0, 255, 0) });
+        bar.Thresholds.Add(new HmiThreshold { Value = 10, Enabled = true, Color = HmiColor.FromArgb(255, 255, 0, 0) });
+        bar.Thresholds.Add(new HmiThreshold { Value = 15, Enabled = false, Color = HmiColor.FromArgb(255, 255, 255, 0) });
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var meter = System.Text.RegularExpressions.Regex.Match(html, "<meter[^>]*>").Value;
+        StringAssert.Contains(meter, $"color: {expected};");
+        StringAssert.Contains(meter, "data-hmi-bar-fill=\"true\"");
+        Assert.IsFalse(html.Contains("data-hmi-bar-threshold", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersBarFillDirections()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
