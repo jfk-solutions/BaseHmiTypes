@@ -25,6 +25,7 @@ export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   beginValue?: HmiProperty<number>;
   endValue?: HmiProperty<number>;
   originValue?: HmiProperty<number>;
+  /** Number of major scale sections between adjacent tick marks; zero requests automatic selection. */
   divisionCount?: HmiProperty<number>;
   subDivisionCount?: HmiProperty<number>;
   /** Major tick length in pixels; omitted values use six pixels. */
