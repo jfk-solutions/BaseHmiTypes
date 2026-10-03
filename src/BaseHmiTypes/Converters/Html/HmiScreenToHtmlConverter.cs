@@ -1737,7 +1737,7 @@ public class HmiScreenToHtmlConverter
         var showThresholds = bar.ShowLimitRanges.GetStaticValueOrDefault(true) && bar.Thresholds.Any(threshold =>
             threshold.Value is not null &&
             (threshold.Enabled is null || ResolveStaticValue(threshold.Enabled, context)));
-        if (showScale || showThresholds)
+        if (showScale || showThresholds || GetBarOutOfRange(bar, context) != 0)
         {
             var vertical = direction is HmiFillDirection.Up or HmiFillDirection.Down;
             var scaleBefore = showScale && bar.ScaleAfterBar is not null && !ResolveStaticValue(bar.ScaleAfterBar, context);
@@ -1791,6 +1791,7 @@ public class HmiScreenToHtmlConverter
         html.Append('>');
         AppendBarMeter(html, bar, minimum, maximum, value, direction, vertical, context);
         AppendBarThresholds(html, bar, minimum, maximum, direction, context);
+        AppendBarOutOfRangeArrow(html, bar, direction, context);
         html.Append("</div>");
     }
 
@@ -1811,7 +1812,9 @@ public class HmiScreenToHtmlConverter
         var disabledColor = !ResolveStaticValue(bar.Enabled, context) && ResolveStaticValue(bar.UseDisabledForegroundColor, context)
             ? context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.DisabledForegroundColor), bar.DisabledForegroundColor)
             : null;
-        if (disabledColor is null && GetBarThresholdFillColor(bar, context) is { } fillColor)
+        var fillColor = GetBarThresholdFillColor(bar, context) ?? (bar.UseThresholdFillColors.GetStaticValueOrDefault()
+            ? context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) : null);
+        if (disabledColor is null && fillColor is not null)
             AppendColorStyle(meterStyle, "color", fillColor);
         AppendAttribute(
             html,
@@ -1851,6 +1854,48 @@ public class HmiScreenToHtmlConverter
                 return threshold.Color;
         }
         return null;
+    }
+
+    private static int GetBarOutOfRange(HmiBar bar, HmiHtmlConvertContext context)
+    {
+        if (bar.Value is null) return 0;
+        var value = ResolveStaticValue(bar.Value, context);
+        if (!double.IsFinite(value)) return 0;
+        if (bar.UnderflowLimit is not null && double.IsFinite(ResolveStaticValue(bar.UnderflowLimit, context)) &&
+            value < ResolveStaticValue(bar.UnderflowLimit, context)) return -1;
+        if (bar.OverflowLimit is not null && double.IsFinite(ResolveStaticValue(bar.OverflowLimit, context)) &&
+            value > ResolveStaticValue(bar.OverflowLimit, context)) return 1;
+        return 0;
+    }
+
+    private static void AppendBarOutOfRangeArrow(StringBuilder html, HmiBar bar, HmiFillDirection direction, HmiHtmlConvertContext context)
+    {
+        var overflow = GetBarOutOfRange(bar, context);
+        if (overflow == 0) return;
+        var arrowDirection = overflow > 0 ? direction : direction switch
+        {
+            HmiFillDirection.Up => HmiFillDirection.Down,
+            HmiFillDirection.Down => HmiFillDirection.Up,
+            HmiFillDirection.Left => HmiFillDirection.Right,
+            _ => HmiFillDirection.Left
+        };
+        var (position, points) = arrowDirection switch
+        {
+            HmiFillDirection.Up => ("top: 0; left: calc(50% - 6px);", "6,0 0,12 12,12"),
+            HmiFillDirection.Down => ("bottom: 0; left: calc(50% - 6px);", "6,12 0,0 12,0"),
+            HmiFillDirection.Left => ("left: 0; top: calc(50% - 6px);", "0,6 12,0 12,12"),
+            _ => ("right: 0; top: calc(50% - 6px);", "12,6 0,0 0,12")
+        };
+        html.Append("<svg");
+        AppendAttribute(html, "xmlns", "http://www.w3.org/2000/svg");
+        AppendAttribute(html, "data-hmi-bar-out-of-range", overflow < 0 ? "Below" : "Above");
+        AppendAttribute(html, "data-raw-value", ToCss(ResolveStaticValue(bar.Value, context)));
+        AppendAttribute(html, "data-limit-value", ToCss(ResolveStaticValue(overflow < 0 ? bar.UnderflowLimit : bar.OverflowLimit, context)));
+        AppendAttribute(html, "role", "img");
+        AppendAttribute(html, "aria-label", overflow < 0 ? "Below lower limit" : "Above upper limit");
+        AppendAttribute(html, "viewBox", "0 0 12 12");
+        AppendAttribute(html, "style", "position: absolute; pointer-events: none; z-index: 2; width: 12px; height: 12px; " + position);
+        html.Append("><polygon fill=\"#000000\" points=\"").Append(points).Append("\"></polygon></svg>");
     }
 
     private static void AppendBarThresholds(

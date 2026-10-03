@@ -16,6 +16,12 @@ public class HmiBar : HmiScaleWidgetBase
     /// <summary>Use the color of the lowest enabled threshold strictly above the current value; otherwise retain the foreground color.</summary>
     public HmiProperty<bool>? UseThresholdFillColors { get; set; }
 
+    /// <summary>Show a black end arrow when the raw value is strictly below this limit.</summary>
+    public HmiProperty<double>? UnderflowLimit { get; set; }
+
+    /// <summary>Show a black end arrow when the raw value is strictly above this limit.</summary>
+    public HmiProperty<double>? OverflowLimit { get; set; }
+
     /// <summary>True places the scale right/below; false places it left/above. Omitted uses right/below.</summary>
     public HmiProperty<bool>? ScaleAfterBar { get; set; }
 

@@ -899,6 +899,49 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(HmiFillDirection.Right, true, "0,6 12,0 12,12")]
+    [DataRow(HmiFillDirection.Right, false, "12,6 0,0 0,12")]
+    [DataRow(HmiFillDirection.Left, true, "12,6 0,0 0,12")]
+    [DataRow(HmiFillDirection.Left, false, "0,6 12,0 12,12")]
+    [DataRow(HmiFillDirection.Up, true, "6,12 0,0 12,0")]
+    [DataRow(HmiFillDirection.Up, false, "6,0 0,12 12,12")]
+    [DataRow(HmiFillDirection.Down, true, "6,0 0,12 12,12")]
+    [DataRow(HmiFillDirection.Down, false, "6,12 0,0 12,0")]
+    public async Task ConvertAsync_RendersBarOutOfRangeArrows(HmiFillDirection direction, bool below, string points)
+    {
+        foreach (var scale in new[] { false, true })
+        {
+            var screen = new HmiScreen();
+            var layer = new HmiLayer();
+            layer.Items.Add(new HmiBar { FillDirection = direction, ShowScale = scale, ShowLimitRanges = false,
+                BeginValue = 0, EndValue = 100, Value = below ? -5 : 105, UnderflowLimit = 10, OverflowLimit = 90,
+                ForegroundColor = HmiColor.FromArgb(255, 255, 0, 0) });
+            screen.Layers.Add(layer);
+            var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+            var arrow = System.Text.RegularExpressions.Regex.Match(html, "<svg[^>]*data-hmi-bar-out-of-range[^>]*>.*?</svg>").Value;
+            StringAssert.Contains(arrow, $"data-hmi-bar-out-of-range=\"{(below ? "Below" : "Above")}\"");
+            StringAssert.Contains(arrow, $"data-raw-value=\"{(below ? -5 : 105)}\"");
+            StringAssert.Contains(arrow, $"data-limit-value=\"{(below ? 10 : 90)}\"");
+            StringAssert.Contains(arrow, $"<polygon fill=\"#000000\" points=\"{points}\"");
+            StringAssert.Contains(html, $"value=\"{(below ? 0 : 100)}\"");
+        }
+    }
+
+    [TestMethod]
+    [DataRow(10d)]
+    [DataRow(50d)]
+    [DataRow(90d)]
+    public async Task ConvertAsync_DoesNotRenderBarArrowsWithinLimits(double value)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(new HmiBar { Value = value, UnderflowLimit = 10, OverflowLimit = 90 });
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        Assert.IsFalse(html.Contains("data-hmi-bar-out-of-range", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersBarFillDirections()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
