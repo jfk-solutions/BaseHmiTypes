@@ -1698,6 +1698,18 @@ public class HmiScreenToHtmlConverter
     {
         var style = new StringBuilder();
         var stateHasCaptionColor = (state?.CaptionColor ?? state?.ForegroundColor) is not null;
+        if (button.Shape is not null)
+        {
+            switch (ResolveStaticValue(button.Shape, context))
+            {
+                case HmiButtonShape.Rectangle:
+                    style.Append("border-radius: 0px;");
+                    break;
+                case HmiButtonShape.Ellipse:
+                    style.Append("border-radius: 50%;overflow: hidden;");
+                    break;
+            }
+        }
         if (GetButtonCaptionBlink(button, state) is { } blinkColor && blinkColor.BlinkValue is HmiColor alternateColor)
         {
             style.Append("--hmi-caption-color-off: ").Append(ToCss(ResolveStaticValue(button.CaptionColor, context))).Append(';')
