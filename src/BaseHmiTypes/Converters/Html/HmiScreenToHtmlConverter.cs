@@ -2981,6 +2981,8 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendSelectionList(StringBuilder html, HmiSelectionGroupBase selectionGroup, HmiHtmlConvertContext context)
     {
+        uint? selectedFields = selectionGroup is HmiListBox { SelectedFields: not null } listBox
+            ? ResolveStaticValue(listBox.SelectedFields, context) : null;
         var selectedValue = selectionGroup.Indicator is not null
             ? ResolveStaticValue(selectionGroup.Indicator, context)
             : ResolveStaticValue(selectionGroup.Value, context);
@@ -2992,18 +2994,23 @@ public class HmiScreenToHtmlConverter
             ?? selectionGroup.States.FirstOrDefault();
 
         html.Append("<select");
-        AppendCommonAttributes(html, selectionGroup, context, additionalStyle: CreateStateStyle(selectedState));
+        AppendCommonAttributes(html, selectionGroup, context, additionalStyle: selectedFields is null ? CreateStateStyle(selectedState) : null);
+        if (selectionGroup is HmiListBox)
+            AppendAttribute(html, "size", "2");
+        if (selectedFields is not null)
+            AppendAttribute(html, "multiple", "multiple");
         if (!ResolveStaticValue(selectionGroup.Enabled, context))
             AppendAttribute(html, "disabled", "disabled");
         html.Append('>');
-        foreach (var state in selectionGroup.States)
+        for (var index = 0; index < selectionGroup.States.Count; index++)
         {
+            var state = selectionGroup.States[index];
             html.Append("<option");
             if (state.Value is double value)
                 AppendAttribute(html, "value", ToCss(value));
             AppendAttribute(html, "style", CreateStateStyle(state));
             AppendAttribute(html, "data-image-name", state.ImageName ?? state.Image?.ImageName);
-            if (ReferenceEquals(state, selectedState))
+            if (selectedFields is uint mask ? index < 32 && (mask & (1u << index)) != 0 : ReferenceEquals(state, selectedState))
                 AppendAttribute(html, "selected", "selected");
             html.Append('>');
             AppendMultilingualText(html, state.Text, context);
