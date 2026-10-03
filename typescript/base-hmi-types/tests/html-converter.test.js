@@ -23,6 +23,8 @@ import {
   HmiAuditTrailFieldPresentation,
   HmiAuditTrailViewKind,
   HmiBar,
+  HmiButton,
+  HmiIOField,
   HmiClock,
   HmiComboBox,
   HmiCustomWidgetContainer,
@@ -75,7 +77,32 @@ import {
   HmiWebControl,
   HmiVerticalAlignment,
   staticProperty,
+  tagProperty,
 } from "../dist/index.js";
+
+for (const [kind, underline, strike] of [[0,false,false],[0,false,true],[0,true,false],[0,true,true],[1,false,false],[1,false,true],[1,true,false],[1,true,true],[2,false,false],[2,false,true],[2,true,false],[2,true,true]]) {
+test(`HTML renderer supports widget font decorations (${kind}, ${underline}, ${strike})`, async () => {
+  const font = new HmiFont();
+  font.underline = tagProperty("Font.Underline", underline);
+  font.strikethrough = tagProperty("Font.Strike", strike);
+  const item = kind === 0 ? new HmiButton() : kind === 1 ? new HmiIOField() : new HmiBar();
+  if (kind === 2) {
+    item.labelFont = font;
+    item.showScale = staticProperty(true);
+  } else item.font = font;
+  item.name = "Decorated";
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  layer.items.push(item);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(kind === 2 ? /<div[^>]*data-hmi-bar-scale[^>]*>/ : kind === 0 ? /<button[^>]*>/ : /<input[^>]*>/)?.[0] ?? "";
+  assert.notEqual(opening, "");
+  const decorations = underline ? (strike ? "underline line-through" : "underline") : "line-through";
+  if (underline || strike) assert.ok(opening.includes(`text-decoration: ${decorations};`));
+  else assert.ok(!opening.includes("text-decoration:"));
+});
+}
 
 class ImageProject extends HmiProjectBase {
   images = new Map();

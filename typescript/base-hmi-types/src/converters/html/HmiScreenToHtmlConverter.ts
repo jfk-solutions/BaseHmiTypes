@@ -1850,8 +1850,10 @@ function getBarScaleFontStyle(bar: HmiScaleWidgetBase): string {
     style += " font-weight: bold;";
   if (getStaticValue(font.italic) === true)
     style += " font-style: italic;";
-  if (getStaticValue(font.underline) === true)
-    style += " text-decoration: underline;";
+  const decorations = [];
+  if (getStaticValue(font.underline) === true) decorations.push("underline");
+  if (getStaticValue(font.strikethrough) === true) decorations.push("line-through");
+  if (decorations.length > 0) style += ` text-decoration: ${decorations.join(" ")};`;
   return style;
 }
 
