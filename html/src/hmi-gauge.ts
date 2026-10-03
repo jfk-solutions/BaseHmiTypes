@@ -23,6 +23,7 @@ const gaugeProperties = {
   originValue: Number,
   divisionCount: Number,
   subDivisionCount: Number,
+  majorTicksOnly: Boolean,
   barMode: Number,
   scaleMode: Number,
   orientation: Number,
@@ -85,6 +86,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   private _originValue = 0;
   private _divisionCount = 5;
   private _subDivisionCount = 5;
+  private _majorTicksOnly = false;
   private _barMode = 0;
   private _scaleMode = 0;
   private _orientation = 0;
@@ -152,6 +154,13 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   }
   set subDivisionCount(value: number) {
     this.setNumberProperty("_subDivisionCount", value, 5);
+  }
+
+  get majorTicksOnly(): boolean {
+    return this._majorTicksOnly;
+  }
+  set majorTicksOnly(value: boolean) {
+    this.setBooleanProperty("_majorTicksOnly", value);
   }
 
   get barMode(): number {
@@ -365,7 +374,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
         `<text x="${formatNumber(labelPoint.x)}" y="${formatNumber(labelPoint.y)}" ${labelStyle}>${formatLabel(value)}</text>`,
       );
 
-      if (division === divisionCount)
+      if (division === divisionCount || this.majorTicksOnly)
         continue;
 
       for (let subDivision = 1; subDivision < subDivisionCount; subDivision++) {

@@ -3103,6 +3103,7 @@ function appendGauge(html: string[], gauge: HmiGauge, context: HmiHtmlConvertCon
   appendStaticAttribute(html, "origin-value", gauge.originValue);
   appendStaticAttribute(html, "division-count", gauge.divisionCount);
   appendStaticAttribute(html, "sub-division-count", gauge.subDivisionCount);
+  appendBooleanAttribute(html, "major-ticks-only", getStaticValue(gauge.majorTicksOnly) ?? false);
   appendStaticAttribute(html, "bar-mode", gauge.barMode);
   appendStaticAttribute(html, "scale-mode", gauge.scaleMode);
   appendStaticAttribute(html, "orientation", gauge.orientation);

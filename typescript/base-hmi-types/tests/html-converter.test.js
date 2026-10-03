@@ -31,6 +31,7 @@ import {
   HmiFillDirection,
   HmiFillPattern,
   HmiFont,
+  HmiGauge,
   HmiHorizontalAlignment,
   HmiImage,
   HmiLayer,
@@ -890,6 +891,22 @@ test(`HTML converter renders configured minor scale ticks (${standalone}, ${dire
   assert.ok(!(await converter.convertAsync(screen)).includes("data-hmi-minor-tick"));
 });
 }
+}
+
+for (const only of [false, true]) {
+test(`HTML converter exposes gauge major ticks only (${only})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const gauge = new HmiGauge();
+  gauge.majorTicksOnly = staticProperty(only);
+  gauge.subDivisionCount = staticProperty(5);
+  layer.items.push(gauge);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const markup = html.match(/<hmi-gauge[^>]*>/)?.[0] ?? "";
+  assert.equal(markup.includes("major-ticks-only"), only);
+  assert.ok(markup.includes('sub-division-count="5"'));
+});
 }
 
 test("HTML converter renders bar fill directions", async () => {
