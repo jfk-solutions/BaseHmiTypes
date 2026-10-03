@@ -49,6 +49,11 @@ public abstract class HmiScaleWidgetBase : HmiWidgetBase
 
     public HmiProperty<int>? SubDivisionCount { get; set; }
 
+    /// <summary>Major tick length in pixels; omitted values use six pixels.</summary>
+    public HmiProperty<int>? MajorTickLength { get; set; }
+
+    public HmiProperty<bool>? MajorTicksBold { get; set; }
+
     public HmiProperty<HmiTickDirection>? TickDirection { get; set; }
 
     public HmiProperty<int>? BarMode { get; set; }
