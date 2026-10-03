@@ -25,6 +25,12 @@ import {
   HmiBar,
   HmiButton,
   HmiCircularArc,
+  HmiCircle,
+  HmiEllipse,
+  HmiLine,
+  HmiPolygon,
+  HmiPolyline,
+  HmiLineMarker,
   HmiEllipticalArc,
   HmiCircleSegment,
   HmiEllipseSegment,
@@ -83,6 +89,36 @@ import {
   staticProperty,
   tagProperty,
 } from "../dist/index.js";
+
+for (const Shape of [HmiCircle, HmiEllipse, HmiCircularArc, HmiEllipticalArc,
+  HmiCircleSegment, HmiEllipseSegment, HmiLine, HmiPolygon, HmiPolyline]) {
+test(`HTML renderer does not clip shape strokes or markers (${Shape.name})`, async () => {
+  const shape = new Shape();
+  shape.name = "Bordered";
+  shape.width = staticProperty(100);
+  shape.height = staticProperty(100);
+  if (shape instanceof HmiCircle || shape instanceof HmiCircularArc) {
+    shape.centerX = staticProperty(50); shape.centerY = staticProperty(50); shape.radius = staticProperty(50);
+  } else if (shape instanceof HmiEllipse || shape instanceof HmiEllipticalArc) {
+    shape.centerX = staticProperty(50); shape.centerY = staticProperty(50);
+    shape.radiusX = staticProperty(50); shape.radiusY = staticProperty(50);
+  }
+  if ("sweepAngle" in shape) shape.sweepAngle = staticProperty(shape instanceof HmiCircleSegment || shape instanceof HmiEllipseSegment ? 90 : 360);
+  shape.lineWidth = tagProperty("Stroke.Width", 10);
+  shape.startMarker = staticProperty(HmiLineMarker.FilledArrow);
+  shape.endMarker = staticProperty(HmiLineMarker.FilledCircle);
+  const layer = new HmiLayer(); layer.items.push(shape);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<svg id="Bordered"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening.includes('overflow="visible"'));
+  assert.ok(opening.includes('viewBox="0 0 100 100"'));
+  const svg = html.match(/<svg id="Bordered"[^>]*>(.*?)<\/svg>/su)?.[1] ?? "";
+  assert.ok(svg.includes('stroke-width="10"'));
+  assert.ok(svg.includes("marker-start="));
+  assert.ok(svg.includes("marker-end="));
+});
+}
 
 for (const kind of [0, 1, 2, 3]) for (const sweep of [360, -360]) for (const start of [0, 90]) {
 test(`HTML renderer supports full-turn arcs (${kind}, ${sweep}, ${start})`, async () => {

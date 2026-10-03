@@ -1014,6 +1014,7 @@ function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, h
   appendCommonAttributes(html, item, context, false);
   appendAttribute(html, "viewBox", `0 0 ${toCss(Math.max(width, 1))} ${toCss(Math.max(height, 1))}`);
   appendAttribute(html, "xmlns", "http://www.w3.org/2000/svg");
+  appendAttribute(html, "overflow", "visible");
   html.push(">");
 }
 
