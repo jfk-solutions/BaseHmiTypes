@@ -2719,6 +2719,8 @@ function appendSelectionList(
   selectionGroup: HmiSelectionGroupBase,
   context: HmiHtmlConvertContext,
 ): void {
+  const selectedFields = selectionGroup instanceof HmiListBox
+    ? getStaticValue(selectionGroup.selectedFields) : undefined;
   const selectedValue = selectionGroup.indicator !== undefined
     ? getStaticValue(selectionGroup.indicator)
     : getStaticValue(selectionGroup.value);
@@ -2728,16 +2730,22 @@ function appendSelectionList(
     ?? selectionGroup.states[0];
 
   html.push("<select");
-  appendCommonAttributes(html, selectionGroup, context, true, createStateStyle(selectedState));
+  appendCommonAttributes(html, selectionGroup, context, true,
+    selectedFields === undefined ? createStateStyle(selectedState) : undefined);
+  if (selectionGroup instanceof HmiListBox) appendAttribute(html, "size", "2");
+  if (selectedFields !== undefined) appendAttribute(html, "multiple", "multiple");
   if (getStaticValue(selectionGroup.enabled) === false) appendAttribute(html, "disabled", "disabled");
   html.push(">");
-  for (const state of selectionGroup.states) {
+  for (let index = 0; index < selectionGroup.states.length; index++) {
+    const state = selectionGroup.states[index]!;
     html.push("<option");
     if (state.value !== undefined)
       appendAttribute(html, "value", toCss(state.value));
     appendAttribute(html, "style", createStateStyle(state) ?? undefined);
     appendAttribute(html, "data-image-name", state.imageName ?? state.image?.imageName);
-    if (state === selectedState)
+    if (selectedFields !== undefined
+      ? index < 32 && ((selectedFields >>> index) & 1) !== 0
+      : state === selectedState)
       appendAttribute(html, "selected", "selected");
     html.push(">");
     appendMultilingualText(html, state.text, context);

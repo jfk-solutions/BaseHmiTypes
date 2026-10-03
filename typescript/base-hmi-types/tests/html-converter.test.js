@@ -1,6 +1,43 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+for (const signedMask of [0,1,5,-2147483648,-1]) for (const tagged of [false,true]) {
+test("HTML renderer renders 32-bit list selections (" + [signedMask,tagged].join(", ") + ")", async () => {
+  const mask = signedMask >>> 0, item = new HmiListBox();
+  item.name = "MultiList"; item.width = staticProperty(180); item.height = staticProperty(120);
+  item.selectedFields = tagged ? tagProperty("List.Selected",mask) : staticProperty(mask);
+  for (let index=0;index<33;index++) {
+    const state = new HmiState(); state.value = 100+index;
+    state.text = HmiMultilingualText.fromText("Entry "+index); item.states.push(state);
+  }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<select id="MultiList"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening.includes('size="2"')); assert.ok(opening.includes('multiple="multiple"'));
+  for (let index=0;index<33;index++) {
+    const option = html.match(new RegExp('<option value="'+(100+index)+'"[^>]*>','u'))?.[0] ?? "";
+    assert.ok(option); assert.equal(option.includes('selected="selected"'),index<32 && ((mask>>>index)&1)!==0);
+  }
+});
+}
+
+for (const list of [false,true]) {
+test("HTML renderer distinguishes a single-selection list from a combo ("+list+")", async () => {
+  const item = list ? new HmiListBox() : new HmiComboBox(); item.name = "SingleList"; item.value = staticProperty(101);
+  for (const [value,text] of [[100,"Stopped"],[101,"Running"]]) {
+    const state = new HmiState(); state.value=value; state.text=HmiMultilingualText.fromText(text); item.states.push(state);
+  }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<select id="SingleList"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening); assert.equal(opening.includes('size="2"'),list);
+  assert.ok(!opening.includes('multiple="multiple"'));
+  assert.ok(html.includes('value="101" selected="selected">Running</option>'));
+});
+}
+
 import {
   blinkProperty,
   HmiBlinkRate,
