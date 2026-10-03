@@ -3249,6 +3249,11 @@ public class HmiScreenToHtmlConverterTests
         var screen = new HmiScreen { Name = "Main", Width = 400, Height = 240 };
         var layer = new HmiLayer { Name = "Default" };
         var trend = new HmiTrendControl { Name = "Trend", Width = 320, Height = 180 };
+        trend.ValueAxes.Add(new HmiTrendValueAxis
+        {
+            Name = "Unused", Label = "Standalone", MinimumValue = 5, MaximumValue = 15,
+            DecimalPlaces = 1, Visible = true, Alignment = HmiHorizontalAlignment.Left
+        });
         trend.Pens.Add(new HmiTrendPen
         {
             Number = 1, DecimalPlaces = 4, ValueAxisName = "Axis A", ValueAxisVisible = false,
@@ -3260,6 +3265,9 @@ public class HmiScreenToHtmlConverterTests
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
         StringAssert.Contains(html, "&quot;decimalPlaces&quot;:4");
+        StringAssert.Contains(html, "value-axes=\"");
+        StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Unused&quot;");
+        StringAssert.Contains(html, "&quot;valueAxisLabel&quot;:&quot;Standalone&quot;");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Axis A&quot;");
         StringAssert.Contains(html, "&quot;valueAxisVisible&quot;:false");
         StringAssert.Contains(html, "&quot;valueAxisColor&quot;:&quot;#123456&quot;");

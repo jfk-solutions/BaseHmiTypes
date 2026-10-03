@@ -17,6 +17,27 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("configured axes render without pens and override legacy assigned-axis copies", () => {
+  const control = new HmiTrendControl();
+  const axes = [{ valueAxisName: "Unused", valueAxisVisible: true, minimum: 5, maximum: 15, decimalPlaces: 1, valueAxisLabel: "Standalone" }];
+  control.setAttribute("value-axes", JSON.stringify(axes));
+  let html = control.shadowRoot.innerHTML;
+  assert.match(html, /data-axis-name="Unused"/u);
+  assert.match(html, />15.0<\/span>/u);
+  assert.match(html, />5.0<\/span>/u);
+  assert.match(html, /Standalone/u);
+  control.setAttribute("pens", JSON.stringify([{ number: 9, valueAxisName: "Unused", minimum: 1000, maximum: 2000, decimalPlaces: 3, lineType: 3 }]));
+  html = control.shadowRoot.innerHTML;
+  assert.equal([...html.matchAll(/data-axis-name=/gu)].length, 1);
+  assert.match(html, /<text[^>]*>10.0<\/text>/u);
+  axes[0].valueAxisVisible = false;
+  control.setAttribute("value-axes", JSON.stringify(axes));
+  assert.ok(!control.shadowRoot.innerHTML.includes("data-axis-name="));
+  // Invalid collections retain the legacy pen-axis rendering path.
+  control.setAttribute("value-axes", "{invalid");
+  assert.match(control.shadowRoot.innerHTML, />2000.000<\/span>/u);
+});
+
 test("named value axes are distinct, shared, independently visible and styled", () => {
   const control = new HmiTrendControl();
   const pens = [

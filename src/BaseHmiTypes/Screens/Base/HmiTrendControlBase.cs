@@ -6,6 +6,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public IList<HmiTrendPen> Pens { get; } = new List<HmiTrendPen>();
 
+    /// <summary>Configured value axes, including axes with no assigned pen.</summary>
+    public IList<HmiTrendValueAxis> ValueAxes { get; } = new List<HmiTrendValueAxis>();
+
     public IList<HmiTrendOverlay> Overlays { get; } = new List<HmiTrendOverlay>();
     public IList<HmiTrendTemplateOption> TemplateOptions { get; } = new List<HmiTrendTemplateOption>();
 

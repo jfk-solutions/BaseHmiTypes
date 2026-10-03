@@ -4,6 +4,7 @@ const trendControlProperties = {
   chartTitle: String,
   windowBackgroundColor: String,
   pens: String,
+  valueAxes: String,
   displayChartTitle: String,
   showToolbar: String,
   toolbarAlignment: String,
@@ -150,7 +151,12 @@ export class HmiTrendControl extends HTMLElement {
     const borderColor = normalizeTransparent(computed.borderTopColor, "#a8acb2");
     const rawBorderWidth = parseFloat(computed.borderTopWidth);
     const borderWidth = Number.isFinite(rawBorderWidth) ? rawBorderWidth : 0;
-    const pens = parsePens(this.getAttribute("pens"));
+    const configuredValueAxes = parsePens(this.getAttribute("value-axes"));
+    const axesByName = new Map(configuredValueAxes.map(axis => [axis.valueAxisName, axis]));
+    const pens = parsePens(this.getAttribute("pens")).map(pen => {
+      const axis = pen.valueAxisName ? axesByName.get(pen.valueAxisName) : undefined;
+      return axis ? { ...pen, ...axis, number: pen.number } : pen;
+    });
     const visiblePens = pens.filter(pen => pen.visible !== false);
     const firstPen = visiblePens[0] ?? pens[0];
     const axisTrendColor = pens.length > 0 ? normalizePenColor(pens[0].color, 0) : undefined;
@@ -212,7 +218,7 @@ export class HmiTrendControl extends HTMLElement {
     const yAxisVisible = readBooleanAttribute(this, "y-axis-scale-visible", true);
     const yAxisAlignment = this.getAttribute("y-axis-alignment")?.toLowerCase() === "right" ? "right" : "left";
     const yAxisLabel = this.getAttribute("y-axis-label") ?? "";
-    const namedValueAxes = collectValueAxes(pens);
+    const namedValueAxes = collectValueAxes(pens, configuredValueAxes);
     const leftAxisCount = namedValueAxes.filter(pen => pen.valueAxisAlignment !== "Right" && pen.valueAxisVisible !== false).length;
     const rightAxisCount = namedValueAxes.filter(pen => pen.valueAxisAlignment === "Right" && pen.valueAxisVisible !== false).length;
     const yAxisGridVisible = readBooleanAttribute(this, "y-axis-grid-visible", true);
@@ -536,9 +542,9 @@ function renderGrid(
   return lines.join("");
 }
 
-function collectValueAxes(pens: readonly TrendPen[]): TrendPen[] {
+function collectValueAxes(pens: readonly TrendPen[], configuredAxes: readonly TrendPen[]): TrendPen[] {
   const axes = new Map<string, TrendPen>();
-  for (const pen of pens) {
+  for (const pen of [...configuredAxes, ...pens]) {
     if (pen.valueAxisName && !axes.has(pen.valueAxisName)) axes.set(pen.valueAxisName, pen);
   }
   return [...axes.values()];

@@ -3470,6 +3470,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "maximum-value", trendControl.MaximumValue);
         AppendStaticAttribute(html, "y-axis-decimal-places", trendControl.YAxisDecimalPlaces);
         AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens));
+        AppendAttribute(html, "value-axes", FormatTrendValueAxes(trendControl.ValueAxes));
         html.Append("></hmi-trend-control>");
     }
 
@@ -3695,6 +3696,18 @@ public class HmiScreenToHtmlConverter
         if (property != null)
             AppendAttribute(html, name, property.StaticValue ? "true" : "false");
     }
+
+    // Use the same axis wire fields as legacy per-pen configurations.
+    private static string? FormatTrendValueAxes(IEnumerable<HmiTrendValueAxis> axes) =>
+        FormatTrendPens(axes.Select((axis, index) => new HmiTrendPen
+        {
+            Number = index + 1, ValueAxisName = axis.Name, ValueAxisLabel = axis.Label,
+            MinimumValue = axis.MinimumValue, MaximumValue = axis.MaximumValue,
+            DecimalPlaces = axis.DecimalPlaces, AxisScaleType = axis.ScaleType,
+            ExponentialFormat = axis.ExponentialFormat, AutoDecimalPlaces = axis.AutoDecimalPlaces,
+            ValueAxisVisible = axis.Visible, ValueAxisColor = axis.Color,
+            ValueAxisInTrendColor = axis.InTrendColor, ValueAxisAlignment = axis.Alignment
+        }));
 
     private static string? FormatTrendPens(IEnumerable<HmiTrendPen> pens)
     {
