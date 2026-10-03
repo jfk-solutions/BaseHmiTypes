@@ -16,6 +16,25 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(0d)]
+    [DataRow(90d)]
+    [DataRow(270d)]
+    [DataRow(-90d)]
+    public async Task ConvertAsync_RendersIOFieldFontOrientation(double angle)
+    {
+        var item = new HmiIOField { Name = "VerticalInput", Width = 80, Height = 160,
+            Text = HmiMultilingualText.FromText("123"), Font = new HmiFont { OrientationAngle = HmiProperty.Tag("Input.Angle", angle) } };
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<input id=\"VerticalInput\"[^>]*>").Value;
+        Assert.IsFalse(string.IsNullOrEmpty(opening));
+        Assert.AreEqual(angle != 0, opening.Contains("writing-mode:", StringComparison.Ordinal));
+        if (angle != 0) StringAssert.Contains(opening, angle == 90 ? "writing-mode: sideways-lr;" : "writing-mode: sideways-rl;");
+        StringAssert.Contains(opening, "value=\"123\"");
+    }
+
+    [TestMethod]
     [DataRow(0d, false)]
     [DataRow(0d, true)]
     [DataRow(90d, false)]

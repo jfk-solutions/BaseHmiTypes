@@ -1753,7 +1753,14 @@ public class HmiScreenToHtmlConverter
     private static void AppendInput(StringBuilder html, HmiIOField ioField, HmiHtmlConvertContext context)
     {
         html.Append("<input");
-        AppendCommonAttributes(html, ioField, context);
+        var angle = ioField.Font?.OrientationAngle is null ? 0 : ResolveStaticValue(ioField.Font.OrientationAngle, context);
+        angle = (angle % 360 + 360) % 360;
+        AppendCommonAttributes(html, ioField, context, additionalStyle: angle switch
+        {
+            90 => "writing-mode: sideways-lr;",
+            270 => "writing-mode: sideways-rl;",
+            _ => null
+        });
         var text = ResolveStaticValue(ioField.Text, context)?.GetDisplayText(context.CultureInfo);
         if (string.IsNullOrWhiteSpace(text) && ioField.Text is HmiExpressionProperty<HmiMultilingualText> expression)
             text = expression.Expression;
