@@ -1147,6 +1147,42 @@ test(`HTML converter renders bar threshold fill colors at ${value}`, async () =>
 });
 }
 
+for (const [disabled, useDisabledColor, fill, foreground] of [
+  [false, false, "#FF0000", "#0000FF"], [false, true, "#FF0000", "#0000FF"],
+  [true, false, "#FF0000", "#0000FF"], [true, true, undefined, "#888888"],
+]) {
+test(`HTML converter keeps scaled bar limit fill separate (${disabled}, ${useDisabledColor})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.name = "LimitScale";
+  bar.showScale = staticProperty(true);
+  bar.showLimitRanges = staticProperty(false);
+  bar.value = staticProperty(5);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(20);
+  bar.useThresholdFillColors = staticProperty(true);
+  bar.enabled = staticProperty(!disabled);
+  bar.useDisabledForegroundColor = staticProperty(useDisabledColor);
+  bar.foregroundColor = staticProperty(hmiColorFromArgb(255, 0, 0, 255));
+  bar.disabledForegroundColor = staticProperty(hmiColorFromArgb(255, 136, 136, 136));
+  const threshold = new HmiThreshold();
+  threshold.value = staticProperty(10);
+  threshold.enabled = staticProperty(true);
+  threshold.color = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+  bar.thresholds.push(threshold);
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const root = html.match(/<div id="LimitScale"[^>]*>/)?.[0] ?? "";
+  const meter = html.match(/<meter[^>]*>/)?.[0] ?? "";
+  assert.ok(root.includes(`color: ${foreground};`));
+  assert.ok(!root.includes("color: #FF0000;"));
+  assert.ok(fill === undefined ? !meter.includes("color:") : meter.includes(`color: ${fill};`));
+  assert.ok(html.includes('data-hmi-bar-scale="true"'));
+});
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
