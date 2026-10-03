@@ -63,6 +63,7 @@ import {
   HmiTrendPen,
   HmiTrendValueAxis,
   HmiTrendWindow,
+  HmiTrendTimeAxis,
   HmiTrendTimeFormat,
   HmiThreshold,
   HmiThresholdValueMode,
@@ -1735,6 +1736,20 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   const screen = new HmiScreen();
   const layer = new HmiLayer();
   const trend = new HmiTrendControl();
+  const timeAxis = new HmiTrendTimeAxis();
+  timeAxis.name = "Time A";
+  timeAxis.visible = staticProperty(false);
+  timeAxis.showDate = staticProperty(true);
+  timeAxis.dateFormat = staticProperty("yyyy/MM/dd");
+  timeAxis.timeFormat = staticProperty(HmiTrendTimeFormat.TwentyFourHour);
+  timeAxis.displayMilliseconds = staticProperty(true);
+  timeAxis.timeSpan = staticProperty(120000);
+  timeAxis.timeSpanUnit = "Milliseconds";
+  timeAxis.alignment = staticProperty(HmiVerticalAlignment.Top);
+  timeAxis.color = staticProperty(hmiColorFromArgb(255, 0x12, 0x34, 0x56));
+  timeAxis.inTrendColor = staticProperty(false);
+  timeAxis.label = "Recorded time";
+  trend.timeAxes.push(timeAxis);
   const window = new HmiTrendWindow();
   window.name = "Window A";
   window.visible = staticProperty(false);
@@ -1771,6 +1786,9 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   assert.match(html, /&quot;decimalPlaces&quot;:4/);
   assert.match(html, /value-axes="/);
   assert.match(html, /trend-windows="/);
+  assert.match(html, /time-axes="/);
+  assert.match(html, /&quot;dateFormat&quot;:&quot;yyyy\/MM\/dd&quot;/);
+  assert.match(html, /&quot;timeSpan&quot;:120000/);
   assert.match(html, /&quot;spacePortion&quot;:3/);
   assert.match(html, /&quot;majorGridColor&quot;:&quot;#123456&quot;/);
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Unused&quot;/);
