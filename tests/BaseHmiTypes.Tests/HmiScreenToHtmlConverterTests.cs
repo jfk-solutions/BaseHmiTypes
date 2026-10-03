@@ -5035,7 +5035,7 @@ public class HmiScreenToHtmlConverterTests
 
         StringAssert.Contains(html, "<button id=\"Motor\"");
         StringAssert.Contains(html, "<img src=\"data:image/png;base64,BAUG\"");
-        StringAssert.Contains(html, "Running</span></button>");
+        StringAssert.Contains(html, "Running</span></span></button>");
         StringAssert.Contains(html, "background-color: #0A141E;");
         StringAssert.Contains(html, "color: #F0F1F2;");
         StringAssert.Contains(html, "border-color: #646566;");
@@ -5159,7 +5159,9 @@ public class HmiScreenToHtmlConverterTests
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen, project);
 
         StringAssert.Contains(html, "<button id=\"Disabled\"");
-        StringAssert.Contains(html, "disabled=\"disabled\"><img src=\"data:image/png;base64,Ag==\"");
+        var disabledMarkup = System.Text.RegularExpressions.Regex.Match(html, "<button id=\"Disabled\"[^>]*>.*?</button>").Value;
+        StringAssert.Contains(disabledMarkup, "disabled=\"disabled\"");
+        StringAssert.Contains(disabledMarkup, "<img src=\"data:image/png;base64,Ag==\"");
         StringAssert.Contains(html, "<button id=\"Grayscale\"");
         StringAssert.Contains(html, "src=\"data:image/png;base64,AQ==\" style=\"width: 100%; height: 100%; filter: grayscale(1);\"");
     }
