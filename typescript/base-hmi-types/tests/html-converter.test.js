@@ -853,6 +853,45 @@ test(`HTML converter renders standalone scale marks (${direction})`, async () =>
 });
 }
 
+for (const standalone of [false, true]) {
+for (const [direction, geometry] of [
+  [HmiTickDirection.Down, 'y1="0" y2="6" x1="12.5%"'],
+  [HmiTickDirection.Up, 'y1="6" y2="12" x1="12.5%"'],
+  [HmiTickDirection.Right, 'x1="0" x2="6" y1="12.5%"'],
+  [HmiTickDirection.Left, 'x1="6" x2="12" y1="12.5%"'],
+]) {
+test(`HTML converter renders configured minor scale ticks (${standalone}, ${direction})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const scale = standalone ? new HmiScale() : new HmiBar();
+  if (standalone) scale.tickDirection = staticProperty(direction);
+  else {
+    scale.fillDirection = staticProperty(direction === HmiTickDirection.Left || direction === HmiTickDirection.Right
+      ? HmiFillDirection.Up : HmiFillDirection.Right);
+    scale.scaleAfterBar = staticProperty(direction === HmiTickDirection.Down || direction === HmiTickDirection.Right);
+  }
+  scale.width = staticProperty(120);
+  scale.height = staticProperty(100);
+  scale.showScale = staticProperty(true);
+  scale.divisionCount = staticProperty(2);
+  scale.subDivisionCount = staticProperty(4);
+  scale.majorTickLength = staticProperty(12);
+  scale.majorTicksBold = staticProperty(true);
+  layer.items.push(scale);
+  screen.layers.push(layer);
+  const converter = new HmiScreenToHtmlConverter();
+  const html = await converter.convertAsync(screen);
+  assert.equal([...html.matchAll(/data-hmi-minor-tick="true"/g)].length, 6);
+  assert.ok(html.includes(`data-hmi-minor-tick="true" stroke-width="1" ${geometry}`));
+  scale.majorTicksOnly = staticProperty(true);
+  assert.ok(!(await converter.convertAsync(screen)).includes("data-hmi-minor-tick"));
+  scale.majorTicksOnly = staticProperty(false);
+  scale.subDivisionCount = staticProperty(1);
+  assert.ok(!(await converter.convertAsync(screen)).includes("data-hmi-minor-tick"));
+});
+}
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
