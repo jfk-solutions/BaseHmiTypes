@@ -1864,6 +1864,17 @@ public class HmiScreenToHtmlConverter
     {
         var sections = bar.DivisionCount is null ? 0 : ResolveStaticValue(bar.DivisionCount, context);
         var tickCount = sections > 0 ? Math.Min(100, sections) + 1 : 2;
+        var interval = bar.MajorTickInterval is null ? 0 : ResolveStaticValue(bar.MajorTickInterval, context);
+        var scaleMode = bar.ScaleMode is null ? 0 : ResolveStaticValue(bar.ScaleMode, context);
+        var explicitInterval = scaleMode == 0 && double.IsFinite(interval) && interval > 0 && maximum > minimum
+            && (maximum - minimum) / interval <= 10000;
+        if (explicitInterval)
+            tickCount = (int)Math.Floor((maximum - minimum) / interval + 1e-10) + 1;
+        var ratios = Enumerable.Range(0, tickCount).Select(index => explicitInterval
+            ? Math.Min(1d, index * interval / (maximum - minimum))
+            : (double)index / (tickCount - 1)).ToArray();
+        if (direction is HmiFillDirection.Up or HmiFillDirection.Left)
+            Array.Reverse(ratios);
         var decimalPlaces = bar.TickLabelDecimalPlaces is null
             ? (int?)null
             : Clamp(ResolveStaticValue(bar.TickLabelDecimalPlaces, context), 0, 15);
@@ -1889,6 +1900,13 @@ public class HmiScreenToHtmlConverter
             .Append(tickLength + 2).Append("px;");
         if (!vertical)
             style.Append(" min-height: ").Append(tickLength + 2).Append("px;");
+        if (explicitInterval)
+        {
+            if (vertical)
+                style.Append(" min-width: calc(").Append(tickLength + 2).Append("px + 12ch);");
+            else
+                style.Append(" min-height: calc(").Append(tickLength + 2).Append("px + 1.2em);");
+        }
 
         html.Append("<div");
         AppendAttribute(html, "data-hmi-bar-scale", "true");
@@ -1896,14 +1914,21 @@ public class HmiScreenToHtmlConverter
         html.Append('>');
         for (var index = 0; index < tickCount; index++)
         {
-            var ratio = tickCount == 1 ? 0d : (double)index / (tickCount - 1);
-            if (reverse)
-                ratio = 1d - ratio;
+            var ratio = ratios[index];
             var tick = minimum + ((maximum - minimum) * ratio);
             var label = exponentialFormat ? tick.ToString($"e{decimalPlaces ?? 2}", CultureInfo.InvariantCulture) : decimalPlaces is int places
                 ? tick.ToString($"F{places}", CultureInfo.InvariantCulture)
                 : ToCss(tick);
-            html.Append("<span>");
+            html.Append("<span");
+            if (explicitInterval)
+            {
+                var position = reverse ? 1d - ratio : ratio;
+                var translation = position == 0 ? 0 : position == 1 ? -100 : -50;
+                AppendAttribute(html, "style", vertical
+                    ? $"position: absolute; top: {ToCss(position * 100)}%; {edge}: {tickLength + 2}px; transform: translateY({translation}%); white-space: nowrap;"
+                    : $"position: absolute; left: {ToCss(position * 100)}%; {edge}: {tickLength + 2}px; transform: translateX({translation}%); white-space: nowrap;");
+            }
+            html.Append('>');
             var tickIndex = reverse ? tickCount - 1 - index : index;
             if (showLabels && tickIndex % labelInterval == 0)
             {
@@ -1921,13 +1946,14 @@ public class HmiScreenToHtmlConverter
         html.Append('>');
         for (var index = 0; index < tickCount; index++)
         {
-            var percentage = ToCss(100d * index / (tickCount - 1));
+            var percentage = ToCss(100d * (reverse ? 1d - ratios[index] : ratios[index]));
             html.Append(vertical
                 ? $"<line x1=\"0\" x2=\"{tickLength}\" y1=\"{percentage}%\" y2=\"{percentage}%\"></line>"
                 : $"<line y1=\"0\" y2=\"{tickLength}\" x1=\"{percentage}%\" x2=\"{percentage}%\"></line>");
         }
         html.Append("</svg>");
         html.Append("</div>");
+
     }
 
     private static void AppendBarScaleFontStyle(
