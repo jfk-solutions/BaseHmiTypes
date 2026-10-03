@@ -24,6 +24,7 @@ const gaugeProperties = {
   divisionCount: Number,
   subDivisionCount: Number,
   majorTicksOnly: Boolean,
+  majorTicksBold: Boolean,
   hideScale: Boolean,
   hideTickLabels: Boolean,
   tickLabelInterval: Number,
@@ -92,6 +93,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   private _divisionCount = 5;
   private _subDivisionCount = 5;
   private _majorTicksOnly = false;
+  private _majorTicksBold = false;
   private _hideScale = false;
   private _hideTickLabels = false;
   private _tickLabelInterval = 1;
@@ -171,6 +173,13 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   }
   set majorTicksOnly(value: boolean) {
     this.setBooleanProperty("_majorTicksOnly", value);
+  }
+
+  get majorTicksBold(): boolean {
+    return this._majorTicksBold;
+  }
+  set majorTicksBold(value: boolean) {
+    this.setBooleanProperty("_majorTicksBold", value);
   }
 
   get hideScale(): boolean {
@@ -412,7 +421,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     const labelInterval = Math.max(1, Math.round(this.tickLabelInterval));
     for (let division = 0; division <= divisionCount; division++) {
       const angle = valueToAngle(division / divisionCount);
-      parts.push(this.renderTick(angle, 35, 38, 0.7));
+      parts.push(this.renderTick(angle, 35, 38, this.majorTicksBold ? 1.4 : 0.7));
 
       const value = begin + range * (division / divisionCount);
       const labelPoint = polarPoint(50, 55, 44.5, angle);
