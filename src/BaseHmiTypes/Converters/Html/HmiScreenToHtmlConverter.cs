@@ -2996,10 +2996,36 @@ public class HmiScreenToHtmlConverter
     private static void AppendTextBlock(StringBuilder html, HmiScreenItemBase item, HmiProperty<HmiMultilingualText>? text, HmiHtmlConvertContext context)
     {
         html.Append("<div");
-        AppendCommonAttributes(html, item, context, additionalStyle: "overflow: hidden;");
+        AppendCommonAttributes(html, item, context, additionalStyle: "overflow: hidden;" + CreateTextOrientationStyle(item, context));
         html.Append(">");
         AppendMultilingualText(html, ResolveStaticValue(text, context), context);
         html.Append("</div>");
+    }
+
+    private static string? CreateTextOrientationStyle(HmiScreenItemBase item, HmiHtmlConvertContext context)
+    {
+        if (item is not HmiText text || text.Font?.OrientationAngle is null)
+            return null;
+        var angle = ResolveStaticValue(text.Font.OrientationAngle, context);
+        angle = (angle % 360 + 360) % 360;
+        if (angle is not (90 or 270))
+            return null;
+        var horizontal = context.EffectiveProperties.Resolve(text, "HorizontalAlignment", text.HorizontalAlignment)?.StaticValue ?? HmiHorizontalAlignment.Left;
+        var vertical = context.EffectiveProperties.Resolve(text, "VerticalAlignment", text.VerticalAlignment)?.StaticValue ?? HmiVerticalAlignment.Top;
+        var cross = horizontal switch
+        {
+            HmiHorizontalAlignment.Left => angle == 90 ? "flex-start" : "flex-end",
+            HmiHorizontalAlignment.Right => angle == 90 ? "flex-end" : "flex-start",
+            HmiHorizontalAlignment.Stretch => "stretch",
+            _ => "center"
+        };
+        var main = vertical switch
+        {
+            HmiVerticalAlignment.Top => angle == 90 ? "flex-end" : "flex-start",
+            HmiVerticalAlignment.Bottom => angle == 90 ? "flex-start" : "flex-end",
+            _ => "center"
+        };
+        return $"writing-mode: {(angle == 90 ? "sideways-lr" : "sideways-rl")};display: flex;text-align: start;justify-content: {main};align-items: {cross};";
     }
 
     private static void AppendRectangle(StringBuilder html, HmiRectangle rectangle, HmiHtmlConvertContext context)
