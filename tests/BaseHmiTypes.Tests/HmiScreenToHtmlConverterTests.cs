@@ -799,6 +799,29 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(0d, 100d, "0.00e+000", "5.00e+001", "1.00e+002")]
+    [DataRow(-100d, 100d, "-1.00e+002", "0.00e+000", "1.00e+002")]
+    [DataRow(0d, 0.004d, "0.00e+000", "2.00e-003", "4.00e-003")]
+    public async Task ConvertAsync_RendersBarExponentialLabels(double minimum, double maximum, string first, string middle, string last)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        var bar = new HmiBar { Width = 120, Height = 40, BeginValue = minimum, EndValue = maximum,
+            ShowScale = true, DivisionCount = 3, TickLabelDecimalPlaces = 2, TickLabelExponentialFormat = true };
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var converter = new HmiScreenToHtmlConverter();
+        var html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, $"<span>{first}</span><span>{middle}</span><span>{last}</span>");
+        bar.TickLabelDecimalPlaces = null;
+        html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, $"<span>{middle}</span>");
+        bar.TickLabelExponentialFormat = false;
+        html = await converter.ConvertAsync(screen);
+        Assert.IsFalse(html.Contains($"<span>{middle}</span>", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersEnabledBarThresholdMarkers()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
