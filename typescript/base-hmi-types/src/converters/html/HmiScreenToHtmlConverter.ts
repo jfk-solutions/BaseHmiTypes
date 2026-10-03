@@ -3375,6 +3375,7 @@ function appendGauge(html: string[], gauge: HmiGauge, context: HmiHtmlConvertCon
   appendStaticAttribute(html, "sub-division-count", gauge.subDivisionCount);
   appendBooleanAttribute(html, "major-ticks-only", getStaticValue(gauge.majorTicksOnly) ?? false);
   appendBooleanAttribute(html, "major-ticks-bold", getStaticValue(gauge.majorTicksBold) ?? false);
+  appendStaticAttribute(html, "major-tick-length", gauge.majorTickLength);
   appendBooleanAttribute(html, "hide-scale", !(getStaticValue(gauge.showScale) ?? true));
   appendBooleanAttribute(html, "hide-tick-labels", !(getStaticValue(gauge.showTickLabels) ?? true));
   appendStaticAttribute(html, "tick-label-interval", gauge.tickLabelInterval);

@@ -26,6 +26,7 @@ const gaugeProperties = {
   subDivisionCount: Number,
   majorTicksOnly: Boolean,
   majorTicksBold: Boolean,
+  majorTickLength: Number,
   hideScale: Boolean,
   hideTickLabels: Boolean,
   tickLabelInterval: Number,
@@ -95,6 +96,8 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   private _subDivisionCount = 5;
   private _majorTicksOnly = false;
   private _majorTicksBold = false;
+  private _majorTickLength = Number.NaN;
+  private _resizeObserver?: ResizeObserver;
   private _hideScale = false;
   private _hideTickLabels = false;
   private _tickLabelInterval = 1;
@@ -181,6 +184,13 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   }
   set majorTicksBold(value: boolean) {
     this.setBooleanProperty("_majorTicksBold", value);
+  }
+
+  get majorTickLength(): number {
+    return this._majorTickLength;
+  }
+  set majorTickLength(value: number) {
+    this.setNumberProperty("_majorTickLength", value, Number.NaN);
   }
 
   get hideScale(): boolean {
@@ -299,6 +309,13 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   connectedCallback(): void {
     this._isConnected = true;
     super.connectedCallback();
+    this._resizeObserver ??= new ResizeObserver(() => this.render());
+    this._resizeObserver.observe(this);
+  }
+
+  disconnectedCallback(): void {
+    this._isConnected = false;
+    this._resizeObserver?.disconnect();
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
@@ -420,9 +437,15 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   ): string {
     const parts: string[] = [];
     const labelInterval = Math.max(1, Math.round(this.tickLabelInterval));
+    // The shared model defines pixel lengths, including a six-pixel default.
+    // Convert against the untransformed viewport so rotation does not alter them.
+    const svg = this.shadowRoot?.getElementById("gauge");
+    const pixelsPerUnit = svg ? Math.min(svg.clientWidth, svg.clientHeight) / 100 : 0;
+    const lengthInPixels = Number.isFinite(this.majorTickLength) ? this.majorTickLength : 6;
+    const majorLength = pixelsPerUnit > 0 ? clamp(lengthInPixels / pixelsPerUnit, 0, 38) : 0;
     for (let division = 0; division <= divisionCount; division++) {
       const angle = valueToAngle(division / divisionCount);
-      parts.push(this.renderTick(angle, 35, 38, this.majorTicksBold ? 1.4 : 0.7));
+      parts.push(this.renderTick(angle, 38 - majorLength, 38, this.majorTicksBold ? 1.4 : 0.7));
 
       const value = begin + range * (division / divisionCount);
       const labelPoint = polarPoint(50, 55, 44.5, angle);
