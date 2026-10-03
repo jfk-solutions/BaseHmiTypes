@@ -16,6 +16,81 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(false, false, false, 10)]
+    [DataRow(false, false, true, 10)]
+    [DataRow(false, true, false, 10)]
+    [DataRow(false, true, true, 10)]
+    [DataRow(true, false, false, 10)]
+    [DataRow(true, false, true, 10)]
+    [DataRow(true, true, false, 10)]
+    [DataRow(true, true, true, 10)]
+    [DataRow(null, false, false, 10)]
+    [DataRow(null, false, true, 10)]
+    [DataRow(null, true, false, 10)]
+    [DataRow(null, true, true, 10)]
+    [DataRow(false, false, true, 1)]
+    [DataRow(false, true, true, 1)]
+    [DataRow(true, false, true, 1)]
+    [DataRow(true, true, true, 1)]
+    public async Task ConvertAsync_RendersGraphicBorderPlacement(bool? inside, bool line, bool image, int width)
+    {
+        var item = new HmiGraphicView { Name = "FramedGraphic", Width = 100, Height = 80 };
+        if (inside.HasValue) item.DrawStrokeInsideFrame = HmiProperty.Tag("Border.Inside", inside.Value);
+        if (image) item.Source = "picture.svg";
+        if (line)
+        {
+            item.LineWidth = HmiProperty.Tag("Line.Width", (double)width);
+            item.LineColor = HmiColor.FromArgb(255, 12, 34, 56);
+            item.BorderWidth = 2;
+            item.BorderColor = HmiColor.FromArgb(255, 255, 0, 0);
+        }
+        else
+        {
+            item.BorderWidth = HmiProperty.Tag("Border.Width", (double)width);
+            item.BorderColor = HmiColor.FromArgb(255, 12, 34, 56);
+        }
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<(?:img|div) id=\"FramedGraphic\"[^>]*>").Value;
+        Assert.IsFalse(string.IsNullOrEmpty(opening));
+        Assert.AreEqual(image, opening.StartsWith("<img", StringComparison.Ordinal));
+        var centered = inside == false && width > 1;
+        Assert.AreEqual(centered, opening.Contains("outline-width:", StringComparison.Ordinal));
+        StringAssert.Contains(opening, "width: 100px;");
+        StringAssert.Contains(opening, "height: 80px;");
+        StringAssert.Contains(opening, $"border-width: {(centered ? 0 : width)}px;");
+        if (image) StringAssert.Contains(opening, "src=\"picture.svg\"");
+        if (centered)
+        {
+            StringAssert.Contains(opening, "outline-width: 10px;");
+            StringAssert.Contains(opening, "outline-offset: -5px;");
+            StringAssert.Contains(opening, "outline-color: #0C2238;");
+        }
+    }
+
+    [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public async Task ConvertAsync_RendersBlinkingGraphicBorderPlacement(bool line, bool inside)
+    {
+        var item = new HmiGraphicView { Name = "FlashingGraphic", Source = "picture.svg",
+            DrawStrokeInsideFrame = HmiProperty.Tag("Border.Inside", inside) };
+        var color = HmiProperty.Blink(HmiColor.FromArgb(255, 1, 2, 3), HmiColor.FromArgb(255, 4, 5, 6), HmiBlinkRate.Fast);
+        if (line) { item.LineWidth = 10; item.LineColor = color; }
+        else { item.BorderWidth = 10; item.BorderColor = color; }
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<img id=\"FlashingGraphic\"[^>]*>").Value;
+        StringAssert.Contains(opening, "--hmi-border-color-off: #010203;");
+        StringAssert.Contains(opening, "--hmi-border-color-on: #040506;");
+        StringAssert.Contains(opening, $"animation: hmi-{(inside ? "border" : "outline")}-color-flash 0.5s steps(1, end) infinite;");
+    }
+
+    [TestMethod]
     [DataRow(false, false)]
     [DataRow(false, true)]
     [DataRow(true, false)]
