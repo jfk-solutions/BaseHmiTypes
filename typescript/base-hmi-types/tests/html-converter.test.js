@@ -1,6 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+for (const list of [false,true]) for (const index of [0,1,2]) for (const explicitValue of [false,true]) {
+test("HTML renderer selects by index without inventing a value ("+[list,index,explicitValue].join(", ")+")", async () => {
+  const item = list ? new HmiListBox() : new HmiComboBox();
+  item.name = "Ordinal"; item.selectedIndex = staticProperty(index);
+  if (explicitValue) item.value = staticProperty(0);
+  for (let i=0;i<3;i++) {
+    const state = new HmiState(); state.value = i; state.text = HmiMultilingualText.fromText("Entry "+i);
+    item.states.push(state);
+  }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  for (let i=0;i<3;i++) {
+    const option = html.match(new RegExp('<option value="'+i+'"[^>]*>','u'))?.[0] ?? "";
+    assert.ok(option); assert.equal(option.includes('selected="selected"'),i===(explicitValue ? 0 : index));
+  }
+});
+}
+
 for (const signedMask of [0,1,5,-2147483648,-1]) for (const tagged of [false,true]) {
 test("HTML renderer renders 32-bit list selections (" + [signedMask,tagged].join(", ") + ")", async () => {
   const mask = signedMask >>> 0, item = new HmiListBox();
