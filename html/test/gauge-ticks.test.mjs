@@ -34,6 +34,32 @@ function createGauge() {
   return gauge;
 }
 
+for (const [weight, bold] of [[500,false],[500,true],[0,false],[0,true],[-1,false],[-1,true]]) {
+  test(`gauge numeric font weight affects scale labels and value (${weight}, ${bold})`, () => {
+    const gauge = createGauge();
+    gauge.showValue = true;
+    gauge.attributeChangedCallback("label-font", null, JSON.stringify({ weight, bold }));
+    const texts = [...gauge.svg.innerHTML.matchAll(/<text\b[^>]*>/gu)].map(match => match[0]);
+    assert.equal(texts.length, 4);
+    const expected = weight > 0 ? weight : bold ? 700 : 400;
+    for (const text of texts) assert.ok(text.includes(`font-weight: ${expected};`));
+    gauge.labelFont = { weight: 600, bold: !bold };
+    assert.equal([...gauge.svg.innerHTML.matchAll(/font-weight: 600;/gu)].length, 4);
+    gauge.attributeChangedCallback("label-font", "{}", null);
+    assert.equal([...gauge.svg.innerHTML.matchAll(/font-weight: 400;/gu)].length, 4);
+  });
+}
+
+for (const weight of [Number.NaN, Number.POSITIVE_INFINITY, "500", "500; fill: red"]) {
+  test(`gauge rejects invalid numeric font weights (${weight})`, () => {
+    const gauge = createGauge();
+    gauge.showValue = true;
+    gauge.labelFont = { weight, bold: true };
+    assert.equal([...gauge.svg.innerHTML.matchAll(/font-weight: 700;/gu)].length, 4);
+    assert.ok(!gauge.svg.innerHTML.includes("fill: red"));
+  });
+}
+
 test("gauge bold major ticks update without changing minor marks or labels", () => {
   const gauge = createGauge();
   const count = expression => [...gauge.svg.innerHTML.matchAll(expression)].length;
