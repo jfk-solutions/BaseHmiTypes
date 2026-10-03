@@ -1740,6 +1740,7 @@ public class HmiScreenToHtmlConverter
         if (showScale || showThresholds)
         {
             var vertical = direction is HmiFillDirection.Up or HmiFillDirection.Down;
+            var scaleBefore = showScale && bar.ScaleAfterBar is not null && !ResolveStaticValue(bar.ScaleAfterBar, context);
             html.Append("<div");
             AppendCommonAttributes(
                 html,
@@ -1752,9 +1753,13 @@ public class HmiScreenToHtmlConverter
                     : "display: flex; align-items: stretch;");
             AppendAttribute(html, "data-hmi-bar", "true");
             AppendAttribute(html, "data-fill-direction", direction.ToString());
-            html.Append('>');
-            AppendBarMeterRegion(html, bar, minimum, maximum, value, direction, vertical, context);
             if (showScale)
+                AppendAttribute(html, "data-scale-side", vertical ? scaleBefore ? "Left" : "Right" : scaleBefore ? "Top" : "Bottom");
+            html.Append('>');
+            if (scaleBefore)
+                AppendBarScale(html, bar, minimum, maximum, direction, vertical, context);
+            AppendBarMeterRegion(html, bar, minimum, maximum, value, direction, vertical, context);
+            if (showScale && !scaleBefore)
                 AppendBarScale(html, bar, minimum, maximum, direction, vertical, context);
             html.Append("</div>");
             return;

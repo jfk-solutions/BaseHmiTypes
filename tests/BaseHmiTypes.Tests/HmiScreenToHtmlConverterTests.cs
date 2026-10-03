@@ -769,6 +769,36 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(HmiFillDirection.Right, false, "Top")]
+    [DataRow(HmiFillDirection.Right, true, "Bottom")]
+    [DataRow(HmiFillDirection.Left, false, "Top")]
+    [DataRow(HmiFillDirection.Left, true, "Bottom")]
+    [DataRow(HmiFillDirection.Up, false, "Left")]
+    [DataRow(HmiFillDirection.Up, true, "Right")]
+    [DataRow(HmiFillDirection.Down, false, "Left")]
+    [DataRow(HmiFillDirection.Down, true, "Right")]
+    public async Task ConvertAsync_RendersBarScaleAlignment(HmiFillDirection direction, bool after, string side)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        var bar = new HmiBar { Width = 120, Height = 40, BeginValue = 0, EndValue = 100,
+            ShowScale = true, ScaleAfterBar = after, FillDirection = direction };
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var converter = new HmiScreenToHtmlConverter();
+        var html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, $"data-scale-side=\"{side}\"");
+        var scaleIndex = html.IndexOf("data-hmi-bar-scale=", StringComparison.Ordinal);
+        var meterIndex = html.IndexOf("data-hmi-bar-meter=", StringComparison.Ordinal);
+        Assert.IsTrue(scaleIndex >= 0 && meterIndex >= 0);
+        Assert.AreEqual(after, scaleIndex > meterIndex);
+        bar.ShowScale = false;
+        html = await converter.ConvertAsync(screen);
+        Assert.IsFalse(html.Contains("data-scale-side=", StringComparison.Ordinal));
+        Assert.IsFalse(html.Contains("data-hmi-bar-scale=", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersEnabledBarThresholdMarkers()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
