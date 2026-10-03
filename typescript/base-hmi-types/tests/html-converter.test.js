@@ -1756,6 +1756,11 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   secondTimeAxis.visible = staticProperty(true);
   secondTimeAxis.alignment = staticProperty(HmiVerticalAlignment.Bottom);
   secondTimeAxis.label = "Second time axis";
+  secondTimeAxis.rangeType = staticProperty("StartEnd");
+  secondTimeAxis.startTime = staticProperty("2018-07-19T08:51:13.000Z");
+  secondTimeAxis.endTime = staticProperty("2018-07-19T08:52:13.000Z");
+  secondTimeAxis.measurementPoints = staticProperty(120);
+  secondTimeAxis.refreshEnabled = staticProperty(false);
   trend.timeAxes.push(secondTimeAxis);
   const thirdTimeAxis = new HmiTrendTimeAxis();
   thirdTimeAxis.name = "Time C";
@@ -1814,6 +1819,11 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   assert.match(html, /&quot;trendWindowName&quot;:&quot;Time window&quot;/);
   assert.match(html, /&quot;name&quot;:&quot;Time B&quot;/);
   assert.match(html, /&quot;label&quot;:&quot;Second time axis&quot;/);
+  assert.match(html, /&quot;rangeType&quot;:&quot;StartEnd&quot;/);
+  assert.match(html, /&quot;startTime&quot;:&quot;2018-07-19T08:51:13.000Z&quot;/);
+  assert.match(html, /&quot;endTime&quot;:&quot;2018-07-19T08:52:13.000Z&quot;/);
+  assert.match(html, /&quot;measurementPoints&quot;:120/);
+  assert.match(html, /&quot;refreshEnabled&quot;:false/);
   assert.match(html, /&quot;name&quot;:&quot;Time A&quot;/);
   assert.match(html, /&quot;name&quot;:&quot;Time C&quot;/);
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Second value&quot;/);

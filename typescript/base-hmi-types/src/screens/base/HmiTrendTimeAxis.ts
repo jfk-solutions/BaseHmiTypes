@@ -2,6 +2,7 @@ import { HmiProperty } from "./HmiProperty.js";
 import { HmiColor } from "./HmiColor.js";
 import { HmiVerticalAlignment } from "./HmiVerticalAlignment.js";
 import { HmiTrendTimeFormat } from "./HmiTrendTimeFormat.js";
+import { HmiTrendTimeRangeType } from "./HmiTrendTimeRangeType.js";
 
 /** A named time axis configured independently of trend pens. */
 export class HmiTrendTimeAxis {
@@ -18,4 +19,11 @@ export class HmiTrendTimeAxis {
   displayMilliseconds?: HmiProperty<boolean>;
   timeSpan?: HmiProperty<number>;
   timeSpanUnit?: string;
+  rangeType?: HmiProperty<HmiTrendTimeRangeType>;
+  /** ISO 8601 timestamp with an explicit offset. */
+  startTime?: HmiProperty<string>;
+  /** ISO 8601 timestamp with an explicit offset. */
+  endTime?: HmiProperty<string>;
+  measurementPoints?: HmiProperty<number>;
+  refreshEnabled?: HmiProperty<boolean>;
 }
