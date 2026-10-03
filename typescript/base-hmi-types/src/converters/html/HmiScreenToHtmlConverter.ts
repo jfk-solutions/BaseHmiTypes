@@ -2706,6 +2706,12 @@ async function appendSelectionGroup(
   html.push(`<${elementName}`);
   appendCommonAttributes(html, selectionGroup, context);
   appendAttribute(html, "frame-border-style", getBorderStyleCss(selectionGroup, context));
+  const frameBorder = context.effectiveProperties.resolve(selectionGroup, "BorderColor", selectionGroup.borderColor);
+  if (frameBorder?.kind === HmiPropertyKind.Blink) {
+    const blink = frameBorder as HmiBlinkProperty<HmiColor>;
+    if (blink.staticValue !== undefined && blink.blinkValue !== undefined)
+      appendAttribute(html, "frame-border-flash-duration", getBlinkDuration(blink.rate));
+  }
   appendStaticAttribute(html, "selected-index", selectionGroup.selectedIndex);
   if (selectionGroup instanceof HmiCheckBoxGroup || selectionGroup instanceof HmiRadioButtonGroup)
     appendStaticAttribute(html, "selected-fields", selectionGroup.selectedFields);
