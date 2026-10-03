@@ -51,6 +51,7 @@ import {
   HmiSystemDiagnosisViewKind,
   HmiText,
   HmiScale,
+  HmiTickDirection,
   HmiScreen,
   HmiScreenWindow,
   HmiScreenToHtmlConverter,
@@ -802,8 +803,55 @@ test("HTML converter renders bar slider and scale previews", async () => {
   assert.match(html, /<input id="SetpointSlider"/);
   assert.match(html, /type="range" min="-10" max="10" value="4" step="any" disabled="disabled"/);
   assert.match(html, /<div id="LevelScale"/);
-  assert.match(html, /><span>0<\/span><span>100<\/span><\/div>/);
+  assert.match(html, /><span>0<\/span><span>100<\/span>/);
+  assert.ok(html.includes('data-hmi-scale-ticks="true"'));
 });
+
+for (const [direction, padding, midpoint, reversed] of [
+  [HmiTickDirection.Down, "padding-top: 14px;", 'x1="50%"', false],
+  [HmiTickDirection.Up, "padding-bottom: 14px;", 'x1="50%"', false],
+  [HmiTickDirection.Left, "padding-right: 14px;", 'y1="50%"', true],
+  [HmiTickDirection.Right, "padding-left: 14px;", 'y1="50%"', true],
+]) {
+test(`HTML converter renders standalone scale marks (${direction})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const scale = new HmiScale();
+  scale.width = staticProperty(120);
+  scale.height = staticProperty(100);
+  scale.beginValue = staticProperty(0);
+  scale.endValue = staticProperty(100);
+  scale.divisionCount = staticProperty(4);
+  scale.tickDirection = staticProperty(direction);
+  scale.majorTickLength = staticProperty(12);
+  scale.majorTicksBold = staticProperty(true);
+  scale.tickLabelInterval = staticProperty(2);
+  scale.tickLabelDecimalPlaces = staticProperty(1);
+  scale.engineeringUnit = staticProperty("a&b");
+  scale.scaleForegroundColor = staticProperty(hmiColorFromArgb(255, 1, 2, 3));
+  scale.scaleBackgroundColor = staticProperty(hmiColorFromArgb(255, 4, 5, 6));
+  scale.labelFont = { name: staticProperty("Arial"), size: staticProperty(9), bold: staticProperty(true) };
+  layer.items.push(scale);
+  screen.layers.push(layer);
+  const converter = new HmiScreenToHtmlConverter();
+  let html = await converter.convertAsync(screen);
+  assert.ok(html.includes(padding));
+  assert.ok(html.includes(midpoint));
+  assert.ok(html.includes('data-hmi-scale-ticks="true"'));
+  assert.ok(html.includes('stroke="#010203" stroke-width="2"'));
+  assert.ok(html.includes("background-color: #040506;"));
+  assert.ok(html.includes("font-family: Arial; font-size: 9px; font-weight: bold;"));
+  assert.ok(html.includes(reversed
+    ? "<span>100.0&nbsp;a&amp;b</span><span></span><span>50.0&nbsp;a&amp;b</span><span></span><span>0.0&nbsp;a&amp;b</span>"
+    : "<span>0.0&nbsp;a&amp;b</span><span></span><span>50.0&nbsp;a&amp;b</span><span></span><span>100.0&nbsp;a&amp;b</span>"));
+  scale.showTickLabels = staticProperty(false);
+  html = await converter.convertAsync(screen);
+  assert.ok(html.includes('data-hmi-scale-ticks="true"'));
+  assert.ok(!html.includes("&nbsp;a&amp;b"));
+  scale.showScale = staticProperty(false);
+  assert.ok(!(await converter.convertAsync(screen)).includes("data-hmi-scale-ticks"));
+});
+}
 
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
