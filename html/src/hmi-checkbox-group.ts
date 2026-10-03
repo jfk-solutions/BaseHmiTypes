@@ -1,6 +1,7 @@
 const selectionGroupProperties = {
   selectedIndex: Number,
   selectedFields: Number,
+  drawStrokeInsideFrame: Boolean,
   selectionItemHeight: Number,
   selectionBackgroundColor: String,
   selectionForegroundColor: String,
@@ -25,6 +26,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   protected abstract readonly indicator: SelectionIndicator;
   private _selectedIndex = -1;
   private _selectedFields: number | undefined;
+  private _drawStrokeInsideFrame = true;
   private _selectionItemHeight = Number.NaN;
   private _selectionBackgroundColor = "";
   private _selectionForegroundColor = "";
@@ -50,6 +52,16 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
     const next = Number.isFinite(parsed) ? parsed >>> 0 : undefined;
     if (this._selectedFields === next) return;
     this._selectedFields = next;
+    this.queueRender();
+  }
+
+  get drawStrokeInsideFrame(): boolean {
+    return this._drawStrokeInsideFrame;
+  }
+  set drawStrokeInsideFrame(value: boolean | string | null | undefined) {
+    const next = value !== false && String(value).toLowerCase() !== "false";
+    if (this._drawStrokeInsideFrame === next) return;
+    this._drawStrokeInsideFrame = next;
     this.queueRender();
   }
 
@@ -110,6 +122,8 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
     const type = selectionGroupProperties[propertyName];
     if (type === Number) {
       (this as unknown as Record<string, number | string | null>)[propertyName] = newValue;
+    } else if (type === Boolean) {
+      (this as unknown as Record<string, boolean | string | null>)[propertyName] = newValue;
     } else if (type === String) {
       (this as unknown as Record<string, string>)[propertyName] = newValue ?? "";
     }
@@ -159,6 +173,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
     const declaredBorderWidth = this.style.borderTopWidth || this.style.borderWidth;
     const rawBorderWidth = parseCssPixels(declaredBorderWidth, computed.borderTopWidth);
     const borderWidth = rawBorderWidth ?? 4;
+    const centeredBorder = !this._drawStrokeInsideFrame && borderWidth > 1;
     const itemHeight = Number.isFinite(this._selectionItemHeight) && this._selectionItemHeight > 0
       ? `${this._selectionItemHeight}px`
       : "1fr";
@@ -177,7 +192,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
           position: relative;
           min-width: 1px;
           min-height: 1px;
-          overflow: hidden;
+          overflow: ${centeredBorder ? "visible" : "hidden"};
           font-family: Arial, Helvetica, sans-serif;
           user-select: none;
           border-style: none !important;
@@ -202,7 +217,8 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
           overflow: hidden;
           color: ${escapeCss(foregroundColor)};
           background: ${escapeCss(backgroundColor)};
-          border: ${toCss(borderWidth)}px solid ${escapeCss(borderColor)};
+          border: ${centeredBorder ? "0" : toCss(borderWidth)}px solid ${escapeCss(borderColor)};
+          ${centeredBorder ? `outline: ${toCss(borderWidth)}px solid ${escapeCss(borderColor)}; outline-offset: ${toCss(-borderWidth / 2)}px;` : ""}
           border-radius: 8px;
           display: grid;
           align-content: start;
