@@ -1757,6 +1757,11 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   secondTimeAxis.alignment = staticProperty(HmiVerticalAlignment.Bottom);
   secondTimeAxis.label = "Second time axis";
   trend.timeAxes.push(secondTimeAxis);
+  const thirdTimeAxis = new HmiTrendTimeAxis();
+  thirdTimeAxis.name = "Time C";
+  thirdTimeAxis.visible = staticProperty(true);
+  thirdTimeAxis.alignment = staticProperty(HmiVerticalAlignment.Bottom);
+  trend.timeAxes.push(thirdTimeAxis);
   const window = new HmiTrendWindow();
   window.name = "Window A";
   window.visible = staticProperty(false);
@@ -1775,6 +1780,11 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   axis.visible = staticProperty(true);
   axis.alignment = staticProperty(HmiHorizontalAlignment.Left);
   trend.valueAxes.push(axis);
+  const secondValueAxis = new HmiTrendValueAxis();
+  secondValueAxis.name = "Second value";
+  secondValueAxis.visible = staticProperty(true);
+  secondValueAxis.alignment = staticProperty(HmiHorizontalAlignment.Left);
+  trend.valueAxes.push(secondValueAxis);
   const pen = new HmiTrendPen();
   pen.number = 1;
   pen.decimalPlaces = staticProperty(4);
@@ -1804,6 +1814,12 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   assert.match(html, /&quot;trendWindowName&quot;:&quot;Time window&quot;/);
   assert.match(html, /&quot;name&quot;:&quot;Time B&quot;/);
   assert.match(html, /&quot;label&quot;:&quot;Second time axis&quot;/);
+  assert.match(html, /&quot;name&quot;:&quot;Time A&quot;/);
+  assert.match(html, /&quot;name&quot;:&quot;Time C&quot;/);
+  assert.match(html, /&quot;valueAxisName&quot;:&quot;Second value&quot;/);
+  assert.ok(html.indexOf("&quot;name&quot;:&quot;Time A&quot;") < html.indexOf("&quot;name&quot;:&quot;Time B&quot;"));
+  assert.ok(html.indexOf("&quot;name&quot;:&quot;Time B&quot;") < html.indexOf("&quot;name&quot;:&quot;Time C&quot;"));
+  assert.ok(html.indexOf("&quot;valueAxisName&quot;:&quot;Unused&quot;") < html.indexOf("&quot;valueAxisName&quot;:&quot;Second value&quot;"));
   assert.match(html, /&quot;trendWindowName&quot;:&quot;Pen window&quot;/);
   assert.match(html, /&quot;timeAxisName&quot;:&quot;Time A&quot;/);
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Axis A&quot;/);
