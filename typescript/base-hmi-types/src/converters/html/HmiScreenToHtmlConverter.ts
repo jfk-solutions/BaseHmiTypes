@@ -84,6 +84,7 @@ import { HmiListBox } from "../../screens/widgets/HmiListBox.js";
 import { HmiRadioButtonGroup } from "../../screens/widgets/HmiRadioButtonGroup.js";
 import { HmiScale } from "../../screens/widgets/HmiScale.js";
 import { HmiScaleWidgetBase } from "../../screens/widgets/HmiScaleWidgetBase.js";
+import { HmiTickDirection } from "../../screens/widgets/HmiTickDirection.js";
 import { HmiThresholdValueMode } from "../../screens/widgets/HmiThreshold.js";
 import { HmiSelectionGroupBase, HmiSelectionGroupItem } from "../../screens/widgets/HmiSelectionGroupBase.js";
 import { HmiSwitchType } from "../../screens/widgets/HmiSwitchType.js";
@@ -1641,6 +1642,19 @@ function appendBarScale(
   direction: HmiFillDirection,
   vertical: boolean,
 ): void {
+  appendScaleMarks(html, bar, minimum, maximum, direction, vertical, getStaticValue(bar.scaleAfterBar) !== false, false);
+}
+
+function appendScaleMarks(
+  html: string[],
+  bar: HmiScaleWidgetBase,
+  minimum: number,
+  maximum: number,
+  direction: HmiFillDirection,
+  vertical: boolean,
+  afterBar: boolean,
+  standalone: boolean,
+): void {
   const sections = getStaticValue(bar.divisionCount) ?? 0;
   let tickCount = sections > 0 ? Math.min(100, sections) + 1 : 2;
   const interval = getStaticValue(bar.majorTickInterval) ?? 0;
@@ -1676,7 +1690,6 @@ function appendBarScale(
 
   const tickLength = Math.max(0, getStaticValue(bar.majorTickLength) ?? 6);
   const tickWidth = getStaticValue(bar.majorTicksBold) === true ? 2 : 1;
-  const afterBar = getStaticValue(bar.scaleAfterBar) !== false;
   const edge = vertical ? (afterBar ? "left" : "right") : (afterBar ? "top" : "bottom");
   style += ` position: relative; box-sizing: border-box; padding-${edge}: ${tickLength + 2}px;`;
   if (!vertical)
@@ -1686,7 +1699,7 @@ function appendBarScale(
       : ` min-height: calc(${tickLength + 2}px + 1.2em);`;
 
   html.push("<div");
-  appendAttribute(html, "data-hmi-bar-scale", "true");
+  appendAttribute(html, standalone ? "data-hmi-scale-labels" : "data-hmi-bar-scale", "true");
   appendAttribute(html, "style", style);
   html.push(">");
   for (let index = 0; index < tickCount; index++) {
@@ -1712,7 +1725,8 @@ function appendBarScale(
     }
     html.push("</span>");
   }
-  html.push('<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-hmi-bar-ticks="true"');
+  html.push('<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"');
+  appendAttribute(html, standalone ? "data-hmi-scale-ticks" : "data-hmi-bar-ticks", "true");
   appendAttribute(html, "style", `position: absolute; pointer-events: none; overflow: visible; ${edge}: 0; ` +
     (vertical ? `top: 0; width: ${tickLength}px; height: 100%;` : `left: 0; width: 100%; height: ${tickLength}px;`));
   const tickColor = getStaticValue(bar.tickColor ?? bar.scaleForegroundColor);
@@ -1729,7 +1743,7 @@ function appendBarScale(
   html.push("</div>");
 }
 
-function getBarScaleFontStyle(bar: HmiBar): string {
+function getBarScaleFontStyle(bar: HmiScaleWidgetBase): string {
   const font = bar.labelFont;
   if (font === undefined)
     return "";
@@ -1821,15 +1835,23 @@ function getSliderTrackStyle(slider: HmiSlider, direction: HmiFillDirection): st
 
 function appendScale(html: string[], scale: HmiScale, context: HmiHtmlConvertContext): void {
   const [minimum, maximum] = resolveScaleRange(scale);
+  const tickDirection = getStaticValue(scale.tickDirection) ?? HmiTickDirection.Down;
+  const vertical = tickDirection === HmiTickDirection.Left || tickDirection === HmiTickDirection.Right;
   html.push("<div");
   appendCommonAttributes(
     html,
     scale,
     context,
     true,
-    "display: flex; align-items: end; justify-content: space-between; overflow: hidden;",
+    "display: flex; align-items: stretch; overflow: hidden;",
   );
-  html.push(`><span>${toCss(minimum)}</span><span>${toCss(maximum)}</span></div>`);
+  appendAttribute(html, "data-hmi-scale", "true");
+  appendAttribute(html, "data-tick-direction", tickDirection);
+  html.push(">");
+  if (getStaticValue(scale.showScale) !== false)
+    appendScaleMarks(html, scale, minimum, maximum, vertical ? HmiFillDirection.Up : HmiFillDirection.Right,
+      vertical, tickDirection === HmiTickDirection.Down || tickDirection === HmiTickDirection.Right, true);
+  html.push("</div>");
 }
 
 function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertContext): void {
