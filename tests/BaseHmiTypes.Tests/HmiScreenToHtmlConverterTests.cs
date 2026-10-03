@@ -16,6 +16,62 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(0d, false)]
+    [DataRow(0d, true)]
+    [DataRow(90d, false)]
+    [DataRow(90d, true)]
+    [DataRow(270d, false)]
+    [DataRow(270d, true)]
+    [DataRow(-90d, false)]
+    [DataRow(-90d, true)]
+    [DataRow(450d, false)]
+    [DataRow(450d, true)]
+    [DataRow(45d, false)]
+    [DataRow(45d, true)]
+    public async Task ConvertAsync_RendersSidewaysTextWithoutRotatingFrame(double angle, bool adapt)
+    {
+        var item = new HmiText { Name = "OrientedText", Width = 80, Height = 160,
+            Text = HmiMultilingualText.FromText("Tank level"), AdaptBorderToContent = adapt,
+            Font = new HmiFont { OrientationAngle = HmiProperty.Tag("Text.Angle", angle) },
+            BorderWidth = 4, BorderColor = HmiColor.FromArgb(255, 1, 2, 3) };
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<div id=\"OrientedText\"[^>]*>").Value;
+        var normalized = (angle % 360 + 360) % 360;
+        Assert.AreEqual(normalized is 90 or 270, opening.Contains("writing-mode:", StringComparison.Ordinal));
+        if (normalized is 90 or 270) StringAssert.Contains(opening, normalized == 90 ? "writing-mode: sideways-lr;" : "writing-mode: sideways-rl;");
+        Assert.IsFalse(opening.Contains("transform:", StringComparison.Ordinal));
+        StringAssert.Contains(opening, "border-width: 4px;");
+        Assert.AreEqual(adapt, opening.Contains("width: max-content;height: max-content;", StringComparison.Ordinal));
+        StringAssert.Contains(html, "Tank level");
+    }
+
+    [TestMethod]
+    [DataRow(90d, false, false)]
+    [DataRow(90d, false, true)]
+    [DataRow(90d, true, false)]
+    [DataRow(90d, true, true)]
+    [DataRow(270d, false, false)]
+    [DataRow(270d, false, true)]
+    [DataRow(270d, true, false)]
+    [DataRow(270d, true, true)]
+    public async Task ConvertAsync_KeepsSidewaysTextAlignmentPhysical(double angle, bool right, bool bottom)
+    {
+        var item = new HmiText { Name = "AlignedText", Width = 80, Height = 160,
+            Text = HmiMultilingualText.FromText("Tank"), Font = new HmiFont { OrientationAngle = angle },
+            HorizontalAlignment = right ? HmiHorizontalAlignment.Right : HmiHorizontalAlignment.Left,
+            VerticalAlignment = bottom ? HmiVerticalAlignment.Bottom : HmiVerticalAlignment.Top };
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<div id=\"AlignedText\"[^>]*>").Value;
+        var main = bottom == (angle == 90) ? "flex-start" : "flex-end";
+        var cross = right == (angle == 90) ? "flex-end" : "flex-start";
+        StringAssert.Contains(opening, $"text-align: start;justify-content: {main};align-items: {cross};");
+    }
+
+    [TestMethod]
     [DataRow(0, false)]
     [DataRow(0, true)]
     [DataRow(1, false)]
