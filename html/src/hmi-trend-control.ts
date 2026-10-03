@@ -84,6 +84,12 @@ interface TrendPen {
   exponentialFormat?: boolean;
   autoDecimalPlaces?: boolean;
   decimalPlaces?: number;
+  valueAxisName?: string;
+  valueAxisVisible?: boolean;
+  valueAxisColor?: string;
+  valueAxisInTrendColor?: boolean;
+  valueAxisAlignment?: "Left" | "Right";
+  valueAxisLabel?: string;
   unit?: string;
 }
 
@@ -206,6 +212,9 @@ export class HmiTrendControl extends HTMLElement {
     const yAxisVisible = readBooleanAttribute(this, "y-axis-scale-visible", true);
     const yAxisAlignment = this.getAttribute("y-axis-alignment")?.toLowerCase() === "right" ? "right" : "left";
     const yAxisLabel = this.getAttribute("y-axis-label") ?? "";
+    const namedValueAxes = collectValueAxes(pens);
+    const leftAxisCount = namedValueAxes.filter(pen => pen.valueAxisAlignment !== "Right" && pen.valueAxisVisible !== false).length;
+    const rightAxisCount = namedValueAxes.filter(pen => pen.valueAxisAlignment === "Right" && pen.valueAxisVisible !== false).length;
     const yAxisGridVisible = readBooleanAttribute(this, "y-axis-grid-visible", true);
     const showPercentageAxis = readBooleanAttribute(this, "show-percentage-axis", false);
     const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
@@ -313,8 +322,10 @@ export class HmiTrendControl extends HTMLElement {
         .plot {
           position: absolute;
           background: ${escapeCss(windowBackgroundColor)};
+          ${namedValueAxes.length ? "font-size: clamp(10px, 2vmin, 18px);" : ""}
           left: 10%;
           right: 2.5%;
+          ${namedValueAxes.length ? `left: calc(2.5% + ${toCss(leftAxisCount * 4.4)}em); right: calc(2.5% + ${toCss(rightAxisCount * 4.4)}em);` : ""}
           top: ${plotTop}%;
           bottom: ${plotBottom}%;
         }
@@ -350,6 +361,21 @@ export class HmiTrendControl extends HTMLElement {
           border-${percentageAxisAlignment}: 1px solid var(--hmi-trend-percentage-axis-color, ${escapeCss(foregroundColor)});
           pointer-events: none;
         }
+
+        .value-axis {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 4.4em;
+          font-size: clamp(10px, 2vmin, 18px);
+          border-right: 1px solid currentColor;
+          pointer-events: none;
+        }
+
+        .value-axis.right { border-right: 0; border-left: 1px solid currentColor; }
+        .value-axis .y-label { left: 0; right: auto; color: inherit; text-align: right; }
+        .value-axis.right .y-label { left: 0.8em; text-align: left; }
+        .value-axis-title { position: absolute; top: -1.4em; left: 0; color: inherit; white-space: nowrap; }
 
         .percentage-label {
           ${percentageAxisAlignment}: -4.4em;
@@ -461,16 +487,16 @@ export class HmiTrendControl extends HTMLElement {
               gridInTrendColor && firstPen !== undefined ? normalizePenColor(firstPen.color, 0) : undefined,
             )}
             ${xAxisVisible ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
-            ${yAxisVisible ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
+            ${yAxisVisible && !namedValueAxes.length ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, configuredDecimalPlaces)}
           </svg>
-          ${yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, axisScaleType, exponentialFormat) : ""}
+          ${namedValueAxes.length ? renderValueAxes(namedValueAxes, pens, minimumValue, maximumValue, configuredDecimalPlaces, foregroundColor) : yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, axisScaleType, exponentialFormat) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
           ${displayStatisticRulers ? `<div class="statistic-ruler start" title="Statistics range start"></div><div class="statistic-ruler end" title="Statistics range end"></div>` : ""}
           ${xAxisVisible ? renderXLabels(labels) : ""}
           ${xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
-          ${yAxisVisible && yAxisLabel ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
+          ${yAxisVisible && yAxisLabel && !namedValueAxes.length ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
         </div>
         ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"${xAxisFlipped && chartLiveMode ? ' style="margin-left: 0"' : ""}></div></div>` : ""}
       </div>`;
@@ -508,6 +534,35 @@ function renderGrid(
     }
   }
   return lines.join("");
+}
+
+function collectValueAxes(pens: readonly TrendPen[]): TrendPen[] {
+  const axes = new Map<string, TrendPen>();
+  for (const pen of pens) {
+    if (pen.valueAxisName && !axes.has(pen.valueAxisName)) axes.set(pen.valueAxisName, pen);
+  }
+  return [...axes.values()];
+}
+
+function renderValueAxes(
+  axes: readonly TrendPen[], pens: readonly TrendPen[],
+  minimum: number, maximum: number, decimalPlaces: number, foregroundColor: string,
+): string {
+  let left = 0;
+  let right = 0;
+  return axes.filter(axis => axis.valueAxisVisible !== false).map(axis => {
+    const alignment = axis.valueAxisAlignment === "Right" ? "right" : "left";
+    const column = alignment === "right" ? right++ : left++;
+    const color = axis.valueAxisInTrendColor === true && pens.length
+      ? normalizePenColor(pens[0]!.color, 0) : normalizeCssColor(axis.valueAxisColor, foregroundColor);
+    const axisMinimum = axis.minimum ?? minimum;
+    const axisMaximumCandidate = axis.maximum ?? maximum;
+    const axisMaximum = axisMaximumCandidate === axisMinimum ? axisMinimum + 1 : axisMaximumCandidate;
+    const scaleType = axis.axisScaleType ?? 0;
+    const precision = axis.autoDecimalPlaces === true ? automaticDecimalPlaces(axisMinimum, axisMaximum, scaleType)
+      : clamp(Math.trunc(axis.decimalPlaces ?? decimalPlaces), 0, 12);
+    return `<div class="value-axis ${alignment}" data-axis-name="${escapeHtml(axis.valueAxisName!)}" style="${alignment}:-${toCss((column + 1) * 4.4)}em;color:${escapeHtml(color)}">${renderYLabels(axisMinimum, axisMaximum, precision, scaleType, axis.exponentialFormat === true)}${axis.valueAxisLabel ? `<span class="value-axis-title">${escapeHtml(axis.valueAxisLabel)}</span>` : ""}</div>`;
+  }).join("");
 }
 
 function renderYLabels(
@@ -847,6 +902,12 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.exponentialFormat === "boolean") pen.exponentialFormat = source.exponentialFormat;
       if (typeof source.autoDecimalPlaces === "boolean") pen.autoDecimalPlaces = source.autoDecimalPlaces;
       if (typeof source.decimalPlaces === "number" && Number.isFinite(source.decimalPlaces)) pen.decimalPlaces = source.decimalPlaces;
+      if (typeof source.valueAxisName === "string") pen.valueAxisName = source.valueAxisName;
+      if (typeof source.valueAxisVisible === "boolean") pen.valueAxisVisible = source.valueAxisVisible;
+      if (typeof source.valueAxisColor === "string") pen.valueAxisColor = source.valueAxisColor;
+      if (typeof source.valueAxisInTrendColor === "boolean") pen.valueAxisInTrendColor = source.valueAxisInTrendColor;
+      if (source.valueAxisAlignment === "Left" || source.valueAxisAlignment === "Right") pen.valueAxisAlignment = source.valueAxisAlignment;
+      if (typeof source.valueAxisLabel === "string") pen.valueAxisLabel = source.valueAxisLabel;
       if (typeof source.unit === "string") pen.unit = source.unit;
       return [pen];
     });

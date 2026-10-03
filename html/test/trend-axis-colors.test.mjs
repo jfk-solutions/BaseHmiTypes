@@ -17,6 +17,37 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("named value axes are distinct, shared, independently visible and styled", () => {
+  const control = new HmiTrendControl();
+  const pens = [
+    { number: 1, color: "#112233", visible: false, valueAxisName: "Pressure", valueAxisVisible: true, valueAxisAlignment: "Right", valueAxisInTrendColor: true, valueAxisLabel: "Pressure & load", minimum: 1, maximum: 100, axisScaleType: 1, decimalPlaces: 2 },
+    { number: 2, valueAxisName: "Temperature", valueAxisVisible: true, valueAxisAlignment: "Left", valueAxisColor: "#445566", valueAxisLabel: "<Temperature>", minimum: -10, maximum: 20, decimalPlaces: 1 },
+    { number: 3, valueAxisName: "Pressure", minimum: 1, maximum: 100 },
+    { number: 4, valueAxisName: "Hidden", valueAxisVisible: false },
+    { number: 5, valueAxisName: "Flow", valueAxisAlignment: "Left", minimum: 0, maximum: 1, decimalPlaces: 3 },
+  ];
+  control.setAttribute("y-axis-scale-visible", "false");
+  control.setAttribute("pens", JSON.stringify(pens));
+  let html = control.shadowRoot.innerHTML;
+  assert.equal([...html.matchAll(/data-axis-name=/gu)].length, 3);
+  assert.equal([...html.matchAll(/data-axis-name="Pressure"/gu)].length, 1);
+  assert.match(html, /class="value-axis right" data-axis-name="Pressure" style="right:-4.4em;color:#112233"/u);
+  assert.match(html, /class="value-axis left" data-axis-name="Temperature" style="left:-4.4em;color:#445566"/u);
+  assert.match(html, /data-axis-name="Flow" style="left:-8.8em/u);
+  assert.match(html, /\.plot\s*\{[^}]*left: calc\(2.5% \+ 8.8em\); right: calc\(2.5% \+ 4.4em\);/u);
+  assert.match(html, />100.00<\/span>/u);
+  assert.match(html, />-10.0<\/span>/u);
+  assert.match(html, />1.000<\/span>/u);
+  assert.match(html, /Pressure &amp; load/u);
+  assert.match(html, /&lt;Temperature&gt;/u);
+  assert.ok(!html.includes("data-axis-name=\"Hidden\""));
+  pens[1].valueAxisVisible = false;
+  control.setAttribute("pens", JSON.stringify(pens));
+  html = control.shadowRoot.innerHTML;
+  assert.ok(!html.includes("data-axis-name=\"Temperature\""));
+  assert.match(html, /data-axis-name="Flow" style="left:-4.4em/u);
+});
+
 test("each pen uses its own axis range, scaling and precision", () => {
   const control = new HmiTrendControl();
   control.setAttribute("minimum-value", "0");
