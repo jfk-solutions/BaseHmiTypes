@@ -2602,9 +2602,20 @@ async function appendSymbolicInput(
     return;
   }
 
+  const textStateStyle = (createStateStyle(selectedState) ?? "") + (createFontWritingModeStyle(symbolicIoField.font) ?? "");
+  if (getStaticValue(symbolicIoField.readOnly) === true) {
+    html.push("<input");
+    appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle);
+    appendAttribute(html, "type", "text");
+    appendAttribute(html, "readonly", "readonly");
+    appendAttribute(html, "value", selectedState?.text?.getDisplayText(context.options.cultureLcid) ?? "");
+    appendAttribute(html, "data-state-value", selectedState?.value !== undefined ? toCss(selectedState.value) : undefined);
+    if (getStaticValue(symbolicIoField.enabled) === false) appendAttribute(html, "disabled", "disabled");
+    html.push(">");
+    return;
+  }
   html.push("<select");
-  appendCommonAttributes(html, symbolicIoField, context, true,
-    (createStateStyle(selectedState) ?? "") + (createFontWritingModeStyle(symbolicIoField.font) ?? ""));
+  appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle);
   html.push(">");
   for (const state of symbolicIoField.states) {
     html.push("<option");
