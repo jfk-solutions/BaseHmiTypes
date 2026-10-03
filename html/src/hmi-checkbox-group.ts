@@ -3,6 +3,7 @@ const selectionGroupProperties = {
   selectedFields: Number,
   drawStrokeInsideFrame: Boolean,
   frameBorderStyle: String,
+  frameBorderFlashDuration: Number,
   selectionItemHeight: Number,
   selectionBackgroundColor: String,
   selectionForegroundColor: String,
@@ -29,6 +30,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   private _selectedFields: number | undefined;
   private _drawStrokeInsideFrame = true;
   private _frameBorderStyle = "solid";
+  private _frameBorderFlashDuration = 0;
   private _selectionItemHeight = Number.NaN;
   private _selectionBackgroundColor = "";
   private _selectionForegroundColor = "";
@@ -74,6 +76,13 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
     const candidate = value?.trim().toLowerCase() ?? "solid";
     const next = ["none", "solid", "dashed", "dotted", "double", "groove"].includes(candidate) ? candidate : "solid";
     this.setStringProperty("_frameBorderStyle", next, "solid");
+  }
+
+  get frameBorderFlashDuration(): number {
+    return this._frameBorderFlashDuration;
+  }
+  set frameBorderFlashDuration(value: number | string | null | undefined) {
+    this.setNumberProperty("_frameBorderFlashDuration", value, 0);
   }
 
   get selectionItemHeight(): number {
@@ -234,6 +243,18 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
           display: grid;
           align-content: start;
           gap: 6px;
+          ${this._frameBorderFlashDuration > 0 ? `animation: hmi-selection-border-flash ${toCss(this._frameBorderFlashDuration)}s steps(1, end) infinite;` : ""}
+        }
+
+        @keyframes hmi-selection-border-flash {
+          0%, 49.999% {
+            border-color: var(--hmi-border-color-off, ${escapeCss(borderColor)});
+            outline-color: var(--hmi-border-color-off, ${escapeCss(borderColor)});
+          }
+          50%, 100% {
+            border-color: var(--hmi-border-color-on, ${escapeCss(borderColor)});
+            outline-color: var(--hmi-border-color-on, ${escapeCss(borderColor)});
+          }
         }
 
         .item {
