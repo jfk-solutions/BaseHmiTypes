@@ -3380,11 +3380,11 @@ function formatTrendTimeAxes(axes: readonly HmiTrendTimeAxis[]): string | undefi
     if (axis.trendWindowName !== undefined) result.trendWindowName = axis.trendWindowName;
     if (axis.label !== undefined) result.label = axis.label;
     if (axis.timeSpanUnit !== undefined) result.timeSpanUnit = axis.timeSpanUnit;
-    for (const key of ["visible", "showDate", "inTrendColor", "displayMilliseconds"] as const) {
+    for (const key of ["visible", "showDate", "inTrendColor", "displayMilliseconds", "refreshEnabled"] as const) {
       const value = getStaticValue(axis[key]);
       if (value !== undefined) result[key] = value;
     }
-    for (const key of ["dateFormat", "alignment", "timeFormat"] as const) {
+    for (const key of ["dateFormat", "alignment", "timeFormat", "rangeType", "startTime", "endTime"] as const) {
       const value = getStaticValue(axis[key]);
       if (value !== undefined) result[key] = value;
     }
@@ -3392,6 +3392,8 @@ function formatTrendTimeAxes(axes: readonly HmiTrendTimeAxis[]): string | undefi
     if (color !== undefined) result.color = colorToCss(color);
     const timeSpan = getStaticValue(axis.timeSpan);
     if (timeSpan !== undefined) result.timeSpan = timeSpan;
+    const measurementPoints = getStaticValue(axis.measurementPoints);
+    if (measurementPoints !== undefined) result.measurementPoints = measurementPoints;
     return result;
   }));
 }
