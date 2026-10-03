@@ -1552,7 +1552,10 @@ function createStateStyle(state: HmiState | undefined): string | null {
 
 function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConvertContext): void {
   html.push("<input");
-  appendCommonAttributes(html, ioField, context);
+  const sourceAngle = getStaticValue(ioField.font?.orientationAngle) ?? 0;
+  const angle = ((sourceAngle % 360) + 360) % 360;
+  appendCommonAttributes(html, ioField, context, undefined,
+    angle === 90 ? "writing-mode: sideways-lr;" : angle === 270 ? "writing-mode: sideways-rl;" : undefined);
   let text = getStaticValue(ioField.text)?.getDisplayText(context.options.cultureLcid);
   if (!text?.trim() && ioField.text?.kind === HmiPropertyKind.Expression)
     text = (ioField.text as HmiExpressionProperty<HmiMultilingualText>).expression;
