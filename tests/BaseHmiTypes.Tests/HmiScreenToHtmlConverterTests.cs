@@ -3320,6 +3320,23 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(0, false)]
+    [DataRow(2, false)]
+    [DataRow(20, true)]
+    [DataRow(25, true)]
+    public async Task ConvertAsync_ExposesGaugeTickLabelNumberFormatting(int precision, bool exponential)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(new HmiGauge { TickLabelDecimalPlaces = precision, TickLabelExponentialFormat = exponential });
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var gauge = System.Text.RegularExpressions.Regex.Match(html, "<hmi-gauge[^>]*>").Value;
+        StringAssert.Contains(gauge, $"tick-label-decimal-places=\"{precision}\"");
+        Assert.AreEqual(exponential, gauge.Contains("tick-label-exponential-format", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersGaugeAsGaugeWebComponent()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
