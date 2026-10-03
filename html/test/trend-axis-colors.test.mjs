@@ -137,6 +137,30 @@ test("WinCC axis list order places earlier visible axes farther away on each sid
   assert.match(html, /data-pen-number="9" data-time-axis="B1"/u);
 });
 
+test("time-axis range modes retain fixed endpoints and distinguish missing sample timestamps", () => {
+  const control = new HmiTrendControl();
+  const startTime = new Date(2018, 6, 19, 8, 51, 13).toISOString();
+  const endTime = new Date(2018, 6, 19, 8, 52, 13).toISOString();
+  control.setAttribute("time-axes", JSON.stringify([
+    { name: "Fixed", rangeType: "StartEnd", startTime, endTime, timeSpan: 9999999, timeFormat: "TwentyFourHour" },
+    { name: "Frozen duration", rangeType: "Duration", startTime, timeSpan: 2, timeSpanUnit: "Minutes", refreshEnabled: false, timeFormat: "TwentyFourHour" },
+    { name: "Samples", rangeType: "MeasurementPoints", measurementPoints: 120 },
+    { name: "Invalid", rangeType: "StartEnd", startTime: "not a date", endTime },
+    { name: "Reversed", rangeType: "StartEnd", startTime: endTime, endTime: startTime },
+  ]));
+  const rows = [...control.shadowRoot.innerHTML.matchAll(/<div class="time-axis [^>]+>[\s\S]*?<\/div>/gu)].map(match => match[0]);
+  assert.match(rows[0], /08:51:13/u);
+  assert.match(rows[0], /08:52:13/u);
+  assert.match(rows[1], /08:51:13/u);
+  assert.match(rows[1], /08:53:13/u);
+  assert.match(rows[2], /120 measurement points \(timestamps unavailable\)/u);
+  assert.equal([...rows[2].matchAll(/class="axis-label x-label"/gu)].length, 1);
+  assert.match(rows[3], /Time range unavailable/u);
+  assert.match(rows[4], /Time range unavailable/u);
+  control.setAttribute("x-axis-flipped", "true");
+  assert.match(control.shadowRoot.innerHTML, /left:0%">[^<]*<br>08:52:13/u);
+});
+
 test("time axes own their window independently of referencing pens", () => {
   const parent = new HmiTrendControl();
   parent.setAttribute("trend-windows", JSON.stringify([{ name: "A" }, { name: "B" }, { name: "Empty" }]));

@@ -16,4 +16,9 @@ public sealed class HmiTrendTimeAxis
     public HmiProperty<bool>? DisplayMilliseconds { get; set; }
     public HmiProperty<double>? TimeSpan { get; set; }
     public string? TimeSpanUnit { get; set; }
+    public HmiProperty<HmiTrendTimeRangeType>? RangeType { get; set; }
+    public HmiProperty<DateTimeOffset>? StartTime { get; set; }
+    public HmiProperty<DateTimeOffset>? EndTime { get; set; }
+    public HmiProperty<int>? MeasurementPoints { get; set; }
+    public HmiProperty<bool>? RefreshEnabled { get; set; }
 }
