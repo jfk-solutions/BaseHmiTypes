@@ -3383,6 +3383,36 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public async Task ConvertAsync_RendersBlinkingScaleWidgetBorderPlacement(bool slider, bool inside)
+    {
+        HmiScaleWidgetBase item = slider ? new HmiSlider() : new HmiBar();
+        item.DrawInsideFrame = inside;
+        item.BorderWidth = 4;
+        item.BorderColor = HmiProperty.Blink(HmiColor.FromArgb(255, 1, 2, 3),
+            HmiColor.FromArgb(255, 4, 5, 6), HmiBlinkRate.Fast);
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(item);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, slider ? "<input[^>]*>" : "<meter[^>]*>").Value;
+        StringAssert.Contains(opening, "--hmi-border-color-off: #010203;");
+        StringAssert.Contains(opening, "--hmi-border-color-on: #040506;");
+        StringAssert.Contains(opening, $"animation: hmi-{(inside ? "border" : "outline")}-color-flash 0.5s steps(1, end) infinite;");
+        Assert.AreEqual(!inside, opening.Contains("outline-width: 4px;", StringComparison.Ordinal));
+        if (!inside)
+        {
+            StringAssert.Contains(opening, "outline-offset: -2px;");
+            StringAssert.Contains(html, "0%,49.999%{outline-color:var(--hmi-border-color-off);}");
+            StringAssert.Contains(html, "50%,100%{outline-color:var(--hmi-border-color-on);}");
+        }
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersGaugeAsGaugeWebComponent()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };
