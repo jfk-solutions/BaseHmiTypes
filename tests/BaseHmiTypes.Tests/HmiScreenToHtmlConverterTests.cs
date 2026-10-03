@@ -3305,6 +3305,21 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task ConvertAsync_ExposesGaugeTickLabelVisibilityAndInterval(bool show)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(new HmiGauge { ShowTickLabels = show, TickLabelInterval = 2 });
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var gauge = System.Text.RegularExpressions.Regex.Match(html, "<hmi-gauge[^>]*>").Value;
+        Assert.AreEqual(!show, gauge.Contains("hide-tick-labels", StringComparison.Ordinal));
+        StringAssert.Contains(gauge, "tick-label-interval=\"2\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersGaugeAsGaugeWebComponent()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };

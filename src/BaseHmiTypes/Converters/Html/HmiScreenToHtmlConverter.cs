@@ -3318,6 +3318,8 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "division-count", gauge.DivisionCount);
         AppendStaticAttribute(html, "sub-division-count", gauge.SubDivisionCount);
         AppendBooleanAttribute(html, "major-ticks-only", gauge.MajorTicksOnly.GetStaticValueOrDefault());
+        AppendBooleanAttribute(html, "hide-tick-labels", !gauge.ShowTickLabels.GetStaticValueOrDefault(true));
+        AppendStaticAttribute(html, "tick-label-interval", gauge.TickLabelInterval);
         AppendStaticAttribute(html, "bar-mode", gauge.BarMode);
         AppendStaticAttribute(html, "scale-mode", gauge.ScaleMode);
         AppendStaticAttribute(html, "orientation", gauge.Orientation);
