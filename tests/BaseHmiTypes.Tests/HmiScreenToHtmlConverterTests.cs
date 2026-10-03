@@ -15,6 +15,44 @@ namespace BaseHmiTypes.Tests;
 [TestClass]
 public class HmiScreenToHtmlConverterTests
 {
+
+    [TestMethod]
+    [DataRow(0, false, false)]
+    [DataRow(0, false, true)]
+    [DataRow(0, true, false)]
+    [DataRow(0, true, true)]
+    [DataRow(1, false, false)]
+    [DataRow(1, false, true)]
+    [DataRow(1, true, false)]
+    [DataRow(1, true, true)]
+    [DataRow(2, false, false)]
+    [DataRow(2, false, true)]
+    [DataRow(2, true, false)]
+    [DataRow(2, true, true)]
+    public async Task ConvertAsync_RendersWidgetFontDecorations(int kind, bool underline, bool strike)
+    {
+        var font = new HmiFont { Underline = HmiProperty.Tag("Font.Underline", underline),
+            Strikethrough = HmiProperty.Tag("Font.Strike", strike) };
+        HmiPaintedScreenItemBase item = kind switch
+        {
+            0 => new HmiButton { Font = font },
+            1 => new HmiIOField { Font = font },
+            _ => new HmiBar { LabelFont = font, ShowScale = true }
+        };
+        item.Name = "Decorated";
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(item);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, kind == 2
+            ? "<div[^>]*data-hmi-bar-scale[^>]*>" : kind == 0 ? "<button[^>]*>" : "<input[^>]*>").Value;
+        Assert.IsFalse(string.IsNullOrEmpty(opening));
+        var decorations = underline ? (strike ? "underline line-through" : "underline") : "line-through";
+        if (underline || strike) StringAssert.Contains(opening, $"text-decoration: {decorations};");
+        else Assert.IsFalse(opening.Contains("text-decoration:", StringComparison.Ordinal));
+    }
+
     [TestMethod]
     public async Task ConvertAsync_RendersItemOpacity()
     {

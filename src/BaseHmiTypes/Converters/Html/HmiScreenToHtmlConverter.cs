@@ -2093,8 +2093,11 @@ public class HmiScreenToHtmlConverter
             style.Append(" font-weight: bold;");
         if (font.Italic is not null && ResolveStaticValue(font.Italic, context))
             style.Append(" font-style: italic;");
-        if (font.Underline is not null && ResolveStaticValue(font.Underline, context))
-            style.Append(" text-decoration: underline;");
+        var decorations = new List<string>();
+        if (font.Underline is not null && ResolveStaticValue(font.Underline, context)) decorations.Add("underline");
+        if (font.Strikethrough is not null && ResolveStaticValue(font.Strikethrough, context)) decorations.Add("line-through");
+        if (decorations.Count > 0)
+            style.Append(" text-decoration: ").Append(string.Join(" ", decorations)).Append(';');
     }
 
     private static string GetBarDirectionStyle(HmiFillDirection direction) => direction switch
@@ -4678,8 +4681,11 @@ public class HmiScreenToHtmlConverter
                 html.Append("font-weight: bold;");
             if (font.Italic.GetStaticValueOrDefault())
                 html.Append("font-style: italic;");
-            if (font.Underline.GetStaticValueOrDefault())
-                html.Append("text-decoration: underline;");
+            var decorations = new List<string>();
+            if (font.Underline.GetStaticValueOrDefault()) decorations.Add("underline");
+            if (font.Strikethrough.GetStaticValueOrDefault()) decorations.Add("line-through");
+            if (decorations.Count > 0)
+                html.Append("text-decoration: ").Append(string.Join(" ", decorations)).Append(';');
         }
         if (horizontalAlignment != null)
         {
