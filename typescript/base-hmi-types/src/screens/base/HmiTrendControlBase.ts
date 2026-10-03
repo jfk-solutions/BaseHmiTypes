@@ -24,6 +24,7 @@ import { HmiTrendScrollMechanism } from "./HmiTrendScrollMechanism.js";
 import { HmiTrendScrollMode } from "./HmiTrendScrollMode.js";
 import { HmiTrendStackAxesMode } from "./HmiTrendStackAxesMode.js";
 import { HmiTrendTimeFormat } from "./HmiTrendTimeFormat.js";
+import { HmiTrendTimeBase } from "./HmiTrendTimeBase.js";
 import { HmiTrendTemplateOption } from "./HmiTrendTemplateOption.js";
 import { HmiTrendUpdateMode } from "./HmiTrendUpdateMode.js";
 import { HmiTrendYAxisRangeMode } from "./HmiTrendYAxisRangeMode.js";
@@ -121,6 +122,9 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   xAxisStartTime?: string;
   xAxisTimeSpan?: HmiProperty<number>;
   xAxisTimeSpanUnit?: string;
+  timeBase?: HmiProperty<HmiTrendTimeBase>;
+  /** Resolved project display zone (IANA ID, UTC, or Local), supplied by the host. */
+  projectTimeZoneId?: string;
   yAxisRangeMode?: HmiProperty<HmiTrendYAxisRangeMode>;
   yAxisCustomMinimumSource?: HmiProperty<HmiTrendYAxisCustomBoundSource>;
   yAxisCustomMinimumValue?: HmiProperty<number>;

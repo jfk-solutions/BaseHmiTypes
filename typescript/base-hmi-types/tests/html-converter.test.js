@@ -1737,6 +1737,8 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   const layer = new HmiLayer();
   const trend = new HmiTrendControl();
   const timeAxis = new HmiTrendTimeAxis();
+  trend.timeBase = staticProperty("Project");
+  trend.projectTimeZoneId = "Europe/Berlin";
   timeAxis.name = "Time A";
   timeAxis.trendWindowName = "Time window";
   timeAxis.visible = staticProperty(false);
@@ -1824,6 +1826,8 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   assert.match(html, /&quot;endTime&quot;:&quot;2018-07-19T08:52:13.000Z&quot;/);
   assert.match(html, /&quot;measurementPoints&quot;:120/);
   assert.match(html, /&quot;refreshEnabled&quot;:false/);
+  assert.match(html, /time-base="Project"/);
+  assert.match(html, /project-time-zone="Europe\/Berlin"/);
   assert.match(html, /&quot;name&quot;:&quot;Time A&quot;/);
   assert.match(html, /&quot;name&quot;:&quot;Time C&quot;/);
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Second value&quot;/);
