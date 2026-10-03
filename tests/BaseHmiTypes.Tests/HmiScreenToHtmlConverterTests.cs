@@ -17,6 +17,53 @@ public class HmiScreenToHtmlConverterTests
 {
 
     [TestMethod]
+    [DataRow(0, 500, false)]
+    [DataRow(0, 500, true)]
+    [DataRow(0, 0, false)]
+    [DataRow(0, 0, true)]
+    [DataRow(0, -1, false)]
+    [DataRow(0, -1, true)]
+    [DataRow(1, 500, false)]
+    [DataRow(1, 500, true)]
+    [DataRow(1, 0, false)]
+    [DataRow(1, 0, true)]
+    [DataRow(1, -1, false)]
+    [DataRow(1, -1, true)]
+    [DataRow(2, 500, false)]
+    [DataRow(2, 500, true)]
+    [DataRow(2, 0, false)]
+    [DataRow(2, 0, true)]
+    [DataRow(2, -1, false)]
+    [DataRow(2, -1, true)]
+    public async Task ConvertAsync_RendersWidgetNumericFontWeight(int kind, int weight, bool bold)
+    {
+        var font = new HmiFont { Weight = HmiProperty.Tag("Font.Weight", weight), Bold = bold };
+        HmiPaintedScreenItemBase item = kind switch
+        {
+            0 => new HmiButton { Font = font },
+            1 => new HmiIOField { Font = font },
+            _ => new HmiBar { LabelFont = font, ShowScale = true }
+        };
+        item.Name = "Weighted";
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(item);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, kind == 2
+            ? "<div[^>]*data-hmi-bar-scale[^>]*>" : kind == 0 ? "<button[^>]*>" : "<input[^>]*>").Value;
+        Assert.IsFalse(string.IsNullOrEmpty(opening));
+        if (weight > 0)
+        {
+            StringAssert.Contains(opening, $"font-weight: {weight};");
+            Assert.IsFalse(opening.Contains("font-weight: bold;", StringComparison.Ordinal));
+        }
+        else if (bold) StringAssert.Contains(opening, "font-weight: bold;");
+        else Assert.IsFalse(opening.Contains("font-weight:", StringComparison.Ordinal));
+    }
+
+
+    [TestMethod]
     [DataRow(0, false, false)]
     [DataRow(0, false, true)]
     [DataRow(0, true, false)]
