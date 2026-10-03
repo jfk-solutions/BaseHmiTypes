@@ -1776,7 +1776,6 @@ public class HmiScreenToHtmlConverter
         if (borderWidth <= 0)
             return style.Length == 0 ? null : style.ToString();
 
-        style.Append("border-style: solid;border-width: ").Append(ToCss(borderWidth)).Append("px;");
         HmiColor? topColor = button.ThreeDBorderTopColor is null
             ? null
             : ResolveStaticValue(button.ThreeDBorderTopColor, context);
@@ -1785,14 +1784,19 @@ public class HmiScreenToHtmlConverter
             : ResolveStaticValue(button.ThreeDBorderBottomColor, context);
         topColor ??= bottomColor;
         bottomColor ??= topColor;
-        if (topColor is not null && bottomColor is not null)
-        {
-            style.Append("border-color: ")
-                .Append(ToCss(topColor.Value)).Append(' ')
-                .Append(ToCss(bottomColor.Value)).Append(' ')
-                .Append(ToCss(bottomColor.Value)).Append(' ')
-                .Append(ToCss(topColor.Value)).Append(';');
-        }
+        var top = topColor is null ? "currentColor" : ToCss(topColor.Value);
+        var bottom = bottomColor is null ? "currentColor" : ToCss(bottomColor.Value);
+        var width = ToCss(borderWidth);
+        // The bevel is an inner paint layer, not a replacement for the normal frame.
+        style.Append("box-shadow: inset ").Append(width).Append("px 0 0 ").Append(top)
+            .Append(", inset 0 ").Append(width).Append("px 0 ").Append(top)
+            .Append(", inset -").Append(width).Append("px 0 0 ").Append(bottom)
+            .Append(", inset 0 -").Append(width).Append("px 0 ").Append(bottom).Append(';');
+        style.Append("padding: ")
+            .Append(ToCss(borderWidth + (button.Padding is null ? 2 : ResolveStaticValue(button.Padding.Top, context)))).Append("px ")
+            .Append(ToCss(borderWidth + (button.Padding is null ? 6 : ResolveStaticValue(button.Padding.Right, context)))).Append("px ")
+            .Append(ToCss(borderWidth + (button.Padding is null ? 2 : ResolveStaticValue(button.Padding.Bottom, context)))).Append("px ")
+            .Append(ToCss(borderWidth + (button.Padding is null ? 6 : ResolveStaticValue(button.Padding.Left, context)))).Append("px;");
         return style.ToString();
     }
 
@@ -4880,6 +4884,8 @@ public class HmiScreenToHtmlConverter
                 !ResolveStaticValue(framedText.DrawStrokeInsideFrame, context) ||
              item is HmiGraphicView framedGraphic && framedGraphic.DrawStrokeInsideFrame is not null &&
                 !ResolveStaticValue(framedGraphic.DrawStrokeInsideFrame, context) ||
+             item is HmiButton framedButton && framedButton.DrawStrokeInsideFrame is not null &&
+                !ResolveStaticValue(framedButton.DrawStrokeInsideFrame, context) ||
              item is HmiSymbolicIOField framedSymbolic && framedSymbolic.DrawStrokeInsideFrame is not null &&
                 !ResolveStaticValue(framedSymbolic.DrawStrokeInsideFrame, context));
         var animations = new List<string>();

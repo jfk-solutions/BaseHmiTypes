@@ -13,4 +13,7 @@ public class HmiButton : HmiButtonBase
 
     /// <summary>Ellipse gives a circular outline when width and height are equal.</summary>
     public HmiProperty<HmiButtonShape>? Shape { get; set; }
+
+    /// <summary>For frames wider than one pixel, false centers the stroke on the bounds. True/omitted draws inside. The 3D bevel is separate.</summary>
+    public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
 }

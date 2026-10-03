@@ -5062,8 +5062,8 @@ public class HmiScreenToHtmlConverterTests
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
         StringAssert.Contains(html, "<button id=\"BeveledButton\"");
-        StringAssert.Contains(html, "border-style: solid;border-width: 3px;");
-        StringAssert.Contains(html, "border-color: #EEEEEE #404040 #404040 #EEEEEE;");
+        StringAssert.Contains(html, "box-shadow: inset 3px 0 0 #EEEEEE, inset 0 3px 0 #EEEEEE, inset -3px 0 0 #404040, inset 0 -3px 0 #404040;");
+        StringAssert.Contains(html, "padding: 5px 9px 5px 9px;");
     }
 
     [TestMethod]
