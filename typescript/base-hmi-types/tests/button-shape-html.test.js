@@ -9,7 +9,7 @@ for(const shape of [HmiButtonShape.Rectangle,HmiButtonShape.Ellipse])for(const t
     const html=await convert(button),opening=html.match(/<button id="Shape"[^>]*>/u)?.[0]??"";
     assert.ok(opening.includes(shape===HmiButtonShape.Ellipse?"border-radius: 50%;overflow: hidden;":"border-radius: 0px;"));
     assert.ok(opening.includes("left: 10px;top: 20px;width: 100px;height: 100px;"));assert.equal(opening.includes("disabled="),!enabled);
-    if(beveled){assert.ok(opening.includes("border-width: 3px;"));assert.ok(opening.includes("border-color: #EEEEEE #404040 #404040 #EEEEEE;"));}
+    if(beveled){assert.ok(opening.includes("box-shadow: inset 3px 0 0 #EEEEEE"));assert.ok(opening.includes("inset -3px 0 0 #404040"));}
     assert.ok(html.includes(">Start</button>"));
   });
 }

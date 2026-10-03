@@ -622,8 +622,8 @@ test("HTML conversion renders button 3D borders", async () => {
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
 
   assert.match(html, /<button id="BeveledButton"/);
-  assert.match(html, /border-style: solid;border-width: 3px;/);
-  assert.match(html, /border-color: #EEEEEE #404040 #404040 #EEEEEE;/);
+  assert.ok(html.includes("box-shadow: inset 3px 0 0 #EEEEEE, inset 0 3px 0 #EEEEEE, inset -3px 0 0 #404040, inset 0 -3px 0 #404040;"));
+  assert.ok(html.includes("padding: 5px 9px 5px 9px;"));
 });
 
 test("HTML conversion renders button caption colors", async () => {
