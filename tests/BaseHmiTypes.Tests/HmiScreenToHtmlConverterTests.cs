@@ -187,6 +187,30 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public async Task ConvertAsync_PreservesCombinedGaugeFontDecorations(bool underline, bool strikethrough)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(new HmiGauge { LabelFont = new HmiFont
+        {
+            Underline = HmiProperty.Tag("Gauge.Font.Underline", underline),
+            Strikethrough = HmiProperty.Tag("Gauge.Font.Strikethrough", strikethrough)
+        } });
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<hmi-gauge[^>]*>").Value;
+        var attribute = System.Text.RegularExpressions.Regex.Match(opening, "label-font=\"([^\"]*)\"");
+        Assert.IsTrue(attribute.Success);
+        using var font = System.Text.Json.JsonDocument.Parse(System.Net.WebUtility.HtmlDecode(attribute.Groups[1].Value));
+        Assert.AreEqual(underline, font.RootElement.GetProperty("underline").GetBoolean());
+        Assert.AreEqual(strikethrough, font.RootElement.GetProperty("strikethrough").GetBoolean());
+    }
+
+    [TestMethod]
     [DataRow(0, 500, false)]
     [DataRow(0, 500, true)]
     [DataRow(0, 0, false)]
