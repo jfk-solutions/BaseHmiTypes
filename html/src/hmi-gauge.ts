@@ -510,11 +510,10 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     const family = font?.name ?? "Arial, Helvetica, sans-serif";
     const weight = this.getFontWeight();
     const style = font?.italic ? "italic" : "normal";
-    const decoration = font?.underline
-      ? "underline"
-      : font?.strikethrough
-        ? "line-through"
-        : "none";
+    const decorations: string[] = [];
+    if (font?.underline) decorations.push("underline");
+    if (font?.strikethrough) decorations.push("line-through");
+    const decoration = decorations.join(" ") || "none";
 
     return `fill="${escapeAttribute(this.labelColor)}" style="font-family: ${escapeAttribute(family)}; font-size: ${formatNumber(size)}px; font-weight: ${weight}; font-style: ${style}; text-decoration: ${decoration};"`;
   }
