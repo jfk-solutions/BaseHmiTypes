@@ -1488,21 +1488,31 @@ async function appendButton(
       showDisabledAppearance && disabledImageMode === HmiDisabledImageMode.Grayscale,
     );
   }
+  const captionBlink = getButtonCaptionBlink(button, state);
+  if (captionBlink !== undefined)
+    html.push('<span data-hmi-button-caption style="animation: hmi-caption-color-flash ' +
+      getBlinkDuration(captionBlink.rate) + 's steps(1, end) infinite;">');
   appendMultilingualText(html, state?.text ?? getStaticValue(button.text), context);
+  if (captionBlink !== undefined) html.push("</span>");
   html.push("</button>");
+}
+
+function getButtonCaptionBlink(button: HmiButton, state: HmiState | undefined): HmiBlinkProperty<HmiColor> | undefined {
+  if ((state?.captionColor ?? state?.foregroundColor) !== undefined ||
+      button.captionColor?.kind !== HmiPropertyKind.Blink) return undefined;
+  const blink = button.captionColor as HmiBlinkProperty<HmiColor>;
+  return blink.staticValue !== undefined && blink.blinkValue !== undefined ? blink : undefined;
 }
 
 function createButtonStyle(button: HmiButton, state: HmiState | undefined): string | null {
   const captionColor = getStaticValue(button.captionColor);
   const stateHasCaptionColor = (state?.captionColor ?? state?.foregroundColor) !== undefined;
-  const captionBlink = button.captionColor?.kind === HmiPropertyKind.Blink
-    ? button.captionColor as HmiBlinkProperty<HmiColor>
-    : undefined;
+  const captionBlink = getButtonCaptionBlink(button, state);
   let style = "";
   if (!stateHasCaptionColor && captionColor !== undefined && captionBlink?.blinkValue !== undefined) {
     style += `--hmi-caption-color-off: ${colorToCss(captionColor)};`;
     style += `--hmi-caption-color-on: ${colorToCss(captionBlink.blinkValue)};`;
-    style += `animation: hmi-caption-color-flash ${getBlinkDuration(captionBlink.rate)}s steps(1, end) infinite;`;
+    style += `color: ${colorToCss(captionColor)};`;
   } else if (!stateHasCaptionColor && captionColor !== undefined) {
     style = `color: ${colorToCss(captionColor)};`;
   }

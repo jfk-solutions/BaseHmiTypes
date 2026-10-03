@@ -90,6 +90,36 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const border of [false,true]) for (const background of [false,true]) for (const stateColor of [false,true]) {
+test("HTML renderer flashes button captions independently (" + [border,background,stateColor].join(", ") + ")", async () => {
+  const item = new HmiButton(); item.name = "FlashingButton";
+  item.width = staticProperty(160); item.height = staticProperty(60);
+  item.text = staticProperty(HmiMultilingualText.fromText("Alarm"));
+  item.captionColor = blinkProperty(hmiColorFromArgb(255,1,2,3),hmiColorFromArgb(255,4,5,6),HmiBlinkRate.Fast);
+  if (border) item.borderColor = blinkProperty(hmiColorFromArgb(255,11,12,13),hmiColorFromArgb(255,14,15,16),HmiBlinkRate.Medium);
+  if (background) item.backgroundColor = blinkProperty(hmiColorFromArgb(255,21,22,23),hmiColorFromArgb(255,24,25,26),HmiBlinkRate.Slow);
+  if (stateColor) {
+    const state = new HmiState(); state.value = 0; state.captionColor = hmiColorFromArgb(255,31,32,33);
+    state.text = HmiMultilingualText.fromText("State alarm"); item.states.push(state);
+  }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<button id="FlashingButton"[^>]*>/u)?.[0] ?? "";
+  const body = html.match(/<button id="FlashingButton"[^>]*>(.*?)<\/button>/su)?.[1] ?? "";
+  assert.ok(!opening.includes("hmi-caption-color-flash"));
+  assert.equal(opening.includes("hmi-border-color-flash 1s"),border);
+  assert.equal(opening.includes("hmi-background-color-flash 2s"),background);
+  assert.equal(body.includes('<span data-hmi-button-caption style="animation: hmi-caption-color-flash 0.5s steps(1, end) infinite;">'),!stateColor);
+  assert.ok(body.includes(stateColor ? "State alarm" : "Alarm"));
+  if (stateColor) assert.ok(opening.includes("color: #1F2021;"));
+  else {
+    assert.ok(opening.includes("--hmi-caption-color-off: #010203;"));
+    assert.ok(opening.includes("--hmi-caption-color-on: #040506;"));
+  }
+});
+}
+
 for (const adapt of [false, true]) for (const inside of [false, true, undefined])
 for (const width of [1, 10]) for (const line of [false, true]) {
 test("HTML renderer supports text border placement (" + [adapt,inside,width,line].join(", ") + ")", async () => {
