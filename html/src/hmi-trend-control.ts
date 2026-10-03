@@ -579,6 +579,7 @@ function renderTrendWindows(
       pens: JSON.stringify(windowPens),
       "value-axes": JSON.stringify(windowAxes),
     });
+    if (axes.length && !windowAxes.length) attributes["y-axis-scale-visible"] = "false";
     const css = Object.entries(window.colors).map(([name, color]) => `--hmi-trend-${name}:${color};`).join("");
     const attributeText = Object.entries(attributes).map(([name, value]) => `${name}="${escapeHtml(value)}"`).join(" ");
     return `<hmi-trend-control data-trend-window="${escapeHtml(window.name)}" style="position:relative;display:block;background:${escapeHtml(backgroundColor)};color:${escapeHtml(foregroundColor)};${css}" ${attributeText}></hmi-trend-control>`;

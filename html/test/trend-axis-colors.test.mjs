@@ -53,6 +53,10 @@ test("trend windows route pens and axes, retain empty windows and apply independ
   parent.setAttribute("trend-windows", JSON.stringify(windows));
   assert.equal(children().length, 2);
   assert.match(parent.shadowRoot.innerHTML, /grid-template-rows: 3fr 2fr;/u);
+  parent.setAttribute("value-axes", JSON.stringify([{ valueAxisName: "Cross", trendWindowName: "B" }]));
+  plots = children();
+  assert.equal(plots[1].getAttribute("y-axis-scale-visible"), "false");
+  assert.ok(!plots[1].shadowRoot.innerHTML.includes("class=\"axis-label y-label\""));
 });
 
 test("independent pen, time-axis and value-axis window references survive rendering", () => {
