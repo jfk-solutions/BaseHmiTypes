@@ -4,6 +4,9 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public class HmiRadioButtonGroup : HmiSelectionGroupBase
 {
+    /// <summary>For borders wider than one pixel, true draws inside the frame and false centers on it. Omitted values retain inside placement.</summary>
+    public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
+
     /// <summary>A 32-bit selection mask; a single set bit selects its field, zero selects none, and multiple set bits are invalid.</summary>
     public HmiProperty<uint>? SelectedFields { get; set; }
 

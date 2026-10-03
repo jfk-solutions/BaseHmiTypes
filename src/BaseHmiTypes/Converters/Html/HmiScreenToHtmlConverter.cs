@@ -2973,6 +2973,14 @@ public class HmiScreenToHtmlConverter
             _ => null
         };
         AppendStaticAttribute(html, "selected-fields", selectedFields);
+        var drawInsideFrame = selectionGroup switch
+        {
+            HmiCheckBoxGroup checkBox => checkBox.DrawStrokeInsideFrame,
+            HmiRadioButtonGroup radioBox => radioBox.DrawStrokeInsideFrame,
+            _ => null
+        };
+        if (drawInsideFrame is not null)
+            AppendAttribute(html, "draw-stroke-inside-frame", ResolveStaticValue(drawInsideFrame, context) ? "true" : "false");
         AppendStaticAttribute(html, "selection-item-height", selectionGroup.SelectionItemHeight);
         AppendStaticAttribute(html, "selection-background-color", selectionGroup.SelectionBackgroundColor);
         AppendStaticAttribute(html, "selection-foreground-color", selectionGroup.SelectionForegroundColor);
