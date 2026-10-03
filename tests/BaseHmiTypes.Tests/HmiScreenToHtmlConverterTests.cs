@@ -677,7 +677,43 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "<input id=\"SetpointSlider\"");
         StringAssert.Contains(html, "type=\"range\" min=\"-10\" max=\"10\" value=\"4\" step=\"any\" disabled=\"disabled\"");
         StringAssert.Contains(html, "<div id=\"LevelScale\"");
-        StringAssert.Contains(html, "><span>0</span><span>100</span></div>");
+        StringAssert.Contains(html, "><span>0</span><span>100</span>");
+        StringAssert.Contains(html, "data-hmi-scale-ticks=\"true\"");
+    }
+
+    [TestMethod]
+    [DataRow(HmiTickDirection.Down, "padding-top: 14px;", "x1=\"50%\"", false)]
+    [DataRow(HmiTickDirection.Up, "padding-bottom: 14px;", "x1=\"50%\"", false)]
+    [DataRow(HmiTickDirection.Left, "padding-right: 14px;", "y1=\"50%\"", true)]
+    [DataRow(HmiTickDirection.Right, "padding-left: 14px;", "y1=\"50%\"", true)]
+    public async Task ConvertAsync_RendersStandaloneScaleMarks(HmiTickDirection direction, string padding, string midpoint, bool reversed)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        var scale = new HmiScale { Width = 120, Height = 100, BeginValue = 0, EndValue = 100,
+            DivisionCount = 4, TickDirection = direction, MajorTickLength = 12, MajorTicksBold = true,
+            TickLabelInterval = 2, TickLabelDecimalPlaces = 1, EngineeringUnit = "a&b",
+            ScaleForegroundColor = HmiColor.FromArgb(255, 1, 2, 3), ScaleBackgroundColor = HmiColor.FromArgb(255, 4, 5, 6),
+            LabelFont = new HmiFont { Name = "Arial", Size = 9, Bold = true } };
+        layer.Items.Add(scale);
+        screen.Layers.Add(layer);
+        var converter = new HmiScreenToHtmlConverter();
+        var html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, padding);
+        StringAssert.Contains(html, midpoint);
+        StringAssert.Contains(html, "data-hmi-scale-ticks=\"true\"");
+        StringAssert.Contains(html, "stroke=\"#010203\" stroke-width=\"2\"");
+        StringAssert.Contains(html, "background-color: #040506;");
+        StringAssert.Contains(html, "font-family: Arial; font-size: 9px; font-weight: bold;");
+        StringAssert.Contains(html, reversed
+            ? "<span>100.0&nbsp;a&amp;b</span><span></span><span>50.0&nbsp;a&amp;b</span><span></span><span>0.0&nbsp;a&amp;b</span>"
+            : "<span>0.0&nbsp;a&amp;b</span><span></span><span>50.0&nbsp;a&amp;b</span><span></span><span>100.0&nbsp;a&amp;b</span>");
+        scale.ShowTickLabels = false;
+        html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, "data-hmi-scale-ticks=\"true\"");
+        Assert.IsFalse(html.Contains("&nbsp;a&amp;b", StringComparison.Ordinal));
+        scale.ShowScale = false;
+        Assert.IsFalse((await converter.ConvertAsync(screen)).Contains("data-hmi-scale-ticks", StringComparison.Ordinal));
     }
 
     [TestMethod]
