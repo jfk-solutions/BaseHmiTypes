@@ -28,6 +28,7 @@ import { HmiLineMarker } from "../../screens/base/HmiLineMarker.js";
 import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
 import { HmiTrendValueAxis } from "../../screens/base/HmiTrendValueAxis.js";
 import { HmiTrendWindow } from "../../screens/base/HmiTrendWindow.js";
+import { HmiTrendTimeAxis } from "../../screens/base/HmiTrendTimeAxis.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
 import { getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
@@ -3220,6 +3221,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendAttribute(html, "pens", formatTrendPens(trendControl.pens));
   appendAttribute(html, "value-axes", formatTrendValueAxes(trendControl.valueAxes));
   appendAttribute(html, "trend-windows", formatTrendWindows(trendControl.trendWindows));
+  appendAttribute(html, "time-axes", formatTrendTimeAxes(trendControl.timeAxes));
   html.push("></hmi-trend-control>");
 }
 
@@ -3368,6 +3370,29 @@ function appendStaticBooleanValueAttribute(
 ): void {
   const value = getStaticValue(property);
   if (value !== undefined) appendAttribute(html, name, value ? "true" : "false");
+}
+
+function formatTrendTimeAxes(axes: readonly HmiTrendTimeAxis[]): string | undefined {
+  if (!axes.length) return undefined;
+  return JSON.stringify(axes.map(axis => {
+    const result: Record<string, string | number | boolean> = {};
+    if (axis.name !== undefined) result.name = axis.name;
+    if (axis.label !== undefined) result.label = axis.label;
+    if (axis.timeSpanUnit !== undefined) result.timeSpanUnit = axis.timeSpanUnit;
+    for (const key of ["visible", "showDate", "inTrendColor", "displayMilliseconds"] as const) {
+      const value = getStaticValue(axis[key]);
+      if (value !== undefined) result[key] = value;
+    }
+    for (const key of ["dateFormat", "alignment", "timeFormat"] as const) {
+      const value = getStaticValue(axis[key]);
+      if (value !== undefined) result[key] = value;
+    }
+    const color = getStaticValue(axis.color);
+    if (color !== undefined) result.color = colorToCss(color);
+    const timeSpan = getStaticValue(axis.timeSpan);
+    if (timeSpan !== undefined) result.timeSpan = timeSpan;
+    return result;
+  }));
 }
 
 function formatTrendWindows(windows: readonly HmiTrendWindow[]): string | undefined {

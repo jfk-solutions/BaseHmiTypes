@@ -1,0 +1,20 @@
+import { HmiProperty } from "./HmiProperty.js";
+import { HmiColor } from "./HmiColor.js";
+import { HmiVerticalAlignment } from "./HmiVerticalAlignment.js";
+import { HmiTrendTimeFormat } from "./HmiTrendTimeFormat.js";
+
+/** A named time axis configured independently of trend pens. */
+export class HmiTrendTimeAxis {
+  name?: string;
+  visible?: HmiProperty<boolean>;
+  showDate?: HmiProperty<boolean>;
+  dateFormat?: HmiProperty<string>;
+  color?: HmiProperty<HmiColor>;
+  inTrendColor?: HmiProperty<boolean>;
+  alignment?: HmiProperty<HmiVerticalAlignment>;
+  label?: string;
+  timeFormat?: HmiProperty<HmiTrendTimeFormat>;
+  displayMilliseconds?: HmiProperty<boolean>;
+  timeSpan?: HmiProperty<number>;
+  timeSpanUnit?: string;
+}

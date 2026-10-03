@@ -18,6 +18,7 @@ import { HmiTrendOverlay } from "./HmiTrendOverlay.js";
 import { HmiTrendPen } from "./HmiTrendPen.js";
 import { HmiTrendValueAxis } from "./HmiTrendValueAxis.js";
 import { HmiTrendWindow } from "./HmiTrendWindow.js";
+import { HmiTrendTimeAxis } from "./HmiTrendTimeAxis.js";
 import { HmiTrendPenCaptionMode } from "./HmiTrendPenCaptionMode.js";
 import { HmiTrendScrollMechanism } from "./HmiTrendScrollMechanism.js";
 import { HmiTrendScrollMode } from "./HmiTrendScrollMode.js";
@@ -36,6 +37,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   /** Configured value axes, including axes with no assigned pen. */
   readonly valueAxes: HmiTrendValueAxis[] = [];
   readonly trendWindows: HmiTrendWindow[] = [];
+  readonly timeAxes: HmiTrendTimeAxis[] = [];
   readonly overlays: HmiTrendOverlay[] = [];
   readonly templateOptions: HmiTrendTemplateOption[] = [];
   templateLoadOptions1Mask?: HmiProperty<number>;
