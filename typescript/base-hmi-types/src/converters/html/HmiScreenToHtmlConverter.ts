@@ -4063,20 +4063,21 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   const borderBlink = borderColor?.kind === HmiPropertyKind.Blink
     ? borderColor as HmiBlinkProperty<HmiColor>
     : undefined;
+  const scaleBorderWidth = getStaticValue(context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth));
+  const centeredScaleBorder = (item instanceof HmiBar || item instanceof HmiSlider) && item.drawInsideFrame !== undefined &&
+    !getStaticValue(context.effectiveProperties.resolve(item, "DrawInsideFrame", item.drawInsideFrame)) &&
+    scaleBorderWidth !== undefined && scaleBorderWidth > 1;
   if (borderBlink?.staticValue !== undefined && borderBlink.blinkValue !== undefined) {
     html.push(`--hmi-border-color-off: ${colorToCss(borderBlink.staticValue)};`);
     html.push(`--hmi-border-color-on: ${colorToCss(borderBlink.blinkValue)};`);
-    animations.push(`hmi-border-color-flash ${getBlinkDuration(borderBlink.rate)}s steps(1, end) infinite`);
+    animations.push(`${centeredScaleBorder ? "hmi-outline-color-flash" : "hmi-border-color-flash"} ${getBlinkDuration(borderBlink.rate)}s steps(1, end) infinite`);
   } else {
     appendColorStyle(html, "border-color", borderColor);
   }
   if (animations.length > 0)
     html.push(`animation: ${animations.join(", ")};`);
   appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth), borderStyle, !suppressBorderStyle);
-  const scaleBorderWidth = getStaticValue(context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth));
-  if ((item instanceof HmiBar || item instanceof HmiSlider) && item.drawInsideFrame !== undefined &&
-      !getStaticValue(context.effectiveProperties.resolve(item, "DrawInsideFrame", item.drawInsideFrame)) && scaleBorderWidth !== undefined &&
-      scaleBorderWidth > 1 && borderColor?.kind !== HmiPropertyKind.Blink) {
+  if (centeredScaleBorder && scaleBorderWidth !== undefined) {
     const color = getStaticValue(borderColor);
     html.push(`border-width: 0px;outline-style: ${borderStyle};outline-width: ${toCss(scaleBorderWidth)}px;`);
     html.push(`outline-offset: ${toCss(-scaleBorderWidth / 2)}px;outline-color: ${color === undefined ? "currentColor" : colorToCss(color)};`);

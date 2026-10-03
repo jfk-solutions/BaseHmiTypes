@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  blinkProperty,
+  HmiBlinkRate,
   expressionProperty,
   hmiColorFromArgb,
   HmiArrowIndicator,
@@ -974,6 +976,32 @@ test(`HTML converter renders scale widget border placement (${slider}, ${inside}
     assert.ok(opening.includes("outline-color: #0C2238;"));
   }
 });
+}
+
+for (const slider of [false, true]) {
+for (const inside of [false, true]) {
+test(`HTML converter renders blinking scale widget border placement (${slider}, ${inside})`, async () => {
+  const item = slider ? new HmiSlider() : new HmiBar();
+  item.drawInsideFrame = staticProperty(inside);
+  item.borderWidth = staticProperty(4);
+  item.borderColor = blinkProperty(hmiColorFromArgb(255, 1, 2, 3), hmiColorFromArgb(255, 4, 5, 6), HmiBlinkRate.Fast);
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  layer.items.push(item);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(slider ? /<input[^>]*>/ : /<meter[^>]*>/)?.[0] ?? "";
+  assert.ok(opening.includes("--hmi-border-color-off: #010203;"));
+  assert.ok(opening.includes("--hmi-border-color-on: #040506;"));
+  assert.ok(opening.includes(`animation: hmi-${inside ? "border" : "outline"}-color-flash 0.5s steps(1, end) infinite;`));
+  assert.equal(opening.includes("outline-width: 4px;"), !inside);
+  if (!inside) {
+    assert.ok(opening.includes("outline-offset: -2px;"));
+    assert.ok(html.includes("0%,49.999%{outline-color:var(--hmi-border-color-off);}"));
+    assert.ok(html.includes("50%,100%{outline-color:var(--hmi-border-color-on);}"));
+  }
+});
+}
 }
 
 test("HTML converter renders bar fill directions", async () => {
