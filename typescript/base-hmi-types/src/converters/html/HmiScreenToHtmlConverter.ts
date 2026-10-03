@@ -4251,7 +4251,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   }
   let borderColor = context.effectiveProperties.resolve(item, "BorderColor", item.borderColor);
   let borderWidth = context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth);
-  const framedShapeBorder = (item instanceof HmiRectangle || item instanceof HmiText) && item.drawStrokeInsideFrame !== undefined;
+  const framedShapeBorder = (item instanceof HmiRectangle || item instanceof HmiText || item instanceof HmiGraphicView) && item.drawStrokeInsideFrame !== undefined;
   if (framedShapeBorder && item instanceof HmiShapeBase) {
     borderColor = context.effectiveProperties.resolve(item, "LineColor", item.lineColor) ?? borderColor;
     borderWidth = context.effectiveProperties.resolve(item, "LineWidth", item.lineWidth) ?? borderWidth;
@@ -4263,7 +4263,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   const centeredBorder = resolvedBorderWidth !== undefined && resolvedBorderWidth > 1 &&
     ((item instanceof HmiBar || item instanceof HmiSlider) && item.drawInsideFrame !== undefined &&
       !getStaticValue(context.effectiveProperties.resolve(item, "DrawInsideFrame", item.drawInsideFrame)) ||
-     (item instanceof HmiRectangle || item instanceof HmiText) && item.drawStrokeInsideFrame !== undefined &&
+     (item instanceof HmiRectangle || item instanceof HmiText || item instanceof HmiGraphicView) && item.drawStrokeInsideFrame !== undefined &&
       !getStaticValue(context.effectiveProperties.resolve(item, "DrawStrokeInsideFrame", item.drawStrokeInsideFrame)));
   if (borderBlink?.staticValue !== undefined && borderBlink.blinkValue !== undefined) {
     html.push(`--hmi-border-color-off: ${colorToCss(borderBlink.staticValue)};`);
