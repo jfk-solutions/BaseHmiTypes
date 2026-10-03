@@ -740,6 +740,30 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(16, 16, false)]
+    [DataRow(20, 20, false)]
+    [DataRow(25, 20, false)]
+    [DataRow(-1, 0, false)]
+    [DataRow(16, 16, true)]
+    [DataRow(20, 20, true)]
+    [DataRow(25, 20, true)]
+    [DataRow(-1, 0, true)]
+    public async Task ConvertAsync_RendersFullBarDecimalPrecision(int configured, int expected, bool exponential)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        layer.Items.Add(new HmiBar { Width = 120, Height = 80, ShowScale = true, DivisionCount = 2,
+            BeginValue = 0, EndValue = 1, TickLabelDecimalPlaces = configured,
+            TickLabelExponentialFormat = exponential });
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var midpoint = exponential
+            ? "5" + (expected > 0 ? "." + new string('0', expected) : "") + "e-001"
+            : expected > 0 ? "0.5" + new string('0', expected - 1) : "1";
+        StringAssert.Contains(html, $"<span>{midpoint}</span>");
+    }
+
+    [TestMethod]
     [DataRow(HmiFillDirection.Right)]
     [DataRow(HmiFillDirection.Up)]
     public async Task ConvertAsync_RendersBarScaleColors(HmiFillDirection direction)

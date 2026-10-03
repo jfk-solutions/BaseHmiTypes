@@ -1877,7 +1877,7 @@ public class HmiScreenToHtmlConverter
             Array.Reverse(ratios);
         var decimalPlaces = bar.TickLabelDecimalPlaces is null
             ? (int?)null
-            : Clamp(ResolveStaticValue(bar.TickLabelDecimalPlaces, context), 0, 15);
+            : Clamp(ResolveStaticValue(bar.TickLabelDecimalPlaces, context), 0, 20);
         var engineeringUnit = bar.EngineeringUnit is null
             ? null
             : ResolveStaticValue(bar.EngineeringUnit, context);
