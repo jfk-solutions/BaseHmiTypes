@@ -31,6 +31,8 @@ export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   /** Major tick length in pixels; omitted values use six pixels. */
   majorTickLength?: HmiProperty<number>;
   majorTicksBold?: HmiProperty<boolean>;
+  /** Spacing of major marks in scale units for a linear scale; zero requests automatic spacing. */
+  majorTickInterval?: HmiProperty<number>;
   tickDirection?: HmiProperty<HmiTickDirection>;
   barMode?: HmiProperty<number>;
   scaleMode?: HmiProperty<number>;

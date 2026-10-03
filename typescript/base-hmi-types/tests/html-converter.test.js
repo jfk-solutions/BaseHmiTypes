@@ -928,6 +928,43 @@ test(`HTML converter renders bar scale sections (${sections})`, async () => {
 });
 }
 
+for (const [direction, labelPosition, strokePosition] of [
+  [HmiFillDirection.Right, "left: 90%", 'x1="90%"'],
+  [HmiFillDirection.Left, "left: 10%", 'x1="10%"'],
+  [HmiFillDirection.Down, "top: 90%", 'y1="90%"'],
+  [HmiFillDirection.Up, "top: 10%", 'y1="10%"'],
+]) {
+test(`HTML converter renders bar major tick interval (${direction})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(80);
+  bar.showScale = staticProperty(true);
+  bar.divisionCount = staticProperty(2);
+  bar.majorTickInterval = staticProperty(30);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(100);
+  bar.fillDirection = staticProperty(direction);
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const converter = new HmiScreenToHtmlConverter();
+  const html = await converter.convertAsync(screen);
+  assert.ok(html.includes(labelPosition));
+  assert.ok(html.includes(strokePosition));
+  for (const value of [30, 60, 90]) assert.ok(html.includes(`>${value}</span>`));
+  assert.ok(!html.includes(">100</span>"));
+  const fallbackLabels = direction === HmiFillDirection.Up || direction === HmiFillDirection.Left
+    ? "<span>100</span><span>50</span><span>0</span>"
+    : "<span>0</span><span>50</span><span>100</span>";
+  bar.scaleMode = staticProperty(3);
+  assert.ok((await converter.convertAsync(screen)).includes(fallbackLabels));
+  bar.scaleMode = staticProperty(0);
+  bar.majorTickInterval = staticProperty(0);
+  assert.ok((await converter.convertAsync(screen)).includes(fallbackLabels));
+});
+}
+
 for (const direction of [HmiFillDirection.Right, HmiFillDirection.Down, HmiFillDirection.Left, HmiFillDirection.Up]) {
 test(`HTML converter renders bar tick label intervals (${direction})`, async () => {
   const screen = new HmiScreen();
