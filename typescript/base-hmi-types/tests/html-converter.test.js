@@ -177,6 +177,27 @@ test(`HTML renderer supports full-turn arcs (${kind}, ${sweep}, ${start})`, asyn
 });
 }
 
+for (const [underline, strikethrough] of [[false,false],[false,true],[true,false],[true,true]]) {
+test("HTML renderer preserves combined gauge font decorations (" + underline + ", " + strikethrough + ")", async () => {
+  const font = new HmiFont();
+  font.underline = tagProperty("Gauge.Font.Underline", underline);
+  font.strikethrough = tagProperty("Gauge.Font.Strikethrough", strikethrough);
+  const gauge = new HmiGauge();
+  gauge.labelFont = font;
+  const layer = new HmiLayer();
+  layer.items.push(gauge);
+  const screen = new HmiScreen();
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<hmi-gauge[^>]*>/u)?.[0];
+  const attribute = opening?.match(/label-font="([^"]*)"/u)?.[1];
+  assert.ok(attribute);
+  const value = JSON.parse(attribute.replaceAll("&quot;", '"'));
+  assert.equal(value.underline, underline);
+  assert.equal(value.strikethrough, strikethrough);
+});
+}
+
 for (const [weight, bold] of [[500,false],[500,true],[0,false],[0,true],[-1,false],[-1,true]]) {
 test(`HTML renderer preserves gauge numeric font weight (${weight}, ${bold})`, async () => {
   const font = new HmiFont();

@@ -50,6 +50,23 @@ for (const [weight, bold] of [[500,false],[500,true],[0,false],[0,true],[-1,fals
   });
 }
 
+for (const [underline, strikethrough] of [[false,false],[false,true],[true,false],[true,true]]) {
+  test("gauge scale labels combine font decorations (" + underline + ", " + strikethrough + ")", () => {
+    const gauge = createGauge();
+    const labels = () => [...gauge.svg.innerHTML.matchAll(/<text\b[^>]*>/gu)].map(match => match[0]);
+    const expected = [underline ? "underline" : "", strikethrough ? "line-through" : ""].filter(Boolean).join(" ") || "none";
+    gauge.attributeChangedCallback("label-font", null, JSON.stringify({ underline, strikethrough }));
+    assert.equal(labels().length, 3);
+    for (const label of labels()) assert.ok(label.includes("text-decoration: " + expected + ";"));
+    gauge.labelFont = { underline: true, strikethrough: true };
+    for (const label of labels()) assert.ok(label.includes("text-decoration: underline line-through;"));
+    gauge.labelFont = { underline: false, strikethrough: false };
+    for (const label of labels()) assert.ok(label.includes("text-decoration: none;"));
+    gauge.attributeChangedCallback("label-font", "{}", null);
+    for (const label of labels()) assert.ok(label.includes("text-decoration: none;"));
+  });
+}
+
 for (const weight of [Number.NaN, Number.POSITIVE_INFINITY, "500", "500; fill: red"]) {
   test(`gauge rejects invalid numeric font weights (${weight})`, () => {
     const gauge = createGauge();
