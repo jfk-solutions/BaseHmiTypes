@@ -7,6 +7,7 @@ const selectionGroupProperties = {
   frameBorderFlashDuration: Number,
   foregroundFlashDuration: Number,
   backgroundFlashDuration: Number,
+  surfaceBackgroundColor: String,
   selectionItemHeight: Number,
   selectionBackgroundColor: String,
   selectionForegroundColor: String,
@@ -37,6 +38,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   private _frameBorderFlashDuration = 0;
   private _foregroundFlashDuration = 0;
   private _backgroundFlashDuration = 0;
+  private _surfaceBackgroundColor = "";
   private _selectionItemHeight = Number.NaN;
   private _selectionBackgroundColor = "";
   private _selectionForegroundColor = "";
@@ -114,6 +116,13 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
     this.setNumberProperty("_backgroundFlashDuration", value, 0);
   }
 
+  get surfaceBackgroundColor(): string {
+    return this._surfaceBackgroundColor;
+  }
+  set surfaceBackgroundColor(value: string | null | undefined) {
+    const candidate = value?.trim() ?? "";
+    this.setStringProperty("_surfaceBackgroundColor", candidate && CSS.supports("color", candidate) ? candidate : "", "");
+  }
   get selectionItemHeight(): number {
     return this._selectionItemHeight;
   }
@@ -214,9 +223,9 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
     const items = this.getItems();
     this.renderedItemsKey = getItemsKey(items);
     const computed = getComputedStyle(this);
-    const backgroundColor = computed.backgroundColor && computed.backgroundColor !== "rgba(0, 0, 0, 0)"
-      ? computed.backgroundColor
-      : "#f5f6ff";
+    const backgroundColor = computed.backgroundColor &&
+      (computed.backgroundColor !== "rgba(0, 0, 0, 0)" || this.style.backgroundColor)
+      ? computed.backgroundColor : "#f5f6ff";
     const foregroundColor = computed.color || "#000000";
     const borderColor = normalizeCssColor(computed.borderTopColor, "#676a72");
     const declaredBorderWidth = this.style.borderTopWidth || this.style.borderWidth;
@@ -392,6 +401,17 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
       <div class="panel" role="group">
         ${this.renderItems(items)}
       </div>`;
+
+    const panel = this.root.querySelector<HTMLElement>(".panel");
+    if (panel) {
+      // Apply paint through CSSOM rather than interpolating property values into shadow markup.
+      if (this._surfaceBackgroundColor)
+        panel.style.backgroundColor = this._surfaceBackgroundColor;
+      panel.style.backgroundImage = computed.backgroundImage;
+      panel.style.backgroundSize = computed.backgroundSize;
+      panel.style.backgroundPosition = computed.backgroundPosition;
+      panel.style.backgroundRepeat = computed.backgroundRepeat;
+    }
 
     this.root.querySelector("slot[name='item']")?.addEventListener("slotchange", () => {
       if (getItemsKey(this.getItems()) !== this.renderedItemsKey)

@@ -2753,6 +2753,11 @@ async function appendSelectionGroup(
 ): Promise<void> {
   html.push(`<${elementName}`);
   appendCommonAttributes(html, selectionGroup, context);
+  const surfaceBackground = getStaticValue(context.effectiveProperties.resolve(selectionGroup, "BackgroundColor", selectionGroup.backgroundColor));
+  if (getFillPattern(selectionGroup, context) === HmiFillPattern.Transparent)
+    appendAttribute(html, "surface-background-color", "transparent");
+  else if (surfaceBackground !== undefined)
+    appendAttribute(html, "surface-background-color", colorToCss(surfaceBackground));
   appendAttribute(html, "frame-border-style", getBorderStyleCss(selectionGroup, context));
   const frameBorder = context.effectiveProperties.resolve(selectionGroup, "BorderColor", selectionGroup.borderColor);
   for (const [name, property] of [
