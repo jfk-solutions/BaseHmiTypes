@@ -17,6 +17,48 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("separate windows use their assigned time-axis format, range, alignment and color", () => {
+  const originalNow = Date.now;
+  Date.now = () => new Date(2020, 11, 24, 15, 4, 6, 12).getTime();
+  try {
+    const parent = new HmiTrendControl();
+    const axes = [
+      { name: "Time A", visible: true, showDate: false, timeFormat: "TwentyFourHour", displayMilliseconds: true, timeSpan: 1, timeSpanUnit: "Milliseconds", color: "#445566", label: "Fast time" },
+      { name: "Time B", visible: true, showDate: true, dateFormat: "dd/MM/yyyy", timeFormat: "TwelveHour", timeSpan: 2, timeSpanUnit: "Hours", alignment: "Top", inTrendColor: true, label: "Slow time" },
+    ];
+    parent.setAttribute("trend-windows", JSON.stringify([{ name: "A" }, { name: "B" }]));
+    parent.setAttribute("pens", JSON.stringify([
+      { number: 1, visible: false, trendWindowName: "A", timeAxisName: "Time A", color: "#112233" },
+      { number: 2, trendWindowName: "B", timeAxisName: "Time B", color: "#778899" },
+    ]));
+    parent.setAttribute("time-axes", JSON.stringify(axes));
+    const decode = value => value.replaceAll("&quot;", "\"").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+    const children = () => [...parent.shadowRoot.innerHTML.matchAll(/<hmi-trend-control\s+([^>]+)>/gu)].map(match => {
+      const child = new HmiTrendControl();
+      for (const attribute of match[1].matchAll(/([\w-]+)="([^"]*)"/gu)) child.setAttribute(attribute[1], decode(attribute[2]));
+      child.connectedCallback();
+      return child;
+    });
+    let plots = children();
+    assert.match(plots[0].shadowRoot.innerHTML, /data-time-axis="Time A"/u);
+    assert.match(plots[0].shadowRoot.innerHTML, /15:04:06.012/u);
+    assert.match(plots[0].shadowRoot.innerHTML, /Fast time/u);
+    assert.match(plots[0].shadowRoot.innerHTML, /--hmi-trend-x-axis-color: #445566;/u);
+    assert.ok(!plots[0].shadowRoot.innerHTML.includes("24/12/2020"));
+    assert.match(plots[1].shadowRoot.innerHTML, /data-time-axis="Time B"/u);
+    assert.match(plots[1].shadowRoot.innerHTML, /24\/12\/2020/u);
+    assert.match(plots[1].shadowRoot.innerHTML, /1:04:06PM/u);
+    assert.match(plots[1].shadowRoot.innerHTML, /Slow time/u);
+    assert.match(plots[1].shadowRoot.innerHTML, /--hmi-trend-x-axis-color: #778899;/u);
+    assert.match(plots[1].shadowRoot.innerHTML, /y1="0" x2="100" y2="0"/u);
+    axes[0].visible = false;
+    parent.setAttribute("time-axes", JSON.stringify(axes));
+    plots = children();
+    assert.ok(!plots[0].shadowRoot.innerHTML.includes("class=\"axis-label x-label\""));
+    assert.match(plots[1].shadowRoot.innerHTML, /Slow time/u);
+  } finally { Date.now = originalNow; }
+});
+
 test("trend windows route pens and axes, retain empty windows and apply independent settings", () => {
   const parent = new HmiTrendControl();
   const windows = [

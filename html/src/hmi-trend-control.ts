@@ -6,6 +6,7 @@ const trendControlProperties = {
   pens: String,
   valueAxes: String,
   trendWindows: String,
+  timeAxes: String,
   displayChartTitle: String,
   showToolbar: String,
   toolbarAlignment: String,
@@ -163,8 +164,11 @@ export class HmiTrendControl extends HTMLElement {
     const visiblePens = pens.filter(pen => pen.visible !== false);
     const trendWindows = parseTrendWindows(this.getAttribute("trend-windows"));
     const firstPen = visiblePens[0] ?? pens[0];
+    const timeAxes = parseTimeAxes(this.getAttribute("time-axes"));
+    const selectedTimeAxis = timeAxes.find(axis => axis.name === pens[0]?.timeAxisName) ?? timeAxes[0];
+    const timeSource = { getAttribute: (name: string) => selectedTimeAxis?.attributes[name] ?? this.getAttribute(name) };
     const axisTrendColor = pens.length > 0 ? normalizePenColor(pens[0].color, 0) : undefined;
-    const xAxisInTrendColor = readBooleanAttribute(this, "x-axis-in-trend-color", false);
+    const xAxisInTrendColor = readBooleanAttribute(timeSource, "x-axis-in-trend-color", false);
     const yAxisInTrendColor = readBooleanAttribute(this, "y-axis-in-trend-color", false);
     const minimumValue = readNumberAttribute(this, "minimum-value", firstPen?.minimum ?? 0);
     const maximumCandidate = readNumberAttribute(this, "maximum-value", firstPen?.maximum ?? 100);
@@ -203,17 +207,17 @@ export class HmiTrendControl extends HTMLElement {
     const displayScrollMechanism = readBooleanAttribute(this, "display-scroll-mechanism", false);
     const chartLiveMode = readBooleanAttribute(this, "chart-live-mode", false);
     const autoScale = readBooleanAttribute(this, "auto-scale", false);
-    const xAxisVisible = readBooleanAttribute(this, "x-axis-scale-visible", true);
-    const xAxisAlignment = this.getAttribute("x-axis-alignment")?.toLowerCase() === "top" ? "top" : "bottom";
-    const xAxisLabel = this.getAttribute("x-axis-label") ?? "";
-    const xAxisDateVisible = readBooleanAttribute(this, "x-axis-date-visible", true);
+    const xAxisVisible = readBooleanAttribute(timeSource, "x-axis-scale-visible", true);
+    const xAxisAlignment = timeSource.getAttribute("x-axis-alignment")?.toLowerCase() === "top" ? "top" : "bottom";
+    const xAxisLabel = timeSource.getAttribute("x-axis-label") ?? "";
+    const xAxisDateVisible = readBooleanAttribute(timeSource, "x-axis-date-visible", true);
     const xAxisFlipped = readBooleanAttribute(this, "x-axis-flipped", false);
-    const timeFormat = this.getAttribute("time-format")?.toLowerCase() === "twentyfourhour"
+    const timeFormat = timeSource.getAttribute("time-format")?.toLowerCase() === "twentyfourhour"
       ? "twenty-four-hour"
       : "twelve-hour";
     const xAxisTimeSpan = readDurationMilliseconds(
-      readNumberAttribute(this, "x-axis-time-span", 63_000),
-      this.getAttribute("x-axis-time-span-unit"),
+      readNumberAttribute(timeSource, "x-axis-time-span", 63_000),
+      timeSource.getAttribute("x-axis-time-span-unit"),
     );
     const xAxisGridVisible = readBooleanAttribute(this, "x-axis-grid-visible", true);
     const majorGridVisible = readBooleanAttribute(this, "major-grid-visible", true);
@@ -229,8 +233,8 @@ export class HmiTrendControl extends HTMLElement {
     const showPercentageAxis = readBooleanAttribute(this, "show-percentage-axis", false);
     const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
     const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
-    const displayMilliseconds = readBooleanAttribute(this, "display-milliseconds", false);
-    const xAxisDateFormat = this.getAttribute("x-axis-date-format");
+    const displayMilliseconds = readBooleanAttribute(timeSource, "display-milliseconds", false);
+    const xAxisDateFormat = timeSource.getAttribute("x-axis-date-format");
     const locale = this.getAttribute("lang") || (typeof document === "undefined" ? undefined : document.documentElement.lang) || undefined;
     const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat, displayMilliseconds, xAxisDateFormat, locale);
     if (xAxisFlipped) labels.reverse();
@@ -260,6 +264,7 @@ export class HmiTrendControl extends HTMLElement {
 
         .frame {
           ${xAxisInTrendColor && axisTrendColor !== undefined ? `--hmi-trend-x-axis-color: ${escapeCss(axisTrendColor)};` : ""}
+          ${!xAxisInTrendColor && selectedTimeAxis ? `--hmi-trend-x-axis-color: ${selectedTimeAxis.color};` : ""}
           ${yAxisInTrendColor && axisTrendColor !== undefined ? `--hmi-trend-y-axis-color: ${escapeCss(axisTrendColor)};` : ""}
           width: 100%;
           height: 100%;
@@ -490,7 +495,7 @@ export class HmiTrendControl extends HTMLElement {
           background: #858d98;
         }
       </style>
-      <div class="frame">
+      <div class="frame"${selectedTimeAxis ? ` data-time-axis="${escapeHtml(selectedTimeAxis.name)}"` : ""}>
         ${displayChartTitle ? `<div class="title">${escapeHtml(chartTitle)}</div>` : ""}
         ${showToolbar ? `<div class="toolbar">${renderPenLegend(visiblePens, displayPenIcons, useTrendNameAsLabel)}</div>` : ""}
         ${showStatusBar ? `<div class="status">${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}</div>` : ""}
@@ -518,6 +523,39 @@ export class HmiTrendControl extends HTMLElement {
         ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"${xAxisFlipped && chartLiveMode ? ' style="margin-left: 0"' : ""}></div></div>` : ""}
       </div>`;
   }
+}
+
+interface TimeAxis {
+  name: string;
+  color: string;
+  attributes: Record<string, string>;
+}
+
+function parseTimeAxes(value: string | null): TimeAxis[] {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap(entry => {
+      if (!entry || typeof entry !== "object") return [];
+      const source = entry as Record<string, unknown>;
+      if (typeof source.name !== "string" || !source.name) return [];
+      const attributes: Record<string, string> = {
+        "x-axis-scale-visible": "true", "x-axis-date-visible": "true", "x-axis-in-trend-color": "false",
+        "x-axis-alignment": "Bottom", "x-axis-label": "", "x-axis-date-format": "",
+        "time-format": "TwelveHour", "display-milliseconds": "false",
+        "x-axis-time-span": "63000", "x-axis-time-span-unit": "Milliseconds",
+      };
+      for (const [key, attribute] of [["visible", "x-axis-scale-visible"], ["showDate", "x-axis-date-visible"], ["inTrendColor", "x-axis-in-trend-color"], ["displayMilliseconds", "display-milliseconds"]]) {
+        if (typeof source[key!] === "boolean") attributes[attribute!] = String(source[key!]);
+      }
+      for (const [key, attribute] of [["alignment", "x-axis-alignment"], ["label", "x-axis-label"], ["dateFormat", "x-axis-date-format"], ["timeFormat", "time-format"], ["timeSpanUnit", "x-axis-time-span-unit"]]) {
+        if (typeof source[key!] === "string") attributes[attribute!] = source[key!] as string;
+      }
+      if (typeof source.timeSpan === "number" && Number.isFinite(source.timeSpan)) attributes["x-axis-time-span"] = String(source.timeSpan);
+      return [{ name: source.name, color: normalizeCssColor(typeof source.color === "string" ? source.color : undefined, "#444850"), attributes }];
+    });
+  } catch { return []; }
 }
 
 interface TrendWindow {
@@ -1004,7 +1042,7 @@ function parsePens(value: string | null): TrendPen[] {
   }
 }
 
-function readBooleanAttribute(element: Element, name: string, fallback: boolean): boolean {
+function readBooleanAttribute(element: Pick<Element, "getAttribute">, name: string, fallback: boolean): boolean {
   const value = element.getAttribute(name);
   if (value === null) return fallback;
   if (value.toLowerCase() === "false" || value === "0") return false;
@@ -1012,9 +1050,10 @@ function readBooleanAttribute(element: Element, name: string, fallback: boolean)
   return fallback;
 }
 
-function readNumberAttribute(element: Element, name: string, fallback: number): number {
-  const value = Number(element.getAttribute(name));
-  return element.hasAttribute(name) && Number.isFinite(value) ? value : fallback;
+function readNumberAttribute(element: Pick<Element, "getAttribute">, name: string, fallback: number): number {
+  const source = element.getAttribute(name);
+  const value = Number(source);
+  return source !== null && Number.isFinite(value) ? value : fallback;
 }
 
 function finiteNumber(value: unknown, fallback: number): number {
