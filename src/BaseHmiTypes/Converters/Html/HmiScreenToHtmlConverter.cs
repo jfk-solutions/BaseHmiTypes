@@ -2966,6 +2966,9 @@ public class HmiScreenToHtmlConverter
         html.Append('<').Append(elementName);
         AppendCommonAttributes(html, selectionGroup, context);
         AppendAttribute(html, "frame-border-style", GetBorderStyleCss(selectionGroup, context));
+        if (context.EffectiveProperties.Resolve(selectionGroup, nameof(HmiPaintedScreenItemBase.BorderColor), selectionGroup.BorderColor)
+            is HmiBlinkProperty<HmiColor> { StaticValue: HmiColor, BlinkValue: HmiColor } borderBlink)
+            AppendAttribute(html, "frame-border-flash-duration", GetBlinkDuration(borderBlink.Rate));
         AppendStaticAttribute(html, "selected-index", selectionGroup.SelectedIndex);
         var selectedFields = selectionGroup switch
         {
