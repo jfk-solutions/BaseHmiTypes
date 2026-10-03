@@ -1861,6 +1861,19 @@ public class HmiScreenToHtmlConverter
         HmiFillDirection direction,
         bool vertical,
         HmiHtmlConvertContext context)
+        => AppendScaleMarks(html, bar, minimum, maximum, direction, vertical,
+            bar.ScaleAfterBar is null || ResolveStaticValue(bar.ScaleAfterBar, context), context, false);
+
+    private static void AppendScaleMarks(
+        StringBuilder html,
+        HmiScaleWidgetBase bar,
+        double minimum,
+        double maximum,
+        HmiFillDirection direction,
+        bool vertical,
+        bool afterBar,
+        HmiHtmlConvertContext context,
+        bool standalone)
     {
         var sections = bar.DivisionCount is null ? 0 : ResolveStaticValue(bar.DivisionCount, context);
         var tickCount = sections > 0 ? Math.Min(100, sections) + 1 : 2;
@@ -1897,7 +1910,6 @@ public class HmiScreenToHtmlConverter
 
         var tickLength = bar.MajorTickLength is null ? 6 : Math.Max(0, ResolveStaticValue(bar.MajorTickLength, context));
         var tickWidth = bar.MajorTicksBold is not null && ResolveStaticValue(bar.MajorTicksBold, context) ? 2 : 1;
-        var afterBar = bar.ScaleAfterBar is null || ResolveStaticValue(bar.ScaleAfterBar, context);
         var edge = vertical ? (afterBar ? "left" : "right") : (afterBar ? "top" : "bottom");
         style.Append(" position: relative; box-sizing: border-box; padding-").Append(edge).Append(": ")
             .Append(tickLength + 2).Append("px;");
@@ -1912,7 +1924,7 @@ public class HmiScreenToHtmlConverter
         }
 
         html.Append("<div");
-        AppendAttribute(html, "data-hmi-bar-scale", "true");
+        AppendAttribute(html, standalone ? "data-hmi-scale-labels" : "data-hmi-bar-scale", "true");
         AppendAttribute(html, "style", style.ToString());
         html.Append('>');
         for (var index = 0; index < tickCount; index++)
@@ -1941,7 +1953,8 @@ public class HmiScreenToHtmlConverter
             }
             html.Append("</span>");
         }
-        html.Append("<svg xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\" data-hmi-bar-ticks=\"true\"");
+        html.Append("<svg xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\"");
+        AppendAttribute(html, standalone ? "data-hmi-scale-ticks" : "data-hmi-bar-ticks", "true");
         AppendAttribute(html, "style", $"position: absolute; pointer-events: none; overflow: visible; {edge}: 0; " +
             (vertical ? $"top: 0; width: {tickLength}px; height: 100%;" : $"left: 0; width: 100%; height: {tickLength}px;"));
         var tickColor = bar.TickColor ?? bar.ScaleForegroundColor;
@@ -2062,9 +2075,17 @@ public class HmiScreenToHtmlConverter
     private static void AppendScale(StringBuilder html, HmiScale scale, HmiHtmlConvertContext context)
     {
         var (minimum, maximum) = ResolveScaleRange(scale, context);
+        var tickDirection = scale.TickDirection is null ? HmiTickDirection.Down : ResolveStaticValue(scale.TickDirection, context);
+        var vertical = tickDirection is HmiTickDirection.Left or HmiTickDirection.Right;
         html.Append("<div");
-        AppendCommonAttributes(html, scale, context, additionalStyle: "display: flex; align-items: end; justify-content: space-between; overflow: hidden;");
-        html.Append("><span>").Append(ToCss(minimum)).Append("</span><span>").Append(ToCss(maximum)).Append("</span></div>");
+        AppendCommonAttributes(html, scale, context, additionalStyle: "display: flex; align-items: stretch; overflow: hidden;");
+        AppendAttribute(html, "data-hmi-scale", "true");
+        AppendAttribute(html, "data-tick-direction", tickDirection.ToString());
+        html.Append('>');
+        if (scale.ShowScale is null || ResolveStaticValue(scale.ShowScale, context))
+            AppendScaleMarks(html, scale, minimum, maximum, vertical ? HmiFillDirection.Up : HmiFillDirection.Right,
+                vertical, tickDirection is HmiTickDirection.Down or HmiTickDirection.Right, context, true);
+        html.Append("</div>");
     }
 
     private static void AppendClock(StringBuilder html, HmiClock clock, HmiHtmlConvertContext context)
