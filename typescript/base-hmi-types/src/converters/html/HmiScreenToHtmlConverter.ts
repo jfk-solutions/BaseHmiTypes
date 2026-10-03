@@ -1641,7 +1641,8 @@ function appendBarScale(
   direction: HmiFillDirection,
   vertical: boolean,
 ): void {
-  const tickCount = Math.max(2, getStaticValue(bar.divisionCount) ?? 2);
+  const sections = getStaticValue(bar.divisionCount) ?? 0;
+  const tickCount = sections > 0 ? Math.min(100, sections) + 1 : 2;
   const configuredDecimalPlaces = getStaticValue(bar.tickLabelDecimalPlaces);
   const decimalPlaces = configuredDecimalPlaces === undefined
     ? undefined

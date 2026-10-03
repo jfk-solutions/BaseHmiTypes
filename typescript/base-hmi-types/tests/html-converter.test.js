@@ -849,7 +849,7 @@ test("HTML converter renders bar scale ticks and appearance", async () => {
   bar.endValue = staticProperty(100);
   bar.value = staticProperty(35);
   bar.showScale = staticProperty(true);
-  bar.divisionCount = staticProperty(3);
+  bar.divisionCount = staticProperty(2);
   bar.tickLabelDecimalPlaces = staticProperty(1);
   bar.engineeringUnit = staticProperty("bar");
   bar.labelColor = staticProperty(hmiColorFromArgb(255, 12, 34, 56));
@@ -884,7 +884,7 @@ test(`HTML converter renders bar major tick strokes (${edge})`, async () => {
   bar.width = staticProperty(120);
   bar.height = staticProperty(80);
   bar.showScale = staticProperty(true);
-  bar.divisionCount = staticProperty(3);
+  bar.divisionCount = staticProperty(2);
   bar.fillDirection = staticProperty(direction);
   bar.scaleAfterBar = staticProperty(after);
   bar.showTickLabels = staticProperty(false);
@@ -907,6 +907,27 @@ test(`HTML converter renders bar major tick strokes (${edge})`, async () => {
 });
 }
 
+for (const [sections, tickCount] of [[0, 2], [1, 2], [4, 5], [100, 101]]) {
+test(`HTML converter renders bar scale sections (${sections})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(80);
+  bar.showScale = staticProperty(true);
+  bar.divisionCount = staticProperty(sections);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(100);
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const strokes = html.match(/<svg[^>]*data-hmi-bar-ticks[^>]*>(.*?)<\/svg>/)?.[1] ?? "";
+  assert.equal([...strokes.matchAll(/<line /g)].length, tickCount);
+  assert.ok(html.includes("<span>0</span>"));
+  assert.ok(html.includes("<span>100</span>"));
+});
+}
+
 for (const direction of [HmiFillDirection.Right, HmiFillDirection.Down, HmiFillDirection.Left, HmiFillDirection.Up]) {
 test(`HTML converter renders bar tick label intervals (${direction})`, async () => {
   const screen = new HmiScreen();
@@ -918,7 +939,7 @@ test(`HTML converter renders bar tick label intervals (${direction})`, async () 
   bar.endValue = staticProperty(100);
   bar.value = staticProperty(35);
   bar.showScale = staticProperty(true);
-  bar.divisionCount = staticProperty(5);
+  bar.divisionCount = staticProperty(4);
   bar.tickLabelInterval = staticProperty(3);
   bar.engineeringUnit = staticProperty("a&b");
   bar.fillDirection = staticProperty(direction);
@@ -988,7 +1009,7 @@ test(`HTML converter renders bar exponential labels (${minimum}, ${maximum})`, a
   bar.beginValue = staticProperty(minimum);
   bar.endValue = staticProperty(maximum);
   bar.showScale = staticProperty(true);
-  bar.divisionCount = staticProperty(3);
+  bar.divisionCount = staticProperty(2);
   bar.tickLabelDecimalPlaces = staticProperty(2);
   bar.tickLabelExponentialFormat = staticProperty(true);
   layer.items.push(bar);
