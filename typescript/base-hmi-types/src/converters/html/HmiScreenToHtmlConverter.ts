@@ -1642,7 +1642,18 @@ function appendBarScale(
   vertical: boolean,
 ): void {
   const sections = getStaticValue(bar.divisionCount) ?? 0;
-  const tickCount = sections > 0 ? Math.min(100, sections) + 1 : 2;
+  let tickCount = sections > 0 ? Math.min(100, sections) + 1 : 2;
+  const interval = getStaticValue(bar.majorTickInterval) ?? 0;
+  const scaleMode = getStaticValue(bar.scaleMode) ?? 0;
+  const explicitInterval = scaleMode === 0 && Number.isFinite(interval) && interval > 0 && maximum > minimum
+    && (maximum - minimum) / interval <= 10000;
+  if (explicitInterval)
+    tickCount = Math.floor((maximum - minimum) / interval + 1e-10) + 1;
+  const ratios = Array.from({ length: tickCount }, (_, index) => explicitInterval
+    ? Math.min(1, index * interval / (maximum - minimum))
+    : index / (tickCount - 1));
+  if (direction === HmiFillDirection.Up || direction === HmiFillDirection.Left)
+    ratios.reverse();
   const configuredDecimalPlaces = getStaticValue(bar.tickLabelDecimalPlaces);
   const decimalPlaces = configuredDecimalPlaces === undefined
     ? undefined
@@ -1667,20 +1678,29 @@ function appendBarScale(
   style += ` position: relative; box-sizing: border-box; padding-${edge}: ${tickLength + 2}px;`;
   if (!vertical)
     style += ` min-height: ${tickLength + 2}px;`;
+  if (explicitInterval)
+    style += vertical ? ` min-width: calc(${tickLength + 2}px + 12ch);`
+      : ` min-height: calc(${tickLength + 2}px + 1.2em);`;
 
   html.push("<div");
   appendAttribute(html, "data-hmi-bar-scale", "true");
   appendAttribute(html, "style", style);
   html.push(">");
   for (let index = 0; index < tickCount; index++) {
-    let ratio = index / (tickCount - 1);
-    if (reverse)
-      ratio = 1 - ratio;
+    const ratio = ratios[index]!;
     const tick = minimum + ((maximum - minimum) * ratio);
     const label = exponentialFormat
       ? tick.toExponential(decimalPlaces ?? 2).replace(/e([+-])(\d+)$/u, (_match, sign: string, exponent: string) => `e${sign}${exponent.padStart(3, "0")}`)
       : decimalPlaces === undefined ? toCss(tick) : tick.toFixed(decimalPlaces);
-    html.push("<span>");
+    html.push("<span");
+    if (explicitInterval) {
+      const position = reverse ? 1 - ratio : ratio;
+      const translation = position === 0 ? 0 : position === 1 ? -100 : -50;
+      appendAttribute(html, "style", vertical
+        ? `position: absolute; top: ${toCss(position * 100)}%; ${edge}: ${tickLength + 2}px; transform: translateY(${translation}%); white-space: nowrap;`
+        : `position: absolute; left: ${toCss(position * 100)}%; ${edge}: ${tickLength + 2}px; transform: translateX(${translation}%); white-space: nowrap;`);
+    }
+    html.push(">");
     const tickIndex = reverse ? tickCount - 1 - index : index;
     if (showLabels && tickIndex % labelInterval === 0) {
       html.push(label);
@@ -1697,7 +1717,7 @@ function appendBarScale(
   appendAttribute(html, "stroke-width", tickWidth.toString());
   html.push(">");
   for (let index = 0; index < tickCount; index++) {
-    const percentage = toCss(100 * index / (tickCount - 1));
+    const percentage = toCss(100 * (reverse ? 1 - ratios[index]! : ratios[index]!));
     html.push(vertical
       ? `<line x1="0" x2="${tickLength}" y1="${percentage}%" y2="${percentage}%"></line>`
       : `<line y1="0" y2="${tickLength}" x1="${percentage}%" x2="${percentage}%"></line>`);
