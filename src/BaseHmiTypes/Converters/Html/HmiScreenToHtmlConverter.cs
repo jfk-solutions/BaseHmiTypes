@@ -1050,6 +1050,7 @@ public class HmiScreenToHtmlConverter
         AppendCommonAttributes(html, item, context, includePaintedStyle: false);
         AppendAttribute(html, "viewBox", "0 0 " + ToCss(Math.Max(width, 1)) + " " + ToCss(Math.Max(height, 1)));
         AppendAttribute(html, "xmlns", "http://www.w3.org/2000/svg");
+        AppendAttribute(html, "overflow", "visible");
         html.Append(">");
     }
 
