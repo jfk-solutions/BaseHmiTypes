@@ -67,6 +67,7 @@ import { HmiPolygon } from "../../screens/shapes/HmiPolygon.js";
 import { HmiPolyline } from "../../screens/shapes/HmiPolyline.js";
 import { HmiRectangle } from "../../screens/shapes/HmiRectangle.js";
 import { HmiShapeBase } from "../../screens/shapes/HmiShapeBase.js";
+import { HmiCentricShapeBase } from "../../screens/shapes/HmiCentricShapeBase.js";
 import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
@@ -861,11 +862,13 @@ function appendCircle(html: string[], circle: HmiCircle, context: HmiHtmlConvert
   const width = getSvgWidth(circle);
   const height = getSvgHeight(circle);
   appendSvgOpen(html, circle, width, height, context);
+  const inside = appendInsideStrokeClip(html, circle,
+    `<circle cx="${toCss(getStaticValueOrDefault(circle.centerX, width / 2))}" cy="${toCss(getStaticValueOrDefault(circle.centerY, height / 2))}" r="${toCss(getStaticValueOrDefault(circle.radius, Math.min(width, height) / 2))}"></circle>`, context);
   html.push("<circle");
   appendSvgAttribute(html, "cx", getStaticValueOrDefault(circle.centerX, width / 2));
   appendSvgAttribute(html, "cy", getStaticValueOrDefault(circle.centerY, height / 2));
   appendSvgAttribute(html, "r", getStaticValueOrDefault(circle.radius, Math.min(width, height) / 2));
-  appendStrokeAttributes(html, circle, getFillColor(circle, context), context);
+  appendStrokeAttributes(html, circle, getFillColor(circle, context), context, inside);
   html.push("></circle>");
   appendSvgFillDefinition(html, circle, getFillColor(circle, context), context);
   appendSvgMarkerDefinitions(html, circle, context);
@@ -876,12 +879,14 @@ function appendEllipse(html: string[], ellipse: HmiEllipse, context: HmiHtmlConv
   const width = getSvgWidth(ellipse);
   const height = getSvgHeight(ellipse);
   appendSvgOpen(html, ellipse, width, height, context);
+  const inside = appendInsideStrokeClip(html, ellipse,
+    `<ellipse cx="${toCss(getStaticValueOrDefault(ellipse.centerX, width / 2))}" cy="${toCss(getStaticValueOrDefault(ellipse.centerY, height / 2))}" rx="${toCss(getStaticValueOrDefault(ellipse.radiusX, width / 2))}" ry="${toCss(getStaticValueOrDefault(ellipse.radiusY, height / 2))}"></ellipse>`, context);
   html.push("<ellipse");
   appendSvgAttribute(html, "cx", getStaticValueOrDefault(ellipse.centerX, width / 2));
   appendSvgAttribute(html, "cy", getStaticValueOrDefault(ellipse.centerY, height / 2));
   appendSvgAttribute(html, "rx", getStaticValueOrDefault(ellipse.radiusX, width / 2));
   appendSvgAttribute(html, "ry", getStaticValueOrDefault(ellipse.radiusY, height / 2));
-  appendStrokeAttributes(html, ellipse, getFillColor(ellipse, context), context);
+  appendStrokeAttributes(html, ellipse, getFillColor(ellipse, context), context, inside);
   html.push("></ellipse>");
   appendSvgFillDefinition(html, ellipse, getFillColor(ellipse, context), context);
   appendSvgMarkerDefinitions(html, ellipse, context);
@@ -969,9 +974,13 @@ function appendArcPath(
   context: HmiHtmlConvertContext,
 ): void {
   appendSvgOpen(html, item, getSvgWidth(item), getSvgHeight(item), context);
+  const path = createArcPath(centerX, centerY, radiusX, radiusY, startAngle, sweepAngle, segment);
+  const inside = appendInsideStrokeClip(html, item, segment
+    ? `<path d="${path}"></path>`
+    : `<ellipse cx="${toCss(centerX)}" cy="${toCss(centerY)}" rx="${toCss(radiusX)}" ry="${toCss(radiusY)}"></ellipse>`, context);
   html.push("<path");
-  appendAttribute(html, "d", createArcPath(centerX, centerY, radiusX, radiusY, startAngle, sweepAngle, segment));
-  appendStrokeAttributes(html, item, segment ? getFillColor(item, context) : undefined, context);
+  appendAttribute(html, "d", path);
+  appendStrokeAttributes(html, item, segment ? getFillColor(item, context) : undefined, context, inside);
   html.push("></path>");
   appendSvgFillDefinition(html, item, segment ? getFillColor(item, context) : undefined, context);
   appendSvgMarkerDefinitions(html, item, context);
@@ -1018,7 +1027,17 @@ function appendSvgOpen(html: string[], item: HmiScreenItemBase, width: number, h
   html.push(">");
 }
 
-function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined, context: HmiHtmlConvertContext): void {
+function appendInsideStrokeClip(html: string[], item: HmiShapeBase, geometry: string, context: HmiHtmlConvertContext): boolean {
+  if (!(item instanceof HmiCentricShapeBase) || !getStaticValueOrDefault(item.drawStrokeInsideFrame, false) || getStrokeWidth(item, context) <= 1)
+    return false;
+  html.push("<defs><clipPath");
+  appendAttribute(html, "id", getFillGradientId(item) + "-inside-stroke");
+  appendAttribute(html, "clipPathUnits", "userSpaceOnUse");
+  html.push(">", geometry, "</clipPath></defs>");
+  return true;
+}
+
+function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: HmiColor | undefined, context: HmiHtmlConvertContext, inside = false): void {
   const lineStyle = getLineStyle(item, context);
   const fillPattern = getFillPattern(item, context);
   const colorGradient = getColorGradient(item);
@@ -1062,7 +1081,8 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
     svgStyle.push(`animation: ${svgAnimations.join(", ")};`);
   if (svgStyle.length > 0)
     appendAttribute(html, "style", svgStyle.join(""));
-  appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context));
+  appendSvgAttribute(html, "stroke-width", getStrokeWidth(item, context) * (inside ? 2 : 1));
+  if (inside) appendAttribute(html, "clip-path", `url(#${getFillGradientId(item)}-inside-stroke)`);
   const lineCap = context.effectiveProperties.tryGetStaticValue<HmiLineCap>(item, "LineCap", item.lineCap).value;
   if (lineCap !== undefined) appendAttribute(html, "stroke-linecap", lineCapToCss(lineCap));
   if (getLineMarker(item, "StartMarker", item.startMarker, context) !== HmiLineMarker.None)
