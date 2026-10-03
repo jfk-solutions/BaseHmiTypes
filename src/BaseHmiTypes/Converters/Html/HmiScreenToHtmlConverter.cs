@@ -1874,6 +1874,7 @@ public class HmiScreenToHtmlConverter
         var reverse = direction is HmiFillDirection.Up or HmiFillDirection.Left;
         var labelInterval = bar.TickLabelInterval is null ? 1 : Math.Max(1, ResolveStaticValue(bar.TickLabelInterval, context));
         var showLabels = bar.ShowTickLabels is null || ResolveStaticValue(bar.ShowTickLabels, context);
+        var exponentialFormat = bar.TickLabelExponentialFormat is not null && ResolveStaticValue(bar.TickLabelExponentialFormat, context);
         var style = new StringBuilder(vertical
             ? "display: flex; flex-direction: column; justify-content: space-between; height: 100%;"
             : "display: flex; justify-content: space-between; width: 100%;");
@@ -1891,7 +1892,7 @@ public class HmiScreenToHtmlConverter
             if (reverse)
                 ratio = 1d - ratio;
             var tick = minimum + ((maximum - minimum) * ratio);
-            var label = decimalPlaces is int places
+            var label = exponentialFormat ? tick.ToString($"e{decimalPlaces ?? 2}", CultureInfo.InvariantCulture) : decimalPlaces is int places
                 ? tick.ToString($"F{places}", CultureInfo.InvariantCulture)
                 : ToCss(tick);
             html.Append("<span>");
