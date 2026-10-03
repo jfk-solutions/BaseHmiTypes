@@ -740,6 +740,35 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(HmiFillDirection.Right)]
+    [DataRow(HmiFillDirection.Up)]
+    public async Task ConvertAsync_RendersBarScaleColors(HmiFillDirection direction)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        var bar = new HmiBar { Width = 120, Height = 80, ShowScale = true, FillDirection = direction,
+            ScaleForegroundColor = HmiColor.FromArgb(255, 12, 34, 56),
+            ScaleBackgroundColor = HmiColor.FromArgb(255, 65, 43, 21) };
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var converter = new HmiScreenToHtmlConverter();
+        var html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, "color: #0C2238; background-color: #412B15;");
+        StringAssert.Contains(html, "stroke=\"#0C2238\"");
+        bar.LabelColor = HmiColor.FromArgb(255, 1, 2, 3);
+        html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, "color: #010203; background-color: #412B15;");
+        StringAssert.Contains(html, "stroke=\"#0C2238\"");
+        bar.TickColor = HmiColor.FromArgb(255, 4, 5, 6);
+        html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, "stroke=\"#040506\"");
+        bar.ShowScale = false;
+        html = await converter.ConvertAsync(screen);
+        Assert.IsFalse(html.Contains("#412B15", StringComparison.Ordinal));
+        Assert.IsFalse(html.Contains("data-hmi-bar-ticks", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     [DataRow(HmiFillDirection.Up, true, "left", true)]
     [DataRow(HmiFillDirection.Down, false, "right", false)]
     [DataRow(HmiFillDirection.Left, true, "top", true)]

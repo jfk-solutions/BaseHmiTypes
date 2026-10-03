@@ -1888,8 +1888,11 @@ public class HmiScreenToHtmlConverter
         var style = new StringBuilder(vertical
             ? "display: flex; flex-direction: column; justify-content: space-between; height: 100%;"
             : "display: flex; justify-content: space-between; width: 100%;");
-        if (bar.LabelColor is not null)
-            style.Append(" color: ").Append(ToCss(ResolveStaticValue(bar.LabelColor, context))).Append(';');
+        var labelColor = bar.LabelColor ?? bar.ScaleForegroundColor;
+        if (labelColor is not null)
+            style.Append(" color: ").Append(ToCss(ResolveStaticValue(labelColor, context))).Append(';');
+        if (bar.ScaleBackgroundColor is not null)
+            style.Append(" background-color: ").Append(ToCss(ResolveStaticValue(bar.ScaleBackgroundColor, context))).Append(';');
         AppendBarScaleFontStyle(style, bar.LabelFont, context);
 
         var tickLength = bar.MajorTickLength is null ? 6 : Math.Max(0, ResolveStaticValue(bar.MajorTickLength, context));
@@ -1941,7 +1944,8 @@ public class HmiScreenToHtmlConverter
         html.Append("<svg xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\" data-hmi-bar-ticks=\"true\"");
         AppendAttribute(html, "style", $"position: absolute; pointer-events: none; overflow: visible; {edge}: 0; " +
             (vertical ? $"top: 0; width: {tickLength}px; height: 100%;" : $"left: 0; width: 100%; height: {tickLength}px;"));
-        AppendAttribute(html, "stroke", bar.TickColor is null ? "currentColor" : ToCss(ResolveStaticValue(bar.TickColor, context)));
+        var tickColor = bar.TickColor ?? bar.ScaleForegroundColor;
+        AppendAttribute(html, "stroke", tickColor is null ? "currentColor" : ToCss(ResolveStaticValue(tickColor, context)));
         AppendAttribute(html, "stroke-width", tickWidth.ToString(CultureInfo.InvariantCulture));
         html.Append('>');
         for (var index = 0; index < tickCount; index++)
