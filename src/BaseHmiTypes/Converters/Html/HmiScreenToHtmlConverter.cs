@@ -2983,6 +2983,14 @@ public class HmiScreenToHtmlConverter
             _ => null
         };
         AppendStaticAttribute(html, "selected-fields", selectedFields);
+        var indicatorOnRight = selectionGroup switch
+        {
+            HmiCheckBoxGroup checkBox => checkBox.IndicatorOnRight,
+            HmiRadioButtonGroup radioBox => radioBox.IndicatorOnRight,
+            _ => null
+        };
+        if (indicatorOnRight is not null)
+            AppendAttribute(html, "indicator-on-right", ResolveStaticValue(indicatorOnRight, context) ? "true" : "false");
         var drawInsideFrame = selectionGroup switch
         {
             HmiCheckBoxGroup checkBox => checkBox.DrawStrokeInsideFrame,

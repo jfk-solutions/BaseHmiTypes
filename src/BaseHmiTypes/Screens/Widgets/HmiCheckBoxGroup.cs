@@ -4,6 +4,9 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public class HmiCheckBoxGroup : HmiSelectionGroupBase
 {
+    /// <summary>True places the checkbox indicator to the right of its caption; false/omitted keeps it on the left.</summary>
+    public HmiProperty<bool>? IndicatorOnRight { get; set; }
+
     /// <summary>For borders wider than one pixel, true draws inside the frame and false centers on it. Omitted values retain inside placement.</summary>
     public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
 
