@@ -10,6 +10,8 @@ export class HmiSlider extends HmiBar {
 
   thumbBackgroundColor?: HmiProperty<HmiColor>;
   thumbForegroundColor?: HmiProperty<HmiColor>;
+  /** Configured small-change increment; preview rendering does not perform process writes. */
+  stepSize?: HmiProperty<number>;
   trackHighBackgroundColor?: HmiProperty<HmiColor>;
   trackLowBackgroundColor?: HmiProperty<HmiColor>;
   highStopColor?: HmiProperty<HmiColor>;

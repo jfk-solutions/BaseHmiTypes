@@ -800,7 +800,7 @@ test("HTML converter renders bar slider and scale previews", async () => {
   assert.match(html, /<meter id="LevelBar"/);
   assert.match(html, /min="0" max="100" value="35">35<\/meter>/);
   assert.match(html, /<input id="SetpointSlider"/);
-  assert.match(html, /type="range" min="-10" max="10" value="4" disabled="disabled"/);
+  assert.match(html, /type="range" min="-10" max="10" value="4" step="any" disabled="disabled"/);
   assert.match(html, /<div id="LevelScale"/);
   assert.match(html, /><span>0<\/span><span>100<\/span><\/div>/);
 });
@@ -1185,6 +1185,31 @@ test("HTML converter renders slider orientations", async () => {
   assert.match(html, /id="LeftSlider"[^>]*direction: rtl;" data-hmi-slider="true" data-orientation="Left"/);
   assert.match(html, /id="RightSlider"[^>]*direction: ltr;" data-hmi-slider="true" data-orientation="Right"/);
 });
+
+for (const [orientation, stepSize] of [[0, 5], [1, 0], [2, -1], [3, 5]]) {
+test(`HTML converter preserves fractional slider value and small change (${orientation})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const slider = new HmiSlider();
+  slider.width = staticProperty(120);
+  slider.height = staticProperty(80);
+  slider.beginValue = staticProperty(-20);
+  slider.endValue = staticProperty(120);
+  slider.value = staticProperty(35.25);
+  slider.orientation = staticProperty(orientation);
+  slider.stepSize = staticProperty(stepSize);
+  layer.items.push(slider);
+  screen.layers.push(layer);
+  const converter = new HmiScreenToHtmlConverter();
+  let html = await converter.convertAsync(screen);
+  assert.ok(html.includes(`data-small-change="${stepSize}"`));
+  assert.ok(html.includes('min="-20" max="120" value="35.25" step="any" disabled="disabled"'));
+  delete slider.stepSize;
+  html = await converter.convertAsync(screen);
+  assert.ok(!html.includes("data-small-change"));
+  assert.ok(html.includes('value="35.25" step="any"'));
+});
+}
 
 test("HTML converter renders slider thumb color", async () => {
   const screen = new HmiScreen();

@@ -1777,10 +1777,16 @@ function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvert
   appendCommonAttributes(html, slider, context, true, sliderStyle);
   appendAttribute(html, "data-hmi-slider", "true");
   appendAttribute(html, "data-orientation", HmiFillDirection[direction]);
+  const stepSize = getStaticValue(slider.stepSize);
+  if (stepSize !== undefined)
+    appendAttribute(html, "data-small-change", stepSize.toString());
   appendAttribute(html, "type", "range");
   appendAttribute(html, "min", toCss(minimum));
   appendAttribute(html, "max", toCss(maximum));
   appendAttribute(html, "value", toCss(value));
+  // This is an inert process-value preview, not an operator setpoint editor.
+  // A native range step would quantize values that are not multiples of SmallChange.
+  appendAttribute(html, "step", "any");
   appendAttribute(html, "disabled", "disabled");
   html.push(">");
 }
