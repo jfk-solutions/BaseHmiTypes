@@ -26,6 +26,7 @@ import { HmiLineStyle } from "../../screens/base/HmiLineStyle.js";
 import { HmiLineCap } from "../../screens/base/HmiLineCap.js";
 import { HmiLineMarker } from "../../screens/base/HmiLineMarker.js";
 import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
+import { HmiTrendValueAxis } from "../../screens/base/HmiTrendValueAxis.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
 import { getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
@@ -3216,6 +3217,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticAttribute(html, "maximum-value", trendControl.maximumValue);
   appendStaticAttribute(html, "y-axis-decimal-places", trendControl.yAxisDecimalPlaces);
   appendAttribute(html, "pens", formatTrendPens(trendControl.pens));
+  appendAttribute(html, "value-axes", formatTrendValueAxes(trendControl.valueAxes));
   html.push("></hmi-trend-control>");
 }
 
@@ -3364,6 +3366,27 @@ function appendStaticBooleanValueAttribute(
 ): void {
   const value = getStaticValue(property);
   if (value !== undefined) appendAttribute(html, name, value ? "true" : "false");
+}
+
+// Use the same axis wire fields as legacy per-pen configurations.
+function formatTrendValueAxes(axes: readonly HmiTrendValueAxis[]): string | undefined {
+  return formatTrendPens(axes.map((axis, index) => {
+    const pen = new HmiTrendPen();
+    pen.number = index + 1;
+    if (axis.name !== undefined) pen.valueAxisName = axis.name;
+    if (axis.label !== undefined) pen.valueAxisLabel = axis.label;
+    if (axis.minimumValue !== undefined) pen.minimumValue = axis.minimumValue;
+    if (axis.maximumValue !== undefined) pen.maximumValue = axis.maximumValue;
+    if (axis.decimalPlaces !== undefined) pen.decimalPlaces = axis.decimalPlaces;
+    if (axis.scaleType !== undefined) pen.axisScaleType = axis.scaleType;
+    if (axis.exponentialFormat !== undefined) pen.exponentialFormat = axis.exponentialFormat;
+    if (axis.autoDecimalPlaces !== undefined) pen.autoDecimalPlaces = axis.autoDecimalPlaces;
+    if (axis.visible !== undefined) pen.valueAxisVisible = axis.visible;
+    if (axis.color !== undefined) pen.valueAxisColor = axis.color;
+    if (axis.inTrendColor !== undefined) pen.valueAxisInTrendColor = axis.inTrendColor;
+    if (axis.alignment !== undefined) pen.valueAxisAlignment = axis.alignment;
+    return pen;
+  }));
 }
 
 function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
