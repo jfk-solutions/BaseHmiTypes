@@ -2965,6 +2965,7 @@ public class HmiScreenToHtmlConverter
     {
         html.Append('<').Append(elementName);
         AppendCommonAttributes(html, selectionGroup, context);
+        AppendAttribute(html, "frame-border-style", GetBorderStyleCss(selectionGroup, context));
         AppendStaticAttribute(html, "selected-index", selectionGroup.SelectedIndex);
         var selectedFields = selectionGroup switch
         {
