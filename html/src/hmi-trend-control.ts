@@ -62,6 +62,7 @@ interface TrendPen {
   name?: string;
   label?: string;
   trendWindowName?: string;
+  renderWindowName?: string;
   timeAxisName?: string;
   color?: string;
   visible?: boolean;
@@ -159,7 +160,7 @@ export class HmiTrendControl extends HTMLElement {
     const axesByName = new Map(configuredValueAxes.map(axis => [axis.valueAxisName, axis]));
     const pens = parsePens(this.getAttribute("pens")).map(pen => {
       const axis = pen.valueAxisName ? axesByName.get(pen.valueAxisName) : undefined;
-      return axis ? { ...pen, ...axis, number: pen.number, trendWindowName: pen.trendWindowName, timeAxisName: pen.timeAxisName } : pen;
+      return axis ? { ...pen, ...axis, number: pen.number, trendWindowName: pen.trendWindowName, timeAxisName: pen.timeAxisName, renderWindowName: axis.trendWindowName ?? pen.trendWindowName } : pen;
     });
     const visiblePens = pens.filter(pen => pen.visible !== false);
     const trendWindows = parseTrendWindows(this.getAttribute("trend-windows"));
@@ -527,6 +528,8 @@ export class HmiTrendControl extends HTMLElement {
 
 interface TimeAxis {
   name: string;
+  trendWindowName?: string;
+  configuration: Record<string, unknown>;
   color: string;
   attributes: Record<string, string>;
 }
@@ -553,7 +556,7 @@ function parseTimeAxes(value: string | null): TimeAxis[] {
         if (typeof source[key!] === "string") attributes[attribute!] = source[key!] as string;
       }
       if (typeof source.timeSpan === "number" && Number.isFinite(source.timeSpan)) attributes["x-axis-time-span"] = String(source.timeSpan);
-      return [{ name: source.name, color: normalizeCssColor(typeof source.color === "string" ? source.color : undefined, "#444850"), attributes }];
+      return [{ name: source.name, trendWindowName: typeof source.trendWindowName === "string" ? source.trendWindowName : undefined, configuration: source, color: normalizeCssColor(typeof source.color === "string" ? source.color : undefined, "#444850"), attributes }];
     });
   } catch { return []; }
 }
@@ -600,10 +603,17 @@ function renderTrendWindows(
   axes: readonly TrendPen[], backgroundColor: string, foregroundColor: string,
 ): string {
   const defaultWindow = windows[0]!.name;
+  const penWindow = (pen: TrendPen) => pen.renderWindowName ?? pen.trendWindowName ?? defaultWindow;
+  const timeAxes = parseTimeAxes(parent.getAttribute("time-axes"));
+  const timeAxisWindow = (axis: TimeAxis) => axis.trendWindowName
+    ?? pens.find(pen => pen.timeAxisName === axis.name)?.renderWindowName
+    ?? pens.find(pen => pen.timeAxisName === axis.name)?.trendWindowName ?? defaultWindow;
   const axisWindow = (axis: TrendPen) => axis.trendWindowName
+    ?? pens.find(pen => pen.valueAxisName === axis.valueAxisName)?.renderWindowName
     ?? pens.find(pen => pen.valueAxisName === axis.valueAxisName)?.trendWindowName ?? defaultWindow;
   return windows.filter(window => window.visible).map(window => {
-    const windowPens = pens.filter(pen => (pen.trendWindowName ?? defaultWindow) === window.name);
+    const windowPens = pens.filter(pen => penWindow(pen) === window.name);
+    const windowTimeAxes = timeAxes.filter(axis => timeAxisWindow(axis) === window.name);
     const windowAxes = axes.filter(axis => axisWindow(axis) === window.name || windowPens.some(pen => pen.valueAxisName === axis.valueAxisName))
       .map(axis => axisWindow(axis) === window.name ? axis : { ...axis, valueAxisVisible: false });
     const attributes: Record<string, string> = {};
@@ -616,8 +626,10 @@ function renderTrendWindows(
       "display-chart-title": "false", "display-scroll-mechanism": "false",
       pens: JSON.stringify(windowPens),
       "value-axes": JSON.stringify(windowAxes),
+      "time-axes": JSON.stringify(windowTimeAxes.map(axis => axis.configuration)),
     });
     if (axes.length && !windowAxes.length) attributes["y-axis-scale-visible"] = "false";
+    if (timeAxes.length && !windowTimeAxes.length) attributes["x-axis-scale-visible"] = "false";
     const css = Object.entries(window.colors).map(([name, color]) => `--hmi-trend-${name}:${color};`).join("");
     const attributeText = Object.entries(attributes).map(([name, value]) => `${name}="${escapeHtml(value)}"`).join(" ");
     return `<hmi-trend-control data-trend-window="${escapeHtml(window.name)}" style="position:relative;display:block;background:${escapeHtml(backgroundColor)};color:${escapeHtml(foregroundColor)};${css}" ${attributeText}></hmi-trend-control>`;
@@ -675,7 +687,7 @@ function renderValueAxes(
     const alignment = axis.valueAxisAlignment === "Right" ? "right" : "left";
     const column = alignment === "right" ? right++ : left++;
     const trendPenIndex = axis.trendWindowName
-      ? pens.findIndex(pen => pen.trendWindowName === axis.trendWindowName)
+      ? pens.findIndex(pen => (pen.renderWindowName ?? pen.trendWindowName) === axis.trendWindowName)
       : pens.length ? 0 : -1;
     const color = axis.valueAxisInTrendColor === true && trendPenIndex >= 0
       ? normalizePenColor(pens[trendPenIndex]!.color, trendPenIndex) : normalizeCssColor(axis.valueAxisColor, foregroundColor);

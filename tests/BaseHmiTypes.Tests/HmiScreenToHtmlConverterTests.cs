@@ -3251,7 +3251,7 @@ public class HmiScreenToHtmlConverterTests
         var trend = new HmiTrendControl { Name = "Trend", Width = 320, Height = 180 };
         trend.TimeAxes.Add(new HmiTrendTimeAxis
         {
-            Name = "Time A", Visible = false, ShowDate = true, DateFormat = "yyyy/MM/dd",
+            Name = "Time A", TrendWindowName = "Time window", Visible = false, ShowDate = true, DateFormat = "yyyy/MM/dd",
             TimeFormat = HmiTrendTimeFormat.TwentyFourHour, DisplayMilliseconds = true,
             TimeSpan = 120000, TimeSpanUnit = "Milliseconds", Alignment = HmiVerticalAlignment.Top,
             Color = HmiColor.FromArgb(255, 0x12, 0x34, 0x56), InTrendColor = false, Label = "Recorded time"
@@ -3289,6 +3289,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Unused&quot;");
         StringAssert.Contains(html, "&quot;valueAxisLabel&quot;:&quot;Standalone&quot;");
         StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Axis window&quot;");
+        StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Time window&quot;");
         StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Pen window&quot;");
         StringAssert.Contains(html, "&quot;timeAxisName&quot;:&quot;Time A&quot;");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Axis A&quot;");
