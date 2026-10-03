@@ -2705,6 +2705,7 @@ async function appendSelectionGroup(
 ): Promise<void> {
   html.push(`<${elementName}`);
   appendCommonAttributes(html, selectionGroup, context);
+  appendAttribute(html, "frame-border-style", getBorderStyleCss(selectionGroup, context));
   appendStaticAttribute(html, "selected-index", selectionGroup.selectedIndex);
   if (selectionGroup instanceof HmiCheckBoxGroup || selectionGroup instanceof HmiRadioButtonGroup)
     appendStaticAttribute(html, "selected-fields", selectionGroup.selectedFields);

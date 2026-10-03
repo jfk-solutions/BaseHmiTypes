@@ -2,6 +2,7 @@ const selectionGroupProperties = {
   selectedIndex: Number,
   selectedFields: Number,
   drawStrokeInsideFrame: Boolean,
+  frameBorderStyle: String,
   selectionItemHeight: Number,
   selectionBackgroundColor: String,
   selectionForegroundColor: String,
@@ -27,6 +28,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   private _selectedIndex = -1;
   private _selectedFields: number | undefined;
   private _drawStrokeInsideFrame = true;
+  private _frameBorderStyle = "solid";
   private _selectionItemHeight = Number.NaN;
   private _selectionBackgroundColor = "";
   private _selectionForegroundColor = "";
@@ -63,6 +65,15 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
     if (this._drawStrokeInsideFrame === next) return;
     this._drawStrokeInsideFrame = next;
     this.queueRender();
+  }
+
+  get frameBorderStyle(): string {
+    return this._frameBorderStyle;
+  }
+  set frameBorderStyle(value: string | null | undefined) {
+    const candidate = value?.trim().toLowerCase() ?? "solid";
+    const next = ["none", "solid", "dashed", "dotted", "double", "groove"].includes(candidate) ? candidate : "solid";
+    this.setStringProperty("_frameBorderStyle", next, "solid");
   }
 
   get selectionItemHeight(): number {
@@ -217,8 +228,8 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
           overflow: hidden;
           color: ${escapeCss(foregroundColor)};
           background: ${escapeCss(backgroundColor)};
-          border: ${centeredBorder ? "0" : toCss(borderWidth)}px solid ${escapeCss(borderColor)};
-          ${centeredBorder ? `outline: ${toCss(borderWidth)}px solid ${escapeCss(borderColor)}; outline-offset: ${toCss(-borderWidth / 2)}px;` : ""}
+          border: ${centeredBorder ? "0" : toCss(borderWidth)}px ${this._frameBorderStyle} ${escapeCss(borderColor)};
+          ${centeredBorder ? `outline: ${toCss(borderWidth)}px ${this._frameBorderStyle} ${escapeCss(borderColor)}; outline-offset: ${toCss(-borderWidth / 2)}px;` : ""}
           border-radius: 8px;
           display: grid;
           align-content: start;
