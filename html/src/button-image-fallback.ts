@@ -1,5 +1,6 @@
 // Graphic-or-text buttons keep their caption in the DOM for failed images.
-// Capture load/error because these image events do not bubble.
+// Capture load/error on document: these events do not bubble, and image load
+// does not reach window capture in Chrome.
 function updateFallback(image: HTMLImageElement): void {
   const graphic = image.closest<HTMLElement>("[data-hmi-button-graphic]");
   const button = graphic?.closest<HTMLButtonElement>("button[data-hmi-button-image-fallback]");
@@ -19,7 +20,7 @@ function scan(node: Node): void {
 }
 
 for (const type of ["load", "error"])
-  window.addEventListener(type, event => {
+  document.addEventListener(type, event => {
     if (event.target instanceof HTMLImageElement) updateFallback(event.target);
   }, true);
 
