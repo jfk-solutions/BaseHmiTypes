@@ -90,6 +90,41 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const angle of [0,90,270,-90,450,45]) for (const adapt of [false,true]) {
+test("HTML renderer rotates static text without its frame (" + [angle,adapt].join(", ") + ")", async () => {
+  const item = new HmiText(); item.name = "OrientedText"; item.width = staticProperty(80); item.height = staticProperty(160);
+  item.text = staticProperty(HmiMultilingualText.fromText("Tank level")); item.adaptBorderToContent = staticProperty(adapt);
+  item.font = new HmiFont(); item.font.orientationAngle = tagProperty("Text.Angle",angle);
+  item.borderWidth = staticProperty(4); item.borderColor = staticProperty(hmiColorFromArgb(255,1,2,3));
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<div id="OrientedText"[^>]*>/u)?.[0] ?? "";
+  const normalized = ((angle % 360) + 360) % 360;
+  assert.equal(opening.includes("writing-mode:"),normalized === 90 || normalized === 270);
+  if (normalized === 90 || normalized === 270) assert.ok(opening.includes(normalized === 90 ? "writing-mode: sideways-lr;" : "writing-mode: sideways-rl;"));
+  assert.ok(!opening.includes("transform:")); assert.ok(opening.includes("border-width: 4px;"));
+  assert.equal(opening.includes("width: max-content;height: max-content;"),adapt); assert.ok(html.includes("Tank level"));
+});
+}
+
+for (const angle of [90,270]) for (const right of [false,true]) for (const bottom of [false,true]) {
+test("HTML renderer keeps sideways text alignment physical (" + [angle,right,bottom].join(", ") + ")", async () => {
+  const item = new HmiText(); item.name = "AlignedText"; item.width = staticProperty(80); item.height = staticProperty(160);
+  item.text = staticProperty(HmiMultilingualText.fromText("Tank"));
+  item.font = new HmiFont(); item.font.orientationAngle = staticProperty(angle);
+  item.horizontalAlignment = staticProperty(right ? HmiHorizontalAlignment.Right : HmiHorizontalAlignment.Left);
+  item.verticalAlignment = staticProperty(bottom ? HmiVerticalAlignment.Bottom : HmiVerticalAlignment.Top);
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<div id="AlignedText"[^>]*>/u)?.[0] ?? "";
+  const main = bottom === (angle === 90) ? "flex-start" : "flex-end";
+  const cross = right === (angle === 90) ? "flex-end" : "flex-start";
+  assert.ok(opening.includes("text-align: start;justify-content: " + main + ";align-items: " + cross + ";"));
+});
+}
+
 for (const mode of [0,1,2,3]) for (const foregroundBlink of [false,true]) {
 test("HTML renderer preserves explicit button caption color (" + [mode,foregroundBlink].join(", ") + ")", async () => {
   const item = new HmiButton(); item.name = "CaptionButton";
