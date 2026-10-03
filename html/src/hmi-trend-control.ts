@@ -696,11 +696,13 @@ function renderValueAxes(
   axes: readonly TrendPen[], pens: readonly TrendPen[],
   minimum: number, maximum: number, decimalPlaces: number, foregroundColor: string,
 ): string {
-  let left = 0;
-  let right = 0;
-  return axes.filter(axis => axis.valueAxisVisible !== false).map(axis => {
+  const visibleAxes = axes.filter(axis => axis.valueAxisVisible !== false);
+  let left = visibleAxes.filter(axis => axis.valueAxisAlignment !== "Right").length;
+  let right = visibleAxes.filter(axis => axis.valueAxisAlignment === "Right").length;
+  return visibleAxes.map(axis => {
     const alignment = axis.valueAxisAlignment === "Right" ? "right" : "left";
-    const column = alignment === "right" ? right++ : left++;
+    // Earlier axes in WinCC's list are farther from the plot on their side.
+    const column = alignment === "right" ? --right : --left;
     const trendPenIndex = axis.trendWindowName
       ? pens.findIndex(pen => (pen.renderWindowName ?? pen.trendWindowName) === axis.trendWindowName)
       : pens.length ? 0 : -1;
@@ -751,12 +753,16 @@ function renderXLabels(values: TimeLabel[]): string {
 }
 
 function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], flipped: boolean, locale: string | undefined): string {
-  const columns = { top: 0, bottom: 0 };
+  const visibleAxes = axes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false");
+  const columns = {
+    top: visibleAxes.filter(axis => axis.attributes["x-axis-alignment"]?.toLowerCase() === "top").length,
+    bottom: visibleAxes.filter(axis => axis.attributes["x-axis-alignment"]?.toLowerCase() !== "top").length,
+  };
   const now = Date.now();
-  return axes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false").map(axis => {
+  return visibleAxes.map(axis => {
     const source = { getAttribute: (name: string) => axis.attributes[name] ?? null };
     const alignment = source.getAttribute("x-axis-alignment")?.toLowerCase() === "top" ? "top" : "bottom";
-    const column = columns[alignment]++;
+    const column = --columns[alignment];
     const span = readDurationMilliseconds(readNumberAttribute(source, "x-axis-time-span", 63_000), source.getAttribute("x-axis-time-span-unit"));
     const labels = createTimeLabels(new Date(now - span), readBooleanAttribute(source, "x-axis-date-visible", true), span,
       source.getAttribute("time-format")?.toLowerCase() === "twentyfourhour" ? "twenty-four-hour" : "twelve-hour",

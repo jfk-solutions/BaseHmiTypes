@@ -3257,6 +3257,7 @@ public class HmiScreenToHtmlConverterTests
             Color = HmiColor.FromArgb(255, 0x12, 0x34, 0x56), InTrendColor = false, Label = "Recorded time"
         });
         trend.TimeAxes.Add(new HmiTrendTimeAxis { Name = "Time B", Visible = true, Alignment = HmiVerticalAlignment.Bottom, Label = "Second time axis" });
+        trend.TimeAxes.Add(new HmiTrendTimeAxis { Name = "Time C", Visible = true, Alignment = HmiVerticalAlignment.Bottom });
         trend.TrendWindows.Add(new HmiTrendWindow
         {
             Name = "Window A", Visible = false, SpacePortion = 3, XAxisGridVisible = false,
@@ -3268,6 +3269,7 @@ public class HmiScreenToHtmlConverterTests
             TrendWindowName = "Axis window",
             DecimalPlaces = 1, Visible = true, Alignment = HmiHorizontalAlignment.Left
         });
+        trend.ValueAxes.Add(new HmiTrendValueAxis { Name = "Second value", Visible = true, Alignment = HmiHorizontalAlignment.Left });
         trend.Pens.Add(new HmiTrendPen
         {
             Number = 1, DecimalPlaces = 4, ValueAxisName = "Axis A", ValueAxisVisible = false,
@@ -3293,6 +3295,12 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Time window&quot;");
         StringAssert.Contains(html, "&quot;name&quot;:&quot;Time B&quot;");
         StringAssert.Contains(html, "&quot;label&quot;:&quot;Second time axis&quot;");
+        StringAssert.Contains(html, "&quot;name&quot;:&quot;Time A&quot;");
+        StringAssert.Contains(html, "&quot;name&quot;:&quot;Time C&quot;");
+        StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Second value&quot;");
+        Assert.IsTrue(html.IndexOf("&quot;name&quot;:&quot;Time A&quot;", StringComparison.Ordinal) < html.IndexOf("&quot;name&quot;:&quot;Time B&quot;", StringComparison.Ordinal));
+        Assert.IsTrue(html.IndexOf("&quot;name&quot;:&quot;Time B&quot;", StringComparison.Ordinal) < html.IndexOf("&quot;name&quot;:&quot;Time C&quot;", StringComparison.Ordinal));
+        Assert.IsTrue(html.IndexOf("&quot;valueAxisName&quot;:&quot;Unused&quot;", StringComparison.Ordinal) < html.IndexOf("&quot;valueAxisName&quot;:&quot;Second value&quot;", StringComparison.Ordinal));
         StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Pen window&quot;");
         StringAssert.Contains(html, "&quot;timeAxisName&quot;:&quot;Time A&quot;");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Axis A&quot;");
