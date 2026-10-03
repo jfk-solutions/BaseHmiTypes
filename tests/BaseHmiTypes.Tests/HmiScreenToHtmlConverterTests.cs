@@ -815,6 +815,38 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false, HmiGradientDirection.HorizontalFromLeft, "to right")]
+    [DataRow(true, HmiGradientDirection.HorizontalFromLeft, "to right")]
+    [DataRow(false, HmiGradientDirection.HorizontalFromRight, "to left")]
+    [DataRow(true, HmiGradientDirection.HorizontalFromRight, "to left")]
+    [DataRow(false, HmiGradientDirection.VerticalFromTop, "to bottom")]
+    [DataRow(true, HmiGradientDirection.VerticalFromTop, "to bottom")]
+    [DataRow(false, HmiGradientDirection.VerticalFromBottom, "to top")]
+    [DataRow(true, HmiGradientDirection.VerticalFromBottom, "to top")]
+    public async Task ConvertAsync_RendersBarTrackGradient(bool scale, HmiGradientDirection direction, string cssDirection)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        var bar = new HmiBar { ShowScale = scale,
+            UseFirstGradient = true, UseSecondGradient = true,
+            FirstGradientColor = HmiColor.FromArgb(255, 255, 0, 0),
+            MiddleGradientColor = HmiColor.FromArgb(255, 0, 255, 0),
+            SecondGradientColor = HmiColor.FromArgb(255, 0, 0, 255),
+            FirstGradientOffset = 25, SecondGradientOffset = 75, GradientDirection = direction };
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var meter = System.Text.RegularExpressions.Regex.Match(html, "<meter[^>]*>").Value;
+        StringAssert.Contains(meter, "data-hmi-bar-track=\"true\"");
+        StringAssert.Contains(html, $"--hmi-bar-track-background: linear-gradient({cssDirection}, #FF0000 0%, #00FF00 25%, #00FF00 75%, #0000FF 100%);");
+        bar.UseFirstGradient = false;
+        bar.UseSecondGradient = false;
+        html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        meter = System.Text.RegularExpressions.Regex.Match(html, "<meter[^>]*>").Value;
+        Assert.IsFalse(meter.Contains("data-hmi-bar-track", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersBarFillDirections()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };

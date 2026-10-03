@@ -1819,7 +1819,8 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendBarColorAttributes(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)
     {
-        if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.BackgroundColor), bar.BackgroundColor)?.StaticValue is HmiColor)
+        if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.BackgroundColor), bar.BackgroundColor)?.StaticValue is HmiColor ||
+            GetColorGradient(bar) is not null)
             AppendAttribute(html, "data-hmi-bar-track", "true");
         if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) is not null ||
             (bar.Enabled is not null && !ResolveStaticValue(bar.Enabled, context) &&
@@ -3045,12 +3046,12 @@ public class HmiScreenToHtmlConverter
         return new ColorGradient(direction?.StaticValue ?? HmiGradientDirection.HorizontalFromLeft, stops);
     }
 
-    private static void AppendColorGradientStyle(StringBuilder html, ColorGradient? gradient)
+    private static void AppendColorGradientStyle(StringBuilder html, ColorGradient? gradient, string property = "background-image")
     {
         if (gradient is not { } value)
             return;
 
-        html.Append("background-image: linear-gradient(").Append(ToCss(value.Direction));
+        html.Append(property).Append(": linear-gradient(").Append(ToCss(value.Direction));
         foreach (var (color, offset) in value.Stops)
             html.Append(", ").Append(ToCss(color)).Append(' ').Append(ToCss(offset)).Append('%');
         html.Append(");");
@@ -4572,7 +4573,10 @@ public class HmiScreenToHtmlConverter
             }
         }
         AppendFillPatternStyle(html, item, context);
-        AppendColorGradientStyle(html, GetColorGradient(item));
+        var colorGradient = GetColorGradient(item);
+        AppendColorGradientStyle(html, colorGradient);
+        if (item is HmiBar)
+            AppendColorGradientStyle(html, colorGradient, "--hmi-bar-track-background");
         if (margin != null)
         {
             html.Append("margin: ")
