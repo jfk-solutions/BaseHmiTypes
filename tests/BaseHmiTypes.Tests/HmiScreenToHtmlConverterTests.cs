@@ -3355,6 +3355,34 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false, false, 4)]
+    [DataRow(false, true, 4)]
+    [DataRow(true, false, 4)]
+    [DataRow(true, true, 4)]
+    [DataRow(false, false, 1)]
+    [DataRow(true, false, 1)]
+    public async Task ConvertAsync_RendersScaleWidgetBorderPlacement(bool slider, bool inside, int width)
+    {
+        HmiScaleWidgetBase item = slider ? new HmiSlider() : new HmiBar();
+        item.DrawInsideFrame = inside;
+        item.BorderWidth = width;
+        item.BorderColor = HmiColor.FromArgb(255, 12, 34, 56);
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(item);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, slider ? "<input[^>]*>" : "<meter[^>]*>").Value;
+        Assert.AreEqual(!inside && width > 1, opening.Contains("outline-width:", StringComparison.Ordinal));
+        if (!inside && width > 1)
+        {
+            StringAssert.Contains(opening, "outline-width: 4px;");
+            StringAssert.Contains(opening, "outline-offset: -2px;");
+            StringAssert.Contains(opening, "outline-color: #0C2238;");
+        }
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersGaugeAsGaugeWebComponent()
     {
         var screen = new HmiScreen { Id = "main", Name = "Main" };

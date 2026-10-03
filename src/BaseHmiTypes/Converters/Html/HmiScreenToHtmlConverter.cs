@@ -4532,6 +4532,15 @@ public class HmiScreenToHtmlConverter
             if (!suppressBorderStyle)
                 html.Append("border-style: ").Append(borderStyle).Append(";");
             html.Append("border-width: ").Append(ToCss(borderWidth.StaticValue)).Append("px;");
+            if (item is HmiBar or HmiSlider && item is HmiScaleWidgetBase scaleWidget &&
+                scaleWidget.DrawInsideFrame is not null && !ResolveStaticValue(scaleWidget.DrawInsideFrame, context) &&
+                borderWidth.StaticValue > 1 && borderColor is not HmiBlinkProperty<HmiColor>)
+            {
+                html.Append("border-width: 0px;outline-style: ").Append(borderStyle)
+                    .Append(";outline-width: ").Append(ToCss(borderWidth.StaticValue)).Append("px;")
+                    .Append("outline-offset: ").Append(ToCss(-borderWidth.StaticValue / 2)).Append("px;")
+                    .Append("outline-color: ").Append(borderColor?.StaticValue is HmiColor color ? ToCss(color) : "currentColor").Append(';');
+            }
         }
 
         if (item is HmiShapeBase shape)
