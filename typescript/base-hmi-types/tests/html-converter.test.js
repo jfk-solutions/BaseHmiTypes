@@ -1751,6 +1751,12 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   timeAxis.inTrendColor = staticProperty(false);
   timeAxis.label = "Recorded time";
   trend.timeAxes.push(timeAxis);
+  const secondTimeAxis = new HmiTrendTimeAxis();
+  secondTimeAxis.name = "Time B";
+  secondTimeAxis.visible = staticProperty(true);
+  secondTimeAxis.alignment = staticProperty(HmiVerticalAlignment.Bottom);
+  secondTimeAxis.label = "Second time axis";
+  trend.timeAxes.push(secondTimeAxis);
   const window = new HmiTrendWindow();
   window.name = "Window A";
   window.visible = staticProperty(false);
@@ -1796,6 +1802,8 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   assert.match(html, /&quot;valueAxisLabel&quot;:&quot;Standalone&quot;/);
   assert.match(html, /&quot;trendWindowName&quot;:&quot;Axis window&quot;/);
   assert.match(html, /&quot;trendWindowName&quot;:&quot;Time window&quot;/);
+  assert.match(html, /&quot;name&quot;:&quot;Time B&quot;/);
+  assert.match(html, /&quot;label&quot;:&quot;Second time axis&quot;/);
   assert.match(html, /&quot;trendWindowName&quot;:&quot;Pen window&quot;/);
   assert.match(html, /&quot;timeAxisName&quot;:&quot;Time A&quot;/);
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Axis A&quot;/);
