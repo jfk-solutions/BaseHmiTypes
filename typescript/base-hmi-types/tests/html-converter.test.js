@@ -955,6 +955,27 @@ test(`HTML converter exposes gauge scale visibility (${show})`, async () => {
 });
 }
 
+for (const [slider, inside, width] of [[false, false, 4], [false, true, 4], [true, false, 4], [true, true, 4], [false, false, 1], [true, false, 1]]) {
+test(`HTML converter renders scale widget border placement (${slider}, ${inside}, ${width})`, async () => {
+  const item = slider ? new HmiSlider() : new HmiBar();
+  item.drawInsideFrame = staticProperty(inside);
+  item.borderWidth = staticProperty(width);
+  item.borderColor = staticProperty(hmiColorFromArgb(255, 12, 34, 56));
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  layer.items.push(item);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(slider ? /<input[^>]*>/ : /<meter[^>]*>/)?.[0] ?? "";
+  assert.equal(opening.includes("outline-width:"), !inside && width > 1);
+  if (!inside && width > 1) {
+    assert.ok(opening.includes("outline-width: 4px;"));
+    assert.ok(opening.includes("outline-offset: -2px;"));
+    assert.ok(opening.includes("outline-color: #0C2238;"));
+  }
+});
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";

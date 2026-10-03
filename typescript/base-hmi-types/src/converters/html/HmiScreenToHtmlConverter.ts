@@ -4073,6 +4073,14 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   if (animations.length > 0)
     html.push(`animation: ${animations.join(", ")};`);
   appendWidthStyle(html, context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth), borderStyle, !suppressBorderStyle);
+  const scaleBorderWidth = getStaticValue(context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth));
+  if ((item instanceof HmiBar || item instanceof HmiSlider) && item.drawInsideFrame !== undefined &&
+      !getStaticValue(context.effectiveProperties.resolve(item, "DrawInsideFrame", item.drawInsideFrame)) && scaleBorderWidth !== undefined &&
+      scaleBorderWidth > 1 && borderColor?.kind !== HmiPropertyKind.Blink) {
+    const color = getStaticValue(borderColor);
+    html.push(`border-width: 0px;outline-style: ${borderStyle};outline-width: ${toCss(scaleBorderWidth)}px;`);
+    html.push(`outline-offset: ${toCss(-scaleBorderWidth / 2)}px;outline-color: ${color === undefined ? "currentColor" : colorToCss(color)};`);
+  }
   if (item instanceof HmiShapeBase) {
     appendColorStyle(html, "border-color", item.lineColor);
     appendWidthStyle(html, item.lineWidth, borderStyle);
