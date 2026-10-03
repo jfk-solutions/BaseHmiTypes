@@ -2969,6 +2969,12 @@ public class HmiScreenToHtmlConverter
         if (context.EffectiveProperties.Resolve(selectionGroup, nameof(HmiPaintedScreenItemBase.BorderColor), selectionGroup.BorderColor)
             is HmiBlinkProperty<HmiColor> { StaticValue: HmiColor, BlinkValue: HmiColor } borderBlink)
             AppendAttribute(html, "frame-border-flash-duration", GetBlinkDuration(borderBlink.Rate));
+        if (context.EffectiveProperties.Resolve(selectionGroup, nameof(HmiPaintedScreenItemBase.ForegroundColor), selectionGroup.ForegroundColor)
+            is HmiBlinkProperty<HmiColor> { StaticValue: HmiColor, BlinkValue: HmiColor } foregroundBlink)
+            AppendAttribute(html, "foreground-flash-duration", GetBlinkDuration(foregroundBlink.Rate));
+        if (context.EffectiveProperties.Resolve(selectionGroup, nameof(HmiPaintedScreenItemBase.BackgroundColor), selectionGroup.BackgroundColor)
+            is HmiBlinkProperty<HmiColor> { StaticValue: HmiColor, BlinkValue: HmiColor } backgroundBlink)
+            AppendAttribute(html, "background-flash-duration", GetBlinkDuration(backgroundBlink.Rate));
         AppendStaticAttribute(html, "selected-index", selectionGroup.SelectedIndex);
         var selectedFields = selectionGroup switch
         {
