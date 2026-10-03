@@ -5,6 +5,7 @@ const trendControlProperties = {
   windowBackgroundColor: String,
   pens: String,
   valueAxes: String,
+  trendWindows: String,
   displayChartTitle: String,
   showToolbar: String,
   toolbarAlignment: String,
@@ -160,6 +161,7 @@ export class HmiTrendControl extends HTMLElement {
       return axis ? { ...pen, ...axis, number: pen.number, trendWindowName: pen.trendWindowName, timeAxisName: pen.timeAxisName } : pen;
     });
     const visiblePens = pens.filter(pen => pen.visible !== false);
+    const trendWindows = parseTrendWindows(this.getAttribute("trend-windows"));
     const firstPen = visiblePens[0] ?? pens[0];
     const axisTrendColor = pens.length > 0 ? normalizePenColor(pens[0].color, 0) : undefined;
     const xAxisInTrendColor = readBooleanAttribute(this, "x-axis-in-trend-color", false);
@@ -338,6 +340,13 @@ export class HmiTrendControl extends HTMLElement {
           bottom: ${plotBottom}%;
         }
 
+        .window-layout {
+          left: 2.5%; right: 2.5%; display: grid;
+          grid-template-rows: ${trendWindows.filter(window => window.visible).map(window => `${toCss(window.spacePortion)}fr`).join(" ") || "1fr"};
+          gap: 1px;
+        }
+        .window-layout > hmi-trend-control { min-height: 0; min-width: 0; width: 100%; height: 100%; }
+
         .grid {
           width: 100%;
           height: 100%;
@@ -485,7 +494,7 @@ export class HmiTrendControl extends HTMLElement {
         ${displayChartTitle ? `<div class="title">${escapeHtml(chartTitle)}</div>` : ""}
         ${showToolbar ? `<div class="toolbar">${renderPenLegend(visiblePens, displayPenIcons, useTrendNameAsLabel)}</div>` : ""}
         ${showStatusBar ? `<div class="status">${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}</div>` : ""}
-        <div class="plot">
+        ${trendWindows.length ? `<div class="plot window-layout">${renderTrendWindows(this, trendWindows, pens, configuredValueAxes, backgroundColor, foregroundColor)}</div>` : `<div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             ${renderGrid(
               xAxisGridVisible,
@@ -505,10 +514,75 @@ export class HmiTrendControl extends HTMLElement {
           ${xAxisVisible ? renderXLabels(labels) : ""}
           ${xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
           ${yAxisVisible && yAxisLabel && !namedValueAxes.length ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
-        </div>
+        </div>`}
         ${displayScrollMechanism ? `<div class="scrollbar"><div class="scroll-thumb"${xAxisFlipped && chartLiveMode ? ' style="margin-left: 0"' : ""}></div></div>` : ""}
       </div>`;
   }
+}
+
+interface TrendWindow {
+  name: string;
+  visible: boolean;
+  spacePortion: number;
+  attributes: Record<string, string>;
+  colors: Record<string, string>;
+}
+
+function parseTrendWindows(value: string | null): TrendWindow[] {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap(entry => {
+      if (!entry || typeof entry !== "object") return [];
+      const source = entry as Record<string, unknown>;
+      if (typeof source.name !== "string" || !source.name) return [];
+      const attributes: Record<string, string> = {};
+      for (const key of ["xAxisGridVisible", "yAxisGridVisible", "majorGridVisible", "minorGridVisible", "gridInTrendColor", "useGraphicValueBar", "useGraphicStatisticRulers"]) {
+        if (typeof source[key] === "boolean") attributes[toKebabCase(key)] = String(source[key]);
+      }
+      for (const key of ["valueBarWidth", "statisticRulerWidth"]) {
+        if (typeof source[key] === "number" && Number.isFinite(source[key])) attributes[toKebabCase(key)] = String(source[key]);
+      }
+      const colors: Record<string, string> = {};
+      for (const key of ["majorGridColor", "minorGridColor", "valueBarColor", "statisticRulerColor"]) {
+        if (typeof source[key] === "string") {
+          const color = normalizeCssColor(source[key], "");
+          if (color) { attributes[toKebabCase(key)] = color; colors[toKebabCase(key)] = color; }
+        }
+      }
+      return [{ name: source.name, visible: source.visible !== false,
+        spacePortion: Math.max(1, finiteNumber(source.spacePortion, 1)), attributes, colors }];
+    });
+  } catch { return []; }
+}
+
+function renderTrendWindows(
+  parent: HmiTrendControl, windows: readonly TrendWindow[], pens: readonly TrendPen[],
+  axes: readonly TrendPen[], backgroundColor: string, foregroundColor: string,
+): string {
+  const defaultWindow = windows[0]!.name;
+  const axisWindow = (axis: TrendPen) => axis.trendWindowName
+    ?? pens.find(pen => pen.valueAxisName === axis.valueAxisName)?.trendWindowName ?? defaultWindow;
+  return windows.filter(window => window.visible).map(window => {
+    const windowPens = pens.filter(pen => (pen.trendWindowName ?? defaultWindow) === window.name);
+    const windowAxes = axes.filter(axis => axisWindow(axis) === window.name || windowPens.some(pen => pen.valueAxisName === axis.valueAxisName))
+      .map(axis => axisWindow(axis) === window.name ? axis : { ...axis, valueAxisVisible: false });
+    const attributes: Record<string, string> = {};
+    for (const name of [...HmiTrendControl.observedAttributes, "lang"]) {
+      const value = parent.getAttribute(name);
+      if (value !== null && name !== "trend-windows") attributes[name] = value;
+    }
+    Object.assign(attributes, window.attributes, {
+      "control-name": window.name, "show-toolbar": "false", "show-status-bar": "false",
+      "display-chart-title": "false", "display-scroll-mechanism": "false",
+      pens: JSON.stringify(windowPens),
+      "value-axes": JSON.stringify(windowAxes),
+    });
+    const css = Object.entries(window.colors).map(([name, color]) => `--hmi-trend-${name}:${color};`).join("");
+    const attributeText = Object.entries(attributes).map(([name, value]) => `${name}="${escapeHtml(value)}"`).join(" ");
+    return `<hmi-trend-control data-trend-window="${escapeHtml(window.name)}" style="position:relative;display:block;background:${escapeHtml(backgroundColor)};color:${escapeHtml(foregroundColor)};${css}" ${attributeText}></hmi-trend-control>`;
+  }).join("");
 }
 
 function renderGrid(

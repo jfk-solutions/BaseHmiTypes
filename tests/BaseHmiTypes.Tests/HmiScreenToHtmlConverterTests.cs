@@ -3249,6 +3249,11 @@ public class HmiScreenToHtmlConverterTests
         var screen = new HmiScreen { Name = "Main", Width = 400, Height = 240 };
         var layer = new HmiLayer { Name = "Default" };
         var trend = new HmiTrendControl { Name = "Trend", Width = 320, Height = 180 };
+        trend.TrendWindows.Add(new HmiTrendWindow
+        {
+            Name = "Window A", Visible = false, SpacePortion = 3, XAxisGridVisible = false,
+            MajorGridColor = HmiColor.FromArgb(255, 0x12, 0x34, 0x56), ValueBarWidth = 4
+        });
         trend.ValueAxes.Add(new HmiTrendValueAxis
         {
             Name = "Unused", Label = "Standalone", MinimumValue = 5, MaximumValue = 15,
@@ -3268,6 +3273,9 @@ public class HmiScreenToHtmlConverterTests
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
         StringAssert.Contains(html, "&quot;decimalPlaces&quot;:4");
         StringAssert.Contains(html, "value-axes=\"");
+        StringAssert.Contains(html, "trend-windows=\"");
+        StringAssert.Contains(html, "&quot;spacePortion&quot;:3");
+        StringAssert.Contains(html, "&quot;majorGridColor&quot;:&quot;#123456&quot;");
         StringAssert.Contains(html, "&quot;valueAxisName&quot;:&quot;Unused&quot;");
         StringAssert.Contains(html, "&quot;valueAxisLabel&quot;:&quot;Standalone&quot;");
         StringAssert.Contains(html, "&quot;trendWindowName&quot;:&quot;Axis window&quot;");

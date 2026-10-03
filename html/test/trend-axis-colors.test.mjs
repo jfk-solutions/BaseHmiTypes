@@ -17,6 +17,44 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("trend windows route pens and axes, retain empty windows and apply independent settings", () => {
+  const parent = new HmiTrendControl();
+  const windows = [
+    { name: "A", spacePortion: 1, xAxisGridVisible: false },
+    { name: "B", spacePortion: 3, yAxisGridVisible: false, majorGridColor: "#123456", useGraphicValueBar: true, valueBarColor: "#445566", valueBarWidth: 4 },
+    { name: "Empty", spacePortion: 2 }, { name: "Hidden", visible: false, spacePortion: 9 },
+  ];
+  parent.setAttribute("trend-windows", JSON.stringify(windows));
+  parent.setAttribute("pens", JSON.stringify([{ number: 1, trendWindowName: "A", valueAxisName: "Cross" }, { number: 2, trendWindowName: "B" }, { number: 3, trendWindowName: "Hidden" }]));
+  parent.setAttribute("value-axes", JSON.stringify([{ valueAxisName: "Cross", trendWindowName: "B" }, { valueAxisName: "Unused", trendWindowName: "Empty", minimum: 5, maximum: 15 }]));
+  parent.setAttribute("display-value-bar", "true");
+  const decode = value => value.replaceAll("&quot;", "\"").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+  const children = () => [...parent.shadowRoot.innerHTML.matchAll(/<hmi-trend-control\s+([^>]+)>/gu)].map(match => {
+    const attributes = Object.fromEntries([...match[1].matchAll(/([\w-]+)="([^"]*)"/gu)].map(attribute => [attribute[1], decode(attribute[2])]));
+    const child = new HmiTrendControl();
+    for (const [name, value] of Object.entries(attributes)) child.setAttribute(name, value);
+    child.connectedCallback();
+    return child;
+  });
+  let plots = children();
+  assert.equal(plots.length, 3);
+  assert.match(parent.shadowRoot.innerHTML, /grid-template-rows: 1fr 3fr 2fr;/u);
+  assert.deepEqual(plots.map(plot => JSON.parse(plot.getAttribute("pens")).map(pen => pen.number)), [[1], [2], []]);
+  assert.ok(!plots[0].shadowRoot.innerHTML.includes("data-axis-name="));
+  assert.match(plots[1].shadowRoot.innerHTML, /data-axis-name="Cross"/u);
+  assert.match(plots[2].shadowRoot.innerHTML, /data-axis-name="Unused"/u);
+  assert.equal(plots[0].getAttribute("x-axis-grid-visible"), "false");
+  assert.equal(plots[1].getAttribute("y-axis-grid-visible"), "false");
+  assert.match(plots[1].getAttribute("style"), /--hmi-trend-major-grid-color:#123456;/u);
+  assert.match(plots[1].shadowRoot.innerHTML, /background: #445566;/u);
+  assert.match(plots[1].shadowRoot.innerHTML, /width: 4px;/u);
+  assert.ok(plots.every(plot => plot.getAttribute("trend-windows") === null));
+  windows[0].visible = false;
+  parent.setAttribute("trend-windows", JSON.stringify(windows));
+  assert.equal(children().length, 2);
+  assert.match(parent.shadowRoot.innerHTML, /grid-template-rows: 3fr 2fr;/u);
+});
+
 test("independent pen, time-axis and value-axis window references survive rendering", () => {
   const control = new HmiTrendControl();
   control.setAttribute("value-axes", JSON.stringify([{ valueAxisName: "Axis", trendWindowName: "Axis <window>", minimum: 0, maximum: 10 }]));
