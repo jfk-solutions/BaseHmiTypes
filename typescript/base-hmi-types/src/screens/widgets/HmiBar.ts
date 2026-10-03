@@ -10,6 +10,10 @@ export class HmiBar extends HmiScaleWidgetBase {
   scaleAfterBar?: HmiProperty<boolean>;
   /** Use the lowest enabled threshold strictly above the value; otherwise retain the foreground color. */
   useThresholdFillColors?: HmiProperty<boolean>;
+  /** Show a black end arrow when the raw value is strictly below this limit. */
+  underflowLimit?: HmiProperty<number>;
+  /** Show a black end arrow when the raw value is strictly above this limit. */
+  overflowLimit?: HmiProperty<number>;
 
   constructor() {
     super();
