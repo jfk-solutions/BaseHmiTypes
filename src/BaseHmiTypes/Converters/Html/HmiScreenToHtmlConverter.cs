@@ -1753,14 +1753,7 @@ public class HmiScreenToHtmlConverter
     private static void AppendInput(StringBuilder html, HmiIOField ioField, HmiHtmlConvertContext context)
     {
         html.Append("<input");
-        var angle = ioField.Font?.OrientationAngle is null ? 0 : ResolveStaticValue(ioField.Font.OrientationAngle, context);
-        angle = (angle % 360 + 360) % 360;
-        AppendCommonAttributes(html, ioField, context, additionalStyle: angle switch
-        {
-            90 => "writing-mode: sideways-lr;",
-            270 => "writing-mode: sideways-rl;",
-            _ => null
-        });
+        AppendCommonAttributes(html, ioField, context, additionalStyle: CreateFontWritingModeStyle(ioField.Font, context));
         var text = ResolveStaticValue(ioField.Text, context)?.GetDisplayText(context.CultureInfo);
         if (string.IsNullOrWhiteSpace(text) && ioField.Text is HmiExpressionProperty<HmiMultilingualText> expression)
             text = expression.Expression;
@@ -2869,7 +2862,8 @@ public class HmiScreenToHtmlConverter
         }
 
         html.Append("<select");
-        AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: CreateStateStyle(selectedState));
+        AppendCommonAttributes(html, symbolicIoField, context, additionalStyle:
+            CreateStateStyle(selectedState) + CreateFontWritingModeStyle(symbolicIoField.Font, context));
         html.Append('>');
         foreach (var state in symbolicIoField.States)
         {
@@ -2884,6 +2878,18 @@ public class HmiScreenToHtmlConverter
             html.Append("</option>");
         }
         html.Append("</select>");
+    }
+
+    private static string? CreateFontWritingModeStyle(HmiFont? font, HmiHtmlConvertContext context)
+    {
+        var angle = font?.OrientationAngle is null ? 0 : ResolveStaticValue(font.OrientationAngle, context);
+        angle = (angle % 360 + 360) % 360;
+        return angle switch
+        {
+            90 => "writing-mode: sideways-lr;",
+            270 => "writing-mode: sideways-rl;",
+            _ => null
+        };
     }
 
     private static string GetBlinkDuration(HmiBlinkRate? rate) => rate switch
