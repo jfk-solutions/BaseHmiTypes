@@ -871,6 +871,41 @@ test("HTML converter renders bar scale ticks and appearance", async () => {
   assert.match(html, /<span>0.0&nbsp;bar<\/span><span>50.0&nbsp;bar<\/span><span>100.0&nbsp;bar<\/span>/);
 });
 
+for (const direction of [HmiFillDirection.Right, HmiFillDirection.Down, HmiFillDirection.Left, HmiFillDirection.Up]) {
+test(`HTML converter renders bar tick label intervals (${direction})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(40);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(100);
+  bar.value = staticProperty(35);
+  bar.showScale = staticProperty(true);
+  bar.divisionCount = staticProperty(5);
+  bar.tickLabelInterval = staticProperty(3);
+  bar.engineeringUnit = staticProperty("a&b");
+  bar.fillDirection = staticProperty(direction);
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const converter = new HmiScreenToHtmlConverter();
+  let html = await converter.convertAsync(screen);
+  const reversed = direction === HmiFillDirection.Left || direction === HmiFillDirection.Up;
+  assert.ok(html.includes(reversed
+    ? "<span></span><span>75&nbsp;a&amp;b</span><span></span><span></span><span>0&nbsp;a&amp;b</span>"
+    : "<span>0&nbsp;a&amp;b</span><span></span><span></span><span>75&nbsp;a&amp;b</span><span></span>"));
+  bar.showTickLabels = staticProperty(false);
+  html = await converter.convertAsync(screen);
+  assert.ok(html.includes("<span></span><span></span><span></span><span></span><span></span>"));
+  assert.ok(!html.includes("&nbsp;a&amp;b"));
+  bar.showTickLabels = staticProperty(true);
+  bar.tickLabelInterval = staticProperty(0);
+  html = await converter.convertAsync(screen);
+  assert.ok(html.includes("<span>25&nbsp;a&amp;b</span>"));
+  assert.ok(html.includes("<span>50&nbsp;a&amp;b</span>"));
+});
+}
+
 test("HTML converter renders enabled bar threshold markers", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
