@@ -1882,6 +1882,15 @@ public class HmiScreenToHtmlConverter
             style.Append(" color: ").Append(ToCss(ResolveStaticValue(bar.LabelColor, context))).Append(';');
         AppendBarScaleFontStyle(style, bar.LabelFont, context);
 
+        var tickLength = bar.MajorTickLength is null ? 6 : Math.Max(0, ResolveStaticValue(bar.MajorTickLength, context));
+        var tickWidth = bar.MajorTicksBold is not null && ResolveStaticValue(bar.MajorTicksBold, context) ? 2 : 1;
+        var afterBar = bar.ScaleAfterBar is null || ResolveStaticValue(bar.ScaleAfterBar, context);
+        var edge = vertical ? (afterBar ? "left" : "right") : (afterBar ? "top" : "bottom");
+        style.Append(" position: relative; box-sizing: border-box; padding-").Append(edge).Append(": ")
+            .Append(tickLength + 2).Append("px;");
+        if (!vertical)
+            style.Append(" min-height: ").Append(tickLength + 2).Append("px;");
+
         html.Append("<div");
         AppendAttribute(html, "data-hmi-bar-scale", "true");
         AppendAttribute(html, "style", style.ToString());
@@ -1905,6 +1914,20 @@ public class HmiScreenToHtmlConverter
             }
             html.Append("</span>");
         }
+        html.Append("<svg xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\" data-hmi-bar-ticks=\"true\"");
+        AppendAttribute(html, "style", $"position: absolute; pointer-events: none; overflow: visible; {edge}: 0; " +
+            (vertical ? $"top: 0; width: {tickLength}px; height: 100%;" : $"left: 0; width: 100%; height: {tickLength}px;"));
+        AppendAttribute(html, "stroke", bar.TickColor is null ? "currentColor" : ToCss(ResolveStaticValue(bar.TickColor, context)));
+        AppendAttribute(html, "stroke-width", tickWidth.ToString(CultureInfo.InvariantCulture));
+        html.Append('>');
+        for (var index = 0; index < tickCount; index++)
+        {
+            var percentage = ToCss(100d * index / (tickCount - 1));
+            html.Append(vertical
+                ? $"<line x1=\"0\" x2=\"{tickLength}\" y1=\"{percentage}%\" y2=\"{percentage}%\"></line>"
+                : $"<line y1=\"0\" y2=\"{tickLength}\" x1=\"{percentage}%\" x2=\"{percentage}%\"></line>");
+        }
+        html.Append("</svg>");
         html.Append("</div>");
     }
 

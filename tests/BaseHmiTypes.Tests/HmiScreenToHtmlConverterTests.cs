@@ -740,6 +740,33 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(HmiFillDirection.Up, true, "left", true)]
+    [DataRow(HmiFillDirection.Down, false, "right", false)]
+    [DataRow(HmiFillDirection.Left, true, "top", true)]
+    [DataRow(HmiFillDirection.Right, false, "bottom", false)]
+    public async Task ConvertAsync_RendersBarMajorTickStrokes(HmiFillDirection direction, bool after, string edge, bool bold)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        var bar = new HmiBar { Width = 120, Height = 80, ShowScale = true, DivisionCount = 3,
+            FillDirection = direction, ScaleAfterBar = after, ShowTickLabels = false,
+            MajorTickLength = 12, MajorTicksBold = bold, TickColor = HmiColor.FromArgb(255, 12, 34, 56) };
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var converter = new HmiScreenToHtmlConverter();
+        var html = await converter.ConvertAsync(screen);
+        StringAssert.Contains(html, $"padding-{edge}: 14px;");
+        StringAssert.Contains(html, "data-hmi-bar-ticks=\"true\"");
+        StringAssert.Contains(html, $"stroke=\"#0C2238\" stroke-width=\"{(bold ? 2 : 1)}\"");
+        StringAssert.Contains(html, direction is HmiFillDirection.Up or HmiFillDirection.Down
+            ? "<line x1=\"0\" x2=\"12\" y1=\"50%\" y2=\"50%\"></line>"
+            : "<line y1=\"0\" y2=\"12\" x1=\"50%\" x2=\"50%\"></line>");
+        StringAssert.Contains(html, "<span></span><span></span><span></span>");
+        bar.ShowScale = false;
+        Assert.IsFalse((await converter.ConvertAsync(screen)).Contains("data-hmi-bar-ticks", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     [DataRow(HmiFillDirection.Right, false)]
     [DataRow(HmiFillDirection.Down, false)]
     [DataRow(HmiFillDirection.Left, true)]
