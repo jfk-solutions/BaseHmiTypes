@@ -1,5 +1,35 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { HmiTextBox } from "../dist/index.js";
+
+for (const enabled of [false,true]) for (const readOnly of [false,true]) {
+test("HTML renderer renders native multiline editors ("+[enabled,readOnly].join(", ")+")", async () => {
+  const item = new HmiTextBox(); item.name="Editor"; item.enabled=tagProperty("Editor.Enabled",enabled);
+  item.readOnly=tagProperty("Editor.ReadOnly",readOnly); item.fieldLength=staticProperty(100);
+  item.text=staticProperty(HmiMultilingualText.fromText('Line 1\n</textarea><script>unsafe</script> & "quotes"'));
+  item.foregroundColor=staticProperty(hmiColorFromArgb(255,1,2,3));
+  item.disabledForegroundColor=staticProperty(hmiColorFromArgb(255,11,22,33)); item.useDisabledForegroundColor=staticProperty(true);
+  const layer=new HmiLayer();layer.items.push(item);const screen=new HmiScreen();screen.layers.push(layer);
+  const html=await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening=html.match(/<textarea id="Editor"[^>]*>/u)?.[0]??"";assert.ok(opening);
+  assert.equal(opening.includes('disabled="disabled"'),!enabled);assert.equal(opening.includes('readonly="readonly"'),readOnly);
+  assert.ok(opening.includes('maxlength="100"'));assert.ok(opening.includes("resize: none;"));
+  assert.ok(opening.includes(enabled ? "color: #010203;" : "color: #0B1621;"));
+  assert.ok(html.includes("Line 1\n&lt;/textarea&gt;&lt;script&gt;unsafe&lt;/script&gt; &amp;"));
+  assert.equal((html.match(/<\/textarea>/gu)??[]).length,1);
+});
+}
+for (const [length,resize] of [[0,false],[-1,true],[20,true]]) {
+test("HTML renderer retains leading multiline newline and resize ("+[length,resize].join(", ")+")", async () => {
+  const item=new HmiTextBox();item.name="Editor";item.fieldLength=staticProperty(length);item.resizable=staticProperty(resize);
+  item.text=staticProperty(HmiMultilingualText.fromText("\nFirst\nSecond"));
+  const layer=new HmiLayer();layer.items.push(item);const screen=new HmiScreen();screen.layers.push(layer);
+  const html=await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening=html.match(/<textarea id="Editor"[^>]*>/u)?.[0]??"";assert.ok(opening);
+  assert.equal(opening.includes("maxlength="),length>0);assert.ok(opening.includes(resize ? "resize: both;" : "resize: none;"));
+  assert.ok(html.includes(">\n\nFirst\nSecond</textarea>"));
+});
+}
 
 for (const list of [false,true]) for (const index of [0,1,2]) for (const explicitValue of [false,true]) {
 test("HTML renderer selects by index without inventing a value ("+[list,index,explicitValue].join(", ")+")", async () => {
