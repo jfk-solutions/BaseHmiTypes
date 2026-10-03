@@ -14,4 +14,6 @@ export class HmiRectangle extends HmiSurfaceShapeBase {
   bottomRightRadius?: HmiProperty<{ x: number; y: number }>;
   cornerRadius?: HmiProperty<number>;
   cornerStyle?: HmiProperty<number>;
+  /** Borders wider than one pixel are inside the frame when true, centered when false. */
+  drawStrokeInsideFrame?: HmiProperty<boolean>;
 }

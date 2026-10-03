@@ -90,6 +90,58 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const rounded of [false, true]) for (const inside of [false, true, undefined])
+for (const width of [1, 10]) for (const line of [false, true]) {
+test("HTML renderer supports rectangle border placement (" + [rounded,inside,width,line].join(", ") + ")", async () => {
+  const item = new HmiRectangle();
+  item.name = "FramedRectangle"; item.width = staticProperty(100); item.height = staticProperty(80);
+  if (inside !== undefined) item.drawStrokeInsideFrame = tagProperty("Border.Inside", inside);
+  if (rounded) item.topLeftRadius = item.topRightRadius = item.bottomLeftRadius = item.bottomRightRadius = staticProperty({x:20,y:10});
+  if (line) {
+    item.lineWidth = tagProperty("Line.Width", width);
+    item.lineColor = staticProperty(hmiColorFromArgb(255,12,34,56));
+    item.borderWidth = staticProperty(2);
+    item.borderColor = staticProperty(hmiColorFromArgb(255,255,0,0));
+  } else {
+    item.borderWidth = tagProperty("Border.Width", width);
+    item.borderColor = staticProperty(hmiColorFromArgb(255,12,34,56));
+  }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<div id="FramedRectangle"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening);
+  const centered = inside === false && width > 1;
+  assert.equal(opening.includes("outline-width:"), centered);
+  assert.ok(opening.includes("width: 100px;"));
+  assert.ok(opening.includes("height: 80px;"));
+  assert.ok(opening.includes("border-width: " + (centered ? 0 : width) + "px;"));
+  if (centered) {
+    assert.ok(opening.includes("outline-width: 10px;"));
+    assert.ok(opening.includes("outline-offset: -5px;"));
+    assert.ok(opening.includes("outline-color: #0C2238;"));
+  }
+  if (rounded) assert.ok(opening.includes("border-radius: 20px 20px 20px 20px / 10px 10px 10px 10px;"));
+});
+}
+
+for (const line of [false, true]) for (const inside of [false, true]) {
+test("HTML renderer supports flashing rectangle border placement (" + line + ", " + inside + ")", async () => {
+  const item = new HmiRectangle();
+  item.name = "FlashingRectangle"; item.drawStrokeInsideFrame = tagProperty("Border.Inside", inside);
+  const color = blinkProperty(hmiColorFromArgb(255,1,2,3),hmiColorFromArgb(255,4,5,6),HmiBlinkRate.Fast);
+  if (line) { item.lineWidth = staticProperty(10); item.lineColor = color; }
+  else { item.borderWidth = staticProperty(10); item.borderColor = color; }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<div id="FlashingRectangle"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening.includes("--hmi-border-color-off: #010203;"));
+  assert.ok(opening.includes("--hmi-border-color-on: #040506;"));
+  assert.ok(opening.includes("animation: hmi-" + (inside ? "border" : "outline") + "-color-flash 0.5s steps(1, end) infinite;"));
+});
+}
+
 for (const [kind, Shape] of [HmiCircle, HmiEllipse, HmiCircularArc, HmiEllipticalArc, HmiCircleSegment, HmiEllipseSegment].entries())
 for (const inside of [false, true]) for (const width of [1, 10]) {
 test(`HTML renderer supports curved inside strokes (${kind}, ${inside}, ${width})`, async () => {
