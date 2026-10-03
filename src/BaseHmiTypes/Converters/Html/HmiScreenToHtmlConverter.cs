@@ -1660,14 +1660,19 @@ public class HmiScreenToHtmlConverter
         var state = button.States.FirstOrDefault(candidate => candidate.Value == stateValue)
             ?? button.States.FirstOrDefault();
         var mode = button.Mode?.StaticValue;
-        var caption = state?.Text ?? ResolveStaticValue(button.Text, context);
+        var down = IsButtonDownVisual(button, context);
+        var caption = state?.Text ?? (down ? ResolveStaticValue(button.AlternateText, context) : null)
+            ?? ResolveStaticValue(button.Text, context);
         html.Append("<button");
         AppendCommonAttributes(html, button, context, additionalStyle: CreateButtonStyle(button, state, context));
         AppendAttribute(html, "aria-label", caption?.GetDisplayText(context.CultureInfo));
+        if (button.Toggle is not null && ResolveStaticValue(button.Toggle, context))
+            AppendAttribute(html, "aria-pressed", ResolveStaticValue(button.Pressed, context) ? "true" : "false");
         var enabled = button.Enabled is null || ResolveStaticValue(button.Enabled, context);
         if (!enabled)
             AppendAttribute(html, "disabled", "disabled");
-        var image = state?.Image ?? button.Image.GetStaticValue();
+        var image = state?.Image ?? (down ? ResolveStaticValue(button.AlternateImage, context) : null)
+            ?? button.Image.GetStaticValue();
         var disabledImageMode = ResolveStaticValue(button.DisabledImageMode, context);
         var showDisabledAppearance = !enabled && button.ShowDisabledState is not null && ResolveStaticValue(button.ShowDisabledState, context);
         if (showDisabledAppearance && disabledImageMode is HmiDisabledImageMode.Reference or HmiDisabledImageMode.Imported)
@@ -1692,6 +1697,9 @@ public class HmiScreenToHtmlConverter
             html.Append("</span>");
         html.Append("</button>");
     }
+
+    private static bool IsButtonDownVisual(HmiButton button, HmiHtmlConvertContext context) =>
+        ResolveStaticValue(button.Pressed, context) && !ResolveStaticValue(button.DownStateSameAsUp, context);
 
     private static void AppendButtonCaption(StringBuilder html, HmiButton button, HmiState? state,
         HmiMultilingualText? caption, bool boundedLayout, bool hidden, HmiHtmlConvertContext context)
@@ -1784,6 +1792,8 @@ public class HmiScreenToHtmlConverter
             : ResolveStaticValue(button.ThreeDBorderBottomColor, context);
         topColor ??= bottomColor;
         bottomColor ??= topColor;
+        if (IsButtonDownVisual(button, context))
+            (topColor, bottomColor) = (bottomColor, topColor);
         var top = topColor is null ? "currentColor" : ToCss(topColor.Value);
         var bottom = bottomColor is null ? "currentColor" : ToCss(bottomColor.Value);
         var width = ToCss(borderWidth);
