@@ -912,6 +912,22 @@ test(`HTML converter exposes gauge major ticks only (${only})`, async () => {
 });
 }
 
+for (const bold of [false, true]) {
+test(`HTML converter exposes gauge bold major ticks (${bold})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const gauge = new HmiGauge();
+  gauge.majorTicksBold = staticProperty(bold);
+  gauge.subDivisionCount = staticProperty(5);
+  layer.items.push(gauge);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const markup = html.match(/<hmi-gauge[^>]*>/)?.[0] ?? "";
+  assert.equal(markup.includes("major-ticks-bold"), bold);
+  assert.ok(markup.includes('sub-division-count="5"'));
+});
+}
+
 for (const show of [false, true]) {
 test(`HTML converter exposes gauge tick label visibility and interval (${show})`, async () => {
   const screen = new HmiScreen();

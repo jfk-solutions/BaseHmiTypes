@@ -34,6 +34,27 @@ function createGauge() {
   return gauge;
 }
 
+test("gauge bold major ticks update without changing minor marks or labels", () => {
+  const gauge = createGauge();
+  const count = expression => [...gauge.svg.innerHTML.matchAll(expression)].length;
+  assert.equal(gauge.majorTicksBold, false);
+  assert.equal(count(/stroke-width="0.7"/gu), 3);
+  assert.ok(Gauge.observedAttributes.includes("major-ticks-bold"));
+  gauge.attributeChangedCallback("major-ticks-bold", null, "");
+  assert.equal(gauge.majorTicksBold, true);
+  assert.equal(count(/stroke-width="1.4"/gu), 3);
+  assert.equal(count(/stroke-width="0.7"/gu), 0);
+  assert.equal(count(/stroke-width="0.45"/gu), 6);
+  assert.equal(count(/<text /gu), 3);
+  gauge.attributeChangedCallback("major-ticks-bold", "", null);
+  assert.equal(count(/stroke-width="0.7"/gu), 3);
+  gauge.majorTicksBold = true;
+  assert.equal(count(/stroke-width="1.4"/gu), 3);
+  gauge.majorTicksOnly = true;
+  assert.equal(count(/stroke-width="1.4"/gu), 3);
+  assert.equal(count(/stroke-width="0.45"/gu), 0);
+});
+
 test("gauge major-only attribute removes minor marks and restores them when removed", () => {
   const gauge = createGauge();
   const count = expression => [...gauge.svg.innerHTML.matchAll(expression)].length;
