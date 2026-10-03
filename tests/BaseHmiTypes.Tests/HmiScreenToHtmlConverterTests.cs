@@ -871,6 +871,34 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false, false, "#FF0000", "#0000FF")]
+    [DataRow(false, true, "#FF0000", "#0000FF")]
+    [DataRow(true, false, "#FF0000", "#0000FF")]
+    [DataRow(true, true, null, "#888888")]
+    public async Task ConvertAsync_KeepsScaledBarLimitFillSeparateFromScaleColor(bool disabled, bool useDisabledColor, string? fill, string foreground)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        var bar = new HmiBar { Name = "LimitScale", ShowScale = true, ShowLimitRanges = false,
+            Value = 5, BeginValue = 0, EndValue = 20, UseThresholdFillColors = true,
+            Enabled = !disabled, UseDisabledForegroundColor = useDisabledColor,
+            ForegroundColor = HmiColor.FromArgb(255, 0, 0, 255), DisabledForegroundColor = HmiColor.FromArgb(255, 136, 136, 136) };
+        bar.Thresholds.Add(new HmiThreshold { Value = 10, Enabled = true, Color = HmiColor.FromArgb(255, 255, 0, 0) });
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var root = System.Text.RegularExpressions.Regex.Match(html, "<div id=\"LimitScale\"[^>]*>").Value;
+        var meter = System.Text.RegularExpressions.Regex.Match(html, "<meter[^>]*>").Value;
+        StringAssert.Contains(root, $"color: {foreground};");
+        Assert.IsFalse(root.Contains("color: #FF0000;", StringComparison.Ordinal));
+        if (fill is not null)
+            StringAssert.Contains(meter, $"color: {fill};");
+        else
+            Assert.IsFalse(meter.Contains("color:", StringComparison.Ordinal));
+        StringAssert.Contains(html, "data-hmi-bar-scale=\"true\"");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersBarFillDirections()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
