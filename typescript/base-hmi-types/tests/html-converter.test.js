@@ -1036,6 +1036,40 @@ test(`HTML converter renders configured bar fill color (${scale}, ${blink})`, as
 }
 }
 
+for (const scale of [false, true]) {
+for (const blink of [false, true]) {
+test(`HTML converter renders configured bar track color (${scale}, ${blink})`, async () => {
+  const bar = new HmiBar();
+  bar.showScale = staticProperty(scale);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(100);
+  bar.value = staticProperty(35);
+  bar.backgroundColor = blink
+    ? blinkProperty(hmiColorFromArgb(255, 1, 2, 3), hmiColorFromArgb(255, 4, 5, 6), HmiBlinkRate.Fast)
+    : staticProperty(hmiColorFromArgb(255, 1, 2, 3));
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  let html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  let meter = html.match(/<meter[^>]*>/)?.[0] ?? "";
+  assert.ok(meter.includes('data-hmi-bar-track="true"'));
+  assert.ok(!meter.includes("data-hmi-bar-fill"));
+  assert.ok(html.includes("--hmi-bar-track-background: #010203;"));
+  assert.ok(html.includes("::-webkit-meter-bar{background:var(--hmi-bar-track-background);}"));
+  if (blink) {
+    assert.ok(html.includes("animation: hmi-background-color-flash 0.5s steps(1, end) infinite;"));
+    assert.ok(html.includes("--hmi-bar-track-background:var(--hmi-background-color-off);"));
+    assert.ok(html.includes("--hmi-bar-track-background:var(--hmi-background-color-on);"));
+  }
+  bar.backgroundColor = undefined;
+  html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  meter = html.match(/<meter[^>]*>/)?.[0] ?? "";
+  assert.ok(!meter.includes("data-hmi-bar-track"));
+});
+}
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";

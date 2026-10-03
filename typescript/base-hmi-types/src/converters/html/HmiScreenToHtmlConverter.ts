@@ -1558,7 +1558,7 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   }
   html.push("<meter");
   appendCommonAttributes(html, bar, context, true, getBarDirectionStyle(direction));
-  appendBarFillAttribute(html, bar, context);
+  appendBarColorAttributes(html, bar, context);
   appendAttribute(html, "data-fill-direction", HmiFillDirection[direction]);
   appendAttribute(html, "min", toCss(minimum));
   appendAttribute(html, "max", toCss(maximum));
@@ -1596,7 +1596,7 @@ function appendBarMeter(
   context: HmiHtmlConvertContext,
 ): void {
   html.push("<meter");
-  appendBarFillAttribute(html, bar, context);
+  appendBarColorAttributes(html, bar, context);
   appendAttribute(html, "style",
     `${vertical ? "height: 100%;" : "width: 100%;"} flex: 1; min-width: 0; min-height: 0;${getBarDirectionStyle(direction)}`);
   appendAttribute(html, "min", toCss(minimum));
@@ -1605,7 +1605,9 @@ function appendBarMeter(
   html.push(`>${toCss(value)}</meter>`);
 }
 
-function appendBarFillAttribute(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
+function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
+  if (getStaticValue(context.effectiveProperties.resolve(bar, "BackgroundColor", bar.backgroundColor)) !== undefined)
+    appendAttribute(html, "data-hmi-bar-track", "true");
   if (context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor) !== undefined ||
       (getStaticValue(bar.enabled) === false && getStaticValue(bar.useDisabledForegroundColor) === true &&
        bar.disabledForegroundColor !== undefined))
@@ -4070,6 +4072,9 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     } else {
       appendColorStyle(html, "background-color", backgroundColor);
     }
+    const barTrackColor = getStaticValue(backgroundColor);
+    if (item instanceof HmiBar && barTrackColor !== undefined)
+      html.push(`--hmi-bar-track-background: ${colorToCss(barTrackColor)};`);
   }
   const borderColor = context.effectiveProperties.resolve(item, "BorderColor", item.borderColor);
   const borderBlink = borderColor?.kind === HmiPropertyKind.Blink
