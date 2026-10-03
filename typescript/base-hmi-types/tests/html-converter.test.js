@@ -90,6 +90,21 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const angle of [0,90,270,-90]) {
+test("HTML renderer renders IO field font orientation (" + angle + ")", async () => {
+  const item = new HmiIOField(); item.name = "VerticalInput"; item.width = staticProperty(80); item.height = staticProperty(160);
+  item.text = staticProperty(HmiMultilingualText.fromText("123"));
+  item.font = new HmiFont(); item.font.orientationAngle = tagProperty("Input.Angle",angle);
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<input id="VerticalInput"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening); assert.equal(opening.includes("writing-mode:"),angle !== 0);
+  if (angle !== 0) assert.ok(opening.includes(angle === 90 ? "writing-mode: sideways-lr;" : "writing-mode: sideways-rl;"));
+  assert.ok(opening.includes('value="123"'));
+});
+}
+
 for (const angle of [0,90,270,-90,450,45]) for (const adapt of [false,true]) {
 test("HTML renderer rotates static text without its frame (" + [angle,adapt].join(", ") + ")", async () => {
   const item = new HmiText(); item.name = "OrientedText"; item.width = staticProperty(80); item.height = staticProperty(160);
