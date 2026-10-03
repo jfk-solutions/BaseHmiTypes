@@ -1767,6 +1767,7 @@ public class HmiScreenToHtmlConverter
 
         html.Append("<meter");
         AppendCommonAttributes(html, bar, context, additionalStyle: GetBarDirectionStyle(direction));
+        AppendBarFillAttribute(html, bar, context);
         AppendAttribute(html, "data-fill-direction", direction.ToString());
         AppendAttribute(html, "min", ToCss(minimum));
         AppendAttribute(html, "max", ToCss(maximum));
@@ -1788,20 +1789,23 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-hmi-bar-meter", "true");
         AppendAttribute(html, "style", "position: relative; display: flex; flex: 1; min-width: 0; min-height: 0;");
         html.Append('>');
-        AppendBarMeter(html, minimum, maximum, value, direction, vertical);
+        AppendBarMeter(html, bar, minimum, maximum, value, direction, vertical, context);
         AppendBarThresholds(html, bar, minimum, maximum, direction, context);
         html.Append("</div>");
     }
 
     private static void AppendBarMeter(
         StringBuilder html,
+        HmiBar bar,
         double minimum,
         double maximum,
         double value,
         HmiFillDirection direction,
-        bool vertical)
+        bool vertical,
+        HmiHtmlConvertContext context)
     {
         html.Append("<meter");
+        AppendBarFillAttribute(html, bar, context);
         AppendAttribute(
             html,
             "style",
@@ -1811,6 +1815,15 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "max", ToCss(maximum));
         AppendAttribute(html, "value", ToCss(value));
         html.Append('>').Append(ToCss(value)).Append("</meter>");
+    }
+
+    private static void AppendBarFillAttribute(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)
+    {
+        if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) is not null ||
+            (bar.Enabled is not null && !ResolveStaticValue(bar.Enabled, context) &&
+             bar.UseDisabledForegroundColor is not null && ResolveStaticValue(bar.UseDisabledForegroundColor, context) &&
+             bar.DisabledForegroundColor is not null))
+            AppendAttribute(html, "data-hmi-bar-fill", "true");
     }
 
     private static void AppendBarThresholds(
