@@ -27,6 +27,7 @@ import { HmiLineCap } from "../../screens/base/HmiLineCap.js";
 import { HmiLineMarker } from "../../screens/base/HmiLineMarker.js";
 import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
 import { HmiTrendValueAxis } from "../../screens/base/HmiTrendValueAxis.js";
+import { HmiTrendWindow } from "../../screens/base/HmiTrendWindow.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
 import { getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
@@ -3218,6 +3219,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControl, conte
   appendStaticAttribute(html, "y-axis-decimal-places", trendControl.yAxisDecimalPlaces);
   appendAttribute(html, "pens", formatTrendPens(trendControl.pens));
   appendAttribute(html, "value-axes", formatTrendValueAxes(trendControl.valueAxes));
+  appendAttribute(html, "trend-windows", formatTrendWindows(trendControl.trendWindows));
   html.push("></hmi-trend-control>");
 }
 
@@ -3366,6 +3368,27 @@ function appendStaticBooleanValueAttribute(
 ): void {
   const value = getStaticValue(property);
   if (value !== undefined) appendAttribute(html, name, value ? "true" : "false");
+}
+
+function formatTrendWindows(windows: readonly HmiTrendWindow[]): string | undefined {
+  if (!windows.length) return undefined;
+  return JSON.stringify(windows.map(window => {
+    const result: Record<string, string | number | boolean> = {};
+    if (window.name !== undefined) result.name = window.name;
+    for (const key of ["visible", "xAxisGridVisible", "yAxisGridVisible", "majorGridVisible", "minorGridVisible", "gridInTrendColor", "useGraphicValueBar", "useGraphicStatisticRulers"] as const) {
+      const value = getStaticValue(window[key]);
+      if (value !== undefined) result[key] = value;
+    }
+    for (const key of ["spacePortion", "valueBarWidth", "statisticRulerWidth"] as const) {
+      const value = getStaticValue(window[key]);
+      if (value !== undefined) result[key] = value;
+    }
+    for (const key of ["majorGridColor", "minorGridColor", "valueBarColor", "statisticRulerColor"] as const) {
+      const value = getStaticValue(window[key]);
+      if (value !== undefined) result[key] = colorToCss(value);
+    }
+    return result;
+  }));
 }
 
 // Use the same axis wire fields as legacy per-pen configurations.

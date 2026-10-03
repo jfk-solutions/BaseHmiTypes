@@ -62,6 +62,7 @@ import {
   HmiTrendLineType,
   HmiTrendPen,
   HmiTrendValueAxis,
+  HmiTrendWindow,
   HmiTrendTimeFormat,
   HmiThreshold,
   HmiThresholdValueMode,
@@ -1734,6 +1735,14 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   const screen = new HmiScreen();
   const layer = new HmiLayer();
   const trend = new HmiTrendControl();
+  const window = new HmiTrendWindow();
+  window.name = "Window A";
+  window.visible = staticProperty(false);
+  window.spacePortion = staticProperty(3);
+  window.xAxisGridVisible = staticProperty(false);
+  window.majorGridColor = staticProperty(hmiColorFromArgb(255, 0x12, 0x34, 0x56));
+  window.valueBarWidth = staticProperty(4);
+  trend.trendWindows.push(window);
   const axis = new HmiTrendValueAxis();
   axis.name = "Unused";
   axis.label = "Standalone";
@@ -1761,6 +1770,9 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
   assert.match(html, /&quot;decimalPlaces&quot;:4/);
   assert.match(html, /value-axes="/);
+  assert.match(html, /trend-windows="/);
+  assert.match(html, /&quot;spacePortion&quot;:3/);
+  assert.match(html, /&quot;majorGridColor&quot;:&quot;#123456&quot;/);
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Unused&quot;/);
   assert.match(html, /&quot;valueAxisLabel&quot;:&quot;Standalone&quot;/);
   assert.match(html, /&quot;trendWindowName&quot;:&quot;Axis window&quot;/);
