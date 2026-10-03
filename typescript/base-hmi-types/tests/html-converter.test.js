@@ -80,6 +80,27 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const [weight, bold] of [[500,false],[500,true],[0,false],[0,true],[-1,false],[-1,true]]) {
+test(`HTML renderer preserves gauge numeric font weight (${weight}, ${bold})`, async () => {
+  const font = new HmiFont();
+  font.weight = tagProperty("Gauge.Font.Weight", weight);
+  font.bold = tagProperty("Gauge.Font.Bold", bold);
+  const gauge = new HmiGauge();
+  gauge.labelFont = font;
+  const layer = new HmiLayer();
+  layer.items.push(gauge);
+  const screen = new HmiScreen();
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<hmi-gauge[^>]*>/u)?.[0];
+  const attribute = opening?.match(/label-font="([^"]*)"/u)?.[1];
+  assert.ok(attribute);
+  const value = JSON.parse(attribute.replaceAll("&quot;", '"'));
+  assert.equal(value.weight, weight);
+  assert.equal(value.bold, bold);
+});
+}
+
 for (const [kind, weight, bold] of [[0,500,false],[0,500,true],[0,0,false],[0,0,true],[0,-1,false],[0,-1,true],[1,500,false],[1,500,true],[1,0,false],[1,0,true],[1,-1,false],[1,-1,true],[2,500,false],[2,500,true],[2,0,false],[2,0,true],[2,-1,false],[2,-1,true]]) {
 test(`HTML renderer supports widget numeric font weight (${kind}, ${weight}, ${bold})`, async () => {
   const font = new HmiFont();

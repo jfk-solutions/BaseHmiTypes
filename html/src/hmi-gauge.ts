@@ -8,6 +8,7 @@ import {
 type GaugeFont = {
   name?: string;
   size?: number;
+  weight?: number;
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
@@ -495,7 +496,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     const y = this.valuePosition === 1 ? 48 : 55;
     const font = this.labelFont;
     const family = font?.name ?? "Arial, Helvetica, sans-serif";
-    const weight = font?.bold ? "700" : "400";
+    const weight = this.getFontWeight();
     const style = font?.italic ? "italic" : "normal";
 
     return `<text x="50" y="${y}"
@@ -507,7 +508,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     const font = this.labelFont;
     const size = font?.size ?? 6;
     const family = font?.name ?? "Arial, Helvetica, sans-serif";
-    const weight = font?.bold ? "700" : "400";
+    const weight = this.getFontWeight();
     const style = font?.italic ? "italic" : "normal";
     const decoration = font?.underline
       ? "underline"
@@ -516,6 +517,13 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
         : "none";
 
     return `fill="${escapeAttribute(this.labelColor)}" style="font-family: ${escapeAttribute(family)}; font-size: ${formatNumber(size)}px; font-weight: ${weight}; font-style: ${style}; text-decoration: ${decoration};"`;
+  }
+
+  private getFontWeight(): string {
+    const font = this.labelFont;
+    return typeof font?.weight === "number" && Number.isFinite(font.weight) && font.weight > 0
+      ? String(font.weight)
+      : font?.bold ? "700" : "400";
   }
 }
 
