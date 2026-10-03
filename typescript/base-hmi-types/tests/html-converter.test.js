@@ -1738,6 +1738,7 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   const trend = new HmiTrendControl();
   const timeAxis = new HmiTrendTimeAxis();
   timeAxis.name = "Time A";
+  timeAxis.trendWindowName = "Time window";
   timeAxis.visible = staticProperty(false);
   timeAxis.showDate = staticProperty(true);
   timeAxis.dateFormat = staticProperty("yyyy/MM/dd");
@@ -1794,6 +1795,7 @@ test("HTML converter exposes per-pen decimal precision", async () => {
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Unused&quot;/);
   assert.match(html, /&quot;valueAxisLabel&quot;:&quot;Standalone&quot;/);
   assert.match(html, /&quot;trendWindowName&quot;:&quot;Axis window&quot;/);
+  assert.match(html, /&quot;trendWindowName&quot;:&quot;Time window&quot;/);
   assert.match(html, /&quot;trendWindowName&quot;:&quot;Pen window&quot;/);
   assert.match(html, /&quot;timeAxisName&quot;:&quot;Time A&quot;/);
   assert.match(html, /&quot;valueAxisName&quot;:&quot;Axis A&quot;/);

@@ -3377,6 +3377,7 @@ function formatTrendTimeAxes(axes: readonly HmiTrendTimeAxis[]): string | undefi
   return JSON.stringify(axes.map(axis => {
     const result: Record<string, string | number | boolean> = {};
     if (axis.name !== undefined) result.name = axis.name;
+    if (axis.trendWindowName !== undefined) result.trendWindowName = axis.trendWindowName;
     if (axis.label !== undefined) result.label = axis.label;
     if (axis.timeSpanUnit !== undefined) result.timeSpanUnit = axis.timeSpanUnit;
     for (const key of ["visible", "showDate", "inTrendColor", "displayMilliseconds"] as const) {

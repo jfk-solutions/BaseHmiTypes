@@ -6,6 +6,7 @@ import { HmiTrendTimeFormat } from "./HmiTrendTimeFormat.js";
 /** A named time axis configured independently of trend pens. */
 export class HmiTrendTimeAxis {
   name?: string;
+  trendWindowName?: string;
   visible?: HmiProperty<boolean>;
   showDate?: HmiProperty<boolean>;
   dateFormat?: HmiProperty<string>;
