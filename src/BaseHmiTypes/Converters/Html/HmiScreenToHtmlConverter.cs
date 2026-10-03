@@ -4702,13 +4702,14 @@ public class HmiScreenToHtmlConverter
                 .Append(ToCss(margin.Bottom.GetStaticValueOrDefault())).Append("px ")
                 .Append(ToCss(margin.Left.GetStaticValueOrDefault())).Append("px;");
         }
-        if (padding != null)
+        var centeredTextInset = item is HmiText && centeredBorder ? borderWidth!.StaticValue / 2d : 0d;
+        if (padding != null || centeredTextInset > 0)
         {
             html.Append("padding: ")
-                .Append(ToCss(padding.Top.GetStaticValueOrDefault())).Append("px ")
-                .Append(ToCss(padding.Right.GetStaticValueOrDefault())).Append("px ")
-                .Append(ToCss(padding.Bottom.GetStaticValueOrDefault())).Append("px ")
-                .Append(ToCss(padding.Left.GetStaticValueOrDefault())).Append("px;");
+                .Append(ToCss((padding?.Top).GetStaticValueOrDefault() + centeredTextInset)).Append("px ")
+                .Append(ToCss((padding?.Right).GetStaticValueOrDefault() + centeredTextInset)).Append("px ")
+                .Append(ToCss((padding?.Bottom).GetStaticValueOrDefault() + centeredTextInset)).Append("px ")
+                .Append(ToCss((padding?.Left).GetStaticValueOrDefault() + centeredTextInset)).Append("px;");
         }
         if (font != null)
         {

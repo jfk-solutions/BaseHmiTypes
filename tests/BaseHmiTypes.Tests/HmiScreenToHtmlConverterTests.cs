@@ -72,7 +72,22 @@ public class HmiScreenToHtmlConverterTests
             StringAssert.Contains(opening, "outline-width: 10px;");
             StringAssert.Contains(opening, "outline-offset: -5px;");
             StringAssert.Contains(opening, "outline-color: #0C2238;");
+            StringAssert.Contains(opening, "padding: 5px 5px 5px 5px;");
         }
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task ConvertAsync_PreservesTextPaddingWithBorderPlacement(bool inside)
+    {
+        var item = new HmiText { Name = "PaddedText", DrawStrokeInsideFrame = inside,
+            BorderWidth = 10, Padding = new HmiThickness { Top = 2, Right = 3, Bottom = 4, Left = 1 } };
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<div id=\"PaddedText\"[^>]*>").Value;
+        StringAssert.Contains(opening, inside ? "padding: 2px 3px 4px 1px;" : "padding: 7px 8px 9px 6px;");
     }
 
     [TestMethod]
