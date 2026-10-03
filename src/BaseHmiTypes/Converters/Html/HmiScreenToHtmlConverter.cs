@@ -1683,7 +1683,7 @@ public class HmiScreenToHtmlConverter
         {
             html.Append("<span data-hmi-button-content style=\"display: flex;flex-direction: column;width: 100%;height: 100%;min-width: 0;min-height: 0;align-items: center;justify-content: center;overflow: hidden;\">")
                 .Append("<span data-hmi-button-graphic style=\"flex: 1 1 0;min-width: 0;min-height: 0;width: 100%;\">");
-            AppendInnerImage(html, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale);
+            AppendButtonImage(html, button, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale, context);
             html.Append("</span>");
         }
         if (mode != HmiButtonType.Graphic)
@@ -1715,6 +1715,25 @@ public class HmiScreenToHtmlConverter
         AppendMultilingualText(html, caption, context);
         if (wrapped)
             html.Append("</span>");
+    }
+
+    private static void AppendButtonImage(StringBuilder html, HmiButton button, string? imageUri, bool grayscale, HmiHtmlConvertContext context)
+    {
+        var aligned = button.ImageHorizontalAlignment is not null || button.ImageVerticalAlignment is not null;
+        if (aligned)
+        {
+            HmiHorizontalAlignment? horizontal = button.ImageHorizontalAlignment is null ? null : ResolveStaticValue(button.ImageHorizontalAlignment, context);
+            HmiVerticalAlignment? vertical = button.ImageVerticalAlignment is null ? null : ResolveStaticValue(button.ImageVerticalAlignment, context);
+            var x = horizontal switch { HmiHorizontalAlignment.Left => "start", HmiHorizontalAlignment.Center => "center", HmiHorizontalAlignment.Right => "end", _ => "stretch" };
+            var y = vertical switch { HmiVerticalAlignment.Top => "start", HmiVerticalAlignment.Center => "center", HmiVerticalAlignment.Bottom => "end", _ => "stretch" };
+            html.Append("<span data-hmi-button-image-layout");
+            AppendAttribute(html, "data-image-horizontal", x);
+            AppendAttribute(html, "data-image-vertical", y);
+            html.Append(" style=\"display: grid;grid-template-columns: minmax(0, 1fr);grid-template-rows: minmax(0, 1fr);width: 100%;height: 100%;overflow: hidden;justify-items: ")
+                .Append(x).Append(";align-items: ").Append(y).Append(";\">");
+        }
+        AppendInnerImage(html, imageUri, grayscale);
+        if (aligned) html.Append("</span>");
     }
 
     private static HmiBlinkProperty<HmiColor>? GetButtonCaptionBlink(HmiButton button, HmiState? state) =>
