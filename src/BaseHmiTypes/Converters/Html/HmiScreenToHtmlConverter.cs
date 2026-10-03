@@ -3705,6 +3705,7 @@ public class HmiScreenToHtmlConverter
         {
             var properties = new List<string>();
             AddTrendJsonString(properties, "name", axis.Name);
+            AddTrendJsonString(properties, "trendWindowName", axis.TrendWindowName);
             AddTrendJsonBoolean(properties, "visible", axis.Visible?.StaticValue);
             AddTrendJsonBoolean(properties, "showDate", axis.ShowDate?.StaticValue);
             AddTrendJsonString(properties, "dateFormat", axis.DateFormat?.StaticValue);

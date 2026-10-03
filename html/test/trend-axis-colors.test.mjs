@@ -59,6 +59,29 @@ test("separate windows use their assigned time-axis format, range, alignment and
   } finally { Date.now = originalNow; }
 });
 
+test("time axes own their window independently of referencing pens", () => {
+  const parent = new HmiTrendControl();
+  parent.setAttribute("trend-windows", JSON.stringify([{ name: "A" }, { name: "B" }, { name: "Empty" }]));
+  parent.setAttribute("pens", JSON.stringify([{ number: 1, trendWindowName: "A", valueAxisName: "Value", timeAxisName: "Time" }]));
+  parent.setAttribute("value-axes", JSON.stringify([{ valueAxisName: "Value", trendWindowName: "B" }]));
+  parent.setAttribute("time-axes", JSON.stringify([
+    { name: "Time", trendWindowName: "A", label: "Independent" },
+    { name: "Standalone", trendWindowName: "Empty", label: "Unused axis" },
+  ]));
+  const decode = value => value.replaceAll("&quot;", "\"").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+  const plots = [...parent.shadowRoot.innerHTML.matchAll(/<hmi-trend-control\s+([^>]+)>/gu)].map(match => {
+    const child = new HmiTrendControl();
+    for (const attribute of match[1].matchAll(/([\w-]+)="([^"]*)"/gu)) child.setAttribute(attribute[1], decode(attribute[2]));
+    child.connectedCallback();
+    return child;
+  });
+  assert.deepEqual(plots.map(plot => JSON.parse(plot.getAttribute("time-axes")).map(axis => axis.name)), [["Time"], [], ["Standalone"]]);
+  assert.deepEqual(plots.map(plot => JSON.parse(plot.getAttribute("pens")).map(pen => pen.number)), [[], [1], []]);
+  assert.match(plots[0].shadowRoot.innerHTML, /Independent/u);
+  assert.equal(plots[1].getAttribute("x-axis-scale-visible"), "false");
+  assert.match(plots[2].shadowRoot.innerHTML, /Unused axis/u);
+});
+
 test("trend windows route pens and axes, retain empty windows and apply independent settings", () => {
   const parent = new HmiTrendControl();
   const windows = [
@@ -81,7 +104,8 @@ test("trend windows route pens and axes, retain empty windows and apply independ
   let plots = children();
   assert.equal(plots.length, 3);
   assert.match(parent.shadowRoot.innerHTML, /grid-template-rows: 1fr 3fr 2fr;/u);
-  assert.deepEqual(plots.map(plot => JSON.parse(plot.getAttribute("pens")).map(pen => pen.number)), [[1], [2], []]);
+  assert.deepEqual(plots.map(plot => JSON.parse(plot.getAttribute("pens")).map(pen => pen.number)), [[], [1, 2], []]);
+  assert.equal(JSON.parse(plots[1].getAttribute("pens"))[0].trendWindowName, "A");
   assert.ok(!plots[0].shadowRoot.innerHTML.includes("data-axis-name="));
   assert.match(plots[1].shadowRoot.innerHTML, /data-axis-name="Cross"/u);
   assert.match(plots[2].shadowRoot.innerHTML, /data-axis-name="Unused"/u);

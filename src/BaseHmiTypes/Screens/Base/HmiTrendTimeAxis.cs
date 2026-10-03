@@ -4,6 +4,7 @@ namespace BaseHmiTypes.Screens.Base;
 public sealed class HmiTrendTimeAxis
 {
     public string? Name { get; set; }
+    public string? TrendWindowName { get; set; }
     public HmiProperty<bool>? Visible { get; set; }
     public HmiProperty<bool>? ShowDate { get; set; }
     public HmiProperty<string>? DateFormat { get; set; }
