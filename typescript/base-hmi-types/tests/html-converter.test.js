@@ -90,6 +90,72 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const adapt of [false, true]) for (const inside of [false, true, undefined])
+for (const width of [1, 10]) for (const line of [false, true]) {
+test("HTML renderer supports text border placement (" + [adapt,inside,width,line].join(", ") + ")", async () => {
+  const item = new HmiText();
+  item.name = "FramedText"; item.width = staticProperty(100); item.height = staticProperty(80);
+  item.text = staticProperty(HmiMultilingualText.fromText("Tank level"));
+  item.adaptBorderToContent = staticProperty(adapt);
+  if (inside !== undefined) item.drawStrokeInsideFrame = tagProperty("Border.Inside", inside);
+  if (line) {
+    item.lineWidth = tagProperty("Line.Width", width);
+    item.lineColor = staticProperty(hmiColorFromArgb(255,12,34,56));
+    item.borderWidth = staticProperty(2);
+    item.borderColor = staticProperty(hmiColorFromArgb(255,255,0,0));
+  } else {
+    item.borderWidth = tagProperty("Border.Width", width);
+    item.borderColor = staticProperty(hmiColorFromArgb(255,12,34,56));
+  }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<div id="FramedText"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening);
+  const centered = inside === false && width > 1;
+  assert.equal(opening.includes("outline-width:"), centered);
+  assert.ok(opening.includes("border-width: " + (centered ? 0 : width) + "px;"));
+  assert.equal(opening.includes("width: max-content;height: max-content;white-space: nowrap;"), adapt);
+  assert.ok(html.includes("Tank level"));
+  if (centered) {
+    assert.ok(opening.includes("outline-width: 10px;"));
+    assert.ok(opening.includes("outline-offset: -5px;"));
+    assert.ok(opening.includes("outline-color: #0C2238;"));
+    assert.ok(opening.includes("padding: 5px 5px 5px 5px;"));
+  }
+});
+}
+
+for (const inside of [false,true]) {
+test("HTML renderer preserves text padding with border placement (" + inside + ")", async () => {
+  const item = new HmiText();
+  item.name = "PaddedText"; item.drawStrokeInsideFrame = staticProperty(inside); item.borderWidth = staticProperty(10);
+  item.padding = {top:staticProperty(2),right:staticProperty(3),bottom:staticProperty(4),left:staticProperty(1)};
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<div id="PaddedText"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening.includes(inside ? "padding: 2px 3px 4px 1px;" : "padding: 7px 8px 9px 6px;"));
+});
+}
+
+for (const line of [false, true]) for (const inside of [false, true]) {
+test("HTML renderer supports flashing text border placement (" + line + ", " + inside + ")", async () => {
+  const item = new HmiText();
+  item.name = "FlashingText"; item.drawStrokeInsideFrame = tagProperty("Border.Inside", inside);
+  const color = blinkProperty(hmiColorFromArgb(255,1,2,3),hmiColorFromArgb(255,4,5,6),HmiBlinkRate.Fast);
+  if (line) { item.lineWidth = staticProperty(10); item.lineColor = color; }
+  else { item.borderWidth = staticProperty(10); item.borderColor = color; }
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<div id="FlashingText"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening.includes("--hmi-border-color-off: #010203;"));
+  assert.ok(opening.includes("--hmi-border-color-on: #040506;"));
+  assert.ok(opening.includes("animation: hmi-" + (inside ? "border" : "outline") + "-color-flash 0.5s steps(1, end) infinite;"));
+});
+}
+
 for (const rounded of [false, true]) for (const inside of [false, true, undefined])
 for (const width of [1, 10]) for (const line of [false, true]) {
 test("HTML renderer supports rectangle border placement (" + [rounded,inside,width,line].join(", ") + ")", async () => {

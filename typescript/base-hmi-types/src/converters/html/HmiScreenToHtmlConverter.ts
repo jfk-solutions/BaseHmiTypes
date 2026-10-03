@@ -4176,8 +4176,8 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   }
   let borderColor = context.effectiveProperties.resolve(item, "BorderColor", item.borderColor);
   let borderWidth = context.effectiveProperties.resolve(item, "BorderWidth", item.borderWidth);
-  const rectangleBorder = item instanceof HmiRectangle && item.drawStrokeInsideFrame !== undefined;
-  if (rectangleBorder && item instanceof HmiRectangle) {
+  const framedShapeBorder = (item instanceof HmiRectangle || item instanceof HmiText) && item.drawStrokeInsideFrame !== undefined;
+  if (framedShapeBorder && item instanceof HmiShapeBase) {
     borderColor = context.effectiveProperties.resolve(item, "LineColor", item.lineColor) ?? borderColor;
     borderWidth = context.effectiveProperties.resolve(item, "LineWidth", item.lineWidth) ?? borderWidth;
   }
@@ -4188,7 +4188,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   const centeredBorder = resolvedBorderWidth !== undefined && resolvedBorderWidth > 1 &&
     ((item instanceof HmiBar || item instanceof HmiSlider) && item.drawInsideFrame !== undefined &&
       !getStaticValue(context.effectiveProperties.resolve(item, "DrawInsideFrame", item.drawInsideFrame)) ||
-     item instanceof HmiRectangle && item.drawStrokeInsideFrame !== undefined &&
+     (item instanceof HmiRectangle || item instanceof HmiText) && item.drawStrokeInsideFrame !== undefined &&
       !getStaticValue(context.effectiveProperties.resolve(item, "DrawStrokeInsideFrame", item.drawStrokeInsideFrame)));
   if (borderBlink?.staticValue !== undefined && borderBlink.blinkValue !== undefined) {
     html.push(`--hmi-border-color-off: ${colorToCss(borderBlink.staticValue)};`);
@@ -4205,7 +4205,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     html.push(`border-width: 0px;outline-style: ${borderStyle};outline-width: ${toCss(resolvedBorderWidth)}px;`);
     html.push(`outline-offset: ${toCss(-resolvedBorderWidth / 2)}px;outline-color: ${color === undefined ? "currentColor" : colorToCss(color)};`);
   }
-  if (item instanceof HmiShapeBase && !rectangleBorder) {
+  if (item instanceof HmiShapeBase && !framedShapeBorder) {
     appendColorStyle(html, "border-color", item.lineColor);
     appendWidthStyle(html, item.lineWidth, borderStyle);
   }
@@ -4223,12 +4223,14 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
       )}px;`,
     );
   }
-  if (hasThicknessEdges(item.padding)) {
+  const centeredTextInset = item instanceof HmiText && centeredBorder ? (resolvedBorderWidth ?? 0) / 2 : 0;
+  const thicknessPadding = hasThicknessEdges(item.padding) ? item.padding : undefined;
+  if (thicknessPadding !== undefined || centeredTextInset > 0) {
     html.push(
-      `padding: ${toCss(getStaticValueOrDefault(item.padding.top, 0))}px ${toCss(
-        getStaticValueOrDefault(item.padding.right, 0),
-      )}px ${toCss(getStaticValueOrDefault(item.padding.bottom, 0))}px ${toCss(
-        getStaticValueOrDefault(item.padding.left, 0),
+      `padding: ${toCss(getStaticValueOrDefault(thicknessPadding?.top, 0) + centeredTextInset)}px ${toCss(
+        getStaticValueOrDefault(thicknessPadding?.right, 0) + centeredTextInset,
+      )}px ${toCss(getStaticValueOrDefault(thicknessPadding?.bottom, 0) + centeredTextInset)}px ${toCss(
+        getStaticValueOrDefault(thicknessPadding?.left, 0) + centeredTextInset,
       )}px;`,
     );
   }
