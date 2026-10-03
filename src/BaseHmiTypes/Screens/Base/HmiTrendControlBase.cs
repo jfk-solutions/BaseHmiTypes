@@ -174,6 +174,11 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public string? XAxisTimeSpanUnit { get; set; }
 
+    public HmiProperty<HmiTrendTimeBase>? TimeBase { get; set; }
+
+    /// <summary>Resolved project display zone (IANA ID, UTC, or Local), supplied by the host.</summary>
+    public string? ProjectTimeZoneId { get; set; }
+
     public HmiProperty<HmiTrendYAxisRangeMode>? YAxisRangeMode { get; set; }
 
     public HmiProperty<HmiTrendYAxisCustomBoundSource>? YAxisCustomMinimumSource { get; set; }

@@ -32,6 +32,8 @@ const trendControlProperties = {
   xAxisDateFormat: String,
   xAxisFlipped: String,
   timeFormat: String,
+  timeBase: String,
+  projectTimeZone: String,
   displayMilliseconds: String,
   xAxisTimeSpan: String,
   xAxisTimeSpanUnit: String,
@@ -239,7 +241,8 @@ export class HmiTrendControl extends HTMLElement {
     const displayMilliseconds = readBooleanAttribute(timeSource, "display-milliseconds", false);
     const xAxisDateFormat = timeSource.getAttribute("x-axis-date-format");
     const locale = this.getAttribute("lang") || (typeof document === "undefined" ? undefined : document.documentElement.lang) || undefined;
-    const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat, displayMilliseconds, xAxisDateFormat, locale);
+    const timeZone = resolveTimeZone(this);
+    const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat, displayMilliseconds, xAxisDateFormat, locale, timeZone ?? undefined);
     if (xAxisFlipped) labels.reverse();
     const plotTop = displayChartTitle ? (showToolbar && !toolbarAtBottom ? 29 : 15) : (showToolbar && !toolbarAtBottom ? 23 : 7);
     const plotBottom = (displayScrollMechanism ? 22 : 16) + (showStatusBar ? 10 : 0) + (showToolbar && toolbarAtBottom ? 12 : 0);
@@ -529,7 +532,7 @@ export class HmiTrendControl extends HTMLElement {
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
           ${displayStatisticRulers ? `<div class="statistic-ruler start" title="Statistics range start"></div><div class="statistic-ruler end" title="Statistics range end"></div>` : ""}
-          ${timeAxes.length ? renderTimeAxes(timeAxes, pens, xAxisFlipped, locale) : xAxisVisible ? renderXLabels(labels) : ""}
+          ${timeAxes.length ? renderTimeAxes(timeAxes, pens, xAxisFlipped, locale, timeZone) : xAxisVisible ? timeZone === null ? `<span class="axis-label x-label" style="left:50%">Project time zone unavailable</span>` : renderXLabels(labels) : ""}
           ${!timeAxes.length && xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
           ${yAxisVisible && yAxisLabel && !namedValueAxes.length ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
         </div>`}
@@ -757,7 +760,18 @@ function renderXLabels(values: TimeLabel[]): string {
     .join("");
 }
 
-function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], flipped: boolean, locale: string | undefined): string {
+function resolveTimeZone(control: Pick<Element, "getAttribute">): string | undefined | null {
+  const base = control.getAttribute("time-base")?.toLowerCase();
+  if (base === "utc") return "UTC";
+  if (base !== "project") return undefined;
+  const zone = control.getAttribute("project-time-zone");
+  if (zone?.toLowerCase() === "local") return undefined;
+  if (!zone) return null;
+  try { new Intl.DateTimeFormat("en", { timeZone: zone }); return zone; }
+  catch { return null; }
+}
+
+function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], flipped: boolean, locale: string | undefined, timeZone: string | undefined | null): string {
   const visibleAxes = axes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false");
   const columns = {
     top: visibleAxes.filter(axis => axis.attributes["x-axis-alignment"]?.toLowerCase() === "top").length,
@@ -776,7 +790,7 @@ function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], fl
     const span = fixedRange ? endTime - startTime : duration;
     const labels = createTimeLabels(new Date(start), readBooleanAttribute(source, "x-axis-date-visible", true), span,
       source.getAttribute("time-format")?.toLowerCase() === "twentyfourhour" ? "twenty-four-hour" : "twelve-hour",
-      readBooleanAttribute(source, "display-milliseconds", false), source.getAttribute("x-axis-date-format"), locale);
+      readBooleanAttribute(source, "display-milliseconds", false), source.getAttribute("x-axis-date-format"), locale, timeZone ?? undefined);
     if (flipped) labels.reverse();
     const trendIndex = axis.trendWindowName ? pens.findIndex(pen => (pen.renderWindowName ?? pen.trendWindowName) === axis.trendWindowName) : 0;
     const color = readBooleanAttribute(source, "x-axis-in-trend-color", false) && trendIndex >= 0 && pens[trendIndex]
@@ -785,7 +799,8 @@ function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], fl
     const measurementMode = source.getAttribute("rangeType") === "MeasurementPoints";
     const rangeUnavailable = source.getAttribute("rangeType") === "StartEnd" && !fixedRange;
     const rangeLabels = measurementMode ? `<span class="axis-label x-label" style="left:50%">${escapeHtml(source.getAttribute("measurementPoints") ?? "Unknown")} measurement points (timestamps unavailable)</span>`
-      : rangeUnavailable ? `<span class="axis-label x-label" style="left:50%">Time range unavailable</span>` : renderXLabels(labels);
+      : rangeUnavailable ? `<span class="axis-label x-label" style="left:50%">Time range unavailable</span>`
+      : timeZone === null ? `<span class="axis-label x-label" style="left:50%">Project time zone unavailable</span>` : renderXLabels(labels);
     return `<div class="time-axis ${alignment}" data-axis-name="${escapeHtml(axis.name)}" style="${alignment}:calc(-${toCss((column + 1) * 3.6)}em - 1px);color:${escapeHtml(color)}">${rangeLabels}${label ? `<span class="axis-label x-axis-title">${escapeHtml(label)}</span>` : ""}</div>`;
   }).join("");
 }
@@ -805,11 +820,12 @@ function createTimeLabels(
   displayMilliseconds: boolean,
   dateFormat: string | null,
   locale: string | undefined,
+  timeZone?: string,
 ): TimeLabel[] {
   const labels: TimeLabel[] = [];
   for (let index = 0; index < 8; index++) {
     const date = new Date(start.getTime() + index * timeSpanMilliseconds / 7);
-    labels.push(formatTimeLabel(date, includeDate, timeFormat, displayMilliseconds, dateFormat, locale));
+    labels.push(formatTimeLabel(date, includeDate, timeFormat, displayMilliseconds, dateFormat, locale, timeZone));
   }
   return labels;
 }
@@ -836,30 +852,39 @@ function formatTimeLabel(
   displayMilliseconds: boolean,
   dateFormat: string | null,
   locale: string | undefined,
+  timeZone?: string,
 ): TimeLabel {
-  const hours = date.getHours();
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  const seconds = date.getSeconds().toString().padStart(2, "0");
+  const parts = dateParts(date, timeZone);
+  const hours = parts.hour;
+  const minutes = parts.minute.toString().padStart(2, "0");
+  const seconds = parts.second.toString().padStart(2, "0");
   const milliseconds = displayMilliseconds ? `.${date.getMilliseconds().toString().padStart(3, "0")}` : "";
   const hour12 = hours % 12 === 0 ? 12 : hours % 12;
   const suffix = hours >= 12 ? "PM" : "AM";
   return {
-    primary: includeDate ? formatDateLabel(date, dateFormat, locale) : "",
+    primary: includeDate ? formatDateLabel(date, dateFormat, locale, timeZone, parts) : "",
     secondary: timeFormat === "twenty-four-hour"
       ? `${hours.toString().padStart(2, "0")}:${minutes}:${seconds}${milliseconds}`
       : `${hour12}:${minutes}:${seconds}${milliseconds}${suffix}`,
   };
 }
 
-function formatDateLabel(date: Date, format: string | null, locale: string | undefined): string {
-  if (!format) return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-  if (format.toLowerCase() === "automatic") return new Intl.DateTimeFormat(locale).format(date);
+function dateParts(date: Date, timeZone: string | undefined): { year: number; month: number; day: number; hour: number; minute: number; second: number } {
+  if (!timeZone) return { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate(), hour: date.getHours(), minute: date.getMinutes(), second: date.getSeconds() };
+  const parts = new Intl.DateTimeFormat("en-US-u-ca-gregory-nu-latn", { timeZone, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23" }).formatToParts(date);
+  const value = (name: string) => Number(parts.find(part => part.type === name)!.value);
+  return { year: value("year"), month: value("month"), day: value("day"), hour: value("hour"), minute: value("minute"), second: value("second") };
+}
+
+function formatDateLabel(date: Date, format: string | null, locale: string | undefined, timeZone: string | undefined, parts: ReturnType<typeof dateParts>): string {
+  if (!format) return `${parts.month}/${parts.day}/${parts.year}`;
+  if (format.toLowerCase() === "automatic") return new Intl.DateTimeFormat(locale, { timeZone }).format(date);
   const tokens: Record<string, string> = {
-    dd: date.getDate().toString().padStart(2, "0"),
-    MM: (date.getMonth() + 1).toString().padStart(2, "0"),
-    MMM: new Intl.DateTimeFormat(locale, { month: "short" }).format(date),
-    yy: (date.getFullYear() % 100).toString().padStart(2, "0"),
-    yyyy: date.getFullYear().toString().padStart(4, "0"),
+    dd: parts.day.toString().padStart(2, "0"),
+    MM: parts.month.toString().padStart(2, "0"),
+    MMM: new Intl.DateTimeFormat(locale, { month: "short", timeZone }).format(date),
+    yy: (parts.year % 100).toString().padStart(2, "0"),
+    yyyy: parts.year.toString().padStart(4, "0"),
   };
   return format.replace(/yyyy|yy|MMM|MM|dd/gu, token => tokens[token]);
 }
