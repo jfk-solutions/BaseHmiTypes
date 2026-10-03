@@ -2707,6 +2707,16 @@ async function appendSelectionGroup(
   appendCommonAttributes(html, selectionGroup, context);
   appendAttribute(html, "frame-border-style", getBorderStyleCss(selectionGroup, context));
   const frameBorder = context.effectiveProperties.resolve(selectionGroup, "BorderColor", selectionGroup.borderColor);
+  for (const [name, property] of [
+    ["foreground", context.effectiveProperties.resolve(selectionGroup, "ForegroundColor", selectionGroup.foregroundColor)],
+    ["background", context.effectiveProperties.resolve(selectionGroup, "BackgroundColor", selectionGroup.backgroundColor)],
+  ] as const) {
+    if (property?.kind === HmiPropertyKind.Blink) {
+      const blink = property as HmiBlinkProperty<HmiColor>;
+      if (blink.staticValue !== undefined && blink.blinkValue !== undefined)
+        appendAttribute(html, `${name}-flash-duration`, getBlinkDuration(blink.rate));
+    }
+  }
   if (frameBorder?.kind === HmiPropertyKind.Blink) {
     const blink = frameBorder as HmiBlinkProperty<HmiColor>;
     if (blink.staticValue !== undefined && blink.blinkValue !== undefined)
