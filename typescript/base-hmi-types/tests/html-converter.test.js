@@ -24,6 +24,10 @@ import {
   HmiAuditTrailViewKind,
   HmiBar,
   HmiButton,
+  HmiCircularArc,
+  HmiEllipticalArc,
+  HmiCircleSegment,
+  HmiEllipseSegment,
   HmiIOField,
   HmiClock,
   HmiComboBox,
@@ -79,6 +83,34 @@ import {
   staticProperty,
   tagProperty,
 } from "../dist/index.js";
+
+for (const kind of [0, 1, 2, 3]) for (const sweep of [360, -360]) for (const start of [0, 90]) {
+test(`HTML renderer supports full-turn arcs (${kind}, ${sweep}, ${start})`, async () => {
+  const Shape = [HmiCircularArc, HmiEllipticalArc, HmiCircleSegment, HmiEllipseSegment][kind];
+  const shape = new Shape();
+  shape.name = "FullTurn";
+  shape.width = staticProperty(100);
+  shape.height = staticProperty(80);
+  shape.centerX = staticProperty(50);
+  shape.centerY = staticProperty(40);
+  if (kind % 2 === 0) shape.radius = staticProperty(40);
+  else { shape.radiusX = staticProperty(50); shape.radiusY = staticProperty(40); }
+  shape.startAngle = staticProperty(start);
+  shape.sweepAngle = staticProperty(sweep);
+  const layer = new HmiLayer();
+  layer.items.push(shape);
+  const screen = new HmiScreen();
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const svg = html.match(/<svg id="FullTurn"[^>]*>(.*?)<\/svg>/su)?.[1];
+  const path = svg?.match(/<path[^>]*d="([^"]*)"/u)?.[1];
+  const radiusX = kind % 2 === 0 ? 40 : 50;
+  const first = start === 0 ? `${50 + radiusX} 40` : "50 80";
+  const opposite = start === 0 ? `${50 - radiusX} 40` : "50 0";
+  const direction = sweep > 0 ? 1 : 0;
+  assert.equal(path, `M ${first} A ${radiusX} 40 0 0 ${direction} ${opposite} A ${radiusX} 40 0 0 ${direction} ${first} Z`);
+});
+}
 
 for (const [weight, bold] of [[500,false],[500,true],[0,false],[0,true],[-1,false],[-1,true]]) {
 test(`HTML renderer preserves gauge numeric font weight (${weight}, ${bold})`, async () => {

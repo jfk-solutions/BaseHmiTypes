@@ -987,6 +987,12 @@ function createArcPath(
   sweepAngle: number,
   segment: boolean,
 ): string {
+  if (Math.abs(sweepAngle) === 360) {
+    const first = getEllipsePoint(centerX, centerY, radiusX, radiusY, startAngle);
+    const opposite = getEllipsePoint(centerX, centerY, radiusX, radiusY, startAngle + sweepAngle / 2);
+    const direction = sweepAngle > 0 ? 1 : 0;
+    return `M ${toCss(first.x)} ${toCss(first.y)} A ${toCss(radiusX)} ${toCss(radiusY)} 0 0 ${direction} ${toCss(opposite.x)} ${toCss(opposite.y)} A ${toCss(radiusX)} ${toCss(radiusY)} 0 0 ${direction} ${toCss(first.x)} ${toCss(first.y)} Z`;
+  }
   const endAngle = startAngle + sweepAngle;
   const start = getEllipsePoint(centerX, centerY, radiusX, radiusY, startAngle);
   const end = getEllipsePoint(centerX, centerY, radiusX, radiusY, endAngle);
