@@ -716,7 +716,7 @@ public class HmiScreenToHtmlConverterTests
             EndValue = 100,
             Value = 35,
             ShowScale = true,
-            DivisionCount = 3,
+            DivisionCount = 2,
             TickLabelDecimalPlaces = 1,
             EngineeringUnit = "bar",
             LabelColor = HmiColor.FromArgb(255, 12, 34, 56),
@@ -748,7 +748,7 @@ public class HmiScreenToHtmlConverterTests
     {
         var screen = new HmiScreen { Width = 320, Height = 240 };
         var layer = new HmiLayer();
-        var bar = new HmiBar { Width = 120, Height = 80, ShowScale = true, DivisionCount = 3,
+        var bar = new HmiBar { Width = 120, Height = 80, ShowScale = true, DivisionCount = 2,
             FillDirection = direction, ScaleAfterBar = after, ShowTickLabels = false,
             MajorTickLength = 12, MajorTicksBold = bold, TickColor = HmiColor.FromArgb(255, 12, 34, 56) };
         layer.Items.Add(bar);
@@ -767,6 +767,25 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(0, 2)]
+    [DataRow(1, 2)]
+    [DataRow(4, 5)]
+    [DataRow(100, 101)]
+    public async Task ConvertAsync_RendersBarScaleSections(int sections, int tickCount)
+    {
+        var screen = new HmiScreen { Width = 320, Height = 240 };
+        var layer = new HmiLayer();
+        layer.Items.Add(new HmiBar { Width = 120, Height = 80, ShowScale = true, DivisionCount = sections,
+            BeginValue = 0, EndValue = 100 });
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var strokes = System.Text.RegularExpressions.Regex.Match(html, "<svg[^>]*data-hmi-bar-ticks[^>]*>(.*?)</svg>").Groups[1].Value;
+        Assert.AreEqual(tickCount, System.Text.RegularExpressions.Regex.Matches(strokes, "<line ").Count);
+        StringAssert.Contains(html, "<span>0</span>");
+        StringAssert.Contains(html, "<span>100</span>");
+    }
+
+    [TestMethod]
     [DataRow(HmiFillDirection.Right, false)]
     [DataRow(HmiFillDirection.Down, false)]
     [DataRow(HmiFillDirection.Left, true)]
@@ -776,7 +795,7 @@ public class HmiScreenToHtmlConverterTests
         var screen = new HmiScreen { Width = 320, Height = 240 };
         var layer = new HmiLayer();
         var bar = new HmiBar { Width = 120, Height = 40, BeginValue = 0, EndValue = 100, Value = 35,
-            ShowScale = true, DivisionCount = 5, TickLabelInterval = 3, EngineeringUnit = "a&b", FillDirection = direction };
+            ShowScale = true, DivisionCount = 4, TickLabelInterval = 3, EngineeringUnit = "a&b", FillDirection = direction };
         layer.Items.Add(bar);
         screen.Layers.Add(layer);
         var converter = new HmiScreenToHtmlConverter();
@@ -834,7 +853,7 @@ public class HmiScreenToHtmlConverterTests
         var screen = new HmiScreen { Width = 320, Height = 240 };
         var layer = new HmiLayer();
         var bar = new HmiBar { Width = 120, Height = 40, BeginValue = minimum, EndValue = maximum,
-            ShowScale = true, DivisionCount = 3, TickLabelDecimalPlaces = 2, TickLabelExponentialFormat = true };
+            ShowScale = true, DivisionCount = 2, TickLabelDecimalPlaces = 2, TickLabelExponentialFormat = true };
         layer.Items.Add(bar);
         screen.Layers.Add(layer);
         var converter = new HmiScreenToHtmlConverter();
