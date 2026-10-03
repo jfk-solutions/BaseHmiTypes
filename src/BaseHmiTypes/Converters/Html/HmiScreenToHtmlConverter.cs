@@ -4595,6 +4595,12 @@ public class HmiScreenToHtmlConverter
         var backgroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
         var borderColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderColor), item.BorderColor);
         var borderWidth = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderWidth), item.BorderWidth);
+        var rectangleBorder = item is HmiRectangle { DrawStrokeInsideFrame: not null };
+        if (rectangleBorder && item is HmiRectangle rectangle)
+        {
+            borderWidth = context.EffectiveProperties.Resolve(rectangle, nameof(HmiShapeBase.LineWidth), rectangle.LineWidth) ?? borderWidth;
+            borderColor = context.EffectiveProperties.Resolve(rectangle, nameof(HmiShapeBase.LineColor), rectangle.LineColor) ?? borderColor;
+        }
         var borderStyle = GetBorderStyleCss(item, context);
         var margin = item.Margin;
         var padding = item.Padding;
@@ -4602,9 +4608,11 @@ public class HmiScreenToHtmlConverter
         var horizontalAlignment = context.EffectiveProperties.Resolve(item, "HorizontalAlignment", GetHorizontalAlignment(item));
         var verticalAlignment = context.EffectiveProperties.Resolve(item, "VerticalAlignment", GetVerticalAlignment(item));
         var suppressBorderStyle = item is HmiCheckBoxGroup or HmiRadioButtonGroup;
-        var centeredScaleBorder = item is HmiBar or HmiSlider && item is HmiScaleWidgetBase scaleWidget &&
-            scaleWidget.DrawInsideFrame is not null && !ResolveStaticValue(scaleWidget.DrawInsideFrame, context) &&
-            borderWidth?.StaticValue > 1;
+        var centeredBorder = borderWidth?.StaticValue > 1 &&
+            (item is HmiBar or HmiSlider && item is HmiScaleWidgetBase scaleWidget &&
+                scaleWidget.DrawInsideFrame is not null && !ResolveStaticValue(scaleWidget.DrawInsideFrame, context) ||
+             item is HmiRectangle framedRectangle && framedRectangle.DrawStrokeInsideFrame is not null &&
+                !ResolveStaticValue(framedRectangle.DrawStrokeInsideFrame, context));
         var animations = new List<string>();
 
         if (foregroundColor is HmiBlinkProperty<HmiColor> foregroundBlink &&
@@ -4647,7 +4655,7 @@ public class HmiScreenToHtmlConverter
         {
             html.Append("--hmi-border-color-off: ").Append(ToCss(borderOff)).Append(';')
                 .Append("--hmi-border-color-on: ").Append(ToCss(borderOn)).Append(';');
-            animations.Add($"{(centeredScaleBorder ? "hmi-outline-color-flash" : "hmi-border-color-flash")} {GetBlinkDuration(borderBlink.Rate)}s steps(1, end) infinite");
+            animations.Add($"{(centeredBorder ? "hmi-outline-color-flash" : "hmi-border-color-flash")} {GetBlinkDuration(borderBlink.Rate)}s steps(1, end) infinite");
         }
         else if (borderColor?.StaticValue != null)
         {
@@ -4660,7 +4668,7 @@ public class HmiScreenToHtmlConverter
             if (!suppressBorderStyle)
                 html.Append("border-style: ").Append(borderStyle).Append(";");
             html.Append("border-width: ").Append(ToCss(borderWidth.StaticValue)).Append("px;");
-            if (centeredScaleBorder)
+            if (centeredBorder)
             {
                 html.Append("border-width: 0px;outline-style: ").Append(borderStyle)
                     .Append(";outline-width: ").Append(ToCss(borderWidth.StaticValue)).Append("px;")
@@ -4669,7 +4677,7 @@ public class HmiScreenToHtmlConverter
             }
         }
 
-        if (item is HmiShapeBase shape)
+        if (item is HmiShapeBase shape && !rectangleBorder)
         {
             if (shape.LineColor != null)
                 html.Append("border-color: ").Append(ToCss(shape.LineColor.StaticValue)).Append(";");
