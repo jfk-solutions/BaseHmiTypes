@@ -17,6 +17,7 @@ export abstract class HmiScaleWidgetBase extends HmiWidgetBase {
   tickLabelInterval?: HmiProperty<number>;
   tickLabelFieldLength?: HmiProperty<number>;
   tickLabelDecimalPlaces?: HmiProperty<number>;
+  tickLabelExponentialFormat?: HmiProperty<boolean>;
   engineeringUnit?: HmiProperty<string>;
   useAutoScaling?: HmiProperty<boolean>;
   useVariableMinimumMaximum?: HmiProperty<boolean>;
