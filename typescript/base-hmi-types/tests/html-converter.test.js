@@ -909,6 +909,22 @@ test(`HTML converter exposes gauge major ticks only (${only})`, async () => {
 });
 }
 
+for (const show of [false, true]) {
+test(`HTML converter exposes gauge tick label visibility and interval (${show})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const gauge = new HmiGauge();
+  gauge.showTickLabels = staticProperty(show);
+  gauge.tickLabelInterval = staticProperty(2);
+  layer.items.push(gauge);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const markup = html.match(/<hmi-gauge[^>]*>/)?.[0] ?? "";
+  assert.equal(markup.includes("hide-tick-labels"), !show);
+  assert.ok(markup.includes('tick-label-interval="2"'));
+});
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
