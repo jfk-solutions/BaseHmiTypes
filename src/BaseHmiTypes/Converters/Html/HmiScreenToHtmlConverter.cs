@@ -1674,11 +1674,15 @@ public class HmiScreenToHtmlConverter
         if (!string.IsNullOrWhiteSpace(imageUri))
             AppendInnerImage(html, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale);
         var captionBlink = GetButtonCaptionBlink(button, state);
+        var captionColor = state?.CaptionColor ?? state?.ForegroundColor ??
+            (button.CaptionColor is null ? (HmiColor?)null : ResolveStaticValue(button.CaptionColor, context));
         if (captionBlink is not null)
             html.Append("<span data-hmi-button-caption style=\"animation: hmi-caption-color-flash ")
                 .Append(GetBlinkDuration(captionBlink.Rate)).Append("s steps(1, end) infinite;\">");
+        else if (captionColor is { } staticCaptionColor)
+            html.Append("<span data-hmi-button-caption style=\"color: ").Append(ToCss(staticCaptionColor)).Append(";\">");
         AppendMultilingualText(html, state?.Text ?? ResolveStaticValue(button.Text, context), context);
-        if (captionBlink is not null)
+        if (captionBlink is not null || captionColor is not null)
             html.Append("</span>");
         html.Append("</button>");
     }

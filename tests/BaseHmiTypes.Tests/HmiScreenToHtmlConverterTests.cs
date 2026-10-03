@@ -16,6 +16,36 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(0, false)]
+    [DataRow(0, true)]
+    [DataRow(1, false)]
+    [DataRow(1, true)]
+    [DataRow(2, false)]
+    [DataRow(2, true)]
+    [DataRow(3, false)]
+    [DataRow(3, true)]
+    public async Task ConvertAsync_PreservesExplicitButtonCaptionColor(int mode, bool foregroundBlink)
+    {
+        var caption = HmiColor.FromArgb(255, 1, 2, 3);
+        var selected = HmiColor.FromArgb(255, 4, 5, 6);
+        var item = new HmiButton { Name = "CaptionButton", Width = 160, Height = 60,
+            Text = HmiMultilingualText.FromText("Alarm") };
+        if (foregroundBlink) item.ForegroundColor = HmiProperty.Blink(
+            HmiColor.FromArgb(255, 11, 12, 13), HmiColor.FromArgb(255, 14, 15, 16), HmiBlinkRate.Fast);
+        if (mode > 0) item.CaptionColor = caption;
+        if (mode >= 2) item.States.Add(new HmiState { Value = 0,
+            CaptionColor = mode == 2 ? selected : null, ForegroundColor = mode == 3 ? selected : null });
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<button id=\"CaptionButton\"[^>]*>").Value;
+        var body = System.Text.RegularExpressions.Regex.Match(html, "<button id=\"CaptionButton\"[^>]*>(.*?)</button>", System.Text.RegularExpressions.RegexOptions.Singleline).Groups[1].Value;
+        Assert.AreEqual(foregroundBlink, opening.Contains("hmi-foreground-color-flash", StringComparison.Ordinal));
+        if (mode == 0) Assert.AreEqual("Alarm", body);
+        else Assert.AreEqual($"<span data-hmi-button-caption style=\"color: {(mode == 1 ? "#010203" : "#040506")};\">Alarm</span>", body);
+    }
+
+    [TestMethod]
     [DataRow(false, false, false)]
     [DataRow(false, true, false)]
     [DataRow(true, false, false)]
@@ -4591,7 +4621,7 @@ public class HmiScreenToHtmlConverterTests
 
         StringAssert.Contains(html, "<button id=\"Motor\"");
         StringAssert.Contains(html, "<img src=\"data:image/png;base64,BAUG\"");
-        StringAssert.Contains(html, "Running</button>");
+        StringAssert.Contains(html, "Running</span></button>");
         StringAssert.Contains(html, "background-color: #0A141E;");
         StringAssert.Contains(html, "color: #F0F1F2;");
         StringAssert.Contains(html, "border-color: #646566;");
