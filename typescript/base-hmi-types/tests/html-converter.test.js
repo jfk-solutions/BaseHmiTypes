@@ -906,6 +906,38 @@ test(`HTML converter renders bar tick label intervals (${direction})`, async () 
 });
 }
 
+for (const direction of [HmiFillDirection.Right, HmiFillDirection.Left, HmiFillDirection.Up, HmiFillDirection.Down]) {
+for (const after of [false, true]) {
+test(`HTML converter renders bar scale alignment (${direction}, ${after})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(40);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(100);
+  bar.showScale = staticProperty(true);
+  bar.scaleAfterBar = staticProperty(after);
+  bar.fillDirection = staticProperty(direction);
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const converter = new HmiScreenToHtmlConverter();
+  let html = await converter.convertAsync(screen);
+  const vertical = direction === HmiFillDirection.Up || direction === HmiFillDirection.Down;
+  const side = vertical ? after ? "Right" : "Left" : after ? "Bottom" : "Top";
+  assert.ok(html.includes(`data-scale-side="${side}"`));
+  const scaleIndex = html.indexOf("data-hmi-bar-scale=");
+  const meterIndex = html.indexOf("data-hmi-bar-meter=");
+  assert.ok(scaleIndex >= 0 && meterIndex >= 0);
+  assert.equal(scaleIndex > meterIndex, after);
+  bar.showScale = staticProperty(false);
+  html = await converter.convertAsync(screen);
+  assert.ok(!html.includes("data-scale-side="));
+  assert.ok(!html.includes("data-hmi-bar-scale="));
+});
+}
+}
+
 test("HTML converter renders enabled bar threshold markers", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";

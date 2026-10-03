@@ -1535,6 +1535,7 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
     threshold.value !== undefined && getStaticValue(threshold.enabled) !== false);
   if (showScale || showThresholds) {
     const vertical = direction === HmiFillDirection.Up || direction === HmiFillDirection.Down;
+    const scaleBefore = showScale && getStaticValue(bar.scaleAfterBar) === false;
     html.push("<div");
     appendCommonAttributes(html, bar, context, true, showScale
       ? vertical
@@ -1543,9 +1544,13 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
       : "display: flex; align-items: stretch;");
     appendAttribute(html, "data-hmi-bar", "true");
     appendAttribute(html, "data-fill-direction", HmiFillDirection[direction]);
-    html.push(">");
-    appendBarMeterRegion(html, bar, minimum, maximum, value, direction, vertical);
     if (showScale)
+      appendAttribute(html, "data-scale-side", vertical ? scaleBefore ? "Left" : "Right" : scaleBefore ? "Top" : "Bottom");
+    html.push(">");
+    if (scaleBefore)
+      appendBarScale(html, bar, minimum, maximum, direction, vertical);
+    appendBarMeterRegion(html, bar, minimum, maximum, value, direction, vertical);
+    if (showScale && !scaleBefore)
       appendBarScale(html, bar, minimum, maximum, direction, vertical);
     html.push("</div>");
     return;

@@ -6,6 +6,8 @@ import { HmiProperty } from "../base/HmiProperty.js";
 export class HmiBar extends HmiScaleWidgetBase {
   fillStyle?: HmiProperty<HmiBarFillStyle>;
   fillDirection?: HmiProperty<HmiFillDirection>;
+  /** True places the scale right/below; false places it left/above. Omitted uses right/below. */
+  scaleAfterBar?: HmiProperty<boolean>;
 
   constructor() {
     super();
