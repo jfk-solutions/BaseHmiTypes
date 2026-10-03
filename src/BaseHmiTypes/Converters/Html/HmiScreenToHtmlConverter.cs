@@ -1673,9 +1673,19 @@ public class HmiScreenToHtmlConverter
         var imageUri = await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
         if (!string.IsNullOrWhiteSpace(imageUri))
             AppendInnerImage(html, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale);
+        var captionBlink = GetButtonCaptionBlink(button, state);
+        if (captionBlink is not null)
+            html.Append("<span data-hmi-button-caption style=\"animation: hmi-caption-color-flash ")
+                .Append(GetBlinkDuration(captionBlink.Rate)).Append("s steps(1, end) infinite;\">");
         AppendMultilingualText(html, state?.Text ?? ResolveStaticValue(button.Text, context), context);
+        if (captionBlink is not null)
+            html.Append("</span>");
         html.Append("</button>");
     }
+
+    private static HmiBlinkProperty<HmiColor>? GetButtonCaptionBlink(HmiButton button, HmiState? state) =>
+        (state?.CaptionColor ?? state?.ForegroundColor) is null &&
+        button.CaptionColor is HmiBlinkProperty<HmiColor> blink ? blink : null;
 
     private static string? CreateButtonStyle(
         HmiButton button,
@@ -1684,12 +1694,11 @@ public class HmiScreenToHtmlConverter
     {
         var style = new StringBuilder();
         var stateHasCaptionColor = (state?.CaptionColor ?? state?.ForegroundColor) is not null;
-        if (!stateHasCaptionColor && button.CaptionColor is HmiBlinkProperty<HmiColor> blinkColor && blinkColor.BlinkValue is HmiColor alternateColor)
+        if (GetButtonCaptionBlink(button, state) is { } blinkColor && blinkColor.BlinkValue is HmiColor alternateColor)
         {
             style.Append("--hmi-caption-color-off: ").Append(ToCss(ResolveStaticValue(button.CaptionColor, context))).Append(';')
                 .Append("--hmi-caption-color-on: ").Append(ToCss(alternateColor)).Append(';')
-                .Append("animation: hmi-caption-color-flash ").Append(GetBlinkDuration(blinkColor.Rate))
-                .Append("s steps(1, end) infinite;");
+                .Append("color: ").Append(ToCss(ResolveStaticValue(button.CaptionColor, context))).Append(';');
         }
         else if (!stateHasCaptionColor && button.CaptionColor is not null)
         {

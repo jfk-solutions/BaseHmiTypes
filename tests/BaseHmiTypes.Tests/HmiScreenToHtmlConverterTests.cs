@@ -16,6 +16,42 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(false, false, false)]
+    [DataRow(false, true, false)]
+    [DataRow(true, false, false)]
+    [DataRow(true, true, false)]
+    [DataRow(false, false, true)]
+    [DataRow(false, true, true)]
+    [DataRow(true, false, true)]
+    [DataRow(true, true, true)]
+    public async Task ConvertAsync_FlashesButtonCaptionIndependently(bool border, bool background, bool stateColor)
+    {
+        var item = new HmiButton { Name = "FlashingButton", Width = 160, Height = 60,
+            Text = HmiMultilingualText.FromText("Alarm"),
+            CaptionColor = HmiProperty.Blink(HmiColor.FromArgb(255, 1, 2, 3), HmiColor.FromArgb(255, 4, 5, 6), HmiBlinkRate.Fast) };
+        if (border) item.BorderColor = HmiProperty.Blink(HmiColor.FromArgb(255, 11, 12, 13), HmiColor.FromArgb(255, 14, 15, 16), HmiBlinkRate.Medium);
+        if (background) item.BackgroundColor = HmiProperty.Blink(HmiColor.FromArgb(255, 21, 22, 23), HmiColor.FromArgb(255, 24, 25, 26), HmiBlinkRate.Slow);
+        if (stateColor) item.States.Add(new HmiState { Value = 0, CaptionColor = HmiColor.FromArgb(255, 31, 32, 33),
+            Text = HmiMultilingualText.FromText("State alarm") });
+        var layer = new HmiLayer(); layer.Items.Add(item);
+        var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<button id=\"FlashingButton\"[^>]*>").Value;
+        var body = System.Text.RegularExpressions.Regex.Match(html, "<button id=\"FlashingButton\"[^>]*>(.*?)</button>", System.Text.RegularExpressions.RegexOptions.Singleline).Groups[1].Value;
+        Assert.IsFalse(opening.Contains("hmi-caption-color-flash", StringComparison.Ordinal));
+        Assert.AreEqual(border, opening.Contains("hmi-border-color-flash 1s", StringComparison.Ordinal));
+        Assert.AreEqual(background, opening.Contains("hmi-background-color-flash 2s", StringComparison.Ordinal));
+        Assert.AreEqual(!stateColor, body.Contains("<span data-hmi-button-caption style=\"animation: hmi-caption-color-flash 0.5s steps(1, end) infinite;\">", StringComparison.Ordinal));
+        StringAssert.Contains(body, stateColor ? "State alarm" : "Alarm");
+        if (stateColor) StringAssert.Contains(opening, "color: #1F2021;");
+        else
+        {
+            StringAssert.Contains(opening, "--hmi-caption-color-off: #010203;");
+            StringAssert.Contains(opening, "--hmi-caption-color-on: #040506;");
+        }
+    }
+
+    [TestMethod]
     [DataRow(false, false, 1, false)]
     [DataRow(false, false, 10, false)]
     [DataRow(false, true, 1, false)]
