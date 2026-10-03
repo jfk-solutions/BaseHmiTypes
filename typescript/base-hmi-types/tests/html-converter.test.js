@@ -1103,6 +1103,34 @@ test(`HTML converter renders bar track gradient (${scale}, ${direction})`, async
 }
 }
 
+for (const [value, expected] of [[5, "#FF0000"], [10, "#00FF00"], [15, "#00FF00"], [20, "#0000FF"], [25, "#0000FF"]]) {
+test(`HTML converter renders bar threshold fill colors at ${value}`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.name = "LimitBar";
+  bar.value = staticProperty(value);
+  bar.foregroundColor = staticProperty(hmiColorFromArgb(255, 0, 0, 255));
+  bar.useThresholdFillColors = staticProperty(true);
+  bar.showLimitRanges = staticProperty(false);
+  for (const [limit, enabled, color] of [[20, true, [0, 255, 0]], [10, true, [255, 0, 0]], [15, false, [255, 255, 0]]]) {
+    const threshold = new HmiThreshold();
+    threshold.value = staticProperty(limit);
+    threshold.enabled = staticProperty(enabled);
+    threshold.color = staticProperty(hmiColorFromArgb(255, ...color));
+    bar.thresholds.push(threshold);
+  }
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const meter = html.match(/<meter[^>]*>/)?.[0];
+  assert.ok(meter);
+  assert.ok(meter.includes(`color: ${expected};`));
+  assert.ok(meter.includes('data-hmi-bar-fill="true"'));
+  assert.ok(!html.includes("data-hmi-bar-threshold"));
+});
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
