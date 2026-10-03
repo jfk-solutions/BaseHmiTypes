@@ -1806,11 +1806,17 @@ public class HmiScreenToHtmlConverter
     {
         html.Append("<meter");
         AppendBarColorAttributes(html, bar, context);
+        var meterStyle = new StringBuilder((vertical ? "height: 100%;" : "width: 100%;") +
+            " flex: 1; min-width: 0; min-height: 0;" + GetBarDirectionStyle(direction));
+        var disabledColor = !ResolveStaticValue(bar.Enabled, context) && ResolveStaticValue(bar.UseDisabledForegroundColor, context)
+            ? context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.DisabledForegroundColor), bar.DisabledForegroundColor)
+            : null;
+        if (disabledColor is null && GetBarThresholdFillColor(bar, context) is { } fillColor)
+            AppendColorStyle(meterStyle, "color", fillColor);
         AppendAttribute(
             html,
             "style",
-            (vertical ? "height: 100%;" : "width: 100%;") +
-            " flex: 1; min-width: 0; min-height: 0;" + GetBarDirectionStyle(direction));
+            meterStyle.ToString());
         AppendAttribute(html, "min", ToCss(minimum));
         AppendAttribute(html, "max", ToCss(maximum));
         AppendAttribute(html, "value", ToCss(value));
@@ -4497,7 +4503,7 @@ public class HmiScreenToHtmlConverter
     private static void AppendStyle(StringBuilder html, HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
         var foregroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.ForegroundColor), item.ForegroundColor);
-        if (item is HmiBar bar && GetBarThresholdFillColor(bar, context) is { } thresholdColor)
+        if (item is HmiBar bar && !bar.ShowScale.GetStaticValueOrDefault() && GetBarThresholdFillColor(bar, context) is { } thresholdColor)
             foregroundColor = thresholdColor;
         var useDisabledForegroundColor = !ResolveStaticValue(item.Enabled, context) &&
             ResolveStaticValue(item.UseDisabledForegroundColor, context);
