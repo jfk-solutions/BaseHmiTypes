@@ -1494,8 +1494,9 @@ async function appendButton(
   if (hasImage) {
     html.push('<span data-hmi-button-content style="display: flex;flex-direction: column;width: 100%;height: 100%;min-width: 0;min-height: 0;align-items: center;justify-content: center;overflow: hidden;">',
       '<span data-hmi-button-graphic style="flex: 1 1 0;min-width: 0;min-height: 0;width: 100%;">');
-    appendInnerImage(
+    appendButtonImage(
       html,
+      button,
       imageUri,
       showDisabledAppearance && disabledImageMode === HmiDisabledImageMode.Grayscale,
     );
@@ -1523,6 +1524,22 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
   }
   appendMultilingualText(html, caption, context);
   if (wrapped) html.push("</span>");
+}
+
+function appendButtonImage(html: string[], button: HmiButton, imageUri: string, grayscale: boolean): void {
+  const aligned = button.imageHorizontalAlignment !== undefined || button.imageVerticalAlignment !== undefined;
+  if (aligned) {
+    const horizontal = getStaticValue(button.imageHorizontalAlignment);
+    const vertical = getStaticValue(button.imageVerticalAlignment);
+    const x = horizontal === HmiHorizontalAlignment.Left ? "start" : horizontal === HmiHorizontalAlignment.Center ? "center" : horizontal === HmiHorizontalAlignment.Right ? "end" : "stretch";
+    const y = vertical === HmiVerticalAlignment.Top ? "start" : vertical === HmiVerticalAlignment.Center ? "center" : vertical === HmiVerticalAlignment.Bottom ? "end" : "stretch";
+    html.push("<span data-hmi-button-image-layout");
+    appendAttribute(html, "data-image-horizontal", x);
+    appendAttribute(html, "data-image-vertical", y);
+    html.push(' style="display: grid;grid-template-columns: minmax(0, 1fr);grid-template-rows: minmax(0, 1fr);width: 100%;height: 100%;overflow: hidden;justify-items: ' + x + ";align-items: " + y + ';">');
+  }
+  appendInnerImage(html, imageUri, grayscale);
+  if (aligned) html.push("</span>");
 }
 
 function getButtonCaptionBlink(button: HmiButton, state: HmiState | undefined): HmiBlinkProperty<HmiColor> | undefined {
