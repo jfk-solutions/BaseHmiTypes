@@ -2745,10 +2745,26 @@ function appendTextBlock(
   context: HmiHtmlConvertContext,
 ): void {
   html.push("<div");
-  appendCommonAttributes(html, item, context, undefined, "overflow: hidden;");
+  appendCommonAttributes(html, item, context, undefined, "overflow: hidden;" + (createTextOrientationStyle(item, context) ?? ""));
   html.push(">");
   appendMultilingualText(html, getStaticValue(text), context);
   html.push("</div>");
+}
+
+function createTextOrientationStyle(item: HmiScreenItemBase, context: HmiHtmlConvertContext): string | undefined {
+  if (!(item instanceof HmiText)) return undefined;
+  const sourceAngle = getStaticValue(item.font?.orientationAngle);
+  if (sourceAngle === undefined) return undefined;
+  const angle = ((sourceAngle % 360) + 360) % 360;
+  if (angle !== 90 && angle !== 270) return undefined;
+  const horizontal = getStaticValue(context.effectiveProperties.resolve(item, "HorizontalAlignment", item.horizontalAlignment)) ?? HmiHorizontalAlignment.Left;
+  const vertical = getStaticValue(context.effectiveProperties.resolve(item, "VerticalAlignment", item.verticalAlignment)) ?? HmiVerticalAlignment.Top;
+  const cross = horizontal === HmiHorizontalAlignment.Left ? (angle === 90 ? "flex-start" : "flex-end")
+    : horizontal === HmiHorizontalAlignment.Right ? (angle === 90 ? "flex-end" : "flex-start")
+    : horizontal === HmiHorizontalAlignment.Stretch ? "stretch" : "center";
+  const main = vertical === HmiVerticalAlignment.Top ? (angle === 90 ? "flex-end" : "flex-start")
+    : vertical === HmiVerticalAlignment.Bottom ? (angle === 90 ? "flex-start" : "flex-end") : "center";
+  return `writing-mode: ${angle === 90 ? "sideways-lr" : "sideways-rl"};display: flex;text-align: start;justify-content: ${main};align-items: ${cross};`;
 }
 
 function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHtmlConvertContext): void {
