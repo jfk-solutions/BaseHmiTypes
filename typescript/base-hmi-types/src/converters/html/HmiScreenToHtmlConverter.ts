@@ -3424,6 +3424,16 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     if (autoDecimalPlaces !== undefined) result.autoDecimalPlaces = autoDecimalPlaces;
     const decimalPlaces = getStaticValue(pen.decimalPlaces);
     if (decimalPlaces !== undefined) result.decimalPlaces = decimalPlaces;
+    if (pen.valueAxisName !== undefined) result.valueAxisName = pen.valueAxisName;
+    const valueAxisVisible = getStaticValue(pen.valueAxisVisible);
+    if (valueAxisVisible !== undefined) result.valueAxisVisible = valueAxisVisible;
+    const valueAxisColor = getStaticValue(pen.valueAxisColor);
+    if (valueAxisColor !== undefined) result.valueAxisColor = colorToCss(valueAxisColor);
+    const valueAxisInTrendColor = getStaticValue(pen.valueAxisInTrendColor);
+    if (valueAxisInTrendColor !== undefined) result.valueAxisInTrendColor = valueAxisInTrendColor;
+    const valueAxisAlignment = getStaticValue(pen.valueAxisAlignment);
+    if (valueAxisAlignment !== undefined) result.valueAxisAlignment = valueAxisAlignment;
+    if (pen.valueAxisLabel !== undefined) result.valueAxisLabel = pen.valueAxisLabel;
     if (pen.engineeringUnit !== undefined) result.unit = pen.engineeringUnit;
     return result;
   }));
