@@ -871,6 +871,30 @@ test("HTML converter renders bar scale ticks and appearance", async () => {
   assert.match(html, /<span>0.0&nbsp;bar<\/span><span>50.0&nbsp;bar<\/span><span>100.0&nbsp;bar<\/span>/);
 });
 
+for (const exponential of [false, true]) {
+for (const [configured, expected] of [[16, 16], [20, 20], [25, 20], [-1, 0]]) {
+test(`HTML converter renders full bar decimal precision (${configured}, ${exponential})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.width = staticProperty(120);
+  bar.height = staticProperty(80);
+  bar.showScale = staticProperty(true);
+  bar.divisionCount = staticProperty(2);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(1);
+  bar.tickLabelDecimalPlaces = staticProperty(configured);
+  bar.tickLabelExponentialFormat = staticProperty(exponential);
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const label = exponential ? "5" + (expected > 0 ? "." + "0".repeat(expected) : "") + "e-001"
+    : expected > 0 ? "0.5" + "0".repeat(expected - 1) : "1";
+  assert.ok(html.includes(`<span>${label}</span>`));
+});
+}
+}
+
 for (const direction of [HmiFillDirection.Right, HmiFillDirection.Up]) {
 test(`HTML converter renders bar scale colors (${direction})`, async () => {
   const screen = new HmiScreen();
