@@ -3425,6 +3425,21 @@ public class HmiScreenToHtmlConverterTests
     [TestMethod]
     [DataRow(false)]
     [DataRow(true)]
+    public async Task ConvertAsync_ExposesGaugeMajorTicksBold(bool bold)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(new HmiGauge { MajorTicksBold = bold, SubDivisionCount = 5 });
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var gauge = System.Text.RegularExpressions.Regex.Match(html, "<hmi-gauge[^>]*>").Value;
+        Assert.AreEqual(bold, gauge.Contains("major-ticks-bold", StringComparison.Ordinal));
+        StringAssert.Contains(gauge, "sub-division-count=\"5\"");
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public async Task ConvertAsync_ExposesGaugeTickLabelVisibilityAndInterval(bool show)
     {
         var screen = new HmiScreen();
