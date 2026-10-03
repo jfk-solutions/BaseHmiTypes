@@ -17,6 +17,22 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("independent pen, time-axis and value-axis window references survive rendering", () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("value-axes", JSON.stringify([{ valueAxisName: "Axis", trendWindowName: "Axis <window>", minimum: 0, maximum: 10 }]));
+  control.setAttribute("pens", JSON.stringify([{ number: 7, valueAxisName: "Axis", trendWindowName: "Pen <window>", timeAxisName: "Time & A" }]));
+  const html = control.shadowRoot.innerHTML;
+  assert.match(html, /data-axis-name="Axis" data-trend-window="Axis &lt;window&gt;"/u);
+  assert.match(html, /data-pen-number="7" data-trend-window="Pen &lt;window&gt;" data-time-axis="Time &amp; A"/u);
+  control.setAttribute("value-axes", JSON.stringify([{ valueAxisName: "Axis", trendWindowName: "B", valueAxisInTrendColor: true, valueAxisColor: "#abcdef" }]));
+  control.setAttribute("pens", JSON.stringify([
+    { number: 1, trendWindowName: "A", color: "#112233" },
+    { number: 2, trendWindowName: "B", color: "#445566", visible: false },
+    { number: 3, trendWindowName: "B", color: "#778899" },
+  ]));
+  assert.match(control.shadowRoot.innerHTML, /data-axis-name="Axis" data-trend-window="B" style="[^"]*color:#445566"/u);
+});
+
 test("configured axes render without pens and override legacy assigned-axis copies", () => {
   const control = new HmiTrendControl();
   const axes = [{ valueAxisName: "Unused", valueAxisVisible: true, minimum: 5, maximum: 15, decimalPlaces: 1, valueAxisLabel: "Standalone" }];
