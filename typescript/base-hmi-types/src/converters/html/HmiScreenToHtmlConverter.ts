@@ -1550,7 +1550,7 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
     html.push(">");
     if (scaleBefore)
       appendBarScale(html, bar, minimum, maximum, direction, vertical);
-    appendBarMeterRegion(html, bar, minimum, maximum, value, direction, vertical);
+    appendBarMeterRegion(html, bar, minimum, maximum, value, direction, vertical, context);
     if (showScale && !scaleBefore)
       appendBarScale(html, bar, minimum, maximum, direction, vertical);
     html.push("</div>");
@@ -1558,6 +1558,7 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   }
   html.push("<meter");
   appendCommonAttributes(html, bar, context, true, getBarDirectionStyle(direction));
+  appendBarFillAttribute(html, bar, context);
   appendAttribute(html, "data-fill-direction", HmiFillDirection[direction]);
   appendAttribute(html, "min", toCss(minimum));
   appendAttribute(html, "max", toCss(maximum));
@@ -1573,31 +1574,42 @@ function appendBarMeterRegion(
   value: number,
   direction: HmiFillDirection,
   vertical: boolean,
+  context: HmiHtmlConvertContext,
 ): void {
   html.push("<div");
   appendAttribute(html, "data-hmi-bar-meter", "true");
   appendAttribute(html, "style", "position: relative; display: flex; flex: 1; min-width: 0; min-height: 0;");
   html.push(">");
-  appendBarMeter(html, minimum, maximum, value, direction, vertical);
+  appendBarMeter(html, bar, minimum, maximum, value, direction, vertical, context);
   appendBarThresholds(html, bar, minimum, maximum, direction);
   html.push("</div>");
 }
 
 function appendBarMeter(
   html: string[],
+  bar: HmiBar,
   minimum: number,
   maximum: number,
   value: number,
   direction: HmiFillDirection,
   vertical: boolean,
+  context: HmiHtmlConvertContext,
 ): void {
   html.push("<meter");
+  appendBarFillAttribute(html, bar, context);
   appendAttribute(html, "style",
     `${vertical ? "height: 100%;" : "width: 100%;"} flex: 1; min-width: 0; min-height: 0;${getBarDirectionStyle(direction)}`);
   appendAttribute(html, "min", toCss(minimum));
   appendAttribute(html, "max", toCss(maximum));
   appendAttribute(html, "value", toCss(value));
   html.push(`>${toCss(value)}</meter>`);
+}
+
+function appendBarFillAttribute(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
+  if (context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor) !== undefined ||
+      (getStaticValue(bar.enabled) === false && getStaticValue(bar.useDisabledForegroundColor) === true &&
+       bar.disabledForegroundColor !== undefined))
+    appendAttribute(html, "data-hmi-bar-fill", "true");
 }
 
 function appendBarThresholds(

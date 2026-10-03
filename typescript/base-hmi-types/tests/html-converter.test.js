@@ -1004,6 +1004,38 @@ test(`HTML converter renders blinking scale widget border placement (${slider}, 
 }
 }
 
+for (const scale of [false, true]) {
+for (const blink of [false, true]) {
+test(`HTML converter renders configured bar fill color (${scale}, ${blink})`, async () => {
+  const bar = new HmiBar();
+  bar.showScale = staticProperty(scale);
+  bar.beginValue = staticProperty(0);
+  bar.endValue = staticProperty(100);
+  bar.value = staticProperty(35);
+  bar.foregroundColor = blink
+    ? blinkProperty(hmiColorFromArgb(255, 1, 2, 3), hmiColorFromArgb(255, 4, 5, 6), HmiBlinkRate.Fast)
+    : staticProperty(hmiColorFromArgb(255, 1, 2, 3));
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  let html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  let meter = html.match(/<meter[^>]*>/)?.[0] ?? "";
+  assert.ok(meter.includes('data-hmi-bar-fill="true"'));
+  assert.ok(meter.includes('value="35"'));
+  assert.ok(html.includes("::-webkit-meter-optimum-value"));
+  assert.ok(html.includes("::-moz-meter-bar{background:currentColor;}"));
+  assert.ok(html.includes(blink
+    ? "animation: hmi-foreground-color-flash 0.5s steps(1, end) infinite;"
+    : "color: #010203;"));
+  bar.foregroundColor = undefined;
+  html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  meter = html.match(/<meter[^>]*>/)?.[0] ?? "";
+  assert.ok(!meter.includes("data-hmi-bar-fill"));
+});
+}
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
