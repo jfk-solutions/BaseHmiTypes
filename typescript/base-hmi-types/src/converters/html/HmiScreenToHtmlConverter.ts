@@ -1534,7 +1534,7 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   const showScale = getStaticValue(bar.showScale) === true;
   const showThresholds = getStaticValue(bar.showLimitRanges) !== false && bar.thresholds.some(threshold =>
     threshold.value !== undefined && getStaticValue(threshold.enabled) !== false);
-  if (showScale || showThresholds) {
+  if (showScale || showThresholds || getBarOutOfRange(bar) !== 0) {
     const vertical = direction === HmiFillDirection.Up || direction === HmiFillDirection.Down;
     const scaleBefore = showScale && getStaticValue(bar.scaleAfterBar) === false;
     html.push("<div");
@@ -1582,6 +1582,7 @@ function appendBarMeterRegion(
   html.push(">");
   appendBarMeter(html, bar, minimum, maximum, value, direction, vertical, context);
   appendBarThresholds(html, bar, minimum, maximum, direction);
+  appendBarOutOfRangeArrow(html, bar, direction);
   html.push("</div>");
 }
 
@@ -1601,7 +1602,9 @@ function appendBarMeter(
   const disabledColor = getStaticValue(bar.enabled) === false && getStaticValue(bar.useDisabledForegroundColor) === true
     ? context.effectiveProperties.resolve(bar, "DisabledForegroundColor", bar.disabledForegroundColor)
     : undefined;
-  const fillColor = disabledColor === undefined ? getStaticValue(getBarThresholdFillColor(bar)) : undefined;
+  const fillColor = disabledColor === undefined ? getStaticValue(getBarThresholdFillColor(bar) ??
+    (getStaticValue(bar.useThresholdFillColors) === true
+      ? context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor) : undefined)) : undefined;
   if (fillColor !== undefined) meterStyle += `color: ${colorToCss(fillColor)};`;
   appendAttribute(html, "style",
     meterStyle);
@@ -1635,6 +1638,42 @@ function getBarThresholdFillColor(bar: HmiBar): HmiProperty<HmiColor> | undefine
       return threshold.color;
   }
   return undefined;
+}
+
+function getBarOutOfRange(bar: HmiBar): number {
+  const value = getStaticValue(bar.value);
+  if (value === undefined || !Number.isFinite(value)) return 0;
+  const lower = getStaticValue(bar.underflowLimit);
+  const upper = getStaticValue(bar.overflowLimit);
+  if (lower !== undefined && Number.isFinite(lower) && value < lower) return -1;
+  if (upper !== undefined && Number.isFinite(upper) && value > upper) return 1;
+  return 0;
+}
+
+function appendBarOutOfRangeArrow(html: string[], bar: HmiBar, direction: HmiFillDirection): void {
+  const overflow = getBarOutOfRange(bar);
+  if (overflow === 0) return;
+  const arrowDirection = overflow > 0 ? direction
+    : direction === HmiFillDirection.Up ? HmiFillDirection.Down
+    : direction === HmiFillDirection.Down ? HmiFillDirection.Up
+    : direction === HmiFillDirection.Left ? HmiFillDirection.Right : HmiFillDirection.Left;
+  const [position, points] = arrowDirection === HmiFillDirection.Up
+    ? ["top: 0; left: calc(50% - 6px);", "6,0 0,12 12,12"]
+    : arrowDirection === HmiFillDirection.Down
+    ? ["bottom: 0; left: calc(50% - 6px);", "6,12 0,0 12,0"]
+    : arrowDirection === HmiFillDirection.Left
+    ? ["left: 0; top: calc(50% - 6px);", "0,6 12,0 12,12"]
+    : ["right: 0; top: calc(50% - 6px);", "12,6 0,0 0,12"];
+  html.push("<svg");
+  appendAttribute(html, "xmlns", "http://www.w3.org/2000/svg");
+  appendAttribute(html, "data-hmi-bar-out-of-range", overflow < 0 ? "Below" : "Above");
+  appendAttribute(html, "data-raw-value", toCss(getStaticValue(bar.value)!));
+  appendAttribute(html, "data-limit-value", toCss(getStaticValue(overflow < 0 ? bar.underflowLimit : bar.overflowLimit)!));
+  appendAttribute(html, "role", "img");
+  appendAttribute(html, "aria-label", overflow < 0 ? "Below lower limit" : "Above upper limit");
+  appendAttribute(html, "viewBox", "0 0 12 12");
+  appendAttribute(html, "style", `position: absolute; pointer-events: none; z-index: 2; width: 12px; height: 12px; ${position}`);
+  html.push(`><polygon fill="#000000" points="${points}"></polygon></svg>`);
 }
 
 function appendBarThresholds(

@@ -1183,6 +1183,53 @@ test(`HTML converter keeps scaled bar limit fill separate (${disabled}, ${useDis
 });
 }
 
+for (const [direction, below, points] of [
+  [HmiFillDirection.Right, true, "0,6 12,0 12,12"], [HmiFillDirection.Right, false, "12,6 0,0 0,12"],
+  [HmiFillDirection.Left, true, "12,6 0,0 0,12"], [HmiFillDirection.Left, false, "0,6 12,0 12,12"],
+  [HmiFillDirection.Up, true, "6,12 0,0 12,0"], [HmiFillDirection.Up, false, "6,0 0,12 12,12"],
+  [HmiFillDirection.Down, true, "6,0 0,12 12,12"], [HmiFillDirection.Down, false, "6,12 0,0 12,0"],
+]) {
+test(`HTML converter renders bar out-of-range arrows (${direction}, ${below})`, async () => {
+  for (const scale of [false, true]) {
+    const screen = new HmiScreen();
+    const layer = new HmiLayer();
+    const bar = new HmiBar();
+    bar.fillDirection = staticProperty(direction);
+    bar.showScale = staticProperty(scale);
+    bar.showLimitRanges = staticProperty(false);
+    bar.beginValue = staticProperty(0);
+    bar.endValue = staticProperty(100);
+    bar.value = staticProperty(below ? -5 : 105);
+    bar.underflowLimit = staticProperty(10);
+    bar.overflowLimit = staticProperty(90);
+    bar.foregroundColor = staticProperty(hmiColorFromArgb(255, 255, 0, 0));
+    layer.items.push(bar);
+    screen.layers.push(layer);
+    const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+    const arrow = html.match(/<svg[^>]*data-hmi-bar-out-of-range[^>]*>.*?<\/svg>/)?.[0] ?? "";
+    assert.ok(arrow.includes(`data-hmi-bar-out-of-range="${below ? "Below" : "Above"}"`));
+    assert.ok(arrow.includes(`data-raw-value="${below ? -5 : 105}"`));
+    assert.ok(arrow.includes(`data-limit-value="${below ? 10 : 90}"`));
+    assert.ok(arrow.includes(`<polygon fill="#000000" points="${points}"`));
+    assert.ok(html.includes(`value="${below ? 0 : 100}"`));
+  }
+});
+}
+for (const value of [10, 50, 90]) {
+test(`HTML converter does not render bar arrows within limits (${value})`, async () => {
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  const bar = new HmiBar();
+  bar.value = staticProperty(value);
+  bar.underflowLimit = staticProperty(10);
+  bar.overflowLimit = staticProperty(90);
+  layer.items.push(bar);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  assert.ok(!html.includes("data-hmi-bar-out-of-range"));
+});
+}
+
 test("HTML converter renders bar fill directions", async () => {
   const screen = new HmiScreen();
   screen.name = "MainScreen";
