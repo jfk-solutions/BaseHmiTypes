@@ -1767,7 +1767,7 @@ public class HmiScreenToHtmlConverter
 
         html.Append("<meter");
         AppendCommonAttributes(html, bar, context, additionalStyle: GetBarDirectionStyle(direction));
-        AppendBarFillAttribute(html, bar, context);
+        AppendBarColorAttributes(html, bar, context);
         AppendAttribute(html, "data-fill-direction", direction.ToString());
         AppendAttribute(html, "min", ToCss(minimum));
         AppendAttribute(html, "max", ToCss(maximum));
@@ -1805,7 +1805,7 @@ public class HmiScreenToHtmlConverter
         HmiHtmlConvertContext context)
     {
         html.Append("<meter");
-        AppendBarFillAttribute(html, bar, context);
+        AppendBarColorAttributes(html, bar, context);
         AppendAttribute(
             html,
             "style",
@@ -1817,8 +1817,10 @@ public class HmiScreenToHtmlConverter
         html.Append('>').Append(ToCss(value)).Append("</meter>");
     }
 
-    private static void AppendBarFillAttribute(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)
+    private static void AppendBarColorAttributes(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)
     {
+        if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.BackgroundColor), bar.BackgroundColor)?.StaticValue is HmiColor)
+            AppendAttribute(html, "data-hmi-bar-track", "true");
         if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) is not null ||
             (bar.Enabled is not null && !ResolveStaticValue(bar.Enabled, context) &&
              bar.UseDisabledForegroundColor is not null && ResolveStaticValue(bar.UseDisabledForegroundColor, context) &&
@@ -4530,6 +4532,8 @@ public class HmiScreenToHtmlConverter
         {
             html.Append("background-color: ").Append(ToCss(backgroundColor.StaticValue)).Append(";");
         }
+        if (item is HmiBar && backgroundColor?.StaticValue is HmiColor barTrackColor)
+            html.Append("--hmi-bar-track-background: ").Append(ToCss(barTrackColor)).Append(';');
         if (borderColor is HmiBlinkProperty<HmiColor> borderBlink &&
             borderBlink.StaticValue is HmiColor borderOff && borderBlink.BlinkValue is HmiColor borderOn)
         {

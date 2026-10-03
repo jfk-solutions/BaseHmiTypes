@@ -13,6 +13,14 @@ meter[data-hmi-bar-fill] {
   color: inherit;
 }
 
+meter[data-hmi-bar-track] {
+  background: var(--hmi-bar-track-background);
+}
+
+meter[data-hmi-bar-track]::-webkit-meter-bar {
+  background: var(--hmi-bar-track-background);
+}
+
 meter[data-hmi-bar-fill]::-webkit-meter-optimum-value,
 meter[data-hmi-bar-fill]::-webkit-meter-suboptimum-value,
 meter[data-hmi-bar-fill]::-webkit-meter-even-less-good-value {
@@ -44,8 +52,8 @@ input[data-hmi-slider]::-moz-range-track {
 }
 
 @keyframes hmi-background-color-flash {
-  0%, 49.999% { background-color: var(--hmi-background-color-off); fill: var(--hmi-background-color-off); }
-  50%, 100% { background-color: var(--hmi-background-color-on); fill: var(--hmi-background-color-on); }
+  0%, 49.999% { background-color: var(--hmi-background-color-off); fill: var(--hmi-background-color-off); --hmi-bar-track-background: var(--hmi-background-color-off); }
+  50%, 100% { background-color: var(--hmi-background-color-on); fill: var(--hmi-background-color-on); --hmi-bar-track-background: var(--hmi-background-color-on); }
 }
 
 @keyframes hmi-border-color-flash {

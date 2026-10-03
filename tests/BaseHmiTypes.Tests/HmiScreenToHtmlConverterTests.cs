@@ -783,6 +783,38 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public async Task ConvertAsync_RendersBarConfiguredTrackColor(bool scale, bool blink)
+    {
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        var bar = new HmiBar { ShowScale = scale, BeginValue = 0, EndValue = 100, Value = 35,
+            BackgroundColor = blink ? HmiProperty.Blink(HmiColor.FromArgb(255, 1, 2, 3),
+                HmiColor.FromArgb(255, 4, 5, 6), HmiBlinkRate.Fast) : HmiColor.FromArgb(255, 1, 2, 3) };
+        layer.Items.Add(bar);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var meter = System.Text.RegularExpressions.Regex.Match(html, "<meter[^>]*>").Value;
+        StringAssert.Contains(meter, "data-hmi-bar-track=\"true\"");
+        Assert.IsFalse(meter.Contains("data-hmi-bar-fill", StringComparison.Ordinal));
+        StringAssert.Contains(html, "--hmi-bar-track-background: #010203;");
+        StringAssert.Contains(html, "::-webkit-meter-bar{background:var(--hmi-bar-track-background);}");
+        if (blink)
+        {
+            StringAssert.Contains(html, "animation: hmi-background-color-flash 0.5s steps(1, end) infinite;");
+            StringAssert.Contains(html, "--hmi-bar-track-background:var(--hmi-background-color-off);");
+            StringAssert.Contains(html, "--hmi-bar-track-background:var(--hmi-background-color-on);");
+        }
+        bar.BackgroundColor = null;
+        html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        meter = System.Text.RegularExpressions.Regex.Match(html, "<meter[^>]*>").Value;
+        Assert.IsFalse(meter.Contains("data-hmi-bar-track", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersBarFillDirections()
     {
         var screen = new HmiScreen { Name = "MainScreen", Width = 320, Height = 240 };
