@@ -1657,7 +1657,7 @@ function appendBarScale(
   const configuredDecimalPlaces = getStaticValue(bar.tickLabelDecimalPlaces);
   const decimalPlaces = configuredDecimalPlaces === undefined
     ? undefined
-    : Math.max(0, Math.min(15, configuredDecimalPlaces));
+    : Math.max(0, Math.min(20, configuredDecimalPlaces));
   const engineeringUnit = getStaticValue(bar.engineeringUnit);
   const reverse = direction === HmiFillDirection.Up || direction === HmiFillDirection.Left;
   const labelInterval = Math.max(1, getStaticValue(bar.tickLabelInterval) ?? 1);
