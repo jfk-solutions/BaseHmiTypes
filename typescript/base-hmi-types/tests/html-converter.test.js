@@ -2,6 +2,55 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { HmiTextBox, HmiGraphicView } from "../dist/index.js";
 
+const symbolicBorderCases = [
+  ...[0,1,2].flatMap(kind => [false,true].flatMap(inside => [false,true].map(color => [kind,inside,10,color]))),
+  ...[0,1,2].map(kind => [kind,undefined,10,true]),
+  ...[0,1,2].map(kind => [kind,false,1,true]),
+];
+for (const [kind,inside,width,stateColor] of symbolicBorderCases) {
+test("HTML renderer supports symbolic border placement ("+[kind,inside,width,stateColor].join(", ")+")", async () => {
+  const item = new HmiSymbolicIOField(); item.name = "FramedState";
+  item.width = staticProperty(100); item.height = staticProperty(80);
+  item.borderWidth = tagProperty("Border.Width",width); item.borderColor = staticProperty(hmiColorFromArgb(255,1,2,3));
+  item.readOnly = staticProperty(kind === 1); item.value = staticProperty(7);
+  if (inside !== undefined) item.drawStrokeInsideFrame = tagProperty("Border.Inside",inside);
+  const state = new HmiState(); state.value = 7; state.text = HmiMultilingualText.fromText("Seven");
+  if (stateColor) state.borderColor = hmiColorFromArgb(255,12,34,56);
+  if (kind === 0) state.image = {uri:"picture.svg"};
+  item.states.push(state);
+  const layer = new HmiLayer(); layer.items.push(item); const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<(?:div|input|select) id="FramedState"[^>]*>/u)?.[0] ?? ""; assert.ok(opening);
+  assert.ok(opening.startsWith(kind === 0 ? "<div" : kind === 1 ? "<input" : "<select"));
+  const centered = inside === false && width > 1;
+  assert.equal(opening.includes("outline-width:"),centered);
+  assert.ok(opening.includes("border-width: "+(centered ? 0 : width)+"px;"));
+  if (centered) {
+    assert.ok(opening.includes("outline-offset: -5px;"));
+    assert.ok(opening.includes(stateColor ? "outline-color: #0C2238;" : "outline-color: #010203;"));
+  }
+  if (kind === 0) assert.ok(html.includes('<img src="picture.svg"'));
+  if (kind === 1) assert.ok(opening.includes('value="Seven"'));
+  if (kind === 2) assert.ok(html.includes(">Seven</option>"));
+});
+}
+for (const inside of [false,true]) {
+test("HTML renderer flashes symbolic borders and images independently ("+inside+")", async () => {
+  const item = new HmiSymbolicIOField(); item.name = "FlashingState"; item.borderWidth = staticProperty(10);
+  item.drawStrokeInsideFrame = tagProperty("Border.Inside",inside);
+  item.borderColor = blinkProperty(hmiColorFromArgb(255,1,2,3),hmiColorFromArgb(255,4,5,6),HmiBlinkRate.Fast);
+  const state = new HmiState(); state.image = {uri:"base.svg"}; state.alternateImage = {uri:"flash.svg"};
+  state.imageBlink = true; state.imageBlinkRate = HmiBlinkRate.Slow; item.states.push(state);
+  const layer = new HmiLayer(); layer.items.push(item); const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<div id="FlashingState"[^>]*>/u)?.[0] ?? "";
+  assert.ok(opening.includes("animation: hmi-"+(inside ? "border" : "outline")+"-color-flash 0.5s steps(1, end) infinite;"));
+  assert.ok(opening.includes("--hmi-border-color-off: #010203;")); assert.ok(opening.includes("--hmi-border-color-on: #040506;"));
+  assert.ok(html.includes("animation: hmi-symbolic-base-flash 2s steps(1, end) infinite;"));
+  assert.ok(html.includes("animation: hmi-symbolic-alternate-flash 2s steps(1, end) infinite;"));
+});
+}
+
 const graphicBorderCases = [
   ...[false,true,undefined].flatMap(inside => [false,true].flatMap(line =>
     [false,true].map(image => [inside,line,image,10]))),
