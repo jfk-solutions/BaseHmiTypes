@@ -1739,6 +1739,21 @@ function appendScaleMarks(
       ? `<line x1="0" x2="${tickLength}" y1="${percentage}%" y2="${percentage}%"></line>`
       : `<line y1="0" y2="${tickLength}" x1="${percentage}%" x2="${percentage}%"></line>`);
   }
+  const subdivisions = Math.max(0, Math.min(100, getStaticValue(bar.subDivisionCount) ?? 0));
+  const majorOnly = getStaticValue(bar.majorTicksOnly) === true;
+  if (!majorOnly && subdivisions > 1) {
+    const shortStart = toCss(afterBar ? 0 : tickLength / 2);
+    const shortEnd = toCss(afterBar ? tickLength / 2 : tickLength);
+    for (let index = 0; index < tickCount - 1; index++) {
+      for (let subdivision = 1; subdivision < subdivisions; subdivision++) {
+        const ratio = ratios[index]! + (ratios[index + 1]! - ratios[index]!) * subdivision / subdivisions;
+        const percentage = toCss(100 * (reverse ? 1 - ratio : ratio));
+        html.push(vertical
+          ? `<line data-hmi-minor-tick="true" stroke-width="1" x1="${shortStart}" x2="${shortEnd}" y1="${percentage}%" y2="${percentage}%"></line>`
+          : `<line data-hmi-minor-tick="true" stroke-width="1" y1="${shortStart}" y2="${shortEnd}" x1="${percentage}%" x2="${percentage}%"></line>`);
+      }
+    }
+  }
   html.push("</svg>");
   html.push("</div>");
 }
