@@ -204,7 +204,7 @@ public class HmiScreenToHtmlConverter
                 await AppendSymbolicInputAsync(html, symbolicIoField, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiTextBox textBox:
-                AppendTextBlock(html, textBox, textBox.Text, context);
+                AppendTextBox(html, textBox, context);
                 break;
             case HmiLabel label:
                 AppendTextBlock(html, label, label.Text, context);
@@ -3030,6 +3030,27 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "image", await ResolveImageUriAsync(item.Image, project, cancellationToken).ConfigureAwait(false));
         AppendAttribute(html, "image-name", item.ImageName ?? item.Image?.ImageName);
         html.Append("></span>");
+    }
+
+    private static void AppendTextBox(StringBuilder html, HmiTextBox item, HmiHtmlConvertContext context)
+    {
+        html.Append("<textarea");
+        var resize = ResolveStaticValue(item.Resizable, context) ? "both" : "none";
+        AppendCommonAttributes(html, item, context,
+            additionalStyle: $"overflow: auto;resize: {resize};" + CreateTextOrientationStyle(item, context));
+        if (!ResolveStaticValue(item.Enabled, context))
+            AppendAttribute(html, "disabled", "disabled");
+        if (ResolveStaticValue(item.ReadOnly, context))
+            AppendAttribute(html, "readonly", "readonly");
+        if (item.FieldLength is not null && ResolveStaticValue(item.FieldLength, context) is > 0 and var length)
+            AppendAttribute(html, "maxlength", length.ToString(CultureInfo.InvariantCulture));
+        html.Append('>');
+        var text = ResolveStaticValue(item.Text, context)?.GetText(context.CultureInfo) ?? "";
+        // HTML removes one initial line feed from textarea content.
+        if (text.StartsWith('\n') || text.StartsWith('\r'))
+            html.Append('\n');
+        html.Append(WebUtility.HtmlEncode(text));
+        html.Append("</textarea>");
     }
 
     private static void AppendTextBlock(StringBuilder html, HmiScreenItemBase item, HmiProperty<HmiMultilingualText>? text, HmiHtmlConvertContext context)
