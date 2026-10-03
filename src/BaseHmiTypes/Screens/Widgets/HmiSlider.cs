@@ -13,6 +13,9 @@ public class HmiSlider : HmiBar
 
     public HmiProperty<HmiColor>? ThumbForegroundColor { get; set; }
 
+    /// <summary>Configured small-change increment; preview rendering does not perform process writes.</summary>
+    public HmiProperty<int>? StepSize { get; set; }
+
     public HmiProperty<HmiColor>? TrackHighBackgroundColor { get; set; }
 
     public HmiProperty<HmiColor>? TrackLowBackgroundColor { get; set; }
