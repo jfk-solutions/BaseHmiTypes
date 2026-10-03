@@ -1,6 +1,7 @@
 const selectionGroupProperties = {
   selectedIndex: Number,
   selectedFields: Number,
+  indicatorOnRight: Boolean,
   drawStrokeInsideFrame: Boolean,
   frameBorderStyle: String,
   frameBorderFlashDuration: Number,
@@ -30,6 +31,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   protected abstract readonly indicator: SelectionIndicator;
   private _selectedIndex = -1;
   private _selectedFields: number | undefined;
+  private _indicatorOnRight = false;
   private _drawStrokeInsideFrame = true;
   private _frameBorderStyle = "solid";
   private _frameBorderFlashDuration = 0;
@@ -65,6 +67,16 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
 
   get drawStrokeInsideFrame(): boolean {
     return this._drawStrokeInsideFrame;
+  }
+
+  get indicatorOnRight(): boolean {
+    return this._indicatorOnRight;
+  }
+  set indicatorOnRight(value: boolean | string | null | undefined) {
+    const next = value === true || value === "" || (typeof value === "string" && value.toLowerCase() === "true");
+    if (this._indicatorOnRight === next) return;
+    this._indicatorOnRight = next;
+    this.queueRender();
   }
   set drawStrokeInsideFrame(value: boolean | string | null | undefined) {
     const next = value !== false && String(value).toLowerCase() !== "false";
@@ -298,7 +310,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
           min-height: 0;
           height: ${itemHeight};
           display: grid;
-          grid-template-columns: minmax(20px, 0.24fr) minmax(0, auto) minmax(0, 1fr);
+          grid-template-columns: ${this._indicatorOnRight ? "minmax(0, auto) minmax(0, 1fr) minmax(20px, 0.24fr)" : "minmax(20px, 0.24fr) minmax(0, auto) minmax(0, 1fr)"};
           align-items: center;
           column-gap: 12px;
           padding: 2px 4px;
@@ -314,6 +326,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
         }
 
         .indicator {
+          ${this._indicatorOnRight ? "grid-column: 3;" : ""}
           width: min(100%, 62px);
           aspect-ratio: 1;
           justify-self: end;
@@ -373,6 +386,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
           white-space: nowrap;
           text-overflow: ellipsis;
         }
+
       </style>
       <slot class="source" name="item"></slot>
       <div class="panel" role="group">
@@ -393,11 +407,11 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
         const selected = mask === undefined ? index === Math.trunc(this._selectedIndex)
           : validMask && index < 32 && (mask & (1 << index)) !== 0;
         const role = this.indicator === "radio" ? "radio" : "checkbox";
+        const indicator = `<span class="indicator ${this.indicator}"></span>`;
+        const caption = `${renderImage(item)}<span class="label">${escapeHtml(item.text)}</span>`;
         return `
           <div class="item${selected ? " selected" : ""}" role="${role}" aria-checked="${selected ? "true" : "false"}">
-            <span class="indicator ${this.indicator}"></span>
-            ${renderImage(item)}
-            <span class="label">${escapeHtml(item.text)}</span>
+            ${this._indicatorOnRight ? `${caption}${indicator}` : `${indicator}${caption}`}
           </div>`;
       })
       .join("");

@@ -3,6 +3,8 @@ import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiProperty } from "../base.js";
 
 export class HmiCheckBoxGroup extends HmiSelectionGroupBase {
+  /** True places the indicator to the right of its caption; false/omitted keeps it on the left. */
+  indicatorOnRight?: HmiProperty<boolean>;
   /** For borders wider than one pixel, false centers on the frame; true/omitted draws inside. */
   drawStrokeInsideFrame?: HmiProperty<boolean>;
   /** A 32-bit selection mask; bit zero selects the first field. Overrides selectedIndex when set. */
