@@ -4595,11 +4595,11 @@ public class HmiScreenToHtmlConverter
         var backgroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
         var borderColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderColor), item.BorderColor);
         var borderWidth = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderWidth), item.BorderWidth);
-        var rectangleBorder = item is HmiRectangle { DrawStrokeInsideFrame: not null };
-        if (rectangleBorder && item is HmiRectangle rectangle)
+        var framedShapeBorder = item is HmiRectangle { DrawStrokeInsideFrame: not null } or HmiText { DrawStrokeInsideFrame: not null };
+        if (framedShapeBorder && item is HmiShapeBase framedShape)
         {
-            borderWidth = context.EffectiveProperties.Resolve(rectangle, nameof(HmiShapeBase.LineWidth), rectangle.LineWidth) ?? borderWidth;
-            borderColor = context.EffectiveProperties.Resolve(rectangle, nameof(HmiShapeBase.LineColor), rectangle.LineColor) ?? borderColor;
+            borderWidth = context.EffectiveProperties.Resolve(framedShape, nameof(HmiShapeBase.LineWidth), framedShape.LineWidth) ?? borderWidth;
+            borderColor = context.EffectiveProperties.Resolve(framedShape, nameof(HmiShapeBase.LineColor), framedShape.LineColor) ?? borderColor;
         }
         var borderStyle = GetBorderStyleCss(item, context);
         var margin = item.Margin;
@@ -4612,7 +4612,9 @@ public class HmiScreenToHtmlConverter
             (item is HmiBar or HmiSlider && item is HmiScaleWidgetBase scaleWidget &&
                 scaleWidget.DrawInsideFrame is not null && !ResolveStaticValue(scaleWidget.DrawInsideFrame, context) ||
              item is HmiRectangle framedRectangle && framedRectangle.DrawStrokeInsideFrame is not null &&
-                !ResolveStaticValue(framedRectangle.DrawStrokeInsideFrame, context));
+                !ResolveStaticValue(framedRectangle.DrawStrokeInsideFrame, context) ||
+             item is HmiText framedText && framedText.DrawStrokeInsideFrame is not null &&
+                !ResolveStaticValue(framedText.DrawStrokeInsideFrame, context));
         var animations = new List<string>();
 
         if (foregroundColor is HmiBlinkProperty<HmiColor> foregroundBlink &&
@@ -4677,7 +4679,7 @@ public class HmiScreenToHtmlConverter
             }
         }
 
-        if (item is HmiShapeBase shape && !rectangleBorder)
+        if (item is HmiShapeBase shape && !framedShapeBorder)
         {
             if (shape.LineColor != null)
                 html.Append("border-color: ").Append(ToCss(shape.LineColor.StaticValue)).Append(";");
