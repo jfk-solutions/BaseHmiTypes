@@ -91,6 +91,7 @@ export * from "./base/HmiTrendScrollMechanism.js";
 export * from "./base/HmiTrendScrollMode.js";
 export * from "./base/HmiTrendStackAxesMode.js";
 export * from "./base/HmiTrendTimeFormat.js";
+export * from "./base/HmiTrendTimeBase.js";
 export * from "./base/HmiTrendTimeRangeType.js";
 export * from "./base/HmiTrendTemplateOption.js";
 export * from "./base/HmiTrendUpdateMode.js";
