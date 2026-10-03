@@ -16,6 +16,46 @@ namespace BaseHmiTypes.Tests;
 public class HmiScreenToHtmlConverterTests
 {
     [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public async Task ConvertAsync_RendersNativeMultilineEditor(bool enabled, bool readOnly)
+    {
+        var item = new HmiTextBox { Name = "Editor", Enabled = HmiProperty.Tag("Editor.Enabled", enabled),
+            ReadOnly = HmiProperty.Tag("Editor.ReadOnly", readOnly), FieldLength = 100,
+            Text = HmiMultilingualText.FromText("Line 1\n</textarea><script>unsafe</script> & \"quotes\""),
+            ForegroundColor = HmiColor.FromArgb(255, 1, 2, 3),
+            DisabledForegroundColor = HmiColor.FromArgb(255, 11, 22, 33), UseDisabledForegroundColor = true };
+        var layer = new HmiLayer(); layer.Items.Add(item); var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<textarea id=\"Editor\"[^>]*>").Value;
+        Assert.IsFalse(string.IsNullOrEmpty(opening));
+        Assert.AreEqual(!enabled, opening.Contains("disabled=\"disabled\"", StringComparison.Ordinal));
+        Assert.AreEqual(readOnly, opening.Contains("readonly=\"readonly\"", StringComparison.Ordinal));
+        StringAssert.Contains(opening, "maxlength=\"100\""); StringAssert.Contains(opening, "resize: none;");
+        StringAssert.Contains(opening, enabled ? "color: #010203;" : "color: #0B1621;");
+        StringAssert.Contains(html, "Line 1\n&lt;/textarea&gt;&lt;script&gt;unsafe&lt;/script&gt; &amp;");
+        Assert.AreEqual(1, System.Text.RegularExpressions.Regex.Matches(html, "</textarea>").Count);
+    }
+
+    [TestMethod]
+    [DataRow(0, false)]
+    [DataRow(-1, true)]
+    [DataRow(20, true)]
+    public async Task ConvertAsync_RetainsMultilineLeadingNewlineAndResizeSettings(int length, bool resize)
+    {
+        var item = new HmiTextBox { Name = "Editor", FieldLength = length, Resizable = resize,
+            Text = HmiMultilingualText.FromText("\nFirst\nSecond") };
+        var layer = new HmiLayer(); layer.Items.Add(item); var screen = new HmiScreen(); screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        var opening = System.Text.RegularExpressions.Regex.Match(html, "<textarea id=\"Editor\"[^>]*>").Value;
+        Assert.AreEqual(length > 0, opening.Contains("maxlength=", StringComparison.Ordinal));
+        StringAssert.Contains(opening, resize ? "resize: both;" : "resize: none;");
+        StringAssert.Contains(html, ">\n\nFirst\nSecond</textarea>");
+    }
+
+    [TestMethod]
     [DataRow(false, 0, false)]
     [DataRow(false, 1, false)]
     [DataRow(false, 2, false)]
