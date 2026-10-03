@@ -1659,32 +1659,62 @@ public class HmiScreenToHtmlConverter
         var stateValue = ResolveStaticValue(button.State, context);
         var state = button.States.FirstOrDefault(candidate => candidate.Value == stateValue)
             ?? button.States.FirstOrDefault();
+        var mode = button.Mode?.StaticValue;
+        var caption = state?.Text ?? ResolveStaticValue(button.Text, context);
         html.Append("<button");
         AppendCommonAttributes(html, button, context, additionalStyle: CreateButtonStyle(button, state, context));
+        AppendAttribute(html, "aria-label", caption?.GetDisplayText(context.CultureInfo));
         var enabled = button.Enabled is null || ResolveStaticValue(button.Enabled, context);
         if (!enabled)
             AppendAttribute(html, "disabled", "disabled");
-        html.Append(">");
         var image = state?.Image ?? button.Image.GetStaticValue();
         var disabledImageMode = ResolveStaticValue(button.DisabledImageMode, context);
         var showDisabledAppearance = !enabled && button.ShowDisabledState is not null && ResolveStaticValue(button.ShowDisabledState, context);
         if (showDisabledAppearance && disabledImageMode is HmiDisabledImageMode.Reference or HmiDisabledImageMode.Imported)
             image = ResolveStaticValue(button.DisabledImage, context) ?? image;
-        var imageUri = await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
-        if (!string.IsNullOrWhiteSpace(imageUri))
+        var imageUri = mode == HmiButtonType.Text ? null
+            : await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
+        var hasImage = !string.IsNullOrWhiteSpace(imageUri);
+        var imageFallback = mode == HmiButtonType.GraphicOrText && hasImage;
+        if (imageFallback)
+            html.Append(" data-hmi-button-image-fallback");
+        html.Append('>');
+        if (hasImage)
+        {
+            html.Append("<span data-hmi-button-content style=\"display: flex;flex-direction: column;width: 100%;height: 100%;min-width: 0;min-height: 0;align-items: center;justify-content: center;overflow: hidden;\">")
+                .Append("<span data-hmi-button-graphic style=\"flex: 1 1 0;min-width: 0;min-height: 0;width: 100%;\">");
             AppendInnerImage(html, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale);
+            html.Append("</span>");
+        }
+        if (mode != HmiButtonType.Graphic)
+            AppendButtonCaption(html, button, state, caption, hasImage, imageFallback, context);
+        if (hasImage)
+            html.Append("</span>");
+        html.Append("</button>");
+    }
+
+    private static void AppendButtonCaption(StringBuilder html, HmiButton button, HmiState? state,
+        HmiMultilingualText? caption, bool boundedLayout, bool hidden, HmiHtmlConvertContext context)
+    {
         var captionBlink = GetButtonCaptionBlink(button, state);
         var captionColor = state?.CaptionColor ?? state?.ForegroundColor ??
             (button.CaptionColor is null ? (HmiColor?)null : ResolveStaticValue(button.CaptionColor, context));
-        if (captionBlink is not null)
-            html.Append("<span data-hmi-button-caption style=\"animation: hmi-caption-color-flash ")
-                .Append(GetBlinkDuration(captionBlink.Rate)).Append("s steps(1, end) infinite;\">");
-        else if (captionColor is { } staticCaptionColor)
-            html.Append("<span data-hmi-button-caption style=\"color: ").Append(ToCss(staticCaptionColor)).Append(";\">");
-        AppendMultilingualText(html, state?.Text ?? ResolveStaticValue(button.Text, context), context);
-        if (captionBlink is not null || captionColor is not null)
+        var wrapped = boundedLayout || captionBlink is not null || captionColor is not null;
+        if (wrapped)
+        {
+            html.Append("<span data-hmi-button-caption");
+            if (hidden) html.Append(" hidden");
+            html.Append(" style=\"");
+            if (boundedLayout) html.Append("flex: 0 0 auto;max-width: 100%;");
+            if (captionBlink is not null)
+                html.Append("animation: hmi-caption-color-flash ").Append(GetBlinkDuration(captionBlink.Rate)).Append("s steps(1, end) infinite;");
+            else if (captionColor is { } staticCaptionColor)
+                html.Append("color: ").Append(ToCss(staticCaptionColor)).Append(';');
+            html.Append("\">");
+        }
+        AppendMultilingualText(html, caption, context);
+        if (wrapped)
             html.Append("</span>");
-        html.Append("</button>");
     }
 
     private static HmiBlinkProperty<HmiColor>? GetButtonCaptionBlink(HmiButton button, HmiState? state) =>
