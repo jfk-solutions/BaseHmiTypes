@@ -1532,7 +1532,7 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   const value = resolveScaleValue(bar, minimum, maximum);
   const direction = getStaticValue(bar.fillDirection) ?? HmiFillDirection.Right;
   const showScale = getStaticValue(bar.showScale) === true;
-  const showThresholds = bar.thresholds.some(threshold =>
+  const showThresholds = getStaticValue(bar.showLimitRanges) !== false && bar.thresholds.some(threshold =>
     threshold.value !== undefined && getStaticValue(threshold.enabled) !== false);
   if (showScale || showThresholds) {
     const vertical = direction === HmiFillDirection.Up || direction === HmiFillDirection.Down;
@@ -1609,10 +1609,26 @@ function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlC
   if (getStaticValue(context.effectiveProperties.resolve(bar, "BackgroundColor", bar.backgroundColor)) !== undefined ||
       getColorGradient(bar) !== undefined)
     appendAttribute(html, "data-hmi-bar-track", "true");
-  if (context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor) !== undefined ||
+  if (getBarThresholdFillColor(bar) !== undefined ||
+      context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor) !== undefined ||
       (getStaticValue(bar.enabled) === false && getStaticValue(bar.useDisabledForegroundColor) === true &&
        bar.disabledForegroundColor !== undefined))
     appendAttribute(html, "data-hmi-bar-fill", "true");
+}
+
+function getBarThresholdFillColor(bar: HmiBar): HmiProperty<HmiColor> | undefined {
+  const value = getStaticValue(bar.value);
+  if (getStaticValue(bar.useThresholdFillColors) !== true || value === undefined || !Number.isFinite(value))
+    return undefined;
+  const thresholds = bar.thresholds.filter(threshold =>
+    threshold.value !== undefined && threshold.color !== undefined && getStaticValue(threshold.enabled) !== false)
+    .sort((left, right) => (getStaticValue(left.value) ?? NaN) - (getStaticValue(right.value) ?? NaN));
+  for (const threshold of thresholds) {
+    const limit = getStaticValue(threshold.value);
+    if (limit !== undefined && Number.isFinite(limit) && value < limit)
+      return threshold.color;
+  }
+  return undefined;
 }
 
 function appendBarThresholds(
@@ -1622,6 +1638,7 @@ function appendBarThresholds(
   maximum: number,
   direction: HmiFillDirection,
 ): void {
+  if (getStaticValue(bar.showLimitRanges) === false) return;
   const percentageMode = getStaticValue(bar.thresholdValueMode) === HmiThresholdValueMode.Percentage;
   for (let index = 0; index < bar.thresholds.length; index++) {
     const threshold = bar.thresholds[index]!;
@@ -4036,6 +4053,8 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   const useDisabledForegroundColor = !getStaticValueOrDefault(item.enabled, true) &&
     getStaticValueOrDefault(item.useDisabledForegroundColor, false);
   let foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
+  if (item instanceof HmiBar)
+    foregroundColor = getBarThresholdFillColor(item) ?? foregroundColor;
   if (useDisabledForegroundColor) {
     foregroundColor = context.effectiveProperties.resolve(
       item,

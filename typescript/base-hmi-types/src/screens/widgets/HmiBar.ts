@@ -8,6 +8,8 @@ export class HmiBar extends HmiScaleWidgetBase {
   fillDirection?: HmiProperty<HmiFillDirection>;
   /** True places the scale right/below; false places it left/above. Omitted uses right/below. */
   scaleAfterBar?: HmiProperty<boolean>;
+  /** Use the lowest enabled threshold strictly above the value; otherwise retain the foreground color. */
+  useThresholdFillColors?: HmiProperty<boolean>;
 
   constructor() {
     super();
