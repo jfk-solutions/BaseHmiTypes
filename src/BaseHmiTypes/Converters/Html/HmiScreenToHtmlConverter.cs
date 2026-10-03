@@ -2966,6 +2966,13 @@ public class HmiScreenToHtmlConverter
         html.Append('<').Append(elementName);
         AppendCommonAttributes(html, selectionGroup, context);
         AppendStaticAttribute(html, "selected-index", selectionGroup.SelectedIndex);
+        var selectedFields = selectionGroup switch
+        {
+            HmiCheckBoxGroup checkBox => checkBox.SelectedFields,
+            HmiRadioButtonGroup radioBox => radioBox.SelectedFields,
+            _ => null
+        };
+        AppendStaticAttribute(html, "selected-fields", selectedFields);
         AppendStaticAttribute(html, "selection-item-height", selectionGroup.SelectionItemHeight);
         AppendStaticAttribute(html, "selection-background-color", selectionGroup.SelectionBackgroundColor);
         AppendStaticAttribute(html, "selection-foreground-color", selectionGroup.SelectionForegroundColor);
