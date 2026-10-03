@@ -80,6 +80,32 @@ import {
   tagProperty,
 } from "../dist/index.js";
 
+for (const [kind, weight, bold] of [[0,500,false],[0,500,true],[0,0,false],[0,0,true],[0,-1,false],[0,-1,true],[1,500,false],[1,500,true],[1,0,false],[1,0,true],[1,-1,false],[1,-1,true],[2,500,false],[2,500,true],[2,0,false],[2,0,true],[2,-1,false],[2,-1,true]]) {
+test(`HTML renderer supports widget numeric font weight (${kind}, ${weight}, ${bold})`, async () => {
+  const font = new HmiFont();
+  font.weight = tagProperty("Font.Weight", weight);
+  font.bold = staticProperty(bold);
+  const item = kind === 0 ? new HmiButton() : kind === 1 ? new HmiIOField() : new HmiBar();
+  if (kind === 2) {
+    item.labelFont = font;
+    item.showScale = staticProperty(true);
+  } else item.font = font;
+  item.name = "Weighted";
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  layer.items.push(item);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(kind === 2 ? /<div[^>]*data-hmi-bar-scale[^>]*>/ : kind === 0 ? /<button[^>]*>/ : /<input[^>]*>/)?.[0] ?? "";
+  assert.notEqual(opening, "");
+  if (weight > 0) {
+    assert.ok(opening.includes(`font-weight: ${weight};`));
+    assert.ok(!opening.includes("font-weight: bold;"));
+  } else if (bold) assert.ok(opening.includes("font-weight: bold;"));
+  else assert.ok(!opening.includes("font-weight:"));
+});
+}
+
 for (const [kind, underline, strike] of [[0,false,false],[0,false,true],[0,true,false],[0,true,true],[1,false,false],[1,false,true],[1,true,false],[1,true,true],[2,false,false],[2,false,true],[2,true,false],[2,true,true]]) {
 test(`HTML renderer supports widget font decorations (${kind}, ${underline}, ${strike})`, async () => {
   const font = new HmiFont();
