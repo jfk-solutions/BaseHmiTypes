@@ -1552,10 +1552,7 @@ function createStateStyle(state: HmiState | undefined): string | null {
 
 function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConvertContext): void {
   html.push("<input");
-  const sourceAngle = getStaticValue(ioField.font?.orientationAngle) ?? 0;
-  const angle = ((sourceAngle % 360) + 360) % 360;
-  appendCommonAttributes(html, ioField, context, undefined,
-    angle === 90 ? "writing-mode: sideways-lr;" : angle === 270 ? "writing-mode: sideways-rl;" : undefined);
+  appendCommonAttributes(html, ioField, context, undefined, createFontWritingModeStyle(ioField.font));
   let text = getStaticValue(ioField.text)?.getDisplayText(context.options.cultureLcid);
   if (!text?.trim() && ioField.text?.kind === HmiPropertyKind.Expression)
     text = (ioField.text as HmiExpressionProperty<HmiMultilingualText>).expression;
@@ -2606,7 +2603,8 @@ async function appendSymbolicInput(
   }
 
   html.push("<select");
-  appendCommonAttributes(html, symbolicIoField, context, true, createStateStyle(selectedState));
+  appendCommonAttributes(html, symbolicIoField, context, true,
+    (createStateStyle(selectedState) ?? "") + (createFontWritingModeStyle(symbolicIoField.font) ?? ""));
   html.push(">");
   for (const state of symbolicIoField.states) {
     html.push("<option");
@@ -2620,6 +2618,12 @@ async function appendSymbolicInput(
     html.push("</option>");
   }
   html.push("</select>");
+}
+
+function createFontWritingModeStyle(font: HmiFont | undefined): string | undefined {
+  const sourceAngle = getStaticValue(font?.orientationAngle) ?? 0;
+  const angle = ((sourceAngle % 360) + 360) % 360;
+  return angle === 90 ? "writing-mode: sideways-lr;" : angle === 270 ? "writing-mode: sideways-rl;" : undefined;
 }
 
 function getBlinkDuration(rate: HmiBlinkRate | undefined): string {

@@ -49,6 +49,8 @@ import {
   HmiGauge,
   HmiHorizontalAlignment,
   HmiImage,
+  HmiImageSourceKind,
+  HmiSymbolicIOField,
   HmiLayer,
   HmiListBox,
   HmiMultilingualText,
@@ -89,6 +91,25 @@ import {
   staticProperty,
   tagProperty,
 } from "../dist/index.js";
+
+for (const angle of [0,90,270]) for (const image of [false,true]) {
+test("HTML renderer renders symbolic text orientation without rotating images (" + [angle,image].join(", ") + ")", async () => {
+  const item = new HmiSymbolicIOField(); item.name = "OrientedList"; item.width = staticProperty(80); item.height = staticProperty(160);
+  item.font = new HmiFont(); item.font.orientationAngle = tagProperty("List.Angle",angle); item.value = staticProperty(1);
+  const state = new HmiState(); state.value = 1; state.text = HmiMultilingualText.fromText("Running");
+  state.captionColor = hmiColorFromArgb(255,1,2,3);
+  if (image) state.image = {kind:HmiImageSourceKind.DataUri,uri:"data:image/png;base64,AQID"};
+  item.states.push(state);
+  const layer = new HmiLayer(); layer.items.push(item);
+  const screen = new HmiScreen(); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  const opening = html.match(/<(?:select|div) id="OrientedList"[^>]*>/u)?.[0] ?? "";
+  assert.equal(opening.includes("writing-mode:"),!image && angle !== 0);
+  if (!image && angle !== 0) assert.ok(opening.includes(angle === 90 ? "writing-mode: sideways-lr;" : "writing-mode: sideways-rl;"));
+  assert.ok(opening.includes("color: #010203;")); assert.ok(html.includes("Running"));
+  assert.ok(html.includes(image ? 'src="data:image/png;base64,AQID"' : 'selected="selected"'));
+});
+}
 
 for (const angle of [0,90,270,-90]) {
 test("HTML renderer renders IO field font orientation (" + angle + ")", async () => {
