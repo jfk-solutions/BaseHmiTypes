@@ -9,6 +9,20 @@ input[data-hmi-slider] {
   background: var(--hmi-slider-track-background, initial);
 }
 
+meter[data-hmi-bar-fill] {
+  color: inherit;
+}
+
+meter[data-hmi-bar-fill]::-webkit-meter-optimum-value,
+meter[data-hmi-bar-fill]::-webkit-meter-suboptimum-value,
+meter[data-hmi-bar-fill]::-webkit-meter-even-less-good-value {
+  background: currentColor;
+}
+
+meter[data-hmi-bar-fill]::-moz-meter-bar {
+  background: currentColor;
+}
+
 input[data-hmi-slider]::-webkit-slider-runnable-track,
 input[data-hmi-slider]::-moz-range-track {
   background: var(--hmi-slider-track-background, initial);
