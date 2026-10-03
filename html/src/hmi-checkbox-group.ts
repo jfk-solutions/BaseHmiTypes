@@ -1,5 +1,6 @@
 const selectionGroupProperties = {
   selectedIndex: Number,
+  selectedFields: Number,
   selectionItemHeight: Number,
   selectionBackgroundColor: String,
   selectionForegroundColor: String,
@@ -23,6 +24,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
 
   protected abstract readonly indicator: SelectionIndicator;
   private _selectedIndex = -1;
+  private _selectedFields: number | undefined;
   private _selectionItemHeight = Number.NaN;
   private _selectionBackgroundColor = "";
   private _selectionForegroundColor = "";
@@ -38,6 +40,17 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   }
   set selectedIndex(value: number | string | null | undefined) {
     this.setNumberProperty("_selectedIndex", value, -1);
+  }
+
+  get selectedFields(): number | undefined {
+    return this._selectedFields;
+  }
+  set selectedFields(value: number | string | null | undefined) {
+    const parsed = value == null ? Number.NaN : Number(value);
+    const next = Number.isFinite(parsed) ? parsed >>> 0 : undefined;
+    if (this._selectedFields === next) return;
+    this._selectedFields = next;
+    this.queueRender();
   }
 
   get selectionItemHeight(): number {
@@ -291,7 +304,10 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   private renderItems(items: SelectionItem[]): string {
     return items
       .map((item, index) => {
-        const selected = index === Math.trunc(this._selectedIndex);
+        const mask = this._selectedFields;
+        const validMask = mask === undefined || this.indicator !== "radio" || (mask & (mask - 1)) === 0;
+        const selected = mask === undefined ? index === Math.trunc(this._selectedIndex)
+          : validMask && index < 32 && (mask & (1 << index)) !== 0;
         const role = this.indicator === "radio" ? "radio" : "checkbox";
         return `
           <div class="item${selected ? " selected" : ""}" role="${role}" aria-checked="${selected ? "true" : "false"}">
