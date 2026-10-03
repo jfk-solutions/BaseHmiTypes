@@ -79,11 +79,11 @@ test("multiple time axes render independent rows without duplicating shared or h
     let html = control.shadowRoot.innerHTML;
     assert.equal([...html.matchAll(/class="time-axis /gu)].length, 3);
     const rows = [...html.matchAll(/<div class="time-axis [^>]+>[\s\S]*?<\/div>/gu)].map(match => match[0]);
-    assert.match(rows[0], /bottom:calc\(-3.6em - 1px\);color:#112233/u);
+    assert.match(rows[0], /bottom:calc\(-7.2em - 1px\);color:#112233/u);
     assert.match(rows[0], /15:04:06.012/u);
     assert.match(rows[0], /Fast &amp; time/u);
     assert.ok(!rows[0].includes("24/12/2020"));
-    assert.match(rows[1], /bottom:calc\(-7.2em - 1px\);color:#445566/u);
+    assert.match(rows[1], /bottom:calc\(-3.6em - 1px\);color:#445566/u);
     assert.match(rows[1], /24\/12\/2020/u);
     assert.match(rows[1], /1:04:06PM/u);
     assert.match(rows[2], /class="time-axis top"/u);
@@ -99,6 +99,42 @@ test("multiple time axes render independent rows without duplicating shared or h
     control.setAttribute("time-axes", JSON.stringify(axes));
     assert.match(control.shadowRoot.innerHTML, /data-axis-name="Slow" style="bottom:calc\(-3.6em - 1px\)/u);
   } finally { Date.now = originalNow; }
+});
+
+test("WinCC axis list order places earlier visible axes farther away on each side", () => {
+  const control = new HmiTrendControl();
+  const valueAxes = [
+    { valueAxisName: "L1" }, { valueAxisName: "R1", valueAxisAlignment: "Right" },
+    { valueAxisName: "Hidden left", valueAxisVisible: false },
+    { valueAxisName: "L2" }, { valueAxisName: "R2", valueAxisAlignment: "Right" },
+  ];
+  const timeAxes = [
+    { name: "T1", alignment: "Top" }, { name: "B1" }, { name: "Hidden top", alignment: "Top", visible: false },
+    { name: "T2", alignment: "Top" }, { name: "B2" },
+  ];
+  control.setAttribute("value-axes", JSON.stringify(valueAxes));
+  control.setAttribute("time-axes", JSON.stringify(timeAxes));
+  let html = control.shadowRoot.innerHTML;
+  for (const side of ["L", "R"]) {
+    const alignment = side === "L" ? "left" : "right";
+    assert.match(html, new RegExp(`data-axis-name="${side}1" style="${alignment}:-8.8em`, "u"));
+    assert.match(html, new RegExp(`data-axis-name="${side}2" style="${alignment}:-4.4em`, "u"));
+  }
+  for (const side of ["T", "B"]) {
+    const alignment = side === "T" ? "top" : "bottom";
+    assert.match(html, new RegExp(`data-axis-name="${side}1" style="${alignment}:calc\\(-7.2em`, "u"));
+    assert.match(html, new RegExp(`data-axis-name="${side}2" style="${alignment}:calc\\(-3.6em`, "u"));
+  }
+  // Reordering is reactive and never changes a pen's association to its named axis.
+  control.setAttribute("pens", JSON.stringify([{ number: 9, valueAxisName: "L1", timeAxisName: "B1" }]));
+  control.setAttribute("value-axes", JSON.stringify(valueAxes.toReversed()));
+  control.setAttribute("time-axes", JSON.stringify(timeAxes.toReversed()));
+  html = control.shadowRoot.innerHTML;
+  assert.match(html, /data-axis-name="L1" style="left:-4.4em/u);
+  assert.match(html, /data-axis-name="R1" style="right:-4.4em/u);
+  assert.match(html, /data-axis-name="T1" style="top:calc\(-3.6em/u);
+  assert.match(html, /data-axis-name="B1" style="bottom:calc\(-3.6em/u);
+  assert.match(html, /data-pen-number="9" data-time-axis="B1"/u);
 });
 
 test("time axes own their window independently of referencing pens", () => {
@@ -219,8 +255,8 @@ test("named value axes are distinct, shared, independently visible and styled", 
   assert.equal([...html.matchAll(/data-axis-name=/gu)].length, 3);
   assert.equal([...html.matchAll(/data-axis-name="Pressure"/gu)].length, 1);
   assert.match(html, /class="value-axis right" data-axis-name="Pressure" style="right:-4.4em;color:#112233"/u);
-  assert.match(html, /class="value-axis left" data-axis-name="Temperature" style="left:-4.4em;color:#445566"/u);
-  assert.match(html, /data-axis-name="Flow" style="left:-8.8em/u);
+  assert.match(html, /class="value-axis left" data-axis-name="Temperature" style="left:-8.8em;color:#445566"/u);
+  assert.match(html, /data-axis-name="Flow" style="left:-4.4em/u);
   assert.match(html, /\.plot\s*\{[^}]*left: calc\(2.5% \+ 8.8em\); right: calc\(2.5% \+ 4.4em\);/u);
   assert.match(html, />100.00<\/span>/u);
   assert.match(html, />-10.0<\/span>/u);
