@@ -23,9 +23,9 @@ public class MetafilePolyDrawTests
     [TestMethod] [DataRow(56u)] [DataRow(92u)]
     public void RecordsMixedCommandsInPath(uint type)=>Assert.AreEqual(MixedPath,Svg(Emf(Record(59),PolyDraw(type),Record(60),Record(64,0,0,39,39))).Elements().Single().Attribute("d")?.Value);
     [TestMethod] [DataRow(56u)] [DataRow(92u)]
-    public void CloseReturnsCurrentPositionToLastMove(uint type)
+    public void CloseKeepsNativeEndpointAsCurrentPosition(uint type)
     {
-        var line=Svg(Emf(PolyDraw(type),Record(54,39,35))).Elements().Single(e=>e.Name.LocalName=="line");Assert.AreEqual("5",line.Attribute("x1")?.Value);Assert.AreEqual("30",line.Attribute("y1")?.Value);
+        var line=Svg(Emf(PolyDraw(type),Record(54,39,35))).Elements().Single(e=>e.Name.LocalName=="line");Assert.AreEqual("35",line.Attribute("x1")?.Value);Assert.AreEqual("30",line.Attribute("y1")?.Value);
     }
     [TestMethod] [DataRow(56u)] [DataRow(92u)]
     public void DrawToWithoutMoveUsesExistingPosition(uint type)
