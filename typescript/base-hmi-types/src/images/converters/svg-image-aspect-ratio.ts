@@ -14,7 +14,16 @@ export function tryOverrideSvgImageAspectRatio(uri: string,keep: boolean): strin
   const starts=(value: string)=>text.startsWith(value,at);
   const name=(c: string)=>/[\p{L}\p{Nd}_:.-]/u.test(c);
   space();
-  while(starts('<?')||starts('<!--')){
+  let doctypeSeen=false;
+  while(starts('<?')||starts('<!--')||starts('<!DOCTYPE')){
+    if(starts('<!DOCTYPE')){
+      // Copy a bare/external header without parsing a DTD or fetching its URI.
+      // Internal subsets remain unsupported, rather than expanding entities.
+      if(doctypeSeen)return undefined;
+      const match=/^<!DOCTYPE[ \t\r\n]+svg(?:[ \t\r\n]+(?:SYSTEM[ \t\r\n]+(?:"[^"]*"|'[^']*')|PUBLIC[ \t\r\n]+(?:"[^"]*"|'[^']*')[ \t\r\n]+(?:"[^"]*"|'[^']*')))?[ \t\r\n]*>/u.exec(text.slice(at));
+      if(!match)return undefined;
+      at+=match[0].length;doctypeSeen=true;space();continue;
+    }
     const marker=starts('<?')?'?>':'-->',end=text.indexOf(marker,at+2);if(end<0)return undefined;
     // The rendered copy is UTF-8, regardless of the source declaration.
     if(starts('<?xml')&&at+5<text.length&&/[\s\u0085]/u.test(text[at+5]!))text=text.slice(0,at)+text.slice(end+marker.length);
@@ -23,6 +32,7 @@ export function tryOverrideSvgImageAspectRatio(uri: string,keep: boolean): strin
   if(at>=text.length||text[at++]!=='<')return undefined;
   let start=at;while(at<text.length&&name(text[at]!))at++;
   const root=text.slice(start,at);if(root.slice(root.lastIndexOf(':')+1)!=='svg')return undefined;
+  if(doctypeSeen&&root!=='svg')return undefined;
   let valueStart: number|undefined,valueEnd=0,insert=0;
   for(;;){
     const beforeSpace=at;space();if(at>=text.length)return undefined;
