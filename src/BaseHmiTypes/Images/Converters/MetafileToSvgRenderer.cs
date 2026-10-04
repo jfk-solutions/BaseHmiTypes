@@ -146,6 +146,8 @@ public sealed class MetafileToSvgRenderer
                     break;
                 case EMR.MoveToEx:
                     (state.CurrentX, state.CurrentY) = TransformPoint(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4));
+                    state.MoveOriginX = state.CurrentX;
+                    state.MoveOriginY = state.CurrentY;
                     if (state.CurrentPath is not null)
                     {
                         state.CurrentPath.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
@@ -209,7 +211,8 @@ public sealed class MetafileToSvgRenderer
                     DrawEmfPointCurve(bytes, record, state, elements);
                     break;
                 case EMR.PolyDraw16:
-                    AppendEmfPolyDraw16ToPath(state, bytes, dataOffset);
+                case EMR.PolyDraw:
+                    DrawEmfPolyDraw(state, bytes, record, elements);
                     break;
                 case EMR.Rectangle:
                     {
@@ -645,6 +648,8 @@ public sealed class MetafileToSvgRenderer
             TextColor = state.TextColor,
             CurrentX = state.CurrentX,
             CurrentY = state.CurrentY,
+            MoveOriginX = state.MoveOriginX,
+            MoveOriginY = state.MoveOriginY,
             WindowOrgX = state.WindowOrgX,
             WindowOrgY = state.WindowOrgY,
             WindowExtX = state.WindowExtX,
@@ -676,6 +681,8 @@ public sealed class MetafileToSvgRenderer
         target.TextColor = restored.TextColor;
         target.CurrentX = restored.CurrentX;
         target.CurrentY = restored.CurrentY;
+        target.MoveOriginX = restored.MoveOriginX;
+        target.MoveOriginY = restored.MoveOriginY;
         target.WindowOrgX = restored.WindowOrgX;
         target.WindowOrgY = restored.WindowOrgY;
         target.WindowExtX = restored.WindowExtX;
@@ -858,27 +865,56 @@ public sealed class MetafileToSvgRenderer
         else elements.Add(PathElement(path, state, PathPaintMode.Stroke));
     }
 
-    private static void AppendEmfPolyDraw16ToPath(DrawState state, byte[] bytes, int offset)
+    private static void DrawEmfPolyDraw(DrawState state, byte[] bytes, EmfRecord record, List<string> elements)
     {
-        var points = ReadEmfPoints16(bytes, offset);
-        var typesOffset = offset + 16 + points.Count * 4;
-        var mapped = MapPoints(points, state);
+        if (record.Size < 28) return;
+        var count = U32(bytes, record.Offset + 24);
+        var shortPoints = record.Type == EMR.PolyDraw16;
+        var pointSize = shortPoints ? 4 : 8;
+        if (count == 0 || count > (record.Size - 28) / (pointSize + 1)) return;
+        var typesOffset = record.Offset + 28 + (int)count * pointSize;
+        // Validate every command before painting or changing the DC position.
+        for (var index = 0; index < count; index++)
+        {
+            var type = bytes[typesOffset + index];
+            if (type == PolyDrawTypeMoveTo || type == PolyDrawTypeLineTo || type == (PolyDrawTypeLineTo | PolyDrawTypeCloseFigure)) continue;
+            if (type != PolyDrawTypeBezierTo || index + 2 >= count || bytes[typesOffset + index + 1] != PolyDrawTypeBezierTo ||
+                (bytes[typesOffset + index + 2] != PolyDrawTypeBezierTo && bytes[typesOffset + index + 2] != (PolyDrawTypeBezierTo | PolyDrawTypeCloseFigure))) return;
+            index += 2;
+        }
+        var mapped = MapPoints(ReadEmfPointArray32(bytes, record, shortPoints), state);
+        var path = state.CurrentPath ?? new List<string>();
+        if (bytes[typesOffset] != PolyDrawTypeMoveTo)
+        {
+            if (state.CurrentPath is not null) EnsurePathPosition(state);
+            else { path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}"); state.PathStartX = state.CurrentX; state.PathStartY = state.CurrentY; }
+        }
         for (var index = 0; index < mapped.Count; index++)
         {
-            var type = bytes[typesOffset + index] & 0x07;
+            var type = bytes[typesOffset + index] & ~PolyDrawTypeCloseFigure;
             if (type == PolyDrawTypeMoveTo)
-                state.CurrentPath?.Add($"M {Number(mapped[index].X)} {Number(mapped[index].Y)}");
-            else if (type == PolyDrawTypeLineTo)
-                state.CurrentPath?.Add($"L {Number(mapped[index].X)} {Number(mapped[index].Y)}");
-            else if (type == PolyDrawTypeBezierTo && index + 2 < mapped.Count)
             {
-                state.CurrentPath?.Add($"C {Number(mapped[index].X)} {Number(mapped[index].Y)} {Number(mapped[index + 1].X)} {Number(mapped[index + 1].Y)} {Number(mapped[index + 2].X)} {Number(mapped[index + 2].Y)}");
+                path.Add($"M {Number(mapped[index].X)} {Number(mapped[index].Y)}");
+                state.PathStartX = state.MoveOriginX = mapped[index].X;
+                state.PathStartY = state.MoveOriginY = mapped[index].Y;
+            }
+            else if (type == PolyDrawTypeLineTo)
+                path.Add($"L {Number(mapped[index].X)} {Number(mapped[index].Y)}");
+            else
+            {
+                path.Add($"C {Number(mapped[index].X)} {Number(mapped[index].Y)} {Number(mapped[index + 1].X)} {Number(mapped[index + 1].Y)} {Number(mapped[index + 2].X)} {Number(mapped[index + 2].Y)}");
                 index += 2;
             }
-
+            state.PathEndX = state.CurrentX = mapped[index].X;
+            state.PathEndY = state.CurrentY = mapped[index].Y;
             if ((bytes[typesOffset + index] & PolyDrawTypeCloseFigure) != 0)
-                state.CurrentPath?.Add("Z");
+            {
+                path.Add(state.PathStartX == state.MoveOriginX && state.PathStartY == state.MoveOriginY ? "Z" : $"L {Number(state.MoveOriginX)} {Number(state.MoveOriginY)}");
+                state.PathEndX = state.CurrentX = state.MoveOriginX;
+                state.PathEndY = state.CurrentY = state.MoveOriginY;
+            }
         }
+        if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke));
     }
 
     private static List<(double X, double Y)> ReadEmfPointArray32(byte[] bytes, EmfRecord record, bool shortPoints = false)
@@ -1250,7 +1286,7 @@ public sealed class MetafileToSvgRenderer
     private const byte PolyDrawTypeMoveTo = 0x06;
     private const byte PolyDrawTypeLineTo = 0x02;
     private const byte PolyDrawTypeBezierTo = 0x04;
-    private const byte PolyDrawTypeCloseFigure = 0x80;
+    private const byte PolyDrawTypeCloseFigure = 0x01;
 }
 
 internal abstract class MetafileObject
@@ -1303,6 +1339,8 @@ internal sealed class DrawState
     public double CurrentX { get; set; }
 
     public double CurrentY { get; set; }
+    public double MoveOriginX { get; set; }
+    public double MoveOriginY { get; set; }
 
     public double WindowOrgX { get; set; }
 
@@ -1469,6 +1507,7 @@ internal static class EMR
     public const uint PolyBezierTo16 = 0x0058;
     public const uint PolylineTo16 = 0x0059;
     public const uint PolyDraw16 = 0x005c;
+    public const uint PolyDraw = 0x0038;
     public const uint SelectObject = 0x0025;
     public const uint CreatePen = 0x0026;
     public const uint CreateBrushIndirect = 0x0027;
