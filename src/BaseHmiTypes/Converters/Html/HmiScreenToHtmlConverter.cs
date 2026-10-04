@@ -4291,10 +4291,10 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "maximum-value", trendControl.MaximumValue);
         AppendStaticAttribute(html, "y-axis-decimal-places", trendControl.YAxisDecimalPlaces);
         AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens, context.CultureInfo));
-        AppendAttribute(html, "value-axes", FormatTrendValueAxes(trendControl.ValueAxes));
+        AppendAttribute(html, "value-axes", FormatTrendValueAxes(trendControl.ValueAxes, context.CultureInfo));
         AppendAttribute(html, "x-value-axes", FormatTrendXValueAxes(trendControl.XValueAxes));
         AppendAttribute(html, "trend-windows", FormatTrendWindows(trendControl.TrendWindows));
-        AppendAttribute(html, "time-axes", FormatTrendTimeAxes(trendControl.TimeAxes));
+        AppendAttribute(html, "time-axes", FormatTrendTimeAxes(trendControl.TimeAxes, context.CultureInfo));
         html.Append("></hmi-trend-control>");
     }
 
@@ -4521,7 +4521,7 @@ public partial class HmiScreenToHtmlConverter
             AppendAttribute(html, name, property.StaticValue ? "true" : "false");
     }
 
-    private static string? FormatTrendTimeAxes(IEnumerable<HmiTrendTimeAxis> axes)
+    private static string? FormatTrendTimeAxes(IEnumerable<HmiTrendTimeAxis> axes, CultureInfo? cultureInfo)
     {
         var entries = axes.Select(axis =>
         {
@@ -4534,7 +4534,7 @@ public partial class HmiScreenToHtmlConverter
             AddTrendJsonString(properties, "color", axis.Color?.StaticValue is HmiColor color ? ToCss(color) : null);
             AddTrendJsonBoolean(properties, "inTrendColor", axis.InTrendColor?.StaticValue);
             AddTrendJsonString(properties, "alignment", axis.Alignment?.StaticValue.ToString());
-            AddTrendJsonString(properties, "label", axis.Label);
+            AddTrendJsonString(properties, "label", axis.LabelText?.GetText(cultureInfo) ?? axis.Label);
             AddTrendJsonString(properties, "timeFormat", axis.TimeFormat?.StaticValue.ToString());
             AddTrendJsonBoolean(properties, "displayMilliseconds", axis.DisplayMilliseconds?.StaticValue);
             AddTrendJsonNumber(properties, "timeSpan", axis.TimeSpan?.StaticValue);
@@ -4601,10 +4601,10 @@ public partial class HmiScreenToHtmlConverter
     }
 
     // Use the same axis wire fields as legacy per-pen configurations.
-    private static string? FormatTrendValueAxes(IEnumerable<HmiTrendValueAxis> axes) =>
+    private static string? FormatTrendValueAxes(IEnumerable<HmiTrendValueAxis> axes, CultureInfo? cultureInfo) =>
         FormatTrendPens(axes.Select((axis, index) => new HmiTrendPen
         {
-            Number = index + 1, ValueAxisName = axis.Name, ValueAxisLabel = axis.Label,
+            Number = index + 1, ValueAxisName = axis.Name, ValueAxisLabel = axis.LabelText?.GetText(cultureInfo) ?? axis.Label,
             TrendWindowName = axis.TrendWindowName,
             MinimumValue = axis.MinimumValue, MaximumValue = axis.MaximumValue,
             DecimalPlaces = axis.DecimalPlaces, AxisScaleType = axis.ScaleType,

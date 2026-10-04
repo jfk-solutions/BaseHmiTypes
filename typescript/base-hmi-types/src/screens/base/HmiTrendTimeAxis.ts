@@ -1,3 +1,4 @@
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiProperty } from "./HmiProperty.js";
 import { HmiColor } from "./HmiColor.js";
 import { HmiVerticalAlignment } from "./HmiVerticalAlignment.js";
@@ -15,6 +16,7 @@ export class HmiTrendTimeAxis {
   inTrendColor?: HmiProperty<boolean>;
   alignment?: HmiProperty<HmiVerticalAlignment>;
   label?: string;
+  labelText?: HmiMultilingualText;
   timeFormat?: HmiProperty<HmiTrendTimeFormat>;
   displayMilliseconds?: HmiProperty<boolean>;
   timeSpan?: HmiProperty<number>;
