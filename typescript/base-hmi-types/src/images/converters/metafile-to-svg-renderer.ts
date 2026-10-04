@@ -26,6 +26,7 @@ interface FontObject {
 }
 
 interface DrawState {
+  pathFigureClosed: boolean;
   clockwiseShapes: boolean;
   miterLimit: number;
   pen: PenObject;
@@ -239,6 +240,7 @@ export class MetafileToSvgRenderer {
           if (state.currentPath) {
             state.currentPath.push(`M ${state.currentX} ${state.currentY}`);
             state.pathStartX = state.currentX;
+            state.pathFigureClosed = false;
             state.pathStartY = state.currentY;
             state.pathEndX = state.currentX;
             state.pathEndY = state.currentY;
@@ -261,18 +263,21 @@ export class MetafileToSvgRenderer {
         case EMR.BEGINPATH:
           state.selectedPath = undefined;
           state.currentPath = [];
+          state.pathFigureClosed = false;
           state.pathStartX = undefined;
           state.pathStartY = undefined;
           state.pathEndX = undefined;
           state.pathEndY = undefined;
           break;
         case EMR.CLOSEFIGURE:
-          state.currentPath?.push('Z');
-          if (state.pathStartX != null && state.pathStartY != null) {
-            state.currentX = state.pathStartX;
-            state.currentY = state.pathStartY;
-            state.pathEndX = state.currentX;
-            state.pathEndY = state.currentY;
+          if (state.currentPath?.length && !state.pathFigureClosed) {
+            // Pending moves are discarded; close preceding drawn geometry,
+            // preserving the DC endpoint and forcing a subsequent new figure.
+            while (state.currentPath.at(-1)?.startsWith('M ')) state.currentPath.pop();
+            if (state.currentPath.length && state.currentPath.at(-1) !== 'Z') state.currentPath.push('Z');
+            state.pathEndX = state.pathStartX;
+            state.pathEndY = state.pathStartY;
+            state.pathFigureClosed = true;
           }
           break;
         case EMR.ENDPATH:
@@ -335,6 +340,7 @@ export class MetafileToSvgRenderer {
             for (let index = 1; index < points.length; index++)
               state.currentPath.push(`L ${points[index][0]} ${points[index][1]}`);
             if (closed) state.currentPath.push('Z');
+            state.pathFigureClosed = closed;
             state.pathStartX = points[0][0];
             state.pathStartY = points[0][1];
             state.pathEndX = closed ? points[0][0] : points.at(-1)![0];
@@ -356,6 +362,7 @@ export class MetafileToSvgRenderer {
             if (closed) path.push('Z');
             if (state.currentPath !== undefined) {
               state.pathStartX = points[0][0]; state.pathStartY = points[0][1];
+              state.pathFigureClosed = closed;
               state.pathEndX = closed ? points[0][0] : points.at(-1)![0];
               state.pathEndY = closed ? points[0][1] : points.at(-1)![1];
             }
@@ -789,6 +796,7 @@ function createInitialState(): DrawState {
     worldTransform: identityTransform(),
     fillRule: 'evenodd',
     clockwiseShapes: false,
+    pathFigureClosed: false,
     miterLimit: 10,
   };
 }
@@ -1032,14 +1040,16 @@ function scaledPenWidth(state: DrawState, width: number): number {
 }
 
 function resetPathConstruction(state: DrawState): void {
+  state.pathFigureClosed = false;
   state.currentPath = undefined;
   state.pathStartX = state.pathStartY = state.pathEndX = state.pathEndY = undefined;
 }
 
 function ensurePathPosition(state: DrawState): void {
-  if (state.currentPath !== undefined && (state.pathEndX !== state.currentX || state.pathEndY !== state.currentY)) {
+  if (state.currentPath !== undefined && (state.pathFigureClosed || state.pathEndX !== state.currentX || state.pathEndY !== state.currentY)) {
     state.currentPath.push(`M ${state.currentX} ${state.currentY}`);
     state.pathStartX = state.currentX; state.pathStartY = state.currentY;
+    state.pathFigureClosed = false;
   }
 }
 
@@ -1055,7 +1065,7 @@ function drawEmfPointCurve(bytes: Uint8Array, record: EmfRecord, state: DrawStat
     else ensurePathPosition(state);
   } else {
     path.push(`M ${points[0][0]} ${points[0][1]}`);
-    if (state.currentPath !== undefined) { state.pathStartX = points[0][0]; state.pathStartY = points[0][1]; }
+    if (state.currentPath !== undefined) { state.pathStartX = points[0][0]; state.pathStartY = points[0][1]; state.pathFigureClosed = false; }
   }
   for (let index = to ? 0 : 1; index < points.length; index += line ? 1 : 3)
     path.push(line ? `L ${points[index][0]} ${points[index][1]}` : `C ${points[index][0]} ${points[index][1]} ${points[index+1][0]} ${points[index+1][1]} ${points[index+2][0]} ${points[index+2][1]}`);
@@ -1119,11 +1129,17 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
   const path = state.currentPath ?? [];
   if (bytes[typesOffset] !== 6) {
     if (state.currentPath !== undefined) ensurePathPosition(state);
-    else { path.push(`M ${state.currentX} ${state.currentY}`); state.pathStartX = state.currentX; state.pathStartY = state.currentY; }
+    else { path.push(`M ${state.currentX} ${state.currentY}`); state.pathStartX = state.currentX; state.pathStartY = state.currentY; state.pathFigureClosed = false; }
   }
   for (let index = 0; index < mapped.length; index++) {
     const type = bytes[typesOffset + index] & ~1;
+    if (type !== 6 && state.pathFigureClosed) {
+      path.push(`M ${state.currentX} ${state.currentY}`);
+      state.pathStartX = state.currentX; state.pathStartY = state.currentY;
+      state.pathFigureClosed = false;
+    }
     if (type === 6) {
+      state.pathFigureClosed = false;
       path.push(`M ${mapped[index][0]} ${mapped[index][1]}`);
       state.pathStartX = mapped[index][0];
       state.pathStartY = mapped[index][1];
@@ -1136,6 +1152,7 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
     if ((bytes[typesOffset + index] & 1) !== 0) {
       path.push('Z');
       // Native Windows GDI retains the supplied endpoint as the DC position.
+      state.pathFigureClosed = true;
       state.pathEndX = state.pathStartX; state.pathEndY = state.pathStartY;
     }
   }
@@ -1703,6 +1720,7 @@ function appendEmfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean,
   }
   path.push('Z');
   state.pathStartX = state.pathEndX = start[0];
+  state.pathFigureClosed = true;
   state.pathStartY = state.pathEndY = start[1];
 }
 
