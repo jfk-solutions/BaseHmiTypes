@@ -2283,6 +2283,10 @@ function appendDateTimeField(html: string[], field: HmiDateTimeField, context: H
 }
 
 function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertContext): void {
+  if (getStaticValue(clock.analog) === true) {
+    appendAnalogClockPreview(html, clock, context);
+    return;
+  }
   const showDate = getStaticValue(clock.showDate) === true;
   const showTime = clock.showTime === undefined || getStaticValue(clock.showTime) === true;
   const showHours = clock.showHours === undefined || getStaticValue(clock.showHours) === true;
@@ -2316,6 +2320,58 @@ function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertCon
   appendAttribute(html, "data-time-zone", getStaticValue(clock.timeZone));
   appendBooleanAttribute(html, "data-analog", getStaticValue(clock.analog) === true);
   html.push(`>${parts.length === 0 ? "Clock" : parts.join(" ")}</time>`);
+}
+
+// Fixed sample matches the digital renderer: not a live clock.
+function appendAnalogClockPreview(html: string[], clock: HmiClock, context: HmiHtmlConvertContext): void {
+  const foreground = clock.foregroundColor === undefined ? "#000000" : colorToCss(getStaticValue(clock.foregroundColor) ?? hmiColorFromArgb(0,0,0,0));
+  const ticks = clock.ticksColor === undefined ? foreground : colorToCss(getStaticValue(clock.ticksColor) ?? hmiColorFromArgb(0,0,0,0));
+  let fill = clock.handFillColor === undefined ? foreground : colorToCss(getStaticValue(clock.handFillColor) ?? hmiColorFromArgb(0,0,0,0));
+  if (getStaticValue(clock.outlinedHands) === true) fill = "none";
+  html.push("<time");
+  appendCommonAttributes(html,clock,context,true,"display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;");
+  appendAttribute(html,"datetime","2000-01-01T12:34:56");
+  appendAttribute(html,"data-format",getStaticValue(clock.format));
+  appendAttribute(html,"data-time-zone",getStaticValue(clock.timeZone));
+  appendBooleanAttribute(html,"data-analog",true);
+  appendAttribute(html,"data-clock-preview","static");
+  html.push('><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Analog clock preview: 12:34:56" style="width: 100%; height: 100%; min-height: 0; flex: 1;">');
+  html.push('<circle data-clock-dial="true" cx="50" cy="50" r="48" fill="none"');
+  appendAttribute(html,"stroke",foreground); html.push(' stroke-width="1"/>');
+  if (clock.showTicks === undefined || getStaticValue(clock.showTicks) === true) {
+    const tickRadius=clockPercent(clock.secondHandLengthPercent,80)*48/100;
+    for(let i=0;i<60;i++) {
+      html.push(`<circle data-clock-tick="${i}"`);
+      appendSvgAttribute(html,"cx",50);appendSvgAttribute(html,"cy",50-tickRadius);
+      appendSvgAttribute(html,"r",i%5===0?2:.75);
+      appendAttribute(html,"transform",`rotate(${i*6} 50 50)`);
+      appendAttribute(html,"fill",ticks);html.push("/>");
+    }
+  }
+  if (clock.showTime === undefined || getStaticValue(clock.showTime) === true) {
+    if (clock.showHours === undefined || getStaticValue(clock.showHours) === true)
+      appendClockHand(html,"hour",17,clockPercent(clock.hourHandLengthPercent,50),clockPercent(clock.hourHandHalfWidthPercent,10),foreground,fill);
+    if (clock.showMinutes === undefined || getStaticValue(clock.showMinutes) === true)
+      appendClockHand(html,"minute",204,clockPercent(clock.minuteHandLengthPercent,70),clockPercent(clock.minuteHandHalfWidthPercent,8),foreground,fill);
+    if (getStaticValue(clock.showSeconds) === true)
+      appendClockHand(html,"second",336,clockPercent(clock.secondHandLengthPercent,80),clockPercent(clock.secondHandHalfWidthPercent,2),foreground,fill);
+    html.push('<circle data-clock-hub="true" cx="50" cy="50" r="2"');appendAttribute(html,"fill",foreground);html.push("/>");
+  }
+  html.push("</svg>");
+  if (getStaticValue(clock.showDate) === true)html.push('<span data-clock-date="true">2000-01-01</span>');
+  html.push("</time>");
+}
+function clockPercent(property: HmiProperty<number>|undefined, fallback: number): number {
+  const value=property===undefined?fallback:getStaticValue(property)??0;
+  return Number.isFinite(value)?Math.max(0,Math.min(100,value)):fallback;
+}
+function appendClockHand(html: string[],name: string,angle: number,lengthPercent: number,widthPercent: number,stroke: string,fill: string): void {
+  if(lengthPercent<=0||widthPercent<=0)return;
+  const length=48*lengthPercent/100,width=length*widthPercent/100;
+  html.push("<polygon");appendAttribute(html,"data-clock-hand",name);
+  appendAttribute(html,"points",`50,${toCss(50-.01*length)} ${toCss(50-width)},${toCss(50-.15*length)} 50,${toCss(50-length)} ${toCss(50+width)},${toCss(50-.15*length)} 50,${toCss(50-.01*length)}`);
+  appendAttribute(html,"transform",`rotate(${angle} 50 50)`);appendAttribute(html,"stroke",stroke);appendAttribute(html,"fill",fill);
+  html.push(' stroke-width="1"/>');
 }
 
 function appendArrowIndicator(
