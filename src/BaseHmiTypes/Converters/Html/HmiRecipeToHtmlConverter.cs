@@ -105,6 +105,19 @@ public sealed class HmiRecipeToHtmlConverter
             }
             html.Append("</tbody></table></div>");
         }
+        var plcFields = recipe.Parameters.Where(field => field.SourcePlcStartValue != null || field.SourcePlcTypeDefaultStartValue != null || field.SourcePlcStartValueConstantName != null || field.SourcePlcHasExplicitStartValue != null).ToArray();
+        if (plcFields.Length > 0)
+        {
+            html.Append("<h2>Source PLC declaration values</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Field</th><th scope=\"col\">Resolved start value</th><th scope=\"col\">Type default start value</th><th scope=\"col\">Symbolic constant</th><th scope=\"col\">Explicit start value</th></tr></thead><tbody>");
+            foreach (var field in plcFields)
+            {
+                html.Append("<tr><th scope=\"row\">").Append(Encode(field.Name)).Append("</th>");
+                foreach (var value in new[] { field.SourcePlcStartValue, field.SourcePlcTypeDefaultStartValue, field.SourcePlcStartValueConstantName, FormatFlag(field.SourcePlcHasExplicitStartValue) })
+                    html.Append("<td data-value-state=\"").Append(value == null ? "missing" : "present").Append("\">").Append(Encode(value ?? "Missing")).Append("</td>");
+                html.Append("</tr>");
+            }
+            html.Append("</tbody></table></div>");
+        }
         html.Append("<h2>Stored records</h2>");
         if (recipe.DataSets.Count == 0)
             html.Append("<p>No stored records.</p>");

@@ -56,6 +56,10 @@ public sealed class HmiRecipeParameter : IHmiObject
 {
     public IDictionary<string, HmiRecipeReference> References { get; } = new Dictionary<string, HmiRecipeReference>();
     public bool? TriggerRedraw { get; set; }
+    public string? SourcePlcStartValue { get; set; }
+    public string? SourcePlcTypeDefaultStartValue { get; set; }
+    public string? SourcePlcStartValueConstantName { get; set; }
+    public bool? SourcePlcHasExplicitStartValue { get; set; }
     public string? SourceTagStartValue { get; set; }
     public string? SourceTagSubstituteValue { get; set; }
     public int? SourceTagSubstituteValueUsage { get; set; }
