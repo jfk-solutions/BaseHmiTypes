@@ -151,6 +151,8 @@ public sealed class MetafileToSvgRenderer
                         state.CurrentPath.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
                         state.PathStartX = state.CurrentX;
                         state.PathStartY = state.CurrentY;
+                        state.PathEndX = state.CurrentX;
+                        state.PathEndY = state.CurrentY;
                     }
 
                     break;
@@ -158,7 +160,12 @@ public sealed class MetafileToSvgRenderer
                     {
                         var point = TransformPoint(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4));
                         if (state.CurrentPath is not null)
+                        {
+                            EnsurePathPosition(state);
                             state.CurrentPath.Add($"L {Number(point.X)} {Number(point.Y)}");
+                            state.PathEndX = point.X;
+                            state.PathEndY = point.Y;
+                        }
                         else
                             elements.Add(LineElement(state.CurrentX, state.CurrentY, point.X, point.Y, state));
                         state.CurrentX = point.X;
@@ -169,6 +176,8 @@ public sealed class MetafileToSvgRenderer
                     state.CurrentPath = new List<string>();
                     state.PathStartX = null;
                     state.PathStartY = null;
+                    state.PathEndX = null;
+                    state.PathEndY = null;
                     break;
                 case EMR.CloseFigure:
                     state.CurrentPath?.Add("Z");
@@ -176,6 +185,8 @@ public sealed class MetafileToSvgRenderer
                     {
                         state.CurrentX = state.PathStartX.Value;
                         state.CurrentY = state.PathStartY.Value;
+                        state.PathEndX = state.CurrentX;
+                        state.PathEndY = state.CurrentY;
                     }
 
                     break;
@@ -190,16 +201,12 @@ public sealed class MetafileToSvgRenderer
                     state.CurrentPath = null;
                     break;
                 case EMR.PolylineTo:
-                    AppendLinePointsToPath(state, ReadEmfPoints32(bytes, dataOffset));
-                    break;
                 case EMR.PolylineTo16:
-                    AppendLinePointsToPath(state, ReadEmfPoints16(bytes, dataOffset));
-                    break;
+                case EMR.PolyBezier:
                 case EMR.PolyBezier16:
-                    AppendEmfPolyBezierPath(state, ReadEmfPoints16(bytes, dataOffset));
-                    break;
+                case EMR.PolyBezierTo:
                 case EMR.PolyBezierTo16:
-                    AppendEmfPolyBezierToPath(state, ReadEmfPoints16(bytes, dataOffset));
+                    DrawEmfPointCurve(bytes, record, state, elements);
                     break;
                 case EMR.PolyDraw16:
                     AppendEmfPolyDraw16ToPath(state, bytes, dataOffset);
@@ -235,6 +242,10 @@ public sealed class MetafileToSvgRenderer
                             for (var index = 1; index < points.Count; index++)
                                 state.CurrentPath.Add($"L {Number(points[index].X)} {Number(points[index].Y)}");
                             if (closed) state.CurrentPath.Add("Z");
+                            state.PathStartX = points[0].X;
+                            state.PathStartY = points[0].Y;
+                            state.PathEndX = closed ? points[0].X : points[points.Count - 1].X;
+                            state.PathEndY = closed ? points[0].Y : points[points.Count - 1].Y;
                         }
                         break;
                     }
@@ -256,6 +267,13 @@ public sealed class MetafileToSvgRenderer
                             for (var index = 1; index < points.Count; index++)
                                 path.Add($"L {Number(points[index].X)} {Number(points[index].Y)}");
                             if (closed) path.Add("Z");
+                            if (state.CurrentPath is not null)
+                            {
+                                state.PathStartX = points[0].X;
+                                state.PathStartY = points[0].Y;
+                                state.PathEndX = closed ? points[0].X : points[points.Count - 1].X;
+                                state.PathEndY = closed ? points[0].Y : points[points.Count - 1].Y;
+                            }
                         }
                         if (path.Count == 0) break;
                         if (state.CurrentPath is not null) state.CurrentPath.AddRange(path);
@@ -642,6 +660,8 @@ public sealed class MetafileToSvgRenderer
             CurrentPath = state.CurrentPath is null ? null : new List<string>(state.CurrentPath),
             PathStartX = state.PathStartX,
             PathStartY = state.PathStartY,
+            PathEndX = state.PathEndX,
+            PathEndY = state.PathEndY,
         };
     }
 
@@ -671,6 +691,8 @@ public sealed class MetafileToSvgRenderer
         target.CurrentPath = restored.CurrentPath;
         target.PathStartX = restored.PathStartX;
         target.PathStartY = restored.PathStartY;
+        target.PathEndX = restored.PathEndX;
+        target.PathEndY = restored.PathEndY;
     }
 
     private static void SelectObject(DrawState state, MetafileObject? obj)
@@ -800,35 +822,40 @@ public sealed class MetafileToSvgRenderer
         return result;
     }
 
-    private static void AppendLinePointsToPath(DrawState state, List<(double X, double Y)> points)
+    private static void EnsurePathPosition(DrawState state)
     {
-        foreach (var point in MapPoints(points, state))
+        if (state.CurrentPath is not null && (state.PathEndX != state.CurrentX || state.PathEndY != state.CurrentY))
         {
-            if (state.CurrentPath is not null)
-                state.CurrentPath.Add($"L {Number(point.X)} {Number(point.Y)}");
-            state.CurrentX = point.X;
-            state.CurrentY = point.Y;
+            state.CurrentPath.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+            state.PathStartX = state.CurrentX;
+            state.PathStartY = state.CurrentY;
         }
     }
 
-    private static void AppendEmfPolyBezierPath(DrawState state, List<(double X, double Y)> points)
+    private static void DrawEmfPointCurve(byte[] bytes, EmfRecord record, DrawState state, List<string> elements)
     {
-        if (points.Count == 0)
-            return;
-        var mapped = MapPoints(points, state);
-        state.CurrentPath ??= new List<string>();
-        state.CurrentPath.Add($"M {Number(mapped[0].X)} {Number(mapped[0].Y)}");
-        state.PathStartX = mapped[0].X;
-        state.PathStartY = mapped[0].Y;
-        for (var index = 1; index + 2 < mapped.Count; index += 3)
-            state.CurrentPath.Add($"C {Number(mapped[index].X)} {Number(mapped[index].Y)} {Number(mapped[index + 1].X)} {Number(mapped[index + 1].Y)} {Number(mapped[index + 2].X)} {Number(mapped[index + 2].Y)}");
-    }
-
-    private static void AppendEmfPolyBezierToPath(DrawState state, List<(double X, double Y)> points)
-    {
-        var mapped = MapPoints(points, state);
-        for (var index = 0; index + 2 < mapped.Count; index += 3)
-            state.CurrentPath?.Add($"C {Number(mapped[index].X)} {Number(mapped[index].Y)} {Number(mapped[index + 1].X)} {Number(mapped[index + 1].Y)} {Number(mapped[index + 2].X)} {Number(mapped[index + 2].Y)}");
+        var line = record.Type == EMR.PolylineTo || record.Type == EMR.PolylineTo16;
+        var to = line || record.Type == EMR.PolyBezierTo || record.Type == EMR.PolyBezierTo16;
+        var shortPoints = record.Type == EMR.PolylineTo16 || record.Type == EMR.PolyBezier16 || record.Type == EMR.PolyBezierTo16;
+        var points = MapPoints(ReadEmfPointArray32(bytes, record, shortPoints), state);
+        if (line ? points.Count < 1 : to ? points.Count < 3 || points.Count % 3 != 0 : points.Count < 4 || (points.Count - 1) % 3 != 0) return;
+        var path = state.CurrentPath ?? new List<string>();
+        if (to)
+        {
+            if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+            else EnsurePathPosition(state);
+        }
+        else
+        {
+            path.Add($"M {Number(points[0].X)} {Number(points[0].Y)}");
+            if (state.CurrentPath is not null) { state.PathStartX = points[0].X; state.PathStartY = points[0].Y; }
+        }
+        for (var index = to ? 0 : 1; index < points.Count; index += line ? 1 : 3)
+            path.Add(line ? $"L {Number(points[index].X)} {Number(points[index].Y)}" : $"C {Number(points[index].X)} {Number(points[index].Y)} {Number(points[index + 1].X)} {Number(points[index + 1].Y)} {Number(points[index + 2].X)} {Number(points[index + 2].Y)}");
+        var end = points[points.Count - 1];
+        if (to) { state.CurrentX = end.X; state.CurrentY = end.Y; }
+        if (state.CurrentPath is not null) { state.PathEndX = end.X; state.PathEndY = end.Y; }
+        else elements.Add(PathElement(path, state, PathPaintMode.Stroke));
     }
 
     private static void AppendEmfPolyDraw16ToPath(DrawState state, byte[] bytes, int offset)
@@ -854,27 +881,18 @@ public sealed class MetafileToSvgRenderer
         }
     }
 
-    private static List<(double X, double Y)> ReadEmfPoints32(byte[] bytes, int offset)
-    {
-        var count = (int)U32(bytes, offset + 16);
-        var pointsOffset = offset + 20;
-        var points = new List<(double X, double Y)>();
-        for (var index = 0; index < count && pointsOffset + index * 8 + 8 <= bytes.Length; index++)
-            points.Add((I32(bytes, pointsOffset + index * 8), I32(bytes, pointsOffset + index * 8 + 4)));
-        return points;
-    }
-
-    private static List<(double X, double Y)> ReadEmfPointArray32(byte[] bytes, EmfRecord record)
+    private static List<(double X, double Y)> ReadEmfPointArray32(byte[] bytes, EmfRecord record, bool shortPoints = false)
     {
         var points = new List<(double X, double Y)>();
         if (record.Size < 28) return points;
         var count = U32(bytes, record.Offset + 24);
         // Validate unsigned counts against this record, not the remaining file.
-        if (count > (record.Size - 28) / 8) return points;
+        var pointSize = shortPoints ? 4 : 8;
+        if (count > (record.Size - 28) / pointSize) return points;
         for (var index = 0; index < count; index++)
         {
-            var offset = record.Offset + 28 + index * 8;
-            points.Add((I32(bytes, offset), I32(bytes, offset + 4)));
+            var offset = record.Offset + 28 + index * pointSize;
+            points.Add(shortPoints ? (I16(bytes, offset), I16(bytes, offset + 2)) : (I32(bytes, offset), I32(bytes, offset + 4)));
         }
         return points;
     }
@@ -1313,6 +1331,8 @@ internal sealed class DrawState
     public double? PathStartX { get; set; }
 
     public double? PathStartY { get; set; }
+    public double? PathEndX { get; set; }
+    public double? PathEndY { get; set; }
 }
 
 internal sealed class ViewBox
@@ -1443,6 +1463,8 @@ internal static class EMR
     public const uint MoveToEx = 0x001b;
     public const uint LineTo = 0x0036;
     public const uint PolylineTo = 0x0006;
+    public const uint PolyBezier = 0x0002;
+    public const uint PolyBezierTo = 0x0005;
     public const uint PolyBezier16 = 0x0055;
     public const uint PolyBezierTo16 = 0x0058;
     public const uint PolylineTo16 = 0x0059;
