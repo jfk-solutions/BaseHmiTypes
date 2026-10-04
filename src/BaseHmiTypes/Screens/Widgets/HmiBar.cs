@@ -19,6 +19,9 @@ public class HmiBar : HmiScaleWidgetBase
     /// <summary>Transform of normalized values between BeginValue and EndValue. Automatic origin placement takes precedence.</summary>
     public HmiProperty<HmiBarValueMapping>? ValueMapping { get; set; }
 
+    /// <summary>Pivot in normalized percentage units for Tangent mapping. Omitted uses the normalized OriginValue, or 50 when there is no origin.</summary>
+    public HmiProperty<double>? TangentPivotPercent { get; set; }
+
     /// <summary>Use the color of the lowest enabled threshold strictly above the current value; otherwise retain the foreground color.</summary>
     public HmiProperty<bool>? UseThresholdFillColors { get; set; }
 
@@ -47,6 +50,7 @@ public enum HmiBarValueMapping
     NormalizedLogarithmic = 1,
     /// <summary>1 - log10(101 - 100*r) / log10(101).</summary>
     InverseNormalizedLogarithmic = 2,
+    Tangent = 4,
     Quadratic = 5,
     Cubic = 6
 }
