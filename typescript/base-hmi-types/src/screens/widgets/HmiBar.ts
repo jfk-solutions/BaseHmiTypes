@@ -8,6 +8,8 @@ export class HmiBar extends HmiScaleWidgetBase {
   fillStyle?: HmiProperty<HmiBarFillStyle>;
   /** Eight top-to-bottom bitmap rows as 16 hex characters, MSB left. Zero bits use patternColor; one bits use the value color. Tiles are screen anchored. */
   bitmapPatternRows?: HmiProperty<string>;
+  /** GDI+ HatchStyle integer 0..52 for HatchPattern. Spacing is eight device pixels, not scaled logical pixels. Invalid indices paint no value region. */
+  hatchStyle?: HmiProperty<number>;
   /** Color of the unfilled bar track, independent of widget background. Omitted retains the background-based track. */
   trackColor?: HmiProperty<HmiColor>;
   /** Color of the value region, independent of widget foreground. Disabled and threshold colors take precedence; omitted inherits foreground. */
@@ -40,6 +42,7 @@ export enum HmiBarFillStyle {
   /** Paint no value-region color; retain track, scale, thresholds, arrows and meter value. */
   Transparent = "Transparent",
   BitmapPattern = "BitmapPattern",
+  HatchPattern = "HatchPattern",
 }
 
 /** Range-normalized mappings, not logarithms/powers of the raw process value. */
