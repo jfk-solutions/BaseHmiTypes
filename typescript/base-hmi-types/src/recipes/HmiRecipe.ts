@@ -43,6 +43,8 @@ export class HmiRecipeReference {
 }
 
 export class HmiRecipeParameter {
+  readonly references = new Map<string, HmiRecipeReference>();
+  triggerRedraw?: boolean;
   displayName?: HmiMultilingualText;
   infoText?: HmiMultilingualText;
   sourceIndex?: number;
