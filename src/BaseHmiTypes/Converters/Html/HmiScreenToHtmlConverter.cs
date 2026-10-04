@@ -1681,18 +1681,23 @@ public class HmiScreenToHtmlConverter
             : await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
         var hasImage = !string.IsNullOrWhiteSpace(imageUri);
         var imageFallback = mode == HmiButtonType.GraphicOrText && hasImage;
+        var overlay = hasImage && ResolveStaticValue(button.OverlayContent, context);
         if (imageFallback)
             html.Append(" data-hmi-button-image-fallback");
         html.Append('>');
         if (hasImage)
         {
-            html.Append("<span data-hmi-button-content style=\"display: flex;flex-direction: column;width: 100%;height: 100%;min-width: 0;min-height: 0;align-items: center;justify-content: center;overflow: hidden;\">")
-                .Append("<span data-hmi-button-graphic style=\"flex: 1 1 0;min-width: 0;min-height: 0;width: 100%;\">");
+            if (overlay)
+                html.Append("<span data-hmi-button-content data-hmi-button-overlay style=\"display: grid;grid-template-columns: minmax(0, 1fr);grid-template-rows: minmax(0, 1fr);width: 100%;height: 100%;min-width: 0;min-height: 0;overflow: hidden;\">")
+                    .Append("<span data-hmi-button-graphic style=\"grid-area: 1 / 1;min-width: 0;min-height: 0;width: 100%;height: 100%;\">");
+            else
+                html.Append("<span data-hmi-button-content style=\"display: flex;flex-direction: column;width: 100%;height: 100%;min-width: 0;min-height: 0;align-items: center;justify-content: center;overflow: hidden;\">")
+                    .Append("<span data-hmi-button-graphic style=\"flex: 1 1 0;min-width: 0;min-height: 0;width: 100%;\">");
             AppendButtonImage(html, button, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale, context);
             html.Append("</span>");
         }
         if (mode != HmiButtonType.Graphic)
-            AppendButtonCaption(html, button, state, caption, hasImage, imageFallback, context);
+            AppendButtonCaption(html, button, state, caption, hasImage, imageFallback, overlay, context);
         if (hasImage)
             html.Append("</span>");
         html.Append("</button>");
@@ -1702,7 +1707,7 @@ public class HmiScreenToHtmlConverter
         ResolveStaticValue(button.Pressed, context) && !ResolveStaticValue(button.DownStateSameAsUp, context);
 
     private static void AppendButtonCaption(StringBuilder html, HmiButton button, HmiState? state,
-        HmiMultilingualText? caption, bool boundedLayout, bool hidden, HmiHtmlConvertContext context)
+        HmiMultilingualText? caption, bool boundedLayout, bool hidden, bool overlay, HmiHtmlConvertContext context)
     {
         var captionBlink = GetButtonCaptionBlink(button, state);
         var captionColor = state?.CaptionColor ?? state?.ForegroundColor ??
@@ -1713,14 +1718,24 @@ public class HmiScreenToHtmlConverter
             html.Append("<span data-hmi-button-caption");
             if (hidden) html.Append(" hidden");
             html.Append(" style=\"");
-            if (boundedLayout) html.Append("flex: 0 0 auto;width: 100%;max-width: 100%;");
+            if (overlay) html.Append("grid-area: 1 / 1;z-index: 1;min-width: 0;min-height: 0;width: 100%;height: 100%;overflow: hidden;");
+            else if (boundedLayout) html.Append("flex: 0 0 auto;width: 100%;max-width: 100%;");
             if (captionBlink is not null)
                 html.Append("animation: hmi-caption-color-flash ").Append(GetBlinkDuration(captionBlink.Rate)).Append("s steps(1, end) infinite;");
             else if (captionColor is { } staticCaptionColor)
                 html.Append("color: ").Append(ToCss(staticCaptionColor)).Append(';');
             html.Append("\">");
         }
+        if (overlay)
+        {
+            var horizontal = button.HorizontalAlignment is null ? HmiHorizontalAlignment.Center : ResolveStaticValue(button.HorizontalAlignment, context);
+            var vertical = button.VerticalAlignment is null ? HmiVerticalAlignment.Center : ResolveStaticValue(button.VerticalAlignment, context);
+            // Keep display on an inner span so the outer hidden caption remains hidden.
+            html.Append("<span data-hmi-button-caption-layout style=\"display: flex;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ")
+                .Append(ToFlexCss(horizontal)).Append(";align-items: ").Append(ToCss(vertical)).Append(";\">");
+        }
         AppendMultilingualText(html, caption, context);
+        if (overlay) html.Append("</span>");
         if (wrapped)
             html.Append("</span>");
     }

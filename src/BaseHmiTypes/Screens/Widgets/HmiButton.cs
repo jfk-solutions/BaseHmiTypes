@@ -22,4 +22,7 @@ public class HmiButton : HmiButtonBase
 
     /// <summary>True identifies a latching/toggle button, exposing its pressed snapshot as an accessible toggle state.</summary>
     public HmiProperty<bool>? Toggle { get; set; }
+
+    /// <summary>True paints image and caption over the same content area with independent alignment. False/omitted retains the stacked preview.</summary>
+    public HmiProperty<bool>? OverlayContent { get; set; }
 }
