@@ -1522,6 +1522,11 @@ function isButtonDownVisual(button: HmiButton): boolean {
   return getStaticValue(button.pressed) === true && getStaticValue(button.downStateSameAsUp) !== true;
 }
 
+function getButtonPressedContentOffset(button: HmiButton): number {
+  const offset = getStaticValue(button.pressedContentOffset) ?? 0;
+  return isButtonDownVisual(button) && Number.isFinite(offset) && offset > 0 ? offset : 0;
+}
+
 function appendButtonCaption(html: string[], button: HmiButton, state: HmiState | undefined,
   caption: HmiMultilingualText | undefined, boundedLayout: boolean, hidden: boolean, overlay: boolean, context: HmiHtmlConvertContext): void {
   const captionBlink = getButtonCaptionBlink(button, state);
@@ -1542,7 +1547,10 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
     const y = getStaticValue(button.verticalAlignment) ?? HmiVerticalAlignment.Center;
     html.push('<span data-hmi-button-caption-layout style="display: flex;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ' + horizontalAlignmentToFlexCss(x) + ';align-items: ' + verticalAlignmentToCss(y) + ';">');
   }
+  const offset = getButtonPressedContentOffset(button);
+  if (offset > 0) html.push('<span data-hmi-button-pressed-caption style="display: inline-block;transform: translate(' + toCss(offset) + 'px, ' + toCss(offset) + 'px);">');
   appendMultilingualText(html, caption, context);
+  if (offset > 0) html.push("</span>");
   if (overlay) html.push("</span>");
   if (wrapped) html.push("</span>");
 }
@@ -1559,7 +1567,9 @@ function appendButtonImage(html: string[], button: HmiButton, imageUri: string, 
     appendAttribute(html, "data-image-vertical", y);
     html.push(' style="display: grid;grid-template-columns: minmax(0, 1fr);grid-template-rows: minmax(0, 1fr);width: 100%;height: 100%;overflow: hidden;justify-items: ' + x + ";align-items: " + y + ';">');
   }
-  appendInnerImage(html, imageUri, grayscale);
+  const horizontal = getStaticValue(button.imageHorizontalAlignment);
+  const offset = horizontal !== undefined && horizontal !== HmiHorizontalAlignment.Stretch ? getButtonPressedContentOffset(button) : 0;
+  appendInnerImage(html, imageUri, grayscale, offset);
   if (aligned) html.push("</span>");
 }
 
@@ -3393,7 +3403,7 @@ function appendSymbolLibraryTransform(html: string[], symbolLibraryControl: HmiS
   }
 }
 
-function appendInnerImage(html: string[], uri: string, grayscale = false): void {
+function appendInnerImage(html: string[], uri: string, grayscale = false, pressedOffset = 0): void {
   if (!uri.trim()) {
     return;
   }
@@ -3404,6 +3414,7 @@ function appendInnerImage(html: string[], uri: string, grayscale = false): void 
   if (grayscale) {
     html.push(" filter: grayscale(1);");
   }
+  if (pressedOffset > 0) html.push(' transform: translate(' + toCss(pressedOffset) + 'px, ' + toCss(pressedOffset) + 'px);');
   html.push("\">");
 }
 

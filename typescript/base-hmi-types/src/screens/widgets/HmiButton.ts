@@ -13,6 +13,8 @@ export class HmiButton extends HmiButtonBase {
   mode?: HmiProperty<HmiButtonType>;
   /** True paints image and caption over the same content area with independent alignment. False/omitted retains the stacked preview. */
   overlayContent?: HmiProperty<boolean>;
+  /** Positive pixel offset on both axes for pressed caption and non-stretched image snapshots. Omitted/zero disables it; downStateSameAsUp suppresses it. */
+  pressedContentOffset?: HmiProperty<number>;
   /** Ellipse gives a circular outline when width and height are equal. */
   shape?: HmiProperty<HmiButtonShape>;
   /** For frames wider than one pixel, false centers the stroke on the bounds. True/omitted draws inside. The 3D bevel is separate. */
