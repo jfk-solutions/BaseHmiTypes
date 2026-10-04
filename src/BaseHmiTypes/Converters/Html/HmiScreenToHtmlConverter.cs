@@ -1938,7 +1938,9 @@ public class HmiScreenToHtmlConverter
         }
 
         html.Append("<meter");
-        AppendCommonAttributes(html, bar, context, additionalStyle: GetBarDirectionStyle(direction));
+        var standaloneStyle = new StringBuilder(GetBarDirectionStyle(direction));
+        AppendBarFillOverrideStyle(standaloneStyle, bar, context);
+        AppendCommonAttributes(html, bar, context, additionalStyle: standaloneStyle.ToString());
         AppendBarColorAttributes(html, bar, context);
         AppendAttribute(html, "data-fill-direction", direction.ToString());
         AppendAttribute(html, "min", ToCss(minimum));
@@ -1994,6 +1996,7 @@ public class HmiScreenToHtmlConverter
             ? context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) : null);
         if (disabledColor is null && fillColor is not null)
             AppendColorStyle(meterStyle, "color", fillColor);
+        AppendBarFillOverrideStyle(meterStyle, bar, context);
         AppendAttribute(
             html,
             "style",
@@ -2047,6 +2050,7 @@ public class HmiScreenToHtmlConverter
         var thresholdColor = GetBarThresholdFillColor(bar, context);
         if (disabledColor is not null) AppendColorStyle(style, "color", disabledColor);
         else if (thresholdColor is not null) AppendColorStyle(style, "color", thresholdColor);
+        AppendBarFillOverrideStyle(style, bar, context);
         AppendAttribute(html, "style", style.ToString());
         html.Append("></span></div>");
     }
@@ -2057,12 +2061,25 @@ public class HmiScreenToHtmlConverter
             context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.BackgroundColor), bar.BackgroundColor)?.StaticValue is HmiColor ||
             GetColorGradient(bar) is not null)
             AppendAttribute(html, "data-hmi-bar-track", "true");
-        if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) is not null ||
+        if (context.EffectiveProperties.Resolve(bar, nameof(HmiBar.FillColor), bar.FillColor) is not null ||
+            context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) is not null ||
             GetBarThresholdFillColor(bar, context) is not null ||
             (bar.Enabled is not null && !ResolveStaticValue(bar.Enabled, context) &&
              bar.UseDisabledForegroundColor is not null && ResolveStaticValue(bar.UseDisabledForegroundColor, context) &&
              bar.DisabledForegroundColor is not null))
             AppendAttribute(html, "data-hmi-bar-fill", "true");
+    }
+
+    private static void AppendBarFillOverrideStyle(StringBuilder style, HmiBar bar, HmiHtmlConvertContext context)
+    {
+        var explicitColor = context.EffectiveProperties.Resolve(bar, nameof(HmiBar.FillColor), bar.FillColor);
+        if (explicitColor is null) return;
+        var disabledColor = !ResolveStaticValue(bar.Enabled, context) && ResolveStaticValue(bar.UseDisabledForegroundColor, context)
+            ? context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.DisabledForegroundColor), bar.DisabledForegroundColor) : null;
+        var color = disabledColor ?? GetBarThresholdFillColor(bar, context) ?? explicitColor;
+        if (color.StaticValue is HmiColor fillColor)
+            // A separate fill must not blink with the widget's general foreground.
+            style.Append("color: ").Append(ToCss(fillColor)).Append(" !important;");
     }
 
     private static HmiProperty<HmiColor>? GetBarThresholdFillColor(HmiBar bar, HmiHtmlConvertContext context)
