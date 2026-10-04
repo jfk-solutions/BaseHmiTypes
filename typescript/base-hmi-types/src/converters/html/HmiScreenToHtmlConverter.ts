@@ -1489,7 +1489,8 @@ async function appendButton(
     (disabledImageMode === HmiDisabledImageMode.Reference ||
       disabledImageMode === HmiDisabledImageMode.Imported)
   ) {
-    image = getStaticValue(button.disabledImage) ?? image;
+    image = getStaticValue(button.disabledImage) ??
+      (getStaticValue(button.disabledImageFallbackToNormal) !== false ? image : undefined);
   }
   const imageUri = mode === HmiButtonType.Text ? undefined : await resolveImageUri(image, project, signal);
   const hasImage = imageUri !== undefined && imageUri.trim() !== "";
