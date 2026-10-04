@@ -33,6 +33,8 @@ interface DrawState {
   textColor: string;
   currentX: number;
   currentY: number;
+  moveOriginX: number;
+  moveOriginY: number;
   windowOrgX: number;
   windowOrgY: number;
   windowExtX: number;
@@ -228,6 +230,8 @@ export class MetafileToSvgRenderer {
           break;
         case EMR.MOVETOEX:
           [state.currentX, state.currentY] = transformPoint(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4));
+          state.moveOriginX = state.currentX;
+          state.moveOriginY = state.currentY;
           if (state.currentPath) {
             state.currentPath.push(`M ${state.currentX} ${state.currentY}`);
             state.pathStartX = state.currentX;
@@ -285,7 +289,8 @@ export class MetafileToSvgRenderer {
           drawEmfPointCurve(bytes, record, state, elements);
           break;
         case EMR.POLYDRAW16:
-          appendEmfPolyDraw16ToPath(state, bytes, dataOffset);
+        case EMR.POLYDRAW:
+          drawEmfPolyDraw(state, bytes, record, elements);
           break;
         case EMR.RECTANGLE:
           elements.push(rectElement(...transformRect(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12)), state));
@@ -565,6 +570,7 @@ const EMR = {
   POLYBEZIERTO16: 0x0058,
   POLYLINETO16: 0x0059,
   POLYDRAW16: 0x005c,
+  POLYDRAW: 0x0038,
   SELECTOBJECT: 0x0025,
   CREATEPEN: 0x0026,
   CREATEBRUSHINDIRECT: 0x0027,
@@ -765,6 +771,8 @@ function createInitialState(): DrawState {
     textColor: '#000000',
     currentX: 0,
     currentY: 0,
+    moveOriginX: 0,
+    moveOriginY: 0,
     windowOrgX: 0,
     windowOrgY: 0,
     windowExtX: 1,
@@ -1081,6 +1089,45 @@ function appendLinePointsToPath(state: DrawState, points: Array<[number, number]
     state.currentX = x;
     state.currentY = y;
   }
+}
+
+function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord, elements: string[]): void {
+  if (record.size < 28) return;
+  const count = u32(bytes, record.offset + 24), shortPoints = record.type === EMR.POLYDRAW16, pointSize = shortPoints ? 4 : 8;
+  if (count === 0 || count > Math.floor((record.size - 28) / (pointSize + 1))) return;
+  const typesOffset = record.offset + 28 + count * pointSize;
+  for (let index = 0; index < count; index++) {
+    const type = bytes[typesOffset + index];
+    if (type === 6 || type === 2 || type === 3) continue;
+    if (type !== 4 || index + 2 >= count || bytes[typesOffset + index + 1] !== 4 ||
+        (bytes[typesOffset + index + 2] !== 4 && bytes[typesOffset + index + 2] !== 5)) return;
+    index += 2;
+  }
+  const mapped = readEmfPointArray32(bytes, record, shortPoints).map(([x, y]) => transformPoint(state, x, y));
+  const path = state.currentPath ?? [];
+  if (bytes[typesOffset] !== 6) {
+    if (state.currentPath !== undefined) ensurePathPosition(state);
+    else { path.push(`M ${state.currentX} ${state.currentY}`); state.pathStartX = state.currentX; state.pathStartY = state.currentY; }
+  }
+  for (let index = 0; index < mapped.length; index++) {
+    const type = bytes[typesOffset + index] & ~1;
+    if (type === 6) {
+      path.push(`M ${mapped[index][0]} ${mapped[index][1]}`);
+      state.moveOriginX = state.pathStartX = mapped[index][0];
+      state.moveOriginY = state.pathStartY = mapped[index][1];
+    } else if (type === 2) path.push(`L ${mapped[index][0]} ${mapped[index][1]}`);
+    else {
+      path.push(`C ${mapped[index][0]} ${mapped[index][1]} ${mapped[index+1][0]} ${mapped[index+1][1]} ${mapped[index+2][0]} ${mapped[index+2][1]}`);
+      index += 2;
+    }
+    state.currentX = state.pathEndX = mapped[index][0]; state.currentY = state.pathEndY = mapped[index][1];
+    if ((bytes[typesOffset + index] & 1) !== 0) {
+      path.push(state.pathStartX === state.moveOriginX && state.pathStartY === state.moveOriginY ? 'Z' : `L ${state.moveOriginX} ${state.moveOriginY}`);
+      // Native Windows GDI retains the supplied endpoint as the DC position.
+      state.pathEndX = state.moveOriginX; state.pathEndY = state.moveOriginY;
+    }
+  }
+  if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke'));
 }
 
 function appendEmfPolyDraw16ToPath(state: DrawState, bytes: Uint8Array, offset: number): void {
