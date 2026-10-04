@@ -80,6 +80,16 @@ export class HmiRecipeToHtmlConverter {
       }
       html.push('</tbody></table></div>');
     }
+    if (recipe.sourceTagDeclarations.length > 0) {
+      html.push('<h2>Source tag composite declarations</h2><div class="table-scroll"><table><thead><tr><th scope="col">Declaration</th><th scope="col">Data type</th><th scope="col">Comment</th><th scope="col">Start value</th><th scope="col">Substitute value</th><th scope="col">Substitute usage flags (raw)</th><th scope="col">Minimum</th><th scope="col">Maximum</th></tr></thead><tbody>');
+      for (const declaration of recipe.sourceTagDeclarations) {
+        html.push('<tr><th scope="row">', encode(declaration.name), '</th>');
+        for (const value of [declaration.dataType, declaration.comment?.getText(cultureLcid), declaration.startValue, declaration.substituteValue, declaration.substituteValueUsage?.toString(), declaration.minimumValue, declaration.maximumValue])
+          html.push('<td data-value-state="', value === undefined ? 'missing' : 'present', '">', encode(value ?? 'Missing'), '</td>');
+        html.push('</tr>');
+      }
+      html.push('</tbody></table></div>');
+    }
     const plcFields = recipe.parameters.filter(field => field.sourcePlcStartValue !== undefined || field.sourcePlcTypeDefaultStartValue !== undefined || field.sourcePlcStartValueConstantName !== undefined || field.sourcePlcHasExplicitStartValue !== undefined);
     if (plcFields.length > 0) {
       html.push('<h2>Source PLC declaration values</h2><div class="table-scroll"><table><thead><tr><th scope="col">Field</th><th scope="col">Resolved start value</th><th scope="col">Type default start value</th><th scope="col">Symbolic constant</th><th scope="col">Explicit start value</th></tr></thead><tbody>');

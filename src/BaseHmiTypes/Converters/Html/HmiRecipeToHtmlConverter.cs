@@ -105,6 +105,18 @@ public sealed class HmiRecipeToHtmlConverter
             }
             html.Append("</tbody></table></div>");
         }
+        if (recipe.SourceTagDeclarations.Count > 0)
+        {
+            html.Append("<h2>Source tag composite declarations</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Declaration</th><th scope=\"col\">Data type</th><th scope=\"col\">Comment</th><th scope=\"col\">Start value</th><th scope=\"col\">Substitute value</th><th scope=\"col\">Substitute usage flags (raw)</th><th scope=\"col\">Minimum</th><th scope=\"col\">Maximum</th></tr></thead><tbody>");
+            foreach (var declaration in recipe.SourceTagDeclarations)
+            {
+                html.Append("<tr><th scope=\"row\">").Append(Encode(declaration.Name)).Append("</th>");
+                foreach (var value in new[] { declaration.DataType, declaration.Comment?.GetText(culture), declaration.StartValue, declaration.SubstituteValue, declaration.SubstituteValueUsage?.ToString(CultureInfo.InvariantCulture), declaration.MinimumValue, declaration.MaximumValue })
+                    html.Append("<td data-value-state=\"").Append(value == null ? "missing" : "present").Append("\">").Append(Encode(value ?? "Missing")).Append("</td>");
+                html.Append("</tr>");
+            }
+            html.Append("</tbody></table></div>");
+        }
         var plcFields = recipe.Parameters.Where(field => field.SourcePlcStartValue != null || field.SourcePlcTypeDefaultStartValue != null || field.SourcePlcStartValueConstantName != null || field.SourcePlcHasExplicitStartValue != null).ToArray();
         if (plcFields.Length > 0)
         {
