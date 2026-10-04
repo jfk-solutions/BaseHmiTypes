@@ -1,5 +1,5 @@
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
-import { HmiColor, HmiProperty } from "../base.js";
+import { HmiColor, HmiFont, HmiProperty } from "../base.js";
 import { HmiParameterColumn } from "./HmiParameterColumn.js";
 
 export abstract class HmiParameterControlBase extends HmiControlWindowBase {
@@ -16,6 +16,9 @@ export abstract class HmiParameterControlBase extends HmiControlWindowBase {
   showToolbar?: HmiProperty<boolean>;
   showStatusBar?: HmiProperty<boolean>;
   toolbarBackgroundColor?: HmiProperty<HmiColor>;
+  toolbarForegroundColor?: HmiProperty<HmiColor>;
+  toolbarFont?: HmiFont;
+  statusBarFont?: HmiFont;
   statusBarBackgroundColor?: HmiProperty<HmiColor>;
   statusBarForegroundColor?: HmiProperty<HmiColor>;
 }
