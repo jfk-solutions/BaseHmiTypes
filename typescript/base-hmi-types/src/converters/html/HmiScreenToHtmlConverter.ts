@@ -127,6 +127,9 @@ import { HmiParameterControlBase } from "../../screens/controls/HmiParameterCont
 import { HmiParameterColumn } from "../../screens/controls/HmiParameterColumn.js";
 import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
 import { HmiRadarChartControl } from "../../screens/controls/HmiRadarChartControl.js";
+import { HmiProcessDiagnosisOverviewControl } from "../../screens/controls/HmiProcessDiagnosisOverviewControl.js";
+import { HmiProcessDiagnosisPlcCodeViewerControl } from "../../screens/controls/HmiProcessDiagnosisPlcCodeViewerControl.js";
+import { HmiProcessDiagnosisCriteriaAnalysisControl } from "../../screens/controls/HmiProcessDiagnosisCriteriaAnalysisControl.js";
 import { HmiProcessDiagnosisGraphOverviewControl } from "../../screens/controls/HmiProcessDiagnosisGraphOverviewControl.js";
 import { HmiSystemDiagnosisControl } from "../../screens/controls/HmiSystemDiagnosisControl.js";
 import { HmiSystemDiagnosisColumnType } from "../../screens/controls/HmiSystemDiagnosisColumnType.js";
@@ -421,6 +424,12 @@ export class HmiScreenToHtmlConverter {
       appendAuditTrailControl(html, item, context);
     } else if (item instanceof HmiRadarChartControl) {
       appendRadarChartControl(html, item, context);
+    } else if (item instanceof HmiProcessDiagnosisOverviewControl) {
+      appendProcessDiagnosisControl(html, item, "Overview", "Process diagnosis overview", context);
+    } else if (item instanceof HmiProcessDiagnosisPlcCodeViewerControl) {
+      appendProcessDiagnosisControl(html, item, "PlcCodeViewer", "PLC code viewer", context);
+    } else if (item instanceof HmiProcessDiagnosisCriteriaAnalysisControl) {
+      appendProcessDiagnosisControl(html, item, "CriteriaAnalysis", "Criteria analysis", context);
     } else if (item instanceof HmiProcessDiagnosisGraphOverviewControl) {
       appendGraphOverviewControl(html, item, context);
     } else if (item instanceof HmiSystemDiagnosisControl) {
@@ -3104,6 +3113,15 @@ function appendRadarChartControl(html: string[], radarChartControl: HmiRadarChar
     html.push(")");
   }
   html.push("</div></div>");
+}
+
+function appendProcessDiagnosisControl(html: string[], item: HmiScreenItemBase, kind: string, label: string, context: HmiHtmlConvertContext): void {
+  html.push("<div");
+  appendCommonAttributes(html, item, context, true, "display: grid; place-items: center; overflow: hidden;");
+  appendAttribute(html, "data-process-diagnosis-kind", kind);
+  appendAttribute(html, "role", "region");
+  appendAttribute(html, "aria-label", label);
+  html.push(">", escapeHtml(label), " data not loaded</div>");
 }
 
 function appendGraphOverviewControl(html: string[], graphOverview: HmiProcessDiagnosisGraphOverviewControl, context: HmiHtmlConvertContext): void {

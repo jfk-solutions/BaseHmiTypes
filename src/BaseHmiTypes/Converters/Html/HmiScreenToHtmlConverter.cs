@@ -332,6 +332,15 @@ public partial class HmiScreenToHtmlConverter
             case HmiRadarChartControl radarChartControl:
                 AppendRadarChartControl(html, radarChartControl, context);
                 break;
+            case HmiProcessDiagnosisOverviewControl overview:
+                AppendProcessDiagnosisControl(html, overview, "Overview", "Process diagnosis overview", context);
+                break;
+            case HmiProcessDiagnosisPlcCodeViewerControl codeViewer:
+                AppendProcessDiagnosisControl(html, codeViewer, "PlcCodeViewer", "PLC code viewer", context);
+                break;
+            case HmiProcessDiagnosisCriteriaAnalysisControl criteria:
+                AppendProcessDiagnosisControl(html, criteria, "CriteriaAnalysis", "Criteria analysis", context);
+                break;
             case HmiProcessDiagnosisGraphOverviewControl graphOverview:
                 AppendGraphOverviewControl(html, graphOverview, context);
                 break;
@@ -3127,6 +3136,16 @@ public partial class HmiScreenToHtmlConverter
             html.Append(')');
         }
         html.Append("</div></div>");
+    }
+
+    private static void AppendProcessDiagnosisControl(StringBuilder html, HmiScreenItemBase item, string kind, string label, HmiHtmlConvertContext context)
+    {
+        html.Append("<div");
+        AppendCommonAttributes(html, item, context, additionalStyle: "display: grid; place-items: center; overflow: hidden;");
+        AppendAttribute(html, "data-process-diagnosis-kind", kind);
+        AppendAttribute(html, "role", "region");
+        AppendAttribute(html, "aria-label", label);
+        html.Append('>').Append(WebUtility.HtmlEncode(label)).Append(" data not loaded</div>");
     }
 
     private static void AppendGraphOverviewControl(StringBuilder html, HmiProcessDiagnosisGraphOverviewControl graphOverview, HmiHtmlConvertContext context)
