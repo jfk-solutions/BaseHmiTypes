@@ -110,7 +110,10 @@ public partial class HmiScreenToHtmlConverter
             var value = ResolveStaticValue(property, context);
             if (IsFinite(value) && value >= 0) style.Append(css).Append(": ").Append(ToCss(value)).Append("px;");
         }
-        AppendDimension("height", control.RowHeight);
+        if (control.RowHeight is not null && ResolveStaticValue(control.RowHeight, context) == 0)
+            style.Append("height: auto;");
+        else AppendDimension("height", control.RowHeight);
+        AppendFontStyle(style, control.ContentFont);
         AppendDimension("padding-left", control.CellPaddingLeft);
         AppendDimension("padding-top", control.CellPaddingTop);
         AppendDimension("padding-right", control.CellPaddingRight);
