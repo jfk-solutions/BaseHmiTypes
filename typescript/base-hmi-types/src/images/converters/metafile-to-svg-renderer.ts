@@ -304,6 +304,22 @@ export class MetafileToSvgRenderer {
             elements.push(element);
           break;
         }
+        case EMR.POLYGON:
+        case EMR.POLYLINE: {
+          const points = readEmfPointArray32(bytes, record).map(([x, y]) => transformPoint(state, x, y));
+          if (points.length < 2) break;
+          const closed = record.type === EMR.POLYGON;
+          if (state.currentPath === undefined) {
+            elements.push(polyElement(points, closed, state));
+          } else {
+            // Independent figures leave the DC current position unchanged.
+            state.currentPath.push(`M ${points[0][0]} ${points[0][1]}`);
+            for (let index = 1; index < points.length; index++)
+              state.currentPath.push(`L ${points[index][0]} ${points[index][1]}`);
+            if (closed) state.currentPath.push('Z');
+          }
+          break;
+        }
         case EMR.POLYPOLYGON16:
           elements.push(...readEmfPolyPoly16(bytes, dataOffset).map(points => polyElement(points.map(([x, y]) => hasEmfPlusDrawing ? transformGdiPointWithEmfPlusTransform(state, emfPlusState.transform, x, y) : transformPoint(state, x, y)), true, state)));
           break;
@@ -525,6 +541,8 @@ const EMR = {
   RECTANGLE: 0x002b,
   ELLIPSE: 0x002a,
   POLYGON16: 0x0056,
+  POLYGON: 0x0003,
+  POLYLINE: 0x0004,
   POLYLINE16: 0x0057,
   POLYPOLYLINE16: 0x005a,
   POLYPOLYGON16: 0x005b,
@@ -848,6 +866,18 @@ function readEmfPoints32(bytes: Uint8Array, offset: number): Array<[number, numb
   const points: Array<[number, number]> = [];
   for (let index = 0; index < count && pointsOffset + index * 8 + 8 <= bytes.length; index++)
     points.push([i32(bytes, pointsOffset + index * 8), i32(bytes, pointsOffset + index * 8 + 4)]);
+  return points;
+}
+
+function readEmfPointArray32(bytes: Uint8Array, record: EmfRecord): Array<[number, number]> {
+  const points: Array<[number, number]> = [];
+  if (record.size < 28) return points;
+  const count = u32(bytes, record.offset + 24);
+  if (count > Math.floor((record.size - 28) / 8)) return points;
+  for (let index = 0; index < count; index++) {
+    const offset = record.offset + 28 + index * 8;
+    points.push([i32(bytes, offset), i32(bytes, offset + 4)]);
+  }
   return points;
 }
 
