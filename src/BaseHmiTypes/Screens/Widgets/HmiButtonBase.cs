@@ -37,6 +37,16 @@ public abstract class HmiButtonBase : HmiWidgetBase
 
     public HmiProperty<bool>? ImageBackgroundTransparent { get; set; }
 
+    /// <summary>RGB key for the alternate image, independent of the normal image key.</summary>
+    public HmiProperty<HmiColor>? AlternateImageBackgroundColor { get; set; }
+
+    public HmiProperty<bool>? AlternateImageBackgroundTransparent { get; set; }
+
+    /// <summary>RGB key for the disabled replacement image, independent of the normal image key.</summary>
+    public HmiProperty<HmiColor>? DisabledImageBackgroundColor { get; set; }
+
+    public HmiProperty<bool>? DisabledImageBackgroundTransparent { get; set; }
+
     public HmiProperty<HmiHorizontalAlignment>? ImageHorizontalAlignment { get; set; }
 
     public HmiProperty<HmiVerticalAlignment>? ImageVerticalAlignment { get; set; }
