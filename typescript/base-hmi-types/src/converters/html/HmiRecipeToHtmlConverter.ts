@@ -80,6 +80,20 @@ export class HmiRecipeToHtmlConverter {
       }
       html.push('</tbody></table></div>');
     }
+    const tagLimits = [
+      ...recipe.parameters.flatMap(field => field.sourceTagLimits.map(limit => ({ kind: "Field", name: field.name, limit }))),
+      ...recipe.sourceTagDeclarations.flatMap(declaration => declaration.limits.map(limit => ({ kind: "Declaration", name: declaration.name, limit }))),
+    ];
+    if (tagLimits.length > 0) {
+      html.push('<h2>Source tag limits</h2><div class="table-scroll"><table><thead><tr><th scope="col">Kind</th><th scope="col">Name</th><th scope="col">Limit</th><th scope="col">Mode (raw)</th><th scope="col">Constant</th><th scope="col">Tag source ID</th><th scope="col">Tag name</th></tr></thead><tbody>');
+      for (const row of tagLimits) {
+        html.push('<tr><td>', row.kind, '</td><th scope="row">', encode(row.name), '</th>');
+        for (const value of [row.limit.kind, row.limit.mode?.toString(), row.limit.constant, row.limit.tag?.sourceId, row.limit.tag?.name])
+          html.push('<td data-value-state="', value === undefined ? "missing" : "present", '">', encode(value ?? "Missing"), '</td>');
+        html.push('</tr>');
+      }
+      html.push('</tbody></table></div>');
+    }
     const tagScalings = [
       ...recipe.parameters.map(field => ({ kind: "Field", name: field.name, scaling: field.sourceTagScaling })),
       ...recipe.sourceTagDeclarations.map(declaration => ({ kind: "Declaration", name: declaration.name, scaling: declaration.scaling })),

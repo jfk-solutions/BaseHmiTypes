@@ -65,6 +65,7 @@ public sealed class HmiRecipeParameter : IHmiObject
     public HmiMultilingualText? SourcePlcComment { get; set; }
     public HmiMultilingualText? SourceTagComment { get; set; }
     public string? SourceTagStartValue { get; set; }
+    public IList<HmiRecipeTagLimit> SourceTagLimits { get; } = new List<HmiRecipeTagLimit>();
     public HmiRecipeTagScaling? SourceTagScaling { get; set; }
     public string? SourceTagSubstituteValue { get; set; }
     public int? SourceTagSubstituteValueUsage { get; set; }
@@ -96,6 +97,15 @@ public sealed class HmiRecipeParameter : IHmiObject
     public string? Comment { get; set; }
 }
 
+/// <summary>Configured source tag limit; no runtime bound is evaluated.</summary>
+public sealed class HmiRecipeTagLimit
+{
+    public string? Kind { get; set; }
+    public int? Mode { get; set; }
+    public string? Constant { get; set; }
+    public HmiRecipeReference? Tag { get; set; }
+}
+
 /// <summary>Configured source tag scaling; no recipe value transformation is implied.</summary>
 public sealed class HmiRecipeTagScaling
 {
@@ -109,6 +119,7 @@ public sealed class HmiRecipeTagScaling
 /// <summary>Retains source HMI tag parent metadata alongside scalar recipe fields.</summary>
 public sealed class HmiRecipeTagDeclaration
 {
+    public IList<HmiRecipeTagLimit> Limits { get; } = new List<HmiRecipeTagLimit>();
     public HmiRecipeTagScaling? Scaling { get; set; }
     public string? Name { get; set; }
     public string? DataType { get; set; }
