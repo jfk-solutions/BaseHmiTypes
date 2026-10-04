@@ -11,6 +11,9 @@ public sealed class HmiAlarmColumn
 
     public HmiProperty<double>? Width { get; set; }
     public HmiProperty<bool>? AutoSize { get; set; }
+    public HmiProperty<int>? DecimalPlaces { get; set; }
+    public HmiProperty<bool>? AutomaticDecimalPlaces { get; set; }
+    public HmiProperty<bool>? ExponentialFormat { get; set; }
     public string? TimeAndDateFormat { get; set; }
     public HmiMultilingualText? HeaderText { get; set; }
     public string? Symbol { get; set; }

@@ -2992,6 +2992,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-cell-padding-left", resolvePropertyPreview(alarmControl.cellPaddingLeft));
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmControl.numberOfRows));
   appendAttribute(html, "data-lines-per-alarm", resolvePropertyPreview(alarmControl.linesPerAlarm));
+  appendAttribute(html, "data-use-project-settings", resolvePropertyPreview(alarmControl.useProjectSettings));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(alarmControl.wordWrap));
   appendAttribute(html, "data-wrap-around", resolvePropertyPreview(alarmControl.wrapAround));
   appendAttribute(html, "data-show-waiting-message", resolvePropertyPreview(alarmControl.showWaitingMessage));
@@ -3059,6 +3060,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       html.push('"');
       appendAttribute(html, "data-column-type", column.type);
       appendAttribute(html, "data-column-source-type", column.sourceType);
+      appendAttribute(html, "data-decimal-places", resolvePropertyPreview(column.decimalPlaces));
+      appendAttribute(html, "data-automatic-decimal-places", resolvePropertyPreview(column.automaticDecimalPlaces));
+      appendAttribute(html, "data-exponential-format", resolvePropertyPreview(column.exponentialFormat));
       appendAttribute(html, "data-time-format", column.timeAndDateFormat);
       appendAttribute(html, "data-symbol", column.symbol);
       html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.sourceType ?? column.type), "</th>");

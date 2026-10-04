@@ -8,6 +8,9 @@ export class HmiAlarmColumn {
   visible?: HmiProperty<boolean>;
   width?: HmiProperty<number>;
   autoSize?: HmiProperty<boolean>;
+  decimalPlaces?: HmiProperty<number>;
+  automaticDecimalPlaces?: HmiProperty<boolean>;
+  exponentialFormat?: HmiProperty<boolean>;
   timeAndDateFormat?: string;
   headerText?: HmiMultilingualText;
   symbol?: string;

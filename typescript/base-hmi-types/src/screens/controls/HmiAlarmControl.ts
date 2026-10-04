@@ -45,6 +45,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   readonly columnSets: HmiAlarmColumnSet[] = [];
   activeColumnSet?: string;
   readonly toolbarButtons: HmiAlarmToolbarButton[] = [];
+  useProjectSettings?: HmiProperty<boolean>;
   showHeader?: HmiProperty<boolean>;
   showTitle?: HmiProperty<boolean>;
   listMode?: HmiProperty<HmiAlarmListMode>;
