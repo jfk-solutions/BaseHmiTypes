@@ -321,11 +321,23 @@ export class MetafileToSvgRenderer {
           break;
         }
         case EMR.POLYPOLYGON16:
-          elements.push(...readEmfPolyPoly16(bytes, dataOffset).map(points => polyElement(points.map(([x, y]) => hasEmfPlusDrawing ? transformGdiPointWithEmfPlusTransform(state, emfPlusState.transform, x, y) : transformPoint(state, x, y)), true, state)));
-          break;
         case EMR.POLYPOLYLINE16:
-          elements.push(...readEmfPolyPoly16(bytes, dataOffset).map(points => polyElement(points.map(([x, y]) => hasEmfPlusDrawing ? transformGdiPointWithEmfPlusTransform(state, emfPlusState.transform, x, y) : transformPoint(state, x, y)), false, state)));
+        case EMR.POLYPOLYGON:
+        case EMR.POLYPOLYLINE: {
+          const closed = record.type === EMR.POLYPOLYGON || record.type === EMR.POLYPOLYGON16;
+          const shortPoints = record.type === EMR.POLYPOLYGON16 || record.type === EMR.POLYPOLYLINE16;
+          const path: string[] = [];
+          for (const figure of readEmfCompoundPoints(bytes, record, shortPoints)) {
+            const points = figure.map(([x, y]) => hasEmfPlusDrawing ? transformGdiPointWithEmfPlusTransform(state, emfPlusState.transform, x, y) : transformPoint(state, x, y));
+            path.push(`M ${points[0][0]} ${points[0][1]}`);
+            for (let index = 1; index < points.length; index++) path.push(`L ${points[index][0]} ${points[index][1]}`);
+            if (closed) path.push('Z');
+          }
+          if (!path.length) break;
+          if (state.currentPath !== undefined) state.currentPath.push(...path);
+          else elements.push(pathElement(path, state, closed ? 'paint' : 'stroke'));
           break;
+        }
         case EMR.FILLPATH:
           if (state.currentPath?.length)
             elements.push(pathElement(state.currentPath, state, 'fill'));
@@ -546,6 +558,8 @@ const EMR = {
   POLYLINE16: 0x0057,
   POLYPOLYLINE16: 0x005a,
   POLYPOLYGON16: 0x005b,
+  POLYPOLYLINE: 0x0007,
+  POLYPOLYGON: 0x0008,
   STRETCHDIBITS: 0x0051,
   EXTCREATEFONTINDIRECTW: 0x0052,
   EXTTEXTOUTW: 0x0054,
@@ -881,18 +895,30 @@ function readEmfPointArray32(bytes: Uint8Array, record: EmfRecord): Array<[numbe
   return points;
 }
 
-function readEmfPolyPoly16(bytes: Uint8Array, offset: number): Array<Array<[number, number]>> {
-  const polygonCount = u32(bytes, offset + 16);
-  const totalPoints = u32(bytes, offset + 20);
-  const countsOffset = offset + 24;
-  const pointsOffset = countsOffset + polygonCount * 4;
+function readEmfCompoundPoints(bytes: Uint8Array, record: EmfRecord, shortPoints: boolean): Array<Array<[number, number]>> {
   const polygons: Array<Array<[number, number]>> = [];
+  if (record.size < 32) return polygons;
+  const figureCount = u32(bytes, record.offset + 24);
+  const totalPoints = u32(bytes, record.offset + 28);
+  if (figureCount > Math.floor((record.size - 32) / 4)) return polygons;
+  const countsOffset = record.offset + 32;
+  const pointsOffset = countsOffset + figureCount * 4;
+  const pointSize = shortPoints ? 4 : 8;
+  if (totalPoints > Math.floor((record.offset + record.size - pointsOffset) / pointSize)) return polygons;
+  let consumed = 0;
+  for (let figure = 0; figure < figureCount; figure++) {
+    const count = u32(bytes, countsOffset + figure * 4);
+    if (count < 2 || count > totalPoints - consumed) return polygons;
+    consumed += count;
+  }
   let pointIndex = 0;
-  for (let polygonIndex = 0; polygonIndex < polygonCount; polygonIndex++) {
+  for (let polygonIndex = 0; polygonIndex < figureCount; polygonIndex++) {
     const count = u32(bytes, countsOffset + polygonIndex * 4);
     const points: Array<[number, number]> = [];
-    for (let index = 0; index < count && pointIndex < totalPoints; index++, pointIndex++)
-      points.push([i16(bytes, pointsOffset + pointIndex * 4), i16(bytes, pointsOffset + pointIndex * 4 + 2)]);
+    for (let index = 0; index < count; index++, pointIndex++) {
+      const offset = pointsOffset + pointIndex * pointSize;
+      points.push(shortPoints ? [i16(bytes, offset), i16(bytes, offset + 2)] : [i32(bytes, offset), i32(bytes, offset + 4)]);
+    }
     polygons.push(points);
   }
   return polygons;
