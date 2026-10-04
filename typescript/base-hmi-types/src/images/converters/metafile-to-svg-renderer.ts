@@ -45,6 +45,7 @@ interface DrawState {
   fillRule: 'evenodd' | 'nonzero';
   activeClipId?: string;
   currentPath?: string[];
+  selectedPath?: string[];
   pathStartX?: number;
   pathStartY?: number;
   pathEndX?: number;
@@ -251,6 +252,7 @@ export class MetafileToSvgRenderer {
           break;
         }
         case EMR.BEGINPATH:
+          state.selectedPath = undefined;
           state.currentPath = [];
           state.pathStartX = undefined;
           state.pathStartY = undefined;
@@ -267,14 +269,22 @@ export class MetafileToSvgRenderer {
           }
           break;
         case EMR.ENDPATH:
+          if (state.currentPath !== undefined) {
+            state.selectedPath = state.currentPath;
+            resetPathConstruction(state);
+          }
+          break;
+        case EMR.ABORTPATH:
+          state.selectedPath = undefined;
+          resetPathConstruction(state);
           break;
         case EMR.SELECTCLIPPATH:
-          if (state.currentPath?.length) {
+          if (state.selectedPath?.length) {
             const id = `clip${++clipSequence}`;
-            defs.push(`<clipPath id="${id}"><path d="${state.currentPath.join(' ')}" /></clipPath>`);
+            defs.push(`<clipPath id="${id}"><path d="${state.selectedPath.join(' ')}" /></clipPath>`);
             state.activeClipId = id;
           }
-          state.currentPath = undefined;
+          state.selectedPath = undefined;
           break;
         case EMR.POLYLINETO:
         case EMR.POLYLINETO16:
@@ -357,19 +367,19 @@ export class MetafileToSvgRenderer {
           break;
         }
         case EMR.FILLPATH:
-          if (state.currentPath?.length)
-            elements.push(pathElement(state.currentPath, state, 'fill'));
-          state.currentPath = undefined;
+          if (state.selectedPath?.length)
+            elements.push(pathElement(state.selectedPath, state, 'fill'));
+          state.selectedPath = undefined;
           break;
         case EMR.STROKEPATH:
-          if (state.currentPath?.length)
-            elements.push(pathElement(state.currentPath, state, 'stroke'));
-          state.currentPath = undefined;
+          if (state.selectedPath?.length)
+            elements.push(pathElement(state.selectedPath, state, 'stroke'));
+          state.selectedPath = undefined;
           break;
         case EMR.STROKEANDFILLPATH:
-          if (state.currentPath?.length)
-            elements.push(pathElement(state.currentPath, state, 'paint'));
-          state.currentPath = undefined;
+          if (state.selectedPath?.length)
+            elements.push(pathElement(state.selectedPath, state, 'paint'));
+          state.selectedPath = undefined;
           break;
         case EMR.EXTTEXTOUTW: {
           const text = emfTextElement(bytes, record, state);
@@ -552,6 +562,7 @@ const EMR = {
   MODIFYWORLDTRANSFORM: 0x0024,
   BEGINPATH: 0x003b,
   ENDPATH: 0x003c,
+  ABORTPATH: 0x0044,
   CLOSEFIGURE: 0x003d,
   FILLPATH: 0x003e,
   STROKEANDFILLPATH: 0x003f,
@@ -789,6 +800,7 @@ function cloneState(state: DrawState): DrawState {
     font: { ...state.font },
     worldTransform: { ...state.worldTransform },
     currentPath: state.currentPath ? [...state.currentPath] : undefined,
+    selectedPath: state.selectedPath ? [...state.selectedPath] : undefined,
   };
 }
 
@@ -1016,6 +1028,11 @@ function scaledPenWidth(state: DrawState, width: number): number {
   const [x1, y1] = transformPoint(state, rawWidth, 0);
   const [x2, y2] = transformPoint(state, 0, rawWidth);
   return Math.max(1, Math.max(Math.hypot(x1 - x0, y1 - y0), Math.hypot(x2 - x0, y2 - y0)));
+}
+
+function resetPathConstruction(state: DrawState): void {
+  state.currentPath = undefined;
+  state.pathStartX = state.pathStartY = state.pathEndX = state.pathEndY = undefined;
 }
 
 function ensurePathPosition(state: DrawState): void {
