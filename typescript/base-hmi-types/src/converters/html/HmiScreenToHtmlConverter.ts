@@ -2473,7 +2473,9 @@ function createParameterCellLayoutStyle(control: HmiDetailedParameterControl): s
     const value = getStaticValue(property);
     if (typeof value === "number" && Number.isFinite(value) && value >= 0) style.push(`${css}: ${toCss(value)}px;`);
   };
-  appendDimension("height", control.rowHeight);
+  if (getStaticValue(control.rowHeight) === 0) style.push("height: auto;");
+  else appendDimension("height", control.rowHeight);
+  if (control.contentFont !== undefined) appendFont(style, control.contentFont);
   appendDimension("padding-left", control.cellPaddingLeft);
   appendDimension("padding-top", control.cellPaddingTop);
   appendDimension("padding-right", control.cellPaddingRight);
