@@ -11,10 +11,14 @@ public class HmiDetailedParameterControl : HmiControlWindowBase
     }
 
     public HmiProperty<bool>? ParameterSetTypeFixed { get; set; }
+    public HmiProperty<uint>? CurrentParameterSetId { get; set; }
+    public HmiProperty<uint>? CurrentParameterSetTypeId { get; set; }
     public HmiProperty<HmiMultilingualText>? ParameterSetTypeLabel { get; set; }
     public HmiProperty<HmiMultilingualText>? ParameterSetLabel { get; set; }
     public HmiProperty<HmiMultilingualText>? NumberLabel { get; set; }
     public HmiProperty<bool>? HideDetails { get; set; }
+    public HmiProperty<HmiColor>? GridLineColor { get; set; }
+    public HmiProperty<double>? GridLineWidth { get; set; }
     /// <summary>Native editing-mode value; no cross-family enum translation is assumed.</summary>
     public HmiProperty<int>? EditMode { get; set; }
     public HmiProperty<bool>? ShowToolbar { get; set; }

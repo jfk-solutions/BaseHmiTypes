@@ -9,10 +9,14 @@ export class HmiDetailedParameterControl extends HmiControlWindowBase {
     this.hmiObjectType = HmiObjectType.HmiDetailedParameterControl;
   }
   parameterSetTypeFixed?: HmiProperty<boolean>;
+  currentParameterSetId?: HmiProperty<number>;
+  currentParameterSetTypeId?: HmiProperty<number>;
   parameterSetTypeLabel?: HmiProperty<HmiMultilingualText>;
   parameterSetLabel?: HmiProperty<HmiMultilingualText>;
   numberLabel?: HmiProperty<HmiMultilingualText>;
   hideDetails?: HmiProperty<boolean>;
+  gridLineColor?: HmiProperty<HmiColor>;
+  gridLineWidth?: HmiProperty<number>;
   /** Native editing-mode value; no cross-family enum translation is assumed. */
   editMode?: HmiProperty<number>;
   showToolbar?: HmiProperty<boolean>;

@@ -2363,6 +2363,8 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   html.push("<div");
   appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
   appendAttribute(html, "data-parameter-set-type-fixed", resolvePropertyPreview(control.parameterSetTypeFixed));
+  appendAttribute(html, "data-current-parameter-set-id", resolvePropertyPreview(control.currentParameterSetId));
+  appendAttribute(html, "data-current-parameter-set-type-id", resolvePropertyPreview(control.currentParameterSetTypeId));
   appendAttribute(html, "data-hide-details", resolvePropertyPreview(control.hideDetails));
   appendAttribute(html, "data-edit-mode", resolvePropertyPreview(control.editMode));
   appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(control.showToolbar));
@@ -2376,11 +2378,24 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   html.push('<div class="hmi-parameter-selection" style="flex: 0 0 auto; padding: 2px 4px;"><div>',
     escapeHtml(getStaticValue(control.parameterSetTypeLabel)?.getText(context.options.cultureLcid) ?? "Parameter set type"));
   if (getStaticValue(control.parameterSetTypeFixed)) html.push(" · Fixed");
+  if (control.currentParameterSetTypeId !== undefined)
+    html.push(": ", String(getStaticValue(control.currentParameterSetTypeId)));
   html.push("</div><div>", escapeHtml(getStaticValue(control.parameterSetLabel)?.getText(context.options.cultureLcid) ?? "Parameter set"),
-    "</div><div>", escapeHtml(getStaticValue(control.numberLabel)?.getText(context.options.cultureLcid) ?? "Number"),
-    "</div><div>Parameter set selection not decoded</div></div>");
-  if (!getStaticValue(control.hideDetails))
-    html.push('<div class="hmi-parameter-details" style="flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top: 1px solid currentColor;">Parameter data not loaded</div>');
+    "</div><div>", escapeHtml(getStaticValue(control.numberLabel)?.getText(context.options.cultureLcid) ?? "Number"));
+  if (control.currentParameterSetId !== undefined) html.push(": ", String(getStaticValue(control.currentParameterSetId)));
+  html.push("</div>");
+  if (control.currentParameterSetId === undefined || control.currentParameterSetTypeId === undefined)
+    html.push("<div>Parameter set selection not decoded</div>");
+  html.push("</div>");
+  if (!getStaticValue(control.hideDetails)) {
+    const style = ["flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;"];
+    const width = getStaticValue(control.gridLineWidth) ?? 1;
+    style.push(`border-top-width: ${toCss(Number.isFinite(width) && width >= 0 ? width : 1)}px;`);
+    appendColorStyle(style, "background-color", control.contentBackgroundColor);
+    appendColorStyle(style, "color", control.contentForegroundColor);
+    appendColorStyle(style, "border-top-color", control.gridLineColor);
+    html.push('<div class="hmi-parameter-details" style="', style.join(""), '\">Parameter data not loaded</div>');
+  }
   if (getStaticValue(control.showStatusBar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
     appendColorStyle(style, "background-color", control.statusBarBackgroundColor);
