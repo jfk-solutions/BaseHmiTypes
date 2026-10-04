@@ -32,6 +32,9 @@ public class HmiGraphicView : HmiSurfaceShapeBase
 
     public HmiProperty<int>? GraphicStretchMode { get; set; }
 
+    /// <summary>Additional image extents outside the logical frame. The source image includes these extents.</summary>
+    public HmiThickness? ImageOverflowPadding { get; set; }
+
     /// <summary>Draws borders wider than one pixel inside the frame when true, or centered on it when false.</summary>
     public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
 }
