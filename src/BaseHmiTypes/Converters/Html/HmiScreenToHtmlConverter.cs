@@ -332,6 +332,9 @@ public partial class HmiScreenToHtmlConverter
             case HmiRadarChartControl radarChartControl:
                 AppendRadarChartControl(html, radarChartControl, context);
                 break;
+            case HmiProcessDiagnosisGraphOverviewControl graphOverview:
+                AppendGraphOverviewControl(html, graphOverview, context);
+                break;
             case HmiSystemDiagnosisControl systemDiagnosisControl:
                 AppendSystemDiagnosisControl(html, systemDiagnosisControl, context);
                 break;
@@ -3124,6 +3127,15 @@ public partial class HmiScreenToHtmlConverter
             html.Append(')');
         }
         html.Append("</div></div>");
+    }
+
+    private static void AppendGraphOverviewControl(StringBuilder html, HmiProcessDiagnosisGraphOverviewControl graphOverview, HmiHtmlConvertContext context)
+    {
+        html.Append("<div");
+        AppendCommonAttributes(html, graphOverview, context, additionalStyle: "display: grid; place-items: center; overflow: hidden;");
+        AppendAttribute(html, "data-associated-graph-db-tag-source-id", graphOverview.AssociatedGraphDbTagSourceId);
+        AppendAttribute(html, "data-associated-graph-db-tag-name", graphOverview.AssociatedGraphDbTagName);
+        html.Append(" role=\"region\" aria-label=\"Graph overview\">Graph diagnostics not loaded</div>");
     }
 
     private static void AppendSystemDiagnosisControl(StringBuilder html, HmiSystemDiagnosisControl systemDiagnosisControl, HmiHtmlConvertContext context)

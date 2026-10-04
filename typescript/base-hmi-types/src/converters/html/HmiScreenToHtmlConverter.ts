@@ -127,6 +127,7 @@ import { HmiParameterControlBase } from "../../screens/controls/HmiParameterCont
 import { HmiParameterColumn } from "../../screens/controls/HmiParameterColumn.js";
 import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
 import { HmiRadarChartControl } from "../../screens/controls/HmiRadarChartControl.js";
+import { HmiProcessDiagnosisGraphOverviewControl } from "../../screens/controls/HmiProcessDiagnosisGraphOverviewControl.js";
 import { HmiSystemDiagnosisControl } from "../../screens/controls/HmiSystemDiagnosisControl.js";
 import { HmiSystemDiagnosisColumnType } from "../../screens/controls/HmiSystemDiagnosisColumnType.js";
 import { HmiSystemDiagnosisViewKind } from "../../screens/controls/HmiSystemDiagnosisViewKind.js";
@@ -420,6 +421,8 @@ export class HmiScreenToHtmlConverter {
       appendAuditTrailControl(html, item, context);
     } else if (item instanceof HmiRadarChartControl) {
       appendRadarChartControl(html, item, context);
+    } else if (item instanceof HmiProcessDiagnosisGraphOverviewControl) {
+      appendGraphOverviewControl(html, item, context);
     } else if (item instanceof HmiSystemDiagnosisControl) {
       appendSystemDiagnosisControl(html, item, context);
     } else if (item instanceof HmiMediaControl) {
@@ -3101,6 +3104,14 @@ function appendRadarChartControl(html: string[], radarChartControl: HmiRadarChar
     html.push(")");
   }
   html.push("</div></div>");
+}
+
+function appendGraphOverviewControl(html: string[], graphOverview: HmiProcessDiagnosisGraphOverviewControl, context: HmiHtmlConvertContext): void {
+  html.push("<div");
+  appendCommonAttributes(html, graphOverview, context, true, "display: grid; place-items: center; overflow: hidden;");
+  appendAttribute(html, "data-associated-graph-db-tag-source-id", graphOverview.associatedGraphDbTagSourceId);
+  appendAttribute(html, "data-associated-graph-db-tag-name", graphOverview.associatedGraphDbTagName);
+  html.push(' role="region" aria-label="Graph overview">Graph diagnostics not loaded</div>');
 }
 
 function appendSystemDiagnosisControl(
