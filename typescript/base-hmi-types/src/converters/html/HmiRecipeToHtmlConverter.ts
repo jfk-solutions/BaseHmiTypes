@@ -99,6 +99,14 @@ export class HmiRecipeToHtmlConverter {
       }
       html.push("</tbody></table></div>");
     }
+    if (recipe.dataSets.some(record => record.sourceValues.size > 0)) {
+      html.push("<h2>Stored source values</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th><th scope=\"col\">Source key</th><th scope=\"col\">Value</th></tr></thead><tbody>");
+      for (const record of recipe.dataSets)
+        for (const [key, value] of record.sourceValues)
+          html.push("<tr><th scope=\"row\">", encode(record.name), "</th><td>", encode(record.sourceNumber?.toString()), "</td><td>", encode(key),
+            "</td><td data-value-state=\"", value == null ? "null" : "present", "\">", encode(value == null ? "Null" : value), "</td></tr>");
+      html.push("</tbody></table></div>");
+    }
     return html.concat("</body></html>").join("");
   }
 }

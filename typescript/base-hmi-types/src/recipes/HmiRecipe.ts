@@ -69,5 +69,6 @@ export class HmiRecipeDataSet {
   displayName?: HmiMultilingualText;
   sourceNumber?: number;
   name?: string;
-  readonly values: Record<string, string | undefined> = {};
+  readonly values: Record<string, string | undefined> = Object.create(null);
+  readonly sourceValues = new Map<string, string | undefined>();
 }

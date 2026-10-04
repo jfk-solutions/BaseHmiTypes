@@ -125,6 +125,17 @@ public sealed class HmiRecipeToHtmlConverter
             }
             html.Append("</tbody></table></div>");
         }
+        if (recipe.DataSets.Any(record => record.SourceValues.Count > 0))
+        {
+            html.Append("<h2>Stored source values</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th><th scope=\"col\">Source key</th><th scope=\"col\">Value</th></tr></thead><tbody>");
+            foreach (var record in recipe.DataSets)
+                foreach (var pair in record.SourceValues)
+                    html.Append("<tr><th scope=\"row\">").Append(Encode(record.Name)).Append("</th><td>")
+                        .Append(record.SourceNumber?.ToString(CultureInfo.InvariantCulture)).Append("</td><td>").Append(Encode(pair.Key))
+                        .Append("</td><td data-value-state=\"").Append(pair.Value == null ? "null" : "present").Append("\">")
+                        .Append(Encode(pair.Value == null ? "Null" : pair.Value)).Append("</td></tr>");
+            html.Append("</tbody></table></div>");
+        }
         return html.Append("</body></html>").ToString();
     }
 
