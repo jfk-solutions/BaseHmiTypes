@@ -21,6 +21,7 @@ public sealed class HmiRecipe : IHmiObject
     public IList<HmiRecipeParameter> Parameters { get; } = new List<HmiRecipeParameter>();
 
     public IList<HmiRecipeDataSet> DataSets { get; } = new List<HmiRecipeDataSet>();
+    public IList<HmiRecipePlcDeclaration> SourcePlcDeclarations { get; } = new List<HmiRecipePlcDeclaration>();
 }
 
 public enum HmiRecipeCommunicationType { Tags = 0, NoCommunication = 1, RawDataTag = 2 }
@@ -89,6 +90,20 @@ public sealed class HmiRecipeParameter : IHmiObject
     public string? MaximumValue { get; set; }
 
     public string? Comment { get; set; }
+}
+
+/// <summary>Retains source parent and sparse declarations alongside scalar recipe fields.</summary>
+public sealed class HmiRecipePlcDeclaration
+{
+    public string? Name { get; set; }
+    public string? DataType { get; set; }
+    public string? StartValue { get; set; }
+    public string? TypeDefaultStartValue { get; set; }
+    public string? StartValueConstantName { get; set; }
+    public bool? HasExplicitStartValue { get; set; }
+    public IDictionary<string, string> SubelementValues { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+    public IDictionary<string, string> SubelementValueConstantNames { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+    public IDictionary<string, string> TypeDefaultSubelementValues { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 }
 
 public sealed class HmiRecipeDataSet : IHmiObject

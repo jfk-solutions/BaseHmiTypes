@@ -118,6 +118,27 @@ public sealed class HmiRecipeToHtmlConverter
             }
             html.Append("</tbody></table></div>");
         }
+        if (recipe.SourcePlcDeclarations.Count > 0)
+        {
+            html.Append("<h2>Source PLC composite declarations</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Declaration</th><th scope=\"col\">Data type</th><th scope=\"col\">Start value</th><th scope=\"col\">Type default</th><th scope=\"col\">Symbolic constant</th><th scope=\"col\">Explicit start value</th></tr></thead><tbody>");
+            foreach (var declaration in recipe.SourcePlcDeclarations)
+            {
+                html.Append("<tr><th scope=\"row\">").Append(Encode(declaration.Name)).Append("</th>");
+                foreach (var value in new[] { declaration.DataType, declaration.StartValue, declaration.TypeDefaultStartValue, declaration.StartValueConstantName, FormatFlag(declaration.HasExplicitStartValue) })
+                    html.Append("<td data-value-state=\"").Append(value == null ? "missing" : "present").Append("\">").Append(Encode(value ?? "Missing")).Append("</td>");
+                html.Append("</tr>");
+            }
+            html.Append("</tbody></table></div>");
+        }
+        if (recipe.SourcePlcDeclarations.Any(declaration => declaration.SubelementValues.Count > 0 || declaration.SubelementValueConstantNames.Count > 0 || declaration.TypeDefaultSubelementValues.Count > 0))
+        {
+            html.Append("<h2>Source PLC sparse values</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Declaration</th><th scope=\"col\">Kind</th><th scope=\"col\">Source key</th><th scope=\"col\">Value</th></tr></thead><tbody>");
+            foreach (var declaration in recipe.SourcePlcDeclarations)
+                foreach (var group in new[] { ("Explicit value", declaration.SubelementValues), ("Symbolic constant", declaration.SubelementValueConstantNames), ("Type default", declaration.TypeDefaultSubelementValues) })
+                    foreach (var pair in group.Item2)
+                        html.Append("<tr><th scope=\"row\">").Append(Encode(declaration.Name)).Append("</th><td>").Append(group.Item1).Append("</td><td>").Append(Encode(pair.Key)).Append("</td><td data-value-state=\"present\">").Append(Encode(pair.Value)).Append("</td></tr>");
+            html.Append("</tbody></table></div>");
+        }
         html.Append("<h2>Stored records</h2>");
         if (recipe.DataSets.Count == 0)
             html.Append("<p>No stored records.</p>");
