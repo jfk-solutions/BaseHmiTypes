@@ -173,11 +173,23 @@ public sealed class MetafileToSvgRenderer
                         break;
                     }
                 case EMR.BeginPath:
+                    state.SelectedPath = null;
                     state.CurrentPath = new List<string>();
                     state.PathStartX = null;
                     state.PathStartY = null;
                     state.PathEndX = null;
                     state.PathEndY = null;
+                    break;
+                case EMR.EndPath:
+                    if (state.CurrentPath is not null)
+                    {
+                        state.SelectedPath = state.CurrentPath;
+                        ResetPathConstruction(state);
+                    }
+                    break;
+                case EMR.AbortPath:
+                    state.SelectedPath = null;
+                    ResetPathConstruction(state);
                     break;
                 case EMR.CloseFigure:
                     state.CurrentPath?.Add("Z");
@@ -191,14 +203,14 @@ public sealed class MetafileToSvgRenderer
 
                     break;
                 case EMR.SelectClipPath:
-                    if (state.CurrentPath is { Count: > 0 })
+                    if (state.SelectedPath is { Count: > 0 })
                     {
                         var id = $"clip{++clipSequence}";
-                        defs.Add($"<clipPath id=\"{id}\"><path d=\"{string.Join(" ", state.CurrentPath)}\" /></clipPath>");
+                        defs.Add($"<clipPath id=\"{id}\"><path d=\"{string.Join(" ", state.SelectedPath)}\" /></clipPath>");
                         state.ActiveClipId = id;
                     }
 
-                    state.CurrentPath = null;
+                    state.SelectedPath = null;
                     break;
                 case EMR.PolylineTo:
                 case EMR.PolylineTo16:
@@ -282,19 +294,19 @@ public sealed class MetafileToSvgRenderer
                         break;
                     }
                 case EMR.FillPath:
-                    if (state.CurrentPath is { Count: > 0 })
-                        elements.Add(PathElement(state.CurrentPath, state, PathPaintMode.Fill));
-                    state.CurrentPath = null;
+                    if (state.SelectedPath is { Count: > 0 })
+                        elements.Add(PathElement(state.SelectedPath, state, PathPaintMode.Fill));
+                    state.SelectedPath = null;
                     break;
                 case EMR.StrokePath:
-                    if (state.CurrentPath is { Count: > 0 })
-                        elements.Add(PathElement(state.CurrentPath, state, PathPaintMode.Stroke));
-                    state.CurrentPath = null;
+                    if (state.SelectedPath is { Count: > 0 })
+                        elements.Add(PathElement(state.SelectedPath, state, PathPaintMode.Stroke));
+                    state.SelectedPath = null;
                     break;
                 case EMR.StrokeAndFillPath:
-                    if (state.CurrentPath is { Count: > 0 })
-                        elements.Add(PathElement(state.CurrentPath, state, PathPaintMode.Paint));
-                    state.CurrentPath = null;
+                    if (state.SelectedPath is { Count: > 0 })
+                        elements.Add(PathElement(state.SelectedPath, state, PathPaintMode.Paint));
+                    state.SelectedPath = null;
                     break;
                 case EMR.ExtTextOutW:
                     {
@@ -659,6 +671,7 @@ public sealed class MetafileToSvgRenderer
             MiterLimit = state.MiterLimit,
             ActiveClipId = state.ActiveClipId,
             CurrentPath = state.CurrentPath is null ? null : new List<string>(state.CurrentPath),
+            SelectedPath = state.SelectedPath is null ? null : new List<string>(state.SelectedPath),
             PathStartX = state.PathStartX,
             PathStartY = state.PathStartY,
             PathEndX = state.PathEndX,
@@ -691,6 +704,7 @@ public sealed class MetafileToSvgRenderer
         target.ActiveClipId = restored.ActiveClipId;
         target.CurrentPath = restored.CurrentPath;
         target.PathStartX = restored.PathStartX;
+        target.SelectedPath = restored.SelectedPath;
         target.PathStartY = restored.PathStartY;
         target.PathEndX = restored.PathEndX;
         target.PathEndY = restored.PathEndY;
@@ -821,6 +835,12 @@ public sealed class MetafileToSvgRenderer
         foreach (var point in points)
             result.Add(TransformPoint(state, point.X, point.Y));
         return result;
+    }
+
+    private static void ResetPathConstruction(DrawState state)
+    {
+        state.CurrentPath = null;
+        state.PathStartX = state.PathStartY = state.PathEndX = state.PathEndY = null;
     }
 
     private static void EnsurePathPosition(DrawState state)
@@ -1322,6 +1342,7 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class DrawState
 {
+    public List<string>? SelectedPath { get; set; }
     public double MiterLimit { get; set; } = 10;
 
     public PenObject Pen { get; set; } = new();
@@ -1487,6 +1508,8 @@ internal static class EMR
     public const uint SetWorldTransform = 0x0023;
     public const uint ModifyWorldTransform = 0x0024;
     public const uint BeginPath = 0x003b;
+    public const uint EndPath = 0x003c;
+    public const uint AbortPath = 0x0044;
     public const uint CloseFigure = 0x003d;
     public const uint FillPath = 0x003e;
     public const uint StrokeAndFillPath = 0x003f;
