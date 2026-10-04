@@ -1671,14 +1671,23 @@ public class HmiScreenToHtmlConverter
         var enabled = button.Enabled is null || ResolveStaticValue(button.Enabled, context);
         if (!enabled)
             AppendAttribute(html, "disabled", "disabled");
-        var image = state?.Image ?? (down ? ResolveStaticValue(button.AlternateImage, context) : null)
+        var alternateImage = down ? ResolveStaticValue(button.AlternateImage, context) : null;
+        var image = state?.Image ?? alternateImage
             ?? button.Image.GetStaticValue();
+        HmiColor? imageKey = state?.Image is not null
+            ? (state.ImageBackgroundTransparent ?? ResolveStaticValue(button.ImageBackgroundTransparent, context))
+                ? state.ImageBackgroundColor ?? (button.ImageBackgroundColor is null ? null : ResolveStaticValue(button.ImageBackgroundColor, context)) : null
+            : alternateImage is not null
+                ? GetImageColorKey(button.AlternateImageBackgroundTransparent, button.AlternateImageBackgroundColor, context)
+                : GetImageColorKey(button.ImageBackgroundTransparent, button.ImageBackgroundColor, context);
         var disabledImageMode = ResolveStaticValue(button.DisabledImageMode, context);
         var showDisabledAppearance = !enabled && button.ShowDisabledState is not null && ResolveStaticValue(button.ShowDisabledState, context);
         if (showDisabledAppearance && disabledImageMode is HmiDisabledImageMode.Reference or HmiDisabledImageMode.Imported)
         {
             var disabledImage = ResolveStaticValue(button.DisabledImage, context);
             image = disabledImage ?? (button.DisabledImageFallbackToNormal is null || ResolveStaticValue(button.DisabledImageFallbackToNormal, context) ? image : null);
+            if (disabledImage is not null)
+                imageKey = GetImageColorKey(button.DisabledImageBackgroundTransparent, button.DisabledImageBackgroundColor, context);
         }
         var imageUri = mode == HmiButtonType.Text ? null
             : await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
@@ -1696,7 +1705,7 @@ public class HmiScreenToHtmlConverter
             else
                 html.Append("<span data-hmi-button-content style=\"display: flex;flex-direction: column;width: 100%;height: 100%;min-width: 0;min-height: 0;align-items: center;justify-content: center;overflow: hidden;\">")
                     .Append("<span data-hmi-button-graphic style=\"flex: 1 1 0;min-width: 0;min-height: 0;width: 100%;\">");
-            AppendButtonImage(html, button, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale, context);
+            AppendButtonImage(html, button, imageUri, showDisabledAppearance && disabledImageMode == HmiDisabledImageMode.Grayscale, context, imageKey);
             html.Append("</span>");
         }
         if (mode != HmiButtonType.Graphic)
@@ -1761,7 +1770,10 @@ public class HmiScreenToHtmlConverter
             html.Append("</span>");
     }
 
-    private static void AppendButtonImage(StringBuilder html, HmiButton button, string? imageUri, bool grayscale, HmiHtmlConvertContext context)
+    private static HmiColor? GetImageColorKey(HmiProperty<bool>? enabled, HmiProperty<HmiColor>? color, HmiHtmlConvertContext context) =>
+        color is not null && ResolveStaticValue(enabled, context) ? ResolveStaticValue(color, context) : null;
+
+    private static void AppendButtonImage(StringBuilder html, HmiButton button, string? imageUri, bool grayscale, HmiHtmlConvertContext context, HmiColor? imageKey)
     {
         var aligned = button.ImageHorizontalAlignment is not null || button.ImageVerticalAlignment is not null;
         if (aligned)
@@ -1779,7 +1791,7 @@ public class HmiScreenToHtmlConverter
         var offset = button.ImageHorizontalAlignment is not null &&
             ResolveStaticValue(button.ImageHorizontalAlignment, context) != HmiHorizontalAlignment.Stretch
             ? GetButtonPressedContentOffset(button, context) : 0;
-        AppendInnerImage(html, imageUri, grayscale, offset);
+        AppendInnerImage(html, imageUri, grayscale, offset, imageKey);
         if (aligned) html.Append("</span>");
     }
 
@@ -3709,13 +3721,15 @@ public class HmiScreenToHtmlConverter
             html.Append("transform: ").Append(string.Join(" ", transforms)).Append(";transform-origin: center;");
     }
 
-    private static void AppendInnerImage(StringBuilder html, string? uri, bool grayscale = false, double pressedOffset = 0)
+    private static void AppendInnerImage(StringBuilder html, string? uri, bool grayscale = false, double pressedOffset = 0, HmiColor? imageKey = null)
     {
         if (string.IsNullOrWhiteSpace(uri))
             return;
 
         html.Append("<img");
         AppendAttribute(html, "src", uri);
+        if (imageKey is { } key)
+            AppendAttribute(html, "data-hmi-image-color-key", $"{key.Red},{key.Green},{key.Blue}");
         html.Append(" style=\"width: 100%; height: 100%;");
         if (grayscale)
             html.Append(" filter: grayscale(1);");
