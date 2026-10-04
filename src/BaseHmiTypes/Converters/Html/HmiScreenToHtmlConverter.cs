@@ -3548,6 +3548,12 @@ public class HmiScreenToHtmlConverter
         html.Append("<img");
         AppendCommonAttributes(html, item, context);
         AppendAttribute(html, "src", imageUri);
+        if (item is HmiGraphicView graphicView && graphicView.ImageBackgroundColor is not null &&
+            ResolveStaticValue(graphicView.ImageBackgroundTransparent, context))
+        {
+            var key = ResolveStaticValue(graphicView.ImageBackgroundColor, context);
+            AppendAttribute(html, "data-hmi-image-color-key", $"{key.Red},{key.Green},{key.Blue}");
+        }
         html.Append(">");
     }
 
