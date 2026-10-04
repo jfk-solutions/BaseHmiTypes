@@ -2911,6 +2911,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-view-kind", alarmControl.ViewKind.ToString());
         AppendAttribute(html, "data-active-column-set", alarmControl.ActiveColumnSet);
         AppendAttribute(html, "data-list-mode", listMode.ToString());
+        AppendAttribute(html, "data-time-base", ResolvePropertyPreview(alarmControl.TimeBase, context));
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmControl.NumberOfRows, context));
         AppendAttribute(html, "data-lines-per-alarm", ResolvePropertyPreview(alarmControl.LinesPerAlarm, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(alarmControl.WordWrap, context));

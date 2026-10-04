@@ -1,4 +1,4 @@
-import { HmiColor, HmiFont, HmiHorizontalAlignment, HmiLineStyle, HmiProperty } from "../base.js";
+import { HmiColor, HmiFont, HmiHorizontalAlignment, HmiLineStyle, HmiProperty, HmiTrendTimeBase } from "../base.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
@@ -52,6 +52,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   allAlarmsTitle?: HmiMultilingualText;
   activeAlarmsTitle?: HmiMultilingualText;
   pastAlarmsTitle?: HmiMultilingualText;
+  timeBase?: HmiProperty<HmiTrendTimeBase>;
   showAlarmTime?: HmiProperty<boolean>;
   showAcknowledgmentTime?: HmiProperty<boolean>;
   showAcknowledgeButton?: HmiProperty<boolean>;
