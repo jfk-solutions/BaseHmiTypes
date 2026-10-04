@@ -13,6 +13,9 @@ public class HmiBar : HmiScaleWidgetBase
 
     public HmiProperty<HmiFillDirection>? FillDirection { get; set; }
 
+    /// <summary>Position of OriginValue in percent of the bar, used only with UseAutoScaling. Valid preview positions are zero through 100.</summary>
+    public HmiProperty<double>? OriginPositionPercent { get; set; }
+
     /// <summary>Use the color of the lowest enabled threshold strictly above the current value; otherwise retain the foreground color.</summary>
     public HmiProperty<bool>? UseThresholdFillColors { get; set; }
 

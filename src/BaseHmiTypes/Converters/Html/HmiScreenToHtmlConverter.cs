@@ -2014,8 +2014,8 @@ public class HmiScreenToHtmlConverter
     private static void AppendBarOriginMeter(StringBuilder html, HmiBar bar, double minimum, double maximum,
         double value, double origin, HmiFillDirection direction, HmiHtmlConvertContext context)
     {
-        var originPercent = Clamp((origin - minimum) / (maximum - minimum) * 100, 0, 100);
-        var valuePercent = Clamp((value - minimum) / (maximum - minimum) * 100, 0, 100);
+        var originPercent = Clamp(GetScaleRatio(bar, minimum, maximum, origin, context) * 100, 0, 100);
+        var valuePercent = Clamp(GetScaleRatio(bar, minimum, maximum, value, context) * 100, 0, 100);
         var start = Math.Min(originPercent, valuePercent);
         var length = Math.Abs(valuePercent - originPercent);
         var position = direction switch
@@ -2140,7 +2140,7 @@ public class HmiScreenToHtmlConverter
             var thresholdValue = ResolveStaticValue(threshold.Value, context);
             var percentage = percentageMode
                 ? thresholdValue
-                : maximum == minimum ? 0d : (thresholdValue - minimum) * 100d / (maximum - minimum);
+                : GetScaleRatio(bar, minimum, maximum, thresholdValue, context) * 100d;
             percentage = Clamp(percentage, 0d, 100d);
             var position = direction switch
             {
@@ -2189,6 +2189,7 @@ public class HmiScreenToHtmlConverter
         var scaleMode = bar.ScaleMode is null ? 0 : ResolveStaticValue(bar.ScaleMode, context);
         var explicitInterval = scaleMode == 0 && double.IsFinite(interval) && interval > 0 && maximum > minimum
             && (maximum - minimum) / interval <= 10000;
+        var positionedTicks = explicitInterval || TryGetBarOriginPosition(bar, minimum, maximum, context, out _);
         if (explicitInterval)
             tickCount = (int)Math.Floor((maximum - minimum) / interval + 1e-10) + 1;
         var ratios = Enumerable.Range(0, tickCount).Select(index => explicitInterval
@@ -2223,7 +2224,7 @@ public class HmiScreenToHtmlConverter
             .Append(tickLength + 2).Append("px;");
         if (!vertical)
             style.Append(" min-height: ").Append(tickLength + 2).Append("px;");
-        if (explicitInterval)
+        if (positionedTicks)
         {
             if (vertical)
                 style.Append(" min-width: calc(").Append(tickLength + 2).Append("px + 12ch);");
@@ -2243,9 +2244,10 @@ public class HmiScreenToHtmlConverter
                 ? tick.ToString($"F{places}", CultureInfo.InvariantCulture)
                 : ToCss(tick);
             html.Append("<span");
-            if (explicitInterval)
+            if (positionedTicks)
             {
-                var position = reverse ? 1d - ratio : ratio;
+                var scaleRatio = GetScaleTickRatio(bar, minimum, maximum, ratio, context);
+                var position = reverse ? 1d - scaleRatio : scaleRatio;
                 var translation = position == 0 ? 0 : position == 1 ? -100 : -50;
                 AppendAttribute(html, "style", vertical
                     ? $"position: absolute; top: {ToCss(position * 100)}%; {edge}: {tickLength + 2}px; transform: translateY({translation}%); white-space: nowrap;"
@@ -2271,7 +2273,8 @@ public class HmiScreenToHtmlConverter
         html.Append('>');
         for (var index = 0; index < tickCount; index++)
         {
-            var percentage = ToCss(100d * (reverse ? 1d - ratios[index] : ratios[index]));
+            var scaleRatio = GetScaleTickRatio(bar, minimum, maximum, ratios[index], context);
+            var percentage = ToCss(100d * (reverse ? 1d - scaleRatio : scaleRatio));
             html.Append(vertical
                 ? $"<line x1=\"0\" x2=\"{tickLength}\" y1=\"{percentage}%\" y2=\"{percentage}%\"></line>"
                 : $"<line y1=\"0\" y2=\"{tickLength}\" x1=\"{percentage}%\" x2=\"{percentage}%\"></line>");
@@ -2287,7 +2290,8 @@ public class HmiScreenToHtmlConverter
                 for (var subdivision = 1; subdivision < subdivisions; subdivision++)
                 {
                     var ratio = ratios[index] + (ratios[index + 1] - ratios[index]) * subdivision / subdivisions;
-                    var percentage = ToCss(100d * (reverse ? 1d - ratio : ratio));
+                    var scaleRatio = GetScaleTickRatio(bar, minimum, maximum, ratio, context);
+                    var percentage = ToCss(100d * (reverse ? 1d - scaleRatio : scaleRatio));
                     html.Append(vertical
                         ? $"<line data-hmi-minor-tick=\"true\" stroke-width=\"1\" x1=\"{shortStart}\" x2=\"{shortEnd}\" y1=\"{percentage}%\" y2=\"{percentage}%\"></line>"
                         : $"<line data-hmi-minor-tick=\"true\" stroke-width=\"1\" y1=\"{shortStart}\" y2=\"{shortEnd}\" x1=\"{percentage}%\" x2=\"{percentage}%\"></line>");
@@ -2996,8 +3000,45 @@ public class HmiScreenToHtmlConverter
         var end = ResolveStaticValue(scale.EndValue, context);
         if (begin == end)
             end = begin + 1;
-        return begin < end ? (begin, end) : (end, begin);
+        var (minimum, maximum) = begin < end ? (begin, end) : (end, begin);
+        if (TryGetBarOriginPosition(scale, minimum, maximum, context, out var position) && scale.OriginValue is not null)
+        {
+            var origin = ResolveStaticValue(scale.OriginValue, context);
+            if (position == 0 && origin < maximum) minimum = origin;
+            if (position == 100 && origin > minimum) maximum = origin;
+        }
+        return (minimum, maximum);
     }
+
+    private static bool TryGetBarOriginPosition(HmiScaleWidgetBase scale, double minimum, double maximum,
+        HmiHtmlConvertContext context, out double position)
+    {
+        position = 0;
+        if (scale is not HmiBar bar || bar.UseAutoScaling is null || !ResolveStaticValue(bar.UseAutoScaling, context) ||
+            bar.OriginPositionPercent is null || bar.OriginValue is null || !double.IsFinite(minimum) ||
+            !double.IsFinite(maximum) || maximum <= minimum || !double.IsFinite(maximum - minimum)) return false;
+        position = ResolveStaticValue(bar.OriginPositionPercent, context);
+        var origin = ResolveStaticValue(bar.OriginValue, context);
+        return double.IsFinite(position) && position >= 0 && position <= 100 && double.IsFinite(origin) &&
+            origin >= minimum && origin <= maximum;
+    }
+
+    private static double GetScaleRatio(HmiScaleWidgetBase scale, double minimum, double maximum, double value,
+        HmiHtmlConvertContext context)
+    {
+        if (!TryGetBarOriginPosition(scale, minimum, maximum, context, out var position))
+            return maximum == minimum ? 0 : (value - minimum) / (maximum - minimum);
+        var origin = ResolveStaticValue(scale.OriginValue, context);
+        value = Clamp(value, minimum, maximum);
+        var fraction = position / 100;
+        return value < origin
+            ? origin > minimum ? fraction * (value - minimum) / (origin - minimum) : 0
+            : maximum > origin ? fraction + (1 - fraction) * (value - origin) / (maximum - origin) : fraction;
+    }
+
+    private static double GetScaleTickRatio(HmiScaleWidgetBase scale, double minimum, double maximum, double ratio,
+        HmiHtmlConvertContext context) => TryGetBarOriginPosition(scale, minimum, maximum, context, out _)
+        ? GetScaleRatio(scale, minimum, maximum, minimum + (maximum - minimum) * ratio, context) : ratio;
 
     private static double ResolveScaleValue(
         HmiScaleWidgetBase scale,
