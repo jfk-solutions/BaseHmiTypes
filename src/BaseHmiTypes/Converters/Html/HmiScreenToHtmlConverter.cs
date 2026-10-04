@@ -2733,6 +2733,12 @@ public partial class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
+    private static void AppendHeaderBorderWidth(StringBuilder style, HmiProperty<double>? property)
+    {
+        if (TryGetStaticValue(property, out var width) && width >= 0 && !double.IsNaN(width) && !double.IsInfinity(width))
+            style.Append("border-width: ").Append(ToCss(width)).Append("px;");
+    }
+
     private async ValueTask AppendUserViewControlAsync(StringBuilder html, HmiUserViewControl control, IHmiProject? project, HmiHtmlConvertContext context, IList<HmiScreenBase> screenStack, CancellationToken cancellationToken)
     {
         var grid = new StringBuilder(control.ShowGridLines is not null && !ResolveStaticValue(control.ShowGridLines, context) ? "border: 0;" : "border: 1px solid currentColor;");
@@ -2741,6 +2747,7 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(header, "background-color", control.HeaderBackgroundColor);
         AppendColorStyle(header, "color", control.HeaderForegroundColor);
         AppendColorStyle(header, "border-color", control.HeaderBorderColor);
+        AppendHeaderBorderWidth(header, control.HeaderBorderWidth);
         AppendFontStyle(header, control.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
         var content = new StringBuilder();
         AppendColorStyle(content, "background-color", control.ContentBackgroundColor);
@@ -2748,6 +2755,7 @@ public partial class HmiScreenToHtmlConverter
         AppendFontStyle(content, control.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
         html.Append("<div");
         AppendCommonAttributes(html, control, context, additionalStyle: "overflow: hidden;");
+        AppendAttribute(html, "data-header-border-width", ResolvePropertyPreview(control.HeaderBorderWidth, context));
         AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(control.ShowGridLines, context));
         AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(control.GridLineColor, context));
         AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(control.AlternatingRowBackgroundColor, context));
@@ -2771,6 +2779,7 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(header, "background-color", control.HeaderBackgroundColor);
         AppendColorStyle(header, "color", control.HeaderForegroundColor);
         AppendColorStyle(header, "border-color", control.HeaderBorderColor);
+        AppendHeaderBorderWidth(header, control.HeaderBorderWidth);
         AppendFontStyle(header, control.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
         var content = new StringBuilder();
         AppendColorStyle(content, "background-color", control.ContentBackgroundColor);
@@ -2778,6 +2787,7 @@ public partial class HmiScreenToHtmlConverter
         AppendFontStyle(content, control.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
         html.Append("<div");
         AppendCommonAttributes(html, control, context, additionalStyle: "overflow: hidden;");
+        AppendAttribute(html, "data-header-border-width", ResolvePropertyPreview(control.HeaderBorderWidth, context));
         AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(control.ShowGridLines, context));
         AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(control.GridLineColor, context));
         AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(control.AlternatingRowBackgroundColor, context));
@@ -2811,6 +2821,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-view-only", ResolvePropertyPreview(recipeControl.ViewOnly, context));
         AppendAttribute(html, "data-wrap-around", ResolvePropertyPreview(recipeControl.WrapAround, context));
         AppendAttribute(html, "data-lines-per-item", ResolvePropertyPreview(recipeControl.LinesPerItem, context));
+        AppendAttribute(html, "data-header-border-width", ResolvePropertyPreview(recipeControl.HeaderBorderWidth, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(recipeControl.WordWrap, context));
         AppendAttribute(html, "data-enable-recipe-dialog", ResolvePropertyPreview(recipeControl.EnableRecipeDialog, context));
         AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(recipeControl.ShowGridLines, context));
@@ -2884,6 +2895,7 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(style, "background-color", recipeControl.HeaderBackgroundColor);
         AppendColorStyle(style, "color", recipeControl.HeaderForegroundColor);
         AppendColorStyle(style, "border-color", recipeControl.HeaderBorderColor);
+        AppendHeaderBorderWidth(style, recipeControl.HeaderBorderWidth);
         AppendFontStyle(style, recipeControl.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
     }

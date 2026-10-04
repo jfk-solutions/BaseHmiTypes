@@ -8,6 +8,7 @@ public sealed class HmiUserViewControl : HmiLayoutContainerBase
 
     public HmiProperty<HmiColor>? HeaderBackgroundColor { get; set; }
     public HmiProperty<HmiColor>? HeaderForegroundColor { get; set; }
+    public HmiProperty<double>? HeaderBorderWidth { get; set; }
     public HmiProperty<HmiColor>? HeaderBorderColor { get; set; }
     public HmiProperty<HmiColor>? ContentBackgroundColor { get; set; }
     public HmiProperty<HmiColor>? ContentForegroundColor { get; set; }
