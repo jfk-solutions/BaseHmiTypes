@@ -2018,7 +2018,7 @@ public partial class HmiScreenToHtmlConverter
             !IsFinite(value) || !IsFinite(maximum - minimum) || maximum <= minimum)
             return null;
         if (bar.OriginValue is null)
-            return UsesNonlinearBarMapping(bar, minimum, maximum, context) || GetBarBitmapRows(bar, context) is not null || IsBarHatch(bar, context) ? minimum : null;
+            return UsesNonlinearBarMapping(bar, minimum, maximum, context) || GetBarBitmapRows(bar, context) is not null || IsBarHatch(bar, context) || IsBarGradient(bar, context) ? minimum : null;
         var origin = ResolveStaticValue(bar.OriginValue, context);
         return IsFinite(origin) ? origin : null;
     }
@@ -2056,6 +2056,7 @@ public partial class HmiScreenToHtmlConverter
         if (disabledColor is not null) AppendColorStyle(style, "color", disabledColor);
         else if (thresholdColor is not null) AppendColorStyle(style, "color", thresholdColor);
         AppendBarFillOverrideStyle(style, bar, context);
+        AppendBarGradientStyle(style, bar, context);
         var bitmapRows = GetBarBitmapRows(bar, context);
         if (bitmapRows is not null || IsBarHatch(bar, context))
         {
