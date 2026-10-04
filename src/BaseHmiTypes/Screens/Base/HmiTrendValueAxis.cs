@@ -11,6 +11,7 @@ public sealed class HmiTrendValueAxis
     public HmiProperty<double>? MaximumValue { get; set; }
     public HmiProperty<bool>? Visible { get; set; }
     public HmiProperty<int>? DecimalPlaces { get; set; }
+    public HmiProperty<int>? DivisionCount { get; set; }
     public HmiProperty<bool>? AutoScale { get; set; }
     public HmiProperty<HmiTrendAxisScaleType>? ScaleType { get; set; }
     public HmiProperty<bool>? ExponentialFormat { get; set; }

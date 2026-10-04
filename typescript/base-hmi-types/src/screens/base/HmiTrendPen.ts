@@ -57,6 +57,8 @@ export class HmiTrendPen {
   autoDecimalPlaces?: HmiProperty<boolean>;
   /** Fixed decimal precision of the value axis assigned to this pen. */
   decimalPlaces?: HmiProperty<number>;
+  valueAxisDivisionCount?: HmiProperty<number>;
+  valueAxisAutoScale?: HmiProperty<boolean>;
   /** Identity of the shared value axis assigned to this pen. */
   valueAxisName?: string;
   valueAxisVisible?: HmiProperty<boolean>;

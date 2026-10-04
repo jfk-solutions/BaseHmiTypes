@@ -94,6 +94,8 @@ interface TrendPen {
   exponentialFormat?: boolean;
   autoDecimalPlaces?: boolean;
   decimalPlaces?: number;
+  valueAxisDivisionCount?: number;
+  valueAxisAutoScale?: boolean;
   valueAxisName?: string;
   valueAxisVisible?: boolean;
   valueAxisColor?: string;
@@ -796,13 +798,20 @@ function renderValueAxes(
       : pens.length ? 0 : -1;
     const color = axis.valueAxisInTrendColor === true && trendPenIndex >= 0
       ? normalizePenColor(pens[trendPenIndex]!.color, trendPenIndex) : normalizeCssColor(axis.valueAxisColor, foregroundColor);
-    const axisMinimum = axis.minimum ?? minimum;
-    const axisMaximumCandidate = axis.maximum ?? maximum;
-    const axisMaximum = axisMaximumCandidate === axisMinimum ? axisMinimum + 1 : axisMaximumCandidate;
     const scaleType = axis.axisScaleType ?? 0;
+    let message: string | undefined;
+    if (axis.valueAxisAutoScale === true) message = "Automatic Y range unavailable";
+    else if (axis.minimum === undefined || axis.maximum === undefined) message = "Y-axis range unavailable";
+    else if (scaleType !== 0 && scaleType !== 1 && scaleType !== 2) message = "Y-axis scaling unavailable";
+    else if (axis.minimum === axis.maximum || scaleType === 1 && (axis.minimum <= 0 || axis.maximum <= 0)
+      || scaleType === 2 && (axis.minimum >= 0 || axis.maximum >= 0)) message = "Invalid Y-axis range";
+    const axisMinimum = axis.minimum ?? minimum;
+    const axisMaximum = axis.maximum ?? maximum;
     const precision = axis.autoDecimalPlaces === true ? automaticDecimalPlaces(axisMinimum, axisMaximum, scaleType)
       : clamp(Math.trunc(axis.decimalPlaces ?? decimalPlaces), 0, 12);
-    return `<div class="value-axis ${alignment}" data-axis-name="${escapeHtml(axis.valueAxisName!)}"${axis.trendWindowName ? ` data-trend-window="${escapeHtml(axis.trendWindowName)}"` : ""} style="${alignment}:-${toCss((column + 1) * 4.4)}em;color:${escapeHtml(color)}">${renderYLabels(axisMinimum, axisMaximum, precision, scaleType, axis.exponentialFormat === true)}${axis.valueAxisLabel ? `<span class="value-axis-title">${escapeHtml(axis.valueAxisLabel)}</span>` : ""}</div>`;
+    const labels = message ? `<span class="axis-label y-label" style="top:50%">${message}</span>`
+      : renderYLabels(axisMinimum, axisMaximum, precision, scaleType, axis.exponentialFormat === true, axis.valueAxisDivisionCount);
+    return `<div class="value-axis ${alignment}" data-axis-name="${escapeHtml(axis.valueAxisName!)}"${axis.trendWindowName ? ` data-trend-window="${escapeHtml(axis.trendWindowName)}"` : ""} style="${alignment}:-${toCss((column + 1) * 4.4)}em;color:${escapeHtml(color)}">${labels}${axis.valueAxisLabel ? `<span class="value-axis-title">${escapeHtml(axis.valueAxisLabel)}</span>` : ""}</div>`;
   }).join("");
 }
 
@@ -812,10 +821,12 @@ function renderYLabels(
   decimalPlaces: number,
   axisScaleType: number,
   exponentialFormat: boolean,
+  divisionCount = 5,
 ): string {
   const labels: string[] = [];
-  for (let index = 0; index <= 5; index++) {
-    const ratio = index / 5;
+  const divisions = clamp(Math.trunc(divisionCount), 1, 100);
+  for (let index = 0; index <= divisions; index++) {
+    const ratio = index / divisions;
     const value = valueAtYAxisPosition(ratio * 100, minimum, maximum, axisScaleType);
     labels.push(`<span class="axis-label y-label" style="top:${toCss(ratio * 100)}%">${escapeHtml(formatAxisValue(value, decimalPlaces, exponentialFormat))}</span>`);
   }
@@ -1207,6 +1218,8 @@ function parsePens(value: string | null): TrendPen[] {
       if (typeof source.exponentialFormat === "boolean") pen.exponentialFormat = source.exponentialFormat;
       if (typeof source.autoDecimalPlaces === "boolean") pen.autoDecimalPlaces = source.autoDecimalPlaces;
       if (typeof source.decimalPlaces === "number" && Number.isFinite(source.decimalPlaces)) pen.decimalPlaces = source.decimalPlaces;
+      if (typeof source.valueAxisDivisionCount === "number" && Number.isFinite(source.valueAxisDivisionCount)) pen.valueAxisDivisionCount = source.valueAxisDivisionCount;
+      if (typeof source.valueAxisAutoScale === "boolean") pen.valueAxisAutoScale = source.valueAxisAutoScale;
       if (typeof source.valueAxisName === "string") pen.valueAxisName = source.valueAxisName;
       if (typeof source.valueAxisVisible === "boolean") pen.valueAxisVisible = source.valueAxisVisible;
       if (typeof source.valueAxisColor === "string") pen.valueAxisColor = source.valueAxisColor;

@@ -4136,6 +4136,8 @@ function formatTrendValueAxes(axes: readonly HmiTrendValueAxis[]): string | unde
     if (axis.minimumValue !== undefined) pen.minimumValue = axis.minimumValue;
     if (axis.maximumValue !== undefined) pen.maximumValue = axis.maximumValue;
     if (axis.decimalPlaces !== undefined) pen.decimalPlaces = axis.decimalPlaces;
+    if (axis.divisionCount !== undefined) pen.valueAxisDivisionCount = axis.divisionCount;
+    if (axis.autoScale !== undefined) pen.valueAxisAutoScale = axis.autoScale;
     if (axis.scaleType !== undefined) pen.axisScaleType = axis.scaleType;
     if (axis.exponentialFormat !== undefined) pen.exponentialFormat = axis.exponentialFormat;
     if (axis.autoDecimalPlaces !== undefined) pen.autoDecimalPlaces = axis.autoDecimalPlaces;
@@ -4201,6 +4203,10 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     if (maximum !== undefined) result.maximum = maximum;
     const axisScaleType = getStaticValue(pen.axisScaleType);
     if (axisScaleType !== undefined) result.axisScaleType = axisScaleType;
+    const valueAxisDivisionCount = getStaticValue(pen.valueAxisDivisionCount);
+    if (valueAxisDivisionCount !== undefined) result.valueAxisDivisionCount = valueAxisDivisionCount;
+    const valueAxisAutoScale = getStaticValue(pen.valueAxisAutoScale);
+    if (valueAxisAutoScale !== undefined) result.valueAxisAutoScale = valueAxisAutoScale;
     const exponentialFormat = getStaticValue(pen.exponentialFormat);
     if (exponentialFormat !== undefined) result.exponentialFormat = exponentialFormat;
     const autoDecimalPlaces = getStaticValue(pen.autoDecimalPlaces);

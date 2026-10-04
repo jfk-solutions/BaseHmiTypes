@@ -417,6 +417,35 @@ test("configured axes render without pens and override legacy assigned-axis copi
   assert.match(control.shadowRoot.innerHTML, />2000.000<\/span>/u);
 });
 
+test("named Y axes retain divisions and identify unavailable ranges and scaling", () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("chart-style", "XYPlot");
+  control.setAttribute("value-axes", JSON.stringify([
+    { valueAxisName: "Log", minimum: 1, maximum: 1000, axisScaleType: 1, valueAxisDivisionCount: 3, decimalPlaces: 0 },
+    { valueAxisName: "Negative", minimum: -1000, maximum: -1, axisScaleType: 2, valueAxisDivisionCount: 3, decimalPlaces: 0 },
+    { valueAxisName: "Auto", minimum: 0, maximum: 100, valueAxisAutoScale: true },
+    { valueAxisName: "Missing", minimum: 1 },
+    { valueAxisName: "Unsupported", minimum: 0, maximum: 100, axisScaleType: 6 },
+    { valueAxisName: "Invalid", minimum: -1, maximum: 100, axisScaleType: 1 },
+    { valueAxisName: "Equal", minimum: 1, maximum: 1 },
+    { valueAxisName: "Hidden", valueAxisVisible: false, minimum: 0, maximum: 10 },
+  ]));
+  control.connectedCallback();
+  const axes = new Map([...control.shadowRoot.innerHTML.matchAll(/<div class="value-axis (left|right)" data-axis-name="([^"]*)"[^>]*>(.*?)<\/div>/gsu)]
+    .map(match => [match[2], match[0]]));
+  assert.equal(axes.size, 7);
+  for (const [name, values] of [["Log", ["1000", "100", "10", "1"]], ["Negative", ["-1", "-10", "-100", "-1000"]]]) {
+    assert.equal([...axes.get(name).matchAll(/class="axis-label y-label"/gu)].length, 4);
+    for (const value of values) assert.ok(axes.get(name).includes(`>${value}</span>`), `${name}: ${value}`);
+  }
+  for (const [name, message] of [["Auto", "Automatic Y range unavailable"], ["Missing", "Y-axis range unavailable"],
+    ["Unsupported", "Y-axis scaling unavailable"], ["Invalid", "Invalid Y-axis range"], ["Equal", "Invalid Y-axis range"]]) {
+    assert.ok(axes.get(name).includes(message));
+    assert.doesNotMatch(axes.get(name), />[-\d.]+<\/span>/u);
+  }
+  assert.doesNotMatch(control.shadowRoot.innerHTML, /data-axis-name="Hidden"|<polyline|<polygon/);
+});
+
 test("named value axes are distinct, shared, independently visible and styled", () => {
   const control = new HmiTrendControl();
   const pens = [
