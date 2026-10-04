@@ -2373,9 +2373,12 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
     appendColorStyle(style, "background-color", control.toolbarBackgroundColor);
     html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '\">Toolbar</div>');
   }
-  html.push('<div class="hmi-parameter-selection" style="flex: 0 0 auto; padding: 2px 4px;">Parameter set type');
+  html.push('<div class="hmi-parameter-selection" style="flex: 0 0 auto; padding: 2px 4px;"><div>',
+    escapeHtml(getStaticValue(control.parameterSetTypeLabel)?.getText(context.options.cultureLcid) ?? "Parameter set type"));
   if (getStaticValue(control.parameterSetTypeFixed)) html.push(" · Fixed");
-  html.push("<br>Parameter set selection not decoded</div>");
+  html.push("</div><div>", escapeHtml(getStaticValue(control.parameterSetLabel)?.getText(context.options.cultureLcid) ?? "Parameter set"),
+    "</div><div>", escapeHtml(getStaticValue(control.numberLabel)?.getText(context.options.cultureLcid) ?? "Number"),
+    "</div><div>Parameter set selection not decoded</div></div>");
   if (!getStaticValue(control.hideDetails))
     html.push('<div class="hmi-parameter-details" style="flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top: 1px solid currentColor;">Parameter data not loaded</div>');
   if (getStaticValue(control.showStatusBar)) {
