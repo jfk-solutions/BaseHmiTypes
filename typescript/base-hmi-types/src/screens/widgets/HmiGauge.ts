@@ -7,6 +7,7 @@ import type { HmiColor } from "../base/HmiColor.js";
 import type { HmiFont } from "../base/HmiFont.js";
 
 export class HmiGauge extends HmiScaleWidgetBase {
+  /** Needle width in logical pixels for HTML preview. A configured width or color enables it; omitted width defaults to two pixels. Nonpositive widths hide it. */
   needleWidth?: HmiProperty<number>;
   needleColor?: HmiProperty<HmiColor>;
   sweepFillColor?: HmiProperty<HmiColor>;
