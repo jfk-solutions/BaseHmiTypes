@@ -87,6 +87,34 @@ public class RecipeControlStyleHtmlTests
         Assert.IsFalse(html.Contains("hmi-recipe-status-bar"));
     }
 
+    [TestMethod]
+    public async Task RecipeComboFontUsesLocaleOnlyForSelectorAndFallsBackToContentFont()
+    {
+        var combo = new HmiFont { Name = "NeutralCombo", Size = 13 };
+        combo.LocalizedFonts[1031] = new HmiFont { Name = "LocalizedCombo <A> & B", Size = 17.5 };
+        var control = new HmiRecipeControl
+        {
+            ComboBoxFont = combo, ContentFont = new HmiFont { Name = "TableContent", Size = 11 },
+            HeaderFont = new HmiFont { Name = "SeparateHeader", Size = 19 },
+            StatusBarFont = new HmiFont { Name = "SeparateStatus", Size = 9 }, ShowStatusBar = true
+        };
+        var screen = new HmiScreen(); var layer = new HmiLayer(); screen.Layers.Add(layer); layer.Items.Add(control);
+        var renderer = new HmiScreenToHtmlConverter();
+        var html = await renderer.ConvertAsync(screen, options: new() { CultureLcid = 1031 });
+        StringAssert.Contains(html, "font-family: LocalizedCombo &lt;A&gt; &amp; B;font-size: 17.5px;");
+        StringAssert.Contains(html, "font-family: SeparateHeader;"); StringAssert.Contains(html, "font-family: SeparateStatus;");
+        Assert.IsFalse(html.Contains("font-family: TableContent;"));
+        html = await renderer.ConvertAsync(screen, options: new() { CultureLcid = 1036 });
+        StringAssert.Contains(html, "font-family: NeutralCombo;");
+        control.ViewKind = HmiRecipeViewKind.Table;
+        html = await renderer.ConvertAsync(screen, options: new() { CultureLcid = 1031 });
+        StringAssert.Contains(html, "font-family: TableContent;"); Assert.IsFalse(html.Contains("font-family: LocalizedCombo"));
+        control.ViewKind = HmiRecipeViewKind.Selector; control.ComboBoxFont = null;
+        html = await renderer.ConvertAsync(screen, options: new() { CultureLcid = 1031 });
+        StringAssert.Contains(html, "font-family: TableContent;");
+        Assert.AreEqual("NeutralCombo", combo.Name!.StaticValue); Assert.AreEqual(1, combo.LocalizedFonts.Count);
+    }
+
     private static async Task<string> Convert(HmiRecipeControl control)
     {
         var screen = new HmiScreen();

@@ -2817,7 +2817,9 @@ function createRecipeContentStyle(recipeControl: HmiRecipeControl, context: HmiH
   appendColorStyle(style, "--hmi-recipe-even-row-background", recipeControl.alternatingRowBackgroundColor);
   appendColorStyle(style, "background-color", recipeControl.contentBackgroundColor);
   appendColorStyle(style, "color", recipeControl.contentForegroundColor);
-  if (recipeControl.contentFont !== undefined) appendFont(style, recipeControl.contentFont.getForCulture(context.options.cultureLcid));
+  const contentFont = recipeControl.viewKind === HmiRecipeViewKind.Selector
+    ? recipeControl.comboBoxFont ?? recipeControl.contentFont : recipeControl.contentFont;
+  if (contentFont !== undefined) appendFont(style, contentFont.getForCulture(context.options.cultureLcid));
   const wordWrap = getStaticValue(recipeControl.wordWrap);
   if (wordWrap !== undefined)
     style.push(wordWrap ? "white-space: normal;overflow-wrap: anywhere;" : "white-space: nowrap;");

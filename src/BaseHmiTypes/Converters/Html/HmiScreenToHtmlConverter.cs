@@ -2821,7 +2821,9 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(style, "--hmi-recipe-even-row-background", recipeControl.AlternatingRowBackgroundColor);
         AppendColorStyle(style, "background-color", recipeControl.ContentBackgroundColor);
         AppendColorStyle(style, "color", recipeControl.ContentForegroundColor);
-        AppendFontStyle(style, recipeControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
+        var contentFont = recipeControl.ViewKind == HmiRecipeViewKind.Selector
+            ? recipeControl.ComboBoxFont ?? recipeControl.ContentFont : recipeControl.ContentFont;
+        AppendFontStyle(style, contentFont?.GetForCulture(context.CultureInfo?.LCID));
         if (TryGetStaticValue(recipeControl.WordWrap, out var wordWrap))
             style.Append(wordWrap ? "white-space: normal;overflow-wrap: anywhere;" : "white-space: nowrap;");
         return style.ToString();

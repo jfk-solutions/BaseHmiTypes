@@ -27,6 +27,7 @@ public sealed class HmiRecipeControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowStatusBar { get; set; }
     public HmiFont? StatusBarFont { get; set; }
+    public HmiFont? ComboBoxFont { get; set; }
     public HmiProperty<bool>? ShowNumbers { get; set; }
     public HmiProperty<HmiColor>? AlternatingRowBackgroundColor { get; set; }
 
