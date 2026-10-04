@@ -1712,7 +1712,7 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
     return;
   }
   html.push("<meter");
-  appendCommonAttributes(html, bar, context, true, getBarDirectionStyle(direction));
+  appendCommonAttributes(html, bar, context, true, getBarDirectionStyle(direction) + getBarFillOverrideStyle(bar, context));
   appendBarColorAttributes(html, bar, context);
   appendAttribute(html, "data-fill-direction", HmiFillDirection[direction]);
   appendAttribute(html, "min", toCss(minimum));
@@ -1766,6 +1766,7 @@ function appendBarMeter(
     (getStaticValue(bar.useThresholdFillColors) === true
       ? context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor) : undefined)) : undefined;
   if (fillColor !== undefined) meterStyle += `color: ${colorToCss(fillColor)};`;
+  meterStyle += getBarFillOverrideStyle(bar, context);
   appendAttribute(html, "style",
     meterStyle);
   appendAttribute(html, "min", toCss(minimum));
@@ -1814,6 +1815,7 @@ function appendBarOriginMeter(html: string[], bar: HmiBar, minimum: number, maxi
   const thresholdColor = getBarThresholdFillColor(bar);
   if (disabledColor !== undefined) appendColorStyle(style, "color", disabledColor);
   else if (thresholdColor !== undefined) appendColorStyle(style, "color", thresholdColor);
+  style.push(getBarFillOverrideStyle(bar, context));
   appendAttribute(html, "style", style.join(""));
   html.push("></span></div>");
 }
@@ -1823,11 +1825,21 @@ function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlC
       getStaticValue(context.effectiveProperties.resolve(bar, "BackgroundColor", bar.backgroundColor)) !== undefined ||
       getColorGradient(bar) !== undefined)
     appendAttribute(html, "data-hmi-bar-track", "true");
-  if (getBarThresholdFillColor(bar) !== undefined ||
+  if (context.effectiveProperties.resolve(bar, "FillColor", bar.fillColor) !== undefined ||
+      getBarThresholdFillColor(bar) !== undefined ||
       context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor) !== undefined ||
       (getStaticValue(bar.enabled) === false && getStaticValue(bar.useDisabledForegroundColor) === true &&
        bar.disabledForegroundColor !== undefined))
     appendAttribute(html, "data-hmi-bar-fill", "true");
+}
+
+function getBarFillOverrideStyle(bar: HmiBar, context: HmiHtmlConvertContext): string {
+  const explicitColor = context.effectiveProperties.resolve(bar, "FillColor", bar.fillColor);
+  if (explicitColor === undefined) return "";
+  const disabledColor = getStaticValue(bar.enabled) !== true && getStaticValue(bar.useDisabledForegroundColor) === true
+    ? context.effectiveProperties.resolve(bar, "DisabledForegroundColor", bar.disabledForegroundColor) : undefined;
+  const color = getStaticValue(disabledColor ?? getBarThresholdFillColor(bar) ?? explicitColor);
+  return color === undefined ? "" : `color: ${colorToCss(color)} !important;`;
 }
 
 function getBarThresholdFillColor(bar: HmiBar): HmiProperty<HmiColor> | undefined {

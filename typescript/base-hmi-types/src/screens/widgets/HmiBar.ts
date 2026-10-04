@@ -8,6 +8,8 @@ export class HmiBar extends HmiScaleWidgetBase {
   fillStyle?: HmiProperty<HmiBarFillStyle>;
   /** Color of the unfilled bar track, independent of widget background. Omitted retains the background-based track. */
   trackColor?: HmiProperty<HmiColor>;
+  /** Color of the value region, independent of widget foreground. Disabled and threshold colors take precedence; omitted inherits foreground. */
+  fillColor?: HmiProperty<HmiColor>;
   fillDirection?: HmiProperty<HmiFillDirection>;
   /** Position of originValue in percent, used only with useAutoScaling. Valid preview positions are zero through 100. */
   originPositionPercent?: HmiProperty<number>;
