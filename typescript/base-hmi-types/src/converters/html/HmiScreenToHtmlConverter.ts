@@ -3243,6 +3243,11 @@ function appendImage(
   html.push("<img");
   appendCommonAttributes(html, item, context);
   appendAttribute(html, "src", uri);
+  if (item instanceof HmiGraphicView && item.imageBackgroundColor !== undefined &&
+      getStaticValue(item.imageBackgroundTransparent) === true) {
+    const key = getStaticValue(item.imageBackgroundColor);
+    if (key !== undefined) appendAttribute(html, "data-hmi-image-color-key", `${key.red},${key.green},${key.blue}`);
+  }
   html.push(">");
 }
 
