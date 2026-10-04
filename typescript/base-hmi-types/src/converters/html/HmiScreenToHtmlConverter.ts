@@ -1480,8 +1480,15 @@ async function appendButton(
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
   }
-  let image = state?.image ?? (down ? getStaticValue(button.alternateImage) : undefined)
+  const alternateImage = down ? getStaticValue(button.alternateImage) : undefined;
+  let image = state?.image ?? alternateImage
     ?? getStaticValue(button.image);
+  let imageKey = state?.image !== undefined
+    ? (state.imageBackgroundTransparent ?? getStaticValue(button.imageBackgroundTransparent)) === true
+      ? state.imageBackgroundColor ?? getStaticValue(button.imageBackgroundColor) : undefined
+    : alternateImage !== undefined
+      ? getImageColorKey(button.alternateImageBackgroundTransparent, button.alternateImageBackgroundColor)
+      : getImageColorKey(button.imageBackgroundTransparent, button.imageBackgroundColor);
   const disabledImageMode = getStaticValue(button.disabledImageMode);
   const showDisabledAppearance = !enabled && getStaticValue(button.showDisabledState) === true;
   if (
@@ -1489,8 +1496,11 @@ async function appendButton(
     (disabledImageMode === HmiDisabledImageMode.Reference ||
       disabledImageMode === HmiDisabledImageMode.Imported)
   ) {
-    image = getStaticValue(button.disabledImage) ??
+    const disabledImage = getStaticValue(button.disabledImage);
+    image = disabledImage ??
       (getStaticValue(button.disabledImageFallbackToNormal) !== false ? image : undefined);
+    if (disabledImage !== undefined)
+      imageKey = getImageColorKey(button.disabledImageBackgroundTransparent, button.disabledImageBackgroundColor);
   }
   const imageUri = mode === HmiButtonType.Text ? undefined : await resolveImageUri(image, project, signal);
   const hasImage = imageUri !== undefined && imageUri.trim() !== "";
@@ -1510,6 +1520,7 @@ async function appendButton(
       button,
       imageUri,
       showDisabledAppearance && disabledImageMode === HmiDisabledImageMode.Grayscale,
+      imageKey,
     );
     html.push("</span>");
   }
@@ -1561,7 +1572,11 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
   if (wrapped) html.push("</span>");
 }
 
-function appendButtonImage(html: string[], button: HmiButton, imageUri: string, grayscale: boolean): void {
+function getImageColorKey(enabled: HmiProperty<boolean> | undefined, color: HmiProperty<HmiColor> | undefined): HmiColor | undefined {
+  return getStaticValue(enabled) === true ? getStaticValue(color) : undefined;
+}
+
+function appendButtonImage(html: string[], button: HmiButton, imageUri: string, grayscale: boolean, imageKey: HmiColor | undefined): void {
   const aligned = button.imageHorizontalAlignment !== undefined || button.imageVerticalAlignment !== undefined;
   if (aligned) {
     const horizontal = getStaticValue(button.imageHorizontalAlignment);
@@ -1575,7 +1590,7 @@ function appendButtonImage(html: string[], button: HmiButton, imageUri: string, 
   }
   const horizontal = getStaticValue(button.imageHorizontalAlignment);
   const offset = horizontal !== undefined && horizontal !== HmiHorizontalAlignment.Stretch ? getButtonPressedContentOffset(button) : 0;
-  appendInnerImage(html, imageUri, grayscale, offset);
+  appendInnerImage(html, imageUri, grayscale, offset, imageKey);
   if (aligned) html.push("</span>");
 }
 
@@ -3414,13 +3429,15 @@ function appendSymbolLibraryTransform(html: string[], symbolLibraryControl: HmiS
   }
 }
 
-function appendInnerImage(html: string[], uri: string, grayscale = false, pressedOffset = 0): void {
+function appendInnerImage(html: string[], uri: string, grayscale = false, pressedOffset = 0, imageKey?: HmiColor): void {
   if (!uri.trim()) {
     return;
   }
 
   html.push("<img");
   appendAttribute(html, "src", uri);
+  if (imageKey !== undefined)
+    appendAttribute(html, "data-hmi-image-color-key", `${imageKey.red},${imageKey.green},${imageKey.blue}`);
   html.push(" style=\"width: 100%; height: 100%;");
   if (grayscale) {
     html.push(" filter: grayscale(1);");
