@@ -113,6 +113,8 @@ import { HmiAuditTrailControl } from "../../screens/controls/HmiAuditTrailContro
 import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewKind.js";
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
 import { HmiDetailedParameterControl } from "../../screens/controls/HmiDetailedParameterControl.js";
+import { HmiOverviewParameterControl } from "../../screens/controls/HmiOverviewParameterControl.js";
+import { HmiParameterControlBase } from "../../screens/controls/HmiParameterControlBase.js";
 import { HmiParameterColumn } from "../../screens/controls/HmiParameterColumn.js";
 import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
 import { HmiRadarChartControl } from "../../screens/controls/HmiRadarChartControl.js";
@@ -395,6 +397,8 @@ export class HmiScreenToHtmlConverter {
       await this.appendScreenWindowAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiDataGridControl) {
       appendDataGridControl(html, item, context);
+    } else if (item instanceof HmiOverviewParameterControl) {
+      appendOverviewParameterControl(html, item, context);
     } else if (item instanceof HmiDetailedParameterControl) {
       appendDetailedParameterControl(html, item, context);
     } else if (item instanceof HmiRecipeControl) {
@@ -2420,20 +2424,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   if (control.currentParameterSetId === undefined || control.currentParameterSetTypeId === undefined)
     html.push("<div>Parameter set selection not decoded</div>");
   html.push("</div>");
-  if (!getStaticValue(control.hideDetails)) {
-    const columns = control.columnDefinitions.filter(column => column.visible === undefined || getStaticValue(column.visible) === true);
-    const style = ["flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;"];
-    if (columns.length > 0) style.push("display: block; overflow: auto;");
-    const width = getStaticValue(control.gridLineWidth) ?? 1;
-    style.push(`border-top-width: ${toCss(Number.isFinite(width) && width >= 0 ? width : 1)}px;`);
-    appendColorStyle(style, "background-color", control.contentBackgroundColor);
-    appendColorStyle(style, "color", control.contentForegroundColor);
-    appendColorStyle(style, "border-top-color", control.gridLineColor);
-    html.push('<div class="hmi-parameter-details" style="', style.join(""), '\">');
-    if (columns.length > 0) appendParameterColumns(html, control, columns, context);
-    else html.push("Parameter data not loaded");
-    html.push("</div>");
-  }
+  if (!getStaticValue(control.hideDetails)) appendParameterView(html, control, context);
   if (getStaticValue(control.showStatusBar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
     appendColorStyle(style, "background-color", control.statusBarBackgroundColor);
@@ -2443,7 +2434,52 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   html.push("</div>");
 }
 
-function appendParameterColumns(html: string[], control: HmiDetailedParameterControl, columns: HmiParameterColumn[], context: HmiHtmlConvertContext): void {
+function appendOverviewParameterControl(html: string[], control: HmiOverviewParameterControl, context: HmiHtmlConvertContext): void {
+  html.push("<div");
+  appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
+  appendAttribute(html, "data-parameter-control-view", "overview");
+  appendAttribute(html, "data-filter", resolvePropertyPreview(control.filter));
+  appendAttribute(html, "data-row-height", resolvePropertyPreview(control.rowHeight));
+  appendAttribute(html, "data-cell-padding-left", resolvePropertyPreview(control.cellPaddingLeft));
+  appendAttribute(html, "data-cell-padding-top", resolvePropertyPreview(control.cellPaddingTop));
+  appendAttribute(html, "data-cell-padding-right", resolvePropertyPreview(control.cellPaddingRight));
+  appendAttribute(html, "data-cell-padding-bottom", resolvePropertyPreview(control.cellPaddingBottom));
+  appendAttribute(html, "data-edit-mode", resolvePropertyPreview(control.editMode));
+  appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(control.showToolbar));
+  appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(control.showStatusBar));
+  html.push(">");
+  if (getStaticValue(control.showToolbar)) {
+    const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
+    appendColorStyle(style, "background-color", control.toolbarBackgroundColor);
+    html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '\">Toolbar</div>');
+  }
+  if (control.filter !== undefined) html.push('<div class="hmi-parameter-filter">Filter: ', escapeHtml(getStaticValue(control.filter) ?? ""), "</div>");
+  appendParameterView(html, control, context);
+  if (getStaticValue(control.showStatusBar)) {
+    const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
+    appendColorStyle(style, "background-color", control.statusBarBackgroundColor);
+    appendColorStyle(style, "color", control.statusBarForegroundColor);
+    html.push('<div class="hmi-parameter-status-bar" role="status" style="', style.join(""), '\">Status</div>');
+  }
+  html.push("</div>");
+}
+
+function appendParameterView(html: string[], control: HmiParameterControlBase, context: HmiHtmlConvertContext): void {
+  const columns = control.columnDefinitions.filter(column => column.visible === undefined || getStaticValue(column.visible) === true);
+  const style = ["flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;"];
+  if (columns.length > 0) style.push("display: block; overflow: auto;");
+  const width = getStaticValue(control.gridLineWidth) ?? 1;
+  style.push(`border-top-width: ${toCss(Number.isFinite(width) && width >= 0 ? width : 1)}px;`);
+  appendColorStyle(style, "background-color", control.contentBackgroundColor);
+  appendColorStyle(style, "color", control.contentForegroundColor);
+  appendColorStyle(style, "border-top-color", control.gridLineColor);
+  html.push('<div class="hmi-parameter-details" style="', style.join(""), '\">');
+  if (columns.length > 0) appendParameterColumns(html, control, columns, context);
+  else html.push("Parameter data not loaded");
+  html.push("</div>");
+}
+
+function appendParameterColumns(html: string[], control: HmiParameterControlBase, columns: HmiParameterColumn[], context: HmiHtmlConvertContext): void {
   html.push('<table class="hmi-parameter-table" style="width: 100%; table-layout: fixed; border-collapse: collapse;"><colgroup>');
   for (const column of columns) html.push('<col style="', createParameterColumnWidthStyle(column), '\">');
   const headerStyle = ["padding: 2px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"];
@@ -2473,7 +2509,7 @@ function appendParameterColumns(html: string[], control: HmiDetailedParameterCon
   html.push('</tr></thead><tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;', createParameterCellLayoutStyle(control), '">Parameter data not loaded</td></tr></tbody></table>');
 }
 
-function createParameterCellLayoutStyle(control: HmiDetailedParameterControl): string {
+function createParameterCellLayoutStyle(control: HmiParameterControlBase): string {
   const style: string[] = [];
   const appendDimension = (css: string, property: HmiProperty<number> | undefined) => {
     const value = getStaticValue(property);

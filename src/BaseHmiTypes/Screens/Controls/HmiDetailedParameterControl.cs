@@ -3,7 +3,7 @@ using BaseHmiTypes.Common;
 
 namespace BaseHmiTypes.Screens.Controls;
 
-public class HmiDetailedParameterControl : HmiControlWindowBase
+public class HmiDetailedParameterControl : HmiParameterControlBase
 {
     public HmiDetailedParameterControl()
     {
@@ -13,23 +13,8 @@ public class HmiDetailedParameterControl : HmiControlWindowBase
     public HmiProperty<bool>? ParameterSetTypeFixed { get; set; }
     public HmiProperty<uint>? CurrentParameterSetId { get; set; }
     public HmiProperty<uint>? CurrentParameterSetTypeId { get; set; }
-    public IList<HmiParameterColumn> ColumnDefinitions { get; } = new List<HmiParameterColumn>();
     public HmiProperty<HmiMultilingualText>? ParameterSetTypeLabel { get; set; }
     public HmiProperty<HmiMultilingualText>? ParameterSetLabel { get; set; }
     public HmiProperty<HmiMultilingualText>? NumberLabel { get; set; }
     public HmiProperty<bool>? HideDetails { get; set; }
-    public HmiProperty<HmiColor>? GridLineColor { get; set; }
-    public HmiProperty<double>? GridLineWidth { get; set; }
-    public HmiProperty<double>? RowHeight { get; set; }
-    public HmiProperty<double>? CellPaddingLeft { get; set; }
-    public HmiProperty<double>? CellPaddingTop { get; set; }
-    public HmiProperty<double>? CellPaddingRight { get; set; }
-    public HmiProperty<double>? CellPaddingBottom { get; set; }
-    /// <summary>Native editing-mode value; no cross-family enum translation is assumed.</summary>
-    public HmiProperty<int>? EditMode { get; set; }
-    public HmiProperty<bool>? ShowToolbar { get; set; }
-    public HmiProperty<bool>? ShowStatusBar { get; set; }
-    public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }
-    public HmiProperty<HmiColor>? StatusBarBackgroundColor { get; set; }
-    public HmiProperty<HmiColor>? StatusBarForegroundColor { get; set; }
 }

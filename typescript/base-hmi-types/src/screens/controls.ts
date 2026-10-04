@@ -51,6 +51,8 @@ export * from "./controls/HmiRadarChartDataPoint.js";
 export * from "./controls/HmiRadarShape.js";
 export * from "./controls/HmiRadarLegendPosition.js";
 export * from "./controls/HmiDetailedParameterControl.js";
+export * from "./controls/HmiParameterControlBase.js";
+export * from "./controls/HmiOverviewParameterControl.js";
 export * from "./controls/HmiMediaControl.js";
 export * from "./controls/HmiObjectExplorerControl.js";
 export * from "./controls/HmiProcessControl.js";
