@@ -121,6 +121,7 @@ import { HmiParameterColumn } from "../../screens/controls/HmiParameterColumn.js
 import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
 import { HmiRadarChartControl } from "../../screens/controls/HmiRadarChartControl.js";
 import { HmiSystemDiagnosisControl } from "../../screens/controls/HmiSystemDiagnosisControl.js";
+import { HmiSystemDiagnosisColumnType } from "../../screens/controls/HmiSystemDiagnosisColumnType.js";
 import { HmiSystemDiagnosisViewKind } from "../../screens/controls/HmiSystemDiagnosisViewKind.js";
 import { HmiWebControl } from "../../screens/controls/HmiWebControl.js";
 import { HmiInspectableScreenHtml, inspectHmiScreenAsync } from "./HmiScreenInspection.js";
@@ -2988,11 +2989,63 @@ function appendSystemDiagnosisControl(
     "display: flex; flex-direction: column; overflow: hidden;",
   );
   appendAttribute(html, "data-view-kind", systemDiagnosisControl.viewKind);
-  html.push(
-    "><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">",
-    escapeHtml(title),
-    "</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Diagnostic data not loaded</div></div>",
-  );
+  appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(systemDiagnosisControl.showToolbar));
+  appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(systemDiagnosisControl.showStatusBar));
+  appendAttribute(html, "data-allow-sort", resolvePropertyPreview(systemDiagnosisControl.allowSortByColumn));
+  appendAttribute(html, "data-row-height", resolvePropertyPreview(systemDiagnosisControl.rowHeight));
+  appendAttribute(html, "data-grid-line-width", resolvePropertyPreview(systemDiagnosisControl.gridLineWidth));
+  html.push("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">", escapeHtml(title), "</div>");
+  const bar = (role: string, background: HmiProperty<HmiColor> | undefined, foreground: HmiProperty<HmiColor> | undefined, font: HmiFont | undefined, text: string) => {
+    const style = ["flex: 0 0 auto; padding: 2px 4px;"];
+    appendColorStyle(style, "background-color", background); appendColorStyle(style, "color", foreground);
+    if (font) appendFont(style, font.getForCulture(context.options.cultureLcid));
+    html.push('<div role="', role, '" style="', style.join(""), '">', text, '</div>');
+  };
+  if (getStaticValue(systemDiagnosisControl.showToolbar) === true)
+    bar("toolbar", systemDiagnosisControl.toolbarBackgroundColor, systemDiagnosisControl.toolbarForegroundColor, systemDiagnosisControl.toolbarFont, "Diagnostic commands not loaded");
+  const content = ["flex: 1 1 auto; overflow: hidden;"];
+  appendColorStyle(content, "background-color", systemDiagnosisControl.contentBackgroundColor); appendColorStyle(content, "color", systemDiagnosisControl.contentForegroundColor);
+  if (systemDiagnosisControl.contentFont) appendFont(content, systemDiagnosisControl.contentFont.getForCulture(context.options.cultureLcid));
+  html.push('<div style="', content.join(""), '">');
+  const columns = systemDiagnosisControl.columnDefinitions.filter(column => getStaticValue(column.visible) !== false)
+    .slice().sort((a, b) => (getStaticValue(a.order) ?? Number.MAX_SAFE_INTEGER) - (getStaticValue(b.order) ?? Number.MAX_SAFE_INTEGER));
+  if (!columns.length) html.push("Diagnostic data not loaded");
+  else {
+    const width = getStaticValue(systemDiagnosisControl.gridLineWidth) ?? 1;
+    const grid = [`border: ${Number.isFinite(width) && width >= 0 ? toCss(width) : "1"}px solid currentColor;`];
+    appendColorStyle(grid, "border-color", systemDiagnosisControl.gridLineColor);
+    const header = [...grid]; appendColorStyle(header, "background-color", systemDiagnosisControl.headerBackgroundColor);
+    appendColorStyle(header, "color", systemDiagnosisControl.headerForegroundColor); appendColorStyle(header, "border-color", systemDiagnosisControl.headerBorderColor);
+    if (systemDiagnosisControl.headerFont) appendFont(header, systemDiagnosisControl.headerFont.getForCulture(context.options.cultureLcid));
+    html.push('<table class="hmi-diagnosis-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;"><colgroup>');
+    for (const column of columns) {
+      html.push("<col"); const columnWidth = getStaticValue(column.width);
+      if (columnWidth !== undefined && Number.isFinite(columnWidth) && columnWidth >= 0) appendAttribute(html, "style", `width: ${toCss(columnWidth)}px;`);
+      html.push(">");
+    }
+    html.push("</colgroup>");
+    if (getStaticValue(systemDiagnosisControl.showColumnHeadings) !== false) {
+      html.push("<thead><tr>");
+      for (const column of columns) {
+        html.push('<th style="', header.join(""), 'overflow: hidden; text-overflow: ellipsis;"');
+        appendAttribute(html, "data-column-source-type", column.sourceType); appendAttribute(html, "data-output-format", column.format);
+        html.push(">", escapeHtml(column.headerText?.getText(context.options.cultureLcid) ?? column.sourceType ?? HmiSystemDiagnosisColumnType[column.type]), "</th>");
+      }
+      html.push("</tr></thead>");
+    }
+    const cell = [...grid];
+    const dimension = (css: string, property: HmiProperty<number> | undefined) => {
+      const value = getStaticValue(property); if (value !== undefined && Number.isFinite(value) && value >= 0) cell.push(`${css}: ${toCss(value)}px;`);
+    };
+    if (getStaticValue(systemDiagnosisControl.rowHeight) === 0) cell.push("height: auto;"); else dimension("height", systemDiagnosisControl.rowHeight);
+    dimension("padding-left", systemDiagnosisControl.cellPaddingLeft); dimension("padding-top", systemDiagnosisControl.cellPaddingTop);
+    dimension("padding-right", systemDiagnosisControl.cellPaddingRight); dimension("padding-bottom", systemDiagnosisControl.cellPaddingBottom);
+    html.push('<tbody><tr><td colspan="', String(columns.length), '" style="', cell.join(""), 'text-align: center;">Diagnostic data not loaded</td></tr></tbody></table>');
+  }
+  html.push("</div>");
+  if (getStaticValue(systemDiagnosisControl.showStatusBar) === true)
+    bar("status", systemDiagnosisControl.statusBarBackgroundColor, systemDiagnosisControl.statusBarForegroundColor, systemDiagnosisControl.statusBarFont, "Diagnostic status not loaded");
+  html.push("</div>");
 }
 
 function appendAlarmLineControl(html: string[], alarmLineControl: HmiAlarmLineControl, context: HmiHtmlConvertContext): void {
