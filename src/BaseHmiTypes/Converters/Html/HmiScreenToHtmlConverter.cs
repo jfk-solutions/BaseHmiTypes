@@ -261,6 +261,9 @@ public partial class HmiScreenToHtmlConverter
             case HmiScale scale:
                 AppendScale(html, scale, context);
                 break;
+            case HmiDateTimeField dateTimeField:
+                AppendDateTimeField(html, dateTimeField, context);
+                break;
             case HmiClock clock:
                 AppendClock(html, clock, context);
                 break;
@@ -2484,6 +2487,21 @@ public partial class HmiScreenToHtmlConverter
             AppendScaleMarks(html, scale, minimum, maximum, vertical ? HmiFillDirection.Up : HmiFillDirection.Right,
                 vertical, tickDirection is HmiTickDirection.Down or HmiTickDirection.Right, context, true);
         html.Append("</div>");
+    }
+
+    private static void AppendDateTimeField(StringBuilder html, HmiDateTimeField field, HmiHtmlConvertContext context)
+    {
+        var value = field.Text is null ? null : ResolveStaticValue(field.Text, context);
+        html.Append("<div");
+        AppendCommonAttributes(html, field, context, additionalStyle: "display: flex; overflow: hidden;");
+        AppendAttribute(html, "data-show-date", ResolvePropertyPreview(field.ShowDate, context));
+        AppendAttribute(html, "data-show-time", ResolvePropertyPreview(field.ShowTime, context));
+        AppendAttribute(html, "data-output-format", ResolvePropertyPreview(field.OutputFormat, context));
+        AppendAttribute(html, "data-format-pattern", ResolvePropertyPreview(field.FormatPattern, context));
+        AppendAttribute(html, "data-date-time-value-state", value is null ? "missing" : "present");
+        var hidden = field.ShowDate is not null && !ResolveStaticValue(field.ShowDate, context)
+            && field.ShowTime is not null && !ResolveStaticValue(field.ShowTime, context);
+        html.Append('>').Append(hidden ? "" : WebUtility.HtmlEncode(value?.GetText(context.CultureInfo) ?? "Date/time value not loaded")).Append("</div>");
     }
 
     private static void AppendClock(StringBuilder html, HmiClock clock, HmiHtmlConvertContext context)

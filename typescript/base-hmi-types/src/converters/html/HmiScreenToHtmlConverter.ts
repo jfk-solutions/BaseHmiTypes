@@ -81,6 +81,7 @@ import { HmiBar, HmiBarFillStyle, HmiBarValueMapping } from "../../screens/widge
 import { HmiDisabledImageMode } from "../../screens/widgets/HmiDisabledImageMode.js";
 import { HmiState } from "../../screens/widgets/HmiState.js";
 import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
+import { HmiDateTimeField } from "../../screens/widgets/HmiDateTimeField.js";
 import { HmiClock } from "../../screens/widgets/HmiClock.js";
 import { HmiComboBox } from "../../screens/widgets/HmiComboBox.js";
 import { HmiGauge } from "../../screens/widgets/HmiGauge.js";
@@ -356,6 +357,8 @@ export class HmiScreenToHtmlConverter {
       appendBar(html, item, context);
     } else if (item instanceof HmiScale) {
       appendScale(html, item, context);
+    } else if (item instanceof HmiDateTimeField) {
+      appendDateTimeField(html, item, context);
     } else if (item instanceof HmiClock) {
       appendClock(html, item, context);
     } else if (item instanceof HmiArrowIndicator) {
@@ -2222,6 +2225,19 @@ function appendScale(html: string[], scale: HmiScale, context: HmiHtmlConvertCon
     appendScaleMarks(html, scale, minimum, maximum, vertical ? HmiFillDirection.Up : HmiFillDirection.Right,
       vertical, tickDirection === HmiTickDirection.Down || tickDirection === HmiTickDirection.Right, true);
   html.push("</div>");
+}
+
+function appendDateTimeField(html: string[], field: HmiDateTimeField, context: HmiHtmlConvertContext): void {
+  const value = getStaticValue(field.text);
+  html.push("<div");
+  appendCommonAttributes(html, field, context, true, "display: flex; overflow: hidden;");
+  appendAttribute(html, "data-show-date", resolvePropertyPreview(field.showDate));
+  appendAttribute(html, "data-show-time", resolvePropertyPreview(field.showTime));
+  appendAttribute(html, "data-output-format", resolvePropertyPreview(field.outputFormat));
+  appendAttribute(html, "data-format-pattern", resolvePropertyPreview(field.formatPattern));
+  appendAttribute(html, "data-date-time-value-state", value === undefined ? "missing" : "present");
+  const hidden = getStaticValue(field.showDate) === false && getStaticValue(field.showTime) === false;
+  html.push(">", hidden ? "" : escapeHtml(value?.getText(context.options.cultureLcid) ?? "Date/time value not loaded"), "</div>");
 }
 
 function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertContext): void {
