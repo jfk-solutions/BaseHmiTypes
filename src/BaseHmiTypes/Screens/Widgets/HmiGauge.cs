@@ -9,6 +9,7 @@ public class HmiGauge : HmiScaleWidgetBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiGauge;
     }
 
+    /// <summary>Needle width in logical pixels for HTML preview. A configured width or color enables the needle; omitted width defaults to two pixels. Nonpositive widths hide it.</summary>
     public HmiProperty<double>? NeedleWidth { get; set; }
 
     public HmiProperty<HmiColor>? NeedleColor { get; set; }

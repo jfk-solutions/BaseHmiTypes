@@ -4038,6 +4038,12 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "begin-value", gauge.BeginValue);
         AppendStaticAttribute(html, "end-value", gauge.EndValue);
         AppendStaticAttribute(html, "origin-value", gauge.OriginValue);
+        if (gauge.NeedleWidth is not null || gauge.NeedleColor is not null)
+        {
+            AppendBooleanAttribute(html, "show-needle", true);
+            AppendStaticAttribute(html, "needle-width", gauge.NeedleWidth);
+            AppendStaticAttribute(html, "needle-color", gauge.NeedleColor);
+        }
         AppendStaticAttribute(html, "division-count", gauge.DivisionCount);
         AppendStaticAttribute(html, "sub-division-count", gauge.SubDivisionCount);
         AppendBooleanAttribute(html, "major-ticks-only", gauge.MajorTicksOnly.GetStaticValueOrDefault());

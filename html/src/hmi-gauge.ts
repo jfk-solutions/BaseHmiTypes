@@ -17,6 +17,9 @@ type GaugeFont = {
 
 const gaugeProperties = {
   value: Number,
+  showNeedle: Boolean,
+  needleWidth: Number,
+  needleColor: String,
   fillLevel: Number,
   showFillLevel: Boolean,
   beginValue: Number,
@@ -87,6 +90,9 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   static readonly template = html`<svg id="gauge" viewBox="0 0 100 100" part="svg"></svg>`;
 
   private _value = 0;
+  private _showNeedle = false;
+  private _needleWidth = 2;
+  private _needleColor = "#20242a";
   private _fillLevel = Number.NaN;
   private _showFillLevel = false;
   private _beginValue = 0;
@@ -119,6 +125,12 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   get value(): number {
     return this._value;
   }
+  get showNeedle(): boolean { return this._showNeedle; }
+  set showNeedle(value: boolean) { this.setBooleanProperty("_showNeedle", value); }
+  get needleWidth(): number { return this._needleWidth; }
+  set needleWidth(value: number) { this.setNumberProperty("_needleWidth", value, 2); }
+  get needleColor(): string { return this._needleColor; }
+  set needleColor(value: string) { this.setStringProperty("_needleColor", value, "#20242a"); }
   set value(value: number) {
     this.setNumberProperty("_value", value, 0);
   }
@@ -424,8 +436,18 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
       ${majorTicks}
       <circle cx="50" cy="55" r="22" fill="#c9ccd3"></circle>
       <circle cx="50" cy="55" r="20" fill="url(#hmi-gauge-knob)"></circle>
+      ${this.renderNeedle(value, begin, range)}
       ${this.showValue ? this.renderValue(value) : ""}
     `;
+  }
+
+  private renderNeedle(value: number, begin: number, range: number): string {
+    if (!this.showNeedle || this.needleWidth <= 0) return "";
+    const svg = this.shadowRoot?.getElementById("gauge");
+    const pixelsPerUnit = svg ? Math.min(svg.clientWidth, svg.clientHeight) / 100 : 0;
+    if (!(pixelsPerUnit > 0)) return "";
+    const tip = polarPoint(50, 55, 30, valueToAngle((value - begin) / range));
+    return `<line data-hmi-gauge-needle x1="50" y1="55" x2="${formatNumber(tip.x)}" y2="${formatNumber(tip.y)}" stroke="${escapeAttribute(this.needleColor)}" stroke-width="${formatNumber(this.needleWidth / pixelsPerUnit)}" stroke-linecap="round"></line>`;
   }
 
   private renderMajorTicks(
