@@ -4,6 +4,11 @@ namespace BaseHmiTypes.Recipes;
 
 public sealed class HmiRecipe : IHmiObject
 {
+    public int? SourceId { get; set; }
+    public string? SourceDisplayName { get; set; }
+    public string? StoragePath { get; set; }
+    public IDictionary<string, HmiRecipeReference> References { get; } = new Dictionary<string, HmiRecipeReference>();
+
     public HmiMultilingualText? DisplayName { get; set; }
     public HmiMultilingualText? InfoText { get; set; }
     public string? Name { get; set; }
@@ -15,6 +20,12 @@ public sealed class HmiRecipe : IHmiObject
     public IList<HmiRecipeParameter> Parameters { get; } = new List<HmiRecipeParameter>();
 
     public IList<HmiRecipeDataSet> DataSets { get; } = new List<HmiRecipeDataSet>();
+}
+
+public sealed class HmiRecipeReference
+{
+    public string? SourceId { get; set; }
+    public string? Name { get; set; }
 }
 
 public sealed class HmiRecipeParameter : IHmiObject

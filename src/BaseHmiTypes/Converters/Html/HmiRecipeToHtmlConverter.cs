@@ -23,6 +23,22 @@ public sealed class HmiRecipeToHtmlConverter
         if (recipe.DisplayName != null) html.Append("<p>Name: ").Append(Encode(recipe.Name)).Append("</p>");
         if (recipe.InfoText != null) html.Append("<p>").Append(Encode(recipe.InfoText.GetText(culture))).Append("</p>");
         if (recipe.Comment != null) html.Append("<p>").Append(Encode(recipe.Comment)).Append("</p>");
+        if (recipe.SourceId != null || recipe.SourceDisplayName != null || recipe.StoragePath != null)
+        {
+            html.Append("<h2>Configuration</h2><dl>");
+            AppendConfiguration(html, "Parameter set type ID", recipe.SourceId?.ToString(CultureInfo.InvariantCulture));
+            AppendConfiguration(html, "Source display name", recipe.SourceDisplayName);
+            AppendConfiguration(html, "Storage path", recipe.StoragePath);
+            html.Append("</dl>");
+        }
+        if (recipe.References.Count > 0)
+        {
+            html.Append("<h2>References</h2><table><thead><tr><th scope=\"col\">Role</th><th scope=\"col\">Source reference</th><th scope=\"col\">Name</th></tr></thead><tbody>");
+            foreach (var pair in recipe.References)
+                html.Append("<tr><th scope=\"row\">").Append(Encode(pair.Key)).Append("</th><td>")
+                    .Append(Encode(pair.Value.SourceId)).Append("</td><td>").Append(Encode(pair.Value.Name)).Append("</td></tr>");
+            html.Append("</tbody></table>");
+        }
         html.Append("<h2>Fields</h2><div class=\"table-scroll\"><table><thead><tr>");
         foreach (var header in new[] { "Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment", "Element ID", "Default", "Decimal places", "Maximum length", "Tag array count", "Required", "Unique", "Indexed", "Display name", "Info text" })
             html.Append("<th scope=\"col\">").Append(header).Append("</th>");
@@ -72,6 +88,11 @@ public sealed class HmiRecipeToHtmlConverter
             html.Append("</tbody></table></div>");
         }
         return html.Append("</body></html>").ToString();
+    }
+
+    private static void AppendConfiguration(StringBuilder html, string label, string? value)
+    {
+        if (value != null) html.Append("<dt>").Append(label).Append("</dt><dd>").Append(Encode(value)).Append("</dd>");
     }
 
     private static string Encode(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
