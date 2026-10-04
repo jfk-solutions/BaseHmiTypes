@@ -61,6 +61,7 @@ public sealed class HmiRecipeParameter : IHmiObject
     public string? SourcePlcTypeDefaultStartValue { get; set; }
     public string? SourcePlcStartValueConstantName { get; set; }
     public bool? SourcePlcHasExplicitStartValue { get; set; }
+    public HmiMultilingualText? SourcePlcComment { get; set; }
     public string? SourceTagStartValue { get; set; }
     public string? SourceTagSubstituteValue { get; set; }
     public int? SourceTagSubstituteValueUsage { get; set; }
@@ -101,6 +102,7 @@ public sealed class HmiRecipePlcDeclaration
     public string? TypeDefaultStartValue { get; set; }
     public string? StartValueConstantName { get; set; }
     public bool? HasExplicitStartValue { get; set; }
+    public HmiMultilingualText? Comment { get; set; }
     public IDictionary<string, string> SubelementValues { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
     public IDictionary<string, string> SubelementValueConstantNames { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
     public IDictionary<string, string> TypeDefaultSubelementValues { get; } = new Dictionary<string, string>(StringComparer.Ordinal);

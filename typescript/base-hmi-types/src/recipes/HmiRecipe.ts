@@ -50,6 +50,7 @@ export class HmiRecipeParameter {
   sourcePlcTypeDefaultStartValue?: string;
   sourcePlcStartValueConstantName?: string;
   sourcePlcHasExplicitStartValue?: boolean;
+  sourcePlcComment?: HmiMultilingualText;
   sourceTagStartValue?: string;
   sourceTagSubstituteValue?: string;
   sourceTagSubstituteValueUsage?: number;
@@ -80,6 +81,7 @@ export class HmiRecipePlcDeclaration {
   typeDefaultStartValue?: string;
   startValueConstantName?: string;
   hasExplicitStartValue?: boolean;
+  comment?: HmiMultilingualText;
   readonly subelementValues = new Map<string, string>();
   readonly subelementValueConstantNames = new Map<string, string>();
   readonly typeDefaultSubelementValues = new Map<string, string>();

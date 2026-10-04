@@ -74,7 +74,7 @@ public sealed class HmiRecipeToHtmlConverter
         {
             html.Append("<tr>");
             foreach (var value in new[] { field.SourceIndex?.ToString(CultureInfo.InvariantCulture), field.Name,
-                         field.Tag, field.DataType, field.Unit, field.MinimumValue, field.MaximumValue, field.Comment,
+                         field.Tag, field.DataType, field.Unit, field.MinimumValue, field.MaximumValue, field.SourcePlcComment?.GetText(culture) ?? field.Comment,
                          field.SourceElementId?.ToString(CultureInfo.InvariantCulture), field.DefaultValue,
                          field.DecimalPlaces?.ToString(CultureInfo.InvariantCulture), field.MaximumLength?.ToString(CultureInfo.InvariantCulture),
                          field.TagArrayCount?.ToString(CultureInfo.InvariantCulture), FormatFlag(field.Required), FormatFlag(field.Unique), FormatFlag(field.Indexed),
@@ -137,6 +137,14 @@ public sealed class HmiRecipeToHtmlConverter
                 foreach (var group in new[] { ("Explicit value", declaration.SubelementValues), ("Symbolic constant", declaration.SubelementValueConstantNames), ("Type default", declaration.TypeDefaultSubelementValues) })
                     foreach (var pair in group.Item2)
                         html.Append("<tr><th scope=\"row\">").Append(Encode(declaration.Name)).Append("</th><td>").Append(group.Item1).Append("</td><td>").Append(Encode(pair.Key)).Append("</td><td data-value-state=\"present\">").Append(Encode(pair.Value)).Append("</td></tr>");
+            html.Append("</tbody></table></div>");
+        }
+        if (recipe.SourcePlcDeclarations.Any(declaration => declaration.Comment != null))
+        {
+            html.Append("<h2>Source PLC declaration comments</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Declaration</th><th scope=\"col\">Comment</th></tr></thead><tbody>");
+            foreach (var declaration in recipe.SourcePlcDeclarations.Where(declaration => declaration.Comment != null))
+                html.Append("<tr><th scope=\"row\">").Append(Encode(declaration.Name)).Append("</th><td data-value-state=\"present\">")
+                    .Append(Encode(declaration.Comment!.GetText(culture))).Append("</td></tr>");
             html.Append("</tbody></table></div>");
         }
         if (recipe.SourcePlcDeclarations.Any(declaration => declaration.SubelementComments.Count > 0))
