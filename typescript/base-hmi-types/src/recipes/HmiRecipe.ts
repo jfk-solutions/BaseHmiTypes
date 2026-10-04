@@ -45,6 +45,10 @@ export class HmiRecipeReference {
 export class HmiRecipeParameter {
   readonly references = new Map<string, HmiRecipeReference>();
   triggerRedraw?: boolean;
+  sourcePlcStartValue?: string;
+  sourcePlcTypeDefaultStartValue?: string;
+  sourcePlcStartValueConstantName?: string;
+  sourcePlcHasExplicitStartValue?: boolean;
   sourceTagStartValue?: string;
   sourceTagSubstituteValue?: string;
   sourceTagSubstituteValueUsage?: number;

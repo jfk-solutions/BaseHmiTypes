@@ -80,6 +80,17 @@ export class HmiRecipeToHtmlConverter {
       }
       html.push('</tbody></table></div>');
     }
+    const plcFields = recipe.parameters.filter(field => field.sourcePlcStartValue !== undefined || field.sourcePlcTypeDefaultStartValue !== undefined || field.sourcePlcStartValueConstantName !== undefined || field.sourcePlcHasExplicitStartValue !== undefined);
+    if (plcFields.length > 0) {
+      html.push('<h2>Source PLC declaration values</h2><div class="table-scroll"><table><thead><tr><th scope="col">Field</th><th scope="col">Resolved start value</th><th scope="col">Type default start value</th><th scope="col">Symbolic constant</th><th scope="col">Explicit start value</th></tr></thead><tbody>');
+      for (const field of plcFields) {
+        html.push('<tr><th scope="row">', encode(field.name), '</th>');
+        for (const value of [field.sourcePlcStartValue, field.sourcePlcTypeDefaultStartValue, field.sourcePlcStartValueConstantName, formatFlag(field.sourcePlcHasExplicitStartValue)])
+          html.push('<td data-value-state="', value === undefined ? "missing" : "present", '">', encode(value ?? "Missing"), '</td>');
+        html.push('</tr>');
+      }
+      html.push('</tbody></table></div>');
+    }
     html.push("<h2>Stored records</h2>");
     if (recipe.dataSets.length === 0) html.push("<p>No stored records.</p>");
     else {
