@@ -66,6 +66,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowToolbar { get; set; }
 
+    public HmiProperty<bool>? UseToolbarBackgroundColor { get; set; }
+
     public IList<HmiAlarmToolbarButton> ToolbarButtons { get; } = new List<HmiAlarmToolbarButton>();
 
     public HmiProperty<bool>? ShowDetailsButton { get; set; }
@@ -165,6 +167,8 @@ public class HmiAlarmControl : HmiControlWindowBase
     public IList<HmiAlarmSortCriterion> SortCriteria { get; } = new List<HmiAlarmSortCriterion>();
 
     public HmiProperty<bool>? ShowStatusBar { get; set; }
+
+    public HmiProperty<bool>? UseStatusBarBackgroundColor { get; set; }
 
     public IList<HmiAlarmStatusBarPanel> StatusBarPanels { get; } = new List<HmiAlarmStatusBarPanel>();
 

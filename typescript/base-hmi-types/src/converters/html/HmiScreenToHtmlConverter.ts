@@ -2889,6 +2889,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-header-border-color", resolvePropertyPreview(alarmControl.headerBorderColor));
   appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(alarmControl.showToolbar));
   appendAttribute(html, "data-toolbar-background-color", resolvePropertyPreview(alarmControl.toolbarBackgroundColor));
+  appendAttribute(html, "data-use-toolbar-background-color", resolvePropertyPreview(alarmControl.useToolbarBackgroundColor));
   appendAttribute(html, "data-toolbar-foreground-color", resolvePropertyPreview(alarmControl.toolbarForegroundColor));
   appendAttribute(html, "data-view-kind", alarmControl.viewKind);
   appendAttribute(html, "data-active-column-set", alarmControl.activeColumnSet);
@@ -2924,6 +2925,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-selection-rectangle-width", resolvePropertyPreview(alarmControl.selectionRectangleWidth));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(alarmControl.showStatusBar));
   appendAttribute(html, "data-status-bar-background-color", resolvePropertyPreview(alarmControl.statusBarBackgroundColor));
+  appendAttribute(html, "data-use-status-bar-background-color", resolvePropertyPreview(alarmControl.useStatusBarBackgroundColor));
   appendAttribute(html, "data-status-bar-foreground-color", resolvePropertyPreview(alarmControl.statusBarForegroundColor));
   html.push(">");
 
@@ -2977,7 +2979,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   const showToolbar = getStaticValue(alarmControl.showToolbar) === true;
   if (showToolbar || showAcknowledgeButton || showHelpButton) {
     const toolbarStyle = ["flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;"];
-    appendColorStyle(toolbarStyle, "background-color", alarmControl.toolbarBackgroundColor);
+    if (alarmControl.useToolbarBackgroundColor === undefined || getStaticValue(alarmControl.useToolbarBackgroundColor) === true)
+      appendColorStyle(toolbarStyle, "background-color", alarmControl.toolbarBackgroundColor);
     appendColorStyle(toolbarStyle, "color", alarmControl.toolbarForegroundColor);
     html.push("<div class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"", ...toolbarStyle, "\">");
     if (alarmControl.toolbarButtons.length) {
@@ -3003,7 +3006,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   }
   if (getStaticValue(alarmControl.showStatusBar) === true) {
     const statusStyle = ["flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;"];
-    appendColorStyle(statusStyle, "background-color", alarmControl.statusBarBackgroundColor);
+    if (alarmControl.useStatusBarBackgroundColor === undefined || getStaticValue(alarmControl.useStatusBarBackgroundColor) === true)
+      appendColorStyle(statusStyle, "background-color", alarmControl.statusBarBackgroundColor);
     appendColorStyle(statusStyle, "color", alarmControl.statusBarForegroundColor);
     if (alarmControl.statusBarFont !== undefined)
       appendFont(statusStyle, alarmControl.statusBarFont.getForCulture(context.options.cultureLcid));

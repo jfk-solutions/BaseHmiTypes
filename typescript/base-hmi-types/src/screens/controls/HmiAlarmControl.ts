@@ -57,6 +57,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showAcknowledgeButton?: HmiProperty<boolean>;
   showHelpButton?: HmiProperty<boolean>;
   showToolbar?: HmiProperty<boolean>;
+  useToolbarBackgroundColor?: HmiProperty<boolean>;
   showDetailsButton?: HmiProperty<boolean>;
   showEnableDisableButtons?: HmiProperty<boolean>;
   showSuppressUnsuppressButtons?: HmiProperty<boolean>;
@@ -106,6 +107,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   sortOrder?: HmiProperty<string>;
   readonly sortCriteria: HmiAlarmSortCriterion[] = [];
   showStatusBar?: HmiProperty<boolean>;
+  useStatusBarBackgroundColor?: HmiProperty<boolean>;
   readonly statusBarPanels: HmiAlarmStatusBarPanel[] = [];
   statusBarFont?: HmiFont;
   statusBarBackgroundColor?: HmiProperty<HmiColor>;
