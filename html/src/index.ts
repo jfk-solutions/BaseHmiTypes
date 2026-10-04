@@ -5,6 +5,7 @@ import "./hmi-checkbox-group.js";
 import "./button-image-fallback.js";
 import "./button-image-alignment.js";
 import "./button-caption-image-layout.js";
+import "./image-color-key.js";
 import "./hmi-clock.js";
 import "./hmi-gauge.js";
 import "./hmi-toggle-switch.js";
