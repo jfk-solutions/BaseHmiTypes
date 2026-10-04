@@ -79,6 +79,13 @@ public sealed class MetafileToSvgRenderer
                 case EMR.SetTextColor:
                     state.TextColor = ColorRef(bytes, dataOffset);
                     break;
+                case EMR.SetMiterLimit:
+                    if (record.Size >= 12)
+                    {
+                        var limit = F32(bytes, dataOffset);
+                        if (!float.IsNaN(limit) && !float.IsInfinity(limit) && limit >= 1) state.MiterLimit = limit;
+                    }
+                    break;
                 case EMR.SaveDc:
                     stateStack.Push(CloneState(state));
                     break;
@@ -113,11 +120,22 @@ public sealed class MetafileToSvgRenderer
                     objects[U32(bytes, dataOffset)] = ReadEmfFont(bytes, dataOffset + 4, record.Size - 12);
                     break;
                 case EMR.ExtCreatePen:
+                    if (record.Size < 52) break;
+                    var extendedPenStyle = U32(bytes, dataOffset + 20);
+                    var geometricPen = (extendedPenStyle & 0xF0000) == 0x10000;
                     objects[U32(bytes, dataOffset)] = new PenObject
                     {
                         Width = ScaledPenWidth(state, I32(bytes, dataOffset + 24)),
                         Color = ColorRef(bytes, dataOffset + 32),
                         None = (U32(bytes, dataOffset + 20) & 0x0000000f) == 5,
+                        LineCap = geometricPen ? (extendedPenStyle & 0xF00) switch
+                        {
+                            0 => "round", 0x100 => "square", 0x200 => "butt", _ => null,
+                        } : null,
+                        LineJoin = geometricPen ? (extendedPenStyle & 0xF000) switch
+                        {
+                            0 => "round", 0x1000 => "bevel", 0x2000 => "miter", _ => null,
+                        } : null,
                     };
                     break;
                 case EMR.SelectObject:
@@ -587,6 +605,7 @@ public sealed class MetafileToSvgRenderer
             ViewportExtY = state.ViewportExtY,
             WorldTransform = state.WorldTransform,
             FillRule = state.FillRule,
+            MiterLimit = state.MiterLimit,
             ActiveClipId = state.ActiveClipId,
             CurrentPath = state.CurrentPath is null ? null : new List<string>(state.CurrentPath),
             PathStartX = state.PathStartX,
@@ -615,6 +634,7 @@ public sealed class MetafileToSvgRenderer
         target.ViewportExtY = restored.ViewportExtY;
         target.WorldTransform = restored.WorldTransform;
         target.FillRule = restored.FillRule;
+        target.MiterLimit = restored.MiterLimit;
         target.ActiveClipId = restored.ActiveClipId;
         target.CurrentPath = restored.CurrentPath;
         target.PathStartX = restored.PathStartX;
@@ -1021,7 +1041,12 @@ public sealed class MetafileToSvgRenderer
 
     private static string StrokeAttrs(DrawState state)
     {
-        return state.Pen.None ? "stroke=\"none\"" : $"stroke=\"{state.Pen.Color}\" stroke-width=\"{Number(state.Pen.Width)}\"";
+        if (state.Pen.None) return "stroke=\"none\"";
+        var attributes = $"stroke=\"{state.Pen.Color}\" stroke-width=\"{Number(state.Pen.Width)}\"";
+        if (state.Pen.LineCap is not null) attributes += $" stroke-linecap=\"{state.Pen.LineCap}\"";
+        if (state.Pen.LineJoin is not null) attributes += $" stroke-linejoin=\"{state.Pen.LineJoin}\"";
+        if (state.Pen.LineJoin == "miter") attributes += $" stroke-miterlimit=\"{Number(state.MiterLimit)}\"";
+        return attributes;
     }
 
     private static string FillAttrs(DrawState state)
@@ -1155,6 +1180,10 @@ internal abstract class MetafileObject
 
 internal sealed class PenObject : MetafileObject
 {
+    public string? LineCap { get; set; }
+
+    public string? LineJoin { get; set; }
+
     public string Color { get; set; } = "#000000";
 
     public double Width { get; set; } = 1;
@@ -1182,6 +1211,8 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class DrawState
 {
+    public double MiterLimit { get; set; } = 10;
+
     public PenObject Pen { get; set; } = new();
 
     public BrushObject Brush { get; set; } = new();
@@ -1329,6 +1360,7 @@ internal enum PathPaintMode
 
 internal static class EMR
 {
+    public const uint SetMiterLimit = 0x003a;
     public const uint Header = 0x0001;
     public const uint Eof = 0x000e;
     public const uint SetWindowExtEx = 0x0009;
