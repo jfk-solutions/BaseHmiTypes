@@ -54,6 +54,7 @@ export class HmiRecipeParameter {
   sourcePlcComment?: HmiMultilingualText;
   sourceTagComment?: HmiMultilingualText;
   sourceTagStartValue?: string;
+  sourceTagScaling?: HmiRecipeTagScaling;
   sourceTagSubstituteValue?: string;
   sourceTagSubstituteValueUsage?: number;
   displayName?: HmiMultilingualText;
@@ -76,7 +77,16 @@ export class HmiRecipeParameter {
   comment?: string;
 }
 
+export class HmiRecipeTagScaling {
+  linearScaling?: boolean;
+  hmiLow?: number;
+  hmiHigh?: number;
+  plcLow?: number;
+  plcHigh?: number;
+}
+
 export class HmiRecipeTagDeclaration {
+  scaling?: HmiRecipeTagScaling;
   name?: string;
   dataType?: string;
   comment?: HmiMultilingualText;

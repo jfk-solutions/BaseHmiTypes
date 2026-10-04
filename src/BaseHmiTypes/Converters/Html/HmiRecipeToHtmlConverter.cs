@@ -105,6 +105,25 @@ public sealed class HmiRecipeToHtmlConverter
             }
             html.Append("</tbody></table></div>");
         }
+        var tagScalings = recipe.Parameters.Where(field => field.SourceTagScaling != null)
+            .Select(field => (Kind: "Field", field.Name, Scaling: field.SourceTagScaling!))
+            .Concat(recipe.SourceTagDeclarations.Where(declaration => declaration.Scaling != null)
+                .Select(declaration => (Kind: "Declaration", declaration.Name, Scaling: declaration.Scaling!))).ToArray();
+        if (tagScalings.Length > 0)
+        {
+            html.Append("<h2>Source tag scaling</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Kind</th><th scope=\"col\">Name</th><th scope=\"col\">Linear scaling</th><th scope=\"col\">HMI low</th><th scope=\"col\">HMI high</th><th scope=\"col\">PLC low</th><th scope=\"col\">PLC high</th></tr></thead><tbody>");
+            foreach (var row in tagScalings)
+            {
+                var scaling = row.Scaling;
+                html.Append("<tr><td>").Append(row.Kind).Append("</td><th scope=\"row\">").Append(Encode(row.Name)).Append("</th>");
+                foreach (var value in new[] { scaling.LinearScaling is bool enabled ? (enabled ? "Yes" : "No") : null,
+                    scaling.HmiLow?.ToString(CultureInfo.InvariantCulture), scaling.HmiHigh?.ToString(CultureInfo.InvariantCulture),
+                    scaling.PlcLow?.ToString(CultureInfo.InvariantCulture), scaling.PlcHigh?.ToString(CultureInfo.InvariantCulture) })
+                    html.Append("<td data-value-state=\"").Append(value == null ? "missing" : "present").Append("\">").Append(Encode(value ?? "Missing")).Append("</td>");
+                html.Append("</tr>");
+            }
+            html.Append("</tbody></table></div>");
+        }
         if (recipe.SourceTagDeclarations.Count > 0)
         {
             html.Append("<h2>Source tag composite declarations</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Declaration</th><th scope=\"col\">Data type</th><th scope=\"col\">Comment</th><th scope=\"col\">Start value</th><th scope=\"col\">Substitute value</th><th scope=\"col\">Substitute usage flags (raw)</th><th scope=\"col\">Minimum</th><th scope=\"col\">Maximum</th></tr></thead><tbody>");

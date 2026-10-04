@@ -80,6 +80,22 @@ export class HmiRecipeToHtmlConverter {
       }
       html.push('</tbody></table></div>');
     }
+    const tagScalings = [
+      ...recipe.parameters.map(field => ({ kind: "Field", name: field.name, scaling: field.sourceTagScaling })),
+      ...recipe.sourceTagDeclarations.map(declaration => ({ kind: "Declaration", name: declaration.name, scaling: declaration.scaling })),
+    ].filter(row => row.scaling !== undefined);
+    if (tagScalings.length > 0) {
+      html.push('<h2>Source tag scaling</h2><div class="table-scroll"><table><thead><tr><th scope="col">Kind</th><th scope="col">Name</th><th scope="col">Linear scaling</th><th scope="col">HMI low</th><th scope="col">HMI high</th><th scope="col">PLC low</th><th scope="col">PLC high</th></tr></thead><tbody>');
+      for (const row of tagScalings) {
+        const scaling = row.scaling!;
+        html.push('<tr><td>', row.kind, '</td><th scope="row">', encode(row.name), '</th>');
+        for (const value of [scaling.linearScaling === undefined ? undefined : scaling.linearScaling ? "Yes" : "No",
+          scaling.hmiLow?.toString(), scaling.hmiHigh?.toString(), scaling.plcLow?.toString(), scaling.plcHigh?.toString()])
+          html.push('<td data-value-state="', value === undefined ? "missing" : "present", '">', encode(value ?? "Missing"), '</td>');
+        html.push('</tr>');
+      }
+      html.push('</tbody></table></div>');
+    }
     if (recipe.sourceTagDeclarations.length > 0) {
       html.push('<h2>Source tag composite declarations</h2><div class="table-scroll"><table><thead><tr><th scope="col">Declaration</th><th scope="col">Data type</th><th scope="col">Comment</th><th scope="col">Start value</th><th scope="col">Substitute value</th><th scope="col">Substitute usage flags (raw)</th><th scope="col">Minimum</th><th scope="col">Maximum</th></tr></thead><tbody>');
       for (const declaration of recipe.sourceTagDeclarations) {
