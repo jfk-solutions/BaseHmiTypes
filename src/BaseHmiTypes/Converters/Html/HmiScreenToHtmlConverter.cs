@@ -2018,7 +2018,7 @@ public partial class HmiScreenToHtmlConverter
             !IsFinite(value) || !IsFinite(maximum - minimum) || maximum <= minimum)
             return null;
         if (bar.OriginValue is null)
-            return UsesNonlinearBarMapping(bar, minimum, maximum, context) || GetBarBitmapRows(bar, context) is not null ? minimum : null;
+            return UsesNonlinearBarMapping(bar, minimum, maximum, context) || GetBarBitmapRows(bar, context) is not null || IsBarHatch(bar, context) ? minimum : null;
         var origin = ResolveStaticValue(bar.OriginValue, context);
         return IsFinite(origin) ? origin : null;
     }
@@ -2057,9 +2057,11 @@ public partial class HmiScreenToHtmlConverter
         else if (thresholdColor is not null) AppendColorStyle(style, "color", thresholdColor);
         AppendBarFillOverrideStyle(style, bar, context);
         var bitmapRows = GetBarBitmapRows(bar, context);
-        if (bitmapRows is not null)
+        if (bitmapRows is not null || IsBarHatch(bar, context))
         {
             AppendAttribute(html, "data-hmi-bar-bitmap", bitmapRows);
+            if (IsBarHatch(bar, context))
+                AppendAttribute(html, "data-hmi-bar-hatch-style", ToCss(context.EffectiveProperties.Resolve(bar, nameof(HmiBar.HatchStyle), bar.HatchStyle)?.StaticValue ?? -1));
             var patternColor = context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.PatternColor), bar.PatternColor)?.StaticValue
                 ?? HmiColor.FromArgb(255, 0, 0, 0);
             AppendAttribute(html, "data-hmi-bar-pattern-color", ToCss(patternColor));
@@ -2075,6 +2077,9 @@ public partial class HmiScreenToHtmlConverter
         var rows = context.EffectiveProperties.Resolve(bar, nameof(HmiBar.BitmapPatternRows), bar.BitmapPatternRows)?.StaticValue;
         return rows is { Length: 16 } && rows.All(Uri.IsHexDigit) ? rows.ToLowerInvariant() : null;
     }
+
+    private static bool IsBarHatch(HmiBar bar, HmiHtmlConvertContext context) =>
+        context.EffectiveProperties.TryGetStaticValue(bar, nameof(HmiBar.FillStyle), bar.FillStyle, out var fillStyle) && fillStyle == HmiBarFillStyle.HatchPattern;
 
     private static void AppendBarColorAttributes(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)
     {
@@ -2094,7 +2099,9 @@ public partial class HmiScreenToHtmlConverter
 
     private static void AppendBarFillOverrideStyle(StringBuilder style, HmiBar bar, HmiHtmlConvertContext context)
     {
-        if (context.EffectiveProperties.TryGetStaticValue(bar, nameof(HmiBar.FillStyle), bar.FillStyle, out var fillStyle) && fillStyle == HmiBarFillStyle.Transparent)
+        if (context.EffectiveProperties.TryGetStaticValue(bar, nameof(HmiBar.FillStyle), bar.FillStyle, out var fillStyle) &&
+            (fillStyle == HmiBarFillStyle.Transparent || fillStyle == HmiBarFillStyle.HatchPattern &&
+             (context.EffectiveProperties.Resolve(bar, nameof(HmiBar.HatchStyle), bar.HatchStyle)?.StaticValue is not int hatch || hatch is < 0 or > 52)))
         {
             // Native transparent brushes remain transparent even when region colors change.
             style.Append("color: transparent !important;");
