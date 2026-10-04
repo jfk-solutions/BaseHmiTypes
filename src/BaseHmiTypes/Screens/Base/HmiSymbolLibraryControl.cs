@@ -33,6 +33,9 @@ public class HmiSymbolLibraryControl : HmiOcxControl
 
     public HmiProperty<HmiSymbolLibraryBlinkSpeed>? BlinkSpeed { get; set; }
 
+    /// <summary>Optional positive half-cycle duration; overrides the standard BlinkSpeed preset.</summary>
+    public HmiProperty<int>? BlinkIntervalMilliseconds { get; set; }
+
     public HmiProperty<HmiColor>? BlinkColor { get; set; }
 
     public HmiProperty<HmiSymbolLibraryRotation>? Rotation { get; set; }
