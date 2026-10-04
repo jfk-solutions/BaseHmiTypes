@@ -237,14 +237,14 @@ public sealed class MetafileToSvgRenderer
                         break;
                     }
                 case EMR.Polygon16:
-                    elements.Add(PolyElement(MapPoints(ReadEmfPoints16(bytes, dataOffset), state), true, state));
-                    break;
+                case EMR.Polyline16:
                 case EMR.Polygon:
                 case EMR.Polyline:
                     {
-                        var points = MapPoints(ReadEmfPointArray32(bytes, record), state);
+                        var shortPoints = record.Type == EMR.Polygon16 || record.Type == EMR.Polyline16;
+                        var points = MapPoints(ReadEmfPointArray32(bytes, record, shortPoints), state);
                         if (points.Count < 2) break;
-                        var closed = record.Type == EMR.Polygon;
+                        var closed = record.Type == EMR.Polygon || record.Type == EMR.Polygon16;
                         if (state.CurrentPath is null)
                             elements.Add(PolyElement(points, closed, state));
                         else
@@ -262,9 +262,6 @@ public sealed class MetafileToSvgRenderer
                         }
                         break;
                     }
-                case EMR.Polyline16:
-                    elements.Add(PolyElement(MapPoints(ReadEmfPoints16(bytes, dataOffset), state), false, state));
-                    break;
                 case EMR.PolyPolygon16:
                 case EMR.PolyPolyline16:
                 case EMR.PolyPolygon:
