@@ -2536,11 +2536,12 @@ public partial class HmiScreenToHtmlConverter
         }
 
         html.Append("<time");
-        AppendCommonAttributes(html, clock, context, additionalStyle: "display: flex; align-items: center; justify-content: center; overflow: hidden;");
+        AppendCommonAttributes(html, clock, context, additionalStyle: "display: flex; align-items: center; justify-content: center; overflow: hidden;" + ClockBackgroundOverride(clock, context));
         AppendAttribute(html, "datetime", "2000-01-01T12:34:56");
         AppendAttribute(html, "data-format", ResolveStaticValue(clock.Format, context));
         AppendAttribute(html, "data-time-zone", ResolveStaticValue(clock.TimeZone, context));
         AppendBooleanAttribute(html, "data-analog", clock.Analog is not null && ResolveStaticValue(clock.Analog, context));
+        if (clock.BackgroundStyle is not null) AppendAttribute(html,"data-clock-background-style",ResolveStaticValue(clock.BackgroundStyle,context).ToString());
         html.Append('>').Append(WebUtility.HtmlEncode(parts.Count == 0 ? "Clock" : string.Join(" ", parts))).Append("</time>");
     }
 

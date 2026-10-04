@@ -10,6 +10,9 @@ public class HmiClock : HmiWidgetBase
     }
 
     public HmiProperty<bool>? Analog { get; set; }
+    /// <summary>Preview background: 0 solid, 1 transparent frame around a filled analog dial,
+    /// 2 transparent. Unset retains the default neutral dial outline.</summary>
+    public HmiProperty<int>? BackgroundStyle { get; set; }
 
     public HmiProperty<bool>? ShowTicks { get; set; }
     public HmiProperty<HmiColor>? TicksColor { get; set; }

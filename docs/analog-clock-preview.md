@@ -29,6 +29,10 @@ remain available in the importing format's native model. Digital output is
 unchanged. `NumberStyle` has no verified dial-label semantics and is not drawn.
 
 This is a static neutral preview, not pixel-identical GDI/theme rendering.
-Classic WinCC background modes, theme effects, focus rendering, custom pictures,
-locale-dependent digital formatting and native-to-neutral clock projection are
-not implemented by this feature. Native raw control state must remain preserved.
+`BackgroundStyle` optionally selects solid (0), transparent frame around a
+filled analog dial (1), or fully transparent (2). Transparent digital modes have
+no dial fill. An unset style retains the original neutral outline. The frame
+preview uses a gray outline and the configured background color inside the dial.
+Theme effects, focus rendering, custom pictures and locale-dependent digital
+formatting are not implemented. Native raw control state must remain preserved
+by importers, including unknown styles and unresolved native colors.

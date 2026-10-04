@@ -14,15 +14,20 @@ public partial class HmiScreenToHtmlConverter
         var fill = clock.HandFillColor is null ? foreground : ToCss(ResolveStaticValue(clock.HandFillColor, context));
         if (clock.OutlinedHands is not null && ResolveStaticValue(clock.OutlinedHands, context)) fill = "none";
         html.Append("<time");
-        AppendCommonAttributes(html, clock, context, additionalStyle: "display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;");
+        AppendCommonAttributes(html, clock, context, additionalStyle: "display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;" + ClockBackgroundOverride(clock, context));
         AppendAttribute(html, "datetime", "2000-01-01T12:34:56");
         AppendAttribute(html, "data-format", ResolveStaticValue(clock.Format, context));
         AppendAttribute(html, "data-time-zone", ResolveStaticValue(clock.TimeZone, context));
         AppendBooleanAttribute(html, "data-analog", true);
         AppendAttribute(html, "data-clock-preview", "static");
+        if (clock.BackgroundStyle is not null) AppendAttribute(html,"data-clock-background-style",ResolveStaticValue(clock.BackgroundStyle,context).ToString());
         html.Append("><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"Analog clock preview: 12:34:56\" style=\"width: 100%; height: 100%; min-height: 0; flex: 1;\">");
-        html.Append("<circle data-clock-dial=\"true\" cx=\"50\" cy=\"50\" r=\"48\" fill=\"none\"");
-        AppendAttribute(html, "stroke", foreground); html.Append(" stroke-width=\"1\"/>");
+        if (clock.BackgroundStyle is null || ResolveStaticValue(clock.BackgroundStyle,context) == 1)
+        {
+            html.Append("<circle data-clock-dial=\"true\" cx=\"50\" cy=\"50\" r=\"48\"");
+            AppendAttribute(html,"fill",clock.BackgroundStyle is null ? "none" : clock.BackgroundColor is null ? "#FFFFFF" : ToCss(ResolveStaticValue(clock.BackgroundColor,context)));
+            AppendAttribute(html, "stroke", clock.BackgroundStyle is null ? foreground : "#808080"); html.Append(" stroke-width=\"1\"/>");
+        }
         if (clock.ShowTicks is null || ResolveStaticValue(clock.ShowTicks, context))
         {
             var tickRadius = ClockPercent(clock.SecondHandLengthPercent, 80, context) * 48 / 100;
@@ -50,6 +55,10 @@ public partial class HmiScreenToHtmlConverter
         if (clock.ShowDate is not null && ResolveStaticValue(clock.ShowDate, context)) html.Append("<span data-clock-date=\"true\">2000-01-01</span>");
         html.Append("</time>");
     }
+
+    private static string ClockBackgroundOverride(HmiClock clock, HmiHtmlConvertContext context) =>
+        clock.BackgroundStyle is not null && ResolveStaticValue(clock.BackgroundStyle,context) is 1 or 2
+            ? " background: transparent;" : string.Empty;
 
     private static double ClockPercent(HmiProperty<double>? property, double fallback, HmiHtmlConvertContext context)
     {
