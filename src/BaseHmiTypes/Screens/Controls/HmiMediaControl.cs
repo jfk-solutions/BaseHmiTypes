@@ -15,6 +15,10 @@ public class HmiMediaControl : HmiControlWindowBase
 
     public HmiProperty<uint>? VideoOutput { get; set; }
 
+    public HmiFont? ToolbarFont { get; set; }
+
+    public HmiFont? StatusBarFont { get; set; }
+
     public HmiProperty<bool>? ShowToolbar { get; set; }
 
     public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }
