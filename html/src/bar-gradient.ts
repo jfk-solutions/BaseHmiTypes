@@ -10,6 +10,9 @@ const round = (value: number): number => Math.floor(f(value + 0.5));
 let pending = false;
 
 function hide(fill: HTMLElement): void {
+  // Hiding invalidates the visible render, even if returning to the same
+  // geometry or restoring the same attributes later would reuse its key.
+  previous.delete(fill);
   const canvas = canvases.get(fill);
   if (canvas && canvas.style.display !== "none") canvas.style.display = "none";
 }
