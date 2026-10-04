@@ -2060,6 +2060,7 @@ public partial class HmiScreenToHtmlConverter
         else if (thresholdColor is not null) AppendColorStyle(style, "color", thresholdColor);
         AppendBarFillOverrideStyle(style, bar, context);
         AppendBarGradientStyle(style, bar, context);
+        AppendBarNativeGradientAttributes(html, bar, context);
         var bitmapRows = GetBarBitmapRows(bar, context);
         if (bitmapRows is not null || IsBarHatch(bar, context))
         {

@@ -18,6 +18,12 @@ public class HmiBar : HmiScaleWidgetBase
     /// <summary>GDI+ HatchStyle index 0 through 52, used with HatchPattern. Hatch spacing is eight device pixels, not scaled logical pixels. Invalid indices paint no value region.</summary>
     public HmiProperty<int>? HatchStyle { get; set; }
 
+    /// <summary>Optional native rectangle-gradient mode: 0 horizontal, 1 vertical, 2 forward diagonal, 3 backward diagonal (top-right to bottom-left). Used with Gradient; overrides generic fill-gradient direction/axis/stop. Invalid modes paint no value region. Preview does not guarantee pixel equivalence at arbitrary transforms.</summary>
+    public HmiProperty<int>? GradientMode { get; set; }
+
+    /// <summary>Native sigma/bell blend with focus 0.5 and scale 1, used with GradientMode. Omitted means linear.</summary>
+    public HmiProperty<bool>? GradientSigmaBlend { get; set; }
+
     /// <summary>Color of the unfilled bar track, independent of the widget background. Omitted retains the background-based track.</summary>
     public HmiProperty<HmiColor>? TrackColor { get; set; }
 
