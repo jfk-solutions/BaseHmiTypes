@@ -12,6 +12,7 @@ export enum HmiObjectType {
   HmiCircleSegment = "HmiCircleSegment",
   HmiCircularArc = "HmiCircularArc",
   HmiClock = "HmiClock",
+  HmiDateTimeField = "HmiDateTimeField",
   HmiComboBox = "HmiComboBox",
   HmiCustomWebControlContainer = "HmiCustomWebControlContainer",
   HmiCustomWidgetContainer = "HmiCustomWidgetContainer",

@@ -15,6 +15,7 @@ public static class HmiObjectType
     public const string HmiCircleSegment = nameof(HmiCircleSegment);
     public const string HmiCircularArc = nameof(HmiCircularArc);
     public const string HmiClock = nameof(HmiClock);
+    public const string HmiDateTimeField = nameof(HmiDateTimeField);
     public const string HmiComboBox = nameof(HmiComboBox);
     public const string HmiCustomWebControlContainer = nameof(HmiCustomWebControlContainer);
     public const string HmiCustomWidgetContainer = nameof(HmiCustomWidgetContainer);
