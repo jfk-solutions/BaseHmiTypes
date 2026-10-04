@@ -88,6 +88,10 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   detailsPaneHeight?: HmiProperty<number>;
   detailsPaneVisible?: HmiProperty<boolean>;
   displayEventContextMenu?: HmiProperty<boolean>;
+  cellPaddingTop?: HmiProperty<number>;
+  cellPaddingRight?: HmiProperty<number>;
+  cellPaddingBottom?: HmiProperty<number>;
+  cellPaddingLeft?: HmiProperty<number>;
   allowColumnResize?: HmiProperty<boolean>;
   allowSortByColumn?: HmiProperty<boolean>;
   rowDoubleClickAction?: HmiProperty<HmiAlarmRowDoubleClickAction>;

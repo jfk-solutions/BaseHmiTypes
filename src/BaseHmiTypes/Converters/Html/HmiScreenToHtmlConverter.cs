@@ -2912,6 +2912,10 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-active-column-set", alarmControl.ActiveColumnSet);
         AppendAttribute(html, "data-list-mode", listMode.ToString());
         AppendAttribute(html, "data-time-base", ResolvePropertyPreview(alarmControl.TimeBase, context));
+        AppendAttribute(html, "data-cell-padding-top", ResolvePropertyPreview(alarmControl.CellPaddingTop, context));
+        AppendAttribute(html, "data-cell-padding-right", ResolvePropertyPreview(alarmControl.CellPaddingRight, context));
+        AppendAttribute(html, "data-cell-padding-bottom", ResolvePropertyPreview(alarmControl.CellPaddingBottom, context));
+        AppendAttribute(html, "data-cell-padding-left", ResolvePropertyPreview(alarmControl.CellPaddingLeft, context));
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmControl.NumberOfRows, context));
         AppendAttribute(html, "data-lines-per-alarm", ResolvePropertyPreview(alarmControl.LinesPerAlarm, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(alarmControl.WordWrap, context));
@@ -4552,7 +4556,17 @@ public partial class HmiScreenToHtmlConverter
         var width = alarmControl.GridLineWidth is null
             ? 1d
             : Math.Max(0d, ResolveStaticValue(alarmControl.GridLineWidth, context));
-        return $"border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: {(horizontal ? ToCss(width) : "0")}px {(vertical ? ToCss(width) : "0")}px;";
+        var style = new StringBuilder($"border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: {(horizontal ? ToCss(width) : "0")}px {(vertical ? ToCss(width) : "0")}px;");
+        Padding("top", alarmControl.CellPaddingTop); Padding("right", alarmControl.CellPaddingRight);
+        Padding("bottom", alarmControl.CellPaddingBottom); Padding("left", alarmControl.CellPaddingLeft);
+        return style.ToString();
+
+        void Padding(string side, HmiProperty<double>? property)
+        {
+            if (property is null) return;
+            var value = ResolveStaticValue(property, context);
+            if (IsFinite(value) && value >= 0) style.Append("padding-").Append(side).Append(": ").Append(ToCss(value)).Append("px;");
+        }
     }
 
     private static void AppendAlarmSelectionRectangleStyle(
