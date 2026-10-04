@@ -1526,7 +1526,7 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
     html.push("<span data-hmi-button-caption");
     if (hidden) html.push(" hidden");
     html.push(' style="');
-    if (boundedLayout) html.push("flex: 0 0 auto;max-width: 100%;");
+    if (boundedLayout) html.push("flex: 0 0 auto;width: 100%;max-width: 100%;");
     if (captionBlink !== undefined) html.push("animation: hmi-caption-color-flash " + getBlinkDuration(captionBlink.rate) + "s steps(1, end) infinite;");
     else if (captionColor !== undefined) html.push("color: " + colorToCss(captionColor) + ";");
     html.push('\">');
