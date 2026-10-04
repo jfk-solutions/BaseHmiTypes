@@ -1786,7 +1786,7 @@ function getBarFillOrigin(bar: HmiBar, minimum: number, maximum: number, value: 
   if (!Number.isFinite(minimum) || !Number.isFinite(maximum) ||
       !Number.isFinite(value) || !Number.isFinite(maximum - minimum) || maximum <= minimum)
     return undefined;
-  if (origin === undefined) return usesNonlinearBarMapping(bar, minimum, maximum) || getBarBitmapRows(bar, context) !== undefined || isBarHatch(bar, context) ? minimum : undefined;
+  if (origin === undefined) return usesNonlinearBarMapping(bar, minimum, maximum) || getBarBitmapRows(bar, context) !== undefined || isBarHatch(bar, context) || isBarGradient(bar, context) ? minimum : undefined;
   return Number.isFinite(origin) ? origin : undefined;
 }
 
@@ -1822,6 +1822,7 @@ function appendBarOriginMeter(html: string[], bar: HmiBar, minimum: number, maxi
   if (disabledColor !== undefined) appendColorStyle(style, "color", disabledColor);
   else if (thresholdColor !== undefined) appendColorStyle(style, "color", thresholdColor);
   style.push(getBarFillOverrideStyle(bar, context));
+  style.push(getBarGradientStyle(bar, context));
   const bitmapRows = getBarBitmapRows(bar, context);
   if (bitmapRows !== undefined || isBarHatch(bar, context)) {
     appendAttribute(html, "data-hmi-bar-bitmap", bitmapRows);
@@ -1841,6 +1842,25 @@ function getBarBitmapRows(bar: HmiBar, context: HmiHtmlConvertContext): string |
 
 function isBarHatch(bar: HmiBar, context: HmiHtmlConvertContext): boolean {
   return getStaticValue(context.effectiveProperties.resolve(bar, "FillStyle", bar.fillStyle)) === HmiBarFillStyle.HatchPattern;
+}
+
+function isBarGradient(bar: HmiBar, context: HmiHtmlConvertContext): boolean {
+  return getStaticValue(context.effectiveProperties.resolve(bar, "FillStyle", bar.fillStyle)) === HmiBarFillStyle.Gradient;
+}
+
+function getBarGradientStyle(bar: HmiBar, context: HmiHtmlConvertContext): string {
+  const endColor = getStaticValue(context.effectiveProperties.resolve(bar, "FillEndColor", bar.fillEndColor));
+  if (!isBarGradient(bar, context) || endColor === undefined) return "";
+  const direction = bar.fillGradientDirection ?? (bar.fillGradientAxis?.toLowerCase() === "vertical"
+    ? HmiGradientDirection.VerticalFromTop : HmiGradientDirection.HorizontalFromLeft);
+  const configuredStop = getStaticValue(context.effectiveProperties.resolve(bar, "FillGradientStop", bar.fillGradientStop)) ?? 100;
+  const stop = Number.isFinite(configuredStop) ? Math.min(100, Math.max(0, configuredStop)) : 100;
+  // Generic value-rectangle gradient, not WinCC's quantized category-16 GDI+ brush.
+  // currentColor retains disabled, threshold and explicit fill priorities.
+  const stops = direction === HmiGradientDirection.HorizontalFromCenter || direction === HmiGradientDirection.VerticalFromCenter
+    ? `${colorToCss(endColor)} ${toCss(50 - stop / 2)}%, currentColor 50%, ${colorToCss(endColor)} ${toCss(50 + stop / 2)}%`
+    : `currentColor 0%, ${colorToCss(endColor)} ${toCss(stop)}%`;
+  return `background-color: transparent; background-image: linear-gradient(${gradientDirectionToCss(direction)}, ${stops});`;
 }
 
 function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {

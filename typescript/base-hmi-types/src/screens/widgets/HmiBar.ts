@@ -5,6 +5,7 @@ import { HmiProperty } from "../base/HmiProperty.js";
 import { HmiColor } from "../base/HmiColor.js";
 
 export class HmiBar extends HmiScaleWidgetBase {
+  /** Gradient blends the value-region color to fillEndColor within each value rectangle. fillGradientStop is a percentage (default 100, clamped to 0..100); center directions start at the center. fillGradientDirection overrides fillGradientAxis ("vertical" or default horizontal). Missing end color retains solid fill. Not a pixel-exact native GDI+ brush. */
   fillStyle?: HmiProperty<HmiBarFillStyle>;
   /** Eight top-to-bottom bitmap rows as 16 hex characters, MSB left. Zero bits use patternColor; one bits use the value color. Tiles are screen anchored. */
   bitmapPatternRows?: HmiProperty<string>;
