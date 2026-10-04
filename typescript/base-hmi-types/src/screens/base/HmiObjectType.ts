@@ -17,6 +17,7 @@ export enum HmiObjectType {
   HmiCustomWidgetContainer = "HmiCustomWidgetContainer",
   HmiDataGridControl = "HmiDataGridControl",
   HmiDcsFaceplateContainer = "HmiDcsFaceplateContainer",
+  HmiOverviewParameterControl = "HmiOverviewParameterControl",
   HmiDetailedParameterControl = "HmiDetailedParameterControl",
   HmiDotNetControlContainer = "HmiDotNetControlContainer",
   HmiDynamicSvg = "HmiDynamicSvg",

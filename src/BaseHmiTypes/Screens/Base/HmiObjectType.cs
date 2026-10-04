@@ -20,6 +20,7 @@ public static class HmiObjectType
     public const string HmiCustomWidgetContainer = nameof(HmiCustomWidgetContainer);
     public const string HmiDataGridControl = nameof(HmiDataGridControl);
     public const string HmiDcsFaceplateContainer = nameof(HmiDcsFaceplateContainer);
+    public const string HmiOverviewParameterControl = nameof(HmiOverviewParameterControl);
     public const string HmiDetailedParameterControl = nameof(HmiDetailedParameterControl);
     public const string HmiDotNetControlContainer = nameof(HmiDotNetControlContainer);
     public const string HmiDynamicSvg = nameof(HmiDynamicSvg);

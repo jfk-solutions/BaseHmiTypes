@@ -46,21 +46,7 @@ public partial class HmiScreenToHtmlConverter
         if (control.CurrentParameterSetId is null || control.CurrentParameterSetTypeId is null)
             html.Append("<div>Parameter set selection not decoded</div>");
         html.Append("</div>");
-        if (!ResolveStaticValue(control.HideDetails, context))
-        {
-            var columns = control.ColumnDefinitions.Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context)).ToArray();
-            var style = new StringBuilder("flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;");
-            if (columns.Length > 0) style.Append("display: block; overflow: auto;");
-            var width = control.GridLineWidth is null ? 1d : ResolveStaticValue(control.GridLineWidth, context);
-            style.Append("border-top-width: ").Append(ToCss(IsFinite(width) && width >= 0 ? width : 1d)).Append("px;");
-            AppendColorStyle(style, "background-color", control.ContentBackgroundColor);
-            AppendColorStyle(style, "color", control.ContentForegroundColor);
-            AppendColorStyle(style, "border-top-color", control.GridLineColor);
-            html.Append("<div class=\"hmi-parameter-details\" style=\"").Append(style).Append("\">");
-            if (columns.Length > 0) AppendParameterColumns(html, control, columns, context);
-            else html.Append("Parameter data not loaded");
-            html.Append("</div>");
-        }
+        if (!ResolveStaticValue(control.HideDetails, context)) AppendParameterView(html, control, context);
         if (ResolveStaticValue(control.ShowStatusBar, context))
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;");
@@ -71,7 +57,57 @@ public partial class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendParameterColumns(StringBuilder html, HmiDetailedParameterControl control,
+    private static void AppendOverviewParameterControl(StringBuilder html, HmiOverviewParameterControl control, HmiHtmlConvertContext context)
+    {
+        html.Append("<div");
+        AppendCommonAttributes(html, control, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-parameter-control-view", "overview");
+        AppendAttribute(html, "data-filter", ResolvePropertyPreview(control.Filter, context));
+        AppendAttribute(html, "data-row-height", ResolvePropertyPreview(control.RowHeight, context));
+        AppendAttribute(html, "data-cell-padding-left", ResolvePropertyPreview(control.CellPaddingLeft, context));
+        AppendAttribute(html, "data-cell-padding-top", ResolvePropertyPreview(control.CellPaddingTop, context));
+        AppendAttribute(html, "data-cell-padding-right", ResolvePropertyPreview(control.CellPaddingRight, context));
+        AppendAttribute(html, "data-cell-padding-bottom", ResolvePropertyPreview(control.CellPaddingBottom, context));
+        AppendAttribute(html, "data-edit-mode", ResolvePropertyPreview(control.EditMode, context));
+        AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(control.ShowToolbar, context));
+        AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(control.ShowStatusBar, context));
+        html.Append('>');
+        if (ResolveStaticValue(control.ShowToolbar, context))
+        {
+            var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;");
+            AppendColorStyle(style, "background-color", control.ToolbarBackgroundColor);
+            html.Append("<div class=\"hmi-parameter-toolbar\" role=\"toolbar\" style=\"").Append(style).Append("\">Toolbar</div>");
+        }
+        if (control.Filter is not null)
+            html.Append("<div class=\"hmi-parameter-filter\">Filter: ").Append(WebUtility.HtmlEncode(ResolveStaticValue(control.Filter, context))).Append("</div>");
+        AppendParameterView(html, control, context);
+        if (ResolveStaticValue(control.ShowStatusBar, context))
+        {
+            var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;");
+            AppendColorStyle(style, "background-color", control.StatusBarBackgroundColor);
+            AppendColorStyle(style, "color", control.StatusBarForegroundColor);
+            html.Append("<div class=\"hmi-parameter-status-bar\" role=\"status\" style=\"").Append(style).Append("\">Status</div>");
+        }
+        html.Append("</div>");
+    }
+
+    private static void AppendParameterView(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    {
+        var columns = control.ColumnDefinitions.Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context)).ToArray();
+        var style = new StringBuilder("flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;");
+        if (columns.Length > 0) style.Append("display: block; overflow: auto;");
+        var width = control.GridLineWidth is null ? 1d : ResolveStaticValue(control.GridLineWidth, context);
+        style.Append("border-top-width: ").Append(ToCss(IsFinite(width) && width >= 0 ? width : 1d)).Append("px;");
+        AppendColorStyle(style, "background-color", control.ContentBackgroundColor);
+        AppendColorStyle(style, "color", control.ContentForegroundColor);
+        AppendColorStyle(style, "border-top-color", control.GridLineColor);
+        html.Append("<div class=\"hmi-parameter-details\" style=\"").Append(style).Append("\">");
+        if (columns.Length > 0) AppendParameterColumns(html, control, columns, context);
+        else html.Append("Parameter data not loaded");
+        html.Append("</div>");
+    }
+
+    private static void AppendParameterColumns(StringBuilder html, HmiParameterControlBase control,
         HmiParameterColumn[] columns, HmiHtmlConvertContext context)
     {
         html.Append("<table class=\"hmi-parameter-table\" style=\"width: 100%; table-layout: fixed; border-collapse: collapse;\"><colgroup>");
@@ -109,7 +145,7 @@ public partial class HmiScreenToHtmlConverter
             .Append("\">Parameter data not loaded</td></tr></tbody></table>");
     }
 
-    private static string CreateParameterCellLayoutStyle(HmiDetailedParameterControl control, HmiHtmlConvertContext context)
+    private static string CreateParameterCellLayoutStyle(HmiParameterControlBase control, HmiHtmlConvertContext context)
     {
         var style = new StringBuilder();
         void AppendDimension(string css, HmiProperty<double>? property)

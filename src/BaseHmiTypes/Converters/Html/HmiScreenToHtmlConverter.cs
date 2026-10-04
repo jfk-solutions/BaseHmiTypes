@@ -314,6 +314,9 @@ public partial class HmiScreenToHtmlConverter
             case HmiDataGridControl dataGridControl:
                 AppendDataGridControl(html, dataGridControl, context);
                 break;
+            case HmiOverviewParameterControl overviewControl:
+                AppendOverviewParameterControl(html, overviewControl, context);
+                break;
             case HmiDetailedParameterControl parameterControl:
                 AppendDetailedParameterControl(html, parameterControl, context);
                 break;
