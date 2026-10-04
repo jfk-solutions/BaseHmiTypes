@@ -42,6 +42,8 @@ public class HmiAlarmControl : HmiControlWindowBase
     public IList<HmiAlarmColumnSet> ColumnSets { get; } = new List<HmiAlarmColumnSet>();
     public string? ActiveColumnSet { get; set; }
 
+    public HmiProperty<bool>? UseProjectSettings { get; set; }
+
     public HmiProperty<bool>? ShowHeader { get; set; }
 
     public HmiProperty<bool>? ShowTitle { get; set; }

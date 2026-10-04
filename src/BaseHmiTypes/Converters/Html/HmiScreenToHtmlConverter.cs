@@ -3003,6 +3003,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-cell-padding-left", ResolvePropertyPreview(alarmControl.CellPaddingLeft, context));
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmControl.NumberOfRows, context));
         AppendAttribute(html, "data-lines-per-alarm", ResolvePropertyPreview(alarmControl.LinesPerAlarm, context));
+        AppendAttribute(html, "data-use-project-settings", ResolvePropertyPreview(alarmControl.UseProjectSettings, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(alarmControl.WordWrap, context));
         AppendAttribute(html, "data-wrap-around", ResolvePropertyPreview(alarmControl.WrapAround, context));
         AppendAttribute(html, "data-show-waiting-message", ResolvePropertyPreview(alarmControl.ShowWaitingMessage, context));
@@ -3076,6 +3077,9 @@ public partial class HmiScreenToHtmlConverter
                 html.Append('"');
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-column-source-type", column.SourceType);
+                AppendAttribute(html, "data-decimal-places", ResolvePropertyPreview(column.DecimalPlaces, context));
+                AppendAttribute(html, "data-automatic-decimal-places", ResolvePropertyPreview(column.AutomaticDecimalPlaces, context));
+                AppendAttribute(html, "data-exponential-format", ResolvePropertyPreview(column.ExponentialFormat, context));
                 AppendAttribute(html, "data-time-format", column.TimeAndDateFormat);
                 AppendAttribute(html, "data-symbol", column.Symbol);
                 html.Append('>')
