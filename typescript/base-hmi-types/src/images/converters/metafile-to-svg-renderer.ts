@@ -304,32 +304,21 @@ export class MetafileToSvgRenderer {
         case EMR.ELLIPSE:
           elements.push(ellipseElement(...transformRect(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12)), state));
           break;
-        case EMR.POLYGON16: {
-          const points = readEmfPoints16(bytes, dataOffset).map(([x, y]) => hasEmfPlusDrawing ? transformGdiPointWithEmfPlusTransform(state, emfPlusState.transform, x, y) : transformPoint(state, x, y));
-          if (!hasEmfPlusDrawing || !isTallFallbackDuplicate(points)) {
-            const element = polyElement(points, true, state);
-            if (hasEmfPlusDrawing)
-              elements.unshift(element);
-            else
-              elements.push(element);
-          }
-          break;
-        }
-        case EMR.POLYLINE16: {
-          const element = polyElement(readEmfPoints16(bytes, dataOffset).map(([x, y]) => hasEmfPlusDrawing ? transformGdiPointWithEmfPlusTransform(state, emfPlusState.transform, x, y) : transformPoint(state, x, y)), false, state);
-          if (hasEmfPlusDrawing)
-            elements.unshift(element);
-          else
-            elements.push(element);
-          break;
-        }
+        case EMR.POLYGON16:
+        case EMR.POLYLINE16:
         case EMR.POLYGON:
         case EMR.POLYLINE: {
-          const points = readEmfPointArray32(bytes, record).map(([x, y]) => transformPoint(state, x, y));
+          const shortPoints = record.type === EMR.POLYGON16 || record.type === EMR.POLYLINE16;
+          const plusFallback = shortPoints && hasEmfPlusDrawing;
+          const points = readEmfPointArray32(bytes, record, shortPoints).map(([x, y]) => plusFallback ? transformGdiPointWithEmfPlusTransform(state, emfPlusState.transform, x, y) : transformPoint(state, x, y));
           if (points.length < 2) break;
-          const closed = record.type === EMR.POLYGON;
+          const closed = record.type === EMR.POLYGON || record.type === EMR.POLYGON16;
           if (state.currentPath === undefined) {
-            elements.push(polyElement(points, closed, state));
+            // Preserve established EMF+ fallback ordering and duplicate suppression.
+            if (plusFallback && closed && isTallFallbackDuplicate(points)) break;
+            const element = polyElement(points, closed, state);
+            if (plusFallback) elements.unshift(element);
+            else elements.push(element);
           } else {
             // Independent figures leave the DC current position unchanged.
             state.currentPath.push(`M ${points[0][0]} ${points[0][1]}`);
