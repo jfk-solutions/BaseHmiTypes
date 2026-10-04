@@ -3027,6 +3027,8 @@ public class HmiScreenToHtmlConverter
                 AppendAttribute(html, "src", imageUri);
                 AppendAttribute(html, "alt", selectedState.Name ?? selectedState.ImageName ?? selectedState.Image.ImageName ?? symbolicIoField.Name);
                 AppendAttribute(html, "class", "hmi-symbolic-image-base");
+                if (selectedState.ImageBackgroundTransparent == true && selectedState.ImageBackgroundColor is { } baseKey)
+                    AppendAttribute(html, "data-hmi-image-color-key", $"{baseKey.Red},{baseKey.Green},{baseKey.Blue}");
                 AppendAttribute(html, "style", imageStyle);
                 html.Append('>');
             }
@@ -3038,6 +3040,8 @@ public class HmiScreenToHtmlConverter
                 AppendAttribute(html, "src", alternateImageUri);
                 AppendAttribute(html, "alt", selectedState.Name ?? selectedState.AlternateImageName ?? selectedState.AlternateImage?.ImageName ?? symbolicIoField.Name);
                 AppendAttribute(html, "class", "hmi-symbolic-image-alternate");
+                if (selectedState.AlternateImageBackgroundTransparent == true && selectedState.AlternateImageBackgroundColor is { } flashKey)
+                    AppendAttribute(html, "data-hmi-image-color-key", $"{flashKey.Red},{flashKey.Green},{flashKey.Blue}");
                 AppendAttribute(html, "style", alternateStyle);
                 html.Append('>');
             }
