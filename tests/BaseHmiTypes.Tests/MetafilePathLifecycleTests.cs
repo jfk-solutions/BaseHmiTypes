@@ -43,6 +43,10 @@ public class MetafilePathLifecycleTests
     }
     [TestMethod] public void RepeatedAbortWithoutPathDoesNotSuppressDrawing()
         =>Assert.AreEqual("line",Svg(Record(68),Record(68),Record(27,5,10),Record(54,35,10)).Elements().Single().Name.LocalName);
+    [TestMethod] public void RestoreDcRestoresSelectedPathSnapshot()
+        =>Assert.AreEqual("M 5 10 L 35 10",Svg(Record(59),Record(27,5,10),Record(54,35,10),Record(60),Record(33),Record(59),Record(27,8,8),Record(54,20,20),Record(60),Record(34,-1),Record(64,0,0,39,39)).Elements().Single().Attribute("d")?.Value);
+    [TestMethod] public void RestoreDcRestoresOpenPathConstructionSnapshot()
+        =>Assert.AreEqual("M 5 10 L 35 10",Svg(Record(59),Record(27,5,10),Record(54,35,10),Record(33),Record(54,35,30),Record(34,-1),Record(60),Record(64,0,0,39,39)).Elements().Single().Attribute("d")?.Value);
     [TestMethod] [DataRow(false)] [DataRow(true)]
     public async Task HtmlReflectsLifecycleWithoutChangingSource(bool abort)
     {
