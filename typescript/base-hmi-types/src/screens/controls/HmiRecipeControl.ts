@@ -1,4 +1,4 @@
-import { HmiColor, HmiHorizontalAlignment, HmiProperty } from "../base.js";
+import { HmiColor, HmiFont, HmiHorizontalAlignment, HmiProperty } from "../base.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiRecipeColumn } from "./HmiRecipeColumn.js";
@@ -19,6 +19,9 @@ export class HmiRecipeControl extends HmiControlWindowBase {
   showGridLines?: HmiProperty<boolean>;
   gridLineColor?: HmiProperty<HmiColor>;
   showStatusBar?: HmiProperty<boolean>;
+  statusBarFont?: HmiFont;
+  showNumbers?: HmiProperty<boolean>;
+  alternatingRowBackgroundColor?: HmiProperty<HmiColor>;
   showFooter?: HmiProperty<boolean>;
   linesPerItem?: HmiProperty<number>;
   wordWrap?: HmiProperty<boolean>;
