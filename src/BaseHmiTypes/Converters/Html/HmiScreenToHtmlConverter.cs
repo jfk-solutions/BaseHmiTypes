@@ -3090,6 +3090,7 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-column-source-type", column.SourceType);
                 AppendAttribute(html, "data-decimal-places", ResolvePropertyPreview(column.DecimalPlaces, context));
+                AppendAttribute(html, "data-leading-zeros", ResolvePropertyPreview(column.LeadingZeros, context));
                 AppendAttribute(html, "data-automatic-decimal-places", ResolvePropertyPreview(column.AutomaticDecimalPlaces, context));
                 AppendAttribute(html, "data-exponential-format", ResolvePropertyPreview(column.ExponentialFormat, context));
                 AppendAttribute(html, "data-time-format", column.TimeAndDateFormat);
