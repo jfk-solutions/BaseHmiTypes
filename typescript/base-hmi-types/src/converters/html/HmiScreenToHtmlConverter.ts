@@ -9,6 +9,7 @@ import { MetafileToSvgRenderer } from "../../images/converters/metafile-to-svg-r
 import { SymbolLibraryMetafileColorizer } from "../../images/converters/symbol-library-metafile-colorizer.js";
 import { HmiSymbolLibraryFillColorMode } from "../../screens/base/HmiSymbolLibraryEnums.js";
 import { SymbolLibraryMetafileTransformer } from "../../images/converters/symbol-library-metafile-transformer.js";
+import { tryOverrideSvgImageAspectRatio } from "../../images/converters/svg-image-aspect-ratio.js";
 import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js";
 import { HmiColor, hmiColorFromArgb } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
@@ -3904,8 +3905,22 @@ function appendImage(
     html.push("></div>");
     return;
   }
+  let imageLayoutStyle: string | undefined;
+  if (item instanceof HmiGraphicView && (item.imageScaled !== undefined || item.imageKeepAspectRatio !== undefined || item.imageHorizontalAlignment !== undefined || item.imageVerticalAlignment !== undefined)) {
+    const keep = getStaticValue(item.imageKeepAspectRatio) ?? false, scaled = getStaticValue(item.imageScaled) ?? true;
+    const horizontal = getStaticValue(item.imageHorizontalAlignment) ?? HmiHorizontalAlignment.Center;
+    const vertical = getStaticValue(item.imageVerticalAlignment) ?? HmiVerticalAlignment.Center;
+    const x = horizontal === HmiHorizontalAlignment.Left ? 0 : horizontal === HmiHorizontalAlignment.Right ? 100 : 50;
+    const y = vertical === HmiVerticalAlignment.Top ? 0 : vertical === HmiVerticalAlignment.Bottom ? 100 : 50;
+    imageLayoutStyle = `object-fit: ${!scaled ? 'none' : keep ? 'contain' : 'fill'}; object-position: ${x}% ${y}%;`;
+    if (item.imageKeepAspectRatio !== undefined) {
+      const normalized = tryOverrideSvgImageAspectRatio(uri, keep);
+      if (normalized === undefined) { appendDiv(html, item, context.options.unsupportedItemPlaceholderCssClass, 'Graphic image', context); return; }
+      uri = normalized;
+    }
+  }
   html.push("<img");
-  appendCommonAttributes(html, item, context);
+  appendCommonAttributes(html, item, context, undefined, imageLayoutStyle);
   appendAttribute(html, "src", uri);
   if (item instanceof HmiGraphicView) appendGraphicImageColorKey(html, item);
   html.push(">");
