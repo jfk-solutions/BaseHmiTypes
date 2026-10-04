@@ -11,6 +11,21 @@ public class HmiClock : HmiWidgetBase
 
     public HmiProperty<bool>? Analog { get; set; }
 
+    public HmiProperty<bool>? ShowTicks { get; set; }
+    public HmiProperty<HmiColor>? TicksColor { get; set; }
+    public HmiProperty<HmiColor>? HandFillColor { get; set; }
+    public HmiProperty<bool>? OutlinedHands { get; set; }
+
+    /// <summary>Hand length as a percentage of the dial radius. Preview defaults: 50, 70, 80.</summary>
+    public HmiProperty<double>? HourHandLengthPercent { get; set; }
+    public HmiProperty<double>? MinuteHandLengthPercent { get; set; }
+    public HmiProperty<double>? SecondHandLengthPercent { get; set; }
+
+    /// <summary>Hand half-width as a percentage of its length. Preview defaults: 10, 8, 2.</summary>
+    public HmiProperty<double>? HourHandHalfWidthPercent { get; set; }
+    public HmiProperty<double>? MinuteHandHalfWidthPercent { get; set; }
+    public HmiProperty<double>? SecondHandHalfWidthPercent { get; set; }
+
     public HmiProperty<int>? NumberStyle { get; set; }
 
     public HmiProperty<bool>? ShowDate { get; set; }

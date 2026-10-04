@@ -2509,6 +2509,11 @@ public partial class HmiScreenToHtmlConverter
 
     private static void AppendClock(StringBuilder html, HmiClock clock, HmiHtmlConvertContext context)
     {
+        if (clock.Analog is not null && ResolveStaticValue(clock.Analog, context))
+        {
+            AppendAnalogClockPreview(html, clock, context);
+            return;
+        }
         var showDate = clock.ShowDate is not null && ResolveStaticValue(clock.ShowDate, context);
         var showTime = clock.ShowTime is null || ResolveStaticValue(clock.ShowTime, context);
         var showHours = clock.ShowHours is null || ResolveStaticValue(clock.ShowHours, context);
