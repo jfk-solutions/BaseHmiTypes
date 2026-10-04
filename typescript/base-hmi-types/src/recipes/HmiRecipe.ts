@@ -1,6 +1,7 @@
 import { HmiMultilingualText } from "../common/HmiMultilingualText.js";
 
 export class HmiRecipe {
+  classicConfiguration?: HmiClassicRecipeConfiguration;
   sourceId?: number;
   sourceDisplayName?: string;
   storagePath?: string;
@@ -12,6 +13,28 @@ export class HmiRecipe {
   lastModified?: Date;
   readonly parameters: HmiRecipeParameter[] = [];
   readonly dataSets: HmiRecipeDataSet[] = [];
+}
+
+export enum HmiRecipeCommunicationType { Tags = 0, NoCommunication = 1, RawDataTag = 2 }
+export enum HmiRecipeSizeType { Limited = 0, Unlimited = 1 }
+export enum HmiRecipeStorageMedia { Database = 0, File = 1, Memory = 2 }
+
+export class HmiClassicRecipeConfiguration {
+  sourceNumber?: number;
+  maximumRecordCount?: number;
+  recipeVersion?: string;
+  communicationType?: HmiRecipeCommunicationType;
+  sizeType?: HmiRecipeSizeType;
+  storageMedia?: HmiRecipeStorageMedia;
+  lastModificationUsed?: boolean;
+  lastUserUsed?: boolean;
+  logUserAction?: boolean;
+  offline?: boolean;
+  signSaving?: boolean;
+  signTransferring?: boolean;
+  syncTags?: boolean;
+  syncTransfer?: boolean;
+  synchronized?: boolean;
 }
 
 export class HmiRecipeReference {

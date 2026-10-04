@@ -31,6 +31,33 @@ public sealed class HmiRecipeToHtmlConverter
             AppendConfiguration(html, "Storage path", recipe.StoragePath);
             html.Append("</dl>");
         }
+        if (recipe.ClassicConfiguration is { } configuration)
+        {
+            var values = new (string Label, string? Value)[]
+            {
+                ("Recipe number", configuration.SourceNumber?.ToString(CultureInfo.InvariantCulture)),
+                ("Maximum record count", configuration.MaximumRecordCount?.ToString(CultureInfo.InvariantCulture)),
+                ("Recipe version", configuration.RecipeVersion),
+                ("Communication type", configuration.CommunicationType?.ToString()),
+                ("Size type", configuration.SizeType?.ToString()),
+                ("Storage media", configuration.StorageMedia?.ToString()),
+                ("Last modification used", FormatFlag(configuration.LastModificationUsed)),
+                ("Last user used", FormatFlag(configuration.LastUserUsed)),
+                ("Log user action", FormatFlag(configuration.LogUserAction)),
+                ("Offline", FormatFlag(configuration.Offline)),
+                ("Sign saving", FormatFlag(configuration.SignSaving)),
+                ("Sign transferring", FormatFlag(configuration.SignTransferring)),
+                ("Synchronize tags", FormatFlag(configuration.SyncTags)),
+                ("Synchronize transfer", FormatFlag(configuration.SyncTransfer)),
+                ("Synchronized", FormatFlag(configuration.Synchronized)),
+            }.Where(pair => pair.Value != null).ToArray();
+            if (values.Length > 0)
+            {
+                html.Append("<h2>Classic configuration</h2><dl>");
+                foreach (var pair in values) AppendConfiguration(html, pair.Label, pair.Value);
+                html.Append("</dl>");
+            }
+        }
         if (recipe.References.Count > 0)
         {
             html.Append("<h2>References</h2><table><thead><tr><th scope=\"col\">Role</th><th scope=\"col\">Source reference</th><th scope=\"col\">Name</th></tr></thead><tbody>");

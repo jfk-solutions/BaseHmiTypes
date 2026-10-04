@@ -4,6 +4,7 @@ namespace BaseHmiTypes.Recipes;
 
 public sealed class HmiRecipe : IHmiObject
 {
+    public HmiClassicRecipeConfiguration? ClassicConfiguration { get; set; }
     public int? SourceId { get; set; }
     public string? SourceDisplayName { get; set; }
     public string? StoragePath { get; set; }
@@ -20,6 +21,29 @@ public sealed class HmiRecipe : IHmiObject
     public IList<HmiRecipeParameter> Parameters { get; } = new List<HmiRecipeParameter>();
 
     public IList<HmiRecipeDataSet> DataSets { get; } = new List<HmiRecipeDataSet>();
+}
+
+public enum HmiRecipeCommunicationType { Tags = 0, NoCommunication = 1, RawDataTag = 2 }
+public enum HmiRecipeSizeType { Limited = 0, Unlimited = 1 }
+public enum HmiRecipeStorageMedia { Database = 0, File = 1, Memory = 2 }
+
+public sealed class HmiClassicRecipeConfiguration
+{
+    public int? SourceNumber { get; set; }
+    public int? MaximumRecordCount { get; set; }
+    public string? RecipeVersion { get; set; }
+    public HmiRecipeCommunicationType? CommunicationType { get; set; }
+    public HmiRecipeSizeType? SizeType { get; set; }
+    public HmiRecipeStorageMedia? StorageMedia { get; set; }
+    public bool? LastModificationUsed { get; set; }
+    public bool? LastUserUsed { get; set; }
+    public bool? LogUserAction { get; set; }
+    public bool? Offline { get; set; }
+    public bool? SignSaving { get; set; }
+    public bool? SignTransferring { get; set; }
+    public bool? SyncTags { get; set; }
+    public bool? SyncTransfer { get; set; }
+    public bool? Synchronized { get; set; }
 }
 
 public sealed class HmiRecipeReference

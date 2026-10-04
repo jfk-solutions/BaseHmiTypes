@@ -1,4 +1,4 @@
-import { HmiRecipe } from "../../recipes/HmiRecipe.js";
+import { HmiRecipe, HmiRecipeCommunicationType, HmiRecipeSizeType, HmiRecipeStorageMedia } from "../../recipes/HmiRecipe.js";
 
 /** Renders stored engineering recipe definitions and records as a standalone HTML document. */
 export class HmiRecipeToHtmlConverter {
@@ -16,6 +16,31 @@ export class HmiRecipeToHtmlConverter {
       appendConfiguration(html, "Source display name", recipe.sourceDisplayName);
       appendConfiguration(html, "Storage path", recipe.storagePath);
       html.push("</dl>");
+    }
+    if (recipe.classicConfiguration) {
+      const configuration = recipe.classicConfiguration;
+      const values: [string, string | undefined][] = [
+        ["Recipe number", configuration.sourceNumber?.toString()],
+        ["Maximum record count", configuration.maximumRecordCount?.toString()],
+        ["Recipe version", configuration.recipeVersion],
+        ["Communication type", configuration.communicationType === undefined ? undefined : HmiRecipeCommunicationType[configuration.communicationType] ?? String(configuration.communicationType)],
+        ["Size type", configuration.sizeType === undefined ? undefined : HmiRecipeSizeType[configuration.sizeType] ?? String(configuration.sizeType)],
+        ["Storage media", configuration.storageMedia === undefined ? undefined : HmiRecipeStorageMedia[configuration.storageMedia] ?? String(configuration.storageMedia)],
+        ["Last modification used", formatFlag(configuration.lastModificationUsed)],
+        ["Last user used", formatFlag(configuration.lastUserUsed)],
+        ["Log user action", formatFlag(configuration.logUserAction)],
+        ["Offline", formatFlag(configuration.offline)],
+        ["Sign saving", formatFlag(configuration.signSaving)],
+        ["Sign transferring", formatFlag(configuration.signTransferring)],
+        ["Synchronize tags", formatFlag(configuration.syncTags)],
+        ["Synchronize transfer", formatFlag(configuration.syncTransfer)],
+        ["Synchronized", formatFlag(configuration.synchronized)],
+      ].filter(pair => pair[1] !== undefined) as [string, string][];
+      if (values.length > 0) {
+        html.push("<h2>Classic configuration</h2><dl>");
+        for (const [label, value] of values) appendConfiguration(html, label, value);
+        html.push("</dl>");
+      }
     }
     if (recipe.references.size > 0) {
       html.push("<h2>References</h2><table><thead><tr><th scope=\"col\">Role</th><th scope=\"col\">Source reference</th><th scope=\"col\">Name</th></tr></thead><tbody>");
