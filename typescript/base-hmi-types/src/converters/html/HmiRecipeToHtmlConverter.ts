@@ -91,6 +91,24 @@ export class HmiRecipeToHtmlConverter {
       }
       html.push('</tbody></table></div>');
     }
+    if (recipe.sourcePlcDeclarations.length > 0) {
+      html.push('<h2>Source PLC composite declarations</h2><div class="table-scroll"><table><thead><tr><th scope="col">Declaration</th><th scope="col">Data type</th><th scope="col">Start value</th><th scope="col">Type default</th><th scope="col">Symbolic constant</th><th scope="col">Explicit start value</th></tr></thead><tbody>');
+      for (const declaration of recipe.sourcePlcDeclarations) {
+        html.push('<tr><th scope="row">', encode(declaration.name), '</th>');
+        for (const value of [declaration.dataType, declaration.startValue, declaration.typeDefaultStartValue, declaration.startValueConstantName, formatFlag(declaration.hasExplicitStartValue)])
+          html.push('<td data-value-state="', value === undefined ? "missing" : "present", '">', encode(value ?? "Missing"), '</td>');
+        html.push('</tr>');
+      }
+      html.push('</tbody></table></div>');
+    }
+    if (recipe.sourcePlcDeclarations.some(declaration => declaration.subelementValues.size > 0 || declaration.subelementValueConstantNames.size > 0 || declaration.typeDefaultSubelementValues.size > 0)) {
+      html.push('<h2>Source PLC sparse values</h2><div class="table-scroll"><table><thead><tr><th scope="col">Declaration</th><th scope="col">Kind</th><th scope="col">Source key</th><th scope="col">Value</th></tr></thead><tbody>');
+      for (const declaration of recipe.sourcePlcDeclarations)
+        for (const [kind, values] of [["Explicit value", declaration.subelementValues], ["Symbolic constant", declaration.subelementValueConstantNames], ["Type default", declaration.typeDefaultSubelementValues]] as const)
+          for (const [key, value] of values)
+            html.push('<tr><th scope="row">', encode(declaration.name), '</th><td>', kind, '</td><td>', encode(key), '</td><td data-value-state="present">', encode(value), '</td></tr>');
+      html.push('</tbody></table></div>');
+    }
     html.push("<h2>Stored records</h2>");
     if (recipe.dataSets.length === 0) html.push("<p>No stored records.</p>");
     else {

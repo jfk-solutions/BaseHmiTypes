@@ -13,6 +13,7 @@ export class HmiRecipe {
   lastModified?: Date;
   readonly parameters: HmiRecipeParameter[] = [];
   readonly dataSets: HmiRecipeDataSet[] = [];
+  readonly sourcePlcDeclarations: HmiRecipePlcDeclaration[] = [];
 }
 
 export enum HmiRecipeCommunicationType { Tags = 0, NoCommunication = 1, RawDataTag = 2 }
@@ -70,6 +71,18 @@ export class HmiRecipeParameter {
   minimumValue?: string;
   maximumValue?: string;
   comment?: string;
+}
+
+export class HmiRecipePlcDeclaration {
+  name?: string;
+  dataType?: string;
+  startValue?: string;
+  typeDefaultStartValue?: string;
+  startValueConstantName?: string;
+  hasExplicitStartValue?: boolean;
+  readonly subelementValues = new Map<string, string>();
+  readonly subelementValueConstantNames = new Map<string, string>();
+  readonly typeDefaultSubelementValues = new Map<string, string>();
 }
 
 export class HmiRecipeDataSet {
