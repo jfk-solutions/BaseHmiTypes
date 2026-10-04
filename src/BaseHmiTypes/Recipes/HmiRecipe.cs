@@ -62,6 +62,7 @@ public sealed class HmiRecipeParameter : IHmiObject
     public string? SourcePlcStartValueConstantName { get; set; }
     public bool? SourcePlcHasExplicitStartValue { get; set; }
     public HmiMultilingualText? SourcePlcComment { get; set; }
+    public HmiMultilingualText? SourceTagComment { get; set; }
     public string? SourceTagStartValue { get; set; }
     public string? SourceTagSubstituteValue { get; set; }
     public int? SourceTagSubstituteValueUsage { get; set; }

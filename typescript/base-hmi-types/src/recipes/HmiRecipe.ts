@@ -51,6 +51,7 @@ export class HmiRecipeParameter {
   sourcePlcStartValueConstantName?: string;
   sourcePlcHasExplicitStartValue?: boolean;
   sourcePlcComment?: HmiMultilingualText;
+  sourceTagComment?: HmiMultilingualText;
   sourceTagStartValue?: string;
   sourceTagSubstituteValue?: string;
   sourceTagSubstituteValueUsage?: number;

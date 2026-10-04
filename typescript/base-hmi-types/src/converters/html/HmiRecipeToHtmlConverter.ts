@@ -55,7 +55,7 @@ export class HmiRecipeToHtmlConverter {
     for (const field of recipe.parameters) {
       html.push("<tr>");
       for (const value of [field.sourceIndex?.toString(), field.name, field.tag, field.dataType, field.unit,
-        field.minimumValue, field.maximumValue, field.sourcePlcComment?.getText(cultureLcid) ?? field.comment, field.sourceElementId?.toString(), field.defaultValue,
+        field.minimumValue, field.maximumValue, field.sourceTagComment?.getText(cultureLcid) ?? field.sourcePlcComment?.getText(cultureLcid) ?? field.comment, field.sourceElementId?.toString(), field.defaultValue,
         field.decimalPlaces?.toString(), field.maximumLength?.toString(), field.tagArrayCount?.toString(),
         formatFlag(field.required), formatFlag(field.unique), formatFlag(field.indexed),
         field.displayName?.getText(cultureLcid), field.infoText?.getText(cultureLcid), formatFlag(field.triggerRedraw)]) html.push("<td>", encode(value), "</td>");
