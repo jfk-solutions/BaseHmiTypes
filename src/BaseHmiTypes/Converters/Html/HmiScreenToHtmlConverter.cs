@@ -4238,7 +4238,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "type-name", trendControl is HmiFunctionTrendControl ? "Function trend control" : "Trend control");
         AppendStaticAttribute(html, "chart-style", trendControl is HmiFunctionTrendControl
             ? HmiProperty.Static(HmiTrendChartStyle.XYPlot) : trendControl.ChartStyle);
-        AppendAttribute(html, "chart-title", trendControl.ChartTitleText?.GetText(context.CultureInfo) ?? trendControl.ChartTitle);
+        AppendAttribute(html, "chart-title", trendControl.ChartTitleText?.GetText(context.CultureInfo) ?? trendControl.ChartTitle, preserveEmpty: true);
         AppendStaticAttribute(html, "window-background-color", trendControl.WindowBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.DisplayChartTitle);
         AppendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.ShowToolbar);
@@ -5426,11 +5426,11 @@ public partial class HmiScreenToHtmlConverter
         return null;
     }
 
-    private static void AppendAttribute(StringBuilder html, string? name, string? value)
+    private static void AppendAttribute(StringBuilder html, string? name, string? value, bool preserveEmpty = false)
     {
         if (string.IsNullOrWhiteSpace(name))
             return;
-        if (string.IsNullOrWhiteSpace(value))
+        if (value is null || (!preserveEmpty && string.IsNullOrWhiteSpace(value)))
             return;
 
         html.Append(' ')

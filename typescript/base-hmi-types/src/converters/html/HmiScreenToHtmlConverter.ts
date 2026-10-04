@@ -4062,7 +4062,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendAttribute(html, "type-name", trendControl instanceof HmiFunctionTrendControl ? "Function trend control" : "Trend control");
   appendStaticAttribute(html, "chart-style", trendControl instanceof HmiFunctionTrendControl
     ? staticProperty(HmiTrendChartStyle.XYPlot) : trendControl.chartStyle);
-  appendAttribute(html, "chart-title", trendControl.chartTitleText?.getText(context.options.cultureLcid) ?? trendControl.chartTitle);
+  appendAttribute(html, "chart-title", trendControl.chartTitleText?.getText(context.options.cultureLcid) ?? trendControl.chartTitle, true);
   appendStaticAttribute(html, "window-background-color", trendControl.windowBackgroundColor);
   appendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.displayChartTitle);
   appendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.showToolbar);
@@ -5105,8 +5105,8 @@ function appendGlobalStyle(html: string[]): void {
   html.push("</style>");
 }
 
-function appendAttribute(html: string[], name: string | undefined, value: string | undefined): void {
-  if (!name?.trim() || !value?.trim()) {
+function appendAttribute(html: string[], name: string | undefined, value: string | undefined, preserveEmpty = false): void {
+  if (!name?.trim() || value === undefined || (!preserveEmpty && !value.trim())) {
     return;
   }
   html.push(` ${name}="${escapeHtml(value)}"`);
