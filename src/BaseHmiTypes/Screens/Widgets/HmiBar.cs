@@ -45,7 +45,9 @@ public class HmiBar : HmiScaleWidgetBase
 public enum HmiBarFillStyle
 {
     Solid,
-    Gradient
+    Gradient,
+    /// <summary>Paint no value-region color; retain track, scale, thresholds, arrows and meter value.</summary>
+    Transparent
 }
 
 /// <summary>Range-normalized mappings, not logarithms or powers of the raw process value.</summary>

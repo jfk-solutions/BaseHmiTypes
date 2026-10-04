@@ -2061,7 +2061,8 @@ public class HmiScreenToHtmlConverter
             context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.BackgroundColor), bar.BackgroundColor)?.StaticValue is HmiColor ||
             GetColorGradient(bar) is not null)
             AppendAttribute(html, "data-hmi-bar-track", "true");
-        if (context.EffectiveProperties.Resolve(bar, nameof(HmiBar.FillColor), bar.FillColor) is not null ||
+        if (context.EffectiveProperties.TryGetStaticValue(bar, nameof(HmiBar.FillStyle), bar.FillStyle, out var fillStyle) && fillStyle == HmiBarFillStyle.Transparent ||
+            context.EffectiveProperties.Resolve(bar, nameof(HmiBar.FillColor), bar.FillColor) is not null ||
             context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) is not null ||
             GetBarThresholdFillColor(bar, context) is not null ||
             (bar.Enabled is not null && !ResolveStaticValue(bar.Enabled, context) &&
@@ -2072,6 +2073,12 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendBarFillOverrideStyle(StringBuilder style, HmiBar bar, HmiHtmlConvertContext context)
     {
+        if (context.EffectiveProperties.TryGetStaticValue(bar, nameof(HmiBar.FillStyle), bar.FillStyle, out var fillStyle) && fillStyle == HmiBarFillStyle.Transparent)
+        {
+            // Native transparent brushes remain transparent even when region colors change.
+            style.Append("color: transparent !important;");
+            return;
+        }
         var explicitColor = context.EffectiveProperties.Resolve(bar, nameof(HmiBar.FillColor), bar.FillColor);
         if (explicitColor is null) return;
         var disabledColor = !ResolveStaticValue(bar.Enabled, context) && ResolveStaticValue(bar.UseDisabledForegroundColor, context)
@@ -4573,6 +4580,7 @@ public class HmiScreenToHtmlConverter
             TrendWindowName = axis.TrendWindowName,
             MinimumValue = axis.MinimumValue, MaximumValue = axis.MaximumValue,
             DecimalPlaces = axis.DecimalPlaces, AxisScaleType = axis.ScaleType,
+            ValueAxisDivisionCount = axis.DivisionCount, ValueAxisAutoScale = axis.AutoScale,
             ExponentialFormat = axis.ExponentialFormat, AutoDecimalPlaces = axis.AutoDecimalPlaces,
             ValueAxisVisible = axis.Visible, ValueAxisColor = axis.Color,
             ValueAxisInTrendColor = axis.InTrendColor, ValueAxisAlignment = axis.Alignment
@@ -4616,6 +4624,8 @@ public class HmiScreenToHtmlConverter
             AddTrendJsonBoolean(properties, "exponentialFormat", pen.ExponentialFormat?.StaticValue);
             AddTrendJsonBoolean(properties, "autoDecimalPlaces", pen.AutoDecimalPlaces?.StaticValue);
             AddTrendJsonNumber(properties, "decimalPlaces", pen.DecimalPlaces?.StaticValue);
+            AddTrendJsonNumber(properties, "valueAxisDivisionCount", pen.ValueAxisDivisionCount?.StaticValue);
+            AddTrendJsonBoolean(properties, "valueAxisAutoScale", pen.ValueAxisAutoScale?.StaticValue);
             AddTrendJsonString(properties, "valueAxisName", pen.ValueAxisName);
             AddTrendJsonBoolean(properties, "valueAxisVisible", pen.ValueAxisVisible?.StaticValue);
             AddTrendJsonString(properties, "valueAxisColor", pen.ValueAxisColor?.StaticValue is HmiColor valueAxisColor ? ToCss(valueAxisColor) : null);
