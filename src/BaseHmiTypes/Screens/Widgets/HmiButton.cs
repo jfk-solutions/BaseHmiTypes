@@ -28,4 +28,7 @@ public class HmiButton : HmiButtonBase
 
     /// <summary>Positive pixel offset on both axes for pressed caption and non-stretched image snapshots. Omitted/zero disables it; DownStateSameAsUp suppresses it.</summary>
     public HmiProperty<double>? PressedContentOffset { get; set; }
+
+    /// <summary>With overlay content, reserve the image's horizontal extent when image and caption share a left/right alignment. Other alignments retain overlapping layers.</summary>
+    public HmiProperty<bool>? AvoidImageCaptionOverlap { get; set; }
 }
