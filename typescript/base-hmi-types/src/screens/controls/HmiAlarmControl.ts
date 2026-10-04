@@ -3,6 +3,7 @@ import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiAlarmColumn } from "./HmiAlarmColumn.js";
+import { HmiAlarmColumnSet } from "./HmiAlarmColumnSet.js";
 import { HmiAlarmConditionPresentation } from "./HmiAlarmConditionPresentation.js";
 import { HmiAlarmSelectedIndicator } from "./HmiAlarmSelectedIndicator.js";
 import { HmiAlarmListMode } from "./HmiAlarmListMode.js";
@@ -41,6 +42,8 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   alarmIdentifier?: HmiProperty<number>;
   readonly conditions: HmiAlarmConditionPresentation[] = [];
   readonly columnDefinitions: HmiAlarmColumn[] = [];
+  readonly columnSets: HmiAlarmColumnSet[] = [];
+  activeColumnSet?: string;
   readonly toolbarButtons: HmiAlarmToolbarButton[] = [];
   showHeader?: HmiProperty<boolean>;
   showTitle?: HmiProperty<boolean>;

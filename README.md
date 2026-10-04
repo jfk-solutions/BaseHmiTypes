@@ -77,6 +77,17 @@ the project provider, including descriptors found below device nodes. A reader
 may qualify device-local table IDs while retaining globally unique screen IDs.
 The TypeScript model mirrors these types and uses camel-case properties.
 
+## Alarm control collections
+
+`HmiAlarmControl.ColumnSets` (`columnSets` in TypeScript) preserves named column
+layouts. `ActiveColumnSet` selects the preview layout; `ColumnDefinitions` remains
+the fallback for callers using a single layout. Columns carry localized captions,
+alignment, visibility, order, width, and automatic sizing. HTML also previews
+configured toolbar buttons and status panels with localized tooltips and text.
+Toolbar buttons are disabled preview elements; their configured enabled state is
+retained as metadata. Native source names remain available when semantic action
+or icon mappings are unknown.
+
 ## Recipe HTML export
 
 `HmiRecipeToHtmlConverter` renders an `HmiRecipe` as a standalone HTML document.

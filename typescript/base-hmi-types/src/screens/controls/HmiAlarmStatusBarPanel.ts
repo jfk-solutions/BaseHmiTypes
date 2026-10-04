@@ -8,4 +8,7 @@ export class HmiAlarmStatusBarPanel {
   visible?: HmiProperty<boolean>;
   order?: HmiProperty<number>;
   tooltip?: HmiMultilingualText;
+  text?: HmiMultilingualText;
+  width?: HmiProperty<number>;
+  autoSize?: HmiProperty<boolean>;
 }

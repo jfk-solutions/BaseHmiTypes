@@ -10,6 +10,7 @@ public sealed class HmiAlarmColumn
     public HmiProperty<bool>? Visible { get; set; }
 
     public HmiProperty<double>? Width { get; set; }
+    public HmiProperty<bool>? AutoSize { get; set; }
     public string? TimeAndDateFormat { get; set; }
     public HmiMultilingualText? HeaderText { get; set; }
     public string? Symbol { get; set; }
