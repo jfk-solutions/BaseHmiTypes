@@ -786,17 +786,15 @@ function readEmfFont(bytes: Uint8Array, offset: number, size: number): FontObjec
 }
 
 function emfTextElement(bytes: Uint8Array, record: EmfRecord, state: DrawState): string | null {
-  const offset = record.offset + 8;
-  if (record.size < 84)
+  if (record.size < 60)
     return null;
-
-  const boundsLeft = i32(bytes, offset);
-  const boundsTop = i32(bytes, offset + 4);
-  const boundsBottom = i32(bytes, offset + 12);
-  const textOffset = offset + 28;
-  const charCount = u32(bytes, textOffset + 8);
-  const stringOffset = u32(bytes, textOffset + 12);
-  if (charCount === 0 || stringOffset === 0)
+  // EmrText begins at byte 36; Bounds is ignored by this record type.
+  const x = i32(bytes, record.offset + 36), y = i32(bytes, record.offset + 40);
+  const charCount = u32(bytes, record.offset + 44), stringOffset = u32(bytes, record.offset + 48);
+  const options = u32(bytes, record.offset + 52), fixedSize = (options & 0x100) !== 0 ? 60 : 76;
+  // Font-specific glyph indices are not Unicode text.
+  if ((options & 0x10) !== 0 || charCount === 0 || stringOffset < fixedSize || stringOffset % 2 !== 0 ||
+    stringOffset > record.size || charCount > Math.floor((record.size - stringOffset) / 2))
     return null;
 
   const stringStart = record.offset + stringOffset;
@@ -807,12 +805,13 @@ function emfTextElement(bytes: Uint8Array, record: EmfRecord, state: DrawState):
   let text = '';
   for (let current = stringStart; current + 1 < stringEnd; current += 2)
     text += String.fromCharCode(u16(bytes, current));
-
-  const fontSize = Math.max(1, Math.abs(state.font.height) || Math.abs(boundsBottom - boundsTop));
-  const weight = state.font.weight >= 600 ? ' font-weight="700"' : '';
+  text = text.replace(/\0+$/u, '');
+  if (!text.length) return null;
+  const point = transformPoint(state, x, y);
+  const fontSize = Math.abs(state.font.height) || 12;
+  const weight = state.font.weight >= 600 ? ' font-weight="bold"' : '';
   const italic = state.font.italic ? ' font-style="italic"' : '';
-  const y = boundsTop + fontSize;
-  return `<text x="${boundsLeft}" y="${y}" font-family="${xmlEscape(state.font.family)}" font-size="${fontSize}"${weight}${italic} fill="${state.textColor}"${clipAttr(state)}>${xmlEscape(text)}</text>`;
+  return `<text x="${point[0]}" y="${point[1]}" fill="${state.textColor}" font-family="${xmlEscape(state.font.family)}" font-size="${fontSize}"${weight}${italic}${clipAttr(state)}>${xmlEscape(text)}</text>`;
 }
 
 function readEmfPoints16(bytes: Uint8Array, offset: number): Array<[number, number]> {
@@ -1616,6 +1615,7 @@ function ascii4(bytes: Uint8Array, offset: number): string {
 
 function xmlEscape(value: string): string {
   return value
+    .replace(/[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/gu, '\uFFFD')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
