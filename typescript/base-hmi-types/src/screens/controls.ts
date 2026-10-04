@@ -41,6 +41,7 @@ export * from "./controls/HmiRecipeViewKind.js";
 export * from "./controls/HmiDataGridControl.js";
 export * from "./controls/HmiDataGridDataSourceKind.js";
 export * from "./controls/HmiDataGridColumn.js";
+export * from "./controls/HmiParameterColumn.js";
 export * from "./controls/HmiDataGridColumnWidthMode.js";
 export * from "./controls/HmiDataGridSortDirection.js";
 export * from "./controls/HmiRadarChartControl.js";

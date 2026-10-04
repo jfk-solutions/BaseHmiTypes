@@ -2,6 +2,7 @@ import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiColor, HmiProperty } from "../base.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
+import { HmiParameterColumn } from "./HmiParameterColumn.js";
 
 export class HmiDetailedParameterControl extends HmiControlWindowBase {
   constructor() {
@@ -11,6 +12,7 @@ export class HmiDetailedParameterControl extends HmiControlWindowBase {
   parameterSetTypeFixed?: HmiProperty<boolean>;
   currentParameterSetId?: HmiProperty<number>;
   currentParameterSetTypeId?: HmiProperty<number>;
+  readonly columnDefinitions: HmiParameterColumn[] = [];
   parameterSetTypeLabel?: HmiProperty<HmiMultilingualText>;
   parameterSetLabel?: HmiProperty<HmiMultilingualText>;
   numberLabel?: HmiProperty<HmiMultilingualText>;
