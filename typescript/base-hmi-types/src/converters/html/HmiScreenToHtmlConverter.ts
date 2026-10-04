@@ -2752,6 +2752,11 @@ function createParameterColumnWidthStyle(column: HmiParameterColumn): string {
   return style.join("");
 }
 
+function appendHeaderBorderWidth(style: string[], property: HmiProperty<number> | undefined): void {
+  const width = getStaticValue(property);
+  if (width !== undefined && width >= 0 && Number.isFinite(width)) style.push(`border-width: ${toCss(width)}px;`);
+}
+
 function appendUserViewControl(html: string[], control: HmiUserViewControl, context: HmiHtmlConvertContext): void {
   const grid = [control.showGridLines !== undefined && getStaticValue(control.showGridLines) === false ? "border: 0;" : "border: 1px solid currentColor;"];
   appendColorStyle(grid, "border-color", control.gridLineColor);
@@ -2759,6 +2764,7 @@ function appendUserViewControl(html: string[], control: HmiUserViewControl, cont
   appendColorStyle(header, "background-color", control.headerBackgroundColor);
   appendColorStyle(header, "color", control.headerForegroundColor);
   appendColorStyle(header, "border-color", control.headerBorderColor);
+  appendHeaderBorderWidth(header, control.headerBorderWidth);
   if (control.headerFont !== undefined) appendFont(header, control.headerFont.getForCulture(context.options.cultureLcid));
   const content: string[] = [];
   appendColorStyle(content, "background-color", control.contentBackgroundColor);
@@ -2766,6 +2772,7 @@ function appendUserViewControl(html: string[], control: HmiUserViewControl, cont
   if (control.contentFont !== undefined) appendFont(content, control.contentFont.getForCulture(context.options.cultureLcid));
   html.push("<div");
   appendCommonAttributes(html, control, context, true, "overflow: hidden;");
+  appendAttribute(html, "data-header-border-width", resolvePropertyPreview(control.headerBorderWidth));
   appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(control.showGridLines));
   appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(control.gridLineColor));
   appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(control.alternatingRowBackgroundColor));
@@ -2783,6 +2790,7 @@ function appendStatusForceControl(html: string[], control: HmiStatusForceControl
   appendColorStyle(header, "background-color", control.headerBackgroundColor);
   appendColorStyle(header, "color", control.headerForegroundColor);
   appendColorStyle(header, "border-color", control.headerBorderColor);
+  appendHeaderBorderWidth(header, control.headerBorderWidth);
   if (control.headerFont !== undefined) appendFont(header, control.headerFont.getForCulture(context.options.cultureLcid));
   const content: string[] = [];
   appendColorStyle(content, "background-color", control.contentBackgroundColor);
@@ -2790,6 +2798,7 @@ function appendStatusForceControl(html: string[], control: HmiStatusForceControl
   if (control.contentFont !== undefined) appendFont(content, control.contentFont.getForCulture(context.options.cultureLcid));
   html.push("<div");
   appendCommonAttributes(html, control, context, true, "overflow: hidden;");
+  appendAttribute(html, "data-header-border-width", resolvePropertyPreview(control.headerBorderWidth));
   appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(control.showGridLines));
   appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(control.gridLineColor));
   appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(control.alternatingRowBackgroundColor));
@@ -2822,6 +2831,7 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-view-only", resolvePropertyPreview(recipeControl.viewOnly));
   appendAttribute(html, "data-wrap-around", resolvePropertyPreview(recipeControl.wrapAround));
   appendAttribute(html, "data-lines-per-item", resolvePropertyPreview(recipeControl.linesPerItem));
+  appendAttribute(html, "data-header-border-width", resolvePropertyPreview(recipeControl.headerBorderWidth));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(recipeControl.wordWrap));
   appendAttribute(html, "data-enable-recipe-dialog", resolvePropertyPreview(recipeControl.enableRecipeDialog));
   appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(recipeControl.showGridLines));
@@ -2883,6 +2893,7 @@ function createRecipeHeaderStyle(recipeControl: HmiRecipeControl, context: HmiHt
   appendColorStyle(style, "background-color", recipeControl.headerBackgroundColor);
   appendColorStyle(style, "color", recipeControl.headerForegroundColor);
   appendColorStyle(style, "border-color", recipeControl.headerBorderColor);
+  appendHeaderBorderWidth(style, recipeControl.headerBorderWidth);
   if (recipeControl.headerFont !== undefined) appendFont(style, recipeControl.headerFont.getForCulture(context.options.cultureLcid));
   return style.join("");
 }

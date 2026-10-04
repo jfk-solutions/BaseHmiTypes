@@ -7,6 +7,7 @@ export class HmiUserViewControl extends HmiLayoutContainerBase {
 
   headerBackgroundColor?: HmiProperty<HmiColor>;
   headerForegroundColor?: HmiProperty<HmiColor>;
+  headerBorderWidth?: HmiProperty<number>;
   headerBorderColor?: HmiProperty<HmiColor>;
   contentBackgroundColor?: HmiProperty<HmiColor>;
   contentForegroundColor?: HmiProperty<HmiColor>;
