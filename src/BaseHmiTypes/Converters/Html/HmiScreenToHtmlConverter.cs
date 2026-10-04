@@ -3975,13 +3975,17 @@ public partial class HmiScreenToHtmlConverter
     {
         var symbolImage = symbolLibraryControl.Symbol;
         var appearance = ResolveStaticValue(symbolLibraryControl.SymbolAppearance ?? symbolLibraryControl.FillColorMode, context);
-        if (symbolImage != null && appearance != HmiSymbolLibraryFillColorMode.Original &&
-            (symbolImage.ImageType == HmiImageType.Wmf || string.Equals(GetImageExtension(symbolImage), ".wmf", StringComparison.OrdinalIgnoreCase) ||
-             (symbolImage.MimeType?.IndexOf("wmf", StringComparison.OrdinalIgnoreCase) ?? -1) >= 0))
+        var flip = ResolveStaticValue(symbolLibraryControl.Flip, context);
+        var rotation = ResolveStaticValue(symbolLibraryControl.Rotation, context);
+        var wmf = symbolImage != null && (symbolImage.ImageType == HmiImageType.Wmf || string.Equals(GetImageExtension(symbolImage), ".wmf", StringComparison.OrdinalIgnoreCase) ||
+             (symbolImage.MimeType?.IndexOf("wmf", StringComparison.OrdinalIgnoreCase) ?? -1) >= 0);
+        if (symbolImage != null && wmf && (appearance != HmiSymbolLibraryFillColorMode.Original || flip != HmiSymbolLibraryFlip.None || rotation != HmiSymbolLibraryRotation.Angle0))
         {
             var colorProperty = symbolLibraryControl.ForeColor ?? symbolLibraryControl.FillColor;
             HmiColor? color = colorProperty == null ? null : ResolveStaticValue(colorProperty, context);
             var colored = SymbolLibraryMetafileColorizer.TryRecolor(symbolImage.Data, appearance, color);
+            if (colored != null && (flip != HmiSymbolLibraryFlip.None || rotation != HmiSymbolLibraryRotation.Angle0))
+                colored = SymbolLibraryMetafileTransformer.TryTransform(colored, flip, rotation);
             if (colored == null)
             {
                 AppendDiv(html, symbolLibraryControl, context.Options.UnsupportedItemPlaceholderCssClass, "Symbol library control", context);
@@ -3993,7 +3997,7 @@ public partial class HmiScreenToHtmlConverter
         if (!string.IsNullOrWhiteSpace(symbolSvg))
         {
             html.Append("<div");
-            AppendSymbolLibraryAttributes(html, symbolLibraryControl, context);
+            AppendSymbolLibraryAttributes(html, symbolLibraryControl, context, transformGeometry: wmf);
             html.Append(">");
             html.Append(NormalizeEmbeddedSymbolSvg(symbolSvg!, symbolLibraryControl));
             html.Append("</div>");
@@ -4008,7 +4012,7 @@ public partial class HmiScreenToHtmlConverter
         }
 
         html.Append("<div");
-        AppendSymbolLibraryAttributes(html, symbolLibraryControl, context);
+        AppendSymbolLibraryAttributes(html, symbolLibraryControl, context, transformGeometry: wmf);
         html.Append(">");
         html.Append("<img");
         AppendAttribute(html, "src", imageUri);
@@ -4087,7 +4091,7 @@ public partial class HmiScreenToHtmlConverter
         return value.Substring(0, valueStart) + WebUtility.HtmlEncode(attributeValue) + value.Substring(valueEnd);
     }
 
-    private static void AppendSymbolLibraryAttributes(StringBuilder html, HmiSymbolLibraryControl symbolLibraryControl, HmiHtmlConvertContext context)
+    private static void AppendSymbolLibraryAttributes(StringBuilder html, HmiSymbolLibraryControl symbolLibraryControl, HmiHtmlConvertContext context, bool transformGeometry = false)
     {
         AppendAttribute(html, "id", symbolLibraryControl.Name);
         AppendTextAttribute(html, "title", symbolLibraryControl.ToolTipText, context);
@@ -4105,7 +4109,7 @@ public partial class HmiScreenToHtmlConverter
         AppendDesignShadow(html, symbolLibraryControl, context);
         if (symbolLibraryControl.BackFillStyle.GetStaticValueOrDefault() == HmiSymbolLibraryBackFillStyle.Solid && symbolLibraryControl.BackColor?.StaticValue != null)
             html.Append("background-color: ").Append(ToCss(symbolLibraryControl.BackColor.StaticValue)).Append(";");
-        AppendSymbolLibraryTransform(html, symbolLibraryControl);
+        if (!transformGeometry) AppendSymbolLibraryTransform(html, symbolLibraryControl);
         html.Append("\"");
     }
 
