@@ -120,6 +120,7 @@ import { HmiTrendControl } from "../../screens/controls/HmiTrendControl.js";
 import { HmiDataGridControl } from "../../screens/controls/HmiDataGridControl.js";
 import { HmiAuditTrailControl } from "../../screens/controls/HmiAuditTrailControl.js";
 import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewKind.js";
+import { HmiStatusForceControl } from "../../screens/controls/HmiStatusForceControl.js";
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
 import { HmiDetailedParameterControl } from "../../screens/controls/HmiDetailedParameterControl.js";
 import { HmiOverviewParameterControl } from "../../screens/controls/HmiOverviewParameterControl.js";
@@ -418,6 +419,8 @@ export class HmiScreenToHtmlConverter {
       appendOverviewParameterControl(html, item, context);
     } else if (item instanceof HmiDetailedParameterControl) {
       appendDetailedParameterControl(html, item, context);
+    } else if (item instanceof HmiStatusForceControl) {
+      appendStatusForceControl(html, item, context);
     } else if (item instanceof HmiRecipeControl) {
       appendRecipeControl(html, item, context);
     } else if (item instanceof HmiAuditTrailControl) {
@@ -2737,6 +2740,30 @@ function createParameterColumnWidthStyle(column: HmiParameterColumn): string {
     if (maximum !== undefined) style.push(`max-width: ${maximum}px;`);
   }
   return style.join("");
+}
+
+function appendStatusForceControl(html: string[], control: HmiStatusForceControl, context: HmiHtmlConvertContext): void {
+  const grid = [control.showGridLines !== undefined && getStaticValue(control.showGridLines) === false ? "border: 0;" : "border: 1px solid currentColor;"];
+  appendColorStyle(grid, "border-color", control.gridLineColor);
+  const header = [...grid];
+  appendColorStyle(header, "background-color", control.headerBackgroundColor);
+  appendColorStyle(header, "color", control.headerForegroundColor);
+  appendColorStyle(header, "border-color", control.headerBorderColor);
+  if (control.headerFont !== undefined) appendFont(header, control.headerFont.getForCulture(context.options.cultureLcid));
+  const content: string[] = [];
+  appendColorStyle(content, "background-color", control.contentBackgroundColor);
+  appendColorStyle(content, "color", control.contentForegroundColor);
+  if (control.contentFont !== undefined) appendFont(content, control.contentFont.getForCulture(context.options.cultureLcid));
+  html.push("<div");
+  appendCommonAttributes(html, control, context, true, "overflow: hidden;");
+  appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(control.showGridLines));
+  appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(control.gridLineColor));
+  appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(control.alternatingRowBackgroundColor));
+  appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(control.selectionBackgroundColor));
+  appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(control.selectionForegroundColor));
+  html.push(' role="region" aria-label="Status/force"><table style="width: 100%; border-collapse: collapse;', content.join(""),
+    '"><thead><tr><th style="', header.join(""), '">Status/force</th></tr></thead><tbody><tr><td style="', grid.join(""),
+    'text-align: center;">Status/force data not loaded</td></tr></tbody></table></div>');
 }
 
 function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, context: HmiHtmlConvertContext): void {

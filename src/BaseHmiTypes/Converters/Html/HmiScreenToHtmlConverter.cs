@@ -323,6 +323,9 @@ public partial class HmiScreenToHtmlConverter
             case HmiDetailedParameterControl parameterControl:
                 AppendDetailedParameterControl(html, parameterControl, context);
                 break;
+            case HmiStatusForceControl statusForce:
+                AppendStatusForceControl(html, statusForce, context);
+                break;
             case HmiRecipeControl recipeControl:
                 AppendRecipeControl(html, recipeControl, context);
                 break;
@@ -2725,6 +2728,31 @@ public partial class HmiScreenToHtmlConverter
         if (showStatusBar)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Status</div>");
         html.Append("</div>");
+    }
+
+    private static void AppendStatusForceControl(StringBuilder html, HmiStatusForceControl control, HmiHtmlConvertContext context)
+    {
+        var grid = new StringBuilder(control.ShowGridLines is not null && !ResolveStaticValue(control.ShowGridLines, context) ? "border: 0;" : "border: 1px solid currentColor;");
+        AppendColorStyle(grid, "border-color", control.GridLineColor);
+        var header = new StringBuilder(grid.ToString());
+        AppendColorStyle(header, "background-color", control.HeaderBackgroundColor);
+        AppendColorStyle(header, "color", control.HeaderForegroundColor);
+        AppendColorStyle(header, "border-color", control.HeaderBorderColor);
+        AppendFontStyle(header, control.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
+        var content = new StringBuilder();
+        AppendColorStyle(content, "background-color", control.ContentBackgroundColor);
+        AppendColorStyle(content, "color", control.ContentForegroundColor);
+        AppendFontStyle(content, control.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
+        html.Append("<div");
+        AppendCommonAttributes(html, control, context, additionalStyle: "overflow: hidden;");
+        AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(control.ShowGridLines, context));
+        AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(control.GridLineColor, context));
+        AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(control.AlternatingRowBackgroundColor, context));
+        AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(control.SelectionBackgroundColor, context));
+        AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(control.SelectionForegroundColor, context));
+        html.Append(" role=\"region\" aria-label=\"Status/force\"><table style=\"width: 100%; border-collapse: collapse;").Append(content)
+            .Append("\"><thead><tr><th style=\"").Append(header).Append("\">Status/force</th></tr></thead><tbody><tr><td style=\"")
+            .Append(grid).Append("text-align: center;\">Status/force data not loaded</td></tr></tbody></table></div>");
     }
 
     private static void AppendRecipeControl(StringBuilder html, HmiRecipeControl recipeControl, HmiHtmlConvertContext context)
