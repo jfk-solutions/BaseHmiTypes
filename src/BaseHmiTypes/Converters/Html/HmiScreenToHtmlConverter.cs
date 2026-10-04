@@ -3094,6 +3094,9 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-automatic-decimal-places", ResolvePropertyPreview(column.AutomaticDecimalPlaces, context));
                 AppendAttribute(html, "data-exponential-format", ResolvePropertyPreview(column.ExponentialFormat, context));
                 AppendAttribute(html, "data-time-format", column.TimeAndDateFormat);
+                AppendAttribute(html, "data-date-format", column.DateFormat, preserveEmpty: true);
+                AppendAttribute(html, "data-time-format-pattern", column.TimeFormat, preserveEmpty: true);
+                AppendAttribute(html, "data-show-date", ResolvePropertyPreview(column.ShowDate, context));
                 AppendAttribute(html, "data-symbol", column.Symbol);
                 html.Append('>')
                     .Append(WebUtility.HtmlEncode(column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString()))

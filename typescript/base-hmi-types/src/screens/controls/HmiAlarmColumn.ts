@@ -14,6 +14,9 @@ export class HmiAlarmColumn {
   automaticDecimalPlaces?: HmiProperty<boolean>;
   exponentialFormat?: HmiProperty<boolean>;
   timeAndDateFormat?: string;
+  dateFormat?: string;
+  timeFormat?: string;
+  showDate?: HmiProperty<boolean>;
   headerText?: HmiMultilingualText;
   symbol?: string;
   alignment?: HmiProperty<HmiHorizontalAlignment>;

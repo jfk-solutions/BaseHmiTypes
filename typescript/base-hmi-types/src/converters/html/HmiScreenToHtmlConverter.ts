@@ -3076,6 +3076,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-automatic-decimal-places", resolvePropertyPreview(column.automaticDecimalPlaces));
       appendAttribute(html, "data-exponential-format", resolvePropertyPreview(column.exponentialFormat));
       appendAttribute(html, "data-time-format", column.timeAndDateFormat);
+      appendAttribute(html, "data-date-format", column.dateFormat, true);
+      appendAttribute(html, "data-time-format-pattern", column.timeFormat, true);
+      appendAttribute(html, "data-show-date", resolvePropertyPreview(column.showDate));
       appendAttribute(html, "data-symbol", column.symbol);
       html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.sourceType ?? column.type), "</th>");
     }
