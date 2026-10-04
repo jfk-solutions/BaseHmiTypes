@@ -76,6 +76,10 @@ public sealed class MetafileToSvgRenderer
                 case EMR.SetPolyFillMode:
                     state.FillRule = PolyFillRule(U32(bytes, dataOffset));
                     break;
+                case EMR.SetArcDirection:
+                    if (record.Size >= 12 && U32(bytes, dataOffset) is var direction && (direction == 1 || direction == 2))
+                        state.ClockwiseShapes = direction == 2;
+                    break;
                 case EMR.SetTextColor:
                     state.TextColor = ColorRef(bytes, dataOffset);
                     break;
@@ -225,15 +229,18 @@ public sealed class MetafileToSvgRenderer
                     DrawEmfPolyDraw(state, bytes, record, elements);
                     break;
                 case EMR.Rectangle:
-                    {
-                        var rect = TransformRect(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12));
-                        elements.Add(RectElement(rect.Left, rect.Top, rect.Right, rect.Bottom, state));
-                        break;
-                    }
                 case EMR.Ellipse:
                     {
+                        if (record.Size < 24) break;
+                        if (state.CurrentPath is not null)
+                        {
+                            AppendEmfShapePath(bytes, dataOffset, record.Type == EMR.Ellipse, state);
+                            break;
+                        }
                         var rect = TransformRect(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12));
-                        elements.Add(EllipseElement(rect.Left, rect.Top, rect.Right, rect.Bottom, state));
+                        elements.Add(record.Type == EMR.Ellipse
+                            ? EllipseElement(rect.Left, rect.Top, rect.Right, rect.Bottom, state)
+                            : RectElement(rect.Left, rect.Top, rect.Right, rect.Bottom, state));
                         break;
                     }
                 case EMR.Polygon16:
@@ -665,6 +672,7 @@ public sealed class MetafileToSvgRenderer
             ViewportExtY = state.ViewportExtY,
             WorldTransform = state.WorldTransform,
             FillRule = state.FillRule,
+            ClockwiseShapes = state.ClockwiseShapes,
             MiterLimit = state.MiterLimit,
             ActiveClipId = state.ActiveClipId,
             CurrentPath = state.CurrentPath is null ? null : new List<string>(state.CurrentPath),
@@ -697,6 +705,7 @@ public sealed class MetafileToSvgRenderer
         target.ViewportExtY = restored.ViewportExtY;
         target.WorldTransform = restored.WorldTransform;
         target.FillRule = restored.FillRule;
+        target.ClockwiseShapes = restored.ClockwiseShapes;
         target.MiterLimit = restored.MiterLimit;
         target.ActiveClipId = restored.ActiveClipId;
         target.CurrentPath = restored.CurrentPath;
@@ -782,6 +791,51 @@ public sealed class MetafileToSvgRenderer
     private static (double X, double Y) TransformPointWithTransform(Transform transform, double x, double y)
     {
         return (x * transform.M11 + y * transform.M21 + transform.Dx, x * transform.M12 + y * transform.M22 + transform.Dy);
+    }
+
+    private static void AppendEmfShapePath(byte[] bytes, int offset, bool ellipse, DrawState state)
+    {
+        // EMF records already carry inclusive bounds: GDI's recorder adjusts
+        // GM_COMPATIBLE right/bottom edges before writing these records.
+        double left = Math.Min(I32(bytes, offset), I32(bytes, offset + 8));
+        double right = Math.Max(I32(bytes, offset), I32(bytes, offset + 8));
+        double top = Math.Min(I32(bytes, offset + 4), I32(bytes, offset + 12));
+        double bottom = Math.Max(I32(bytes, offset + 4), I32(bytes, offset + 12));
+        var path = state.CurrentPath!;
+        string Point(double x, double y)
+        {
+            var point = TransformPoint(state, x, y);
+            return $"{Number(point.X)} {Number(point.Y)}";
+        }
+        var start = TransformPoint(state, right, ellipse ? (top + bottom) / 2 : state.ClockwiseShapes ? bottom : top);
+        path.Add($"M {Number(start.X)} {Number(start.Y)}");
+        if (!ellipse)
+        {
+            if (state.ClockwiseShapes)
+            {
+                path.Add($"L {Point(left, bottom)}");path.Add($"L {Point(left, top)}");path.Add($"L {Point(right, top)}");
+            }
+            else
+            {
+                path.Add($"L {Point(left, top)}");path.Add($"L {Point(left, bottom)}");path.Add($"L {Point(right, bottom)}");
+            }
+        }
+        else
+        {
+            const double kappa = 0.5522847498307936;
+            var cx = (left + right) / 2;var cy = (top + bottom) / 2;
+            var rx = (right - left) / 2;var ry = (bottom - top) / 2;
+            var sign = state.ClockwiseShapes ? 1 : -1;
+            var vertices = new[] { (X: 1, Y: 0), (X: 0, Y: sign), (X: -1, Y: 0), (X: 0, Y: -sign), (X: 1, Y: 0) };
+            for (var index = 0; index < 4; index++)
+            {
+                var a = vertices[index];var b = vertices[index + 1];
+                path.Add($"C {Point(cx + rx * (a.X - kappa * a.Y * sign), cy + ry * (a.Y + kappa * a.X * sign))} {Point(cx + rx * (b.X + kappa * b.Y * sign), cy + ry * (b.Y - kappa * b.X * sign))} {Point(cx + rx * b.X, cy + ry * b.Y)}");
+            }
+        }
+        path.Add("Z");
+        state.PathStartX = state.PathEndX = start.X;
+        state.PathStartY = state.PathEndY = start.Y;
     }
 
     private static (double Left, double Top, double Right, double Bottom) TransformRect(DrawState state, int left, int top, int right, int bottom)
@@ -1135,14 +1189,14 @@ public sealed class MetafileToSvgRenderer
 
     private static string RectElement(double left, double top, double right, double bottom, DrawState state)
     {
-        return $"<rect x=\"{Number(Math.Min(left, right))}\" y=\"{Number(Math.Min(top, bottom))}\" width=\"{Number(Math.Abs(right - left))}\" height=\"{Number(Math.Abs(bottom - top))}\" {PaintAttrs(state)} />";
+        return $"<rect x=\"{Number(Math.Min(left, right))}\" y=\"{Number(Math.Min(top, bottom))}\" width=\"{Number(Math.Abs(right - left))}\" height=\"{Number(Math.Abs(bottom - top))}\" {PaintAttrs(state)}{ClipAttr(state)} />";
     }
 
     private static string EllipseElement(double left, double top, double right, double bottom, DrawState state)
     {
         var width = Math.Abs(right - left);
         var height = Math.Abs(bottom - top);
-        return $"<ellipse cx=\"{Number(Math.Min(left, right) + width / 2)}\" cy=\"{Number(Math.Min(top, bottom) + height / 2)}\" rx=\"{Number(width / 2)}\" ry=\"{Number(height / 2)}\" {PaintAttrs(state)} />";
+        return $"<ellipse cx=\"{Number(Math.Min(left, right) + width / 2)}\" cy=\"{Number(Math.Min(top, bottom) + height / 2)}\" rx=\"{Number(width / 2)}\" ry=\"{Number(height / 2)}\" {PaintAttrs(state)}{ClipAttr(state)} />";
     }
 
     private static string PolyElement(List<(double X, double Y)> points, bool closed, DrawState state)
@@ -1339,6 +1393,7 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class DrawState
 {
+    public bool ClockwiseShapes { get; set; }
     public List<string>? SelectedPath { get; set; }
     public double MiterLimit { get; set; } = 10;
 
@@ -1527,6 +1582,7 @@ internal static class EMR
     public const uint CreateBrushIndirect = 0x0027;
     public const uint DeleteObject = 0x0028;
     public const uint Rectangle = 0x002b;
+    public const uint SetArcDirection = 0x0039;
     public const uint Ellipse = 0x002a;
     public const uint Polygon16 = 0x0056;
     public const uint Polygon = 0x0003;
