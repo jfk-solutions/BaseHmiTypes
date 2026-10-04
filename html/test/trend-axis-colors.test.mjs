@@ -58,6 +58,72 @@ test("areas retain fractional heights, individual backgrounds, and hidden areas"
   assert.match(control.shadowRoot.innerHTML, /grid-template-rows: 3fr/);
 });
 
+test("XY numeric axes retain independent ranges, side order, colors, visibility and automatic-range state", () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("chart-style", "XYPlot");
+  control.setAttribute("x-value-axes", JSON.stringify([
+    { name: "Outer", alignment: "Top", minimum: 0, maximum: 100, divisionCount: 4, label: "Speed <axis>", color: "#123456" },
+    { name: "Inner", alignment: "Top", minimum: -1, maximum: 1, decimalPlaces: 1 },
+    { name: "Log", alignment: "Bottom", minimum: 1, maximum: 10, scaleType: 1, divisionCount: 2, decimalPlaces: 2, color: "#654321" },
+    { name: "Automatic", autoRange: true, minimum: 0, maximum: 100 },
+    { name: "Missing", minimum: 2 },
+    { name: "Hidden", visible: false, minimum: 3, maximum: 5 },
+  ]));
+  control.connectedCallback();
+  const html = control.shadowRoot.innerHTML;
+  const axes = new Map([...html.matchAll(/<div class="numeric-x-axis (top|bottom)" data-x-value-axis="([^"]*)"[^>]*>(.*?)<\/div>/gsu)]
+    .map(match => [match[2], match[0]]));
+  assert.equal(axes.size, 5);
+  assert.match(axes.get("Outer"), /top:-7.2em;color:#123456/);
+  assert.match(axes.get("Inner"), /top:-3.6em/);
+  assert.match(axes.get("Outer"), /Speed &lt;axis&gt;/);
+  for (const value of ["0", "25", "50", "75", "100"]) assert.ok(axes.get("Outer").includes(`>${value}</span>`));
+  assert.match(axes.get("Log"), /bottom:-10.8em;color:#654321/);
+  for (const value of ["1.00", "3.16", "10.00"]) assert.ok(axes.get("Log").includes(`>${value}</span>`));
+  assert.match(axes.get("Automatic"), /Automatic X range unavailable/);
+  assert.doesNotMatch(axes.get("Automatic"), />0<|>100</);
+  assert.match(axes.get("Missing"), /X-axis range unavailable/);
+  assert.doesNotMatch(html, /<polyline|<polygon|data-time-axis=|data-x-value-axis="Hidden"/);
+  control.setAttribute("x-axis-flipped", "true");
+  assert.match(control.shadowRoot.innerHTML, /left:100%">0<\/span>/);
+  control.setAttribute("x-value-axes", JSON.stringify([{ name: "Unsupported", minimum: 0, maximum: 100, scaleType: 4 }]));
+  assert.match(control.shadowRoot.innerHTML, /X-axis scaling unavailable/);
+  const unsupportedAxis = control.shadowRoot.innerHTML.match(/<div class="numeric-x-axis[^>]*>(.*?)<\/div>/su)?.[1];
+  assert.ok(unsupportedAxis);
+  assert.doesNotMatch(unsupportedAxis, />0<|>100</);
+  control.setAttribute("x-value-axes", JSON.stringify([{ name: "Invalid log", minimum: -1, maximum: 1, scaleType: 1 }]));
+  assert.match(control.shadowRoot.innerHTML, /Invalid X-axis range/);
+  control.setAttribute("x-value-axes", JSON.stringify([{ name: "Negative log", minimum: -100, maximum: -1, scaleType: 2, divisionCount: 2, decimalPlaces: 0 }]));
+  const negativeAxis = control.shadowRoot.innerHTML.match(/<div class="numeric-x-axis[^>]*>(.*?)<\/div>/su)?.[1];
+  assert.ok(negativeAxis);
+  for (const value of ["-100", "-10", "-1"]) assert.ok(negativeAxis.includes(`>${value}</span>`));
+});
+
+test("numeric X axes with repeated names stay assigned to their own areas", () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("chart-style", "XYPlot");
+  control.setAttribute("x-value-axes", JSON.stringify([
+    { name: "Input", trendWindowName: "Area A", minimum: -10, maximum: 10, alignment: "Top", color: "#123456" },
+    { name: "Input", trendWindowName: "Area B", minimum: 100, maximum: 200, alignment: "Bottom", color: "#654321" },
+  ]));
+  control.setAttribute("trend-windows", JSON.stringify([{ name: "Area A" }, { name: "Area B" }]));
+  control.connectedCallback();
+  const children = [...control.shadowRoot.innerHTML.matchAll(/<hmi-trend-control\s+([^>]+)>/gu)].map(match => {
+    const child = new HmiTrendControl();
+    for (const attribute of match[1].matchAll(/([\w-]+)="([^"]*)"/gu))
+      child.setAttribute(attribute[1], attribute[2].replaceAll("&quot;", '"').replaceAll("&amp;", "&"));
+    child.connectedCallback();
+    return child;
+  });
+  assert.equal(children.length, 2);
+  assert.match(children[0].shadowRoot.innerHTML, /numeric-x-axis top[^>]+data-trend-window="Area A"[^>]+color:#123456/);
+  assert.match(children[0].shadowRoot.innerHTML, />-10<\/span>/);
+  assert.doesNotMatch(children[0].shadowRoot.innerHTML, /data-trend-window="Area B"|>200<\/span>/);
+  assert.match(children[1].shadowRoot.innerHTML, /numeric-x-axis bottom[^>]+data-trend-window="Area B"[^>]+color:#654321/);
+  assert.match(children[1].shadowRoot.innerHTML, />200<\/span>/);
+  assert.doesNotMatch(children[1].shadowRoot.innerHTML, /data-trend-window="Area A"|>-10<\/span>/);
+});
+
 test("separate windows use their assigned time-axis format, range, alignment and color", () => {
   const originalNow = Date.now;
   Date.now = () => new Date(2020, 11, 24, 15, 4, 6, 12).getTime();

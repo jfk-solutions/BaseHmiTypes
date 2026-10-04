@@ -98,8 +98,10 @@ const html = new HmiRecipeToHtmlConverter().convert(recipe);
 
 Function-trend controls use the shared trend HTML renderer in C# and TypeScript.
 The XYPlot preview retains shared window, toolbar, status-bar, and appearance
-settings. It displays unavailable X-range/data messages and omits generated
-time curves and time labels. Full function-trend axis and data-source mapping
+settings. It displays configured numeric ranges, identifies missing ranges/data,
+and omits generated time curves and time labels. Full function-trend data-source and scaling mapping
 is still needed before the preview can display configured XY data.
 
 Trend windows also carry an optional fractional SizeFactor and BackgroundColor in C# (sizeFactor and backgroundColor in TypeScript). Positive size factors determine relative area heights in HTML; classic integer SpacePortion remains the fallback. Each visible area applies its own configured background.
+
+HmiTrendControlBase.XValueAxes (xValueAxes in TypeScript) carries independent numeric X axes for XY plots. The preview renders configured top/bottom axes with area ownership, visibility, color, range, divisions, precision and linear/logarithmic scaling. Automatic or missing ranges, unsupported scaling, and invalid logarithmic bounds are identified in the preview. Curve bindings and runtime data remain separate work.

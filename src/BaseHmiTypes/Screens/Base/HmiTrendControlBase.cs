@@ -8,6 +8,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     /// <summary>Configured value axes, including axes with no assigned pen.</summary>
     public IList<HmiTrendValueAxis> ValueAxes { get; } = new List<HmiTrendValueAxis>();
+    /// <summary>Configured numeric X axes for XY plots, including unassigned axes.</summary>
+    public IList<HmiTrendXValueAxis> XValueAxes { get; } = new List<HmiTrendXValueAxis>();
     public IList<HmiTrendWindow> TrendWindows { get; } = new List<HmiTrendWindow>();
     public IList<HmiTrendTimeAxis> TimeAxes { get; } = new List<HmiTrendTimeAxis>();
 
