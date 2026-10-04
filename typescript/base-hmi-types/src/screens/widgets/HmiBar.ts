@@ -10,6 +10,8 @@ export class HmiBar extends HmiScaleWidgetBase {
   originPositionPercent?: HmiProperty<number>;
   /** Transform of normalized range positions. Automatic origin placement takes precedence. */
   valueMapping?: HmiProperty<HmiBarValueMapping>;
+  /** Tangent pivot in normalized percent. Omitted uses normalized originValue, or 50 without an origin. */
+  tangentPivotPercent?: HmiProperty<number>;
   /** True places the scale right/below; false places it left/above. Omitted uses right/below. */
   scaleAfterBar?: HmiProperty<boolean>;
   /** Use the lowest enabled threshold strictly above the value; otherwise retain the foreground color. */
@@ -35,6 +37,7 @@ export enum HmiBarValueMapping {
   Linear = 0,
   NormalizedLogarithmic = 1,
   InverseNormalizedLogarithmic = 2,
+  Tangent = 4,
   Quadratic = 5,
   Cubic = 6,
 }
