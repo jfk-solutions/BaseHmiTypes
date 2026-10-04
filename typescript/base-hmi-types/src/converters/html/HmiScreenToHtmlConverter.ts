@@ -1779,8 +1779,8 @@ function getBarFillOrigin(bar: HmiBar, minimum: number, maximum: number, value: 
 
 function appendBarOriginMeter(html: string[], bar: HmiBar, minimum: number, maximum: number,
   value: number, origin: number, direction: HmiFillDirection, context: HmiHtmlConvertContext): void {
-  const originPercent = Math.min(100, Math.max(0, (origin - minimum) / (maximum - minimum) * 100));
-  const valuePercent = Math.min(100, Math.max(0, (value - minimum) / (maximum - minimum) * 100));
+  const originPercent = Math.min(100, Math.max(0, getScaleRatio(bar, minimum, maximum, origin) * 100));
+  const valuePercent = Math.min(100, Math.max(0, getScaleRatio(bar, minimum, maximum, value) * 100));
   const start = Math.min(originPercent, valuePercent);
   const length = Math.abs(valuePercent - originPercent);
   const position = direction === HmiFillDirection.Up
@@ -1890,7 +1890,7 @@ function appendBarThresholds(
       continue;
     let percentage = percentageMode
       ? thresholdValue
-      : maximum === minimum ? 0 : (thresholdValue - minimum) * 100 / (maximum - minimum);
+      : getScaleRatio(bar, minimum, maximum, thresholdValue) * 100;
     percentage = Math.max(0, Math.min(100, percentage));
     const position = direction === HmiFillDirection.Up
       ? `left: 0; right: 0; bottom: ${toCss(percentage)}%; height: 2px;`
@@ -1936,6 +1936,7 @@ function appendScaleMarks(
   const scaleMode = getStaticValue(bar.scaleMode) ?? 0;
   const explicitInterval = scaleMode === 0 && Number.isFinite(interval) && interval > 0 && maximum > minimum
     && (maximum - minimum) / interval <= 10000;
+  const positionedTicks = explicitInterval || getBarOriginPosition(bar, minimum, maximum) !== undefined;
   if (explicitInterval)
     tickCount = Math.floor((maximum - minimum) / interval + 1e-10) + 1;
   const ratios = Array.from({ length: tickCount }, (_, index) => explicitInterval
@@ -1969,7 +1970,7 @@ function appendScaleMarks(
   style += ` position: relative; box-sizing: border-box; padding-${edge}: ${tickLength + 2}px;`;
   if (!vertical)
     style += ` min-height: ${tickLength + 2}px;`;
-  if (explicitInterval)
+  if (positionedTicks)
     style += vertical ? ` min-width: calc(${tickLength + 2}px + 12ch);`
       : ` min-height: calc(${tickLength + 2}px + 1.2em);`;
 
@@ -1984,8 +1985,9 @@ function appendScaleMarks(
       ? tick.toExponential(decimalPlaces ?? 2).replace(/e([+-])(\d+)$/u, (_match, sign: string, exponent: string) => `e${sign}${exponent.padStart(3, "0")}`)
       : decimalPlaces === undefined ? toCss(tick) : tick.toFixed(decimalPlaces);
     html.push("<span");
-    if (explicitInterval) {
-      const position = reverse ? 1 - ratio : ratio;
+    if (positionedTicks) {
+      const scaleRatio = getScaleTickRatio(bar, minimum, maximum, ratio);
+      const position = reverse ? 1 - scaleRatio : scaleRatio;
       const translation = position === 0 ? 0 : position === 1 ? -100 : -50;
       appendAttribute(html, "style", vertical
         ? `position: absolute; top: ${toCss(position * 100)}%; ${edge}: ${tickLength + 2}px; transform: translateY(${translation}%); white-space: nowrap;`
@@ -2009,7 +2011,8 @@ function appendScaleMarks(
   appendAttribute(html, "stroke-width", tickWidth.toString());
   html.push(">");
   for (let index = 0; index < tickCount; index++) {
-    const percentage = toCss(100 * (reverse ? 1 - ratios[index]! : ratios[index]!));
+    const scaleRatio = getScaleTickRatio(bar, minimum, maximum, ratios[index]!);
+    const percentage = toCss(100 * (reverse ? 1 - scaleRatio : scaleRatio));
     html.push(vertical
       ? `<line x1="0" x2="${tickLength}" y1="${percentage}%" y2="${percentage}%"></line>`
       : `<line y1="0" y2="${tickLength}" x1="${percentage}%" x2="${percentage}%"></line>`);
@@ -2022,7 +2025,8 @@ function appendScaleMarks(
     for (let index = 0; index < tickCount - 1; index++) {
       for (let subdivision = 1; subdivision < subdivisions; subdivision++) {
         const ratio = ratios[index]! + (ratios[index + 1]! - ratios[index]!) * subdivision / subdivisions;
-        const percentage = toCss(100 * (reverse ? 1 - ratio : ratio));
+        const scaleRatio = getScaleTickRatio(bar, minimum, maximum, ratio);
+        const percentage = toCss(100 * (reverse ? 1 - scaleRatio : scaleRatio));
         html.push(vertical
           ? `<line data-hmi-minor-tick="true" stroke-width="1" x1="${shortStart}" x2="${shortEnd}" y1="${percentage}%" y2="${percentage}%"></line>`
           : `<line data-hmi-minor-tick="true" stroke-width="1" y1="${shortStart}" y2="${shortEnd}" x1="${percentage}%" x2="${percentage}%"></line>`);
@@ -2718,7 +2722,39 @@ function resolveScaleRange(scale: HmiScaleWidgetBase): [number, number] {
   let end = getStaticValue(scale.endValue) ?? 0;
   if (begin === end)
     end = begin + 1;
-  return begin < end ? [begin, end] : [end, begin];
+  let [minimum, maximum]: [number, number] = begin < end ? [begin, end] : [end, begin];
+  const position = getBarOriginPosition(scale, minimum, maximum);
+  if (position !== undefined) {
+    const origin = getStaticValue(scale.originValue)!;
+    if (position === 0 && origin < maximum) minimum = origin;
+    if (position === 100 && origin > minimum) maximum = origin;
+  }
+  return [minimum, maximum];
+}
+
+function getBarOriginPosition(scale: HmiScaleWidgetBase, minimum: number, maximum: number): number | undefined {
+  if (!(scale instanceof HmiBar) || getStaticValue(scale.useAutoScaling) !== true ||
+    scale.originPositionPercent === undefined || scale.originValue === undefined || !Number.isFinite(minimum) ||
+    !Number.isFinite(maximum) || maximum <= minimum || !Number.isFinite(maximum - minimum)) return undefined;
+  const position = getStaticValue(scale.originPositionPercent), origin = getStaticValue(scale.originValue);
+  return position !== undefined && Number.isFinite(position) && position >= 0 && position <= 100 &&
+    origin !== undefined && Number.isFinite(origin) && origin >= minimum && origin <= maximum ? position : undefined;
+}
+
+function getScaleRatio(scale: HmiScaleWidgetBase, minimum: number, maximum: number, value: number): number {
+  const position = getBarOriginPosition(scale, minimum, maximum);
+  if (position === undefined) return maximum === minimum ? 0 : (value - minimum) / (maximum - minimum);
+  const origin = getStaticValue(scale.originValue)!;
+  value = Math.min(maximum, Math.max(minimum, value));
+  const fraction = position / 100;
+  return value < origin
+    ? origin > minimum ? fraction * (value - minimum) / (origin - minimum) : 0
+    : maximum > origin ? fraction + (1 - fraction) * (value - origin) / (maximum - origin) : fraction;
+}
+
+function getScaleTickRatio(scale: HmiScaleWidgetBase, minimum: number, maximum: number, ratio: number): number {
+  return getBarOriginPosition(scale, minimum, maximum) !== undefined
+    ? getScaleRatio(scale, minimum, maximum, minimum + (maximum - minimum) * ratio) : ratio;
 }
 
 function resolveScaleValue(scale: HmiScaleWidgetBase, minimum: number, maximum: number): number {
