@@ -69,6 +69,17 @@ export class HmiRecipeToHtmlConverter {
           '</td><td>', encode(role), '</td><td>', encode(reference.sourceId), '</td><td>', encode(reference.name), '</td></tr>');
       html.push('</tbody></table></div>');
     }
+    const sourceTagFields = recipe.parameters.filter(field => field.sourceTagStartValue !== undefined || field.sourceTagSubstituteValue !== undefined || field.sourceTagSubstituteValueUsage !== undefined);
+    if (sourceTagFields.length > 0) {
+      html.push('<h2>Source tag values</h2><div class="table-scroll"><table><thead><tr><th scope="col">Field</th><th scope="col">Start value</th><th scope="col">Substitute value</th><th scope="col">Substitute usage flags (raw)</th></tr></thead><tbody>');
+      for (const field of sourceTagFields) {
+        html.push('<tr><th scope="row">', encode(field.name), '</th>');
+        for (const value of [field.sourceTagStartValue, field.sourceTagSubstituteValue, field.sourceTagSubstituteValueUsage?.toString()])
+          html.push('<td data-value-state="', value === undefined ? "missing" : "present", '">', encode(value ?? "Missing"), '</td>');
+        html.push('</tr>');
+      }
+      html.push('</tbody></table></div>');
+    }
     html.push("<h2>Stored records</h2>");
     if (recipe.dataSets.length === 0) html.push("<p>No stored records.</p>");
     else {

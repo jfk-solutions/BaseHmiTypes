@@ -45,6 +45,9 @@ export class HmiRecipeReference {
 export class HmiRecipeParameter {
   readonly references = new Map<string, HmiRecipeReference>();
   triggerRedraw?: boolean;
+  sourceTagStartValue?: string;
+  sourceTagSubstituteValue?: string;
+  sourceTagSubstituteValueUsage?: number;
   displayName?: HmiMultilingualText;
   infoText?: HmiMultilingualText;
   sourceIndex?: number;
