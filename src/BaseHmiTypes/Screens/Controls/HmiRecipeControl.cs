@@ -19,6 +19,8 @@ public sealed class HmiRecipeControl : HmiControlWindowBase
 
     public HmiProperty<bool>? EnableRecipeDialog { get; set; }
 
+    public HmiProperty<double>? HeaderCornerRadius { get; set; }
+
     public HmiProperty<bool>? ShowHeader { get; set; }
 
     public HmiProperty<bool>? ShowGridLines { get; set; }
