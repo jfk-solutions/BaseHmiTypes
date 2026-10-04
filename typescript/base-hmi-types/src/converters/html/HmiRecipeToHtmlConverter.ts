@@ -55,7 +55,7 @@ export class HmiRecipeToHtmlConverter {
     for (const field of recipe.parameters) {
       html.push("<tr>");
       for (const value of [field.sourceIndex?.toString(), field.name, field.tag, field.dataType, field.unit,
-        field.minimumValue, field.maximumValue, field.comment, field.sourceElementId?.toString(), field.defaultValue,
+        field.minimumValue, field.maximumValue, field.sourcePlcComment?.getText(cultureLcid) ?? field.comment, field.sourceElementId?.toString(), field.defaultValue,
         field.decimalPlaces?.toString(), field.maximumLength?.toString(), field.tagArrayCount?.toString(),
         formatFlag(field.required), formatFlag(field.unique), formatFlag(field.indexed),
         field.displayName?.getText(cultureLcid), field.infoText?.getText(cultureLcid), formatFlag(field.triggerRedraw)]) html.push("<td>", encode(value), "</td>");
@@ -107,6 +107,12 @@ export class HmiRecipeToHtmlConverter {
         for (const [kind, values] of [["Explicit value", declaration.subelementValues], ["Symbolic constant", declaration.subelementValueConstantNames], ["Type default", declaration.typeDefaultSubelementValues]] as const)
           for (const [key, value] of values)
             html.push('<tr><th scope="row">', encode(declaration.name), '</th><td>', kind, '</td><td>', encode(key), '</td><td data-value-state="present">', encode(value), '</td></tr>');
+      html.push('</tbody></table></div>');
+    }
+    if (recipe.sourcePlcDeclarations.some(declaration => declaration.comment !== undefined)) {
+      html.push('<h2>Source PLC declaration comments</h2><div class="table-scroll"><table><thead><tr><th scope="col">Declaration</th><th scope="col">Comment</th></tr></thead><tbody>');
+      for (const declaration of recipe.sourcePlcDeclarations.filter(declaration => declaration.comment !== undefined))
+        html.push('<tr><th scope="row">', encode(declaration.name), '</th><td data-value-state="present">', encode(declaration.comment!.getText(cultureLcid)), '</td></tr>');
       html.push('</tbody></table></div>');
     }
     if (recipe.sourcePlcDeclarations.some(declaration => declaration.subelementComments.size > 0)) {
