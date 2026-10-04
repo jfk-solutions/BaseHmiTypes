@@ -11,6 +11,9 @@ public class HmiBar : HmiScaleWidgetBase
 
     public HmiProperty<HmiBarFillStyle>? FillStyle { get; set; }
 
+    /// <summary>Color of the unfilled bar track, independent of the widget background. Omitted retains the background-based track.</summary>
+    public HmiProperty<HmiColor>? TrackColor { get; set; }
+
     public HmiProperty<HmiFillDirection>? FillDirection { get; set; }
 
     /// <summary>Position of OriginValue in percent of the bar, used only with UseAutoScaling. Valid preview positions are zero through 100.</summary>
