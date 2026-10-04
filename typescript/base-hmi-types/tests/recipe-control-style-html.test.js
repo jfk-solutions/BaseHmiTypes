@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   HmiRecipeControl, HmiRecipeColumnType, HmiRecipeViewKind, HmiFont,
-  HmiLayer, HmiScreen, HmiScreenToHtmlConverter, HmiMultilingualText,
+  HmiLayer, HmiScreen, HmiScreenToHtmlConverter, HmiMultilingualText, HmiHtmlConvertOptions, getStaticValue,
   staticProperty, hmiColorFromArgb,
 } from "../dist/index.js";
 
@@ -68,4 +68,23 @@ test("recipe grid and status visibility reach HTML", async () => {
   delete control.showGridLines; delete control.showStatusBar;
   html = await convert(control); assert.ok(!html.includes("data-show-grid-lines")); assert.ok(!html.includes("data-show-status-bar"));
   assert.ok(!html.includes("hmi-recipe-status-bar"));
+});
+
+test("recipe combo font uses locale only for selector and falls back to content font", async () => {
+  const font = (name, size) => { const value = new HmiFont(); value.name = staticProperty(name); value.size = staticProperty(size); return value; };
+  const combo = font("NeutralCombo", 13); combo.localizedFonts.set(1031, font("LocalizedCombo <A> & B", 17.5));
+  const control = new HmiRecipeControl(); control.comboBoxFont = combo; control.contentFont = font("TableContent", 11);
+  control.headerFont = font("SeparateHeader", 19); control.statusBarFont = font("SeparateStatus", 9); control.showStatusBar = staticProperty(true);
+  const screen = new HmiScreen(), layer = new HmiLayer(); screen.layers.push(layer); layer.items.push(control);
+  const renderer = new HmiScreenToHtmlConverter(), options = new HmiHtmlConvertOptions(); options.cultureLcid = 1031;
+  let html = await renderer.convertAsync(screen, undefined, options);
+  assert.ok(html.includes("font-family: LocalizedCombo &lt;A&gt; &amp; B;font-size: 17.5px;"));
+  assert.ok(html.includes("font-family: SeparateHeader;")); assert.ok(html.includes("font-family: SeparateStatus;"));
+  assert.ok(!html.includes("font-family: TableContent;"));
+  options.cultureLcid = 1036; html = await renderer.convertAsync(screen, undefined, options); assert.ok(html.includes("font-family: NeutralCombo;"));
+  control.viewKind = HmiRecipeViewKind.Table; options.cultureLcid = 1031;
+  html = await renderer.convertAsync(screen, undefined, options); assert.ok(html.includes("font-family: TableContent;")); assert.ok(!html.includes("font-family: LocalizedCombo"));
+  control.viewKind = HmiRecipeViewKind.Selector; delete control.comboBoxFont;
+  html = await renderer.convertAsync(screen, undefined, options); assert.ok(html.includes("font-family: TableContent;"));
+  assert.equal(getStaticValue(combo.name), "NeutralCombo"); assert.equal(combo.localizedFonts.size, 1);
 });

@@ -20,6 +20,7 @@ export class HmiRecipeControl extends HmiControlWindowBase {
   gridLineColor?: HmiProperty<HmiColor>;
   showStatusBar?: HmiProperty<boolean>;
   statusBarFont?: HmiFont;
+  comboBoxFont?: HmiFont;
   showNumbers?: HmiProperty<boolean>;
   alternatingRowBackgroundColor?: HmiProperty<HmiColor>;
   showFooter?: HmiProperty<boolean>;
