@@ -2896,6 +2896,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-view-kind", alarmControl.viewKind);
   appendAttribute(html, "data-active-column-set", alarmControl.activeColumnSet);
   appendAttribute(html, "data-list-mode", listMode);
+  appendAttribute(html, "data-time-base", resolvePropertyPreview(alarmControl.timeBase));
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmControl.numberOfRows));
   appendAttribute(html, "data-lines-per-alarm", resolvePropertyPreview(alarmControl.linesPerAlarm));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(alarmControl.wordWrap));
