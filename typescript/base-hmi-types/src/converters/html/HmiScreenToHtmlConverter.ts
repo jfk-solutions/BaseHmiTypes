@@ -4565,6 +4565,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendStaticAttribute(html, "toolbar-background-color", trendControl.toolbarBackgroundColor);
   appendStaticAttribute(html, "toolbar-button-size", trendControl.toolbarButtonSize);
   appendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.showStatusBar);
+  appendAttribute(html, "status-bar-text", trendControl.statusBarText?.getText(context.options.cultureLcid), true);
   appendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.useStatusBarBackgroundColor);
   appendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
   appendStaticBooleanValueAttribute(html, "use-trend-name-as-label", trendControl.useTrendNameAsLabel);

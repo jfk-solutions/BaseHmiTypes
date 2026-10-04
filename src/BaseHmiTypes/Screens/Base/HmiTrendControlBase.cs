@@ -319,6 +319,8 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiFont? StatusBarFont { get; set; }
 
+    public HmiMultilingualText? StatusBarText { get; set; }
+
     public HmiProperty<bool>? ShowTimePeriodBar { get; set; }
 
     public HmiProperty<bool>? ShowTagExplorer { get; set; }

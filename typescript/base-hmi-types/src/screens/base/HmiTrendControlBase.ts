@@ -190,6 +190,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   statusBarBackgroundColor?: HmiProperty<HmiColor>;
   statusBarForegroundColor?: HmiProperty<HmiColor>;
   statusBarFont?: HmiFont;
+  statusBarText?: HmiMultilingualText;
   showTimePeriodBar?: HmiProperty<boolean>;
   showTagExplorer?: HmiProperty<boolean>;
   collapseTagExplorer?: HmiProperty<boolean>;

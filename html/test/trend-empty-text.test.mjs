@@ -44,3 +44,17 @@ for (const useNames of [false, true]) test(`trend legend retains explicit empty 
     ? ["Blank label pen", "Missing label pen", "Space label pen", "Pen 4", "Pen 5", "Markup pen (Unit &lt;X&gt;)"]
     : ["", "Missing label pen", "   ", "", "Pen 5", "Label &lt;A&gt; &amp; B (Unit &lt;X&gt;)"]);
 });
+
+
+for (const live of [false, true]) for (const automatic of [false, true]) for (const text of [undefined, "", "   ", "Ready <A> & B"]) test(`trend status retains configured text ${JSON.stringify(text)} live=${live} automatic=${automatic}`, () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("show-status-bar", "true"); control.setAttribute("chart-live-mode", String(live)); control.setAttribute("auto-scale", String(automatic));
+  if (text !== undefined) control.setAttribute("status-bar-text", text);
+  control.connectedCallback();
+  const body = () => /<div class="status">(.*?)<\/div>/su.exec(control.shadowRoot.innerHTML)?.[1];
+  const expected = text === undefined ? `${live ? "LIVE" : "HISTORICAL"}${automatic ? " · AUTO" : ""}` : text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  assert.equal(body(), expected);
+  control.setAttribute("status-bar-text", "Updated <X> & Y"); assert.equal(body(), "Updated &lt;X&gt; &amp; Y");
+  control.setAttribute("show-status-bar", "false"); assert.equal(body(), undefined); assert.equal(control.getAttribute("status-bar-text"), "Updated <X> & Y");
+  control.setAttribute("show-status-bar", "true"); assert.equal(body(), "Updated &lt;X&gt; &amp; Y");
+});
