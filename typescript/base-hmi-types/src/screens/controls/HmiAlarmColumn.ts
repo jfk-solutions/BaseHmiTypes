@@ -7,6 +7,7 @@ export class HmiAlarmColumn {
   sourceType?: string;
   visible?: HmiProperty<boolean>;
   width?: HmiProperty<number>;
+  autoSize?: HmiProperty<boolean>;
   timeAndDateFormat?: string;
   headerText?: HmiMultilingualText;
   symbol?: string;

@@ -2749,8 +2749,12 @@ public class HmiScreenToHtmlConverter
         var showHeader = alarmControl.ShowHeader is null || ResolveStaticValue(alarmControl.ShowHeader, context);
         var showTitle = alarmControl.ShowTitle is not null && ResolveStaticValue(alarmControl.ShowTitle, context);
         var listMode = ResolveStaticValue(alarmControl.ListMode, context);
-        var visibleColumns = alarmControl.ColumnDefinitions
+        var selectedSet = alarmControl.ActiveColumnSet is null ? null : alarmControl.ColumnSets.FirstOrDefault(set => set.Name == alarmControl.ActiveColumnSet);
+        var columns = selectedSet?.Columns
+            ?? alarmControl.ColumnDefinitions;
+        var visibleColumns = columns
             .Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context))
+            .OrderBy(column => column.Order is null ? int.MaxValue : ResolveStaticValue(column.Order, context))
             .ToArray();
 
         html.Append("<div");
@@ -2769,6 +2773,7 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-toolbar-background-color", ResolvePropertyPreview(alarmControl.ToolbarBackgroundColor, context));
         AppendAttribute(html, "data-toolbar-foreground-color", ResolvePropertyPreview(alarmControl.ToolbarForegroundColor, context));
         AppendAttribute(html, "data-view-kind", alarmControl.ViewKind.ToString());
+        AppendAttribute(html, "data-active-column-set", alarmControl.ActiveColumnSet);
         AppendAttribute(html, "data-list-mode", listMode.ToString());
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmControl.NumberOfRows, context));
         AppendAttribute(html, "data-lines-per-alarm", ResolvePropertyPreview(alarmControl.LinesPerAlarm, context));
@@ -2833,12 +2838,18 @@ public class HmiScreenToHtmlConverter
                     .Append("</th>");
             foreach (var column in visibleColumns)
             {
-                html.Append("<th style=\"").Append(headerCellStyle).Append("overflow: hidden; text-overflow: ellipsis;\"");
+                html.Append("<th style=\"").Append(headerCellStyle).Append("overflow: hidden; text-overflow: ellipsis;");
+                if (column.AutoSize is null || !ResolveStaticValue(column.AutoSize, context))
+                    if (column.Width is not null && IsFinite(ResolveStaticValue(column.Width, context)) && ResolveStaticValue(column.Width, context) >= 0)
+                        html.Append("width: ").Append(ToCss(ResolveStaticValue(column.Width, context))).Append("px;");
+                if (column.Alignment is not null) html.Append("text-align: ").Append(ToCss(ResolveStaticValue(column.Alignment, context))).Append(';');
+                html.Append('"');
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
+                AppendAttribute(html, "data-column-source-type", column.SourceType);
                 AppendAttribute(html, "data-time-format", column.TimeAndDateFormat);
                 AppendAttribute(html, "data-symbol", column.Symbol);
                 html.Append('>')
-                    .Append(WebUtility.HtmlEncode(column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.Type.ToString()))
+                    .Append(WebUtility.HtmlEncode(column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString()))
                     .Append("</th>");
             }
             html.Append("</tr></thead>");
@@ -2860,14 +2871,29 @@ public class HmiScreenToHtmlConverter
             AppendColorStyle(toolbarStyle, "background-color", alarmControl.ToolbarBackgroundColor);
             AppendColorStyle(toolbarStyle, "color", alarmControl.ToolbarForegroundColor);
             html.Append("<div class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"").Append(toolbarStyle).Append("\">");
-            if (showAcknowledgeButton)
-                html.Append("Acknowledge");
-            if (showAcknowledgeButton && showHelpButton)
-                html.Append(" · ");
-            if (showHelpButton)
-                html.Append("Help");
-            if (!showAcknowledgeButton && !showHelpButton)
-                html.Append("Toolbar");
+            if (alarmControl.ToolbarButtons.Count > 0)
+            {
+                foreach (var button in alarmControl.ToolbarButtons.Where(button => button.Visible is null || ResolveStaticValue(button.Visible, context))
+                    .OrderBy(button => button.Order is null ? int.MaxValue : ResolveStaticValue(button.Order, context)))
+                {
+                    html.Append("<button type=\"button\" disabled");
+                    AppendAttribute(html, "data-button-type", button.SourceType ?? button.Type.ToString());
+                    AppendAttribute(html, "data-enabled", ResolvePropertyPreview(button.Enabled, context));
+                    AppendAttribute(html, "title", button.Tooltip?.GetDisplayText(context.CultureInfo));
+                    html.Append('>').Append(WebUtility.HtmlEncode(button.Caption?.GetDisplayText(context.CultureInfo) ?? button.SourceType ?? button.Type.ToString())).Append("</button>");
+                }
+            }
+            else
+            {
+                if (showAcknowledgeButton)
+                    html.Append("Acknowledge");
+                if (showAcknowledgeButton && showHelpButton)
+                    html.Append(" · ");
+                if (showHelpButton)
+                    html.Append("Help");
+                if (!showAcknowledgeButton && !showHelpButton)
+                    html.Append("Toolbar");
+            }
             html.Append("</div>");
         }
         if (alarmControl.ShowStatusBar is not null && ResolveStaticValue(alarmControl.ShowStatusBar, context))
@@ -2877,7 +2903,20 @@ public class HmiScreenToHtmlConverter
             AppendColorStyle(statusStyle, "color", alarmControl.StatusBarForegroundColor);
             AppendFontStyle(statusStyle, alarmControl.StatusBarFont);
             html.Append("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"")
-                .Append(statusStyle).Append("\">Status</div>");
+                .Append(statusStyle).Append("\">");
+            if (alarmControl.StatusBarPanels.Count == 0) html.Append("Status");
+            foreach (var panel in alarmControl.StatusBarPanels.Where(panel => panel.Visible is null || ResolveStaticValue(panel.Visible, context))
+                .OrderBy(panel => panel.Order is null ? int.MaxValue : ResolveStaticValue(panel.Order, context)))
+            {
+                html.Append("<span class=\"hmi-alarm-status-panel\" style=\"display:inline-block;");
+                if ((panel.AutoSize is null || !ResolveStaticValue(panel.AutoSize, context)) && panel.Width is not null && IsFinite(ResolveStaticValue(panel.Width, context)) && ResolveStaticValue(panel.Width, context) >= 0)
+                    html.Append("width: ").Append(ToCss(ResolveStaticValue(panel.Width, context))).Append("px;");
+                html.Append('"');
+                AppendAttribute(html, "data-panel-type", panel.SourceType ?? panel.Type.ToString());
+                AppendAttribute(html, "title", panel.Tooltip?.GetDisplayText(context.CultureInfo));
+                html.Append('>').Append(WebUtility.HtmlEncode(panel.Text?.GetDisplayText(context.CultureInfo) ?? panel.SourceType ?? panel.Type.ToString())).Append("</span>");
+            }
+            html.Append("</div>");
         }
         html.Append("</div>");
     }

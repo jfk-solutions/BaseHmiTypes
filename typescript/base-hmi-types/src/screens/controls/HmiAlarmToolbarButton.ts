@@ -6,6 +6,7 @@ export class HmiAlarmToolbarButton {
   type = HmiAlarmToolbarButtonType.Unknown;
   sourceType?: string;
   visible?: HmiProperty<boolean>;
+  enabled?: HmiProperty<boolean>;
   order?: HmiProperty<number>;
   caption?: HmiMultilingualText;
   tooltip?: HmiMultilingualText;

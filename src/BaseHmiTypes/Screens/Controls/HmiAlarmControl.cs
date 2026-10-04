@@ -39,6 +39,8 @@ public class HmiAlarmControl : HmiControlWindowBase
     public IList<HmiAlarmConditionPresentation> Conditions { get; } = new List<HmiAlarmConditionPresentation>();
 
     public IList<HmiAlarmColumn> ColumnDefinitions { get; } = new List<HmiAlarmColumn>();
+    public IList<HmiAlarmColumnSet> ColumnSets { get; } = new List<HmiAlarmColumnSet>();
+    public string? ActiveColumnSet { get; set; }
 
     public HmiProperty<bool>? ShowHeader { get; set; }
 

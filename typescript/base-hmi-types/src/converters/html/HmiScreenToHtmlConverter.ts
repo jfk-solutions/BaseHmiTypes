@@ -2465,9 +2465,11 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   const showHeader = alarmControl.showHeader === undefined || getStaticValue(alarmControl.showHeader) === true;
   const showTitle = getStaticValue(alarmControl.showTitle) === true;
   const listMode = getStaticValue(alarmControl.listMode) ?? HmiAlarmListMode.All;
-  const visibleColumns = alarmControl.columnDefinitions.filter(
+  const selectedSet = alarmControl.activeColumnSet === undefined ? undefined : alarmControl.columnSets.find(set => set.name === alarmControl.activeColumnSet);
+  const columns = selectedSet?.columns ?? alarmControl.columnDefinitions;
+  const visibleColumns = columns.filter(
     (column) => column.visible === undefined || getStaticValue(column.visible) === true,
-  );
+  ).sort((left, right) => (getStaticValue(left.order) ?? 2147483647) - (getStaticValue(right.order) ?? 2147483647));
 
   html.push("<div");
   appendCommonAttributes(
@@ -2487,6 +2489,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-toolbar-background-color", resolvePropertyPreview(alarmControl.toolbarBackgroundColor));
   appendAttribute(html, "data-toolbar-foreground-color", resolvePropertyPreview(alarmControl.toolbarForegroundColor));
   appendAttribute(html, "data-view-kind", alarmControl.viewKind);
+  appendAttribute(html, "data-active-column-set", alarmControl.activeColumnSet);
   appendAttribute(html, "data-list-mode", listMode);
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmControl.numberOfRows));
   appendAttribute(html, "data-lines-per-alarm", resolvePropertyPreview(alarmControl.linesPerAlarm));
@@ -2544,11 +2547,18 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     if (visibleColumns.length === 0)
       html.push("<th style=\"", headerCellStyle, "\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
     for (const column of visibleColumns) {
-      html.push("<th style=\"", headerCellStyle, "overflow: hidden; text-overflow: ellipsis;\"");
+      html.push("<th style=\"", headerCellStyle, "overflow: hidden; text-overflow: ellipsis;");
+      const width = getStaticValue(column.width);
+      if (getStaticValue(column.autoSize) !== true && width !== undefined && Number.isFinite(width) && width >= 0)
+        html.push(`width: ${toCss(width)}px;`);
+      const alignment = getStaticValue(column.alignment);
+      if (alignment !== undefined) html.push(`text-align: ${horizontalAlignmentToCss(alignment)};`);
+      html.push('"');
       appendAttribute(html, "data-column-type", column.type);
+      appendAttribute(html, "data-column-source-type", column.sourceType);
       appendAttribute(html, "data-time-format", column.timeAndDateFormat);
       appendAttribute(html, "data-symbol", column.symbol);
-      html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.type), "</th>");
+      html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.sourceType ?? column.type), "</th>");
     }
     html.push("</tr></thead>");
   }
@@ -2568,14 +2578,25 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     appendColorStyle(toolbarStyle, "background-color", alarmControl.toolbarBackgroundColor);
     appendColorStyle(toolbarStyle, "color", alarmControl.toolbarForegroundColor);
     html.push("<div class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"", ...toolbarStyle, "\">");
-    if (showAcknowledgeButton)
-      html.push("Acknowledge");
-    if (showAcknowledgeButton && showHelpButton)
-      html.push(" · ");
-    if (showHelpButton)
-      html.push("Help");
-    if (!showAcknowledgeButton && !showHelpButton)
-      html.push("Toolbar");
+    if (alarmControl.toolbarButtons.length) {
+      for (const button of alarmControl.toolbarButtons.filter(button => getStaticValue(button.visible) !== false)
+        .sort((left, right) => (getStaticValue(left.order) ?? 2147483647) - (getStaticValue(right.order) ?? 2147483647))) {
+        html.push('<button type="button" disabled');
+        appendAttribute(html, "data-button-type", button.sourceType ?? button.type);
+        appendAttribute(html, "data-enabled", resolvePropertyPreview(button.enabled));
+        appendAttribute(html, "title", button.tooltip?.getDisplayText(context.options.cultureLcid));
+        html.push(">", escapeHtml(button.caption?.getDisplayText(context.options.cultureLcid) ?? button.sourceType ?? button.type), "</button>");
+      }
+    } else {
+      if (showAcknowledgeButton)
+        html.push("Acknowledge");
+      if (showAcknowledgeButton && showHelpButton)
+        html.push(" · ");
+      if (showHelpButton)
+        html.push("Help");
+      if (!showAcknowledgeButton && !showHelpButton)
+        html.push("Toolbar");
+    }
     html.push("</div>");
   }
   if (getStaticValue(alarmControl.showStatusBar) === true) {
@@ -2584,7 +2605,20 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     appendColorStyle(statusStyle, "color", alarmControl.statusBarForegroundColor);
     if (alarmControl.statusBarFont !== undefined)
       appendFont(statusStyle, alarmControl.statusBarFont);
-    html.push("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"", ...statusStyle, "\">Status</div>");
+    html.push("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"", ...statusStyle, "\">");
+    if (!alarmControl.statusBarPanels.length) html.push("Status");
+    for (const panel of alarmControl.statusBarPanels.filter(panel => getStaticValue(panel.visible) !== false)
+      .sort((left, right) => (getStaticValue(left.order) ?? 2147483647) - (getStaticValue(right.order) ?? 2147483647))) {
+      html.push('<span class="hmi-alarm-status-panel" style="display:inline-block;');
+      const width = getStaticValue(panel.width);
+      if (getStaticValue(panel.autoSize) !== true && width !== undefined && Number.isFinite(width) && width >= 0)
+        html.push(`width: ${toCss(width)}px;`);
+      html.push('"');
+      appendAttribute(html, "data-panel-type", panel.sourceType ?? panel.type);
+      appendAttribute(html, "title", panel.tooltip?.getDisplayText(context.options.cultureLcid));
+      html.push(">", escapeHtml(panel.text?.getDisplayText(context.options.cultureLcid) ?? panel.sourceType ?? panel.type), "</span>");
+    }
+    html.push("</div>");
   }
   html.push("</div>");
 }
