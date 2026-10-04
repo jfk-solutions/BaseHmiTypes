@@ -2906,6 +2906,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-header-border-color", ResolvePropertyPreview(alarmControl.HeaderBorderColor, context));
         AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(alarmControl.ShowToolbar, context));
         AppendAttribute(html, "data-toolbar-background-color", ResolvePropertyPreview(alarmControl.ToolbarBackgroundColor, context));
+        AppendAttribute(html, "data-use-toolbar-background-color", ResolvePropertyPreview(alarmControl.UseToolbarBackgroundColor, context));
         AppendAttribute(html, "data-toolbar-foreground-color", ResolvePropertyPreview(alarmControl.ToolbarForegroundColor, context));
         AppendAttribute(html, "data-view-kind", alarmControl.ViewKind.ToString());
         AppendAttribute(html, "data-active-column-set", alarmControl.ActiveColumnSet);
@@ -2941,6 +2942,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-selection-rectangle-width", ResolvePropertyPreview(alarmControl.SelectionRectangleWidth, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(alarmControl.ShowStatusBar, context));
         AppendAttribute(html, "data-status-bar-background-color", ResolvePropertyPreview(alarmControl.StatusBarBackgroundColor, context));
+        AppendAttribute(html, "data-use-status-bar-background-color", ResolvePropertyPreview(alarmControl.UseStatusBarBackgroundColor, context));
         AppendAttribute(html, "data-status-bar-foreground-color", ResolvePropertyPreview(alarmControl.StatusBarForegroundColor, context));
         html.Append('>');
 
@@ -3003,7 +3005,8 @@ public partial class HmiScreenToHtmlConverter
         if (showToolbar || showAcknowledgeButton || showHelpButton)
         {
             var toolbarStyle = new StringBuilder("flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;");
-            AppendColorStyle(toolbarStyle, "background-color", alarmControl.ToolbarBackgroundColor);
+            if (alarmControl.UseToolbarBackgroundColor is null || ResolveStaticValue(alarmControl.UseToolbarBackgroundColor, context))
+                AppendColorStyle(toolbarStyle, "background-color", alarmControl.ToolbarBackgroundColor);
             AppendColorStyle(toolbarStyle, "color", alarmControl.ToolbarForegroundColor);
             html.Append("<div class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"").Append(toolbarStyle).Append("\">");
             if (alarmControl.ToolbarButtons.Count > 0)
@@ -3034,7 +3037,8 @@ public partial class HmiScreenToHtmlConverter
         if (alarmControl.ShowStatusBar is not null && ResolveStaticValue(alarmControl.ShowStatusBar, context))
         {
             var statusStyle = new StringBuilder("flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;");
-            AppendColorStyle(statusStyle, "background-color", alarmControl.StatusBarBackgroundColor);
+            if (alarmControl.UseStatusBarBackgroundColor is null || ResolveStaticValue(alarmControl.UseStatusBarBackgroundColor, context))
+                AppendColorStyle(statusStyle, "background-color", alarmControl.StatusBarBackgroundColor);
             AppendColorStyle(statusStyle, "color", alarmControl.StatusBarForegroundColor);
             AppendFontStyle(statusStyle, alarmControl.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
             html.Append("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"")
