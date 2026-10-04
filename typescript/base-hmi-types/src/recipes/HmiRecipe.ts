@@ -83,6 +83,7 @@ export class HmiRecipePlcDeclaration {
   readonly subelementValues = new Map<string, string>();
   readonly subelementValueConstantNames = new Map<string, string>();
   readonly typeDefaultSubelementValues = new Map<string, string>();
+  readonly subelementComments = new Map<string, HmiMultilingualText>();
 }
 
 export class HmiRecipeDataSet {

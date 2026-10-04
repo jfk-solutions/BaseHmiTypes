@@ -104,6 +104,7 @@ public sealed class HmiRecipePlcDeclaration
     public IDictionary<string, string> SubelementValues { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
     public IDictionary<string, string> SubelementValueConstantNames { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
     public IDictionary<string, string> TypeDefaultSubelementValues { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+    public IDictionary<string, HmiMultilingualText> SubelementComments { get; } = new Dictionary<string, HmiMultilingualText>(StringComparer.Ordinal);
 }
 
 public sealed class HmiRecipeDataSet : IHmiObject
