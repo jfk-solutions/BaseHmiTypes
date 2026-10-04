@@ -72,7 +72,7 @@ import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
 import { HmiButtonBase } from "../../screens/widgets/HmiButtonBase.js";
-import { HmiBar } from "../../screens/widgets/HmiBar.js";
+import { HmiBar, HmiBarValueMapping } from "../../screens/widgets/HmiBar.js";
 import { HmiDisabledImageMode } from "../../screens/widgets/HmiDisabledImageMode.js";
 import { HmiState } from "../../screens/widgets/HmiState.js";
 import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
@@ -1771,10 +1771,11 @@ function appendBarMeter(
 
 function getBarFillOrigin(bar: HmiBar, minimum: number, maximum: number, value: number): number | undefined {
   const origin = getStaticValue(bar.originValue);
-  if (origin === undefined || !Number.isFinite(origin) || !Number.isFinite(minimum) || !Number.isFinite(maximum) ||
+  if (!Number.isFinite(minimum) || !Number.isFinite(maximum) ||
       !Number.isFinite(value) || !Number.isFinite(maximum - minimum) || maximum <= minimum)
     return undefined;
-  return origin;
+  if (origin === undefined) return usesNonlinearBarMapping(bar, minimum, maximum) ? minimum : undefined;
+  return Number.isFinite(origin) ? origin : undefined;
 }
 
 function appendBarOriginMeter(html: string[], bar: HmiBar, minimum: number, maximum: number,
@@ -1936,7 +1937,7 @@ function appendScaleMarks(
   const scaleMode = getStaticValue(bar.scaleMode) ?? 0;
   const explicitInterval = scaleMode === 0 && Number.isFinite(interval) && interval > 0 && maximum > minimum
     && (maximum - minimum) / interval <= 10000;
-  const positionedTicks = explicitInterval || getBarOriginPosition(bar, minimum, maximum) !== undefined;
+  const positionedTicks = explicitInterval || getBarOriginPosition(bar, minimum, maximum) !== undefined || usesNonlinearBarMapping(bar, minimum, maximum);
   if (explicitInterval)
     tickCount = Math.floor((maximum - minimum) / interval + 1e-10) + 1;
   const ratios = Array.from({ length: tickCount }, (_, index) => explicitInterval
@@ -2743,7 +2744,18 @@ function getBarOriginPosition(scale: HmiScaleWidgetBase, minimum: number, maximu
 
 function getScaleRatio(scale: HmiScaleWidgetBase, minimum: number, maximum: number, value: number): number {
   const position = getBarOriginPosition(scale, minimum, maximum);
-  if (position === undefined) return maximum === minimum ? 0 : (value - minimum) / (maximum - minimum);
+  if (position === undefined) {
+    let ratio = maximum === minimum ? 0 : (value - minimum) / (maximum - minimum);
+    if (!usesNonlinearBarMapping(scale, minimum, maximum)) return ratio;
+    ratio = Math.min(1, Math.max(0, ratio));
+    switch (getStaticValue((scale as HmiBar).valueMapping)) {
+      case HmiBarValueMapping.NormalizedLogarithmic: return Math.log10(1 + 100 * ratio) / Math.log10(101);
+      case HmiBarValueMapping.InverseNormalizedLogarithmic: return 1 - Math.log10(101 - 100 * ratio) / Math.log10(101);
+      case HmiBarValueMapping.Quadratic: return ratio * ratio;
+      case HmiBarValueMapping.Cubic: return ratio * ratio * ratio;
+      default: return ratio;
+    }
+  }
   const origin = getStaticValue(scale.originValue)!;
   value = Math.min(maximum, Math.max(minimum, value));
   const fraction = position / 100;
@@ -2753,8 +2765,14 @@ function getScaleRatio(scale: HmiScaleWidgetBase, minimum: number, maximum: numb
 }
 
 function getScaleTickRatio(scale: HmiScaleWidgetBase, minimum: number, maximum: number, ratio: number): number {
-  return getBarOriginPosition(scale, minimum, maximum) !== undefined
+  return getBarOriginPosition(scale, minimum, maximum) !== undefined || usesNonlinearBarMapping(scale, minimum, maximum)
     ? getScaleRatio(scale, minimum, maximum, minimum + (maximum - minimum) * ratio) : ratio;
+}
+
+function usesNonlinearBarMapping(scale: HmiScaleWidgetBase, minimum: number, maximum: number): boolean {
+  return scale instanceof HmiBar && Number.isFinite(minimum) && Number.isFinite(maximum) && maximum > minimum &&
+    Number.isFinite(maximum - minimum) && [HmiBarValueMapping.NormalizedLogarithmic, HmiBarValueMapping.InverseNormalizedLogarithmic,
+      HmiBarValueMapping.Quadratic, HmiBarValueMapping.Cubic].includes(getStaticValue(scale.valueMapping) ?? HmiBarValueMapping.Linear);
 }
 
 function resolveScaleValue(scale: HmiScaleWidgetBase, minimum: number, maximum: number): number {
