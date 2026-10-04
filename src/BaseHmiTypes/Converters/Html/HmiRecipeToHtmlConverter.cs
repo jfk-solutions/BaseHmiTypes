@@ -139,6 +139,15 @@ public sealed class HmiRecipeToHtmlConverter
                         html.Append("<tr><th scope=\"row\">").Append(Encode(declaration.Name)).Append("</th><td>").Append(group.Item1).Append("</td><td>").Append(Encode(pair.Key)).Append("</td><td data-value-state=\"present\">").Append(Encode(pair.Value)).Append("</td></tr>");
             html.Append("</tbody></table></div>");
         }
+        if (recipe.SourcePlcDeclarations.Any(declaration => declaration.SubelementComments.Count > 0))
+        {
+            html.Append("<h2>Source PLC sparse comments</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Declaration</th><th scope=\"col\">Source key</th><th scope=\"col\">Comment</th></tr></thead><tbody>");
+            foreach (var declaration in recipe.SourcePlcDeclarations)
+                foreach (var pair in declaration.SubelementComments)
+                    html.Append("<tr><th scope=\"row\">").Append(Encode(declaration.Name)).Append("</th><td>").Append(Encode(pair.Key))
+                        .Append("</td><td data-value-state=\"present\">").Append(Encode(pair.Value.GetText(culture))).Append("</td></tr>");
+            html.Append("</tbody></table></div>");
+        }
         html.Append("<h2>Stored records</h2>");
         if (recipe.DataSets.Count == 0)
             html.Append("<p>No stored records.</p>");

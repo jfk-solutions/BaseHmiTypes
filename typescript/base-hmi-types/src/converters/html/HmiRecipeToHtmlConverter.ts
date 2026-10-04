@@ -109,6 +109,13 @@ export class HmiRecipeToHtmlConverter {
             html.push('<tr><th scope="row">', encode(declaration.name), '</th><td>', kind, '</td><td>', encode(key), '</td><td data-value-state="present">', encode(value), '</td></tr>');
       html.push('</tbody></table></div>');
     }
+    if (recipe.sourcePlcDeclarations.some(declaration => declaration.subelementComments.size > 0)) {
+      html.push('<h2>Source PLC sparse comments</h2><div class="table-scroll"><table><thead><tr><th scope="col">Declaration</th><th scope="col">Source key</th><th scope="col">Comment</th></tr></thead><tbody>');
+      for (const declaration of recipe.sourcePlcDeclarations)
+        for (const [key, comment] of declaration.subelementComments)
+          html.push('<tr><th scope="row">', encode(declaration.name), '</th><td>', encode(key), '</td><td data-value-state="present">', encode(comment.getText(cultureLcid)), '</td></tr>');
+      html.push('</tbody></table></div>');
+    }
     html.push("<h2>Stored records</h2>");
     if (recipe.dataSets.length === 0) html.push("<p>No stored records.</p>");
     else {
