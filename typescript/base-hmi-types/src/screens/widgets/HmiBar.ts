@@ -35,6 +35,8 @@ export class HmiBar extends HmiScaleWidgetBase {
 export enum HmiBarFillStyle {
   Solid = "Solid",
   Gradient = "Gradient",
+  /** Paint no value-region color; retain track, scale, thresholds, arrows and meter value. */
+  Transparent = "Transparent",
 }
 
 /** Range-normalized mappings, not logarithms/powers of the raw process value. */
