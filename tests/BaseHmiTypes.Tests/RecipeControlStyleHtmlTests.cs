@@ -115,6 +115,52 @@ public class RecipeControlStyleHtmlTests
         Assert.AreEqual("NeutralCombo", combo.Name!.StaticValue); Assert.AreEqual(1, combo.LocalizedFonts.Count);
     }
 
+    [TestMethod]
+    [DataRow(HmiRecipeViewKind.Selector)]
+    [DataRow(HmiRecipeViewKind.Table)]
+    public async Task RecipeHeaderGradientFlagsAndRawAppearanceStayIndependent(HmiRecipeViewKind kind)
+    {
+        var control = new HmiRecipeControl {
+            ViewKind = kind, HeaderBackgroundColor = HmiColor.FromArgb(255, 1, 2, 3),
+            HeaderBorderBackgroundColor = HmiColor.FromArgb(255, 13, 14, 15),
+            HeaderFirstGradientColor = HmiColor.FromArgb(255, 4, 5, 6),
+            HeaderMiddleGradientColor = HmiColor.FromArgb(255, 7, 8, 9),
+            HeaderSecondGradientColor = HmiColor.FromArgb(255, 10, 11, 12),
+            HeaderFirstGradientOffset = 25.5d, HeaderSecondGradientOffset = 75d,
+            HeaderBackFillStyle = 0, HeaderEdgeStyle = -17,
+            UseHeaderFirstGradient = true, UseHeaderSecondGradient = true };
+        control.ColumnDefinitions.Add(new HmiRecipeColumn());
+        var html = await Convert(control);
+        StringAssert.Contains(html, "background-image: linear-gradient(to right, #040506 0%, #070809 25.5%, #070809 75%, #0A0B0C 100%);");
+        StringAssert.Contains(html, "data-header-back-fill-style=\"0\""); StringAssert.Contains(html, "data-header-edge-style=\"-17\"");
+        StringAssert.Contains(html, "data-header-first-gradient-offset=\"25.5\""); StringAssert.Contains(html, "data-header-second-gradient-offset=\"75\"");
+        StringAssert.Contains(html, "data-use-header-first-gradient=\"true\""); StringAssert.Contains(html, "data-use-header-second-gradient=\"true\"");
+        var body = System.Text.RegularExpressions.Regex.Match(html, kind == HmiRecipeViewKind.Table ? "<td\\b[^>]*style=\"([^\"]*)\"" : "<div style=\"flex: 1 1 auto;([^\"]*)\"").Groups[1].Value;
+        Assert.IsTrue(body.Length > 0);
+        Assert.IsFalse(body.Contains("linear-gradient"));
+        control.UseHeaderSecondGradient = false;
+        html = await Convert(control);
+        StringAssert.Contains(html, "linear-gradient(to right, #040506 0%, #070809 25.5%, #070809 100%)");
+        control.UseHeaderFirstGradient = false; control.UseHeaderSecondGradient = true;
+        html = await Convert(control);
+        StringAssert.Contains(html, "linear-gradient(to right, #070809 0%, #070809 75%, #0A0B0C 100%)");
+        control.UseHeaderFirstGradient = true; control.HeaderFirstGradientOffset = -20d; control.HeaderSecondGradientOffset = 125d;
+        html = await Convert(control);
+        StringAssert.Contains(html, "linear-gradient(to right, #040506 0%, #070809 0%, #070809 100%, #0A0B0C 100%)");
+        StringAssert.Contains(html, "data-header-first-gradient-offset=\"-20\""); StringAssert.Contains(html, "data-header-second-gradient-offset=\"125\"");
+        Assert.AreEqual(-20d, control.HeaderFirstGradientOffset.StaticValue); Assert.AreEqual(125d, control.HeaderSecondGradientOffset.StaticValue);
+        control.UseHeaderFirstGradient = false; control.UseHeaderSecondGradient = false;
+        html = await Convert(control); Assert.IsFalse(System.Text.RegularExpressions.Regex.IsMatch(html, "style=\"[^\"]*linear-gradient"));
+        StringAssert.Contains(html, "data-use-header-first-gradient=\"false\""); StringAssert.Contains(html, "data-use-header-second-gradient=\"false\"");
+        control.UseHeaderFirstGradient = null; control.UseHeaderSecondGradient = null;
+        html = await Convert(control); Assert.IsFalse(System.Text.RegularExpressions.Regex.IsMatch(html, "style=\"[^\"]*linear-gradient")); Assert.IsFalse(html.Contains("data-use-header-first-gradient"));
+        control.UseHeaderFirstGradient = true; control.ShowHeader = false;
+        html = await Convert(control); Assert.IsFalse(System.Text.RegularExpressions.Regex.IsMatch(html, "style=\"[^\"]*linear-gradient")); StringAssert.Contains(html, "data-use-header-first-gradient=\"true\"");
+        control = new HmiRecipeControl(); html = await Convert(control);
+        Assert.IsFalse(html.Contains("data-header-first-gradient")); Assert.IsFalse(html.Contains("data-header-back-fill-style"));
+        Assert.IsFalse(html.Contains("data-header-edge-style")); Assert.IsFalse(html.Contains("data-header-border-background-color"));
+    }
+
     private static async Task<string> Convert(HmiRecipeControl control)
     {
         var screen = new HmiScreen();

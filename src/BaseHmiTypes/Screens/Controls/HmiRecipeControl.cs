@@ -20,6 +20,16 @@ public sealed class HmiRecipeControl : HmiControlWindowBase
     public HmiProperty<bool>? EnableRecipeDialog { get; set; }
 
     public HmiProperty<double>? HeaderCornerRadius { get; set; }
+    public HmiProperty<HmiColor>? HeaderBorderBackgroundColor { get; set; }
+    public HmiProperty<int>? HeaderBackFillStyle { get; set; }
+    public HmiProperty<int>? HeaderEdgeStyle { get; set; }
+    public HmiProperty<HmiColor>? HeaderFirstGradientColor { get; set; }
+    public HmiProperty<HmiColor>? HeaderMiddleGradientColor { get; set; }
+    public HmiProperty<HmiColor>? HeaderSecondGradientColor { get; set; }
+    public HmiProperty<double>? HeaderFirstGradientOffset { get; set; }
+    public HmiProperty<double>? HeaderSecondGradientOffset { get; set; }
+    public HmiProperty<bool>? UseHeaderFirstGradient { get; set; }
+    public HmiProperty<bool>? UseHeaderSecondGradient { get; set; }
 
     public HmiProperty<bool>? ShowHeader { get; set; }
 
