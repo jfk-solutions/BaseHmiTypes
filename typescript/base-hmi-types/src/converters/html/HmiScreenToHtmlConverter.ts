@@ -2194,12 +2194,16 @@ function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvert
     ? HmiFillDirection.Right
     : orientation as HmiFillDirection;
   const thumbColor = getStaticValue(slider.thumbBackgroundColor);
+  const thumbForeground = getStaticValue(slider.thumbForegroundColor);
   const sliderStyle = getBarDirectionStyle(direction) +
     (thumbColor === undefined ? "" : `--hmi-slider-thumb-background: ${colorToCss(thumbColor)};`) +
+    (thumbForeground === undefined ? "" : `--hmi-slider-thumb-foreground: ${colorToCss(thumbForeground)};`) +
     getSliderTrackStyle(slider, direction);
   html.push("<input");
   appendCommonAttributes(html, slider, context, true, sliderStyle);
   appendAttribute(html, "data-hmi-slider", "true");
+  if (slider.thumbBackgroundColor !== undefined || slider.thumbForegroundColor !== undefined)
+    appendAttribute(html, "data-hmi-slider-custom-thumb", "true");
   appendAttribute(html, "data-orientation", HmiFillDirection[direction]);
   const stepSize = getStaticValue(slider.stepSize);
   if (stepSize !== undefined)
