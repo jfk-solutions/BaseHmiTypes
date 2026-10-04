@@ -44,3 +44,11 @@ public enum HmiSymbolLibraryBackFillStyle
     Transparent = 0,
     Solid = 1
 }
+
+/// <summary>Explicit raster layout; unset retains the existing symbol layout policy.</summary>
+public enum HmiSymbolLibraryRasterLayout
+{
+    Stretch = 0,
+    NativeScaleDown = 1,
+    Tile = 2
+}

@@ -17,6 +17,8 @@ public class HmiSymbolLibraryControl : HmiOcxControl
 
     public HmiImage? Symbol { get; set; }
 
+    public HmiProperty<HmiSymbolLibraryRasterLayout>? RasterLayout { get; set; }
+
     public HmiProperty<HmiSymbolLibraryFillColorMode>? SymbolAppearance { get; set; }
 
     public HmiProperty<HmiSymbolLibraryFillColorMode>? FillColorMode { get; set; }

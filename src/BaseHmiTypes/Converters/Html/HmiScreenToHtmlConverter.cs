@@ -4013,7 +4013,7 @@ public partial class HmiScreenToHtmlConverter
             var speed = symbolLibraryControl.BlinkSpeed == null ? HmiSymbolLibraryBlinkSpeed.Medium : ResolveStaticValue(symbolLibraryControl.BlinkSpeed, context);
             var interval = speed switch { HmiSymbolLibraryBlinkSpeed.Fast => 250, HmiSymbolLibraryBlinkSpeed.Medium => 500, HmiSymbolLibraryBlinkSpeed.Slow => 1000, _ => 0 };
             if (symbolLibraryControl.BlinkIntervalMilliseconds != null) interval = ResolveStaticValue(symbolLibraryControl.BlinkIntervalMilliseconds, context);
-            var normal = CreateSymbolLibraryMarkup(symbolImage, symbolLibraryControl);
+            var normal = CreateSymbolLibraryMarkup(symbolImage, symbolLibraryControl, context);
             string? alternate = null;
             if (blink is HmiSymbolLibraryBlinkMode.Solid or HmiSymbolLibraryBlinkMode.Shaded && wmf && symbolLibraryControl.Symbol != null)
             {
@@ -4021,7 +4021,7 @@ public partial class HmiScreenToHtmlConverter
                 var bytes = SymbolLibraryMetafileColorizer.TryRecolor(symbolLibraryControl.Symbol.Data,
                     blink == HmiSymbolLibraryBlinkMode.Solid ? HmiSymbolLibraryFillColorMode.Solid : HmiSymbolLibraryFillColorMode.Shaded, color);
                 if (bytes != null) bytes = SymbolLibraryMetafileTransformer.TryTransform(bytes, flip, rotation);
-                if (bytes != null) alternate = CreateSymbolLibraryMarkup(new HmiImage { ImageType = HmiImageType.Wmf, Data = bytes }, symbolLibraryControl);
+                if (bytes != null) alternate = CreateSymbolLibraryMarkup(new HmiImage { ImageType = HmiImageType.Wmf, Data = bytes }, symbolLibraryControl, context);
             }
             if (interval <= 0 || interval > int.MaxValue / 2 || normal == null || (blink != HmiSymbolLibraryBlinkMode.Invisible && alternate == null))
             { AppendDiv(html, symbolLibraryControl, context.Options.UnsupportedItemPlaceholderCssClass, "Symbol library control", context); return; }
@@ -4037,6 +4037,13 @@ public partial class HmiScreenToHtmlConverter
             if (alternate != null) html.Append("<div data-hmi-symbol-phase=\"alternate\" aria-hidden=\"true\" style=\"position: absolute; inset: 0; opacity: 1; animation: hmi-symbol-on ").Append(interval * 2).Append("ms step-end infinite;\">").Append(alternate).Append("</div>");
             html.Append("</div>");
             return;
+        }
+        if (symbolLibraryControl.RasterLayout != null)
+        {
+            var markup = CreateSymbolLibraryMarkup(symbolImage, symbolLibraryControl, context);
+            if (markup == null) { AppendDiv(html, symbolLibraryControl, context.Options.UnsupportedItemPlaceholderCssClass, "Symbol library control", context); return; }
+            html.Append("<div"); AppendSymbolLibraryAttributes(html, symbolLibraryControl, context, transformGeometry: wmf);
+            html.Append('>').Append(markup).Append("</div>"); return;
         }
         if (!string.IsNullOrWhiteSpace(symbolSvg))
         {
@@ -4068,8 +4075,42 @@ public partial class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static string? CreateSymbolLibraryMarkup(HmiImage? image, HmiSymbolLibraryControl control)
+    private static string? CreateSymbolLibraryMarkup(HmiImage? image, HmiSymbolLibraryControl control, HmiHtmlConvertContext context)
     {
+        if (control.RasterLayout != null)
+        {
+            var layout = ResolveStaticValue(control.RasterLayout, context);
+            var rasterUri = ResolveImageUri(image);
+            if (string.IsNullOrWhiteSpace(rasterUri) || layout is < HmiSymbolLibraryRasterLayout.Stretch or > HmiSymbolLibraryRasterLayout.Tile) return null;
+            if (layout == HmiSymbolLibraryRasterLayout.Tile)
+            {
+                var tile = new StringBuilder("<div data-hmi-symbol-tile=\"true\" role=\"img\"");
+                AppendAttribute(tile, "aria-label", image?.Name ?? control.Name);
+                AppendAttribute(tile, "style", "width: 100%; height: 100%; image-rendering: pixelated; background-repeat: repeat; background-position: 0 0; background-size: auto; background-image: url(\"" + rasterUri + "\");");
+                return tile.Append("></div>").ToString();
+            }
+            var raster = new StringBuilder("<img"); AppendAttribute(raster, "src", rasterUri); AppendAttribute(raster, "alt", image?.Name ?? control.Name);
+            if (layout == HmiSymbolLibraryRasterLayout.Stretch)
+                return raster.Append(" style=\"width: 100%; height: 100%; display: block; object-fit: fill; image-rendering: pixelated;\">").ToString();
+            // Native type-0 bitmaps stay at intrinsic size unless too large. Their fit uses
+            // an integer aspect ratio scaled by 1000, with integer centering, not CSS contain.
+            if (image?.ImageType != HmiImageType.Bmp || image.Data.Length < 54 || image.Data[0] != 'B' || image.Data[1] != 'M') return null;
+            var imageWidth = image.Data[18] | image.Data[19] << 8 | image.Data[20] << 16 | image.Data[21] << 24;
+            var imageHeight = image.Data[22] | image.Data[23] << 8 | image.Data[24] << 16 | image.Data[25] << 24;
+            var width = Math.Truncate(ResolveStaticValue(control.Width, context)); var height = Math.Truncate(ResolveStaticValue(control.Height, context));
+            if (imageWidth <= 0 || imageHeight <= 0 || !IsFinite(width) || !IsFinite(height) || width <= 0 || height <= 0 || width > int.MaxValue / 1000 || height > int.MaxValue / 1000 || imageWidth > int.MaxValue / 1000) return null;
+            var drawWidth = imageWidth; var drawHeight = imageHeight;
+            if (imageWidth > width || imageHeight > height)
+            {
+                var ratio = imageWidth * 1000 / imageHeight; if (ratio == 0) return null;
+                drawWidth = (int)width; drawHeight = (int)height;
+                if ((int)width * 1000 / (int)height < ratio) drawHeight = (int)width * 1000 / ratio;
+                else drawWidth = (int)height * ratio / 1000;
+            }
+            var left = (int)(width - drawWidth) / 2; var top = (int)(height - drawHeight) / 2;
+            AppendAttribute(raster, "style", $"position: absolute; left: {left}px; top: {top}px; width: {drawWidth}px; height: {drawHeight}px; image-rendering: pixelated;");
+            return raster.Append('>').ToString();
+        }
         var svg = ResolveImageSvg(image);
         if (!string.IsNullOrWhiteSpace(svg)) return NormalizeEmbeddedSymbolSvg(svg!, control);
         var uri = ResolveImageUri(image);
