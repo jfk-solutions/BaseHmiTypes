@@ -6,6 +6,8 @@ import { HmiProperty } from "../base/HmiProperty.js";
 export class HmiBar extends HmiScaleWidgetBase {
   fillStyle?: HmiProperty<HmiBarFillStyle>;
   fillDirection?: HmiProperty<HmiFillDirection>;
+  /** Position of originValue in percent, used only with useAutoScaling. Valid preview positions are zero through 100. */
+  originPositionPercent?: HmiProperty<number>;
   /** True places the scale right/below; false places it left/above. Omitted uses right/below. */
   scaleAfterBar?: HmiProperty<boolean>;
   /** Use the lowest enabled threshold strictly above the value; otherwise retain the foreground color. */
