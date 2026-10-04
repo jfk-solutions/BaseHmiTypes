@@ -56,6 +56,11 @@ public sealed class HmiState
 
     public bool? ImageBackgroundTransparent { get; set; }
 
+    /// <summary>RGB key for the alternate/flashing picture, independent of the base image.</summary>
+    public HmiColor? AlternateImageBackgroundColor { get; set; }
+
+    public bool? AlternateImageBackgroundTransparent { get; set; }
+
     public HmiHorizontalAlignment? ImageHorizontalAlignment { get; set; }
 
     public HmiVerticalAlignment? ImageVerticalAlignment { get; set; }
