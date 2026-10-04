@@ -10,3 +10,4 @@ import "./hmi-clock.js";
 import "./hmi-gauge.js";
 import "./hmi-toggle-switch.js";
 import "./hmi-trend-control.js";
+import "./bar-bitmap-pattern.js";

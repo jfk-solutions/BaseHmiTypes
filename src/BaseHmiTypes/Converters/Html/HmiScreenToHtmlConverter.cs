@@ -102,7 +102,9 @@ public class HmiScreenToHtmlConverter
             html.Append(" style=\"position: relative; overflow: hidden;");
             AppendSize(html, screen.Width.GetStaticValueOrDefault(), screen.Height.GetStaticValueOrDefault());
             AppendScreenStyle(html, screen, backgroundImageUri);
-            html.Append("\">");
+            html.Append('"');
+            AppendAttribute(html, "data-hmi-screen", "true");
+            html.Append('>');
 
             var template = await ResolveTemplateAsync(screen, project, screenStack, cancellationToken).ConfigureAwait(false);
             if (template != null)
@@ -2013,7 +2015,7 @@ public class HmiScreenToHtmlConverter
             !IsFinite(value) || !IsFinite(maximum - minimum) || maximum <= minimum)
             return null;
         if (bar.OriginValue is null)
-            return UsesNonlinearBarMapping(bar, minimum, maximum, context) ? minimum : null;
+            return UsesNonlinearBarMapping(bar, minimum, maximum, context) || GetBarBitmapRows(bar, context) is not null ? minimum : null;
         var origin = ResolveStaticValue(bar.OriginValue, context);
         return IsFinite(origin) ? origin : null;
     }
@@ -2051,8 +2053,24 @@ public class HmiScreenToHtmlConverter
         if (disabledColor is not null) AppendColorStyle(style, "color", disabledColor);
         else if (thresholdColor is not null) AppendColorStyle(style, "color", thresholdColor);
         AppendBarFillOverrideStyle(style, bar, context);
+        var bitmapRows = GetBarBitmapRows(bar, context);
+        if (bitmapRows is not null)
+        {
+            AppendAttribute(html, "data-hmi-bar-bitmap", bitmapRows);
+            var patternColor = context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.PatternColor), bar.PatternColor)?.StaticValue
+                ?? HmiColor.FromArgb(255, 0, 0, 0);
+            AppendAttribute(html, "data-hmi-bar-pattern-color", ToCss(patternColor));
+        }
         AppendAttribute(html, "style", style.ToString());
         html.Append("></span></div>");
+    }
+
+    private static string? GetBarBitmapRows(HmiBar bar, HmiHtmlConvertContext context)
+    {
+        if (!context.EffectiveProperties.TryGetStaticValue(bar, nameof(HmiBar.FillStyle), bar.FillStyle, out var fillStyle) || fillStyle != HmiBarFillStyle.BitmapPattern)
+            return null;
+        var rows = context.EffectiveProperties.Resolve(bar, nameof(HmiBar.BitmapPatternRows), bar.BitmapPatternRows)?.StaticValue;
+        return rows is { Length: 16 } && rows.All(Uri.IsHexDigit) ? rows.ToLowerInvariant() : null;
     }
 
     private static void AppendBarColorAttributes(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)

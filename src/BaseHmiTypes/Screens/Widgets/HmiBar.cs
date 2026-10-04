@@ -11,6 +11,9 @@ public class HmiBar : HmiScaleWidgetBase
 
     public HmiProperty<HmiBarFillStyle>? FillStyle { get; set; }
 
+    /// <summary>Eight top-to-bottom bitmap rows as 16 hexadecimal characters, MSB left. Zero bits use PatternColor; one bits use the value-region color. Tiles are anchored to the containing screen.</summary>
+    public HmiProperty<string>? BitmapPatternRows { get; set; }
+
     /// <summary>Color of the unfilled bar track, independent of the widget background. Omitted retains the background-based track.</summary>
     public HmiProperty<HmiColor>? TrackColor { get; set; }
 
@@ -47,7 +50,8 @@ public enum HmiBarFillStyle
     Solid,
     Gradient,
     /// <summary>Paint no value-region color; retain track, scale, thresholds, arrows and meter value.</summary>
-    Transparent
+    Transparent,
+    BitmapPattern
 }
 
 /// <summary>Range-normalized mappings, not logarithms or powers of the raw process value.</summary>
