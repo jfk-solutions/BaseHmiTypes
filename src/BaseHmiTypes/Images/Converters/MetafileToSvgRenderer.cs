@@ -638,7 +638,12 @@ public sealed class MetafileToSvgRenderer
     {
         return index switch
         {
-            0x80000005 => new BrushObject { Color = "#ffffff" },
+            0x80000000 => new BrushObject { Color = "#ffffff" },
+            0x80000001 => new BrushObject { Color = "#c0c0c0" },
+            0x80000002 => new BrushObject { Color = "#808080" },
+            0x80000003 => new BrushObject { Color = "#404040" },
+            0x80000004 => new BrushObject { Color = "#000000" },
+            0x80000005 => new BrushObject { None = true },
             0x80000006 => new PenObject { Color = "#ffffff", Width = 1 },
             0x80000007 => new PenObject { Color = "#000000", Width = 1 },
             0x80000008 => new PenObject { None = true, Width = 1 },
