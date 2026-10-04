@@ -1,6 +1,7 @@
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiColor, HmiProperty } from "../base.js";
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 
 export class HmiDetailedParameterControl extends HmiControlWindowBase {
   constructor() {
@@ -8,6 +9,9 @@ export class HmiDetailedParameterControl extends HmiControlWindowBase {
     this.hmiObjectType = HmiObjectType.HmiDetailedParameterControl;
   }
   parameterSetTypeFixed?: HmiProperty<boolean>;
+  parameterSetTypeLabel?: HmiProperty<HmiMultilingualText>;
+  parameterSetLabel?: HmiProperty<HmiMultilingualText>;
+  numberLabel?: HmiProperty<HmiMultilingualText>;
   hideDetails?: HmiProperty<boolean>;
   /** Native editing-mode value; no cross-family enum translation is assumed. */
   editMode?: HmiProperty<number>;

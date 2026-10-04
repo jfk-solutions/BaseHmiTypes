@@ -1,4 +1,5 @@
 using BaseHmiTypes.Screens.Base;
+using BaseHmiTypes.Common;
 
 namespace BaseHmiTypes.Screens.Controls;
 
@@ -10,6 +11,9 @@ public class HmiDetailedParameterControl : HmiControlWindowBase
     }
 
     public HmiProperty<bool>? ParameterSetTypeFixed { get; set; }
+    public HmiProperty<HmiMultilingualText>? ParameterSetTypeLabel { get; set; }
+    public HmiProperty<HmiMultilingualText>? ParameterSetLabel { get; set; }
+    public HmiProperty<HmiMultilingualText>? NumberLabel { get; set; }
     public HmiProperty<bool>? HideDetails { get; set; }
     /// <summary>Native editing-mode value; no cross-family enum translation is assumed.</summary>
     public HmiProperty<int>? EditMode { get; set; }

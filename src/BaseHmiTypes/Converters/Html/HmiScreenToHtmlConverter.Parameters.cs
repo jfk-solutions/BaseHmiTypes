@@ -1,4 +1,5 @@
 using System.Text;
+using System.Net;
 using BaseHmiTypes.Screens.Controls;
 
 namespace BaseHmiTypes.Converters.Html;
@@ -21,9 +22,14 @@ public partial class HmiScreenToHtmlConverter
             AppendColorStyle(style, "background-color", control.ToolbarBackgroundColor);
             html.Append("<div class=\"hmi-parameter-toolbar\" role=\"toolbar\" style=\"").Append(style).Append("\">Toolbar</div>");
         }
-        html.Append("<div class=\"hmi-parameter-selection\" style=\"flex: 0 0 auto; padding: 2px 4px;\">Parameter set type");
+        html.Append("<div class=\"hmi-parameter-selection\" style=\"flex: 0 0 auto; padding: 2px 4px;\"><div>")
+            .Append(WebUtility.HtmlEncode(ResolveStaticValue(control.ParameterSetTypeLabel, context)?.GetText(context.CultureInfo) ?? "Parameter set type"));
         if (ResolveStaticValue(control.ParameterSetTypeFixed, context)) html.Append(" · Fixed");
-        html.Append("<br>Parameter set selection not decoded</div>");
+        html.Append("</div><div>")
+            .Append(WebUtility.HtmlEncode(ResolveStaticValue(control.ParameterSetLabel, context)?.GetText(context.CultureInfo) ?? "Parameter set"))
+            .Append("</div><div>")
+            .Append(WebUtility.HtmlEncode(ResolveStaticValue(control.NumberLabel, context)?.GetText(context.CultureInfo) ?? "Number"))
+            .Append("</div><div>Parameter set selection not decoded</div></div>");
         if (!ResolveStaticValue(control.HideDetails, context))
             html.Append("<div class=\"hmi-parameter-details\" style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top: 1px solid currentColor;\">Parameter data not loaded</div>");
         if (ResolveStaticValue(control.ShowStatusBar, context))
