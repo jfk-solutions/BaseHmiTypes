@@ -2898,6 +2898,10 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-active-column-set", alarmControl.activeColumnSet);
   appendAttribute(html, "data-list-mode", listMode);
   appendAttribute(html, "data-time-base", resolvePropertyPreview(alarmControl.timeBase));
+  appendAttribute(html, "data-cell-padding-top", resolvePropertyPreview(alarmControl.cellPaddingTop));
+  appendAttribute(html, "data-cell-padding-right", resolvePropertyPreview(alarmControl.cellPaddingRight));
+  appendAttribute(html, "data-cell-padding-bottom", resolvePropertyPreview(alarmControl.cellPaddingBottom));
+  appendAttribute(html, "data-cell-padding-left", resolvePropertyPreview(alarmControl.cellPaddingLeft));
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmControl.numberOfRows));
   appendAttribute(html, "data-lines-per-alarm", resolvePropertyPreview(alarmControl.linesPerAlarm));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(alarmControl.wordWrap));
@@ -4429,7 +4433,15 @@ function createAlarmGridCellStyle(alarmControl: HmiAlarmControl): string {
   const horizontal = getStaticValue(alarmControl.showHorizontalGridLines) !== false;
   const vertical = getStaticValue(alarmControl.showVerticalGridLines) !== false;
   const width = Math.max(0, getStaticValue(alarmControl.gridLineWidth) ?? 1);
-  return `border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: ${horizontal ? toCss(width) : "0"}px ${vertical ? toCss(width) : "0"}px;`;
+  const parts = [`border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: ${horizontal ? toCss(width) : "0"}px ${vertical ? toCss(width) : "0"}px;`];
+  for (const [side, property] of [
+    ["top", alarmControl.cellPaddingTop], ["right", alarmControl.cellPaddingRight],
+    ["bottom", alarmControl.cellPaddingBottom], ["left", alarmControl.cellPaddingLeft],
+  ] as const) {
+    const value = getStaticValue(property);
+    if (value !== undefined && Number.isFinite(value) && value >= 0) parts.push(`padding-${side}: ${toCss(value)}px;`);
+  }
+  return parts.join("");
 }
 
 function appendAlarmSelectionRectangleStyle(parts: string[], alarmControl: HmiAlarmControl): void {
