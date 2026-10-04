@@ -16,6 +16,9 @@ export class HmiRecipeControl extends HmiControlWindowBase {
   horizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   enableRecipeDialog?: HmiProperty<boolean>;
   showHeader?: HmiProperty<boolean>;
+  showGridLines?: HmiProperty<boolean>;
+  gridLineColor?: HmiProperty<HmiColor>;
+  showStatusBar?: HmiProperty<boolean>;
   showFooter?: HmiProperty<boolean>;
   linesPerItem?: HmiProperty<number>;
   wordWrap?: HmiProperty<boolean>;

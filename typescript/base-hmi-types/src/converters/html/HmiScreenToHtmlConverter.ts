@@ -2622,6 +2622,8 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   const headerStyle = createRecipeHeaderStyle(recipeControl);
   const contentStyle = createRecipeContentStyle(recipeControl);
 
+  const cellStyle: string[] = [recipeControl.showGridLines && !getStaticValue(recipeControl.showGridLines) ? "border: 0;" : "border: 1px solid currentColor;"];
+  appendColorStyle(cellStyle, "border-color", recipeControl.gridLineColor);
   html.push("<div");
   appendCommonAttributes(
     html,
@@ -2637,6 +2639,9 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-lines-per-item", resolvePropertyPreview(recipeControl.linesPerItem));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(recipeControl.wordWrap));
   appendAttribute(html, "data-enable-recipe-dialog", resolvePropertyPreview(recipeControl.enableRecipeDialog));
+  appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(recipeControl.showGridLines));
+  appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(recipeControl.gridLineColor));
+  appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(recipeControl.showStatusBar));
   html.push(">");
 
   if (recipeControl.viewKind === HmiRecipeViewKind.Selector) {
@@ -2663,7 +2668,7 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
     if (showHeader) {
       html.push("<thead><tr>");
       for (const column of visibleColumns) {
-        html.push("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;", headerStyle, "\"");
+        html.push("<th style=\"", cellStyle.join(""), "overflow: hidden; text-overflow: ellipsis;", headerStyle, "\"");
         appendAttribute(html, "data-column-type", column.type);
         html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.type), "</th>");
       }
@@ -2671,8 +2676,11 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
     }
     html.push("<tbody><tr><td");
     appendAttribute(html, "colspan", Math.max(visibleColumns.length, 1).toString());
-    html.push(" style=\"text-align: center;\">Recipe data not loaded</td></tr></tbody></table>");
+    html.push(" style=\"", recipeControl.showGridLines || recipeControl.gridLineColor ? cellStyle.join("") : "", "text-align: center;\">Recipe data not loaded</td></tr></tbody></table>");
   }
+
+  if (recipeControl.showStatusBar && getStaticValue(recipeControl.showStatusBar))
+    html.push("<div class=\"hmi-recipe-status-bar\" style=\"flex: 0 0 auto; padding: 2px 4px;\">Recipe status not loaded</div>");
 
   if (showFooter)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");

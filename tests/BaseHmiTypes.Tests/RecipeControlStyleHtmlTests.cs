@@ -67,6 +67,26 @@ public class RecipeControlStyleHtmlTests
         Assert.IsFalse(html.Contains("<thead>"));
     }
 
+    [TestMethod]
+    public async Task RecipeGridAndStatusVisibilityReachHtml()
+    {
+        var control = new HmiRecipeControl { ViewKind = HmiRecipeViewKind.Table, ShowGridLines = false, ShowStatusBar = false, GridLineColor = HmiColor.FromArgb(255, 21, 22, 23) };
+        control.ColumnDefinitions.Add(new HmiRecipeColumn { Type = HmiRecipeColumnType.CurrentValue });
+        var html = await Convert(control);
+        StringAssert.Contains(html, "border: 0;border-color: #151617;");
+        StringAssert.Contains(html, "data-show-grid-lines=\"false\"");
+        Assert.IsFalse(html.Contains("hmi-recipe-status-bar"));
+        control.ShowGridLines = true; control.ShowStatusBar = true;
+        html = await Convert(control);
+        StringAssert.Contains(html, "border: 1px solid currentColor;border-color: #151617;");
+        StringAssert.Contains(html, "class=\"hmi-recipe-status-bar\"");
+        StringAssert.Contains(html, "Recipe status not loaded");
+        control.ShowGridLines = null; control.ShowStatusBar = null;
+        html = await Convert(control);
+        Assert.IsFalse(html.Contains("data-show-grid-lines")); Assert.IsFalse(html.Contains("data-show-status-bar"));
+        Assert.IsFalse(html.Contains("hmi-recipe-status-bar"));
+    }
+
     private static async Task<string> Convert(HmiRecipeControl control)
     {
         var screen = new HmiScreen();
