@@ -13,6 +13,7 @@ export class HmiTrendValueAxis {
   maximumValue?: HmiProperty<number>;
   visible?: HmiProperty<boolean>;
   decimalPlaces?: HmiProperty<number>;
+  divisionCount?: HmiProperty<number>;
   autoScale?: HmiProperty<boolean>;
   scaleType?: HmiProperty<HmiTrendAxisScaleType>;
   exponentialFormat?: HmiProperty<boolean>;
