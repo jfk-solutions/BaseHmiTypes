@@ -1676,7 +1676,10 @@ public class HmiScreenToHtmlConverter
         var disabledImageMode = ResolveStaticValue(button.DisabledImageMode, context);
         var showDisabledAppearance = !enabled && button.ShowDisabledState is not null && ResolveStaticValue(button.ShowDisabledState, context);
         if (showDisabledAppearance && disabledImageMode is HmiDisabledImageMode.Reference or HmiDisabledImageMode.Imported)
-            image = ResolveStaticValue(button.DisabledImage, context) ?? image;
+        {
+            var disabledImage = ResolveStaticValue(button.DisabledImage, context);
+            image = disabledImage ?? (button.DisabledImageFallbackToNormal is null || ResolveStaticValue(button.DisabledImageFallbackToNormal, context) ? image : null);
+        }
         var imageUri = mode == HmiButtonType.Text ? null
             : await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
         var hasImage = !string.IsNullOrWhiteSpace(imageUri);

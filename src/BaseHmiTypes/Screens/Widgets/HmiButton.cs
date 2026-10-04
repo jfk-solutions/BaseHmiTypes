@@ -31,4 +31,7 @@ public class HmiButton : HmiButtonBase
 
     /// <summary>With overlay content, reserve the image's horizontal extent when image and caption share a left/right alignment. Other alignments retain overlapping layers.</summary>
     public HmiProperty<bool>? AvoidImageCaptionOverlap { get; set; }
+
+    /// <summary>True/omitted retains the normal image when a configured disabled-image replacement is missing. False suppresses the normal image instead.</summary>
+    public HmiProperty<bool>? DisabledImageFallbackToNormal { get; set; }
 }
