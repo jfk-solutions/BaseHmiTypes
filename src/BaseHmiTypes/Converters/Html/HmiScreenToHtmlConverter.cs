@@ -3561,16 +3561,41 @@ public class HmiScreenToHtmlConverter
         }
 
         var imageUri = uri!;
+        if (item is HmiGraphicView { ImageOverflowPadding: { } padding } overflowingGraphic)
+        {
+            static double Extent(double value) => double.IsFinite(value) ? Math.Max(0, value) : 0;
+            var left = Extent(ResolveStaticValue(padding.Left, context));
+            var top = Extent(ResolveStaticValue(padding.Top, context));
+            var right = Extent(ResolveStaticValue(padding.Right, context));
+            var bottom = Extent(ResolveStaticValue(padding.Bottom, context));
+            var width = Extent(ResolveStaticValue(item.Width, context));
+            var height = Extent(ResolveStaticValue(item.Height, context));
+            html.Append("<div");
+            AppendCommonAttributes(html, item, context, additionalStyle: "overflow: visible;");
+            html.Append("><img");
+            AppendAttribute(html, "data-hmi-graphic-overflow-image", "true");
+            AppendAttribute(html, "src", imageUri);
+            AppendGraphicImageColorKey(html, overflowingGraphic, context);
+            AppendAttribute(html, "style", $"position: absolute; left: {ToCss(left == 0 ? 0 : -left)}px; top: {ToCss(top == 0 ? 0 : -top)}px; width: {ToCss(Extent(width + left + right))}px; height: {ToCss(Extent(height + top + bottom))}px; max-width: none; display: block;");
+            html.Append("></div>");
+            return;
+        }
         html.Append("<img");
         AppendCommonAttributes(html, item, context);
         AppendAttribute(html, "src", imageUri);
-        if (item is HmiGraphicView graphicView && graphicView.ImageBackgroundColor is not null &&
+        if (item is HmiGraphicView graphicView)
+            AppendGraphicImageColorKey(html, graphicView, context);
+        html.Append(">");
+    }
+
+    private static void AppendGraphicImageColorKey(StringBuilder html, HmiGraphicView graphicView, HmiHtmlConvertContext context)
+    {
+        if (graphicView.ImageBackgroundColor is not null &&
             ResolveStaticValue(graphicView.ImageBackgroundTransparent, context))
         {
             var key = ResolveStaticValue(graphicView.ImageBackgroundColor, context);
             AppendAttribute(html, "data-hmi-image-color-key", $"{key.Red},{key.Green},{key.Blue}");
         }
-        html.Append(">");
     }
 
     private static void AppendSymbolLibraryControl(StringBuilder html, HmiSymbolLibraryControl symbolLibraryControl, HmiHtmlConvertContext context)
