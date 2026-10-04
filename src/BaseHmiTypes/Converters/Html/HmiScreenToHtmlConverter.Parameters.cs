@@ -16,6 +16,11 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-current-parameter-set-id", ResolvePropertyPreview(control.CurrentParameterSetId, context));
         AppendAttribute(html, "data-current-parameter-set-type-id", ResolvePropertyPreview(control.CurrentParameterSetTypeId, context));
         AppendAttribute(html, "data-hide-details", ResolvePropertyPreview(control.HideDetails, context));
+        AppendAttribute(html, "data-row-height", ResolvePropertyPreview(control.RowHeight, context));
+        AppendAttribute(html, "data-cell-padding-left", ResolvePropertyPreview(control.CellPaddingLeft, context));
+        AppendAttribute(html, "data-cell-padding-top", ResolvePropertyPreview(control.CellPaddingTop, context));
+        AppendAttribute(html, "data-cell-padding-right", ResolvePropertyPreview(control.CellPaddingRight, context));
+        AppendAttribute(html, "data-cell-padding-bottom", ResolvePropertyPreview(control.CellPaddingBottom, context));
         AppendAttribute(html, "data-edit-mode", ResolvePropertyPreview(control.EditMode, context));
         AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(control.ShowToolbar, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(control.ShowStatusBar, context));
@@ -92,7 +97,25 @@ public partial class HmiScreenToHtmlConverter
             html.Append('>').Append(WebUtility.HtmlEncode(column.HeaderText?.GetText(context.CultureInfo) ?? column.Name ?? column.Key ?? "Column")).Append("</th>");
         }
         html.Append("</tr></thead><tbody><tr><td colspan=\"").Append(columns.Length.ToString(CultureInfo.InvariantCulture))
-            .Append("\" style=\"text-align: center; padding: 2px 4px;\">Parameter data not loaded</td></tr></tbody></table>");
+            .Append("\" style=\"text-align: center; padding: 2px 4px;").Append(CreateParameterCellLayoutStyle(control, context))
+            .Append("\">Parameter data not loaded</td></tr></tbody></table>");
+    }
+
+    private static string CreateParameterCellLayoutStyle(HmiDetailedParameterControl control, HmiHtmlConvertContext context)
+    {
+        var style = new StringBuilder();
+        void AppendDimension(string css, HmiProperty<double>? property)
+        {
+            if (property is null) return;
+            var value = ResolveStaticValue(property, context);
+            if (IsFinite(value) && value >= 0) style.Append(css).Append(": ").Append(ToCss(value)).Append("px;");
+        }
+        AppendDimension("height", control.RowHeight);
+        AppendDimension("padding-left", control.CellPaddingLeft);
+        AppendDimension("padding-top", control.CellPaddingTop);
+        AppendDimension("padding-right", control.CellPaddingRight);
+        AppendDimension("padding-bottom", control.CellPaddingBottom);
+        return style.ToString();
     }
 
     private static string CreateParameterHeaderAlignmentStyle(HmiParameterColumn column, HmiHtmlConvertContext context)
