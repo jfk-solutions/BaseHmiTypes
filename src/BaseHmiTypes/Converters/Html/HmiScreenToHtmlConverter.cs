@@ -2413,10 +2413,13 @@ public partial class HmiScreenToHtmlConverter
             : ResolveStaticValue(slider.ThumbBackgroundColor, context);
         var sliderStyle = GetBarDirectionStyle(direction) +
             (thumbColor is null ? string.Empty : $"--hmi-slider-thumb-background: {ToCss(thumbColor.Value)};") +
+            (slider.ThumbForegroundColor is null ? string.Empty : $"--hmi-slider-thumb-foreground: {ToCss(ResolveStaticValue(slider.ThumbForegroundColor, context))};") +
             GetSliderTrackStyle(slider, direction, context);
         html.Append("<input");
         AppendCommonAttributes(html, slider, context, additionalStyle: sliderStyle);
         AppendAttribute(html, "data-hmi-slider", "true");
+        if (slider.ThumbBackgroundColor is not null || slider.ThumbForegroundColor is not null)
+            AppendAttribute(html, "data-hmi-slider-custom-thumb", "true");
         AppendAttribute(html, "data-orientation", direction.ToString());
         if (slider.StepSize is not null)
             AppendAttribute(html, "data-small-change", ResolveStaticValue(slider.StepSize, context).ToString(CultureInfo.InvariantCulture));
