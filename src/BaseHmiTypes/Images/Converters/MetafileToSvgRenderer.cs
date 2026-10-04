@@ -867,17 +867,20 @@ public sealed class MetafileToSvgRenderer
 
     private static string? EmfTextElement(byte[] bytes, EmfRecord record, DrawState state)
     {
-        var dataOffset = record.Offset + 8;
-        if (dataOffset + 76 > record.Offset + record.Size)
+        if (record.Size < 60)
             return null;
-        var x = I32(bytes, dataOffset + 8);
-        var y = I32(bytes, dataOffset + 12);
-        var chars = (int)U32(bytes, dataOffset + 40);
-        var stringOffset = (int)U32(bytes, dataOffset + 44);
-        var absoluteStringOffset = record.Offset + stringOffset;
-        if (chars <= 0 || absoluteStringOffset < 0 || absoluteStringOffset + chars * 2 > bytes.Length)
+        // EmrText starts at byte 36 of EMR_EXTTEXTOUTW, not at the ignored Bounds.
+        var x = I32(bytes, record.Offset + 36);
+        var y = I32(bytes, record.Offset + 40);
+        var chars = U32(bytes, record.Offset + 44);
+        var stringOffset = U32(bytes, record.Offset + 48);
+        var options = U32(bytes, record.Offset + 52);
+        var fixedSize = (options & 0x100) != 0 ? 60u : 76u;
+        // Glyph indices are not Unicode. Font-specific glyph playback remains unsupported.
+        if ((options & 0x10) != 0 || chars == 0 || stringOffset < fixedSize || stringOffset % 2 != 0 ||
+            stringOffset > record.Size || chars > (record.Size - stringOffset) / 2)
             return null;
-        var value = Encoding.Unicode.GetString(bytes, absoluteStringOffset, chars * 2).TrimEnd('\0');
+        var value = Encoding.Unicode.GetString(bytes, record.Offset + (int)stringOffset, (int)chars * 2).TrimEnd('\0');
         if (value.Length == 0)
             return null;
         var point = TransformPoint(state, x, y);
@@ -1100,7 +1103,15 @@ public sealed class MetafileToSvgRenderer
 
     private static string XmlEscape(string value)
     {
-        return value
+        var safe = new StringBuilder(value.Length);
+        for (var at = 0; at < value.Length; at++)
+        {
+            var c = value[at];
+            if (char.IsHighSurrogate(c) && at + 1 < value.Length && char.IsLowSurrogate(value[at + 1]))
+            { safe.Append(c).Append(value[++at]); continue; }
+            safe.Append(c is '\t' or '\r' or '\n' || c >= ' ' && c <= '\uD7FF' || c >= '\uE000' && c <= '\uFFFD' ? c : '\uFFFD');
+        }
+        return safe.ToString()
             .Replace("&", "&amp;")
             .Replace("<", "&lt;")
             .Replace(">", "&gt;")
