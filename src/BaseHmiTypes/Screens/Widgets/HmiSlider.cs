@@ -11,6 +11,7 @@ public class HmiSlider : HmiBar
 
     public HmiProperty<HmiColor>? ThumbBackgroundColor { get; set; }
 
+    /// <summary>Foreground of the thumb. The HTML preview uses it for the thumb outline.</summary>
     public HmiProperty<HmiColor>? ThumbForegroundColor { get; set; }
 
     /// <summary>Configured small-change increment; preview rendering does not perform process writes.</summary>

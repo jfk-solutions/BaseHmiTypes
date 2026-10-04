@@ -9,6 +9,44 @@ input[data-hmi-slider] {
   background: var(--hmi-slider-track-background, initial);
 }
 
+/* Explicit model thumb colors must survive the inert/disabled preview.
+   Leave unconfigured sliders on the browser's native appearance. */
+input[data-hmi-slider-custom-thumb] {
+  appearance: none;
+  -webkit-appearance: none;
+  opacity: 1;
+  background: transparent;
+}
+input[data-hmi-slider-custom-thumb]::-webkit-slider-runnable-track {
+  block-size: 4px;
+  inline-size: 100%;
+  background: var(--hmi-slider-track-background, #eeeeee);
+}
+input[data-hmi-slider-custom-thumb]::-moz-range-track {
+  block-size: 4px;
+  inline-size: 100%;
+  background: var(--hmi-slider-track-background, #eeeeee);
+}
+input[data-hmi-slider-custom-thumb]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  margin-block-start: -6px;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--hmi-slider-thumb-foreground, transparent);
+  border-radius: 2px;
+  background: var(--hmi-slider-thumb-background, #808080);
+}
+input[data-hmi-slider-custom-thumb]::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--hmi-slider-thumb-foreground, transparent);
+  border-radius: 2px;
+  background: var(--hmi-slider-thumb-background, #808080);
+}
+
 meter[data-hmi-bar-fill] {
   color: inherit;
 }
