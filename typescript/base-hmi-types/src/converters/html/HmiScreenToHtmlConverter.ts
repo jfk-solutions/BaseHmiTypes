@@ -2926,6 +2926,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(alarmControl.showStatusBar));
   appendAttribute(html, "data-status-bar-background-color", resolvePropertyPreview(alarmControl.statusBarBackgroundColor));
   appendAttribute(html, "data-use-status-bar-background-color", resolvePropertyPreview(alarmControl.useStatusBarBackgroundColor));
+  appendAttribute(html, "data-status-bar-text", alarmControl.statusBarText?.getText(context.options.cultureLcid), true);
+  appendAttribute(html, "data-show-status-bar-tooltips", resolvePropertyPreview(alarmControl.showStatusBarTooltips));
   appendAttribute(html, "data-status-bar-foreground-color", resolvePropertyPreview(alarmControl.statusBarForegroundColor));
   html.push(">");
 
@@ -3012,7 +3014,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     if (alarmControl.statusBarFont !== undefined)
       appendFont(statusStyle, alarmControl.statusBarFont.getForCulture(context.options.cultureLcid));
     html.push("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"", ...statusStyle, "\">");
-    if (!alarmControl.statusBarPanels.length) html.push("Status");
+    if (!alarmControl.statusBarPanels.length)
+      html.push(escapeHtml(alarmControl.statusBarText?.getText(context.options.cultureLcid) ?? "Status"));
     for (const panel of alarmControl.statusBarPanels.filter(panel => getStaticValue(panel.visible) !== false)
       .sort((left, right) => (getStaticValue(left.order) ?? 2147483647) - (getStaticValue(right.order) ?? 2147483647))) {
       html.push('<span class="hmi-alarm-status-panel" style="display:inline-block;');
@@ -3021,7 +3024,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
         html.push(`width: ${toCss(width)}px;`);
       html.push('"');
       appendAttribute(html, "data-panel-type", panel.sourceType ?? panel.type);
-      appendAttribute(html, "title", panel.tooltip?.getDisplayText(context.options.cultureLcid));
+      if (alarmControl.showStatusBarTooltips === undefined || getStaticValue(alarmControl.showStatusBarTooltips) === true)
+        appendAttribute(html, "title", panel.tooltip?.getDisplayText(context.options.cultureLcid));
       html.push(">", escapeHtml(panel.text?.getDisplayText(context.options.cultureLcid) ?? panel.sourceType ?? panel.type), "</span>");
     }
     html.push("</div>");

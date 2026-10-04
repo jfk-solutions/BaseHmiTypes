@@ -109,6 +109,8 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showStatusBar?: HmiProperty<boolean>;
   useStatusBarBackgroundColor?: HmiProperty<boolean>;
   readonly statusBarPanels: HmiAlarmStatusBarPanel[] = [];
+  statusBarText?: HmiMultilingualText;
+  showStatusBarTooltips?: HmiProperty<boolean>;
   statusBarFont?: HmiFont;
   statusBarBackgroundColor?: HmiProperty<HmiColor>;
   statusBarForegroundColor?: HmiProperty<HmiColor>;
