@@ -3,6 +3,8 @@
 type MetafileObject = PenObject | BrushObject | FontObject;
 
 interface PenObject {
+  lineCap?: string;
+  lineJoin?: string;
   kind: 'pen';
   color: string;
   width: number;
@@ -24,6 +26,7 @@ interface FontObject {
 }
 
 interface DrawState {
+  miterLimit: number;
   pen: PenObject;
   brush: BrushObject;
   font: FontObject;
@@ -160,6 +163,12 @@ export class MetafileToSvgRenderer {
         case EMR.SETPOLYFILLMODE:
           state.fillRule = polyFillRule(u32(bytes, dataOffset));
           break;
+        case EMR.SETMITERLIMIT:
+          if (record.size >= 12) {
+            const limit = f32(bytes, dataOffset);
+            if (Number.isFinite(limit) && limit >= 1) state.miterLimit = limit;
+          }
+          break;
         case EMR.SETTEXTCOLOR:
           state.textColor = colorRef(bytes, dataOffset);
           break;
@@ -195,14 +204,20 @@ export class MetafileToSvgRenderer {
         case EMR.EXTCREATEFONTINDIRECTW:
           objects.set(u32(bytes, dataOffset), readEmfFont(bytes, dataOffset + 4, record.size - 12));
           break;
-        case EMR.EXTCREATEPEN:
+        case EMR.EXTCREATEPEN: {
+          if (record.size < 52) break;
+          const style = u32(bytes, dataOffset + 20);
+          const geometric = (style & 0xf0000) === 0x10000;
           objects.set(u32(bytes, dataOffset), {
             kind: 'pen',
             width: scaledPenWidth(state, i32(bytes, dataOffset + 24)),
             color: colorRef(bytes, dataOffset + 32),
             none: (u32(bytes, dataOffset + 20) & 0x0000000f) === 5,
+            lineCap: geometric ? ({0: 'round', 256: 'square', 512: 'butt'} as Record<number, string>)[style & 0xf00] : undefined,
+            lineJoin: geometric ? ({0: 'round', 4096: 'bevel', 8192: 'miter'} as Record<number, string>)[style & 0xf000] : undefined,
           });
           break;
+        }
         case EMR.SELECTOBJECT:
           selectObject(state, emfStockObject(u32(bytes, dataOffset)) ?? objects.get(u32(bytes, dataOffset)));
           break;
@@ -475,6 +490,7 @@ export class MetafileToSvgRenderer {
 const PlaceableWmfKey = 0x9ac6cdd7;
 
 const EMR = {
+  SETMITERLIMIT: 0x003a,
   HEADER: 0x0001,
   EOF: 0x000e,
   GDICOMMENT: 0x0046,
@@ -708,6 +724,7 @@ function createInitialState(): DrawState {
     viewportExtY: 1,
     worldTransform: identityTransform(),
     fillRule: 'evenodd',
+    miterLimit: 10,
   };
 }
 
@@ -1537,7 +1554,12 @@ function paintAttrs(state: DrawState): string {
 }
 
 function strokeAttrs(state: DrawState): string {
-  return state.pen.none ? 'stroke="none"' : `stroke="${state.pen.color}" stroke-width="${state.pen.width}"`;
+  if (state.pen.none) return 'stroke="none"';
+  let attributes = `stroke="${state.pen.color}" stroke-width="${state.pen.width}"`;
+  if (state.pen.lineCap !== undefined) attributes += ` stroke-linecap="${state.pen.lineCap}"`;
+  if (state.pen.lineJoin !== undefined) attributes += ` stroke-linejoin="${state.pen.lineJoin}"`;
+  if (state.pen.lineJoin === 'miter') attributes += ` stroke-miterlimit="${state.miterLimit}"`;
+  return attributes;
 }
 
 function fillAttrs(state: DrawState): string {
