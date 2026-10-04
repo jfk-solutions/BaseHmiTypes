@@ -2751,6 +2751,7 @@ function getScaleRatio(scale: HmiScaleWidgetBase, minimum: number, maximum: numb
     switch (getStaticValue((scale as HmiBar).valueMapping)) {
       case HmiBarValueMapping.NormalizedLogarithmic: return Math.log10(1 + 100 * ratio) / Math.log10(101);
       case HmiBarValueMapping.InverseNormalizedLogarithmic: return 1 - Math.log10(101 - 100 * ratio) / Math.log10(101);
+      case HmiBarValueMapping.Tangent: return mapBarTangent(ratio, getBarTangentPivot(scale as HmiBar, minimum, maximum));
       case HmiBarValueMapping.Quadratic: return ratio * ratio;
       case HmiBarValueMapping.Cubic: return ratio * ratio * ratio;
       default: return ratio;
@@ -2771,8 +2772,22 @@ function getScaleTickRatio(scale: HmiScaleWidgetBase, minimum: number, maximum: 
 
 function usesNonlinearBarMapping(scale: HmiScaleWidgetBase, minimum: number, maximum: number): boolean {
   return scale instanceof HmiBar && Number.isFinite(minimum) && Number.isFinite(maximum) && maximum > minimum &&
-    Number.isFinite(maximum - minimum) && [HmiBarValueMapping.NormalizedLogarithmic, HmiBarValueMapping.InverseNormalizedLogarithmic,
-      HmiBarValueMapping.Quadratic, HmiBarValueMapping.Cubic].includes(getStaticValue(scale.valueMapping) ?? HmiBarValueMapping.Linear);
+    Number.isFinite(maximum - minimum) && ([HmiBarValueMapping.NormalizedLogarithmic, HmiBarValueMapping.InverseNormalizedLogarithmic,
+      HmiBarValueMapping.Quadratic, HmiBarValueMapping.Cubic].includes(getStaticValue(scale.valueMapping) ?? HmiBarValueMapping.Linear) ||
+      getStaticValue(scale.valueMapping) === HmiBarValueMapping.Tangent && Number.isFinite(getBarTangentPivot(scale, minimum, maximum)));
+}
+
+function getBarTangentPivot(bar: HmiBar, minimum: number, maximum: number): number {
+  return bar.tangentPivotPercent !== undefined ? getStaticValue(bar.tangentPivotPercent) ?? 0
+    : bar.originValue !== undefined ? ((getStaticValue(bar.originValue) ?? 0) - minimum) * 100 / (maximum - minimum) : 50;
+}
+
+function mapBarTangent(ratio: number, pivot: number): number {
+  const delta = ratio * 100 - pivot;
+  // Continuous pivot limit avoids native 0/0 when the pivot is the upper endpoint.
+  if (delta === 0) return pivot / 100;
+  const span = delta < 0 ? pivot : 100 - pivot, pi = 4 * Math.atan(1), angle = pi * .5 - pi * .5 * .1;
+  return (pivot + Math.tan(angle / span * delta + pi) * (span / Math.tan(angle))) / 100;
 }
 
 function resolveScaleValue(scale: HmiScaleWidgetBase, minimum: number, maximum: number): number {
