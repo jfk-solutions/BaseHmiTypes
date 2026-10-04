@@ -1,3 +1,5 @@
+using BaseHmiTypes.Common;
+
 namespace BaseHmiTypes.Screens.Base;
 
 /// <summary>A named time axis configured independently of trend pens.</summary>
@@ -12,6 +14,7 @@ public sealed class HmiTrendTimeAxis
     public HmiProperty<bool>? InTrendColor { get; set; }
     public HmiProperty<HmiVerticalAlignment>? Alignment { get; set; }
     public string? Label { get; set; }
+    public HmiMultilingualText? LabelText { get; set; }
     public HmiProperty<HmiTrendTimeFormat>? TimeFormat { get; set; }
     public HmiProperty<bool>? DisplayMilliseconds { get; set; }
     public HmiProperty<double>? TimeSpan { get; set; }

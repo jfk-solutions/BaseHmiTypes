@@ -4024,10 +4024,10 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendStaticAttribute(html, "maximum-value", trendControl.maximumValue);
   appendStaticAttribute(html, "y-axis-decimal-places", trendControl.yAxisDecimalPlaces);
   appendAttribute(html, "pens", formatTrendPens(trendControl.pens, context.options.cultureLcid));
-  appendAttribute(html, "value-axes", formatTrendValueAxes(trendControl.valueAxes));
+  appendAttribute(html, "value-axes", formatTrendValueAxes(trendControl.valueAxes, context.options.cultureLcid));
   appendAttribute(html, "x-value-axes", formatTrendXValueAxes(trendControl.xValueAxes));
   appendAttribute(html, "trend-windows", formatTrendWindows(trendControl.trendWindows));
-  appendAttribute(html, "time-axes", formatTrendTimeAxes(trendControl.timeAxes));
+  appendAttribute(html, "time-axes", formatTrendTimeAxes(trendControl.timeAxes, context.options.cultureLcid));
   html.push("></hmi-trend-control>");
 }
 
@@ -4178,13 +4178,14 @@ function appendStaticBooleanValueAttribute(
   if (value !== undefined) appendAttribute(html, name, value ? "true" : "false");
 }
 
-function formatTrendTimeAxes(axes: readonly HmiTrendTimeAxis[]): string | undefined {
+function formatTrendTimeAxes(axes: readonly HmiTrendTimeAxis[], cultureLcid?: number): string | undefined {
   if (!axes.length) return undefined;
   return JSON.stringify(axes.map(axis => {
     const result: Record<string, string | number | boolean> = {};
     if (axis.name !== undefined) result.name = axis.name;
     if (axis.trendWindowName !== undefined) result.trendWindowName = axis.trendWindowName;
-    if (axis.label !== undefined) result.label = axis.label;
+    const label = axis.labelText?.getText(cultureLcid) ?? axis.label;
+    if (label !== undefined) result.label = label;
     if (axis.timeSpanUnit !== undefined) result.timeSpanUnit = axis.timeSpanUnit;
     for (const key of ["visible", "showDate", "inTrendColor", "displayMilliseconds", "refreshEnabled"] as const) {
       const value = getStaticValue(axis[key]);
@@ -4250,12 +4251,13 @@ function formatTrendWindows(windows: readonly HmiTrendWindow[]): string | undefi
 }
 
 // Use the same axis wire fields as legacy per-pen configurations.
-function formatTrendValueAxes(axes: readonly HmiTrendValueAxis[]): string | undefined {
+function formatTrendValueAxes(axes: readonly HmiTrendValueAxis[], cultureLcid?: number): string | undefined {
   return formatTrendPens(axes.map((axis, index) => {
     const pen = new HmiTrendPen();
     pen.number = index + 1;
     if (axis.name !== undefined) pen.valueAxisName = axis.name;
-    if (axis.label !== undefined) pen.valueAxisLabel = axis.label;
+    const label = axis.labelText?.getText(cultureLcid) ?? axis.label;
+    if (label !== undefined) pen.valueAxisLabel = label;
     if (axis.trendWindowName !== undefined) pen.trendWindowName = axis.trendWindowName;
     if (axis.minimumValue !== undefined) pen.minimumValue = axis.minimumValue;
     if (axis.maximumValue !== undefined) pen.maximumValue = axis.maximumValue;

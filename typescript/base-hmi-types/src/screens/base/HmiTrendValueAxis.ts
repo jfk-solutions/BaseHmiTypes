@@ -1,3 +1,4 @@
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiProperty } from "./HmiProperty.js";
 import { HmiColor } from "./HmiColor.js";
 import { HmiHorizontalAlignment } from "./HmiHorizontalAlignment.js";
@@ -9,6 +10,7 @@ export class HmiTrendValueAxis {
   /** Trend window assigned to this axis, independent of pen assignments. */
   trendWindowName?: string;
   label?: string;
+  labelText?: HmiMultilingualText;
   minimumValue?: HmiProperty<number>;
   maximumValue?: HmiProperty<number>;
   visible?: HmiProperty<boolean>;
