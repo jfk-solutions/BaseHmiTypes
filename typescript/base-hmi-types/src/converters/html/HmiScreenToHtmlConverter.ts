@@ -2542,7 +2542,7 @@ function appendParameterColumns(html: string[], control: HmiParameterControlBase
   const headerStyle = ["padding: 2px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"];
   appendColorStyle(headerStyle, "background-color", control.headerBackgroundColor);
   appendColorStyle(headerStyle, "color", control.headerForegroundColor);
-  if (control.headerFont !== undefined) appendFont(headerStyle, control.headerFont);
+  if (control.headerFont !== undefined) appendFont(headerStyle, control.headerFont.getForCulture(context.options.cultureLcid));
   html.push("</colgroup><thead><tr>");
   for (const [index, column] of columns.entries()) {
     const separator: string[] = [];
@@ -2563,10 +2563,10 @@ function appendParameterColumns(html: string[], control: HmiParameterControlBase
     appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat));
     html.push(">", escapeHtml(column.headerText?.getText(context.options.cultureLcid) ?? column.name ?? column.key ?? "Column"), "</th>");
   }
-  html.push('</tr></thead><tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;', createParameterCellLayoutStyle(control), '">Parameter data not loaded</td></tr></tbody></table>');
+  html.push('</tr></thead><tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;', createParameterCellLayoutStyle(control, context), '">Parameter data not loaded</td></tr></tbody></table>');
 }
 
-function createParameterCellLayoutStyle(control: HmiParameterControlBase): string {
+function createParameterCellLayoutStyle(control: HmiParameterControlBase, context: HmiHtmlConvertContext): string {
   const style: string[] = [];
   const appendDimension = (css: string, property: HmiProperty<number> | undefined) => {
     const value = getStaticValue(property);
@@ -2574,7 +2574,7 @@ function createParameterCellLayoutStyle(control: HmiParameterControlBase): strin
   };
   if (getStaticValue(control.rowHeight) === 0) style.push("height: auto;");
   else appendDimension("height", control.rowHeight);
-  if (control.contentFont !== undefined) appendFont(style, control.contentFont);
+  if (control.contentFont !== undefined) appendFont(style, control.contentFont.getForCulture(context.options.cultureLcid));
   appendDimension("padding-left", control.cellPaddingLeft);
   appendDimension("padding-top", control.cellPaddingTop);
   appendDimension("padding-right", control.cellPaddingRight);
@@ -2619,8 +2619,8 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   const showHeader = recipeControl.showHeader === undefined || getStaticValue(recipeControl.showHeader) === true;
   const showFooter = getStaticValue(recipeControl.showFooter) === true;
   const defaultRecipeName = getStaticValue(recipeControl.defaultRecipeName) ?? "";
-  const headerStyle = createRecipeHeaderStyle(recipeControl);
-  const contentStyle = createRecipeContentStyle(recipeControl);
+  const headerStyle = createRecipeHeaderStyle(recipeControl, context);
+  const contentStyle = createRecipeContentStyle(recipeControl, context);
 
   const cellStyle: string[] = [recipeControl.showGridLines && !getStaticValue(recipeControl.showGridLines) ? "border: 0;" : "border: 1px solid currentColor;"];
   appendColorStyle(cellStyle, "border-color", recipeControl.gridLineColor);
@@ -2687,20 +2687,20 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   html.push("</div>");
 }
 
-function createRecipeHeaderStyle(recipeControl: HmiRecipeControl): string {
+function createRecipeHeaderStyle(recipeControl: HmiRecipeControl, context: HmiHtmlConvertContext): string {
   const style: string[] = [];
   appendColorStyle(style, "background-color", recipeControl.headerBackgroundColor);
   appendColorStyle(style, "color", recipeControl.headerForegroundColor);
   appendColorStyle(style, "border-color", recipeControl.headerBorderColor);
-  if (recipeControl.headerFont !== undefined) appendFont(style, recipeControl.headerFont);
+  if (recipeControl.headerFont !== undefined) appendFont(style, recipeControl.headerFont.getForCulture(context.options.cultureLcid));
   return style.join("");
 }
 
-function createRecipeContentStyle(recipeControl: HmiRecipeControl): string {
+function createRecipeContentStyle(recipeControl: HmiRecipeControl, context: HmiHtmlConvertContext): string {
   const style: string[] = [];
   appendColorStyle(style, "background-color", recipeControl.contentBackgroundColor);
   appendColorStyle(style, "color", recipeControl.contentForegroundColor);
-  if (recipeControl.contentFont !== undefined) appendFont(style, recipeControl.contentFont);
+  if (recipeControl.contentFont !== undefined) appendFont(style, recipeControl.contentFont.getForCulture(context.options.cultureLcid));
   const wordWrap = getStaticValue(recipeControl.wordWrap);
   if (wordWrap !== undefined)
     style.push(wordWrap ? "white-space: normal;overflow-wrap: anywhere;" : "white-space: nowrap;");
@@ -2774,7 +2774,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     alarmControl,
     context,
     true,
-    createAlarmControlStyle(alarmControl),
+    createAlarmControlStyle(alarmControl, context),
   );
   appendAttribute(html, "data-window-resizable", resolvePropertyPreview(alarmControl.resizable));
   appendAttribute(html, "data-window-movable", resolvePropertyPreview(alarmControl.movable));
@@ -2824,7 +2824,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
 
   if (showTitle) {
     const title = resolveAlarmTitle(alarmControl, listMode, context);
-    html.push("<div style=\"", createAlarmHeaderStyle(alarmControl));
+    html.push("<div style=\"", createAlarmHeaderStyle(alarmControl, context));
     if (getStaticValue(alarmControl.movable) === true)
       html.push("cursor: move;");
     html.push("\"><span style=\"flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\">", escapeHtml(title), "</span>");
@@ -2839,7 +2839,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   html.push("\" style=\"", createAlarmTableStyle(alarmControl), "\">");
   const gridCellStyle = createAlarmGridCellStyle(alarmControl);
   if (showHeader) {
-    const headerCellStyle = createAlarmTableHeaderCellStyle(alarmControl, gridCellStyle);
+    const headerCellStyle = createAlarmTableHeaderCellStyle(alarmControl, gridCellStyle, context);
     html.push("<thead><tr>");
     if (visibleColumns.length === 0)
       html.push("<th style=\"", headerCellStyle, "\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
@@ -2901,7 +2901,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     appendColorStyle(statusStyle, "background-color", alarmControl.statusBarBackgroundColor);
     appendColorStyle(statusStyle, "color", alarmControl.statusBarForegroundColor);
     if (alarmControl.statusBarFont !== undefined)
-      appendFont(statusStyle, alarmControl.statusBarFont);
+      appendFont(statusStyle, alarmControl.statusBarFont.getForCulture(context.options.cultureLcid));
     html.push("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"", ...statusStyle, "\">");
     if (!alarmControl.statusBarPanels.length) html.push("Status");
     for (const panel of alarmControl.statusBarPanels.filter(panel => getStaticValue(panel.visible) !== false)
@@ -3975,7 +3975,7 @@ function appendGauge(html: string[], gauge: HmiGauge, context: HmiHtmlConvertCon
   appendStaticAttribute(html, "scale-background-color", gauge.scaleBackgroundColor);
   appendStaticAttribute(html, "scale-foreground-color", gauge.scaleForegroundColor);
   appendStaticAttribute(html, "tick-color", gauge.tickColor);
-  appendAttribute(html, "label-font", formatFont(gauge.labelFont));
+  appendAttribute(html, "label-font", formatFont(gauge.labelFont?.getForCulture(context.options.cultureLcid)));
   html.push("></hmi-gauge>");
 }
 
@@ -4124,7 +4124,7 @@ function appendIntegerListAttribute(
 
 function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, context: HmiHtmlConvertContext): void {
   html.push("<hmi-trend-control");
-  appendCommonAttributes(html, trendControl, context, true, createTrendControlStyle(trendControl));
+  appendCommonAttributes(html, trendControl, context, true, createTrendControlStyle(trendControl, context));
   appendAttribute(html, "data-window-resizable", resolvePropertyPreview(trendControl.resizable));
   appendAttribute(html, "data-window-movable", resolvePropertyPreview(trendControl.movable));
   appendAttribute(html, "data-window-closeable", resolvePropertyPreview(trendControl.closeable));
@@ -4200,7 +4200,7 @@ function createControlWindowStyle(window: HmiWindowBase, baseStyle: string): str
   return getStaticValue(window.resizable) === true ? `${baseStyle}resize: both;` : baseStyle;
 }
 
-function createAlarmControlStyle(alarmControl: HmiAlarmControl): string {
+function createAlarmControlStyle(alarmControl: HmiAlarmControl, context: HmiHtmlConvertContext): string {
   const horizontalOverflow = getStaticValue(alarmControl.showHorizontalScrollbar) === true ? "auto" : "hidden";
   const verticalOverflow = getStaticValue(alarmControl.showVerticalScrollbar) === true ? "auto" : "hidden";
   let style = createControlWindowStyle(
@@ -4212,17 +4212,17 @@ function createAlarmControlStyle(alarmControl: HmiAlarmControl): string {
     style += `--hmi-grid-line-color: ${colorToCss(gridLineColor)};`;
   const parts = [style];
   if (alarmControl.contentFont !== undefined)
-    appendFont(parts, alarmControl.contentFont);
+    appendFont(parts, alarmControl.contentFont.getForCulture(context.options.cultureLcid));
   return parts.join("");
 }
 
-function createAlarmHeaderStyle(alarmControl: HmiAlarmControl): string {
+function createAlarmHeaderStyle(alarmControl: HmiAlarmControl, context: HmiHtmlConvertContext): string {
   const parts = ["flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;"];
   appendColorStyle(parts, "background-color", alarmControl.headerBackgroundColor);
   appendColorStyle(parts, "color", alarmControl.headerForegroundColor);
   appendColorStyle(parts, "border-bottom-color", alarmControl.headerBorderColor);
   if (alarmControl.headerFont !== undefined)
-    appendFont(parts, alarmControl.headerFont);
+    appendFont(parts, alarmControl.headerFont.getForCulture(context.options.cultureLcid));
   return parts.join("");
 }
 
@@ -4260,7 +4260,7 @@ function appendAlarmSelectionRectangleStyle(parts: string[], alarmControl: HmiAl
   parts.push(`outline: ${toCss(width)}px solid ${color};outline-offset: -${toCss(width)}px;`);
 }
 
-function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCellStyle: string): string {
+function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCellStyle: string, context: HmiHtmlConvertContext): string {
   const parts = [gridCellStyle];
   appendColorStyle(parts, "background-color", alarmControl.tableHeaderBackgroundColor);
   appendColorStyle(parts, "color", alarmControl.tableHeaderForegroundColor);
@@ -4270,15 +4270,15 @@ function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCell
   appendColorStyle(parts, "border-color", alarmControl.tableHeaderBorderColor);
   const borderWidth = getStaticValue(alarmControl.tableHeaderBorderWidth);
   if (borderWidth !== undefined) parts.push(`border-width: ${toCss(Math.max(0, borderWidth))}px;`);
-  if (alarmControl.headerFont !== undefined) appendFont(parts, alarmControl.headerFont);
+  if (alarmControl.headerFont !== undefined) appendFont(parts, alarmControl.headerFont.getForCulture(context.options.cultureLcid));
   return parts.join("");
 }
 
-function createTrendControlStyle(trendControl: HmiTrendControlBase): string {
+function createTrendControlStyle(trendControl: HmiTrendControlBase, context: HmiHtmlConvertContext): string {
   const parts = [createControlWindowStyle(trendControl, "overflow: hidden;")];
-  appendFontVariables(parts, "content", trendControl.contentFont);
-  appendFontVariables(parts, "header", trendControl.headerFont);
-  appendFontVariables(parts, "status", trendControl.statusBarFont);
+  appendFontVariables(parts, "content", trendControl.contentFont?.getForCulture(context.options.cultureLcid));
+  appendFontVariables(parts, "header", trendControl.headerFont?.getForCulture(context.options.cultureLcid));
+  appendFontVariables(parts, "status", trendControl.statusBarFont?.getForCulture(context.options.cultureLcid));
   const toolbarBackground = getStaticValue(trendControl.toolbarBackgroundColor);
   if (toolbarBackground !== undefined && getStaticValue(trendControl.useToolbarBackgroundColor) !== false)
     parts.push(`--hmi-trend-toolbar-background: ${colorToCss(toolbarBackground)};`);
@@ -5028,9 +5028,9 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     );
   }
 
-  const font = getFont(item);
+  const font = getFont(item)?.getForCulture(context.options.cultureLcid);
   if (font !== undefined) {
-    appendFont(html, font);
+    appendFont(html, font.getForCulture(context.options.cultureLcid));
   }
 
   const horizontalAlignment = getStaticValue(
