@@ -910,8 +910,10 @@ public sealed class MetafileToSvgRenderer
             if ((bytes[typesOffset + index] & PolyDrawTypeCloseFigure) != 0)
             {
                 path.Add(state.PathStartX == state.MoveOriginX && state.PathStartY == state.MoveOriginY ? "Z" : $"L {Number(state.MoveOriginX)} {Number(state.MoveOriginY)}");
-                state.PathEndX = state.CurrentX = state.MoveOriginX;
-                state.PathEndY = state.CurrentY = state.MoveOriginY;
+                // Windows GDI closes the figure without moving the DC current
+                // position back from the supplied endpoint (verified natively).
+                state.PathEndX = state.MoveOriginX;
+                state.PathEndY = state.MoveOriginY;
             }
         }
         if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke));
