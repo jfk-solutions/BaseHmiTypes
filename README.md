@@ -91,6 +91,10 @@ or icon mappings are unknown.
 ## Recipe HTML export
 
 `HmiRecipeToHtmlConverter` renders an `HmiRecipe` as a standalone HTML document.
+Fields also carry optional source element IDs, lexical defaults, decimal precision,
+maximum length, tag array count, and required/unique/indexed flags. Stored records
+carry an optional source number. The export displays these values without applying
+defaults to missing records or treating unspecified flags as false.
 It shows field metadata and stored records, retaining unmatched record keys and
 distinguishing missing values, null values, and empty strings. Values are HTML
 encoded and their persisted text is preserved. This export does not simulate

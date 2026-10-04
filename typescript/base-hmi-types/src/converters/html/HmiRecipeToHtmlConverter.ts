@@ -8,13 +8,15 @@ export class HmiRecipeToHtmlConverter {
       encode(recipe.name ?? "Recipe"), "</h1>"];
     if (recipe.comment != null) html.push("<p>", encode(recipe.comment), "</p>");
     html.push("<h2>Fields</h2><div class=\"table-scroll\"><table><thead><tr>");
-    for (const header of ["Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment"])
+    for (const header of ["Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment", "Element ID", "Default", "Decimal places", "Maximum length", "Tag array count", "Required", "Unique", "Indexed"])
       html.push("<th scope=\"col\">", header, "</th>");
     html.push("</tr></thead><tbody>");
     for (const field of recipe.parameters) {
       html.push("<tr>");
       for (const value of [field.sourceIndex?.toString(), field.name, field.tag, field.dataType, field.unit,
-        field.minimumValue, field.maximumValue, field.comment]) html.push("<td>", encode(value), "</td>");
+        field.minimumValue, field.maximumValue, field.comment, field.sourceElementId?.toString(), field.defaultValue,
+        field.decimalPlaces?.toString(), field.maximumLength?.toString(), field.tagArrayCount?.toString(),
+        formatFlag(field.required), formatFlag(field.unique), formatFlag(field.indexed)]) html.push("<td>", encode(value), "</td>");
       html.push("</tr>");
     }
     html.push("</tbody></table></div><h2>Stored records</h2>");
@@ -29,11 +31,11 @@ export class HmiRecipeToHtmlConverter {
       };
       for (const field of recipe.parameters) if (field.name != null) addColumn(field.name);
       for (const record of recipe.dataSets) for (const key of Object.keys(record.values)) addColumn(key);
-      html.push("<div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th>");
+      html.push("<div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th>");
       for (const column of columns) html.push("<th scope=\"col\">", encode(column), "</th>");
       html.push("</tr></thead><tbody>");
       for (const record of recipe.dataSets) {
-        html.push("<tr><th scope=\"row\">", encode(record.name), "</th>");
+        html.push("<tr><th scope=\"row\">", encode(record.name), "</th><td>", encode(record.sourceNumber?.toString()), "</td>");
         const keys = new Map(Object.keys(record.values).map(key => [ordinalKey(key), key]));
         for (const column of columns) {
           const key = keys.get(ordinalKey(column));
@@ -48,6 +50,10 @@ export class HmiRecipeToHtmlConverter {
     }
     return html.concat("</body></html>").join("");
   }
+}
+
+function formatFlag(value: boolean | undefined): string | undefined {
+  return value === undefined ? undefined : value ? "Yes" : "No";
 }
 
 function encode(value: string | undefined): string {

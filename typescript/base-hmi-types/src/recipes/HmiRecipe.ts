@@ -8,6 +8,14 @@ export class HmiRecipe {
 
 export class HmiRecipeParameter {
   sourceIndex?: number;
+  sourceElementId?: number;
+  defaultValue?: string;
+  decimalPlaces?: number;
+  maximumLength?: number;
+  tagArrayCount?: number;
+  required?: boolean;
+  unique?: boolean;
+  indexed?: boolean;
   name?: string;
   tag?: string;
   dataType?: string;
@@ -18,6 +26,7 @@ export class HmiRecipeParameter {
 }
 
 export class HmiRecipeDataSet {
+  sourceNumber?: number;
   name?: string;
   readonly values: Record<string, string | undefined> = {};
 }
