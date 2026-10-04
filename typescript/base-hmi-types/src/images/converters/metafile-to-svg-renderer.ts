@@ -176,11 +176,13 @@ export class MetafileToSvgRenderer {
           state.worldTransform = modifyWorldTransform(state.worldTransform, readTransform(bytes, dataOffset), u32(bytes, dataOffset + 24));
           break;
         case EMR.CREATEPEN:
+          if (record.size < 28) break;
           objects.set(u32(bytes, dataOffset), {
             kind: 'pen',
-            width: Math.max(1, i32(bytes, dataOffset + 12)),
-            color: colorRef(bytes, dataOffset + 20),
-            none: u32(bytes, dataOffset + 4) === 5,
+            // LogPen.Width.x supplies the width; Width.y is ignored.
+            width: Math.max(1, Math.abs(i32(bytes, dataOffset + 8))),
+            color: colorRef(bytes, dataOffset + 16),
+            none: (u32(bytes, dataOffset + 4) & 0xF) === 5,
           });
           break;
         case EMR.CREATEBRUSHINDIRECT:
