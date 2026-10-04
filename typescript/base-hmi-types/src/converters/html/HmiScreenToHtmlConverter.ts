@@ -1786,7 +1786,7 @@ function getBarFillOrigin(bar: HmiBar, minimum: number, maximum: number, value: 
   if (!Number.isFinite(minimum) || !Number.isFinite(maximum) ||
       !Number.isFinite(value) || !Number.isFinite(maximum - minimum) || maximum <= minimum)
     return undefined;
-  if (origin === undefined) return usesNonlinearBarMapping(bar, minimum, maximum) || getBarBitmapRows(bar, context) !== undefined ? minimum : undefined;
+  if (origin === undefined) return usesNonlinearBarMapping(bar, minimum, maximum) || getBarBitmapRows(bar, context) !== undefined || isBarHatch(bar, context) ? minimum : undefined;
   return Number.isFinite(origin) ? origin : undefined;
 }
 
@@ -1823,8 +1823,9 @@ function appendBarOriginMeter(html: string[], bar: HmiBar, minimum: number, maxi
   else if (thresholdColor !== undefined) appendColorStyle(style, "color", thresholdColor);
   style.push(getBarFillOverrideStyle(bar, context));
   const bitmapRows = getBarBitmapRows(bar, context);
-  if (bitmapRows !== undefined) {
+  if (bitmapRows !== undefined || isBarHatch(bar, context)) {
     appendAttribute(html, "data-hmi-bar-bitmap", bitmapRows);
+    if (isBarHatch(bar, context)) appendAttribute(html, "data-hmi-bar-hatch-style", toCss(getStaticValue(context.effectiveProperties.resolve(bar, "HatchStyle", bar.hatchStyle)) ?? -1));
     const patternColor = getStaticValue(context.effectiveProperties.resolve(bar, "PatternColor", bar.patternColor)) ?? hmiColorFromArgb(255, 0, 0, 0);
     appendAttribute(html, "data-hmi-bar-pattern-color", colorToCss(patternColor));
   }
@@ -1836,6 +1837,10 @@ function getBarBitmapRows(bar: HmiBar, context: HmiHtmlConvertContext): string |
   if (getStaticValue(context.effectiveProperties.resolve(bar, "FillStyle", bar.fillStyle)) !== HmiBarFillStyle.BitmapPattern) return undefined;
   const rows = getStaticValue(context.effectiveProperties.resolve(bar, "BitmapPatternRows", bar.bitmapPatternRows));
   return rows !== undefined && /^[0-9a-f]{16}$/i.test(rows) ? rows.toLowerCase() : undefined;
+}
+
+function isBarHatch(bar: HmiBar, context: HmiHtmlConvertContext): boolean {
+  return getStaticValue(context.effectiveProperties.resolve(bar, "FillStyle", bar.fillStyle)) === HmiBarFillStyle.HatchPattern;
 }
 
 function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
@@ -1853,7 +1858,9 @@ function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlC
 }
 
 function getBarFillOverrideStyle(bar: HmiBar, context: HmiHtmlConvertContext): string {
-  if (getStaticValue(context.effectiveProperties.resolve(bar, "FillStyle", bar.fillStyle)) === HmiBarFillStyle.Transparent)
+  const hatch = getStaticValue(context.effectiveProperties.resolve(bar, "HatchStyle", bar.hatchStyle)) ?? -1;
+  if (getStaticValue(context.effectiveProperties.resolve(bar, "FillStyle", bar.fillStyle)) === HmiBarFillStyle.Transparent ||
+      isBarHatch(bar, context) && (!Number.isInteger(hatch) || hatch < 0 || hatch > 52))
     return "color: transparent !important;";
   const explicitColor = context.effectiveProperties.resolve(bar, "FillColor", bar.fillColor);
   if (explicitColor === undefined) return "";
