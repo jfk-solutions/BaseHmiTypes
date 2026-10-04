@@ -3999,6 +3999,37 @@ public partial class HmiScreenToHtmlConverter
             symbolImage = new HmiImage { Id = symbolImage.Id, Name = symbolImage.Name, ImageType = symbolImage.ImageType, MimeType = symbolImage.MimeType, Data = colored };
         }
         var symbolSvg = ResolveImageSvg(symbolImage);
+        var blink = ResolveStaticValue(symbolLibraryControl.BlinkMode, context);
+        if (blink != HmiSymbolLibraryBlinkMode.NoFlashing)
+        {
+            var speed = symbolLibraryControl.BlinkSpeed == null ? HmiSymbolLibraryBlinkSpeed.Medium : ResolveStaticValue(symbolLibraryControl.BlinkSpeed, context);
+            var interval = speed switch { HmiSymbolLibraryBlinkSpeed.Fast => 250, HmiSymbolLibraryBlinkSpeed.Medium => 500, HmiSymbolLibraryBlinkSpeed.Slow => 1000, _ => 0 };
+            if (symbolLibraryControl.BlinkIntervalMilliseconds != null) interval = ResolveStaticValue(symbolLibraryControl.BlinkIntervalMilliseconds, context);
+            var normal = CreateSymbolLibraryMarkup(symbolImage, symbolLibraryControl);
+            string? alternate = null;
+            if (blink is HmiSymbolLibraryBlinkMode.Solid or HmiSymbolLibraryBlinkMode.Shaded && wmf && symbolLibraryControl.Symbol != null)
+            {
+                HmiColor? color = symbolLibraryControl.BlinkColor == null ? null : ResolveStaticValue(symbolLibraryControl.BlinkColor, context);
+                var bytes = SymbolLibraryMetafileColorizer.TryRecolor(symbolLibraryControl.Symbol.Data,
+                    blink == HmiSymbolLibraryBlinkMode.Solid ? HmiSymbolLibraryFillColorMode.Solid : HmiSymbolLibraryFillColorMode.Shaded, color);
+                if (bytes != null) bytes = SymbolLibraryMetafileTransformer.TryTransform(bytes, flip, rotation);
+                if (bytes != null) alternate = CreateSymbolLibraryMarkup(new HmiImage { ImageType = HmiImageType.Wmf, Data = bytes }, symbolLibraryControl);
+            }
+            if (interval <= 0 || interval > int.MaxValue / 2 || normal == null || (blink != HmiSymbolLibraryBlinkMode.Invisible && alternate == null))
+            { AppendDiv(html, symbolLibraryControl, context.Options.UnsupportedItemPlaceholderCssClass, "Symbol library control", context); return; }
+            html.Append("<div");
+            AppendSymbolLibraryAttributes(html, symbolLibraryControl, context, transformGeometry: wmf);
+            AppendAttribute(html, "data-hmi-symbol-blink-interval", interval.ToString(CultureInfo.InvariantCulture));
+            html.Append(">");
+            html.Append("<style>@keyframes hmi-symbol-on{0%{opacity:1}50%{opacity:0}100%{opacity:1}}@keyframes hmi-symbol-off{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@media(prefers-reduced-motion:reduce){[data-hmi-symbol-phase=normal]{animation:none!important;opacity:1!important}[data-hmi-symbol-phase=alternate]{animation:none!important;opacity:0!important}}</style>");
+            // Native CActiveSymbol starts its blink flag at 1: colored modes start on BlinkColor;
+            // invisible mode starts visible. Reduced-motion users always get the normal appearance.
+            var invisible = blink == HmiSymbolLibraryBlinkMode.Invisible;
+            html.Append("<div data-hmi-symbol-phase=\"normal\" style=\"position: absolute; inset: 0; opacity: ").Append(invisible ? 1 : 0).Append("; animation: ").Append(invisible ? "hmi-symbol-on " : "hmi-symbol-off ").Append(interval * 2).Append("ms step-end infinite;\">").Append(normal).Append("</div>");
+            if (alternate != null) html.Append("<div data-hmi-symbol-phase=\"alternate\" aria-hidden=\"true\" style=\"position: absolute; inset: 0; opacity: 1; animation: hmi-symbol-on ").Append(interval * 2).Append("ms step-end infinite;\">").Append(alternate).Append("</div>");
+            html.Append("</div>");
+            return;
+        }
         if (!string.IsNullOrWhiteSpace(symbolSvg))
         {
             html.Append("<div");
@@ -4027,6 +4058,19 @@ public partial class HmiScreenToHtmlConverter
         html.Append(symbolLibraryControl.FixedAspectRatio.GetStaticValueOrDefault() ? "object-fit: contain;" : "object-fit: fill;");
         html.Append("\">");
         html.Append("</div>");
+    }
+
+    private static string? CreateSymbolLibraryMarkup(HmiImage? image, HmiSymbolLibraryControl control)
+    {
+        var svg = ResolveImageSvg(image);
+        if (!string.IsNullOrWhiteSpace(svg)) return NormalizeEmbeddedSymbolSvg(svg!, control);
+        var uri = ResolveImageUri(image);
+        if (string.IsNullOrWhiteSpace(uri)) return null;
+        var html = new StringBuilder("<img");
+        AppendAttribute(html, "src", uri); AppendAttribute(html, "alt", image?.Name ?? control.Name);
+        AppendAttribute(html, "data-hmi-symbol-id", control.SymbolId);
+        html.Append(" style=\"width: 100%; height: 100%; display: block;").Append(control.FixedAspectRatio.GetStaticValueOrDefault() ? "object-fit: contain;" : "object-fit: fill;").Append("\">");
+        return html.ToString();
     }
 
     private static string NormalizeEmbeddedSymbolSvg(string svg, HmiSymbolLibraryControl symbolLibraryControl)
