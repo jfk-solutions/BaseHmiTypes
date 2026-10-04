@@ -3967,7 +3967,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendAttribute(html, "type-name", trendControl instanceof HmiFunctionTrendControl ? "Function trend control" : "Trend control");
   appendStaticAttribute(html, "chart-style", trendControl instanceof HmiFunctionTrendControl
     ? staticProperty(HmiTrendChartStyle.XYPlot) : trendControl.chartStyle);
-  appendAttribute(html, "chart-title", trendControl.chartTitle);
+  appendAttribute(html, "chart-title", trendControl.chartTitleText?.getText(context.options.cultureLcid) ?? trendControl.chartTitle);
   appendStaticAttribute(html, "window-background-color", trendControl.windowBackgroundColor);
   appendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.displayChartTitle);
   appendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.showToolbar);

@@ -1,4 +1,5 @@
 import { HmiControlWindowBase } from "./HmiControlWindowBase.js";
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiColor } from "./HmiColor.js";
 import { HmiFont } from "./HmiFont.js";
 import { HmiHorizontalAlignment } from "./HmiHorizontalAlignment.js";
@@ -71,6 +72,7 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   scrollMechanism?: HmiProperty<HmiTrendScrollMechanism>;
   bufferSizePerPen?: HmiProperty<number>;
   chartTitle?: string;
+  chartTitleText?: HmiMultilingualText;
   displayChartTitle?: HmiProperty<boolean>;
   dataServerName?: string;
   dataServer?: HmiProperty<HmiTrendDataServer>;
