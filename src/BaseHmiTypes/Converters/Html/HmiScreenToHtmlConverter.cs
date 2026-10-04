@@ -1737,7 +1737,14 @@ public class HmiScreenToHtmlConverter
             var horizontal = button.HorizontalAlignment is null ? HmiHorizontalAlignment.Center : ResolveStaticValue(button.HorizontalAlignment, context);
             var vertical = button.VerticalAlignment is null ? HmiVerticalAlignment.Center : ResolveStaticValue(button.VerticalAlignment, context);
             // Keep display on an inner span so the outer hidden caption remains hidden.
-            html.Append("<span data-hmi-button-caption-layout style=\"display: flex;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ")
+            html.Append("<span data-hmi-button-caption-layout");
+            if (ResolveStaticValue(button.AvoidImageCaptionOverlap, context) && button.ImageHorizontalAlignment is not null)
+            {
+                var imageHorizontal = ResolveStaticValue(button.ImageHorizontalAlignment, context);
+                if (horizontal == imageHorizontal && horizontal is HmiHorizontalAlignment.Left or HmiHorizontalAlignment.Right)
+                    AppendAttribute(html, "data-hmi-button-caption-avoid-image", horizontal == HmiHorizontalAlignment.Left ? "start" : "end");
+            }
+            html.Append(" style=\"display: flex;box-sizing: border-box;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ")
                 .Append(ToFlexCss(horizontal)).Append(";align-items: ").Append(ToCss(vertical)).Append(";\">");
         }
         var offset = GetButtonPressedContentOffset(button, context);
