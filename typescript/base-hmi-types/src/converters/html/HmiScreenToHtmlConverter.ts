@@ -2313,12 +2313,13 @@ function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertCon
     clock,
     context,
     true,
-    "display: flex; align-items: center; justify-content: center; overflow: hidden;",
+    "display: flex; align-items: center; justify-content: center; overflow: hidden;" + clockBackgroundOverride(clock),
   );
   appendAttribute(html, "datetime", "2000-01-01T12:34:56");
   appendAttribute(html, "data-format", getStaticValue(clock.format));
   appendAttribute(html, "data-time-zone", getStaticValue(clock.timeZone));
   appendBooleanAttribute(html, "data-analog", getStaticValue(clock.analog) === true);
+  if(clock.backgroundStyle!==undefined)appendAttribute(html,"data-clock-background-style",String(getStaticValue(clock.backgroundStyle)??0));
   html.push(`>${parts.length === 0 ? "Clock" : parts.join(" ")}</time>`);
 }
 
@@ -2329,15 +2330,19 @@ function appendAnalogClockPreview(html: string[], clock: HmiClock, context: HmiH
   let fill = clock.handFillColor === undefined ? foreground : colorToCss(getStaticValue(clock.handFillColor) ?? hmiColorFromArgb(0,0,0,0));
   if (getStaticValue(clock.outlinedHands) === true) fill = "none";
   html.push("<time");
-  appendCommonAttributes(html,clock,context,true,"display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;");
+  appendCommonAttributes(html,clock,context,true,"display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;"+clockBackgroundOverride(clock));
   appendAttribute(html,"datetime","2000-01-01T12:34:56");
   appendAttribute(html,"data-format",getStaticValue(clock.format));
   appendAttribute(html,"data-time-zone",getStaticValue(clock.timeZone));
   appendBooleanAttribute(html,"data-analog",true);
   appendAttribute(html,"data-clock-preview","static");
+  if(clock.backgroundStyle!==undefined)appendAttribute(html,"data-clock-background-style",String(getStaticValue(clock.backgroundStyle)??0));
   html.push('><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Analog clock preview: 12:34:56" style="width: 100%; height: 100%; min-height: 0; flex: 1;">');
-  html.push('<circle data-clock-dial="true" cx="50" cy="50" r="48" fill="none"');
-  appendAttribute(html,"stroke",foreground); html.push(' stroke-width="1"/>');
+  if(clock.backgroundStyle===undefined||getStaticValue(clock.backgroundStyle)===1){
+    html.push('<circle data-clock-dial="true" cx="50" cy="50" r="48"');
+    appendAttribute(html,"fill",clock.backgroundStyle===undefined?"none":clock.backgroundColor===undefined?"#FFFFFF":colorToCss(getStaticValue(clock.backgroundColor)??hmiColorFromArgb(0,0,0,0)));
+    appendAttribute(html,"stroke",clock.backgroundStyle===undefined?foreground:"#808080");html.push(' stroke-width="1"/>');
+  }
   if (clock.showTicks === undefined || getStaticValue(clock.showTicks) === true) {
     const tickRadius=clockPercent(clock.secondHandLengthPercent,80)*48/100;
     for(let i=0;i<60;i++) {
@@ -2364,6 +2369,10 @@ function appendAnalogClockPreview(html: string[], clock: HmiClock, context: HmiH
 function clockPercent(property: HmiProperty<number>|undefined, fallback: number): number {
   const value=property===undefined?fallback:getStaticValue(property)??0;
   return Number.isFinite(value)?Math.max(0,Math.min(100,value)):fallback;
+}
+function clockBackgroundOverride(clock: HmiClock): string {
+  const mode=getStaticValue(clock.backgroundStyle);
+  return clock.backgroundStyle!==undefined&&(mode===1||mode===2)?" background: transparent;":"";
 }
 function appendClockHand(html: string[],name: string,angle: number,lengthPercent: number,widthPercent: number,stroke: string,fill: string): void {
   if(lengthPercent<=0||widthPercent<=0)return;

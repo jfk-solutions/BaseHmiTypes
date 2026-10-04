@@ -10,6 +10,8 @@ export class HmiClock extends HmiWidgetBase {
   }
 
   analog?: HmiProperty<boolean>;
+  /** 0 solid, 1 transparent frame around a filled analog dial, 2 transparent. */
+  backgroundStyle?: HmiProperty<number>;
   showTicks?: HmiProperty<boolean>;
   ticksColor?: HmiProperty<HmiColor>;
   handFillColor?: HmiProperty<HmiColor>;
