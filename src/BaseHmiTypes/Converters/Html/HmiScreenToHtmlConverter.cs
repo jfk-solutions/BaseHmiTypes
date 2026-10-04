@@ -3041,6 +3041,7 @@ public class HmiScreenToHtmlConverter
             {
                 HmiBarValueMapping.NormalizedLogarithmic => Math.Log10(1 + 100 * ratio) / Math.Log10(101),
                 HmiBarValueMapping.InverseNormalizedLogarithmic => 1 - Math.Log10(101 - 100 * ratio) / Math.Log10(101),
+                HmiBarValueMapping.Tangent => MapBarTangent(ratio, GetBarTangentPivot((HmiBar)scale, minimum, maximum, context)),
                 HmiBarValueMapping.Quadratic => ratio * ratio,
                 HmiBarValueMapping.Cubic => ratio * ratio * ratio,
                 _ => ratio
@@ -3061,9 +3062,26 @@ public class HmiScreenToHtmlConverter
 
     private static bool UsesNonlinearBarMapping(HmiScaleWidgetBase scale, double minimum, double maximum,
         HmiHtmlConvertContext context) => scale is HmiBar bar && IsFinite(minimum) && IsFinite(maximum) &&
-        maximum > minimum && IsFinite(maximum - minimum) && ResolveStaticValue(bar.ValueMapping, context) is
-        HmiBarValueMapping.NormalizedLogarithmic or HmiBarValueMapping.InverseNormalizedLogarithmic or
-        HmiBarValueMapping.Quadratic or HmiBarValueMapping.Cubic;
+        maximum > minimum && IsFinite(maximum - minimum) &&
+        (ResolveStaticValue(bar.ValueMapping, context) is HmiBarValueMapping.NormalizedLogarithmic or
+            HmiBarValueMapping.InverseNormalizedLogarithmic or HmiBarValueMapping.Quadratic or HmiBarValueMapping.Cubic ||
+         ResolveStaticValue(bar.ValueMapping, context) == HmiBarValueMapping.Tangent &&
+            IsFinite(GetBarTangentPivot(bar, minimum, maximum, context)));
+
+    private static double GetBarTangentPivot(HmiBar bar, double minimum, double maximum, HmiHtmlConvertContext context)
+        => bar.TangentPivotPercent is not null ? ResolveStaticValue(bar.TangentPivotPercent, context)
+            : bar.OriginValue is not null ? (ResolveStaticValue(bar.OriginValue, context) - minimum) * 100 / (maximum - minimum) : 50;
+
+    private static double MapBarTangent(double ratio, double pivot)
+    {
+        var delta = ratio * 100 - pivot;
+        // Continuous pivot limit avoids native 0/0 when the pivot is the upper endpoint.
+        if (delta == 0) return pivot / 100;
+        var span = delta < 0 ? pivot : 100 - pivot;
+        var pi = 4 * Math.Atan(1);
+        var angle = pi * .5 - pi * .5 * .1;
+        return (pivot + Math.Tan(angle / span * delta + pi) * (span / Math.Tan(angle))) / 100;
+    }
 
     private static double ResolveScaleValue(
         HmiScaleWidgetBase scale,
