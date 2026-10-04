@@ -13,6 +13,8 @@ export class HmiGraphicView extends HmiSurfaceShapeBase {
   image?: HmiProperty<HmiImageSource>;
   alternateImage?: HmiProperty<HmiImageSource>;
   imageScaled?: HmiProperty<boolean>;
+  /** When scaling the image, preserve its aspect ratio inside the graphical frame. */
+  imageKeepAspectRatio?: HmiProperty<boolean>;
   /** Additional image extents outside the logical frame. The source image includes these extents. */
   imageOverflowPadding?: HmiThickness;
   imageBlink?: HmiProperty<boolean>;
