@@ -556,7 +556,7 @@ export class HmiTrendControl extends HTMLElement {
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
           ${displayStatisticRulers ? `<div class="statistic-ruler start" title="Statistics range start"></div><div class="statistic-ruler end" title="Statistics range end"></div>` : ""}
-          ${xyPlot ? xValueAxes.length ? renderXValueAxes(xValueAxes, xAxisFlipped, foregroundColor) : `<span class="axis-label x-label" style="left:50%">X-axis range unavailable</span>` : timeAxes.length ? renderTimeAxes(timeAxes, pens, xAxisFlipped, locale, timeZone) : xAxisVisible ? timeZone === null ? `<span class="axis-label x-label" style="left:50%">Project time zone unavailable</span>` : renderXLabels(labels) : ""}
+          ${xyPlot ? xValueAxes.length ? renderXValueAxes(xValueAxes, xAxisFlipped, foregroundColor) : `<span class="axis-label x-label" style="left:50%">X-axis range unavailable</span>` : timeAxes.length ? renderTimeAxes(timeAxes, pens, xAxisFlipped, locale, timeZone, unavailableTimeZoneText(this)) : xAxisVisible ? timeZone === null ? `<span class="axis-label x-label" style="left:50%">${escapeHtml(unavailableTimeZoneText(this))}</span>` : renderXLabels(labels) : ""}
           ${xyPlot ? `<span class="axis-label" style="left:50%;top:50%">Function trend data not loaded</span>` : ""}
           ${!timeAxes.length && xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
           ${yAxisVisible && yAxisLabel && !namedValueAxes.length ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
@@ -854,6 +854,7 @@ function renderXLabels(values: TimeLabel[]): string {
 function resolveTimeZone(control: Pick<Element, "getAttribute">): string | undefined | null {
   const base = control.getAttribute("time-base")?.toLowerCase();
   if (base === "utc") return "UTC";
+  if (base === "server") return null;
   if (base !== "project") return undefined;
   const zone = control.getAttribute("project-time-zone");
   if (zone?.toLowerCase() === "local") return undefined;
@@ -862,7 +863,11 @@ function resolveTimeZone(control: Pick<Element, "getAttribute">): string | undef
   catch { return null; }
 }
 
-function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], flipped: boolean, locale: string | undefined, timeZone: string | undefined | null): string {
+function unavailableTimeZoneText(control: Pick<Element, "getAttribute">): string {
+  return control.getAttribute("time-base")?.toLowerCase() === "server" ? "Server time zone unavailable" : "Project time zone unavailable";
+}
+
+function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], flipped: boolean, locale: string | undefined, timeZone: string | undefined | null, unavailableText: string): string {
   const visibleAxes = axes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false");
   const columns = {
     top: visibleAxes.filter(axis => axis.attributes["x-axis-alignment"]?.toLowerCase() === "top").length,
@@ -891,7 +896,7 @@ function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], fl
     const rangeUnavailable = source.getAttribute("rangeType") === "StartEnd" && !fixedRange;
     const rangeLabels = measurementMode ? `<span class="axis-label x-label" style="left:50%">${escapeHtml(source.getAttribute("measurementPoints") ?? "Unknown")} measurement points (timestamps unavailable)</span>`
       : rangeUnavailable ? `<span class="axis-label x-label" style="left:50%">Time range unavailable</span>`
-      : timeZone === null ? `<span class="axis-label x-label" style="left:50%">Project time zone unavailable</span>` : renderXLabels(labels);
+      : timeZone === null ? `<span class="axis-label x-label" style="left:50%">${escapeHtml(unavailableText)}</span>` : renderXLabels(labels);
     return `<div class="time-axis ${alignment}" data-axis-name="${escapeHtml(axis.name)}" style="${alignment}:calc(-${toCss((column + 1) * 3.6)}em - 1px);color:${escapeHtml(color)}">${rangeLabels}${label ? `<span class="axis-label x-axis-title">${escapeHtml(label)}</span>` : ""}</div>`;
   }).join("");
 }
