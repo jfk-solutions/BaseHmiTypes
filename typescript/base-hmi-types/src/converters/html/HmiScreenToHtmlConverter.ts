@@ -1,5 +1,6 @@
 import { HmiCharacterScreen } from "../../screens/screen/HmiCharacterScreen.js";
 import { formatScaleLabel } from "./format-scale-label.js";
+import { nativeBarSigmaRampFactors } from "./bar-sigma-ramp.generated.js";
 import { IHmiProject } from "../../projects/IHmiProject.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiImage } from "../../images/HmiImage.js";
@@ -1830,6 +1831,7 @@ function appendBarOriginMeter(html: string[], bar: HmiBar, minimum: number, maxi
   else if (thresholdColor !== undefined) appendColorStyle(style, "color", thresholdColor);
   style.push(getBarFillOverrideStyle(bar, context));
   style.push(getBarGradientStyle(bar, context));
+  appendBarNativeGradientAttributes(html, bar, context);
   const bitmapRows = getBarBitmapRows(bar, context);
   if (bitmapRows !== undefined || isBarHatch(bar, context)) {
     appendAttribute(html, "data-hmi-bar-bitmap", bitmapRows);
@@ -1856,6 +1858,7 @@ function isBarGradient(bar: HmiBar, context: HmiHtmlConvertContext): boolean {
 }
 
 function getBarGradientStyle(bar: HmiBar, context: HmiHtmlConvertContext): string {
+  if (hasBarNativeGradient(bar, context)) return "background-color: transparent;";
   const endColor = getStaticValue(context.effectiveProperties.resolve(bar, "FillEndColor", bar.fillEndColor));
   if (!isBarGradient(bar, context) || endColor === undefined) return "";
   const direction = bar.fillGradientDirection ?? (bar.fillGradientAxis?.toLowerCase() === "vertical"
@@ -1868,6 +1871,40 @@ function getBarGradientStyle(bar: HmiBar, context: HmiHtmlConvertContext): strin
     ? `${colorToCss(endColor)} ${toCss(50 - stop / 2)}%, currentColor 50%, ${colorToCss(endColor)} ${toCss(50 + stop / 2)}%`
     : `currentColor 0%, ${colorToCss(endColor)} ${toCss(stop)}%`;
   return `background-color: transparent; background-image: linear-gradient(${gradientDirectionToCss(direction)}, ${stops});`;
+}
+
+function hasBarNativeGradient(bar: HmiBar, context: HmiHtmlConvertContext): boolean {
+  return isBarGradient(bar, context) && context.effectiveProperties.resolve(bar, "GradientMode", bar.gradientMode) !== undefined;
+}
+
+function appendBarNativeGradientAttributes(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
+  if (!hasBarNativeGradient(bar, context)) return;
+  const mode = getStaticValue(context.effectiveProperties.resolve(bar, "GradientMode", bar.gradientMode)) ?? -1;
+  appendAttribute(html, "data-hmi-bar-gradient-mode", toCss(mode));
+  if (!Number.isInteger(mode) || mode < 0 || mode > 3) return;
+  const disabled = getStaticValue(bar.enabled) !== true && getStaticValue(bar.useDisabledForegroundColor) === true
+    ? context.effectiveProperties.resolve(bar, "DisabledForegroundColor", bar.disabledForegroundColor) : undefined;
+  const start = getStaticValue(disabled ?? getBarThresholdFillColor(bar) ??
+    context.effectiveProperties.resolve(bar, "FillColor", bar.fillColor) ??
+    context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor)) ?? hmiColorFromArgb(255, 0, 0, 0);
+  const end = getStaticValue(context.effectiveProperties.resolve(bar, "FillEndColor", bar.fillEndColor) ??
+    context.effectiveProperties.resolve(bar, "PatternColor", bar.patternColor)) ?? hmiColorFromArgb(255, 0, 0, 0);
+  const sigma = getStaticValue(context.effectiveProperties.resolve(bar, "GradientSigmaBlend", bar.gradientSigmaBlend)) ?? false;
+  appendAttribute(html, "data-hmi-bar-gradient-sigma", sigma ? "true" : "false");
+  // Static/tag-fallback palettes. Round each operation as single precision,
+  // matching C#; native input channels are premultiplied before palette rounding.
+  const f = Math.fround;
+  const round = (value: number): number => Math.floor(f(value + 0.5));
+  const ramps = [16, 64, 256].map(count => Array.from({length: count + 1}, (_, index) => {
+    const factor = sigma ? nativeBarSigmaRampFactors[index * 256 / count]! : f(index / count);
+    const inverse = f(1 - factor);
+    const mix = (a: number, alpha: number, b: number, beta: number): number =>
+      round(f(f(f(a * alpha / 255) * inverse) + f(f(b * beta / 255) * factor)));
+    const alpha = round(f(f(start.alpha * inverse) + f(end.alpha * factor)));
+    return ((alpha << 24) | (mix(start.red, start.alpha, end.red, end.alpha) << 16) |
+      (mix(start.green, start.alpha, end.green, end.alpha) << 8) | mix(start.blue, start.alpha, end.blue, end.alpha)) >>> 0;
+  }));
+  appendAttribute(html, "data-hmi-bar-gradient-ramps", JSON.stringify(ramps));
 }
 
 function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
