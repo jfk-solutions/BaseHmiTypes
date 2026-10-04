@@ -1819,7 +1819,8 @@ function appendBarOriginMeter(html: string[], bar: HmiBar, minimum: number, maxi
 }
 
 function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
-  if (getStaticValue(context.effectiveProperties.resolve(bar, "BackgroundColor", bar.backgroundColor)) !== undefined ||
+  if (getStaticValue(context.effectiveProperties.resolve(bar, "TrackColor", bar.trackColor)) !== undefined ||
+      getStaticValue(context.effectiveProperties.resolve(bar, "BackgroundColor", bar.backgroundColor)) !== undefined ||
       getColorGradient(bar) !== undefined)
     appendAttribute(html, "data-hmi-bar-track", "true");
   if (getBarThresholdFillColor(bar) !== undefined ||
@@ -4690,6 +4691,11 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   appendColorGradientStyle(html, colorGradient);
   if (item instanceof HmiBar)
     appendColorGradientStyle(html, colorGradient, "--hmi-bar-track-background");
+  if (item instanceof HmiBar) {
+    const explicitTrackColor = getStaticValue(context.effectiveProperties.resolve(item, "TrackColor", item.trackColor));
+    if (explicitTrackColor !== undefined)
+      html.push(`--hmi-bar-track-background: ${colorToCss(explicitTrackColor)} !important;`);
+  }
   if (item.margin !== undefined) {
     html.push(
       `margin: ${toCss(getStaticValueOrDefault(item.margin.top, 0))}px ${toCss(

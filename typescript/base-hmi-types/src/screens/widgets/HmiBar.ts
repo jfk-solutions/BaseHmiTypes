@@ -2,9 +2,12 @@ import { HmiScaleWidgetBase } from "./HmiScaleWidgetBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiFillDirection } from "../base/HmiFillDirection.js";
 import { HmiProperty } from "../base/HmiProperty.js";
+import { HmiColor } from "../base/HmiColor.js";
 
 export class HmiBar extends HmiScaleWidgetBase {
   fillStyle?: HmiProperty<HmiBarFillStyle>;
+  /** Color of the unfilled bar track, independent of widget background. Omitted retains the background-based track. */
+  trackColor?: HmiProperty<HmiColor>;
   fillDirection?: HmiProperty<HmiFillDirection>;
   /** Position of originValue in percent, used only with useAutoScaling. Valid preview positions are zero through 100. */
   originPositionPercent?: HmiProperty<number>;
