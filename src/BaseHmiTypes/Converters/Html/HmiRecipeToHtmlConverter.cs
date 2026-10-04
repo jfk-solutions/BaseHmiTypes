@@ -67,7 +67,7 @@ public sealed class HmiRecipeToHtmlConverter
             html.Append("</tbody></table>");
         }
         html.Append("<h2>Fields</h2><div class=\"table-scroll\"><table><thead><tr>");
-        foreach (var header in new[] { "Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment", "Element ID", "Default", "Decimal places", "Maximum length", "Tag array count", "Required", "Unique", "Indexed", "Display name", "Info text" })
+        foreach (var header in new[] { "Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment", "Element ID", "Default", "Decimal places", "Maximum length", "Tag array count", "Required", "Unique", "Indexed", "Display name", "Info text", "Trigger redraw" })
             html.Append("<th scope=\"col\">").Append(header).Append("</th>");
         html.Append("</tr></thead><tbody>");
         foreach (var field in recipe.Parameters)
@@ -78,11 +78,22 @@ public sealed class HmiRecipeToHtmlConverter
                          field.SourceElementId?.ToString(CultureInfo.InvariantCulture), field.DefaultValue,
                          field.DecimalPlaces?.ToString(CultureInfo.InvariantCulture), field.MaximumLength?.ToString(CultureInfo.InvariantCulture),
                          field.TagArrayCount?.ToString(CultureInfo.InvariantCulture), FormatFlag(field.Required), FormatFlag(field.Unique), FormatFlag(field.Indexed),
-                         field.DisplayName?.GetText(culture), field.InfoText?.GetText(culture) })
+                         field.DisplayName?.GetText(culture), field.InfoText?.GetText(culture), FormatFlag(field.TriggerRedraw) })
                 html.Append("<td>").Append(Encode(value)).Append("</td>");
             html.Append("</tr>");
         }
-        html.Append("</tbody></table></div><h2>Stored records</h2>");
+        html.Append("</tbody></table></div>");
+        if (recipe.Parameters.Any(field => field.References.Count > 0))
+        {
+            html.Append("<h2>Field references</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Index</th><th scope=\"col\">Field</th><th scope=\"col\">Element ID</th><th scope=\"col\">Role</th><th scope=\"col\">Source reference</th><th scope=\"col\">Name</th></tr></thead><tbody>");
+            foreach (var field in recipe.Parameters)
+                foreach (var pair in field.References)
+                    html.Append("<tr><td>").Append(field.SourceIndex?.ToString(CultureInfo.InvariantCulture)).Append("</td><th scope=\"row\">").Append(Encode(field.Name))
+                        .Append("</th><td>").Append(field.SourceElementId?.ToString(CultureInfo.InvariantCulture)).Append("</td><td>").Append(Encode(pair.Key))
+                        .Append("</td><td>").Append(Encode(pair.Value.SourceId)).Append("</td><td>").Append(Encode(pair.Value.Name)).Append("</td></tr>");
+            html.Append("</tbody></table></div>");
+        }
+        html.Append("<h2>Stored records</h2>");
         if (recipe.DataSets.Count == 0)
             html.Append("<p>No stored records.</p>");
         else

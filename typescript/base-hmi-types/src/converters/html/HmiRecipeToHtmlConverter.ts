@@ -49,7 +49,7 @@ export class HmiRecipeToHtmlConverter {
       html.push("</tbody></table>");
     }
     html.push("<h2>Fields</h2><div class=\"table-scroll\"><table><thead><tr>");
-    for (const header of ["Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment", "Element ID", "Default", "Decimal places", "Maximum length", "Tag array count", "Required", "Unique", "Indexed", "Display name", "Info text"])
+    for (const header of ["Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment", "Element ID", "Default", "Decimal places", "Maximum length", "Tag array count", "Required", "Unique", "Indexed", "Display name", "Info text", "Trigger redraw"])
       html.push("<th scope=\"col\">", header, "</th>");
     html.push("</tr></thead><tbody>");
     for (const field of recipe.parameters) {
@@ -58,10 +58,18 @@ export class HmiRecipeToHtmlConverter {
         field.minimumValue, field.maximumValue, field.comment, field.sourceElementId?.toString(), field.defaultValue,
         field.decimalPlaces?.toString(), field.maximumLength?.toString(), field.tagArrayCount?.toString(),
         formatFlag(field.required), formatFlag(field.unique), formatFlag(field.indexed),
-        field.displayName?.getText(cultureLcid), field.infoText?.getText(cultureLcid)]) html.push("<td>", encode(value), "</td>");
+        field.displayName?.getText(cultureLcid), field.infoText?.getText(cultureLcid), formatFlag(field.triggerRedraw)]) html.push("<td>", encode(value), "</td>");
       html.push("</tr>");
     }
-    html.push("</tbody></table></div><h2>Stored records</h2>");
+    html.push("</tbody></table></div>");
+    if (recipe.parameters.some(field => field.references.size > 0)) {
+      html.push('<h2>Field references</h2><div class="table-scroll"><table><thead><tr><th scope="col">Index</th><th scope="col">Field</th><th scope="col">Element ID</th><th scope="col">Role</th><th scope="col">Source reference</th><th scope="col">Name</th></tr></thead><tbody>');
+      for (const field of recipe.parameters) for (const [role, reference] of field.references)
+        html.push('<tr><td>', encode(field.sourceIndex?.toString()), '</td><th scope="row">', encode(field.name), '</th><td>', encode(field.sourceElementId?.toString()),
+          '</td><td>', encode(role), '</td><td>', encode(reference.sourceId), '</td><td>', encode(reference.name), '</td></tr>');
+      html.push('</tbody></table></div>');
+    }
+    html.push("<h2>Stored records</h2>");
     if (recipe.dataSets.length === 0) html.push("<p>No stored records.</p>");
     else {
       // Preserve definition order, then include raw record keys not represented by a named field.

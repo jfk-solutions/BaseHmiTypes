@@ -54,6 +54,9 @@ public sealed class HmiRecipeReference
 
 public sealed class HmiRecipeParameter : IHmiObject
 {
+    public IDictionary<string, HmiRecipeReference> References { get; } = new Dictionary<string, HmiRecipeReference>();
+    public bool? TriggerRedraw { get; set; }
+
     public HmiMultilingualText? DisplayName { get; set; }
     public HmiMultilingualText? InfoText { get; set; }
     public int? SourceIndex { get; set; }
