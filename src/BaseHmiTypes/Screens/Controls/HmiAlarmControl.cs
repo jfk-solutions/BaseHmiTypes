@@ -130,6 +130,9 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<bool>? DisplayEventContextMenu { get; set; }
 
+    public HmiProperty<bool>? ShortenCellContents { get; set; }
+    public HmiProperty<bool>? ShortenColumnTitles { get; set; }
+
     public HmiProperty<double>? CellPaddingTop { get; set; }
     public HmiProperty<double>? CellPaddingRight { get; set; }
     public HmiProperty<double>? CellPaddingBottom { get; set; }

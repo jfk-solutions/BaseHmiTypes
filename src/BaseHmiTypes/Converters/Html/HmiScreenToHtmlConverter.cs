@@ -2922,6 +2922,8 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-active-column-set", alarmControl.ActiveColumnSet);
         AppendAttribute(html, "data-list-mode", listMode.ToString());
         AppendAttribute(html, "data-time-base", ResolvePropertyPreview(alarmControl.TimeBase, context));
+        AppendAttribute(html, "data-shorten-cell-contents", ResolvePropertyPreview(alarmControl.ShortenCellContents, context));
+        AppendAttribute(html, "data-shorten-column-titles", ResolvePropertyPreview(alarmControl.ShortenColumnTitles, context));
         AppendAttribute(html, "data-cell-padding-top", ResolvePropertyPreview(alarmControl.CellPaddingTop, context));
         AppendAttribute(html, "data-cell-padding-right", ResolvePropertyPreview(alarmControl.CellPaddingRight, context));
         AppendAttribute(html, "data-cell-padding-bottom", ResolvePropertyPreview(alarmControl.CellPaddingBottom, context));
@@ -2992,7 +2994,8 @@ public partial class HmiScreenToHtmlConverter
                     .Append("</th>");
             foreach (var column in visibleColumns)
             {
-                html.Append("<th style=\"").Append(headerCellStyle).Append("overflow: hidden; text-overflow: ellipsis;");
+                html.Append("<th style=\"").Append(headerCellStyle).Append(alarmControl.ShortenColumnTitles is null
+                    ? "overflow: hidden; text-overflow: ellipsis;" : string.Empty);
                 if (column.AutoSize is null || !ResolveStaticValue(column.AutoSize, context))
                     if (column.Width is not null && IsFinite(ResolveStaticValue(column.Width, context)) && ResolveStaticValue(column.Width, context) >= 0)
                         html.Append("width: ").Append(ToCss(ResolveStaticValue(column.Width, context))).Append("px;");
@@ -3010,7 +3013,8 @@ public partial class HmiScreenToHtmlConverter
         }
         html.Append("<tbody><tr><td");
         AppendAttribute(html, "colspan", Math.Max(visibleColumns.Length, 1).ToString(CultureInfo.InvariantCulture));
-        html.Append(" style=\"text-align: center;").Append(gridCellStyle);
+        html.Append(" style=\"text-align: center;").Append(gridCellStyle)
+            .Append(CreateAlarmShorteningStyle(alarmControl.ShortenCellContents, context));
         AppendColorStyle(html, "background-color", alarmControl.SelectionBackgroundColor);
         AppendColorStyle(html, "color", alarmControl.SelectionForegroundColor);
         AppendAlarmSelectionRectangleStyle(html, alarmControl, context);
@@ -4687,12 +4691,21 @@ public partial class HmiScreenToHtmlConverter
         style.Append(";outline-offset: -").Append(ToCss(width)).Append("px;");
     }
 
+    private static string CreateAlarmShorteningStyle(HmiProperty<bool>? property, HmiHtmlConvertContext context)
+    {
+        if (property is null) return string.Empty;
+        return ResolveStaticValue(property, context)
+            ? "overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+            : "overflow: hidden; text-overflow: clip;";
+    }
+
     private static string CreateAlarmTableHeaderCellStyle(
         HmiAlarmControl alarmControl,
         HmiHtmlConvertContext context,
         string gridCellStyle)
     {
         var style = new StringBuilder(gridCellStyle);
+        style.Append(CreateAlarmShorteningStyle(alarmControl.ShortenColumnTitles, context));
         AppendColorStyle(style, "background-color", alarmControl.TableHeaderBackgroundColor);
         AppendColorStyle(style, "color", alarmControl.TableHeaderForegroundColor);
         if (alarmControl.TableHeaderHorizontalAlignment is not null)
