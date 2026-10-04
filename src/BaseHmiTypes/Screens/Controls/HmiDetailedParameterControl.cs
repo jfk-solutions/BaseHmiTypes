@@ -20,6 +20,11 @@ public class HmiDetailedParameterControl : HmiControlWindowBase
     public HmiProperty<bool>? HideDetails { get; set; }
     public HmiProperty<HmiColor>? GridLineColor { get; set; }
     public HmiProperty<double>? GridLineWidth { get; set; }
+    public HmiProperty<double>? RowHeight { get; set; }
+    public HmiProperty<double>? CellPaddingLeft { get; set; }
+    public HmiProperty<double>? CellPaddingTop { get; set; }
+    public HmiProperty<double>? CellPaddingRight { get; set; }
+    public HmiProperty<double>? CellPaddingBottom { get; set; }
     /// <summary>Native editing-mode value; no cross-family enum translation is assumed.</summary>
     public HmiProperty<int>? EditMode { get; set; }
     public HmiProperty<bool>? ShowToolbar { get; set; }

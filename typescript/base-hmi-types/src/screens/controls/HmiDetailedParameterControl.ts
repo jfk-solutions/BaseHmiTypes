@@ -19,6 +19,11 @@ export class HmiDetailedParameterControl extends HmiControlWindowBase {
   hideDetails?: HmiProperty<boolean>;
   gridLineColor?: HmiProperty<HmiColor>;
   gridLineWidth?: HmiProperty<number>;
+  rowHeight?: HmiProperty<number>;
+  cellPaddingLeft?: HmiProperty<number>;
+  cellPaddingTop?: HmiProperty<number>;
+  cellPaddingRight?: HmiProperty<number>;
+  cellPaddingBottom?: HmiProperty<number>;
   /** Native editing-mode value; no cross-family enum translation is assumed. */
   editMode?: HmiProperty<number>;
   showToolbar?: HmiProperty<boolean>;

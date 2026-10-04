@@ -2394,6 +2394,11 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   appendAttribute(html, "data-current-parameter-set-id", resolvePropertyPreview(control.currentParameterSetId));
   appendAttribute(html, "data-current-parameter-set-type-id", resolvePropertyPreview(control.currentParameterSetTypeId));
   appendAttribute(html, "data-hide-details", resolvePropertyPreview(control.hideDetails));
+  appendAttribute(html, "data-row-height", resolvePropertyPreview(control.rowHeight));
+  appendAttribute(html, "data-cell-padding-left", resolvePropertyPreview(control.cellPaddingLeft));
+  appendAttribute(html, "data-cell-padding-top", resolvePropertyPreview(control.cellPaddingTop));
+  appendAttribute(html, "data-cell-padding-right", resolvePropertyPreview(control.cellPaddingRight));
+  appendAttribute(html, "data-cell-padding-bottom", resolvePropertyPreview(control.cellPaddingBottom));
   appendAttribute(html, "data-edit-mode", resolvePropertyPreview(control.editMode));
   appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(control.showToolbar));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(control.showStatusBar));
@@ -2459,7 +2464,21 @@ function appendParameterColumns(html: string[], control: HmiDetailedParameterCon
     appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat));
     html.push(">", escapeHtml(column.headerText?.getText(context.options.cultureLcid) ?? column.name ?? column.key ?? "Column"), "</th>");
   }
-  html.push('</tr></thead><tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;">Parameter data not loaded</td></tr></tbody></table>');
+  html.push('</tr></thead><tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;', createParameterCellLayoutStyle(control), '">Parameter data not loaded</td></tr></tbody></table>');
+}
+
+function createParameterCellLayoutStyle(control: HmiDetailedParameterControl): string {
+  const style: string[] = [];
+  const appendDimension = (css: string, property: HmiProperty<number> | undefined) => {
+    const value = getStaticValue(property);
+    if (typeof value === "number" && Number.isFinite(value) && value >= 0) style.push(`${css}: ${toCss(value)}px;`);
+  };
+  appendDimension("height", control.rowHeight);
+  appendDimension("padding-left", control.cellPaddingLeft);
+  appendDimension("padding-top", control.cellPaddingTop);
+  appendDimension("padding-right", control.cellPaddingRight);
+  appendDimension("padding-bottom", control.cellPaddingBottom);
+  return style.join("");
 }
 
 function createParameterHeaderAlignmentStyle(column: HmiParameterColumn): string {
