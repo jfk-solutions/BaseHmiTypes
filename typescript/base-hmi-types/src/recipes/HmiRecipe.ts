@@ -13,6 +13,7 @@ export class HmiRecipe {
   lastModified?: Date;
   readonly parameters: HmiRecipeParameter[] = [];
   readonly dataSets: HmiRecipeDataSet[] = [];
+  readonly sourceTagDeclarations: HmiRecipeTagDeclaration[] = [];
   readonly sourcePlcDeclarations: HmiRecipePlcDeclaration[] = [];
 }
 
@@ -73,6 +74,17 @@ export class HmiRecipeParameter {
   minimumValue?: string;
   maximumValue?: string;
   comment?: string;
+}
+
+export class HmiRecipeTagDeclaration {
+  name?: string;
+  dataType?: string;
+  comment?: HmiMultilingualText;
+  startValue?: string;
+  substituteValue?: string;
+  substituteValueUsage?: number;
+  minimumValue?: string;
+  maximumValue?: string;
 }
 
 export class HmiRecipePlcDeclaration {

@@ -21,6 +21,7 @@ public sealed class HmiRecipe : IHmiObject
     public IList<HmiRecipeParameter> Parameters { get; } = new List<HmiRecipeParameter>();
 
     public IList<HmiRecipeDataSet> DataSets { get; } = new List<HmiRecipeDataSet>();
+    public IList<HmiRecipeTagDeclaration> SourceTagDeclarations { get; } = new List<HmiRecipeTagDeclaration>();
     public IList<HmiRecipePlcDeclaration> SourcePlcDeclarations { get; } = new List<HmiRecipePlcDeclaration>();
 }
 
@@ -92,6 +93,19 @@ public sealed class HmiRecipeParameter : IHmiObject
     public string? MaximumValue { get; set; }
 
     public string? Comment { get; set; }
+}
+
+/// <summary>Retains source HMI tag parent metadata alongside scalar recipe fields.</summary>
+public sealed class HmiRecipeTagDeclaration
+{
+    public string? Name { get; set; }
+    public string? DataType { get; set; }
+    public HmiMultilingualText? Comment { get; set; }
+    public string? StartValue { get; set; }
+    public string? SubstituteValue { get; set; }
+    public int? SubstituteValueUsage { get; set; }
+    public string? MinimumValue { get; set; }
+    public string? MaximumValue { get; set; }
 }
 
 /// <summary>Retains source parent and sparse declarations alongside scalar recipe fields.</summary>
