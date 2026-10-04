@@ -2053,7 +2053,8 @@ public class HmiScreenToHtmlConverter
 
     private static void AppendBarColorAttributes(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)
     {
-        if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.BackgroundColor), bar.BackgroundColor)?.StaticValue is HmiColor ||
+        if (context.EffectiveProperties.Resolve(bar, nameof(HmiBar.TrackColor), bar.TrackColor)?.StaticValue is HmiColor ||
+            context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.BackgroundColor), bar.BackgroundColor)?.StaticValue is HmiColor ||
             GetColorGradient(bar) is not null)
             AppendAttribute(html, "data-hmi-bar-track", "true");
         if (context.EffectiveProperties.Resolve(bar, nameof(HmiPaintedScreenItemBase.ForegroundColor), bar.ForegroundColor) is not null ||
@@ -5218,6 +5219,10 @@ public class HmiScreenToHtmlConverter
         AppendColorGradientStyle(html, colorGradient);
         if (item is HmiBar)
             AppendColorGradientStyle(html, colorGradient, "--hmi-bar-track-background");
+        if (item is HmiBar coloredTrackBar && context.EffectiveProperties.Resolve(
+            coloredTrackBar, nameof(HmiBar.TrackColor), coloredTrackBar.TrackColor)?.StaticValue is HmiColor explicitTrackColor)
+            // Keep a separate track independent of widget background gradients and blink animation.
+            html.Append("--hmi-bar-track-background: ").Append(ToCss(explicitTrackColor)).Append(" !important;");
         if (margin != null)
         {
             html.Append("margin: ")
