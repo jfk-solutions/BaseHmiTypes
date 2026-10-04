@@ -261,7 +261,7 @@ export class HmiTrendControl extends HTMLElement {
     const yAxisGridVisible = readBooleanAttribute(this, "y-axis-grid-visible", true);
     const showPercentageAxis = readBooleanAttribute(this, "show-percentage-axis", false);
     const percentageAxisAlignment = this.getAttribute("percentage-axis-alignment")?.toLowerCase() === "left" ? "left" : "right";
-    const chartTitle = this.getAttribute("chart-title") || this._controlName || this._typeName;
+    const chartTitle = this.getAttribute("chart-title") ?? (this._controlName || this._typeName);
     const displayMilliseconds = readBooleanAttribute(timeSource, "display-milliseconds", false);
     const xAxisDateFormat = timeSource.getAttribute("x-axis-date-format");
     const locale = this.getAttribute("lang") || (typeof document === "undefined" ? undefined : document.documentElement.lang) || undefined;
@@ -984,7 +984,8 @@ function renderPenLegend(pens: readonly TrendPen[], displayIcons: boolean, useTr
   if (pens.length === 0) return `<div class="pen-chip"><span class="pen-name">No configured pens</span></div>`;
   return pens.map((pen, index) => {
     const color = normalizePenColor(pen.color, index);
-    const label = (useTrendNameAsLabel ? pen.name : pen.label) || pen.name || `Pen ${pen.number || index + 1}`;
+    const fallback = pen.name || `Pen ${pen.number || index + 1}`;
+    const label = useTrendNameAsLabel ? fallback : pen.label ?? fallback;
     const unit = pen.unit ? ` (${pen.unit})` : "";
     const markerColor = pen.markerColor ?? color;
     const marker = pen.marker === undefined || pen.marker === "0"
