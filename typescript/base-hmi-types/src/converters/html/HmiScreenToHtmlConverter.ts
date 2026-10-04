@@ -77,7 +77,7 @@ import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
 import { HmiButtonBase } from "../../screens/widgets/HmiButtonBase.js";
-import { HmiBar, HmiBarValueMapping } from "../../screens/widgets/HmiBar.js";
+import { HmiBar, HmiBarFillStyle, HmiBarValueMapping } from "../../screens/widgets/HmiBar.js";
 import { HmiDisabledImageMode } from "../../screens/widgets/HmiDisabledImageMode.js";
 import { HmiState } from "../../screens/widgets/HmiState.js";
 import { HmiCheckBoxGroup } from "../../screens/widgets/HmiCheckBoxGroup.js";
@@ -1825,7 +1825,8 @@ function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlC
       getStaticValue(context.effectiveProperties.resolve(bar, "BackgroundColor", bar.backgroundColor)) !== undefined ||
       getColorGradient(bar) !== undefined)
     appendAttribute(html, "data-hmi-bar-track", "true");
-  if (context.effectiveProperties.resolve(bar, "FillColor", bar.fillColor) !== undefined ||
+  if (getStaticValue(context.effectiveProperties.resolve(bar, "FillStyle", bar.fillStyle)) === HmiBarFillStyle.Transparent ||
+      context.effectiveProperties.resolve(bar, "FillColor", bar.fillColor) !== undefined ||
       getBarThresholdFillColor(bar) !== undefined ||
       context.effectiveProperties.resolve(bar, "ForegroundColor", bar.foregroundColor) !== undefined ||
       (getStaticValue(bar.enabled) === false && getStaticValue(bar.useDisabledForegroundColor) === true &&
@@ -1834,6 +1835,8 @@ function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlC
 }
 
 function getBarFillOverrideStyle(bar: HmiBar, context: HmiHtmlConvertContext): string {
+  if (getStaticValue(context.effectiveProperties.resolve(bar, "FillStyle", bar.fillStyle)) === HmiBarFillStyle.Transparent)
+    return "color: transparent !important;";
   const explicitColor = context.effectiveProperties.resolve(bar, "FillColor", bar.fillColor);
   if (explicitColor === undefined) return "";
   const disabledColor = getStaticValue(bar.enabled) !== true && getStaticValue(bar.useDisabledForegroundColor) === true
