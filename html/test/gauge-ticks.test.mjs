@@ -18,6 +18,7 @@ const source = readFileSync(new URL("../dist/hmi-gauge.js", import.meta.url), "u
 const context = {
   BaseCustomWebComponentConnectedReady: Component,
   SVGSVGElement: Svg,
+  ResizeObserver: class { observe() {} disconnect() {} },
   css: strings => strings.join(""),
   html: strings => strings.join(""),
   customElement: () => () => {},
