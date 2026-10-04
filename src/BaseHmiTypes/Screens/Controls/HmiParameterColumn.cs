@@ -8,6 +8,8 @@ public sealed class HmiParameterColumn
     public string? Name { get; set; }
     public string? Key { get; set; }
     public HmiMultilingualText? HeaderText { get; set; }
+    public HmiProperty<HmiHorizontalAlignment>? HeaderHorizontalAlignment { get; set; }
+    public HmiProperty<HmiVerticalAlignment>? HeaderVerticalAlignment { get; set; }
     public HmiProperty<bool>? Visible { get; set; }
     public HmiProperty<uint>? Width { get; set; }
     public HmiProperty<uint>? MinimumWidth { get; set; }
