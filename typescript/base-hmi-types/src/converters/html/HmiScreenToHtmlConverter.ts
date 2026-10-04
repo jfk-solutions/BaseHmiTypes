@@ -28,6 +28,7 @@ import { HmiLineCap } from "../../screens/base/HmiLineCap.js";
 import { HmiLineMarker } from "../../screens/base/HmiLineMarker.js";
 import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
 import { HmiTrendValueAxis } from "../../screens/base/HmiTrendValueAxis.js";
+import { HmiTrendXValueAxis } from "../../screens/base/HmiTrendXValueAxis.js";
 import { HmiTrendWindow } from "../../screens/base/HmiTrendWindow.js";
 import { HmiTrendTimeAxis } from "../../screens/base/HmiTrendTimeAxis.js";
 import { HmiTrendControlBase } from "../../screens/base/HmiTrendControlBase.js";
@@ -3853,6 +3854,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendStaticAttribute(html, "y-axis-decimal-places", trendControl.yAxisDecimalPlaces);
   appendAttribute(html, "pens", formatTrendPens(trendControl.pens));
   appendAttribute(html, "value-axes", formatTrendValueAxes(trendControl.valueAxes));
+  appendAttribute(html, "x-value-axes", formatTrendXValueAxes(trendControl.xValueAxes));
   appendAttribute(html, "trend-windows", formatTrendWindows(trendControl.trendWindows));
   appendAttribute(html, "time-axes", formatTrendTimeAxes(trendControl.timeAxes));
   html.push("></hmi-trend-control>");
@@ -4027,6 +4029,30 @@ function formatTrendTimeAxes(axes: readonly HmiTrendTimeAxis[]): string | undefi
     if (timeSpan !== undefined) result.timeSpan = timeSpan;
     const measurementPoints = getStaticValue(axis.measurementPoints);
     if (measurementPoints !== undefined) result.measurementPoints = measurementPoints;
+    return result;
+  }));
+}
+
+function formatTrendXValueAxes(axes: readonly HmiTrendXValueAxis[]): string | undefined {
+  if (!axes.length) return undefined;
+  return JSON.stringify(axes.map(axis => {
+    const result: Record<string, string | number | boolean> = {};
+    for (const key of ["name", "trendWindowName", "label"] as const) {
+      if (axis[key] !== undefined) result[key] = axis[key];
+    }
+    for (const key of ["visible", "autoRange", "exponentialFormat"] as const) {
+      const value = getStaticValue(axis[key]);
+      if (value !== undefined) result[key] = value;
+    }
+    for (const [key, property] of [["minimum", axis.minimumValue], ["maximum", axis.maximumValue],
+      ["divisionCount", axis.divisionCount], ["decimalPlaces", axis.decimalPlaces], ["scaleType", axis.scaleType]] as const) {
+      const value = getStaticValue(property);
+      if (value !== undefined && Number.isFinite(value)) result[key] = value;
+    }
+    const color = getStaticValue(axis.color);
+    if (color !== undefined) result.color = colorToCss(color);
+    const alignment = getStaticValue(axis.alignment);
+    if (alignment !== undefined) result.alignment = HmiVerticalAlignment[alignment];
     return result;
   }));
 }

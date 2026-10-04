@@ -82,6 +82,7 @@ export * from "./base/HmiTrendOverlay.js";
 export * from "./base/HmiTrendOverlayAnchorType.js";
 export * from "./base/HmiTrendPen.js";
 export * from "./base/HmiTrendValueAxis.js";
+export * from "./base/HmiTrendXValueAxis.js";
 export * from "./base/HmiTrendWindow.js";
 export * from "./base/HmiTrendTimeAxis.js";
 export * from "./base/HmiTrendPenCaptionMode.js";

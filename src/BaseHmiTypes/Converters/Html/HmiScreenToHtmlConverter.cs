@@ -4200,6 +4200,7 @@ public class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "y-axis-decimal-places", trendControl.YAxisDecimalPlaces);
         AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens));
         AppendAttribute(html, "value-axes", FormatTrendValueAxes(trendControl.ValueAxes));
+        AppendAttribute(html, "x-value-axes", FormatTrendXValueAxes(trendControl.XValueAxes));
         AppendAttribute(html, "trend-windows", FormatTrendWindows(trendControl.TrendWindows));
         AppendAttribute(html, "time-axes", FormatTrendTimeAxes(trendControl.TimeAxes));
         html.Append("></hmi-trend-control>");
@@ -4451,6 +4452,29 @@ public class HmiScreenToHtmlConverter
             AddTrendJsonString(properties, "endTime", axis.EndTime?.StaticValue.ToString("O", CultureInfo.InvariantCulture));
             AddTrendJsonNumber(properties, "measurementPoints", axis.MeasurementPoints?.StaticValue);
             AddTrendJsonBoolean(properties, "refreshEnabled", axis.RefreshEnabled?.StaticValue);
+            return "{" + string.Join(",", properties) + "}";
+        }).ToArray();
+        return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";
+    }
+
+    private static string? FormatTrendXValueAxes(IEnumerable<HmiTrendXValueAxis> axes)
+    {
+        var entries = axes.Select(axis =>
+        {
+            var properties = new List<string>();
+            AddTrendJsonString(properties, "name", axis.Name);
+            AddTrendJsonString(properties, "trendWindowName", axis.TrendWindowName);
+            AddTrendJsonString(properties, "label", axis.Label);
+            AddTrendJsonBoolean(properties, "visible", axis.Visible?.StaticValue);
+            AddTrendJsonBoolean(properties, "autoRange", axis.AutoRange?.StaticValue);
+            AddTrendJsonBoolean(properties, "exponentialFormat", axis.ExponentialFormat?.StaticValue);
+            AddTrendJsonNumber(properties, "minimum", axis.MinimumValue?.StaticValue);
+            AddTrendJsonNumber(properties, "maximum", axis.MaximumValue?.StaticValue);
+            AddTrendJsonNumber(properties, "divisionCount", axis.DivisionCount?.StaticValue);
+            AddTrendJsonNumber(properties, "decimalPlaces", axis.DecimalPlaces?.StaticValue);
+            AddTrendJsonNumber(properties, "scaleType", axis.ScaleType is null ? (double?)null : (int)axis.ScaleType.StaticValue);
+            AddTrendJsonString(properties, "color", axis.Color?.StaticValue is HmiColor color ? ToCss(color) : null);
+            AddTrendJsonString(properties, "alignment", axis.Alignment?.StaticValue.ToString());
             return "{" + string.Join(",", properties) + "}";
         }).ToArray();
         return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";
