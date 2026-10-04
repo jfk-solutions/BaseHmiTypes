@@ -2,6 +2,7 @@ const trendControlProperties = {
   controlName: String,
   typeName: String,
   chartTitle: String,
+  chartStyle: String,
   windowBackgroundColor: String,
   pens: String,
   valueAxes: String,
@@ -167,7 +168,8 @@ export class HmiTrendControl extends HTMLElement {
     const visiblePens = pens.filter(pen => pen.visible !== false);
     const trendWindows = parseTrendWindows(this.getAttribute("trend-windows"));
     const firstPen = visiblePens[0] ?? pens[0];
-    const timeAxes = parseTimeAxes(this.getAttribute("time-axes"));
+    const xyPlot = this.getAttribute("chart-style") === "XYPlot";
+    const timeAxes = xyPlot ? [] : parseTimeAxes(this.getAttribute("time-axes"));
     const topTimeAxisCount = timeAxes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false" && axis.attributes["x-axis-alignment"]?.toLowerCase() === "top").length;
     const bottomTimeAxisCount = timeAxes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false" && axis.attributes["x-axis-alignment"]?.toLowerCase() !== "top").length;
     const selectedTimeAxis = timeAxes.find(axis => axis.name === pens[0]?.timeAxisName) ?? timeAxes[0];
@@ -526,13 +528,14 @@ export class HmiTrendControl extends HTMLElement {
             )}
             ${xAxisVisible && !timeAxes.length ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible && !namedValueAxes.length ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
-            ${renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, configuredDecimalPlaces)}
+            ${xyPlot ? "" : renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, configuredDecimalPlaces)}
           </svg>
           ${namedValueAxes.length ? renderValueAxes(namedValueAxes, pens, minimumValue, maximumValue, configuredDecimalPlaces, foregroundColor) : yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, axisScaleType, exponentialFormat) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
           ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
           ${displayStatisticRulers ? `<div class="statistic-ruler start" title="Statistics range start"></div><div class="statistic-ruler end" title="Statistics range end"></div>` : ""}
-          ${timeAxes.length ? renderTimeAxes(timeAxes, pens, xAxisFlipped, locale, timeZone) : xAxisVisible ? timeZone === null ? `<span class="axis-label x-label" style="left:50%">Project time zone unavailable</span>` : renderXLabels(labels) : ""}
+          ${xyPlot ? `<span class="axis-label x-label" style="left:50%">X-axis range unavailable</span>` : timeAxes.length ? renderTimeAxes(timeAxes, pens, xAxisFlipped, locale, timeZone) : xAxisVisible ? timeZone === null ? `<span class="axis-label x-label" style="left:50%">Project time zone unavailable</span>` : renderXLabels(labels) : ""}
+          ${xyPlot ? `<span class="axis-label" style="left:50%;top:50%">Function trend data not loaded</span>` : ""}
           ${!timeAxes.length && xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
           ${yAxisVisible && yAxisLabel && !namedValueAxes.length ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
         </div>`}

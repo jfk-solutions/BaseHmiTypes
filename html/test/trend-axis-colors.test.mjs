@@ -17,6 +17,31 @@ globalThis.customElements = { define() {} };
 globalThis.getComputedStyle = () => ({ backgroundColor: "#ffffff", color: "#111111", borderTopColor: "#111111", borderTopWidth: "0" });
 const { HmiTrendControl } = await import("../dist/hmi-trend-control.js");
 
+test("function trends retain configuration without fabricated time curves", () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("chart-style", "XYPlot");
+  control.setAttribute("type-name", "Function trend control");
+  control.setAttribute("pens", JSON.stringify([{ number: 1, name: "Pressure", color: "#123456" }]));
+  control.setAttribute("time-axes", JSON.stringify([{ name: "Time", label: "Time axis", showDate: true }]));
+  control.connectedCallback();
+  assert.match(control.shadowRoot.innerHTML, /Function trend data not loaded/);
+  assert.match(control.shadowRoot.innerHTML, /X-axis range unavailable/);
+  assert.doesNotMatch(control.shadowRoot.innerHTML, /<polyline|<polygon|data-time-axis=|Time axis/);
+  control.setAttribute("trend-windows", JSON.stringify([{ name: "Area A" }, { name: "Area B" }]));
+  const children = [...control.shadowRoot.innerHTML.matchAll(/<hmi-trend-control\s+([^>]+)>/gu)].map(match => {
+    const child = new HmiTrendControl();
+    for (const attribute of match[1].matchAll(/([\w-]+)="([^"]*)"/gu))
+      child.setAttribute(attribute[1], attribute[2].replaceAll("&quot;", '"').replaceAll("&amp;", "&"));
+    child.connectedCallback();
+    return child;
+  });
+  assert.equal(children.length, 2);
+  for (const child of children) {
+    assert.match(child.shadowRoot.innerHTML, /Function trend data not loaded/);
+    assert.doesNotMatch(child.shadowRoot.innerHTML, /<polyline|<polygon|data-time-axis=|Time axis/);
+  }
+});
+
 test("separate windows use their assigned time-axis format, range, alignment and color", () => {
   const originalNow = Date.now;
   Date.now = () => new Date(2020, 11, 24, 15, 4, 6, 12).getTime();

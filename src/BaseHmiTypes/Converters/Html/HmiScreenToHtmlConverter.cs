@@ -271,7 +271,7 @@ public class HmiScreenToHtmlConverter
             case HmiGauge gauge:
                 AppendGauge(html, gauge, context);
                 break;
-            case HmiTrendControl trendControl:
+            case HmiTrendControlBase trendControl:
                 AppendTrendControl(html, trendControl, context);
                 break;
             case HmiSymbolContainer symbolContainer:
@@ -4131,7 +4131,7 @@ public class HmiScreenToHtmlConverter
             AppendAttribute(html, name, string.Join(",", ResolveStaticValue(property, context) ?? Array.Empty<int>()));
     }
 
-    private static void AppendTrendControl(StringBuilder html, HmiTrendControl trendControl, HmiHtmlConvertContext context)
+    private static void AppendTrendControl(StringBuilder html, HmiTrendControlBase trendControl, HmiHtmlConvertContext context)
     {
         html.Append("<hmi-trend-control");
         AppendCommonAttributes(html, trendControl, context, additionalStyle: CreateTrendControlStyle(trendControl, context));
@@ -4139,7 +4139,9 @@ public class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-window-movable", ResolvePropertyPreview(trendControl.Movable, context));
         AppendAttribute(html, "data-window-closeable", ResolvePropertyPreview(trendControl.Closeable, context));
         AppendAttribute(html, "control-name", trendControl.Name);
-        AppendAttribute(html, "type-name", "Trend control");
+        AppendAttribute(html, "type-name", trendControl is HmiFunctionTrendControl ? "Function trend control" : "Trend control");
+        AppendStaticAttribute(html, "chart-style", trendControl is HmiFunctionTrendControl
+            ? HmiProperty.Static(HmiTrendChartStyle.XYPlot) : trendControl.ChartStyle);
         AppendAttribute(html, "chart-title", trendControl.ChartTitle);
         AppendStaticAttribute(html, "window-background-color", trendControl.WindowBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.DisplayChartTitle);
@@ -4314,7 +4316,7 @@ public class HmiScreenToHtmlConverter
         return style.ToString();
     }
 
-    private static string CreateTrendControlStyle(HmiTrendControl trendControl, HmiHtmlConvertContext context)
+    private static string CreateTrendControlStyle(HmiTrendControlBase trendControl, HmiHtmlConvertContext context)
     {
         var style = new StringBuilder(CreateControlWindowStyle(trendControl, context, "overflow: hidden;"));
         AppendFontVariables(style, "content", trendControl.ContentFont);
