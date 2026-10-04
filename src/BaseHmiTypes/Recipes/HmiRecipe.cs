@@ -1,7 +1,11 @@
+using BaseHmiTypes.Common;
+
 namespace BaseHmiTypes.Recipes;
 
 public sealed class HmiRecipe : IHmiObject
 {
+    public HmiMultilingualText? DisplayName { get; set; }
+    public HmiMultilingualText? InfoText { get; set; }
     public string? Name { get; set; }
 
     public string? Comment { get; set; }
@@ -15,6 +19,8 @@ public sealed class HmiRecipe : IHmiObject
 
 public sealed class HmiRecipeParameter : IHmiObject
 {
+    public HmiMultilingualText? DisplayName { get; set; }
+    public HmiMultilingualText? InfoText { get; set; }
     public int? SourceIndex { get; set; }
     public int? SourceElementId { get; set; }
     public string? DefaultValue { get; set; }
@@ -42,6 +48,7 @@ public sealed class HmiRecipeParameter : IHmiObject
 
 public sealed class HmiRecipeDataSet : IHmiObject
 {
+    public HmiMultilingualText? DisplayName { get; set; }
     public int? SourceNumber { get; set; }
     public string? Name { get; set; }
 

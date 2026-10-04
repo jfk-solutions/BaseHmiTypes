@@ -1,5 +1,6 @@
 using BaseHmiTypes.Converters.Html;
 using BaseHmiTypes.Recipes;
+using BaseHmiTypes.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BaseHmiTypes.Tests;
@@ -7,6 +8,28 @@ namespace BaseHmiTypes.Tests;
 [TestClass]
 public class RecipeHtmlTests
 {
+    [TestMethod]
+    public void LocalizedDuplicateLabelsDoNotChangeRecordKeysOrStoredValues()
+    {
+        var label = HmiMultilingualText.FromText("Default label");
+        label.Texts[1031] = "Gleicher <Name>";
+        var recipe = new HmiRecipe { Name = "Engineering recipe", DisplayName = label };
+        foreach (var name in new[] { "First", "Second" }) recipe.Parameters.Add(new() { Name = name, DisplayName = label });
+        var record = new HmiRecipeDataSet { Name = "Engineering record", DisplayName = label };
+        record.Values["First"] = "01.500";
+        record.Values["Second"] = "02.750";
+        recipe.DataSets.Add(record);
+        var converter = new HmiRecipeToHtmlConverter();
+        var html = converter.Convert(recipe, 1031);
+        StringAssert.Contains(html, "<h1>Gleicher &lt;Name&gt;</h1>");
+        StringAssert.Contains(html, "<th scope=\"col\">First</th><th scope=\"col\">Second</th>");
+        StringAssert.Contains(html, "<td data-value-state=\"present\">01.500</td><td data-value-state=\"present\">02.750</td>");
+        StringAssert.Contains(html, "Engineering record</th>");
+        StringAssert.Contains(converter.Convert(recipe, 1033), "<h1>Default label</h1>");
+        Assert.AreEqual(2, record.Values.Count);
+        Assert.AreEqual("First", recipe.Parameters[0].Name);
+    }
+
     [TestMethod]
     public void RendersMetadataAndRetainsUnmatchedRecordColumns()
     {
