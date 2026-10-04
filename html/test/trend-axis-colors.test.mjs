@@ -590,3 +590,21 @@ test("trend-colored axes follow configured order even when the first pen is hidd
   control.setAttribute("pens", "[]");
   assert.doesNotMatch(control.shadowRoot.innerHTML, /--hmi-trend-[xy]-axis-color: /);
 });
+
+test("server time base preserves unavailable server-zone state across axes and windows", () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("time-base", "Server");
+  control.setAttribute("project-time-zone", "UTC");
+  control.setAttribute("time-axes", JSON.stringify([{
+    name: "ServerAxis", rangeType: "StartEnd", startTime: "2020-12-31T23:59:59.123Z",
+    endTime: "2021-01-01T00:00:00.123Z", timeFormat: "TwentyFourHour", displayMilliseconds: true,
+  }]));
+  assert.match(control.shadowRoot.innerHTML, /Server time zone unavailable/u);
+  assert.ok(!control.shadowRoot.innerHTML.includes("23:59:59.123"));
+  control.setAttribute("time-axes", "[]");
+  assert.match(control.shadowRoot.innerHTML, /Server time zone unavailable/u);
+  assert.ok(!control.shadowRoot.innerHTML.includes("Project time zone unavailable"));
+  control.setAttribute("trend-windows", JSON.stringify([{ name: "WindowA" }]));
+  const attributes = control.shadowRoot.innerHTML.match(/<hmi-trend-control\s+([^>]+)>/u)[1];
+  assert.match(attributes, /time-base="Server"/u);
+});
