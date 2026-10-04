@@ -33,8 +33,6 @@ interface DrawState {
   textColor: string;
   currentX: number;
   currentY: number;
-  moveOriginX: number;
-  moveOriginY: number;
   windowOrgX: number;
   windowOrgY: number;
   windowExtX: number;
@@ -230,8 +228,6 @@ export class MetafileToSvgRenderer {
           break;
         case EMR.MOVETOEX:
           [state.currentX, state.currentY] = transformPoint(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4));
-          state.moveOriginX = state.currentX;
-          state.moveOriginY = state.currentY;
           if (state.currentPath) {
             state.currentPath.push(`M ${state.currentX} ${state.currentY}`);
             state.pathStartX = state.currentX;
@@ -771,8 +767,6 @@ function createInitialState(): DrawState {
     textColor: '#000000',
     currentX: 0,
     currentY: 0,
-    moveOriginX: 0,
-    moveOriginY: 0,
     windowOrgX: 0,
     windowOrgY: 0,
     windowExtX: 1,
@@ -1113,8 +1107,8 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
     const type = bytes[typesOffset + index] & ~1;
     if (type === 6) {
       path.push(`M ${mapped[index][0]} ${mapped[index][1]}`);
-      state.moveOriginX = state.pathStartX = mapped[index][0];
-      state.moveOriginY = state.pathStartY = mapped[index][1];
+      state.pathStartX = mapped[index][0];
+      state.pathStartY = mapped[index][1];
     } else if (type === 2) path.push(`L ${mapped[index][0]} ${mapped[index][1]}`);
     else {
       path.push(`C ${mapped[index][0]} ${mapped[index][1]} ${mapped[index+1][0]} ${mapped[index+1][1]} ${mapped[index+2][0]} ${mapped[index+2][1]}`);
@@ -1122,9 +1116,9 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
     }
     state.currentX = state.pathEndX = mapped[index][0]; state.currentY = state.pathEndY = mapped[index][1];
     if ((bytes[typesOffset + index] & 1) !== 0) {
-      path.push(state.pathStartX === state.moveOriginX && state.pathStartY === state.moveOriginY ? 'Z' : `L ${state.moveOriginX} ${state.moveOriginY}`);
+      path.push('Z');
       // Native Windows GDI retains the supplied endpoint as the DC position.
-      state.pathEndX = state.moveOriginX; state.pathEndY = state.moveOriginY;
+      state.pathEndX = state.pathStartX; state.pathEndY = state.pathStartY;
     }
   }
   if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke'));
