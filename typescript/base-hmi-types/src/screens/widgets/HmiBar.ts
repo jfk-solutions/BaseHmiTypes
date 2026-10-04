@@ -6,6 +6,8 @@ import { HmiColor } from "../base/HmiColor.js";
 
 export class HmiBar extends HmiScaleWidgetBase {
   fillStyle?: HmiProperty<HmiBarFillStyle>;
+  /** Eight top-to-bottom bitmap rows as 16 hex characters, MSB left. Zero bits use patternColor; one bits use the value color. Tiles are screen anchored. */
+  bitmapPatternRows?: HmiProperty<string>;
   /** Color of the unfilled bar track, independent of widget background. Omitted retains the background-based track. */
   trackColor?: HmiProperty<HmiColor>;
   /** Color of the value region, independent of widget foreground. Disabled and threshold colors take precedence; omitted inherits foreground. */
@@ -37,6 +39,7 @@ export enum HmiBarFillStyle {
   Gradient = "Gradient",
   /** Paint no value-region color; retain track, scale, thresholds, arrows and meter value. */
   Transparent = "Transparent",
+  BitmapPattern = "BitmapPattern",
 }
 
 /** Range-normalized mappings, not logarithms/powers of the raw process value. */
