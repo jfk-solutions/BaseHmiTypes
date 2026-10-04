@@ -3069,9 +3069,77 @@ public partial class HmiScreenToHtmlConverter
             context,
             additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-view-kind", systemDiagnosisControl.ViewKind.ToString());
+        AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(systemDiagnosisControl.ShowToolbar, context));
+        AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(systemDiagnosisControl.ShowStatusBar, context));
+        AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(systemDiagnosisControl.AllowSortByColumn, context));
+        AppendAttribute(html, "data-row-height", ResolvePropertyPreview(systemDiagnosisControl.RowHeight, context));
+        AppendAttribute(html, "data-grid-line-width", ResolvePropertyPreview(systemDiagnosisControl.GridLineWidth, context));
         html.Append("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">")
-            .Append(WebUtility.HtmlEncode(title))
-            .Append("</div><div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Diagnostic data not loaded</div></div>");
+            .Append(WebUtility.HtmlEncode(title)).Append("</div>");
+        void Bar(string role, HmiProperty<HmiColor>? background, HmiProperty<HmiColor>? foreground, HmiFont? font, string text)
+        {
+            var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px;");
+            AppendColorStyle(style, "background-color", background); AppendColorStyle(style, "color", foreground);
+            AppendFontStyle(style, font?.GetForCulture(context.CultureInfo?.LCID));
+            html.Append("<div role=\"").Append(role).Append("\" style=\"").Append(style).Append("\">").Append(text).Append("</div>");
+        }
+        if (systemDiagnosisControl.ShowToolbar is not null && ResolveStaticValue(systemDiagnosisControl.ShowToolbar, context))
+            Bar("toolbar", systemDiagnosisControl.ToolbarBackgroundColor, systemDiagnosisControl.ToolbarForegroundColor, systemDiagnosisControl.ToolbarFont, "Diagnostic commands not loaded");
+        var content = new StringBuilder("flex: 1 1 auto; overflow: hidden;");
+        AppendColorStyle(content, "background-color", systemDiagnosisControl.ContentBackgroundColor);
+        AppendColorStyle(content, "color", systemDiagnosisControl.ContentForegroundColor);
+        AppendFontStyle(content, systemDiagnosisControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
+        html.Append("<div style=\"").Append(content).Append("\">");
+        var columns = systemDiagnosisControl.ColumnDefinitions.Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context))
+            .OrderBy(column => column.Order is null ? int.MaxValue : ResolveStaticValue(column.Order, context)).ToArray();
+        if (columns.Length == 0) html.Append("Diagnostic data not loaded");
+        else
+        {
+            var grid = new StringBuilder("border: ");
+            var width = systemDiagnosisControl.GridLineWidth is null ? 1 : ResolveStaticValue(systemDiagnosisControl.GridLineWidth, context);
+            grid.Append(IsFinite(width) && width >= 0 ? ToCss(width) : "1").Append("px solid currentColor;");
+            AppendColorStyle(grid, "border-color", systemDiagnosisControl.GridLineColor);
+            var header = new StringBuilder(grid.ToString());
+            AppendColorStyle(header, "background-color", systemDiagnosisControl.HeaderBackgroundColor);
+            AppendColorStyle(header, "color", systemDiagnosisControl.HeaderForegroundColor);
+            AppendColorStyle(header, "border-color", systemDiagnosisControl.HeaderBorderColor);
+            AppendFontStyle(header, systemDiagnosisControl.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
+            html.Append("<table class=\"hmi-diagnosis-table\" style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\"><colgroup>");
+            foreach (var column in columns)
+            {
+                html.Append("<col");
+                if (TryGetStaticValue(column.Width, out var columnWidth) && IsFinite(columnWidth) && columnWidth >= 0)
+                    AppendAttribute(html, "style", "width: " + ToCss(columnWidth) + "px;");
+                html.Append('>');
+            }
+            html.Append("</colgroup>");
+            if (systemDiagnosisControl.ShowColumnHeadings is null || ResolveStaticValue(systemDiagnosisControl.ShowColumnHeadings, context))
+            {
+                html.Append("<thead><tr>");
+                foreach (var column in columns)
+                {
+                    html.Append("<th style=\"").Append(header).Append("overflow: hidden; text-overflow: ellipsis;\"");
+                    AppendAttribute(html, "data-column-source-type", column.SourceType);
+                    AppendAttribute(html, "data-output-format", column.Format);
+                    html.Append('>').Append(WebUtility.HtmlEncode(column.HeaderText?.GetText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString())).Append("</th>");
+                }
+                html.Append("</tr></thead>");
+            }
+            var cell = new StringBuilder(grid.ToString());
+            void Dimension(string css, HmiProperty<double>? property)
+            {
+                if (TryGetStaticValue(property, out var value) && IsFinite(value) && value >= 0) cell.Append(css).Append(": ").Append(ToCss(value)).Append("px;");
+            }
+            if (systemDiagnosisControl.RowHeight is not null && ResolveStaticValue(systemDiagnosisControl.RowHeight, context) == 0) cell.Append("height: auto;");
+            else Dimension("height", systemDiagnosisControl.RowHeight);
+            Dimension("padding-left", systemDiagnosisControl.CellPaddingLeft); Dimension("padding-top", systemDiagnosisControl.CellPaddingTop);
+            Dimension("padding-right", systemDiagnosisControl.CellPaddingRight); Dimension("padding-bottom", systemDiagnosisControl.CellPaddingBottom);
+            html.Append("<tbody><tr><td colspan=\"").Append(columns.Length).Append("\" style=\"").Append(cell).Append("text-align: center;\">Diagnostic data not loaded</td></tr></tbody></table>");
+        }
+        html.Append("</div>");
+        if (systemDiagnosisControl.ShowStatusBar is not null && ResolveStaticValue(systemDiagnosisControl.ShowStatusBar, context))
+            Bar("status", systemDiagnosisControl.StatusBarBackgroundColor, systemDiagnosisControl.StatusBarForegroundColor, systemDiagnosisControl.StatusBarFont, "Diagnostic status not loaded");
+        html.Append("</div>");
     }
 
     private static void AppendAlarmLineControl(StringBuilder html, HmiAlarmLineControl alarmLineControl, HmiHtmlConvertContext context)
