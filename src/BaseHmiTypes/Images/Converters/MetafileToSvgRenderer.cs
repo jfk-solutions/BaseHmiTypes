@@ -242,13 +242,26 @@ public sealed class MetafileToSvgRenderer
                     elements.Add(PolyElement(MapPoints(ReadEmfPoints16(bytes, dataOffset), state), false, state));
                     break;
                 case EMR.PolyPolygon16:
-                    foreach (var points in ReadEmfPolyPoly16(bytes, dataOffset))
-                        elements.Add(PolyElement(MapPoints(points, state), true, state));
-                    break;
                 case EMR.PolyPolyline16:
-                    foreach (var points in ReadEmfPolyPoly16(bytes, dataOffset))
-                        elements.Add(PolyElement(MapPoints(points, state), false, state));
-                    break;
+                case EMR.PolyPolygon:
+                case EMR.PolyPolyline:
+                    {
+                        var closed = record.Type == EMR.PolyPolygon || record.Type == EMR.PolyPolygon16;
+                        var shortPoints = record.Type == EMR.PolyPolygon16 || record.Type == EMR.PolyPolyline16;
+                        var path = new List<string>();
+                        foreach (var figure in ReadEmfCompoundPoints(bytes, record, shortPoints))
+                        {
+                            var points = MapPoints(figure, state);
+                            path.Add($"M {Number(points[0].X)} {Number(points[0].Y)}");
+                            for (var index = 1; index < points.Count; index++)
+                                path.Add($"L {Number(points[index].X)} {Number(points[index].Y)}");
+                            if (closed) path.Add("Z");
+                        }
+                        if (path.Count == 0) break;
+                        if (state.CurrentPath is not null) state.CurrentPath.AddRange(path);
+                        else elements.Add(PathElement(path, state, closed ? PathPaintMode.Paint : PathPaintMode.Stroke));
+                        break;
+                    }
                 case EMR.FillPath:
                     if (state.CurrentPath is { Count: > 0 })
                         elements.Add(PathElement(state.CurrentPath, state, PathPaintMode.Fill));
@@ -876,20 +889,34 @@ public sealed class MetafileToSvgRenderer
         return points;
     }
 
-    private static List<List<(double X, double Y)>> ReadEmfPolyPoly16(byte[] bytes, int offset)
+    private static List<List<(double X, double Y)>> ReadEmfCompoundPoints(byte[] bytes, EmfRecord record, bool shortPoints)
     {
-        var polygonCount = (int)U32(bytes, offset + 16);
-        var pointCount = (int)U32(bytes, offset + 20);
-        var countsOffset = offset + 24;
-        var pointsOffset = countsOffset + polygonCount * 4;
         var result = new List<List<(double X, double Y)>>();
-        var pointIndex = 0;
-        for (var polygon = 0; polygon < polygonCount; polygon++)
+        if (record.Size < 32) return result;
+        var figureCount = U32(bytes, record.Offset + 24);
+        var pointCount = U32(bytes, record.Offset + 28);
+        if (figureCount > (record.Size - 32) / 4) return result;
+        var countsOffset = record.Offset + 32;
+        var pointsOffset = countsOffset + (int)figureCount * 4;
+        var pointSize = shortPoints ? 4 : 8;
+        if (pointCount > (record.Offset + record.Size - pointsOffset) / pointSize) return result;
+        uint consumed = 0;
+        for (var figure = 0; figure < figureCount; figure++)
         {
-            var count = (int)U32(bytes, countsOffset + polygon * 4);
+            var count = U32(bytes, countsOffset + figure * 4);
+            if (count < 2 || count > pointCount - consumed) return result;
+            consumed += count;
+        }
+        var pointIndex = 0;
+        for (var figure = 0; figure < figureCount; figure++)
+        {
+            var count = U32(bytes, countsOffset + figure * 4);
             var points = new List<(double X, double Y)>();
-            for (var index = 0; index < count && pointIndex < pointCount; index++, pointIndex++)
-                points.Add((I16(bytes, pointsOffset + pointIndex * 4), I16(bytes, pointsOffset + pointIndex * 4 + 2)));
+            for (var index = 0; index < count; index++, pointIndex++)
+            {
+                var offset = pointsOffset + pointIndex * pointSize;
+                points.Add(shortPoints ? (I16(bytes, offset), I16(bytes, offset + 2)) : (I32(bytes, offset), I32(bytes, offset + 4)));
+            }
             result.Add(points);
         }
 
@@ -1432,6 +1459,8 @@ internal static class EMR
     public const uint Polyline16 = 0x0057;
     public const uint PolyPolyline16 = 0x005a;
     public const uint PolyPolygon16 = 0x005b;
+    public const uint PolyPolyline = 0x0007;
+    public const uint PolyPolygon = 0x0008;
     public const uint StretchDiBits = 0x0051;
     public const uint ExtCreateFontIndirectW = 0x0052;
     public const uint ExtTextOutW = 0x0054;
