@@ -1,4 +1,5 @@
 import { HmiCharacterScreen } from "../../screens/screen/HmiCharacterScreen.js";
+import { formatScaleLabel } from "./format-scale-label.js";
 import { IHmiProject } from "../../projects/IHmiProject.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiImage } from "../../images/HmiImage.js";
@@ -1986,8 +1987,8 @@ function appendScaleMarks(
     const ratio = ratios[index]!;
     const tick = minimum + ((maximum - minimum) * ratio);
     const label = exponentialFormat
-      ? tick.toExponential(decimalPlaces ?? 2).replace(/e([+-])(\d+)$/u, (_match, sign: string, exponent: string) => `e${sign}${exponent.padStart(3, "0")}`)
-      : decimalPlaces === undefined ? toCss(tick) : tick.toFixed(decimalPlaces);
+      ? formatScaleLabel(tick, decimalPlaces ?? 2, true)
+      : decimalPlaces === undefined ? toCss(tick) : formatScaleLabel(tick, decimalPlaces, false);
     html.push("<span");
     if (positionedTicks) {
       const scaleRatio = getScaleTickRatio(bar, minimum, maximum, ratio);
