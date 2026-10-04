@@ -6,6 +6,8 @@ import { runInNewContext } from "node:vm";
 // Stub only the DOM/component framework; execute the compiled gauge and its SVG renderer.
 class Svg {
   innerHTML = "";
+  clientWidth = 100;
+  clientHeight = 100;
 }
 class Component {
   svg = new Svg();
@@ -34,6 +36,34 @@ function createGauge() {
   gauge.ready();
   return gauge;
 }
+
+for (const [value,x,y] of [[-1,28.787,76.213],[0,28.787,76.213],[50,50,25],[100,71.213,76.213],[101,71.213,76.213]]) {
+  test(`configured needle tracks clamped process value ${value}`,()=>{
+    const gauge=createGauge();gauge.endValue=100;gauge.showNeedle=true;gauge.value=value;
+    const needle=gauge.svg.innerHTML.match(/<line data-hmi-gauge-needle[^>]*>/u)?.[0];
+    assert.ok(needle?.includes(`x2="${x}"`));assert.ok(needle?.includes(`y2="${y}"`));
+    gauge.hideScale=true;gauge.showFillLevel=false;assert.ok(gauge.svg.innerHTML.includes('data-hmi-gauge-needle'));
+  });
+}
+for (const [size,width] of [[100,3],[200,1.5],[50,6]]) {
+  test(`needle width remains logical pixels at viewport ${size}`,()=>{
+    const gauge=createGauge();gauge.svg.clientWidth=size;gauge.svg.clientHeight=size;
+    gauge.showNeedle=true;gauge.needleWidth=3;gauge.needleColor='rgba(255,0,0,0.5)';
+    const needle=()=>gauge.svg.innerHTML.match(/<line data-hmi-gauge-needle[^>]*>/u)?.[0];
+    assert.ok(needle().includes(`stroke-width="${width}"`));assert.ok(needle().includes('stroke="rgba(255,0,0,0.5)"'));
+    gauge.attributeChangedCallback('needle-width','3','0');assert.equal(needle(),undefined);
+    gauge.attributeChangedCallback('needle-width','0',null);assert.ok(needle());
+    gauge.attributeChangedCallback('show-needle','',null);assert.equal(needle(),undefined);
+  });
+}
+test('needle uses descending range and escapes attributes',()=>{
+  const gauge=createGauge();gauge.beginValue=100;gauge.endValue=0;gauge.value=100;gauge.showNeedle=true;
+  gauge.needleColor='red" onload="evil';
+  const needle=gauge.svg.innerHTML.match(/<line data-hmi-gauge-needle[^>]*>/u)?.[0];
+  assert.ok(needle.includes('x2="28.787"'));assert.ok(needle.includes('&quot;'));assert.ok(!needle.includes(' onload="'));
+  gauge.needleWidth=-1;assert.ok(!gauge.svg.innerHTML.includes('data-hmi-gauge-needle'));
+  gauge.needleWidth=NaN;assert.ok(gauge.svg.innerHTML.includes('data-hmi-gauge-needle'));
+});
 
 for (const [weight, bold] of [[500,false],[500,true],[0,false],[0,true],[-1,false],[-1,true]]) {
   test(`gauge numeric font weight affects scale labels and value (${weight}, ${bold})`, () => {
