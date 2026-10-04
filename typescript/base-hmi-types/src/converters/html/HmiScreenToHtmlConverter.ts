@@ -2748,6 +2748,10 @@ async function appendSymbolicInput(
       appendAttribute(html, "src", imageUri);
       appendAttribute(html, "alt", selectedState.name ?? selectedState.imageName ?? selectedState.image.imageName ?? symbolicIoField.name);
       appendAttribute(html, "class", "hmi-symbolic-image-base");
+      if (selectedState.imageBackgroundTransparent === true && selectedState.imageBackgroundColor !== undefined) {
+        const key = selectedState.imageBackgroundColor;
+        appendAttribute(html, "data-hmi-image-color-key", `${key.red},${key.green},${key.blue}`);
+      }
       appendAttribute(html, "style", imageStyle);
       html.push(">");
     }
@@ -2758,6 +2762,10 @@ async function appendSymbolicInput(
       appendAttribute(html, "src", alternateImageUri);
       appendAttribute(html, "alt", selectedState.name ?? selectedState.alternateImageName ?? selectedState.alternateImage?.imageName ?? symbolicIoField.name);
       appendAttribute(html, "class", "hmi-symbolic-image-alternate");
+      if (selectedState.alternateImageBackgroundTransparent === true && selectedState.alternateImageBackgroundColor !== undefined) {
+        const key = selectedState.alternateImageBackgroundColor;
+        appendAttribute(html, "data-hmi-image-color-key", `${key.red},${key.green},${key.blue}`);
+      }
       appendAttribute(html, "style", alternateStyle);
       html.push(">");
     }

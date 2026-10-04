@@ -31,6 +31,9 @@ export class HmiState {
   imageColor?: HmiColor;
   imageBackgroundColor?: HmiColor;
   imageBackgroundTransparent?: boolean;
+  /** RGB key for the alternate/flashing picture, independent of the base image. */
+  alternateImageBackgroundColor?: HmiColor;
+  alternateImageBackgroundTransparent?: boolean;
   imageHorizontalAlignment?: HmiHorizontalAlignment;
   imageVerticalAlignment?: HmiVerticalAlignment;
   captionColor?: HmiColor;
