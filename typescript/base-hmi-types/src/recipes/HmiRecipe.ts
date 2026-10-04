@@ -45,6 +45,7 @@ export class HmiRecipeReference {
 }
 
 export class HmiRecipeParameter {
+  readonly sourceTagLimits: HmiRecipeTagLimit[] = [];
   readonly references = new Map<string, HmiRecipeReference>();
   triggerRedraw?: boolean;
   sourcePlcStartValue?: string;
@@ -77,6 +78,13 @@ export class HmiRecipeParameter {
   comment?: string;
 }
 
+export class HmiRecipeTagLimit {
+  kind?: string;
+  mode?: number;
+  constant?: string;
+  tag?: HmiRecipeReference;
+}
+
 export class HmiRecipeTagScaling {
   linearScaling?: boolean;
   hmiLow?: number;
@@ -86,6 +94,7 @@ export class HmiRecipeTagScaling {
 }
 
 export class HmiRecipeTagDeclaration {
+  readonly limits: HmiRecipeTagLimit[] = [];
   scaling?: HmiRecipeTagScaling;
   name?: string;
   dataType?: string;

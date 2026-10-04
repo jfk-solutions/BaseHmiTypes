@@ -105,6 +105,20 @@ public sealed class HmiRecipeToHtmlConverter
             }
             html.Append("</tbody></table></div>");
         }
+        var tagLimits = recipe.Parameters.SelectMany(field => field.SourceTagLimits.Select(limit => (Kind: "Field", field.Name, Limit: limit)))
+            .Concat(recipe.SourceTagDeclarations.SelectMany(declaration => declaration.Limits.Select(limit => (Kind: "Declaration", declaration.Name, Limit: limit)))).ToArray();
+        if (tagLimits.Length > 0)
+        {
+            html.Append("<h2>Source tag limits</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Kind</th><th scope=\"col\">Name</th><th scope=\"col\">Limit</th><th scope=\"col\">Mode (raw)</th><th scope=\"col\">Constant</th><th scope=\"col\">Tag source ID</th><th scope=\"col\">Tag name</th></tr></thead><tbody>");
+            foreach (var row in tagLimits)
+            {
+                html.Append("<tr><td>").Append(row.Kind).Append("</td><th scope=\"row\">").Append(Encode(row.Name)).Append("</th>");
+                foreach (var value in new[] { row.Limit.Kind, row.Limit.Mode?.ToString(CultureInfo.InvariantCulture), row.Limit.Constant, row.Limit.Tag?.SourceId, row.Limit.Tag?.Name })
+                    html.Append("<td data-value-state=\"").Append(value == null ? "missing" : "present").Append("\">").Append(Encode(value ?? "Missing")).Append("</td>");
+                html.Append("</tr>");
+            }
+            html.Append("</tbody></table></div>");
+        }
         var tagScalings = recipe.Parameters.Where(field => field.SourceTagScaling != null)
             .Select(field => (Kind: "Field", field.Name, Scaling: field.SourceTagScaling!))
             .Concat(recipe.SourceTagDeclarations.Where(declaration => declaration.Scaling != null)
