@@ -2427,9 +2427,11 @@ function appendParameterColumns(html: string[], control: HmiDetailedParameterCon
   if (control.headerFont !== undefined) appendFont(headerStyle, control.headerFont);
   html.push("</colgroup><thead><tr>");
   for (const column of columns) {
-    html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), '\"');
+    html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), '\"');
     appendAttribute(html, "data-column-name", column.name);
     appendAttribute(html, "data-column-key", column.key);
+    appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
+    appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
     appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
     appendAttribute(html, "data-minimum-width", resolvePropertyPreview(column.minimumWidth));
     appendAttribute(html, "data-maximum-width", resolvePropertyPreview(column.maximumWidth));
@@ -2438,6 +2440,16 @@ function appendParameterColumns(html: string[], control: HmiDetailedParameterCon
     html.push(">", escapeHtml(column.headerText?.getText(context.options.cultureLcid) ?? column.name ?? column.key ?? "Column"), "</th>");
   }
   html.push('</tr></thead><tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;">Parameter data not loaded</td></tr></tbody></table>');
+}
+
+function createParameterHeaderAlignmentStyle(column: HmiParameterColumn): string {
+  const style: string[] = [];
+  const horizontal = getStaticValue(column.headerHorizontalAlignment);
+  if (horizontal !== undefined) style.push(`text-align: ${horizontalAlignmentToCss(horizontal)};`);
+  const vertical = getStaticValue(column.headerVerticalAlignment);
+  if (vertical !== undefined && vertical !== HmiVerticalAlignment.Stretch)
+    style.push(`vertical-align: ${vertical === HmiVerticalAlignment.Top ? "top" : vertical === HmiVerticalAlignment.Bottom ? "bottom" : "middle"};`);
+  return style.join("");
 }
 
 function createParameterColumnWidthStyle(column: HmiParameterColumn): string {

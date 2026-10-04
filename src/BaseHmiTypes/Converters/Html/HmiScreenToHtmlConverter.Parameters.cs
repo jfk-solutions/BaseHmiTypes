@@ -2,6 +2,7 @@ using System.Text;
 using System.Net;
 using System.Globalization;
 using BaseHmiTypes.Screens.Controls;
+using BaseHmiTypes.Screens.Base;
 
 namespace BaseHmiTypes.Converters.Html;
 
@@ -78,9 +79,11 @@ public partial class HmiScreenToHtmlConverter
         html.Append("</colgroup><thead><tr>");
         foreach (var column in columns)
         {
-            html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append('"');
+            html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append('"');
             AppendAttribute(html, "data-column-name", column.Name);
             AppendAttribute(html, "data-column-key", column.Key);
+            AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
+            AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
             AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));
             AppendAttribute(html, "data-minimum-width", ResolvePropertyPreview(column.MinimumWidth, context));
             AppendAttribute(html, "data-maximum-width", ResolvePropertyPreview(column.MaximumWidth, context));
@@ -90,6 +93,20 @@ public partial class HmiScreenToHtmlConverter
         }
         html.Append("</tr></thead><tbody><tr><td colspan=\"").Append(columns.Length.ToString(CultureInfo.InvariantCulture))
             .Append("\" style=\"text-align: center; padding: 2px 4px;\">Parameter data not loaded</td></tr></tbody></table>");
+    }
+
+    private static string CreateParameterHeaderAlignmentStyle(HmiParameterColumn column, HmiHtmlConvertContext context)
+    {
+        var style = new StringBuilder();
+        if (column.HeaderHorizontalAlignment is not null)
+            style.Append("text-align: ").Append(ToCss(ResolveStaticValue(column.HeaderHorizontalAlignment, context))).Append(';');
+        if (column.HeaderVerticalAlignment is not null)
+        {
+            var alignment = ResolveStaticValue(column.HeaderVerticalAlignment, context);
+            if (alignment != HmiVerticalAlignment.Stretch)
+                style.Append("vertical-align: ").Append(alignment == HmiVerticalAlignment.Top ? "top" : alignment == HmiVerticalAlignment.Bottom ? "bottom" : "middle").Append(';');
+        }
+        return style.ToString();
     }
 
     private static string CreateParameterColumnWidthStyle(HmiParameterColumn column, HmiHtmlConvertContext context)
