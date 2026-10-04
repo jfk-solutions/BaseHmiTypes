@@ -2004,9 +2004,11 @@ public class HmiScreenToHtmlConverter
 
     private static double? GetBarFillOrigin(HmiBar bar, double minimum, double maximum, double value, HmiHtmlConvertContext context)
     {
-        if (bar.OriginValue is null || !double.IsFinite(minimum) || !double.IsFinite(maximum) ||
+        if (!double.IsFinite(minimum) || !double.IsFinite(maximum) ||
             !double.IsFinite(value) || !double.IsFinite(maximum - minimum) || maximum <= minimum)
             return null;
+        if (bar.OriginValue is null)
+            return UsesNonlinearBarMapping(bar, minimum, maximum, context) ? minimum : null;
         var origin = ResolveStaticValue(bar.OriginValue, context);
         return double.IsFinite(origin) ? origin : null;
     }
@@ -2189,7 +2191,8 @@ public class HmiScreenToHtmlConverter
         var scaleMode = bar.ScaleMode is null ? 0 : ResolveStaticValue(bar.ScaleMode, context);
         var explicitInterval = scaleMode == 0 && double.IsFinite(interval) && interval > 0 && maximum > minimum
             && (maximum - minimum) / interval <= 10000;
-        var positionedTicks = explicitInterval || TryGetBarOriginPosition(bar, minimum, maximum, context, out _);
+        var positionedTicks = explicitInterval || TryGetBarOriginPosition(bar, minimum, maximum, context, out _) ||
+            UsesNonlinearBarMapping(bar, minimum, maximum, context);
         if (explicitInterval)
             tickCount = (int)Math.Floor((maximum - minimum) / interval + 1e-10) + 1;
         var ratios = Enumerable.Range(0, tickCount).Select(index => explicitInterval
@@ -3027,7 +3030,20 @@ public class HmiScreenToHtmlConverter
         HmiHtmlConvertContext context)
     {
         if (!TryGetBarOriginPosition(scale, minimum, maximum, context, out var position))
-            return maximum == minimum ? 0 : (value - minimum) / (maximum - minimum);
+        {
+            var ratio = maximum == minimum ? 0 : (value - minimum) / (maximum - minimum);
+            if (!UsesNonlinearBarMapping(scale, minimum, maximum, context)) return ratio;
+            ratio = Clamp(ratio, 0, 1);
+            var mapping = ResolveStaticValue(((HmiBar)scale).ValueMapping, context);
+            return mapping switch
+            {
+                HmiBarValueMapping.NormalizedLogarithmic => Math.Log10(1 + 100 * ratio) / Math.Log10(101),
+                HmiBarValueMapping.InverseNormalizedLogarithmic => 1 - Math.Log10(101 - 100 * ratio) / Math.Log10(101),
+                HmiBarValueMapping.Quadratic => ratio * ratio,
+                HmiBarValueMapping.Cubic => ratio * ratio * ratio,
+                _ => ratio
+            };
+        }
         var origin = ResolveStaticValue(scale.OriginValue, context);
         value = Clamp(value, minimum, maximum);
         var fraction = position / 100;
@@ -3037,8 +3053,15 @@ public class HmiScreenToHtmlConverter
     }
 
     private static double GetScaleTickRatio(HmiScaleWidgetBase scale, double minimum, double maximum, double ratio,
-        HmiHtmlConvertContext context) => TryGetBarOriginPosition(scale, minimum, maximum, context, out _)
+        HmiHtmlConvertContext context) => TryGetBarOriginPosition(scale, minimum, maximum, context, out _) ||
+        UsesNonlinearBarMapping(scale, minimum, maximum, context)
         ? GetScaleRatio(scale, minimum, maximum, minimum + (maximum - minimum) * ratio, context) : ratio;
+
+    private static bool UsesNonlinearBarMapping(HmiScaleWidgetBase scale, double minimum, double maximum,
+        HmiHtmlConvertContext context) => scale is HmiBar bar && double.IsFinite(minimum) && double.IsFinite(maximum) &&
+        maximum > minimum && double.IsFinite(maximum - minimum) && ResolveStaticValue(bar.ValueMapping, context) is
+        HmiBarValueMapping.NormalizedLogarithmic or HmiBarValueMapping.InverseNormalizedLogarithmic or
+        HmiBarValueMapping.Quadratic or HmiBarValueMapping.Cubic;
 
     private static double ResolveScaleValue(
         HmiScaleWidgetBase scale,
