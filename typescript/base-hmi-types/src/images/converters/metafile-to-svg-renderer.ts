@@ -26,6 +26,7 @@ interface FontObject {
 }
 
 interface DrawState {
+  clockwiseShapes: boolean;
   miterLimit: number;
   pen: PenObject;
   brush: BrushObject;
@@ -172,6 +173,12 @@ export class MetafileToSvgRenderer {
             if (Number.isFinite(limit) && limit >= 1) state.miterLimit = limit;
           }
           break;
+        case EMR.SETARCDIRECTION:
+          if (record.size >= 12) {
+            const direction = u32(bytes, dataOffset);
+            if (direction === 1 || direction === 2) state.clockwiseShapes = direction === 2;
+          }
+          break;
         case EMR.SETTEXTCOLOR:
           state.textColor = colorRef(bytes, dataOffset);
           break;
@@ -299,10 +306,13 @@ export class MetafileToSvgRenderer {
           drawEmfPolyDraw(state, bytes, record, elements);
           break;
         case EMR.RECTANGLE:
-          elements.push(rectElement(...transformRect(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12)), state));
-          break;
         case EMR.ELLIPSE:
-          elements.push(ellipseElement(...transformRect(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12)), state));
+          if (record.size < 24) break;
+          if (state.currentPath !== undefined) appendEmfShapePath(bytes, dataOffset, record.type === EMR.ELLIPSE, state);
+          else {
+            const rect = transformRect(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12));
+            elements.push(record.type === EMR.ELLIPSE ? ellipseElement(...rect, state) : rectElement(...rect, state));
+          }
           break;
         case EMR.POLYGON16:
         case EMR.POLYLINE16:
@@ -536,6 +546,7 @@ const PlaceableWmfKey = 0x9ac6cdd7;
 
 const EMR = {
   SETMITERLIMIT: 0x003a,
+  SETARCDIRECTION: 0x0039,
   HEADER: 0x0001,
   EOF: 0x000e,
   GDICOMMENT: 0x0046,
@@ -777,6 +788,7 @@ function createInitialState(): DrawState {
     viewportExtY: 1,
     worldTransform: identityTransform(),
     fillRule: 'evenodd',
+    clockwiseShapes: false,
     miterLimit: 10,
   };
 }
@@ -1667,14 +1679,41 @@ function lineElement(x1: number, y1: number, x2: number, y2: number, state: Draw
   return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${strokeAttrs(state)} fill="none" />`;
 }
 
+function appendEmfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean, state: DrawState): void {
+  // GDI's recorder already adjusts GM_COMPATIBLE bounds to inclusive edges.
+  const left = Math.min(i32(bytes, offset), i32(bytes, offset + 8));
+  const right = Math.max(i32(bytes, offset), i32(bytes, offset + 8));
+  const top = Math.min(i32(bytes, offset + 4), i32(bytes, offset + 12));
+  const bottom = Math.max(i32(bytes, offset + 4), i32(bytes, offset + 12));
+  const path = state.currentPath!;
+  const point = (x: number, y: number) => transformPoint(state, x, y).map(value => Number(value.toFixed(3))).join(' ');
+  const start = transformPoint(state, right, ellipse ? (top + bottom) / 2 : state.clockwiseShapes ? bottom : top);
+  path.push(`M ${point(right, ellipse ? (top + bottom) / 2 : state.clockwiseShapes ? bottom : top)}`);
+  if (!ellipse) {
+    if (state.clockwiseShapes) path.push(`L ${point(left, bottom)}`, `L ${point(left, top)}`, `L ${point(right, top)}`);
+    else path.push(`L ${point(left, top)}`, `L ${point(left, bottom)}`, `L ${point(right, bottom)}`);
+  } else {
+    const kappa = 0.5522847498307936, cx = (left + right) / 2, cy = (top + bottom) / 2, rx = (right - left) / 2, ry = (bottom - top) / 2;
+    const sign = state.clockwiseShapes ? 1 : -1;
+    const vertices = [[1, 0], [0, sign], [-1, 0], [0, -sign], [1, 0]];
+    for (let index = 0; index < 4; index++) {
+      const a = vertices[index], b = vertices[index + 1];
+      path.push(`C ${point(cx + rx * (a[0] - kappa * a[1] * sign), cy + ry * (a[1] + kappa * a[0] * sign))} ${point(cx + rx * (b[0] + kappa * b[1] * sign), cy + ry * (b[1] - kappa * b[0] * sign))} ${point(cx + rx * b[0], cy + ry * b[1])}`);
+    }
+  }
+  path.push('Z');
+  state.pathStartX = state.pathEndX = start[0];
+  state.pathStartY = state.pathEndY = start[1];
+}
+
 function rectElement(left: number, top: number, right: number, bottom: number, state: DrawState): string {
-  return `<rect x="${Math.min(left, right)}" y="${Math.min(top, bottom)}" width="${Math.abs(right - left)}" height="${Math.abs(bottom - top)}" ${paintAttrs(state)} />`;
+  return `<rect x="${Math.min(left, right)}" y="${Math.min(top, bottom)}" width="${Math.abs(right - left)}" height="${Math.abs(bottom - top)}" ${paintAttrs(state)}${clipAttr(state)} />`;
 }
 
 function ellipseElement(left: number, top: number, right: number, bottom: number, state: DrawState): string {
   const width = Math.abs(right - left);
   const height = Math.abs(bottom - top);
-  return `<ellipse cx="${Math.min(left, right) + width / 2}" cy="${Math.min(top, bottom) + height / 2}" rx="${width / 2}" ry="${height / 2}" ${paintAttrs(state)} />`;
+  return `<ellipse cx="${Math.min(left, right) + width / 2}" cy="${Math.min(top, bottom) + height / 2}" rx="${width / 2}" ry="${height / 2}" ${paintAttrs(state)}${clipAttr(state)} />`;
 }
 
 function polyElement(points: Array<[number, number]>, closed: boolean, state: DrawState): string {
