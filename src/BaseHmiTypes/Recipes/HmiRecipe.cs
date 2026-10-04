@@ -16,6 +16,14 @@ public sealed class HmiRecipe : IHmiObject
 public sealed class HmiRecipeParameter : IHmiObject
 {
     public int? SourceIndex { get; set; }
+    public int? SourceElementId { get; set; }
+    public string? DefaultValue { get; set; }
+    public int? DecimalPlaces { get; set; }
+    public int? MaximumLength { get; set; }
+    public int? TagArrayCount { get; set; }
+    public bool? Required { get; set; }
+    public bool? Unique { get; set; }
+    public bool? Indexed { get; set; }
 
     public string? Name { get; set; }
 
@@ -34,6 +42,7 @@ public sealed class HmiRecipeParameter : IHmiObject
 
 public sealed class HmiRecipeDataSet : IHmiObject
 {
+    public int? SourceNumber { get; set; }
     public string? Name { get; set; }
 
     public IDictionary<string, string?> Values { get; } = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
