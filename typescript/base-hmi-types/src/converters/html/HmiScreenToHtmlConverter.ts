@@ -120,6 +120,7 @@ import { HmiTrendControl } from "../../screens/controls/HmiTrendControl.js";
 import { HmiDataGridControl } from "../../screens/controls/HmiDataGridControl.js";
 import { HmiAuditTrailControl } from "../../screens/controls/HmiAuditTrailControl.js";
 import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewKind.js";
+import { HmiUserViewControl } from "../../screens/controls/HmiUserViewControl.js";
 import { HmiStatusForceControl } from "../../screens/controls/HmiStatusForceControl.js";
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
 import { HmiDetailedParameterControl } from "../../screens/controls/HmiDetailedParameterControl.js";
@@ -409,6 +410,15 @@ export class HmiScreenToHtmlConverter {
       await this.appendOcxControlAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiDotNetControlContainer) {
       await this.appendDotNetControlAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
+    } else if (item instanceof HmiUserViewControl) {
+      appendUserViewControl(html, item, context);
+      const childContext = item.childCoordinateSpace === HmiChildCoordinateSpace.ScreenAbsolute
+        ? context.withPositionOffset(-getStaticValueOrDefault(item.x, 0), -getStaticValueOrDefault(item.y, 0)) : context;
+      for (let childIndex = 0; childIndex < item.items.length; childIndex++) {
+        await this.appendItemAsync(html, item.items[childIndex], project, childContext, screenStack,
+          `${key}/item:${childIndex}`, includeInspectionAttributes, signal);
+      }
+      html.push("</div>");
     } else if (item instanceof HmiLayoutContainerBase || item instanceof HmiContainerBase) {
       await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiScreenWindow) {
@@ -2740,6 +2750,30 @@ function createParameterColumnWidthStyle(column: HmiParameterColumn): string {
     if (maximum !== undefined) style.push(`max-width: ${maximum}px;`);
   }
   return style.join("");
+}
+
+function appendUserViewControl(html: string[], control: HmiUserViewControl, context: HmiHtmlConvertContext): void {
+  const grid = [control.showGridLines !== undefined && getStaticValue(control.showGridLines) === false ? "border: 0;" : "border: 1px solid currentColor;"];
+  appendColorStyle(grid, "border-color", control.gridLineColor);
+  const header = [...grid];
+  appendColorStyle(header, "background-color", control.headerBackgroundColor);
+  appendColorStyle(header, "color", control.headerForegroundColor);
+  appendColorStyle(header, "border-color", control.headerBorderColor);
+  if (control.headerFont !== undefined) appendFont(header, control.headerFont.getForCulture(context.options.cultureLcid));
+  const content: string[] = [];
+  appendColorStyle(content, "background-color", control.contentBackgroundColor);
+  appendColorStyle(content, "color", control.contentForegroundColor);
+  if (control.contentFont !== undefined) appendFont(content, control.contentFont.getForCulture(context.options.cultureLcid));
+  html.push("<div");
+  appendCommonAttributes(html, control, context, true, "overflow: hidden;");
+  appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(control.showGridLines));
+  appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(control.gridLineColor));
+  appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(control.alternatingRowBackgroundColor));
+  appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(control.selectionBackgroundColor));
+  appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(control.selectionForegroundColor));
+  html.push(' role="region" aria-label="User view"><table style="width: 100%; border-collapse: collapse;', content.join(""),
+    '"><thead><tr><th style="', header.join(""), '">User view</th></tr></thead><tbody><tr><td style="', grid.join(""),
+    'text-align: center;">User view data not loaded</td></tr></tbody></table>');
 }
 
 function appendStatusForceControl(html: string[], control: HmiStatusForceControl, context: HmiHtmlConvertContext): void {

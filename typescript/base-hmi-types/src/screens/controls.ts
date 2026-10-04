@@ -34,6 +34,7 @@ export * from "./controls/HmiAuditTrailControl.js";
 export * from "./controls/HmiAuditTrailField.js";
 export * from "./controls/HmiAuditTrailFieldPresentation.js";
 export * from "./controls/HmiAuditTrailViewKind.js";
+export * from "./controls/HmiUserViewControl.js";
 export * from "./controls/HmiStatusForceControl.js";
 export * from "./controls/HmiRecipeControl.js";
 export * from "./controls/HmiRecipeColumn.js";

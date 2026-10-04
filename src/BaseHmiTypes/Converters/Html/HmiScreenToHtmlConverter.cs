@@ -302,6 +302,9 @@ public partial class HmiScreenToHtmlConverter
             case HmiDotNetControlContainer dotNetControl:
                 await AppendDotNetControlAsync(html, dotNetControl, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
+            case HmiUserViewControl userView:
+                await AppendUserViewControlAsync(html, userView, project, context, screenStack, cancellationToken).ConfigureAwait(false);
+                break;
             case HmiLayoutContainerBase layoutContainer:
                 await AppendContainerAsync(html, layoutContainer, layoutContainer.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
@@ -2727,6 +2730,36 @@ public partial class HmiScreenToHtmlConverter
 
         if (showStatusBar)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Status</div>");
+        html.Append("</div>");
+    }
+
+    private async ValueTask AppendUserViewControlAsync(StringBuilder html, HmiUserViewControl control, IHmiProject? project, HmiHtmlConvertContext context, IList<HmiScreenBase> screenStack, CancellationToken cancellationToken)
+    {
+        var grid = new StringBuilder(control.ShowGridLines is not null && !ResolveStaticValue(control.ShowGridLines, context) ? "border: 0;" : "border: 1px solid currentColor;");
+        AppendColorStyle(grid, "border-color", control.GridLineColor);
+        var header = new StringBuilder(grid.ToString());
+        AppendColorStyle(header, "background-color", control.HeaderBackgroundColor);
+        AppendColorStyle(header, "color", control.HeaderForegroundColor);
+        AppendColorStyle(header, "border-color", control.HeaderBorderColor);
+        AppendFontStyle(header, control.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
+        var content = new StringBuilder();
+        AppendColorStyle(content, "background-color", control.ContentBackgroundColor);
+        AppendColorStyle(content, "color", control.ContentForegroundColor);
+        AppendFontStyle(content, control.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
+        html.Append("<div");
+        AppendCommonAttributes(html, control, context, additionalStyle: "overflow: hidden;");
+        AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(control.ShowGridLines, context));
+        AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(control.GridLineColor, context));
+        AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(control.AlternatingRowBackgroundColor, context));
+        AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(control.SelectionBackgroundColor, context));
+        AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(control.SelectionForegroundColor, context));
+        html.Append(" role=\"region\" aria-label=\"User view\"><table style=\"width: 100%; border-collapse: collapse;").Append(content)
+            .Append("\"><thead><tr><th style=\"").Append(header).Append("\">User view</th></tr></thead><tbody><tr><td style=\"")
+            .Append(grid).Append("text-align: center;\">User view data not loaded</td></tr></tbody></table>");
+        var childContext = control.ChildCoordinateSpace == HmiChildCoordinateSpace.ScreenAbsolute
+            ? context.WithPositionOffset(-control.X.GetStaticValueOrDefault(), -control.Y.GetStaticValueOrDefault()) : context;
+        foreach (var child in control.Items)
+            await AppendItemAsync(html, child, project, childContext, screenStack, cancellationToken).ConfigureAwait(false);
         html.Append("</div>");
     }
 
