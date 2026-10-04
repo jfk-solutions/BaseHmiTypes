@@ -32,6 +32,8 @@ export class HmiSymbolLibraryControl extends HmiOcxControl {
   flip?: HmiProperty<HmiSymbolLibraryFlip>;
   fillColor?: HmiProperty<HmiColor>;
   blinkSpeed?: HmiProperty<HmiSymbolLibraryBlinkSpeed>;
+  /** Positive half-cycle duration in milliseconds; overrides the speed preset. */
+  blinkIntervalMilliseconds?: HmiProperty<number>;
   blinkColor?: HmiProperty<HmiColor>;
   rotation?: HmiProperty<HmiSymbolLibraryRotation>;
   backColor?: HmiProperty<HmiColor>;

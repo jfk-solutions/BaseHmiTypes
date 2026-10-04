@@ -48,6 +48,8 @@ import { HmiSymbolFlipMode } from "../../screens/base/HmiSymbolFlipMode.js";
 import { HmiSymbolLibraryControl } from "../../screens/base/HmiSymbolLibraryControl.js";
 import {
   HmiSymbolLibraryBackFillStyle,
+  HmiSymbolLibraryBlinkMode,
+  HmiSymbolLibraryBlinkSpeed,
   HmiSymbolLibraryFlip,
   HmiSymbolLibraryRotation,
 } from "../../screens/base/HmiSymbolLibraryEnums.js";
@@ -3926,6 +3928,33 @@ function appendSymbolLibraryControl(
     symbolImage = Object.assign(new HmiImage(), {id: symbolImage.id, name: symbolImage.name, imageType: symbolImage.imageType, mimeType: symbolImage.mimeType, data: colored});
   }
   const symbolSvg = resolveImageSvg(symbolImage);
+  const blink = getStaticValue(symbolLibraryControl.blinkMode) ?? HmiSymbolLibraryBlinkMode.NoFlashing;
+  if (blink !== HmiSymbolLibraryBlinkMode.NoFlashing) {
+    const speed = getStaticValue(symbolLibraryControl.blinkSpeed) ?? HmiSymbolLibraryBlinkSpeed.Medium;
+    let interval = speed === HmiSymbolLibraryBlinkSpeed.Fast ? 250 : speed === HmiSymbolLibraryBlinkSpeed.Medium ? 500 : speed === HmiSymbolLibraryBlinkSpeed.Slow ? 1000 : 0;
+    if (symbolLibraryControl.blinkIntervalMilliseconds !== undefined) interval = getStaticValue(symbolLibraryControl.blinkIntervalMilliseconds) ?? 0;
+    const normal = createSymbolLibraryMarkup(symbolImage, symbolLibraryControl);
+    let alternate: string | undefined;
+    if ((blink === HmiSymbolLibraryBlinkMode.Solid || blink === HmiSymbolLibraryBlinkMode.Shaded) && wmf && symbolLibraryControl.symbol) {
+      let bytes = SymbolLibraryMetafileColorizer.tryRecolor(symbolLibraryControl.symbol.data,
+        blink === HmiSymbolLibraryBlinkMode.Solid ? HmiSymbolLibraryFillColorMode.Solid : HmiSymbolLibraryFillColorMode.Shaded, getStaticValue(symbolLibraryControl.blinkColor));
+      if (bytes) bytes = SymbolLibraryMetafileTransformer.tryTransform(bytes, flip, rotation);
+      if (bytes) alternate = createSymbolLibraryMarkup(Object.assign(new HmiImage(), {imageType: HmiImageType.Wmf, data: bytes}), symbolLibraryControl);
+    }
+    if (!Number.isInteger(interval) || interval <= 0 || interval > 0x3fffffff || !normal || (blink !== HmiSymbolLibraryBlinkMode.Invisible && !alternate)) {
+      appendDiv(html, symbolLibraryControl, context.options.unsupportedItemPlaceholderCssClass, 'Symbol library control', context); return;
+    }
+    html.push('<div');
+    appendSymbolLibraryAttributes(html, symbolLibraryControl, context, wmf);
+    appendAttribute(html, 'data-hmi-symbol-blink-interval', String(interval)); html.push('>');
+    html.push('<style>@keyframes hmi-symbol-on{0%{opacity:1}50%{opacity:0}100%{opacity:1}}@keyframes hmi-symbol-off{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@media(prefers-reduced-motion:reduce){[data-hmi-symbol-phase=normal]{animation:none!important;opacity:1!important}[data-hmi-symbol-phase=alternate]{animation:none!important;opacity:0!important}}</style>');
+    // Native initial flag is one: colored modes begin on BlinkColor, invisible begins visible.
+    // Reduced-motion users always receive the normal appearance.
+    const invisible = blink === HmiSymbolLibraryBlinkMode.Invisible;
+    html.push(`<div data-hmi-symbol-phase="normal" style="position: absolute; inset: 0; opacity: ${invisible ? 1 : 0}; animation: ${invisible ? 'hmi-symbol-on' : 'hmi-symbol-off'} ${interval * 2}ms step-end infinite;">${normal}</div>`);
+    if (alternate) html.push(`<div data-hmi-symbol-phase="alternate" aria-hidden="true" style="position: absolute; inset: 0; opacity: 1; animation: hmi-symbol-on ${interval * 2}ms step-end infinite;">${alternate}</div>`);
+    html.push('</div>'); return;
+  }
   if (symbolSvg?.trim()) {
     html.push("<div");
     appendSymbolLibraryAttributes(html, symbolLibraryControl, context, wmf);
@@ -3952,6 +3981,18 @@ function appendSymbolLibraryControl(
   html.push(getStaticValueOrDefault(symbolLibraryControl.fixedAspectRatio, false) ? "object-fit: contain;" : "object-fit: fill;");
   html.push("\">");
   html.push("</div>");
+}
+
+function createSymbolLibraryMarkup(image: HmiImage | undefined, control: HmiSymbolLibraryControl): string | undefined {
+  const svg = resolveImageSvg(image);
+  if (svg?.trim()) return normalizeEmbeddedSymbolSvg(svg, control);
+  const uri = resolveImageUriFromImage(image);
+  if (!uri?.trim()) return undefined;
+  const html = ['<img'];
+  appendAttribute(html, 'src', uri); appendAttribute(html, 'alt', image?.name ?? control.name);
+  appendAttribute(html, 'data-hmi-symbol-id', control.symbolId);
+  html.push(' style="width: 100%; height: 100%; display: block;', getStaticValueOrDefault(control.fixedAspectRatio, false) ? 'object-fit: contain;' : 'object-fit: fill;', '">');
+  return html.join('');
 }
 
 function normalizeEmbeddedSymbolSvg(svg: string, symbolLibraryControl: HmiSymbolLibraryControl): string {
