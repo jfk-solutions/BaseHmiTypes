@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 namespace BaseHmiTypes.Images.Converters;
 
 /// <summary>Overrides only the root viewport policy of an embedded SVG copy, preserving the source.</summary>
@@ -27,8 +28,18 @@ internal static class SvgImageAspectRatio
         void Space() { while (at < text.Length && (char.IsWhiteSpace(text[at]) || text[at] == '\ufeff')) at++; }
         bool At(string value) => at + value.Length <= text.Length && string.CompareOrdinal(text, at, value, 0, value.Length) == 0;
         Space();
-        while (At("<?") || At("<!--"))
+        var doctypeSeen = false;
+        while (At("<?") || At("<!--") || At("<!DOCTYPE"))
         {
+            if (At("<!DOCTYPE"))
+            {
+                // Copy a bare/external header without parsing a DTD or fetching its URI.
+                // Internal subsets remain unsupported, rather than expanding entities.
+                if (doctypeSeen) return null;
+                var match = Regex.Match(text.Substring(at), "^<!DOCTYPE[ \\t\\r\\n]+svg(?:[ \\t\\r\\n]+(?:SYSTEM[ \\t\\r\\n]+(?:\"[^\"]*\"|'[^']*')|PUBLIC[ \\t\\r\\n]+(?:\"[^\"]*\"|'[^']*')[ \\t\\r\\n]+(?:\"[^\"]*\"|'[^']*')))?[ \\t\\r\\n]*>");
+                if (!match.Success) return null;
+                at += match.Length; doctypeSeen = true; Space(); continue;
+            }
             var endMarker = At("<?") ? "?>" : "-->";
             var end = text.IndexOf(endMarker, at + 2, StringComparison.Ordinal); if (end < 0) return null;
             // Output is UTF-8. Remove an XML encoding declaration instead of retaining
@@ -38,12 +49,13 @@ internal static class SvgImageAspectRatio
             else at = end + endMarker.Length;
             Space();
         }
-        // Do not interpret declarations, DTDs, entities or nested SVGs as the root.
+        // Do not interpret other declarations, entities or nested SVGs as the root.
         if (at >= text.Length || text[at++] != '<') return null;
         var nameStart = at;
         bool Name(char c) => char.IsLetterOrDigit(c) || c is '_' or ':' or '-' or '.';
         while (at < text.Length && Name(text[at])) at++;
         var name = text.Substring(nameStart, at - nameStart);
+        if (doctypeSeen && name != "svg") return null;
         if (name.Substring(name.LastIndexOf(':') + 1) != "svg") return null;
         int? valueStart = null; var valueEnd = 0; var insert = 0;
         while (true)
