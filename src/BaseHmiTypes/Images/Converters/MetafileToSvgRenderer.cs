@@ -219,6 +219,25 @@ public sealed class MetafileToSvgRenderer
                 case EMR.Polygon16:
                     elements.Add(PolyElement(MapPoints(ReadEmfPoints16(bytes, dataOffset), state), true, state));
                     break;
+                case EMR.Polygon:
+                case EMR.Polyline:
+                    {
+                        var points = MapPoints(ReadEmfPointArray32(bytes, record), state);
+                        if (points.Count < 2) break;
+                        var closed = record.Type == EMR.Polygon;
+                        if (state.CurrentPath is null)
+                            elements.Add(PolyElement(points, closed, state));
+                        else
+                        {
+                            // These records start independent figures and do not change
+                            // the DC's current position, unlike POLYLINETO.
+                            state.CurrentPath.Add($"M {Number(points[0].X)} {Number(points[0].Y)}");
+                            for (var index = 1; index < points.Count; index++)
+                                state.CurrentPath.Add($"L {Number(points[index].X)} {Number(points[index].Y)}");
+                            if (closed) state.CurrentPath.Add("Z");
+                        }
+                        break;
+                    }
                 case EMR.Polyline16:
                     elements.Add(PolyElement(MapPoints(ReadEmfPoints16(bytes, dataOffset), state), false, state));
                     break;
@@ -832,6 +851,21 @@ public sealed class MetafileToSvgRenderer
         return points;
     }
 
+    private static List<(double X, double Y)> ReadEmfPointArray32(byte[] bytes, EmfRecord record)
+    {
+        var points = new List<(double X, double Y)>();
+        if (record.Size < 28) return points;
+        var count = U32(bytes, record.Offset + 24);
+        // Validate unsigned counts against this record, not the remaining file.
+        if (count > (record.Size - 28) / 8) return points;
+        for (var index = 0; index < count; index++)
+        {
+            var offset = record.Offset + 28 + index * 8;
+            points.Add((I32(bytes, offset), I32(bytes, offset + 4)));
+        }
+        return points;
+    }
+
     private static List<(double X, double Y)> ReadEmfPoints16(byte[] bytes, int offset)
     {
         var count = (int)U32(bytes, offset + 16);
@@ -1393,6 +1427,8 @@ internal static class EMR
     public const uint Rectangle = 0x002b;
     public const uint Ellipse = 0x002a;
     public const uint Polygon16 = 0x0056;
+    public const uint Polygon = 0x0003;
+    public const uint Polyline = 0x0004;
     public const uint Polyline16 = 0x0057;
     public const uint PolyPolyline16 = 0x005a;
     public const uint PolyPolygon16 = 0x005b;
