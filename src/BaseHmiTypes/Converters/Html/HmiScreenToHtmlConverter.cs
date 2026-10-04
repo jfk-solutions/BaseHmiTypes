@@ -1713,7 +1713,7 @@ public class HmiScreenToHtmlConverter
             html.Append("<span data-hmi-button-caption");
             if (hidden) html.Append(" hidden");
             html.Append(" style=\"");
-            if (boundedLayout) html.Append("flex: 0 0 auto;max-width: 100%;");
+            if (boundedLayout) html.Append("flex: 0 0 auto;width: 100%;max-width: 100%;");
             if (captionBlink is not null)
                 html.Append("animation: hmi-caption-color-flash ").Append(GetBlinkDuration(captionBlink.Rate)).Append("s steps(1, end) infinite;");
             else if (captionColor is { } staticCaptionColor)
