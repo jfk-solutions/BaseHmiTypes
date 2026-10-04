@@ -91,4 +91,6 @@ public sealed class HmiRecipeDataSet : IHmiObject
     public string? Name { get; set; }
 
     public IDictionary<string, string?> Values { get; } = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+    public IDictionary<string, string?> SourceValues { get; } = new Dictionary<string, string?>(StringComparer.Ordinal);
 }
