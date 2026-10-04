@@ -16,6 +16,8 @@ namespace BaseHmiTypes.Converters.Html;
 
 public class HmiScreenToHtmlConverter
 {
+    private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
+
     private static double Clamp(double value, double min, double max)
     {
         if (min > max)
@@ -1721,7 +1723,7 @@ public class HmiScreenToHtmlConverter
     private static double GetButtonPressedContentOffset(HmiButton button, HmiHtmlConvertContext context)
     {
         var offset = ResolveStaticValue(button.PressedContentOffset, context);
-        return IsButtonDownVisual(button, context) && double.IsFinite(offset) && offset > 0 ? offset : 0;
+        return IsButtonDownVisual(button, context) && IsFinite(offset) && offset > 0 ? offset : 0;
     }
 
     private static void AppendButtonCaption(StringBuilder html, HmiButton button, HmiState? state,
@@ -2004,13 +2006,13 @@ public class HmiScreenToHtmlConverter
 
     private static double? GetBarFillOrigin(HmiBar bar, double minimum, double maximum, double value, HmiHtmlConvertContext context)
     {
-        if (!double.IsFinite(minimum) || !double.IsFinite(maximum) ||
-            !double.IsFinite(value) || !double.IsFinite(maximum - minimum) || maximum <= minimum)
+        if (!IsFinite(minimum) || !IsFinite(maximum) ||
+            !IsFinite(value) || !IsFinite(maximum - minimum) || maximum <= minimum)
             return null;
         if (bar.OriginValue is null)
             return UsesNonlinearBarMapping(bar, minimum, maximum, context) ? minimum : null;
         var origin = ResolveStaticValue(bar.OriginValue, context);
-        return double.IsFinite(origin) ? origin : null;
+        return IsFinite(origin) ? origin : null;
     }
 
     private static void AppendBarOriginMeter(StringBuilder html, HmiBar bar, double minimum, double maximum,
@@ -2083,10 +2085,10 @@ public class HmiScreenToHtmlConverter
     {
         if (bar.Value is null) return 0;
         var value = ResolveStaticValue(bar.Value, context);
-        if (!double.IsFinite(value)) return 0;
-        if (bar.UnderflowLimit is not null && double.IsFinite(ResolveStaticValue(bar.UnderflowLimit, context)) &&
+        if (!IsFinite(value)) return 0;
+        if (bar.UnderflowLimit is not null && IsFinite(ResolveStaticValue(bar.UnderflowLimit, context)) &&
             value < ResolveStaticValue(bar.UnderflowLimit, context)) return -1;
-        if (bar.OverflowLimit is not null && double.IsFinite(ResolveStaticValue(bar.OverflowLimit, context)) &&
+        if (bar.OverflowLimit is not null && IsFinite(ResolveStaticValue(bar.OverflowLimit, context)) &&
             value > ResolveStaticValue(bar.OverflowLimit, context)) return 1;
         return 0;
     }
@@ -2189,7 +2191,7 @@ public class HmiScreenToHtmlConverter
         var tickCount = sections > 0 ? Math.Min(100, sections) + 1 : 2;
         var interval = bar.MajorTickInterval is null ? 0 : ResolveStaticValue(bar.MajorTickInterval, context);
         var scaleMode = bar.ScaleMode is null ? 0 : ResolveStaticValue(bar.ScaleMode, context);
-        var explicitInterval = scaleMode == 0 && double.IsFinite(interval) && interval > 0 && maximum > minimum
+        var explicitInterval = scaleMode == 0 && IsFinite(interval) && interval > 0 && maximum > minimum
             && (maximum - minimum) / interval <= 10000;
         var positionedTicks = explicitInterval || TryGetBarOriginPosition(bar, minimum, maximum, context, out _) ||
             UsesNonlinearBarMapping(bar, minimum, maximum, context);
@@ -3018,11 +3020,11 @@ public class HmiScreenToHtmlConverter
     {
         position = 0;
         if (scale is not HmiBar bar || bar.UseAutoScaling is null || !ResolveStaticValue(bar.UseAutoScaling, context) ||
-            bar.OriginPositionPercent is null || bar.OriginValue is null || !double.IsFinite(minimum) ||
-            !double.IsFinite(maximum) || maximum <= minimum || !double.IsFinite(maximum - minimum)) return false;
+            bar.OriginPositionPercent is null || bar.OriginValue is null || !IsFinite(minimum) ||
+            !IsFinite(maximum) || maximum <= minimum || !IsFinite(maximum - minimum)) return false;
         position = ResolveStaticValue(bar.OriginPositionPercent, context);
         var origin = ResolveStaticValue(bar.OriginValue, context);
-        return double.IsFinite(position) && position >= 0 && position <= 100 && double.IsFinite(origin) &&
+        return IsFinite(position) && position >= 0 && position <= 100 && IsFinite(origin) &&
             origin >= minimum && origin <= maximum;
     }
 
@@ -3058,8 +3060,8 @@ public class HmiScreenToHtmlConverter
         ? GetScaleRatio(scale, minimum, maximum, minimum + (maximum - minimum) * ratio, context) : ratio;
 
     private static bool UsesNonlinearBarMapping(HmiScaleWidgetBase scale, double minimum, double maximum,
-        HmiHtmlConvertContext context) => scale is HmiBar bar && double.IsFinite(minimum) && double.IsFinite(maximum) &&
-        maximum > minimum && double.IsFinite(maximum - minimum) && ResolveStaticValue(bar.ValueMapping, context) is
+        HmiHtmlConvertContext context) => scale is HmiBar bar && IsFinite(minimum) && IsFinite(maximum) &&
+        maximum > minimum && IsFinite(maximum - minimum) && ResolveStaticValue(bar.ValueMapping, context) is
         HmiBarValueMapping.NormalizedLogarithmic or HmiBarValueMapping.InverseNormalizedLogarithmic or
         HmiBarValueMapping.Quadratic or HmiBarValueMapping.Cubic;
 
@@ -3380,7 +3382,7 @@ public class HmiScreenToHtmlConverter
         html.Append('>');
         var text = ResolveStaticValue(item.Text, context)?.GetText(context.CultureInfo) ?? "";
         // HTML removes one initial line feed from textarea content.
-        if (text.StartsWith('\n') || text.StartsWith('\r'))
+        if (text.Length > 0 && (text[0] == '\n' || text[0] == '\r'))
             html.Append('\n');
         html.Append(WebUtility.HtmlEncode(text));
         html.Append("</textarea>");
@@ -3665,7 +3667,7 @@ public class HmiScreenToHtmlConverter
         var imageUri = uri!;
         if (item is HmiGraphicView { ImageOverflowPadding: { } padding } overflowingGraphic)
         {
-            static double Extent(double value) => double.IsFinite(value) ? Math.Max(0, value) : 0;
+            static double Extent(double value) => IsFinite(value) ? Math.Max(0, value) : 0;
             var left = Extent(ResolveStaticValue(padding.Left, context));
             var top = Extent(ResolveStaticValue(padding.Top, context));
             var right = Extent(ResolveStaticValue(padding.Right, context));
