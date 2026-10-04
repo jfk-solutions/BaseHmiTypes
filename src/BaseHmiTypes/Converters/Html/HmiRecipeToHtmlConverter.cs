@@ -93,6 +93,18 @@ public sealed class HmiRecipeToHtmlConverter
                         .Append("</td><td>").Append(Encode(pair.Value.SourceId)).Append("</td><td>").Append(Encode(pair.Value.Name)).Append("</td></tr>");
             html.Append("</tbody></table></div>");
         }
+        if (recipe.Parameters.Any(field => field.SourceTagStartValue != null || field.SourceTagSubstituteValue != null || field.SourceTagSubstituteValueUsage != null))
+        {
+            html.Append("<h2>Source tag values</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Field</th><th scope=\"col\">Start value</th><th scope=\"col\">Substitute value</th><th scope=\"col\">Substitute usage flags (raw)</th></tr></thead><tbody>");
+            foreach (var field in recipe.Parameters.Where(field => field.SourceTagStartValue != null || field.SourceTagSubstituteValue != null || field.SourceTagSubstituteValueUsage != null))
+            {
+                html.Append("<tr><th scope=\"row\">").Append(Encode(field.Name)).Append("</th>");
+                foreach (var value in new[] { field.SourceTagStartValue, field.SourceTagSubstituteValue, field.SourceTagSubstituteValueUsage?.ToString(CultureInfo.InvariantCulture) })
+                    html.Append("<td data-value-state=\"").Append(value == null ? "missing" : "present").Append("\">").Append(Encode(value ?? "Missing")).Append("</td>");
+                html.Append("</tr>");
+            }
+            html.Append("</tbody></table></div>");
+        }
         html.Append("<h2>Stored records</h2>");
         if (recipe.DataSets.Count == 0)
             html.Append("<p>No stored records.</p>");
