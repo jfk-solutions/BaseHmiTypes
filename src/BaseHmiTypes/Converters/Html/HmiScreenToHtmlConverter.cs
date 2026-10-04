@@ -3972,8 +3972,25 @@ public partial class HmiScreenToHtmlConverter
             html.Append("></div>");
             return;
         }
+        string? imageLayoutStyle = null;
+        if (item is HmiGraphicView layoutGraphic && (layoutGraphic.ImageScaled != null || layoutGraphic.ImageKeepAspectRatio != null || layoutGraphic.ImageHorizontalAlignment != null || layoutGraphic.ImageVerticalAlignment != null))
+        {
+            var keep = ResolveStaticValue(layoutGraphic.ImageKeepAspectRatio, context);
+            var scaled = layoutGraphic.ImageScaled == null || ResolveStaticValue(layoutGraphic.ImageScaled, context);
+            var horizontal = layoutGraphic.ImageHorizontalAlignment == null ? HmiHorizontalAlignment.Center : ResolveStaticValue(layoutGraphic.ImageHorizontalAlignment, context);
+            var vertical = layoutGraphic.ImageVerticalAlignment == null ? HmiVerticalAlignment.Center : ResolveStaticValue(layoutGraphic.ImageVerticalAlignment, context);
+            var x = horizontal == HmiHorizontalAlignment.Left ? 0 : horizontal == HmiHorizontalAlignment.Right ? 100 : 50;
+            var y = vertical == HmiVerticalAlignment.Top ? 0 : vertical == HmiVerticalAlignment.Bottom ? 100 : 50;
+            imageLayoutStyle = $"object-fit: {(!scaled ? "none" : keep ? "contain" : "fill")}; object-position: {x}% {y}%;";
+            if (layoutGraphic.ImageKeepAspectRatio != null)
+            {
+                var normalized = SvgImageAspectRatio.TryOverrideDataUri(imageUri, keep);
+                if (normalized == null) { AppendDiv(html, item, context.Options.UnsupportedItemPlaceholderCssClass, "Graphic image", context); return; }
+                imageUri = normalized;
+            }
+        }
         html.Append("<img");
-        AppendCommonAttributes(html, item, context);
+        AppendCommonAttributes(html, item, context, additionalStyle: imageLayoutStyle);
         AppendAttribute(html, "src", imageUri);
         if (item is HmiGraphicView graphicView)
             AppendGraphicImageColorKey(html, graphicView, context);

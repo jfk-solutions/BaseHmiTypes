@@ -18,6 +18,9 @@ public class HmiGraphicView : HmiSurfaceShapeBase
 
     public HmiProperty<bool>? ImageScaled { get; set; }
 
+    /// <summary>When scaling the image, preserve its aspect ratio inside the graphical frame.</summary>
+    public HmiProperty<bool>? ImageKeepAspectRatio { get; set; }
+
     public HmiProperty<bool>? ImageBlink { get; set; }
 
     public HmiProperty<HmiColor>? ImageColor { get; set; }
