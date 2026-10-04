@@ -1545,7 +1545,12 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
   if (overlay) {
     const x = getStaticValue(button.horizontalAlignment) ?? HmiHorizontalAlignment.Center;
     const y = getStaticValue(button.verticalAlignment) ?? HmiVerticalAlignment.Center;
-    html.push('<span data-hmi-button-caption-layout style="display: flex;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ' + horizontalAlignmentToFlexCss(x) + ';align-items: ' + verticalAlignmentToCss(y) + ';">');
+    html.push('<span data-hmi-button-caption-layout');
+    const imageHorizontal = getStaticValue(button.imageHorizontalAlignment);
+    if (getStaticValue(button.avoidImageCaptionOverlap) === true && x === imageHorizontal &&
+        (x === HmiHorizontalAlignment.Left || x === HmiHorizontalAlignment.Right))
+      appendAttribute(html, 'data-hmi-button-caption-avoid-image', x === HmiHorizontalAlignment.Left ? 'start' : 'end');
+    html.push(' style="display: flex;box-sizing: border-box;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ' + horizontalAlignmentToFlexCss(x) + ';align-items: ' + verticalAlignmentToCss(y) + ';">');
   }
   const offset = getButtonPressedContentOffset(button);
   if (offset > 0) html.push('<span data-hmi-button-pressed-caption style="display: inline-block;transform: translate(' + toCss(offset) + 'px, ' + toCss(offset) + 'px);">');
