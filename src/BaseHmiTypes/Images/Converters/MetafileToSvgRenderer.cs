@@ -146,8 +146,6 @@ public sealed class MetafileToSvgRenderer
                     break;
                 case EMR.MoveToEx:
                     (state.CurrentX, state.CurrentY) = TransformPoint(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4));
-                    state.MoveOriginX = state.CurrentX;
-                    state.MoveOriginY = state.CurrentY;
                     if (state.CurrentPath is not null)
                     {
                         state.CurrentPath.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
@@ -648,8 +646,6 @@ public sealed class MetafileToSvgRenderer
             TextColor = state.TextColor,
             CurrentX = state.CurrentX,
             CurrentY = state.CurrentY,
-            MoveOriginX = state.MoveOriginX,
-            MoveOriginY = state.MoveOriginY,
             WindowOrgX = state.WindowOrgX,
             WindowOrgY = state.WindowOrgY,
             WindowExtX = state.WindowExtX,
@@ -681,8 +677,6 @@ public sealed class MetafileToSvgRenderer
         target.TextColor = restored.TextColor;
         target.CurrentX = restored.CurrentX;
         target.CurrentY = restored.CurrentY;
-        target.MoveOriginX = restored.MoveOriginX;
-        target.MoveOriginY = restored.MoveOriginY;
         target.WindowOrgX = restored.WindowOrgX;
         target.WindowOrgY = restored.WindowOrgY;
         target.WindowExtX = restored.WindowExtX;
@@ -895,8 +889,8 @@ public sealed class MetafileToSvgRenderer
             if (type == PolyDrawTypeMoveTo)
             {
                 path.Add($"M {Number(mapped[index].X)} {Number(mapped[index].Y)}");
-                state.PathStartX = state.MoveOriginX = mapped[index].X;
-                state.PathStartY = state.MoveOriginY = mapped[index].Y;
+                state.PathStartX = mapped[index].X;
+                state.PathStartY = mapped[index].Y;
             }
             else if (type == PolyDrawTypeLineTo)
                 path.Add($"L {Number(mapped[index].X)} {Number(mapped[index].Y)}");
@@ -909,11 +903,11 @@ public sealed class MetafileToSvgRenderer
             state.PathEndY = state.CurrentY = mapped[index].Y;
             if ((bytes[typesOffset + index] & PolyDrawTypeCloseFigure) != 0)
             {
-                path.Add(state.PathStartX == state.MoveOriginX && state.PathStartY == state.MoveOriginY ? "Z" : $"L {Number(state.MoveOriginX)} {Number(state.MoveOriginY)}");
+                path.Add("Z");
                 // Windows GDI closes the figure without moving the DC current
                 // position back from the supplied endpoint (verified natively).
-                state.PathEndX = state.MoveOriginX;
-                state.PathEndY = state.MoveOriginY;
+                state.PathEndX = state.PathStartX;
+                state.PathEndY = state.PathStartY;
             }
         }
         if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke));
@@ -1341,8 +1335,6 @@ internal sealed class DrawState
     public double CurrentX { get; set; }
 
     public double CurrentY { get; set; }
-    public double MoveOriginX { get; set; }
-    public double MoveOriginY { get; set; }
 
     public double WindowOrgX { get; set; }
 
