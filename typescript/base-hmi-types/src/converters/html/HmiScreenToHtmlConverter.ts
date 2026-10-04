@@ -3263,15 +3263,35 @@ function appendImage(
     return;
   }
 
+  if (item instanceof HmiGraphicView && item.imageOverflowPadding !== undefined) {
+    const extent = (value: number | undefined): number => Number.isFinite(value) ? Math.max(0, value!) : 0;
+    const padding = item.imageOverflowPadding;
+    const left = extent(getStaticValue(padding.left)), top = extent(getStaticValue(padding.top));
+    const right = extent(getStaticValue(padding.right)), bottom = extent(getStaticValue(padding.bottom));
+    const width = extent(getStaticValue(item.width)), height = extent(getStaticValue(item.height));
+    html.push("<div");
+    appendCommonAttributes(html, item, context, true, "overflow: visible;");
+    html.push("><img");
+    appendAttribute(html, "data-hmi-graphic-overflow-image", "true");
+    appendAttribute(html, "src", uri);
+    appendGraphicImageColorKey(html, item);
+    appendAttribute(html, "style", `position: absolute; left: ${toCss(-left)}px; top: ${toCss(-top)}px; width: ${toCss(extent(width + left + right))}px; height: ${toCss(extent(height + top + bottom))}px; max-width: none; display: block;`);
+    html.push("></div>");
+    return;
+  }
   html.push("<img");
   appendCommonAttributes(html, item, context);
   appendAttribute(html, "src", uri);
-  if (item instanceof HmiGraphicView && item.imageBackgroundColor !== undefined &&
-      getStaticValue(item.imageBackgroundTransparent) === true) {
-    const key = getStaticValue(item.imageBackgroundColor);
+  if (item instanceof HmiGraphicView) appendGraphicImageColorKey(html, item);
+  html.push(">");
+}
+
+function appendGraphicImageColorKey(html: string[], graphicView: HmiGraphicView): void {
+  if (graphicView.imageBackgroundColor !== undefined &&
+      getStaticValue(graphicView.imageBackgroundTransparent) === true) {
+    const key = getStaticValue(graphicView.imageBackgroundColor);
     if (key !== undefined) appendAttribute(html, "data-hmi-image-color-key", `${key.red},${key.green},${key.blue}`);
   }
-  html.push(">");
 }
 
 function appendSymbolLibraryControl(
