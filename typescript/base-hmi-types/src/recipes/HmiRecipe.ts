@@ -1,4 +1,8 @@
+import { HmiMultilingualText } from "../common/HmiMultilingualText.js";
+
 export class HmiRecipe {
+  displayName?: HmiMultilingualText;
+  infoText?: HmiMultilingualText;
   name?: string;
   comment?: string;
   lastModified?: Date;
@@ -7,6 +11,8 @@ export class HmiRecipe {
 }
 
 export class HmiRecipeParameter {
+  displayName?: HmiMultilingualText;
+  infoText?: HmiMultilingualText;
   sourceIndex?: number;
   sourceElementId?: number;
   defaultValue?: string;
@@ -26,6 +32,7 @@ export class HmiRecipeParameter {
 }
 
 export class HmiRecipeDataSet {
+  displayName?: HmiMultilingualText;
   sourceNumber?: number;
   name?: string;
   readonly values: Record<string, string | undefined> = {};

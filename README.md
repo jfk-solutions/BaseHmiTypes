@@ -95,6 +95,11 @@ Fields also carry optional source element IDs, lexical defaults, decimal precisi
 maximum length, tag array count, and required/unique/indexed flags. Stored records
 carry an optional source number. The export displays these values without applying
 defaults to missing records or treating unspecified flags as false.
+Recipes and fields carry multilingual DisplayName and InfoText; records carry
+DisplayName. `Convert(recipe, cultureLcid)` / `convert(recipe, cultureLcid)` selects
+plain localized labels for HTML while retaining engineering names and record keys.
+The one-argument export remains available. Formatted text payloads remain in the
+model; this export displays plain text and does not apply their formatting.
 It shows field metadata and stored records, retaining unmatched record keys and
 distinguishing missing values, null values, and empty strings. Values are HTML
 encoded and their persisted text is preserved. This export does not simulate

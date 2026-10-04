@@ -2,13 +2,16 @@ import { HmiRecipe } from "../../recipes/HmiRecipe.js";
 
 /** Renders stored engineering recipe definitions and records as a standalone HTML document. */
 export class HmiRecipeToHtmlConverter {
-  convert(recipe: HmiRecipe): string {
-    const html = ["<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>", encode(recipe.name ?? "Recipe"),
+  convert(recipe: HmiRecipe, cultureLcid?: number): string {
+    const title = recipe.displayName?.getText(cultureLcid) ?? recipe.name ?? "Recipe";
+    const html = ["<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>", encode(title),
       "</title><style>body{font-family:system-ui,sans-serif;margin:24px;color:#202124}table{border-collapse:collapse;margin-bottom:24px}th,td{border:1px solid #ccd0d5;padding:8px;text-align:left;vertical-align:top;white-space:pre-wrap}thead{background:#edf1f5}td[data-value-state=missing],td[data-value-state=null]{color:#666;font-style:italic}.table-scroll{overflow:auto}</style></head><body><h1>",
-      encode(recipe.name ?? "Recipe"), "</h1>"];
+      encode(title), "</h1>"];
+    if (recipe.displayName != null) html.push("<p>Name: ", encode(recipe.name), "</p>");
+    if (recipe.infoText != null) html.push("<p>", encode(recipe.infoText.getText(cultureLcid)), "</p>");
     if (recipe.comment != null) html.push("<p>", encode(recipe.comment), "</p>");
     html.push("<h2>Fields</h2><div class=\"table-scroll\"><table><thead><tr>");
-    for (const header of ["Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment", "Element ID", "Default", "Decimal places", "Maximum length", "Tag array count", "Required", "Unique", "Indexed"])
+    for (const header of ["Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment", "Element ID", "Default", "Decimal places", "Maximum length", "Tag array count", "Required", "Unique", "Indexed", "Display name", "Info text"])
       html.push("<th scope=\"col\">", header, "</th>");
     html.push("</tr></thead><tbody>");
     for (const field of recipe.parameters) {
@@ -16,7 +19,8 @@ export class HmiRecipeToHtmlConverter {
       for (const value of [field.sourceIndex?.toString(), field.name, field.tag, field.dataType, field.unit,
         field.minimumValue, field.maximumValue, field.comment, field.sourceElementId?.toString(), field.defaultValue,
         field.decimalPlaces?.toString(), field.maximumLength?.toString(), field.tagArrayCount?.toString(),
-        formatFlag(field.required), formatFlag(field.unique), formatFlag(field.indexed)]) html.push("<td>", encode(value), "</td>");
+        formatFlag(field.required), formatFlag(field.unique), formatFlag(field.indexed),
+        field.displayName?.getText(cultureLcid), field.infoText?.getText(cultureLcid)]) html.push("<td>", encode(value), "</td>");
       html.push("</tr>");
     }
     html.push("</tbody></table></div><h2>Stored records</h2>");
@@ -31,11 +35,12 @@ export class HmiRecipeToHtmlConverter {
       };
       for (const field of recipe.parameters) if (field.name != null) addColumn(field.name);
       for (const record of recipe.dataSets) for (const key of Object.keys(record.values)) addColumn(key);
-      html.push("<div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th>");
+      html.push("<div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th><th scope=\"col\">Display name</th>");
       for (const column of columns) html.push("<th scope=\"col\">", encode(column), "</th>");
       html.push("</tr></thead><tbody>");
       for (const record of recipe.dataSets) {
-        html.push("<tr><th scope=\"row\">", encode(record.name), "</th><td>", encode(record.sourceNumber?.toString()), "</td>");
+        html.push("<tr><th scope=\"row\">", encode(record.name), "</th><td>", encode(record.sourceNumber?.toString()), "</td><td>",
+          encode(record.displayName?.getText(cultureLcid)), "</td>");
         const keys = new Map(Object.keys(record.values).map(key => [ordinalKey(key), key]));
         for (const column of columns) {
           const key = keys.get(ordinalKey(column));

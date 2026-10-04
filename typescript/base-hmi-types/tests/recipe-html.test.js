@@ -1,6 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { HmiRecipe, HmiRecipeParameter, HmiRecipeDataSet, HmiRecipeToHtmlConverter } from "../dist/index.js";
+import { HmiRecipe, HmiRecipeParameter, HmiRecipeDataSet, HmiRecipeToHtmlConverter, HmiMultilingualText } from "../dist/index.js";
+
+test("Localized duplicate labels do not change record keys or stored values", () => {
+  const label = HmiMultilingualText.fromText("Default label");
+  label.texts.set(1031, "Gleicher <Name>");
+  const recipe = Object.assign(new HmiRecipe(), { name: "Engineering recipe", displayName: label });
+  for (const name of ["First", "Second"]) recipe.parameters.push(Object.assign(new HmiRecipeParameter(), { name, displayName: label }));
+  const record = Object.assign(new HmiRecipeDataSet(), { name: "Engineering record", displayName: label });
+  record.values.First = "01.500";
+  record.values.Second = "02.750";
+  recipe.dataSets.push(record);
+  const converter = new HmiRecipeToHtmlConverter();
+  const html = converter.convert(recipe, 1031);
+  for (const value of ["<h1>Gleicher &lt;Name&gt;</h1>", '<th scope="col">First</th><th scope="col">Second</th>',
+    '<td data-value-state="present">01.500</td><td data-value-state="present">02.750</td>', "Engineering record</th>"]) assert.ok(html.includes(value), value);
+  assert.ok(converter.convert(recipe, 1033).includes("<h1>Default label</h1>"));
+  assert.equal(Object.keys(record.values).length, 2);
+  assert.equal(recipe.parameters[0].name, "First");
+});
 
 test("Recipe HTML renders metadata and retains unmatched record columns", () => {
   const recipe = Object.assign(new HmiRecipe(), { name: "Recipe <A>", comment: "Engineering & data" });
