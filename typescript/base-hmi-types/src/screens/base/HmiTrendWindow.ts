@@ -6,6 +6,9 @@ export class HmiTrendWindow {
   name?: string;
   visible?: HmiProperty<boolean>;
   spacePortion?: HmiProperty<number>;
+  /** Relative height of the area; preserves fractional engineering values. */
+  sizeFactor?: HmiProperty<number>;
+  backgroundColor?: HmiProperty<HmiColor>;
   xAxisGridVisible?: HmiProperty<boolean>;
   yAxisGridVisible?: HmiProperty<boolean>;
   majorGridVisible?: HmiProperty<boolean>;

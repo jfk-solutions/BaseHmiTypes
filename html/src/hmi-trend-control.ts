@@ -591,6 +591,7 @@ interface TrendWindow {
   name: string;
   visible: boolean;
   spacePortion: number;
+  backgroundColor?: string;
   attributes: Record<string, string>;
   colors: Record<string, string>;
 }
@@ -618,8 +619,10 @@ function parseTrendWindows(value: string | null): TrendWindow[] {
           if (color) { attributes[toKebabCase(key)] = color; colors[toKebabCase(key)] = color; }
         }
       }
-      return [{ name: source.name, visible: source.visible !== false,
-        spacePortion: Math.max(1, finiteNumber(source.spacePortion, 1)), attributes, colors }];
+      const sizeFactor = finiteNumber(source.sizeFactor, 0);
+      const backgroundColor = typeof source.backgroundColor === "string" ? normalizeCssColor(source.backgroundColor, "") : undefined;
+      return [{ name: source.name, visible: source.visible !== false, backgroundColor,
+        spacePortion: sizeFactor > 0 ? sizeFactor : Math.max(1, finiteNumber(source.spacePortion, 1)), attributes, colors }];
     });
   } catch { return []; }
 }
@@ -654,11 +657,12 @@ function renderTrendWindows(
       "value-axes": JSON.stringify(windowAxes),
       "time-axes": JSON.stringify(windowTimeAxes.map(axis => axis.configuration)),
     });
+    if (window.backgroundColor) attributes["window-background-color"] = window.backgroundColor;
     if (axes.length && !windowAxes.length) attributes["y-axis-scale-visible"] = "false";
     if (timeAxes.length && !windowTimeAxes.length) attributes["x-axis-scale-visible"] = "false";
     const css = Object.entries(window.colors).map(([name, color]) => `--hmi-trend-${name}:${color};`).join("");
     const attributeText = Object.entries(attributes).map(([name, value]) => `${name}="${escapeHtml(value)}"`).join(" ");
-    return `<hmi-trend-control data-trend-window="${escapeHtml(window.name)}" style="position:relative;display:block;background:${escapeHtml(backgroundColor)};color:${escapeHtml(foregroundColor)};${css}" ${attributeText}></hmi-trend-control>`;
+    return `<hmi-trend-control data-trend-window="${escapeHtml(window.name)}" style="position:relative;display:block;background:${escapeHtml(window.backgroundColor || backgroundColor)};color:${escapeHtml(foregroundColor)};${css}" ${attributeText}></hmi-trend-control>`;
   }).join("");
 }
 

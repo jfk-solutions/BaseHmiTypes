@@ -4464,6 +4464,8 @@ public class HmiScreenToHtmlConverter
             AddTrendJsonString(properties, "name", window.Name);
             AddTrendJsonBoolean(properties, "visible", window.Visible?.StaticValue);
             AddTrendJsonNumber(properties, "spacePortion", window.SpacePortion?.StaticValue);
+            AddTrendJsonNumber(properties, "sizeFactor", window.SizeFactor?.StaticValue);
+            AddTrendJsonString(properties, "backgroundColor", window.BackgroundColor?.StaticValue is HmiColor background ? ToCss(background) : null);
             AddTrendJsonBoolean(properties, "xAxisGridVisible", window.XAxisGridVisible?.StaticValue);
             AddTrendJsonBoolean(properties, "yAxisGridVisible", window.YAxisGridVisible?.StaticValue);
             AddTrendJsonBoolean(properties, "majorGridVisible", window.MajorGridVisible?.StaticValue);

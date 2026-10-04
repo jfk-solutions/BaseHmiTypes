@@ -42,6 +42,22 @@ test("function trends retain configuration without fabricated time curves", () =
   }
 });
 
+test("areas retain fractional heights, individual backgrounds, and hidden areas", () => {
+  const control = new HmiTrendControl();
+  control.setAttribute("trend-windows", JSON.stringify([
+    { name: "Upper", sizeFactor: 0.5, backgroundColor: "#123456" },
+    { name: "Lower", sizeFactor: 1.5, backgroundColor: "#654321" },
+    { name: "Hidden", sizeFactor: 2, visible: false },
+  ]));
+  control.connectedCallback();
+  assert.match(control.shadowRoot.innerHTML, /grid-template-rows: 0.5fr 1.5fr/);
+  assert.match(control.shadowRoot.innerHTML, /data-trend-window="Upper"[^>]+background:#123456[^>]+window-background-color="#123456"/);
+  assert.match(control.shadowRoot.innerHTML, /data-trend-window="Lower"[^>]+background:#654321[^>]+window-background-color="#654321"/);
+  assert.doesNotMatch(control.shadowRoot.innerHTML, /data-trend-window="Hidden"/);
+  control.setAttribute("trend-windows", JSON.stringify([{ name: "Fallback", sizeFactor: -1, spacePortion: 3 }]));
+  assert.match(control.shadowRoot.innerHTML, /grid-template-rows: 3fr/);
+});
+
 test("separate windows use their assigned time-axis format, range, alignment and color", () => {
   const originalNow = Date.now;
   Date.now = () => new Date(2020, 11, 24, 15, 4, 6, 12).getTime();
