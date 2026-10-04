@@ -123,6 +123,7 @@ import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewK
 import { HmiUserViewControl } from "../../screens/controls/HmiUserViewControl.js";
 import { HmiStatusForceControl } from "../../screens/controls/HmiStatusForceControl.js";
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
+import { HmiNcKeyboardControl } from "../../screens/controls/HmiNcKeyboardControl.js";
 import { HmiDetailedParameterControl } from "../../screens/controls/HmiDetailedParameterControl.js";
 import { HmiOverviewParameterControl } from "../../screens/controls/HmiOverviewParameterControl.js";
 import { HmiParameterControlBase } from "../../screens/controls/HmiParameterControlBase.js";
@@ -449,6 +450,8 @@ export class HmiScreenToHtmlConverter {
       appendSystemDiagnosisControl(html, item, context);
     } else if (item instanceof HmiMediaControl) {
       appendMediaControl(html, item, context);
+    } else if (item instanceof HmiNcKeyboardControl) {
+      appendNcKeyboardControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
       appendWebControl(html, item, context);
     } else if (item instanceof HmiAlarmLineControl) {
@@ -2475,6 +2478,34 @@ function appendMediaControl(html: string[], mediaControl: HmiMediaControl, conte
   if (getStaticValue(mediaControl.showStatusBar) === true)
     bar("status", mediaControl.statusBarBackgroundColor, mediaControl.statusBarForegroundColor, mediaControl.statusBarFont, "Media status not loaded");
   html.push("</div>");
+}
+
+function appendNcKeyboardControl(html: string[], control: HmiNcKeyboardControl, context: HmiHtmlConvertContext): void {
+  html.push("<div");
+  appendCommonAttributes(html, control, context, true, createControlWindowStyle(control, "overflow: hidden;"));
+  appendAttribute(html, "data-keyboard-style", resolvePropertyPreview(control.keyboardStyle));
+  appendAttribute(html, "data-keyboard-background-color", resolvePropertyPreview(control.keyboardBackgroundColor));
+  html.push(' role="region" aria-label="NC keyboard" data-preview="palette">');
+  const style = ["overflow: auto; height: 100%;"];
+  appendColorStyle(style, "background-color", control.keyboardBackgroundColor);
+  html.push('<div class="hmi-nc-keyboard-palette" style="', style.join(""), '"><div>NC keyboard layout not decoded</div><table><thead><tr><th>Key class</th><th>Normal state</th><th>Pressed state</th></tr></thead><tbody>');
+  for (const [kind, label, appearance] of [["normal", "Normal keys", control.normalKeys], ["special", "Special keys", control.specialKeys], ["enter", "Enter key", control.enterKey]] as const) {
+    html.push('<tr data-key-class="', kind, '"><th>', label, "</th><td>");
+    state("normal", appearance.normalBackgroundColor, appearance.normalForegroundColor);
+    html.push("</td><td>"); state("pressed", appearance.pressedBackgroundColor, appearance.pressedForegroundColor);
+    html.push("</td></tr>");
+  }
+  html.push("</tbody></table></div></div>");
+
+  function state(name: string, background: HmiProperty<HmiColor> | undefined, foreground: HmiProperty<HmiColor> | undefined): void {
+    html.push('<span class="hmi-nc-key-preview"');
+    appendAttribute(html, "data-key-state", name);
+    appendAttribute(html, "data-background-color", resolvePropertyPreview(background));
+    appendAttribute(html, "data-foreground-color", resolvePropertyPreview(foreground));
+    const keyStyle = ["display: inline-block; min-width: 6em; padding: 2px 4px;"];
+    appendColorStyle(keyStyle, "background-color", background); appendColorStyle(keyStyle, "color", foreground);
+    html.push(' style="', keyStyle.join(""), '">', background === undefined && foreground === undefined ? "Not configured" : "Preview", "</span>");
+  }
 }
 
 function appendWebControl(html: string[], webControl: HmiWebControl, context: HmiHtmlConvertContext): void {
