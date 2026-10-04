@@ -47,6 +47,8 @@ interface DrawState {
   currentPath?: string[];
   pathStartX?: number;
   pathStartY?: number;
+  pathEndX?: number;
+  pathEndY?: number;
 }
 
 interface ViewBox {
@@ -230,12 +232,18 @@ export class MetafileToSvgRenderer {
             state.currentPath.push(`M ${state.currentX} ${state.currentY}`);
             state.pathStartX = state.currentX;
             state.pathStartY = state.currentY;
+            state.pathEndX = state.currentX;
+            state.pathEndY = state.currentY;
           }
           break;
         case EMR.LINETO: {
           const [x, y] = transformPoint(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4));
-          if (state.currentPath)
+          if (state.currentPath) {
+            ensurePathPosition(state);
             state.currentPath.push(`L ${x} ${y}`);
+            state.pathEndX = x;
+            state.pathEndY = y;
+          }
           else
             elements.push(lineElement(state.currentX, state.currentY, x, y, state));
           state.currentX = x;
@@ -246,12 +254,16 @@ export class MetafileToSvgRenderer {
           state.currentPath = [];
           state.pathStartX = undefined;
           state.pathStartY = undefined;
+          state.pathEndX = undefined;
+          state.pathEndY = undefined;
           break;
         case EMR.CLOSEFIGURE:
           state.currentPath?.push('Z');
           if (state.pathStartX != null && state.pathStartY != null) {
             state.currentX = state.pathStartX;
             state.currentY = state.pathStartY;
+            state.pathEndX = state.currentX;
+            state.pathEndY = state.currentY;
           }
           break;
         case EMR.ENDPATH:
@@ -265,16 +277,12 @@ export class MetafileToSvgRenderer {
           state.currentPath = undefined;
           break;
         case EMR.POLYLINETO:
-          appendLinePointsToPath(state, readEmfPoints32(bytes, dataOffset));
-          break;
         case EMR.POLYLINETO16:
-          appendLinePointsToPath(state, readEmfPoints16(bytes, dataOffset));
-          break;
+        case EMR.POLYBEZIER:
         case EMR.POLYBEZIER16:
-          appendEmfPolyBezierPath(state, readEmfPoints16(bytes, dataOffset));
-          break;
+        case EMR.POLYBEZIERTO:
         case EMR.POLYBEZIERTO16:
-          appendEmfPolyBezierToPath(state, readEmfPoints16(bytes, dataOffset));
+          drawEmfPointCurve(bytes, record, state, elements);
           break;
         case EMR.POLYDRAW16:
           appendEmfPolyDraw16ToPath(state, bytes, dataOffset);
@@ -317,6 +325,10 @@ export class MetafileToSvgRenderer {
             for (let index = 1; index < points.length; index++)
               state.currentPath.push(`L ${points[index][0]} ${points[index][1]}`);
             if (closed) state.currentPath.push('Z');
+            state.pathStartX = points[0][0];
+            state.pathStartY = points[0][1];
+            state.pathEndX = closed ? points[0][0] : points.at(-1)![0];
+            state.pathEndY = closed ? points[0][1] : points.at(-1)![1];
           }
           break;
         }
@@ -332,6 +344,11 @@ export class MetafileToSvgRenderer {
             path.push(`M ${points[0][0]} ${points[0][1]}`);
             for (let index = 1; index < points.length; index++) path.push(`L ${points[index][0]} ${points[index][1]}`);
             if (closed) path.push('Z');
+            if (state.currentPath !== undefined) {
+              state.pathStartX = points[0][0]; state.pathStartY = points[0][1];
+              state.pathEndX = closed ? points[0][0] : points.at(-1)![0];
+              state.pathEndY = closed ? points[0][1] : points.at(-1)![1];
+            }
           }
           if (!path.length) break;
           if (state.currentPath !== undefined) state.currentPath.push(...path);
@@ -542,6 +559,8 @@ const EMR = {
   MOVETOEX: 0x001b,
   LINETO: 0x0036,
   POLYLINETO: 0x0006,
+  POLYBEZIER: 0x0002,
+  POLYBEZIERTO: 0x0005,
   POLYBEZIER16: 0x0055,
   POLYBEZIERTO16: 0x0058,
   POLYLINETO16: 0x0059,
@@ -883,14 +902,15 @@ function readEmfPoints32(bytes: Uint8Array, offset: number): Array<[number, numb
   return points;
 }
 
-function readEmfPointArray32(bytes: Uint8Array, record: EmfRecord): Array<[number, number]> {
+function readEmfPointArray32(bytes: Uint8Array, record: EmfRecord, shortPoints = false): Array<[number, number]> {
   const points: Array<[number, number]> = [];
   if (record.size < 28) return points;
   const count = u32(bytes, record.offset + 24);
-  if (count > Math.floor((record.size - 28) / 8)) return points;
+  const pointSize = shortPoints ? 4 : 8;
+  if (count > Math.floor((record.size - 28) / pointSize)) return points;
   for (let index = 0; index < count; index++) {
-    const offset = record.offset + 28 + index * 8;
-    points.push([i32(bytes, offset), i32(bytes, offset + 4)]);
+    const offset = record.offset + 28 + index * pointSize;
+    points.push(shortPoints ? [i16(bytes, offset), i16(bytes, offset + 2)] : [i32(bytes, offset), i32(bytes, offset + 4)]);
   }
   return points;
 }
@@ -996,6 +1016,35 @@ function scaledPenWidth(state: DrawState, width: number): number {
   return Math.max(1, Math.max(Math.hypot(x1 - x0, y1 - y0), Math.hypot(x2 - x0, y2 - y0)));
 }
 
+function ensurePathPosition(state: DrawState): void {
+  if (state.currentPath !== undefined && (state.pathEndX !== state.currentX || state.pathEndY !== state.currentY)) {
+    state.currentPath.push(`M ${state.currentX} ${state.currentY}`);
+    state.pathStartX = state.currentX; state.pathStartY = state.currentY;
+  }
+}
+
+function drawEmfPointCurve(bytes: Uint8Array, record: EmfRecord, state: DrawState, elements: string[]): void {
+  const line = record.type === EMR.POLYLINETO || record.type === EMR.POLYLINETO16;
+  const to = line || record.type === EMR.POLYBEZIERTO || record.type === EMR.POLYBEZIERTO16;
+  const shortPoints = record.type === EMR.POLYLINETO16 || record.type === EMR.POLYBEZIER16 || record.type === EMR.POLYBEZIERTO16;
+  const points = readEmfPointArray32(bytes, record, shortPoints).map(([x, y]) => transformPoint(state, x, y));
+  if (line ? points.length < 1 : to ? points.length < 3 || points.length % 3 !== 0 : points.length < 4 || (points.length - 1) % 3 !== 0) return;
+  const path = state.currentPath ?? [];
+  if (to) {
+    if (state.currentPath === undefined) path.push(`M ${state.currentX} ${state.currentY}`);
+    else ensurePathPosition(state);
+  } else {
+    path.push(`M ${points[0][0]} ${points[0][1]}`);
+    if (state.currentPath !== undefined) { state.pathStartX = points[0][0]; state.pathStartY = points[0][1]; }
+  }
+  for (let index = to ? 0 : 1; index < points.length; index += line ? 1 : 3)
+    path.push(line ? `L ${points[index][0]} ${points[index][1]}` : `C ${points[index][0]} ${points[index][1]} ${points[index+1][0]} ${points[index+1][1]} ${points[index+2][0]} ${points[index+2][1]}`);
+  const end = points.at(-1)!;
+  if (to) { state.currentX = end[0]; state.currentY = end[1]; }
+  if (state.currentPath !== undefined) { state.pathEndX = end[0]; state.pathEndY = end[1]; }
+  else elements.push(pathElement(path, state, 'stroke'));
+}
+
 function appendEmfPolyBezierToPath(state: DrawState, points: Array<[number, number]>): void {
   if (!state.currentPath)
     return;
@@ -1006,6 +1055,8 @@ function appendEmfPolyBezierToPath(state: DrawState, points: Array<[number, numb
     state.currentPath.push(`C ${x1} ${y1} ${x2} ${y2} ${x3} ${y3}`);
     state.currentX = x3;
     state.currentY = y3;
+    state.pathEndX = x3;
+    state.pathEndY = y3;
   }
 }
 
