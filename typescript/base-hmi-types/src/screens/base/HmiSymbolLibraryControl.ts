@@ -10,6 +10,7 @@ import {
   HmiSymbolLibraryFillColorMode,
   HmiSymbolLibraryFlip,
   HmiSymbolLibraryRotation,
+  HmiSymbolLibraryRasterLayout,
 } from "./HmiSymbolLibraryEnums.js";
 
 export class HmiSymbolLibraryControl extends HmiOcxControl {
@@ -24,6 +25,7 @@ export class HmiSymbolLibraryControl extends HmiOcxControl {
 
   symbolId?: string;
   symbol?: HmiImage;
+  rasterLayout?: HmiProperty<HmiSymbolLibraryRasterLayout>;
   symbolAppearance?: HmiProperty<HmiSymbolLibraryFillColorMode>;
   fillColorMode?: HmiProperty<HmiSymbolLibraryFillColorMode>;
   blinkMode?: HmiProperty<HmiSymbolLibraryBlinkMode>;
