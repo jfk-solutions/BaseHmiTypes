@@ -2320,6 +2320,8 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   const showHeader = recipeControl.showHeader === undefined || getStaticValue(recipeControl.showHeader) === true;
   const showFooter = getStaticValue(recipeControl.showFooter) === true;
   const defaultRecipeName = getStaticValue(recipeControl.defaultRecipeName) ?? "";
+  const headerStyle = createRecipeHeaderStyle(recipeControl);
+  const contentStyle = createRecipeContentStyle(recipeControl);
 
   html.push("<div");
   appendCommonAttributes(
@@ -2334,13 +2336,15 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-view-only", resolvePropertyPreview(recipeControl.viewOnly));
   appendAttribute(html, "data-wrap-around", resolvePropertyPreview(recipeControl.wrapAround));
   appendAttribute(html, "data-lines-per-item", resolvePropertyPreview(recipeControl.linesPerItem));
+  appendAttribute(html, "data-word-wrap", resolvePropertyPreview(recipeControl.wordWrap));
+  appendAttribute(html, "data-enable-recipe-dialog", resolvePropertyPreview(recipeControl.enableRecipeDialog));
   html.push(">");
 
   if (recipeControl.viewKind === HmiRecipeViewKind.Selector) {
     if (showHeader)
-      html.push("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px;\">Recipe selector</div>");
+      html.push("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px;", headerStyle, "\">Recipe selector</div>");
     html.push(
-      "<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">",
+      "<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;", contentStyle, "\">",
       escapeHtml(defaultRecipeName),
       "</div>",
     );
@@ -2348,11 +2352,19 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
     const visibleColumns = recipeControl.columnDefinitions.filter(
       (column) => column.visible === undefined || getStaticValue(column.visible) === true,
     );
-    html.push("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;\">");
+    html.push("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;", contentStyle, "\"><colgroup>");
+    for (const column of visibleColumns) {
+      html.push("<col");
+      const width = getStaticValue(column.width);
+      if (width !== undefined && Number.isFinite(width) && width >= 0)
+        appendAttribute(html, "style", `width: ${toCss(width)}px;`);
+      html.push(">");
+    }
+    html.push("</colgroup>");
     if (showHeader) {
       html.push("<thead><tr>");
       for (const column of visibleColumns) {
-        html.push("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;\"");
+        html.push("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;", headerStyle, "\"");
         appendAttribute(html, "data-column-type", column.type);
         html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.type), "</th>");
       }
@@ -2366,6 +2378,26 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   if (showFooter)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
   html.push("</div>");
+}
+
+function createRecipeHeaderStyle(recipeControl: HmiRecipeControl): string {
+  const style: string[] = [];
+  appendColorStyle(style, "background-color", recipeControl.headerBackgroundColor);
+  appendColorStyle(style, "color", recipeControl.headerForegroundColor);
+  appendColorStyle(style, "border-color", recipeControl.headerBorderColor);
+  if (recipeControl.headerFont !== undefined) appendFont(style, recipeControl.headerFont);
+  return style.join("");
+}
+
+function createRecipeContentStyle(recipeControl: HmiRecipeControl): string {
+  const style: string[] = [];
+  appendColorStyle(style, "background-color", recipeControl.contentBackgroundColor);
+  appendColorStyle(style, "color", recipeControl.contentForegroundColor);
+  if (recipeControl.contentFont !== undefined) appendFont(style, recipeControl.contentFont);
+  const wordWrap = getStaticValue(recipeControl.wordWrap);
+  if (wordWrap !== undefined)
+    style.push(wordWrap ? "white-space: normal;overflow-wrap: anywhere;" : "white-space: nowrap;");
+  return style.join("");
 }
 
 function appendAuditTrailControl(html: string[], auditTrailControl: HmiAuditTrailControl, context: HmiHtmlConvertContext): void {
