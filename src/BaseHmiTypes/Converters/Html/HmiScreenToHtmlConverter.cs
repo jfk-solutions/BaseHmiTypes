@@ -3973,7 +3973,23 @@ public partial class HmiScreenToHtmlConverter
 
     private static void AppendSymbolLibraryControl(StringBuilder html, HmiSymbolLibraryControl symbolLibraryControl, HmiHtmlConvertContext context)
     {
-        var symbolSvg = ResolveImageSvg(symbolLibraryControl.Symbol);
+        var symbolImage = symbolLibraryControl.Symbol;
+        var appearance = ResolveStaticValue(symbolLibraryControl.SymbolAppearance ?? symbolLibraryControl.FillColorMode, context);
+        if (symbolImage != null && appearance != HmiSymbolLibraryFillColorMode.Original &&
+            (symbolImage.ImageType == HmiImageType.Wmf || string.Equals(GetImageExtension(symbolImage), ".wmf", StringComparison.OrdinalIgnoreCase) ||
+             (symbolImage.MimeType?.IndexOf("wmf", StringComparison.OrdinalIgnoreCase) ?? -1) >= 0))
+        {
+            var colorProperty = symbolLibraryControl.ForeColor ?? symbolLibraryControl.FillColor;
+            HmiColor? color = colorProperty == null ? null : ResolveStaticValue(colorProperty, context);
+            var colored = SymbolLibraryMetafileColorizer.TryRecolor(symbolImage.Data, appearance, color);
+            if (colored == null)
+            {
+                AppendDiv(html, symbolLibraryControl, context.Options.UnsupportedItemPlaceholderCssClass, "Symbol library control", context);
+                return;
+            }
+            symbolImage = new HmiImage { Id = symbolImage.Id, Name = symbolImage.Name, ImageType = symbolImage.ImageType, MimeType = symbolImage.MimeType, Data = colored };
+        }
+        var symbolSvg = ResolveImageSvg(symbolImage);
         if (!string.IsNullOrWhiteSpace(symbolSvg))
         {
             html.Append("<div");
@@ -3984,7 +4000,7 @@ public partial class HmiScreenToHtmlConverter
             return;
         }
 
-        var imageUri = ResolveImageUri(symbolLibraryControl.Symbol);
+        var imageUri = ResolveImageUri(symbolImage);
         if (string.IsNullOrWhiteSpace(imageUri))
         {
             AppendDiv(html, symbolLibraryControl, context.Options.UnsupportedItemPlaceholderCssClass, "Symbol library control", context);
