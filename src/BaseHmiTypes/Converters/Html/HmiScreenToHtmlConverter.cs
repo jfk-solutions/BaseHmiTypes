@@ -335,6 +335,9 @@ public partial class HmiScreenToHtmlConverter
             case HmiSystemDiagnosisControl systemDiagnosisControl:
                 AppendSystemDiagnosisControl(html, systemDiagnosisControl, context);
                 break;
+            case HmiMediaControl mediaControl:
+                AppendMediaControl(html, mediaControl, context);
+                break;
             case HmiWebControl webControl:
                 AppendWebControl(html, webControl, context);
                 break;
@@ -2566,6 +2569,26 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-value", ToCss(value));
         AppendAttribute(html, "data-orientation", vertical ? "vertical" : "horizontal");
         html.Append("><span style=\"").Append(markerStyle).Append("\">").Append(vertical ? "▲" : "▶").Append("</span></div>");
+    }
+
+    private static void AppendMediaControl(StringBuilder html, HmiMediaControl mediaControl, HmiHtmlConvertContext context)
+    {
+        var source = ResolveStaticValue(mediaControl.Source, context);
+        if (string.IsNullOrWhiteSpace(source) && mediaControl.Source is HmiExpressionProperty<string> expression)
+            source = expression.Expression;
+        var autoPlay = ResolvePropertyPreview(mediaControl.AutoPlay, context);
+        html.Append("<div");
+        AppendCommonAttributes(html, mediaControl, context,
+            additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-media-source", ResolvePropertyPreview(mediaControl.Source, context));
+        AppendAttribute(html, "data-auto-play", autoPlay);
+        html.Append('>');
+        html.Append("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Media not loaded</div>");
+        if (!string.IsNullOrWhiteSpace(source))
+            html.Append("<div style=\"overflow: hidden; overflow-wrap: anywhere;\">Source: ").Append(WebUtility.HtmlEncode(source)).Append("</div>");
+        if (autoPlay is not null)
+            html.Append("<div>Autoplay: ").Append(WebUtility.HtmlEncode(autoPlay)).Append("</div>");
+        html.Append("</div>");
     }
 
     private static void AppendWebControl(StringBuilder html, HmiWebControl webControl, HmiHtmlConvertContext context)

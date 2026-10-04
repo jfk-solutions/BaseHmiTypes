@@ -123,6 +123,7 @@ import { HmiRadarChartControl } from "../../screens/controls/HmiRadarChartContro
 import { HmiSystemDiagnosisControl } from "../../screens/controls/HmiSystemDiagnosisControl.js";
 import { HmiSystemDiagnosisColumnType } from "../../screens/controls/HmiSystemDiagnosisColumnType.js";
 import { HmiSystemDiagnosisViewKind } from "../../screens/controls/HmiSystemDiagnosisViewKind.js";
+import { HmiMediaControl } from "../../screens/controls/HmiMediaControl.js";
 import { HmiWebControl } from "../../screens/controls/HmiWebControl.js";
 import { HmiInspectableScreenHtml, inspectHmiScreenAsync } from "./HmiScreenInspection.js";
 
@@ -414,6 +415,8 @@ export class HmiScreenToHtmlConverter {
       appendRadarChartControl(html, item, context);
     } else if (item instanceof HmiSystemDiagnosisControl) {
       appendSystemDiagnosisControl(html, item, context);
+    } else if (item instanceof HmiMediaControl) {
+      appendMediaControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
       appendWebControl(html, item, context);
     } else if (item instanceof HmiAlarmLineControl) {
@@ -2404,6 +2407,25 @@ function appendArrowIndicator(
   appendAttribute(html, "data-value", toCss(value));
   appendAttribute(html, "data-orientation", vertical ? "vertical" : "horizontal");
   html.push(`><span style="${markerStyle}">${vertical ? "▲" : "▶"}</span></div>`);
+}
+
+function appendMediaControl(html: string[], mediaControl: HmiMediaControl, context: HmiHtmlConvertContext): void {
+  let source = getStaticValue(mediaControl.source);
+  if (!source?.trim() && mediaControl.source?.kind === HmiPropertyKind.Expression)
+    source = (mediaControl.source as HmiExpressionProperty<string>).expression;
+  const autoPlay = resolvePropertyPreview(mediaControl.autoPlay);
+  html.push("<div");
+  appendCommonAttributes(html, mediaControl, context, true,
+    "display: flex; flex-direction: column; overflow: hidden;");
+  appendAttribute(html, "data-media-source", resolvePropertyPreview(mediaControl.source));
+  appendAttribute(html, "data-auto-play", autoPlay);
+  html.push(">");
+  html.push("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Media not loaded</div>");
+  if (source?.trim())
+    html.push("<div style=\"overflow: hidden; overflow-wrap: anywhere;\">Source: ", escapeHtml(source), "</div>");
+  if (autoPlay !== undefined)
+    html.push("<div>Autoplay: ", escapeHtml(autoPlay), "</div>");
+  html.push("</div>");
 }
 
 function appendWebControl(html: string[], webControl: HmiWebControl, context: HmiHtmlConvertContext): void {
