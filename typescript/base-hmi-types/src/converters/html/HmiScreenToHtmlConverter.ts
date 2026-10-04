@@ -3939,6 +3939,11 @@ function appendGauge(html: string[], gauge: HmiGauge, context: HmiHtmlConvertCon
   appendStaticAttribute(html, "begin-value", gauge.beginValue);
   appendStaticAttribute(html, "end-value", gauge.endValue);
   appendStaticAttribute(html, "origin-value", gauge.originValue);
+  if (gauge.needleWidth !== undefined || gauge.needleColor !== undefined) {
+    appendBooleanAttribute(html, "show-needle", true);
+    appendStaticAttribute(html, "needle-width", gauge.needleWidth);
+    appendStaticAttribute(html, "needle-color", gauge.needleColor);
+  }
   appendStaticAttribute(html, "division-count", gauge.divisionCount);
   appendStaticAttribute(html, "sub-division-count", gauge.subDivisionCount);
   appendBooleanAttribute(html, "major-ticks-only", getStaticValue(gauge.majorTicksOnly) ?? false);
