@@ -4039,11 +4039,11 @@ function formatTrendWindows(windows: readonly HmiTrendWindow[]): string | undefi
       const value = getStaticValue(window[key]);
       if (value !== undefined) result[key] = value;
     }
-    for (const key of ["spacePortion", "valueBarWidth", "statisticRulerWidth"] as const) {
+    for (const key of ["spacePortion", "sizeFactor", "valueBarWidth", "statisticRulerWidth"] as const) {
       const value = getStaticValue(window[key]);
       if (value !== undefined) result[key] = value;
     }
-    for (const key of ["majorGridColor", "minorGridColor", "valueBarColor", "statisticRulerColor"] as const) {
+    for (const key of ["backgroundColor", "majorGridColor", "minorGridColor", "valueBarColor", "statisticRulerColor"] as const) {
       const value = getStaticValue(window[key]);
       if (value !== undefined) result[key] = colorToCss(value);
     }

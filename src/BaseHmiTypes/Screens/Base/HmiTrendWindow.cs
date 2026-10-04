@@ -6,6 +6,9 @@ public sealed class HmiTrendWindow
     public string? Name { get; set; }
     public HmiProperty<bool>? Visible { get; set; }
     public HmiProperty<int>? SpacePortion { get; set; }
+    /// <summary>Relative height of the area; preserves fractional engineering values.</summary>
+    public HmiProperty<double>? SizeFactor { get; set; }
+    public HmiProperty<HmiColor>? BackgroundColor { get; set; }
     public HmiProperty<bool>? XAxisGridVisible { get; set; }
     public HmiProperty<bool>? YAxisGridVisible { get; set; }
     public HmiProperty<bool>? MajorGridVisible { get; set; }
