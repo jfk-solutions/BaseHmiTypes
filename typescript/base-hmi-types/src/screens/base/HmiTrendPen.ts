@@ -1,3 +1,4 @@
+import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiColor } from "./HmiColor.js";
 import { HmiLineStyle } from "./HmiLineStyle.js";
 import { HmiProperty } from "./HmiProperty.js";
@@ -12,6 +13,7 @@ export class HmiTrendPen {
   number = 0;
   name?: string;
   label?: string;
+  labelText?: HmiMultilingualText;
   /** Named trend window assigned to this pen. */
   trendWindowName?: string;
   /** Named time axis assigned to this pen. */
@@ -79,6 +81,7 @@ export class HmiTrendPen {
   dataSourceApplication?: string;
   description?: string;
   engineeringUnit?: string;
+  engineeringUnitText?: HmiMultilingualText;
   logarithmicScale?: HmiProperty<boolean>;
   /** FactoryTalk pen index used as the lower boundary of a shaded range. */
   lowerBoundPenIndex?: HmiProperty<number>;

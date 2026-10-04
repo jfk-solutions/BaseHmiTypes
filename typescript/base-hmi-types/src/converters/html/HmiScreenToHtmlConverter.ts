@@ -4023,7 +4023,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendStaticAttribute(html, "minimum-value", trendControl.minimumValue);
   appendStaticAttribute(html, "maximum-value", trendControl.maximumValue);
   appendStaticAttribute(html, "y-axis-decimal-places", trendControl.yAxisDecimalPlaces);
-  appendAttribute(html, "pens", formatTrendPens(trendControl.pens));
+  appendAttribute(html, "pens", formatTrendPens(trendControl.pens, context.options.cultureLcid));
   appendAttribute(html, "value-axes", formatTrendValueAxes(trendControl.valueAxes));
   appendAttribute(html, "x-value-axes", formatTrendXValueAxes(trendControl.xValueAxes));
   appendAttribute(html, "trend-windows", formatTrendWindows(trendControl.trendWindows));
@@ -4273,12 +4273,13 @@ function formatTrendValueAxes(axes: readonly HmiTrendValueAxis[]): string | unde
   }));
 }
 
-function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
+function formatTrendPens(pens: readonly HmiTrendPen[], cultureLcid?: number): string | undefined {
   if (pens.length === 0) return undefined;
   return JSON.stringify(pens.map(pen => {
     const result: Record<string, string | number | boolean> = { number: pen.number };
     if (pen.name !== undefined) result.name = pen.name;
-    if (pen.label !== undefined) result.label = pen.label;
+    const label = pen.labelText?.getText(cultureLcid) ?? pen.label;
+    if (label !== undefined) result.label = label;
     if (pen.trendWindowName !== undefined) result.trendWindowName = pen.trendWindowName;
     if (pen.timeAxisName !== undefined) result.timeAxisName = pen.timeAxisName;
     const color = getStaticValue(pen.color);
@@ -4347,7 +4348,8 @@ function formatTrendPens(pens: readonly HmiTrendPen[]): string | undefined {
     const valueAxisAlignment = getStaticValue(pen.valueAxisAlignment);
     if (valueAxisAlignment !== undefined) result.valueAxisAlignment = valueAxisAlignment;
     if (pen.valueAxisLabel !== undefined) result.valueAxisLabel = pen.valueAxisLabel;
-    if (pen.engineeringUnit !== undefined) result.unit = pen.engineeringUnit;
+    const unit = pen.engineeringUnitText?.getText(cultureLcid) ?? pen.engineeringUnit;
+    if (unit !== undefined) result.unit = unit;
     return result;
   }));
 }
