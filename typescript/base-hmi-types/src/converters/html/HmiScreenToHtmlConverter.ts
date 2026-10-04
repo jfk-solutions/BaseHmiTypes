@@ -29,9 +29,12 @@ import { HmiTrendPen } from "../../screens/base/HmiTrendPen.js";
 import { HmiTrendValueAxis } from "../../screens/base/HmiTrendValueAxis.js";
 import { HmiTrendWindow } from "../../screens/base/HmiTrendWindow.js";
 import { HmiTrendTimeAxis } from "../../screens/base/HmiTrendTimeAxis.js";
+import { HmiTrendControlBase } from "../../screens/base/HmiTrendControlBase.js";
+import { HmiTrendChartStyle } from "../../screens/base/HmiTrendChartStyle.js";
+import { HmiFunctionTrendControl } from "../../screens/controls/HmiFunctionTrendControl.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
-import { getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
+import { staticProperty, getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
 import { HmiScreenBase } from "../../screens/base/HmiScreenBase.js";
 import { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
 import { HmiSymbolContainer } from "../../screens/base/HmiSymbolContainer.js";
@@ -353,7 +356,7 @@ export class HmiScreenToHtmlConverter {
       appendAlarmIndicator(html, item, context);
     } else if (item instanceof HmiGauge) {
       appendGauge(html, item, context);
-    } else if (item instanceof HmiTrendControl) {
+    } else if (item instanceof HmiTrendControlBase) {
       appendTrendControl(html, item, context);
     } else if (item instanceof HmiSymbolContainer) {
       await this.appendSymbolContainerAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
@@ -3781,14 +3784,16 @@ function appendIntegerListAttribute(
   if (value !== undefined) appendAttribute(html, name, value.join(","));
 }
 
-function appendTrendControl(html: string[], trendControl: HmiTrendControl, context: HmiHtmlConvertContext): void {
+function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, context: HmiHtmlConvertContext): void {
   html.push("<hmi-trend-control");
   appendCommonAttributes(html, trendControl, context, true, createTrendControlStyle(trendControl));
   appendAttribute(html, "data-window-resizable", resolvePropertyPreview(trendControl.resizable));
   appendAttribute(html, "data-window-movable", resolvePropertyPreview(trendControl.movable));
   appendAttribute(html, "data-window-closeable", resolvePropertyPreview(trendControl.closeable));
   appendAttribute(html, "control-name", trendControl.name);
-  appendAttribute(html, "type-name", "Trend control");
+  appendAttribute(html, "type-name", trendControl instanceof HmiFunctionTrendControl ? "Function trend control" : "Trend control");
+  appendStaticAttribute(html, "chart-style", trendControl instanceof HmiFunctionTrendControl
+    ? staticProperty(HmiTrendChartStyle.XYPlot) : trendControl.chartStyle);
   appendAttribute(html, "chart-title", trendControl.chartTitle);
   appendStaticAttribute(html, "window-background-color", trendControl.windowBackgroundColor);
   appendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.displayChartTitle);
@@ -3930,7 +3935,7 @@ function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCell
   return parts.join("");
 }
 
-function createTrendControlStyle(trendControl: HmiTrendControl): string {
+function createTrendControlStyle(trendControl: HmiTrendControlBase): string {
   const parts = [createControlWindowStyle(trendControl, "overflow: hidden;")];
   appendFontVariables(parts, "content", trendControl.contentFont);
   appendFontVariables(parts, "header", trendControl.headerFont);

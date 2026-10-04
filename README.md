@@ -93,3 +93,11 @@ var html = new BaseHmiTypes.Converters.Html.HmiRecipeToHtmlConverter().Convert(r
 import { HmiRecipeToHtmlConverter } from "@jfk-solutions/base-hmi-types";
 const html = new HmiRecipeToHtmlConverter().convert(recipe);
 ```
+
+## Function trend preview
+
+Function-trend controls use the shared trend HTML renderer in C# and TypeScript.
+The XYPlot preview retains shared window, toolbar, status-bar, and appearance
+settings. It displays unavailable X-range/data messages and omits generated
+time curves and time labels. Full function-trend axis and data-source mapping
+is still needed before the preview can display configured XY data.
