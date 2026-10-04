@@ -6,6 +6,8 @@ import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiImage } from "../../images/HmiImage.js";
 import { HmiImageType } from "../../images/HmiImageType.js";
 import { MetafileToSvgRenderer } from "../../images/converters/metafile-to-svg-renderer.js";
+import { SymbolLibraryMetafileColorizer } from "../../images/converters/symbol-library-metafile-colorizer.js";
+import { HmiSymbolLibraryFillColorMode } from "../../screens/base/HmiSymbolLibraryEnums.js";
 import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js";
 import { HmiColor, hmiColorFromArgb } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
@@ -3901,7 +3903,19 @@ function appendSymbolLibraryControl(
   symbolLibraryControl: HmiSymbolLibraryControl,
   context: HmiHtmlConvertContext,
 ): void {
-  const symbolSvg = resolveImageSvg(symbolLibraryControl.symbol);
+  let symbolImage = symbolLibraryControl.symbol;
+  const appearance = getStaticValue(symbolLibraryControl.symbolAppearance ?? symbolLibraryControl.fillColorMode) ?? HmiSymbolLibraryFillColorMode.Original;
+  if (symbolImage && appearance !== HmiSymbolLibraryFillColorMode.Original &&
+      (symbolImage.imageType === HmiImageType.Wmf || getImageExtension(symbolImage)?.toLowerCase() === '.wmf' || symbolImage.mimeType?.toLowerCase().includes('wmf'))) {
+    const color = getStaticValue(symbolLibraryControl.foreColor ?? symbolLibraryControl.fillColor);
+    const colored = SymbolLibraryMetafileColorizer.tryRecolor(symbolImage.data, appearance, color);
+    if (!colored) {
+      appendDiv(html, symbolLibraryControl, context.options.unsupportedItemPlaceholderCssClass, 'Symbol library control', context);
+      return;
+    }
+    symbolImage = Object.assign(new HmiImage(), {id: symbolImage.id, name: symbolImage.name, imageType: symbolImage.imageType, mimeType: symbolImage.mimeType, data: colored});
+  }
+  const symbolSvg = resolveImageSvg(symbolImage);
   if (symbolSvg?.trim()) {
     html.push("<div");
     appendSymbolLibraryAttributes(html, symbolLibraryControl, context);
@@ -3911,7 +3925,7 @@ function appendSymbolLibraryControl(
     return;
   }
 
-  const imageUri = resolveImageUriFromImage(symbolLibraryControl.symbol);
+  const imageUri = resolveImageUriFromImage(symbolImage);
   if (!imageUri?.trim()) {
     appendDiv(html, symbolLibraryControl, context.options.unsupportedItemPlaceholderCssClass, "Symbol library control", context);
     return;
