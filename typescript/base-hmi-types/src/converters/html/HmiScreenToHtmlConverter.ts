@@ -50,6 +50,7 @@ import {
   HmiSymbolLibraryBackFillStyle,
   HmiSymbolLibraryBlinkMode,
   HmiSymbolLibraryBlinkSpeed,
+  HmiSymbolLibraryRasterLayout,
   HmiSymbolLibraryFlip,
   HmiSymbolLibraryRotation,
 } from "../../screens/base/HmiSymbolLibraryEnums.js";
@@ -3964,6 +3965,12 @@ function appendSymbolLibraryControl(
     if (alternate) html.push(`<div data-hmi-symbol-phase="alternate" aria-hidden="true" style="position: absolute; inset: 0; opacity: 1; animation: hmi-symbol-on ${interval * 2}ms step-end infinite;">${alternate}</div>`);
     html.push('</div>'); return;
   }
+  if (symbolLibraryControl.rasterLayout !== undefined) {
+    const markup = createSymbolLibraryMarkup(symbolImage, symbolLibraryControl);
+    if (!markup) { appendDiv(html, symbolLibraryControl, context.options.unsupportedItemPlaceholderCssClass, 'Symbol library control', context); return; }
+    html.push('<div'); appendSymbolLibraryAttributes(html, symbolLibraryControl, context, wmf);
+    html.push('>', markup, '</div>'); return;
+  }
   if (symbolSvg?.trim()) {
     html.push("<div");
     appendSymbolLibraryAttributes(html, symbolLibraryControl, context, wmf);
@@ -3993,6 +4000,36 @@ function appendSymbolLibraryControl(
 }
 
 function createSymbolLibraryMarkup(image: HmiImage | undefined, control: HmiSymbolLibraryControl): string | undefined {
+  if (control.rasterLayout !== undefined) {
+    const layout = getStaticValue(control.rasterLayout), rasterUri = resolveImageUriFromImage(image);
+    if (!rasterUri?.trim() || !Object.values(HmiSymbolLibraryRasterLayout).includes(layout!)) return undefined;
+    if (layout === HmiSymbolLibraryRasterLayout.Tile) {
+      const tile = ['<div data-hmi-symbol-tile="true" role="img"'];
+      appendAttribute(tile, 'aria-label', image?.name ?? control.name);
+      appendAttribute(tile, 'style', `width: 100%; height: 100%; image-rendering: pixelated; background-repeat: repeat; background-position: 0 0; background-size: auto; background-image: url("${rasterUri}");`);
+      return [...tile, '></div>'].join('');
+    }
+    const raster = ['<img']; appendAttribute(raster, 'src', rasterUri); appendAttribute(raster, 'alt', image?.name ?? control.name);
+    if (layout === HmiSymbolLibraryRasterLayout.Stretch)
+      return [...raster, ' style="width: 100%; height: 100%; display: block; object-fit: fill; image-rendering: pixelated;">'].join('');
+    // Native downscale uses an integer ratio scaled by 1000 and integer centering.
+    if (image?.imageType !== HmiImageType.Bmp || image.data.length < 54 || image.data[0] !== 66 || image.data[1] !== 77) return undefined;
+    const data = new DataView(image.data.buffer, image.data.byteOffset, image.data.byteLength);
+    const imageWidth = data.getInt32(18, true), imageHeight = data.getInt32(22, true);
+    const width = Math.trunc(getStaticValue(control.width) ?? 0), height = Math.trunc(getStaticValue(control.height) ?? 0);
+    const limit = Math.trunc(0x7fffffff / 1000);
+    if (imageWidth <= 0 || imageHeight <= 0 || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0 || width > limit || height > limit || imageWidth > limit) return undefined;
+    let drawWidth = imageWidth, drawHeight = imageHeight;
+    if (imageWidth > width || imageHeight > height) {
+      const ratio = Math.trunc(imageWidth * 1000 / imageHeight); if (!ratio) return undefined;
+      drawWidth = width; drawHeight = height;
+      if (Math.trunc(width * 1000 / height) < ratio) drawHeight = Math.trunc(width * 1000 / ratio);
+      else drawWidth = Math.trunc(height * ratio / 1000);
+    }
+    const left = Math.trunc((width - drawWidth) / 2), top = Math.trunc((height - drawHeight) / 2);
+    appendAttribute(raster, 'style', `position: absolute; left: ${left}px; top: ${top}px; width: ${drawWidth}px; height: ${drawHeight}px; image-rendering: pixelated;`);
+    return [...raster, '>'].join('');
+  }
   const svg = resolveImageSvg(image);
   if (svg?.trim()) return normalizeEmbeddedSymbolSvg(svg, control);
   const uri = resolveImageUriFromImage(image);

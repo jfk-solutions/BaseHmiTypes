@@ -36,3 +36,10 @@ export enum HmiSymbolLibraryBackFillStyle {
   Transparent = "Transparent",
   Solid = "Solid",
 }
+
+/** Explicit raster layout; unset retains the existing symbol layout policy. */
+export enum HmiSymbolLibraryRasterLayout {
+  Stretch = "Stretch",
+  NativeScaleDown = "NativeScaleDown",
+  Tile = "Tile",
+}
