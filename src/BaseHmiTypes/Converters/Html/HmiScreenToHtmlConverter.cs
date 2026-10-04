@@ -4234,7 +4234,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "type-name", trendControl is HmiFunctionTrendControl ? "Function trend control" : "Trend control");
         AppendStaticAttribute(html, "chart-style", trendControl is HmiFunctionTrendControl
             ? HmiProperty.Static(HmiTrendChartStyle.XYPlot) : trendControl.ChartStyle);
-        AppendAttribute(html, "chart-title", trendControl.ChartTitle);
+        AppendAttribute(html, "chart-title", trendControl.ChartTitleText?.GetText(context.CultureInfo) ?? trendControl.ChartTitle);
         AppendStaticAttribute(html, "window-background-color", trendControl.WindowBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "display-chart-title", trendControl.DisplayChartTitle);
         AppendStaticBooleanValueAttribute(html, "show-toolbar", trendControl.ShowToolbar);

@@ -1,3 +1,5 @@
+using BaseHmiTypes.Common;
+
 namespace BaseHmiTypes.Screens.Base;
 
 public abstract class HmiTrendControlBase : HmiControlWindowBase
@@ -71,6 +73,7 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<int>? BufferSizePerPen { get; set; }
 
     public string? ChartTitle { get; set; }
+    public HmiMultilingualText? ChartTitleText { get; set; }
 
     public HmiProperty<bool>? DisplayChartTitle { get; set; }
 
