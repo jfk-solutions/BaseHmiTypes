@@ -1494,11 +1494,16 @@ async function appendButton(
   const imageUri = mode === HmiButtonType.Text ? undefined : await resolveImageUri(image, project, signal);
   const hasImage = imageUri !== undefined && imageUri.trim() !== "";
   const imageFallback = mode === HmiButtonType.GraphicOrText && hasImage;
+  const overlay = hasImage && getStaticValue(button.overlayContent) === true;
   if (imageFallback) html.push(" data-hmi-button-image-fallback");
   html.push(">");
   if (hasImage) {
-    html.push('<span data-hmi-button-content style="display: flex;flex-direction: column;width: 100%;height: 100%;min-width: 0;min-height: 0;align-items: center;justify-content: center;overflow: hidden;">',
-      '<span data-hmi-button-graphic style="flex: 1 1 0;min-width: 0;min-height: 0;width: 100%;">');
+    if (overlay)
+      html.push('<span data-hmi-button-content data-hmi-button-overlay style="display: grid;grid-template-columns: minmax(0, 1fr);grid-template-rows: minmax(0, 1fr);width: 100%;height: 100%;min-width: 0;min-height: 0;overflow: hidden;">',
+        '<span data-hmi-button-graphic style="grid-area: 1 / 1;min-width: 0;min-height: 0;width: 100%;height: 100%;">');
+    else
+      html.push('<span data-hmi-button-content style="display: flex;flex-direction: column;width: 100%;height: 100%;min-width: 0;min-height: 0;align-items: center;justify-content: center;overflow: hidden;">',
+        '<span data-hmi-button-graphic style="flex: 1 1 0;min-width: 0;min-height: 0;width: 100%;">');
     appendButtonImage(
       html,
       button,
@@ -1508,7 +1513,7 @@ async function appendButton(
     html.push("</span>");
   }
   if (mode !== HmiButtonType.Graphic)
-    appendButtonCaption(html, button, state, caption, hasImage, imageFallback, context);
+    appendButtonCaption(html, button, state, caption, hasImage, imageFallback, overlay, context);
   if (hasImage) html.push("</span>");
   html.push("</button>");
 }
@@ -1518,7 +1523,7 @@ function isButtonDownVisual(button: HmiButton): boolean {
 }
 
 function appendButtonCaption(html: string[], button: HmiButton, state: HmiState | undefined,
-  caption: HmiMultilingualText | undefined, boundedLayout: boolean, hidden: boolean, context: HmiHtmlConvertContext): void {
+  caption: HmiMultilingualText | undefined, boundedLayout: boolean, hidden: boolean, overlay: boolean, context: HmiHtmlConvertContext): void {
   const captionBlink = getButtonCaptionBlink(button, state);
   const captionColor = state?.captionColor ?? state?.foregroundColor ?? getStaticValue(button.captionColor);
   const wrapped = boundedLayout || captionBlink !== undefined || captionColor !== undefined;
@@ -1526,12 +1531,19 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
     html.push("<span data-hmi-button-caption");
     if (hidden) html.push(" hidden");
     html.push(' style="');
-    if (boundedLayout) html.push("flex: 0 0 auto;width: 100%;max-width: 100%;");
+    if (overlay) html.push("grid-area: 1 / 1;z-index: 1;min-width: 0;min-height: 0;width: 100%;height: 100%;overflow: hidden;");
+    else if (boundedLayout) html.push("flex: 0 0 auto;width: 100%;max-width: 100%;");
     if (captionBlink !== undefined) html.push("animation: hmi-caption-color-flash " + getBlinkDuration(captionBlink.rate) + "s steps(1, end) infinite;");
     else if (captionColor !== undefined) html.push("color: " + colorToCss(captionColor) + ";");
     html.push('\">');
   }
+  if (overlay) {
+    const x = getStaticValue(button.horizontalAlignment) ?? HmiHorizontalAlignment.Center;
+    const y = getStaticValue(button.verticalAlignment) ?? HmiVerticalAlignment.Center;
+    html.push('<span data-hmi-button-caption-layout style="display: flex;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ' + horizontalAlignmentToFlexCss(x) + ';align-items: ' + verticalAlignmentToCss(y) + ';">');
+  }
   appendMultilingualText(html, caption, context);
+  if (overlay) html.push("</span>");
   if (wrapped) html.push("</span>");
 }
 
