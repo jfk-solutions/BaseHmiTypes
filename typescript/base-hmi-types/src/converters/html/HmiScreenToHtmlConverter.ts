@@ -2910,6 +2910,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-active-column-set", alarmControl.activeColumnSet);
   appendAttribute(html, "data-list-mode", listMode);
   appendAttribute(html, "data-time-base", resolvePropertyPreview(alarmControl.timeBase));
+  appendAttribute(html, "data-shorten-cell-contents", resolvePropertyPreview(alarmControl.shortenCellContents));
+  appendAttribute(html, "data-shorten-column-titles", resolvePropertyPreview(alarmControl.shortenColumnTitles));
   appendAttribute(html, "data-cell-padding-top", resolvePropertyPreview(alarmControl.cellPaddingTop));
   appendAttribute(html, "data-cell-padding-right", resolvePropertyPreview(alarmControl.cellPaddingRight));
   appendAttribute(html, "data-cell-padding-bottom", resolvePropertyPreview(alarmControl.cellPaddingBottom));
@@ -2973,7 +2975,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     if (visibleColumns.length === 0)
       html.push("<th style=\"", headerCellStyle, "\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
     for (const column of visibleColumns) {
-      html.push("<th style=\"", headerCellStyle, "overflow: hidden; text-overflow: ellipsis;");
+      html.push("<th style=\"", headerCellStyle, alarmControl.shortenColumnTitles === undefined
+        ? "overflow: hidden; text-overflow: ellipsis;" : "");
       const width = getStaticValue(column.width);
       if (getStaticValue(column.autoSize) !== true && width !== undefined && Number.isFinite(width) && width >= 0)
         html.push(`width: ${toCss(width)}px;`);
@@ -2990,7 +2993,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   }
   html.push("<tbody><tr><td");
   appendAttribute(html, "colspan", Math.max(visibleColumns.length, 1).toString());
-  html.push(" style=\"text-align: center;", gridCellStyle);
+  html.push(" style=\"text-align: center;", gridCellStyle, createAlarmShorteningStyle(alarmControl.shortenCellContents));
   appendColorStyle(html, "background-color", alarmControl.selectionBackgroundColor);
   appendColorStyle(html, "color", alarmControl.selectionForegroundColor);
   appendAlarmSelectionRectangleStyle(html, alarmControl);
@@ -4545,8 +4548,14 @@ function appendAlarmSelectionRectangleStyle(parts: string[], alarmControl: HmiAl
   parts.push(`outline: ${toCss(width)}px solid ${color};outline-offset: -${toCss(width)}px;`);
 }
 
+function createAlarmShorteningStyle(property: HmiProperty<boolean> | undefined): string {
+  const value = getStaticValue(property);
+  if (value === undefined) return "";
+  return value ? "overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" : "overflow: hidden; text-overflow: clip;";
+}
+
 function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCellStyle: string, context: HmiHtmlConvertContext): string {
-  const parts = [gridCellStyle];
+  const parts = [gridCellStyle, createAlarmShorteningStyle(alarmControl.shortenColumnTitles)];
   appendColorStyle(parts, "background-color", alarmControl.tableHeaderBackgroundColor);
   appendColorStyle(parts, "color", alarmControl.tableHeaderForegroundColor);
   const horizontalAlignment = getStaticValue(alarmControl.tableHeaderHorizontalAlignment);
