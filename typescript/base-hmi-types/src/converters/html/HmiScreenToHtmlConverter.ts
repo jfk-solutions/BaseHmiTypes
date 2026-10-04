@@ -205,7 +205,9 @@ export class HmiScreenToHtmlConverter {
       html.push(" style=\"position: relative; overflow: hidden;");
       appendSize(html, getStaticValueOrDefault(screen.width, 0), getStaticValueOrDefault(screen.height, 0));
       appendScreenStyle(html, screen, backgroundImageUri);
-      html.push("\">");
+      html.push('"');
+      appendAttribute(html, "data-hmi-screen", "true");
+      html.push(">");
 
       const template = await resolveTemplateAsync(screen, project, screenStack, signal);
       if (template !== undefined) {
@@ -1692,7 +1694,7 @@ function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext):
   const showScale = getStaticValue(bar.showScale) === true;
   const showThresholds = getStaticValue(bar.showLimitRanges) !== false && bar.thresholds.some(threshold =>
     threshold.value !== undefined && getStaticValue(threshold.enabled) !== false);
-  if (showScale || showThresholds || getBarOutOfRange(bar) !== 0 || getBarFillOrigin(bar, minimum, maximum, value) !== undefined) {
+  if (showScale || showThresholds || getBarOutOfRange(bar) !== 0 || getBarFillOrigin(bar, minimum, maximum, value, context) !== undefined) {
     const vertical = direction === HmiFillDirection.Up || direction === HmiFillDirection.Down;
     const scaleBefore = showScale && getStaticValue(bar.scaleAfterBar) === false;
     html.push("<div");
@@ -1754,7 +1756,7 @@ function appendBarMeter(
   vertical: boolean,
   context: HmiHtmlConvertContext,
 ): void {
-  const origin = getBarFillOrigin(bar, minimum, maximum, value);
+  const origin = getBarFillOrigin(bar, minimum, maximum, value, context);
   if (origin !== undefined) {
     appendBarOriginMeter(html, bar, minimum, maximum, value, origin, direction, context);
     return;
@@ -1778,12 +1780,12 @@ function appendBarMeter(
   html.push(`>${toCss(value)}</meter>`);
 }
 
-function getBarFillOrigin(bar: HmiBar, minimum: number, maximum: number, value: number): number | undefined {
+function getBarFillOrigin(bar: HmiBar, minimum: number, maximum: number, value: number, context: HmiHtmlConvertContext): number | undefined {
   const origin = getStaticValue(bar.originValue);
   if (!Number.isFinite(minimum) || !Number.isFinite(maximum) ||
       !Number.isFinite(value) || !Number.isFinite(maximum - minimum) || maximum <= minimum)
     return undefined;
-  if (origin === undefined) return usesNonlinearBarMapping(bar, minimum, maximum) ? minimum : undefined;
+  if (origin === undefined) return usesNonlinearBarMapping(bar, minimum, maximum) || getBarBitmapRows(bar, context) !== undefined ? minimum : undefined;
   return Number.isFinite(origin) ? origin : undefined;
 }
 
@@ -1819,8 +1821,20 @@ function appendBarOriginMeter(html: string[], bar: HmiBar, minimum: number, maxi
   if (disabledColor !== undefined) appendColorStyle(style, "color", disabledColor);
   else if (thresholdColor !== undefined) appendColorStyle(style, "color", thresholdColor);
   style.push(getBarFillOverrideStyle(bar, context));
+  const bitmapRows = getBarBitmapRows(bar, context);
+  if (bitmapRows !== undefined) {
+    appendAttribute(html, "data-hmi-bar-bitmap", bitmapRows);
+    const patternColor = getStaticValue(context.effectiveProperties.resolve(bar, "PatternColor", bar.patternColor)) ?? hmiColorFromArgb(255, 0, 0, 0);
+    appendAttribute(html, "data-hmi-bar-pattern-color", colorToCss(patternColor));
+  }
   appendAttribute(html, "style", style.join(""));
   html.push("></span></div>");
+}
+
+function getBarBitmapRows(bar: HmiBar, context: HmiHtmlConvertContext): string | undefined {
+  if (getStaticValue(context.effectiveProperties.resolve(bar, "FillStyle", bar.fillStyle)) !== HmiBarFillStyle.BitmapPattern) return undefined;
+  const rows = getStaticValue(context.effectiveProperties.resolve(bar, "BitmapPatternRows", bar.bitmapPatternRows));
+  return rows !== undefined && /^[0-9a-f]{16}$/i.test(rows) ? rows.toLowerCase() : undefined;
 }
 
 function appendBarColorAttributes(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
@@ -2359,9 +2373,12 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
     appendColorStyle(style, "background-color", control.toolbarBackgroundColor);
     html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '\">Toolbar</div>');
   }
-  html.push('<div class="hmi-parameter-selection" style="flex: 0 0 auto; padding: 2px 4px;">Parameter set type');
+  html.push('<div class="hmi-parameter-selection" style="flex: 0 0 auto; padding: 2px 4px;"><div>',
+    escapeHtml(getStaticValue(control.parameterSetTypeLabel)?.getText(context.cultureLcid) ?? "Parameter set type"));
   if (getStaticValue(control.parameterSetTypeFixed)) html.push(" · Fixed");
-  html.push("<br>Parameter set selection not decoded</div>");
+  html.push("</div><div>", escapeHtml(getStaticValue(control.parameterSetLabel)?.getText(context.cultureLcid) ?? "Parameter set"),
+    "</div><div>", escapeHtml(getStaticValue(control.numberLabel)?.getText(context.cultureLcid) ?? "Number"),
+    "</div><div>Parameter set selection not decoded</div></div>");
   if (!getStaticValue(control.hideDetails))
     html.push('<div class="hmi-parameter-details" style="flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top: 1px solid currentColor;">Parameter data not loaded</div>');
   if (getStaticValue(control.showStatusBar)) {
