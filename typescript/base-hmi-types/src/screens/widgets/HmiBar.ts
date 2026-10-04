@@ -11,6 +11,10 @@ export class HmiBar extends HmiScaleWidgetBase {
   bitmapPatternRows?: HmiProperty<string>;
   /** GDI+ HatchStyle integer 0..52 for HatchPattern. Spacing is eight device pixels, not scaled logical pixels. Invalid indices paint no value region. */
   hatchStyle?: HmiProperty<number>;
+  /** Native rectangle-gradient mode: 0 horizontal, 1 vertical, 2 forward diagonal, 3 backward diagonal (top-right to bottom-left). Overrides generic gradient direction/axis/stop. Invalid modes paint no value region; arbitrary-transform pixel fidelity is not guaranteed. */
+  gradientMode?: HmiProperty<number>;
+  /** Native sigma/bell blend with focus 0.5 and scale 1. Omitted means linear. */
+  gradientSigmaBlend?: HmiProperty<boolean>;
   /** Color of the unfilled bar track, independent of widget background. Omitted retains the background-based track. */
   trackColor?: HmiProperty<HmiColor>;
   /** Color of the value region, independent of widget foreground. Disabled and threshold colors take precedence; omitted inherits foreground. */
