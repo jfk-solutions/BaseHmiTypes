@@ -2427,20 +2427,21 @@ function appendMediaControl(html: string[], mediaControl: HmiMediaControl, conte
   appendAttribute(html, "data-status-bar-background-color", resolvePropertyPreview(mediaControl.statusBarBackgroundColor));
   appendAttribute(html, "data-status-bar-foreground-color", resolvePropertyPreview(mediaControl.statusBarForegroundColor));
   html.push(">");
-  const bar = (role: string, background: HmiProperty<HmiColor> | undefined, foreground: HmiProperty<HmiColor> | undefined, text: string) => {
+  const bar = (role: string, background: HmiProperty<HmiColor> | undefined, foreground: HmiProperty<HmiColor> | undefined, font: HmiFont | undefined, text: string) => {
     const style = ["flex: 0 0 auto; padding: 2px 4px;"];
     appendColorStyle(style, "background-color", background); appendColorStyle(style, "color", foreground);
+    if (font) appendFont(style, font.getForCulture(context.options.cultureLcid));
     html.push('<div role="', role, '" style="', style.join(""), '">', text, "</div>");
   };
   if (getStaticValue(mediaControl.showToolbar) === true)
-    bar("toolbar", mediaControl.toolbarBackgroundColor, mediaControl.toolbarForegroundColor, "Media commands not loaded");
+    bar("toolbar", mediaControl.toolbarBackgroundColor, mediaControl.toolbarForegroundColor, mediaControl.toolbarFont, "Media commands not loaded");
   html.push("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Media not loaded</div>");
   if (source?.trim())
     html.push("<div style=\"overflow: hidden; overflow-wrap: anywhere;\">Source: ", escapeHtml(source), "</div>");
   if (autoPlay !== undefined)
     html.push("<div>Autoplay: ", escapeHtml(autoPlay), "</div>");
   if (getStaticValue(mediaControl.showStatusBar) === true)
-    bar("status", mediaControl.statusBarBackgroundColor, mediaControl.statusBarForegroundColor, "Media status not loaded");
+    bar("status", mediaControl.statusBarBackgroundColor, mediaControl.statusBarForegroundColor, mediaControl.statusBarFont, "Media status not loaded");
   html.push("</div>");
 }
 

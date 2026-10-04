@@ -1,4 +1,4 @@
-import { HmiProperty, HmiColor } from "../base.js";
+import { HmiProperty, HmiColor, HmiFont } from "../base.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 
@@ -11,6 +11,8 @@ export class HmiMediaControl extends HmiControlWindowBase {
   source?: HmiProperty<string>;
   autoPlay?: HmiProperty<boolean>;
   videoOutput?: HmiProperty<number>;
+  toolbarFont?: HmiFont;
+  statusBarFont?: HmiFont;
   showToolbar?: HmiProperty<boolean>;
   toolbarBackgroundColor?: HmiProperty<HmiColor>;
   toolbarForegroundColor?: HmiProperty<HmiColor>;

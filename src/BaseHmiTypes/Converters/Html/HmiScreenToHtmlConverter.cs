@@ -2590,21 +2590,22 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-status-bar-background-color", ResolvePropertyPreview(mediaControl.StatusBarBackgroundColor, context));
         AppendAttribute(html, "data-status-bar-foreground-color", ResolvePropertyPreview(mediaControl.StatusBarForegroundColor, context));
         html.Append('>');
-        void Bar(string role, HmiProperty<HmiColor>? background, HmiProperty<HmiColor>? foreground, string text)
+        void Bar(string role, HmiProperty<HmiColor>? background, HmiProperty<HmiColor>? foreground, HmiFont? font, string text)
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px;");
             AppendColorStyle(style, "background-color", background); AppendColorStyle(style, "color", foreground);
+            AppendFontStyle(style, font?.GetForCulture(context.CultureInfo?.LCID));
             html.Append("<div role=\"").Append(role).Append("\" style=\"").Append(style).Append("\">").Append(text).Append("</div>");
         }
         if (mediaControl.ShowToolbar is not null && ResolveStaticValue(mediaControl.ShowToolbar, context))
-            Bar("toolbar", mediaControl.ToolbarBackgroundColor, mediaControl.ToolbarForegroundColor, "Media commands not loaded");
+            Bar("toolbar", mediaControl.ToolbarBackgroundColor, mediaControl.ToolbarForegroundColor, mediaControl.ToolbarFont, "Media commands not loaded");
         html.Append("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Media not loaded</div>");
         if (!string.IsNullOrWhiteSpace(source))
             html.Append("<div style=\"overflow: hidden; overflow-wrap: anywhere;\">Source: ").Append(WebUtility.HtmlEncode(source)).Append("</div>");
         if (autoPlay is not null)
             html.Append("<div>Autoplay: ").Append(WebUtility.HtmlEncode(autoPlay)).Append("</div>");
         if (mediaControl.ShowStatusBar is not null && ResolveStaticValue(mediaControl.ShowStatusBar, context))
-            Bar("status", mediaControl.StatusBarBackgroundColor, mediaControl.StatusBarForegroundColor, "Media status not loaded");
+            Bar("status", mediaControl.StatusBarBackgroundColor, mediaControl.StatusBarForegroundColor, mediaControl.StatusBarFont, "Media status not loaded");
         html.Append("</div>");
     }
 
