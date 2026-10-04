@@ -25,4 +25,7 @@ public class HmiButton : HmiButtonBase
 
     /// <summary>True paints image and caption over the same content area with independent alignment. False/omitted retains the stacked preview.</summary>
     public HmiProperty<bool>? OverlayContent { get; set; }
+
+    /// <summary>Positive pixel offset on both axes for pressed caption and non-stretched image snapshots. Omitted/zero disables it; DownStateSameAsUp suppresses it.</summary>
+    public HmiProperty<double>? PressedContentOffset { get; set; }
 }

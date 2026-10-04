@@ -1706,6 +1706,12 @@ public class HmiScreenToHtmlConverter
     private static bool IsButtonDownVisual(HmiButton button, HmiHtmlConvertContext context) =>
         ResolveStaticValue(button.Pressed, context) && !ResolveStaticValue(button.DownStateSameAsUp, context);
 
+    private static double GetButtonPressedContentOffset(HmiButton button, HmiHtmlConvertContext context)
+    {
+        var offset = ResolveStaticValue(button.PressedContentOffset, context);
+        return IsButtonDownVisual(button, context) && double.IsFinite(offset) && offset > 0 ? offset : 0;
+    }
+
     private static void AppendButtonCaption(StringBuilder html, HmiButton button, HmiState? state,
         HmiMultilingualText? caption, bool boundedLayout, bool hidden, bool overlay, HmiHtmlConvertContext context)
     {
@@ -1734,7 +1740,12 @@ public class HmiScreenToHtmlConverter
             html.Append("<span data-hmi-button-caption-layout style=\"display: flex;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ")
                 .Append(ToFlexCss(horizontal)).Append(";align-items: ").Append(ToCss(vertical)).Append(";\">");
         }
+        var offset = GetButtonPressedContentOffset(button, context);
+        if (offset > 0)
+            html.Append("<span data-hmi-button-pressed-caption style=\"display: inline-block;transform: translate(")
+                .Append(ToCss(offset)).Append("px, ").Append(ToCss(offset)).Append("px);\">");
         AppendMultilingualText(html, caption, context);
+        if (offset > 0) html.Append("</span>");
         if (overlay) html.Append("</span>");
         if (wrapped)
             html.Append("</span>");
@@ -1755,7 +1766,10 @@ public class HmiScreenToHtmlConverter
             html.Append(" style=\"display: grid;grid-template-columns: minmax(0, 1fr);grid-template-rows: minmax(0, 1fr);width: 100%;height: 100%;overflow: hidden;justify-items: ")
                 .Append(x).Append(";align-items: ").Append(y).Append(";\">");
         }
-        AppendInnerImage(html, imageUri, grayscale);
+        var offset = button.ImageHorizontalAlignment is not null &&
+            ResolveStaticValue(button.ImageHorizontalAlignment, context) != HmiHorizontalAlignment.Stretch
+            ? GetButtonPressedContentOffset(button, context) : 0;
+        AppendInnerImage(html, imageUri, grayscale, offset);
         if (aligned) html.Append("</span>");
     }
 
@@ -3679,7 +3693,7 @@ public class HmiScreenToHtmlConverter
             html.Append("transform: ").Append(string.Join(" ", transforms)).Append(";transform-origin: center;");
     }
 
-    private static void AppendInnerImage(StringBuilder html, string? uri, bool grayscale = false)
+    private static void AppendInnerImage(StringBuilder html, string? uri, bool grayscale = false, double pressedOffset = 0)
     {
         if (string.IsNullOrWhiteSpace(uri))
             return;
@@ -3689,6 +3703,9 @@ public class HmiScreenToHtmlConverter
         html.Append(" style=\"width: 100%; height: 100%;");
         if (grayscale)
             html.Append(" filter: grayscale(1);");
+        if (pressedOffset > 0)
+            html.Append(" transform: translate(").Append(ToCss(pressedOffset)).Append("px, ")
+                .Append(ToCss(pressedOffset)).Append("px);");
         html.Append("\">");
     }
 
