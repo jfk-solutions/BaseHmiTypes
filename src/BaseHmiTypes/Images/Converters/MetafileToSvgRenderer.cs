@@ -92,11 +92,14 @@ public sealed class MetafileToSvgRenderer
                     state.WorldTransform = ModifyWorldTransform(state.WorldTransform, ReadTransform(bytes, dataOffset), U32(bytes, dataOffset + 24));
                     break;
                 case EMR.CreatePen:
+                    if (record.Size < 28) break;
                     objects[U32(bytes, dataOffset)] = new PenObject
                     {
-                        Width = Math.Max(1, I32(bytes, dataOffset + 12)),
-                        Color = ColorRef(bytes, dataOffset + 20),
-                        None = U32(bytes, dataOffset + 4) == 5,
+                        // LogPen.Width.x supplies the width; Width.y is ignored.
+                        // The complete 16-byte LogPen ends inside this record.
+                        Width = Math.Max(1, Math.Abs((double)I32(bytes, dataOffset + 8))),
+                        Color = ColorRef(bytes, dataOffset + 16),
+                        None = (U32(bytes, dataOffset + 4) & 0xF) == 5,
                     };
                     break;
                 case EMR.CreateBrushIndirect:
