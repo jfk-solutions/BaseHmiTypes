@@ -53,3 +53,19 @@ test("recipe table keeps widths without header and rejects invalid widths", asyn
   assert.ok(html.includes("white-space: normal;overflow-wrap: anywhere;"));
   assert.equal(html.includes("<thead>"), false);
 });
+
+test("recipe grid and status visibility reach HTML", async () => {
+  const control = new HmiRecipeControl(); control.viewKind = HmiRecipeViewKind.Table;
+  control.columnDefinitions.push({ type: HmiRecipeColumnType.CurrentValue });
+  control.showGridLines = staticProperty(false); control.showStatusBar = staticProperty(false);
+  control.gridLineColor = staticProperty(hmiColorFromArgb(255, 21, 22, 23));
+  let html = await convert(control);
+  assert.ok(html.includes("border: 0;border-color: #151617;"));
+  assert.ok(html.includes('data-show-grid-lines="false"')); assert.ok(!html.includes("hmi-recipe-status-bar"));
+  control.showGridLines = staticProperty(true); control.showStatusBar = staticProperty(true);
+  html = await convert(control); assert.ok(html.includes("border: 1px solid currentColor;border-color: #151617;"));
+  assert.ok(html.includes('class="hmi-recipe-status-bar"')); assert.ok(html.includes("Recipe status not loaded"));
+  delete control.showGridLines; delete control.showStatusBar;
+  html = await convert(control); assert.ok(!html.includes("data-show-grid-lines")); assert.ok(!html.includes("data-show-status-bar"));
+  assert.ok(!html.includes("hmi-recipe-status-bar"));
+});

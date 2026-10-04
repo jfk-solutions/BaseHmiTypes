@@ -2676,6 +2676,10 @@ public partial class HmiScreenToHtmlConverter
         var headerStyle = CreateRecipeHeaderStyle(recipeControl);
         var contentStyle = CreateRecipeContentStyle(recipeControl);
 
+        var cellStyle = new StringBuilder();
+        cellStyle.Append(recipeControl.ShowGridLines is not null && !ResolveStaticValue(recipeControl.ShowGridLines, context) ? "border: 0;" : "border: 1px solid currentColor;");
+        AppendColorStyle(cellStyle, "border-color", recipeControl.GridLineColor);
+
         html.Append("<div");
         AppendCommonAttributes(
             html,
@@ -2689,6 +2693,9 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-lines-per-item", ResolvePropertyPreview(recipeControl.LinesPerItem, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(recipeControl.WordWrap, context));
         AppendAttribute(html, "data-enable-recipe-dialog", ResolvePropertyPreview(recipeControl.EnableRecipeDialog, context));
+        AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(recipeControl.ShowGridLines, context));
+        AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(recipeControl.GridLineColor, context));
+        AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(recipeControl.ShowStatusBar, context));
         html.Append('>');
 
         if (recipeControl.ViewKind == HmiRecipeViewKind.Selector)
@@ -2722,7 +2729,7 @@ public partial class HmiScreenToHtmlConverter
                 html.Append("<thead><tr>");
                 foreach (var column in visibleColumns)
                 {
-                    html.Append("<th style=\"border: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis;")
+                    html.Append("<th style=\"").Append(cellStyle).Append("overflow: hidden; text-overflow: ellipsis;")
                         .Append(headerStyle).Append('"');
                     AppendAttribute(html, "data-column-type", column.Type.ToString());
                     html.Append('>')
@@ -2733,8 +2740,11 @@ public partial class HmiScreenToHtmlConverter
             }
             html.Append("<tbody><tr><td");
             AppendAttribute(html, "colspan", Math.Max(visibleColumns.Length, 1).ToString(CultureInfo.InvariantCulture));
-            html.Append(" style=\"text-align: center;\">Recipe data not loaded</td></tr></tbody></table>");
+            html.Append(" style=\"").Append(recipeControl.ShowGridLines is not null || recipeControl.GridLineColor is not null ? cellStyle.ToString() : string.Empty).Append("text-align: center;\">Recipe data not loaded</td></tr></tbody></table>");
         }
+
+        if (recipeControl.ShowStatusBar is not null && ResolveStaticValue(recipeControl.ShowStatusBar, context))
+            html.Append("<div class=\"hmi-recipe-status-bar\" style=\"flex: 0 0 auto; padding: 2px 4px;\">Recipe status not loaded</div>");
 
         if (showFooter)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");

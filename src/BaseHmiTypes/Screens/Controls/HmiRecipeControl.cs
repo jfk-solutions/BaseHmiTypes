@@ -21,6 +21,12 @@ public sealed class HmiRecipeControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowHeader { get; set; }
 
+    public HmiProperty<bool>? ShowGridLines { get; set; }
+
+    public HmiProperty<HmiColor>? GridLineColor { get; set; }
+
+    public HmiProperty<bool>? ShowStatusBar { get; set; }
+
     public HmiProperty<bool>? ShowFooter { get; set; }
 
     public HmiProperty<int>? LinesPerItem { get; set; }
