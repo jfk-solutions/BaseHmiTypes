@@ -9,6 +9,7 @@ public class HmiBar : HmiScaleWidgetBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiBar;
     }
 
+    /// <summary>Gradient blends the value-region color to FillEndColor within each value rectangle. FillGradientStop is a percentage (default 100, clamped to 0–100); center directions start at the center. FillGradientDirection takes precedence over FillGradientAxis ("vertical" or default horizontal). A missing end color retains solid fill. This generic gradient is not a pixel-exact native GDI+ brush.</summary>
     public HmiProperty<HmiBarFillStyle>? FillStyle { get; set; }
 
     /// <summary>Eight top-to-bottom bitmap rows as 16 hexadecimal characters, MSB left. Zero bits use PatternColor; one bits use the value-region color. Tiles are anchored to the containing screen.</summary>
