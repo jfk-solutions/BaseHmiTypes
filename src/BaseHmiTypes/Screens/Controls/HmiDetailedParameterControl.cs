@@ -13,6 +13,7 @@ public class HmiDetailedParameterControl : HmiControlWindowBase
     public HmiProperty<bool>? ParameterSetTypeFixed { get; set; }
     public HmiProperty<uint>? CurrentParameterSetId { get; set; }
     public HmiProperty<uint>? CurrentParameterSetTypeId { get; set; }
+    public IList<HmiParameterColumn> ColumnDefinitions { get; } = new List<HmiParameterColumn>();
     public HmiProperty<HmiMultilingualText>? ParameterSetTypeLabel { get; set; }
     public HmiProperty<HmiMultilingualText>? ParameterSetLabel { get; set; }
     public HmiProperty<HmiMultilingualText>? NumberLabel { get; set; }

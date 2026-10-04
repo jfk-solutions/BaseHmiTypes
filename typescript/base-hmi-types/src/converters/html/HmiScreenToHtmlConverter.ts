@@ -113,6 +113,7 @@ import { HmiAuditTrailControl } from "../../screens/controls/HmiAuditTrailContro
 import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewKind.js";
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
 import { HmiDetailedParameterControl } from "../../screens/controls/HmiDetailedParameterControl.js";
+import { HmiParameterColumn } from "../../screens/controls/HmiParameterColumn.js";
 import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
 import { HmiRadarChartControl } from "../../screens/controls/HmiRadarChartControl.js";
 import { HmiSystemDiagnosisControl } from "../../screens/controls/HmiSystemDiagnosisControl.js";
@@ -2388,13 +2389,18 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
     html.push("<div>Parameter set selection not decoded</div>");
   html.push("</div>");
   if (!getStaticValue(control.hideDetails)) {
+    const columns = control.columnDefinitions.filter(column => column.visible === undefined || getStaticValue(column.visible) === true);
     const style = ["flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;"];
+    if (columns.length > 0) style.push("display: block; overflow: auto;");
     const width = getStaticValue(control.gridLineWidth) ?? 1;
     style.push(`border-top-width: ${toCss(Number.isFinite(width) && width >= 0 ? width : 1)}px;`);
     appendColorStyle(style, "background-color", control.contentBackgroundColor);
     appendColorStyle(style, "color", control.contentForegroundColor);
     appendColorStyle(style, "border-top-color", control.gridLineColor);
-    html.push('<div class="hmi-parameter-details" style="', style.join(""), '\">Parameter data not loaded</div>');
+    html.push('<div class="hmi-parameter-details" style="', style.join(""), '\">');
+    if (columns.length > 0) appendParameterColumns(html, control, columns, context);
+    else html.push("Parameter data not loaded");
+    html.push("</div>");
   }
   if (getStaticValue(control.showStatusBar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
@@ -2403,6 +2409,51 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
     html.push('<div class="hmi-parameter-status-bar" role="status" style="', style.join(""), '\">Status</div>');
   }
   html.push("</div>");
+}
+
+function appendParameterColumns(html: string[], control: HmiDetailedParameterControl, columns: HmiParameterColumn[], context: HmiHtmlConvertContext): void {
+  html.push('<table class="hmi-parameter-table" style="width: 100%; table-layout: fixed; border-collapse: collapse;"><colgroup>');
+  for (const column of columns) html.push('<col style="', createParameterColumnWidthStyle(column), '\">');
+  const headerStyle = ["padding: 2px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"];
+  appendColorStyle(headerStyle, "background-color", control.headerBackgroundColor);
+  appendColorStyle(headerStyle, "color", control.headerForegroundColor);
+  if (control.headerFont !== undefined) appendFont(headerStyle, control.headerFont);
+  html.push("</colgroup><thead><tr>");
+  for (const column of columns) {
+    html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), '\"');
+    appendAttribute(html, "data-column-name", column.name);
+    appendAttribute(html, "data-column-key", column.key);
+    appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
+    appendAttribute(html, "data-minimum-width", resolvePropertyPreview(column.minimumWidth));
+    appendAttribute(html, "data-maximum-width", resolvePropertyPreview(column.maximumWidth));
+    appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
+    appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat));
+    html.push(">", escapeHtml(column.headerText?.getText(context.options.cultureLcid) ?? column.name ?? column.key ?? "Column"), "</th>");
+  }
+  html.push('</tr></thead><tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;">Parameter data not loaded</td></tr></tbody></table>');
+}
+
+function createParameterColumnWidthStyle(column: HmiParameterColumn): string {
+  const dimension = (property: HmiProperty<number> | undefined): number | undefined => {
+    const value = getStaticValue(property);
+    return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 0xffffffff ? value : undefined;
+  };
+  const minimum = dimension(column.minimumWidth), maximum = dimension(column.maximumWidth);
+  const validBounds = minimum === undefined || maximum === undefined || minimum <= maximum;
+  const style: string[] = [];
+  let width = dimension(column.width);
+  if (width !== undefined) {
+    if (validBounds) {
+      if (minimum !== undefined && width < minimum) width = minimum;
+      if (maximum !== undefined && width > maximum) width = maximum;
+    }
+    style.push(`width: ${width}px;`);
+  }
+  if (validBounds) {
+    if (minimum !== undefined) style.push(`min-width: ${minimum}px;`);
+    if (maximum !== undefined) style.push(`max-width: ${maximum}px;`);
+  }
+  return style.join("");
 }
 
 function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, context: HmiHtmlConvertContext): void {
