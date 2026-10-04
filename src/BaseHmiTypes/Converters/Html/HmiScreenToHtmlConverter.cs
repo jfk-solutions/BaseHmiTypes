@@ -2823,6 +2823,16 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-lines-per-item", ResolvePropertyPreview(recipeControl.LinesPerItem, context));
         AppendAttribute(html, "data-header-border-width", ResolvePropertyPreview(recipeControl.HeaderBorderWidth, context));
         AppendAttribute(html, "data-header-corner-radius", ResolvePropertyPreview(recipeControl.HeaderCornerRadius, context));
+        AppendAttribute(html, "data-header-border-background-color", ResolvePropertyPreview(recipeControl.HeaderBorderBackgroundColor, context));
+        AppendAttribute(html, "data-header-back-fill-style", ResolvePropertyPreview(recipeControl.HeaderBackFillStyle, context));
+        AppendAttribute(html, "data-header-edge-style", ResolvePropertyPreview(recipeControl.HeaderEdgeStyle, context));
+        AppendAttribute(html, "data-header-first-gradient-color", ResolvePropertyPreview(recipeControl.HeaderFirstGradientColor, context));
+        AppendAttribute(html, "data-header-middle-gradient-color", ResolvePropertyPreview(recipeControl.HeaderMiddleGradientColor, context));
+        AppendAttribute(html, "data-header-second-gradient-color", ResolvePropertyPreview(recipeControl.HeaderSecondGradientColor, context));
+        AppendAttribute(html, "data-header-first-gradient-offset", ResolvePropertyPreview(recipeControl.HeaderFirstGradientOffset, context));
+        AppendAttribute(html, "data-header-second-gradient-offset", ResolvePropertyPreview(recipeControl.HeaderSecondGradientOffset, context));
+        AppendAttribute(html, "data-use-header-first-gradient", ResolvePropertyPreview(recipeControl.UseHeaderFirstGradient, context));
+        AppendAttribute(html, "data-use-header-second-gradient", ResolvePropertyPreview(recipeControl.UseHeaderSecondGradient, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(recipeControl.WordWrap, context));
         AppendAttribute(html, "data-enable-recipe-dialog", ResolvePropertyPreview(recipeControl.EnableRecipeDialog, context));
         AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(recipeControl.ShowGridLines, context));
@@ -2894,6 +2904,10 @@ public partial class HmiScreenToHtmlConverter
     {
         var style = new StringBuilder();
         AppendColorStyle(style, "background-color", recipeControl.HeaderBackgroundColor);
+        AppendColorGradientStyle(style, CreateColorGradient(
+            recipeControl.HeaderBackgroundColor, recipeControl.HeaderFirstGradientColor, recipeControl.HeaderFirstGradientOffset,
+            recipeControl.HeaderMiddleGradientColor, recipeControl.HeaderSecondGradientColor, recipeControl.HeaderSecondGradientOffset,
+            recipeControl.UseHeaderFirstGradient, recipeControl.UseHeaderSecondGradient, null));
         AppendColorStyle(style, "color", recipeControl.HeaderForegroundColor);
         AppendColorStyle(style, "border-color", recipeControl.HeaderBorderColor);
         AppendHeaderBorderWidth(style, recipeControl.HeaderBorderWidth);

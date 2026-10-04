@@ -2833,6 +2833,16 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-lines-per-item", resolvePropertyPreview(recipeControl.linesPerItem));
   appendAttribute(html, "data-header-border-width", resolvePropertyPreview(recipeControl.headerBorderWidth));
   appendAttribute(html, "data-header-corner-radius", resolvePropertyPreview(recipeControl.headerCornerRadius));
+  appendAttribute(html, "data-header-border-background-color", resolvePropertyPreview(recipeControl.headerBorderBackgroundColor));
+  appendAttribute(html, "data-header-back-fill-style", resolvePropertyPreview(recipeControl.headerBackFillStyle));
+  appendAttribute(html, "data-header-edge-style", resolvePropertyPreview(recipeControl.headerEdgeStyle));
+  appendAttribute(html, "data-header-first-gradient-color", resolvePropertyPreview(recipeControl.headerFirstGradientColor));
+  appendAttribute(html, "data-header-middle-gradient-color", resolvePropertyPreview(recipeControl.headerMiddleGradientColor));
+  appendAttribute(html, "data-header-second-gradient-color", resolvePropertyPreview(recipeControl.headerSecondGradientColor));
+  appendAttribute(html, "data-header-first-gradient-offset", resolvePropertyPreview(recipeControl.headerFirstGradientOffset));
+  appendAttribute(html, "data-header-second-gradient-offset", resolvePropertyPreview(recipeControl.headerSecondGradientOffset));
+  appendAttribute(html, "data-use-header-first-gradient", resolvePropertyPreview(recipeControl.useHeaderFirstGradient));
+  appendAttribute(html, "data-use-header-second-gradient", resolvePropertyPreview(recipeControl.useHeaderSecondGradient));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(recipeControl.wordWrap));
   appendAttribute(html, "data-enable-recipe-dialog", resolvePropertyPreview(recipeControl.enableRecipeDialog));
   appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(recipeControl.showGridLines));
@@ -2892,6 +2902,11 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
 function createRecipeHeaderStyle(recipeControl: HmiRecipeControl, context: HmiHtmlConvertContext): string {
   const style: string[] = [];
   appendColorStyle(style, "background-color", recipeControl.headerBackgroundColor);
+  appendColorGradientStyle(style, createColorGradient({
+    backgroundColor: recipeControl.headerBackgroundColor, firstGradientColor: recipeControl.headerFirstGradientColor, firstGradientOffset: recipeControl.headerFirstGradientOffset,
+    middleGradientColor: recipeControl.headerMiddleGradientColor, secondGradientColor: recipeControl.headerSecondGradientColor, secondGradientOffset: recipeControl.headerSecondGradientOffset,
+    useFirstGradient: recipeControl.useHeaderFirstGradient, useSecondGradient: recipeControl.useHeaderSecondGradient,
+  }));
   appendColorStyle(style, "color", recipeControl.headerForegroundColor);
   appendColorStyle(style, "border-color", recipeControl.headerBorderColor);
   appendHeaderBorderWidth(style, recipeControl.headerBorderWidth);

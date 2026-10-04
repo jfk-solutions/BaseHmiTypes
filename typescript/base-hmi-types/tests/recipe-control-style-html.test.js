@@ -88,3 +88,33 @@ test("recipe combo font uses locale only for selector and falls back to content 
   html = await renderer.convertAsync(screen, undefined, options); assert.ok(html.includes("font-family: TableContent;"));
   assert.equal(getStaticValue(combo.name), "NeutralCombo"); assert.equal(combo.localizedFonts.size, 1);
 });
+
+
+for (const kind of [HmiRecipeViewKind.Selector, HmiRecipeViewKind.Table]) test(`recipe header gradient flags and raw appearance stay independent: ${kind}`, async () => {
+  let control = new HmiRecipeControl(); control.viewKind = kind;
+  for (const [name, red] of [["headerBackgroundColor", 1], ["headerBorderBackgroundColor", 13], ["headerFirstGradientColor", 4], ["headerMiddleGradientColor", 7], ["headerSecondGradientColor", 10]]) control[name] = staticProperty(hmiColorFromArgb(255, red, red + 1, red + 2));
+  for (const [name, value] of [["headerFirstGradientOffset", 25.5], ["headerSecondGradientOffset", 75], ["headerBackFillStyle", 0], ["headerEdgeStyle", -17], ["useHeaderFirstGradient", true], ["useHeaderSecondGradient", true]]) control[name] = staticProperty(value);
+  control.columnDefinitions.push({ type: HmiRecipeColumnType.Unknown });
+  let html = await convert(control);
+  assert.ok(html.includes("background-image: linear-gradient(to right, #040506 0%, #070809 25.5%, #070809 75%, #0A0B0C 100%);"));
+  for (const attr of ['data-header-back-fill-style="0"', 'data-header-edge-style="-17"', 'data-header-first-gradient-offset="25.5"', 'data-header-second-gradient-offset="75"', 'data-use-header-first-gradient="true"', 'data-use-header-second-gradient="true"']) assert.ok(html.includes(attr), attr);
+  const body = html.match(kind === HmiRecipeViewKind.Table ? /<td\b[^>]*style="([^"]*)"/u : /<div style="flex: 1 1 auto;([^"]*)"/u)?.[1] ?? "";
+  assert.ok(body.length > 0);
+  assert.ok(!body.includes("linear-gradient"));
+  control.useHeaderSecondGradient = staticProperty(false); html = await convert(control);
+  assert.ok(html.includes("linear-gradient(to right, #040506 0%, #070809 25.5%, #070809 100%)"));
+  control.useHeaderFirstGradient = staticProperty(false); control.useHeaderSecondGradient = staticProperty(true); html = await convert(control);
+  assert.ok(html.includes("linear-gradient(to right, #070809 0%, #070809 75%, #0A0B0C 100%)"));
+  control.useHeaderFirstGradient = staticProperty(true); control.headerFirstGradientOffset = staticProperty(-20); control.headerSecondGradientOffset = staticProperty(125); html = await convert(control);
+  assert.ok(html.includes("linear-gradient(to right, #040506 0%, #070809 0%, #070809 100%, #0A0B0C 100%)"));
+  assert.ok(html.includes('data-header-first-gradient-offset="-20"')); assert.ok(html.includes('data-header-second-gradient-offset="125"'));
+  assert.equal(getStaticValue(control.headerFirstGradientOffset), -20); assert.equal(getStaticValue(control.headerSecondGradientOffset), 125);
+  control.useHeaderFirstGradient = staticProperty(false); control.useHeaderSecondGradient = staticProperty(false); html = await convert(control);
+  assert.ok(!/style="[^"]*linear-gradient/u.test(html)); assert.ok(html.includes('data-use-header-first-gradient="false"')); assert.ok(html.includes('data-use-header-second-gradient="false"'));
+  delete control.useHeaderFirstGradient; delete control.useHeaderSecondGradient; html = await convert(control);
+  assert.ok(!/style="[^"]*linear-gradient/u.test(html)); assert.ok(!html.includes("data-use-header-first-gradient"));
+  control.useHeaderFirstGradient = staticProperty(true); control.showHeader = staticProperty(false); html = await convert(control);
+  assert.ok(!/style="[^"]*linear-gradient/u.test(html)); assert.ok(html.includes('data-use-header-first-gradient="true"'));
+  control = new HmiRecipeControl(); html = await convert(control);
+  for (const name of ["data-header-first-gradient", "data-header-back-fill-style", "data-header-edge-style", "data-header-border-background-color"]) assert.ok(!html.includes(name));
+});
