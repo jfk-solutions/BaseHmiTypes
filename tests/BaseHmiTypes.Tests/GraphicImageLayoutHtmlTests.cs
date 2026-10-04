@@ -34,10 +34,31 @@ namespace BaseHmiTypes.Tests;
     public async Task PercentEncodedSvgUsesTheSamePolicy(bool keep)
     {var html=await Render(new() {Source="data:image/svg+xml;charset=utf-8,"+Uri.EscapeDataString(Svg),ImageKeepAspectRatio=keep});StringAssert.Contains(Decoded(html),keep?"xMidYMid meet":"none");}
     [TestMethod] [DataRow("data:image/svg+xml;base64,!!!")] [DataRow("data:image/svg+xml;base64")]
-    [DataRow("<html><svg/></html>")] [DataRow("<!DOCTYPE svg SYSTEM 'https://example.invalid/x'><svg/>")]
+    [DataRow("<html><svg/></html>")] [DataRow("<!DOCTYPE html><svg/>")]
+    [DataRow("<!DOCTYPE svg [<!ENTITY x 'text'>]><svg/>")]
+    [DataRow("<!DOCTYPEsvg><svg/>")]
+    [DataRow("<!DOCTYPE svg SYSTEM 'unfinished><svg/>")]
+    [DataRow("<!DOCTYPE svg PUBLIC 'missing-system'><svg/>")]
+    [DataRow("<!DOCTYPE svg><!DOCTYPE svg><svg/>")]
+    [DataRow("<!DOCTYPE svg SYSTEM unquoted><svg/>")]
+    [DataRow("<!DOCTYPE svg SYSTEM 'x'<svg/>")]
     [DataRow("<svg preserveAspectRatio='none' preserveAspectRatio='none'/>")]
     public async Task UnsupportedEmbeddedSvgLayoutsStayPlaceholders(string source)
     {var uri=source.StartsWith("data:",StringComparison.Ordinal)?source:"data:image/svg+xml;base64,"+Convert.ToBase64String(Encoding.UTF8.GetBytes(source));StringAssert.Contains(await Render(new() {Source=uri,ImageKeepAspectRatio=false}),"Graphic image");}
+    public static IEnumerable<object[]> Doctypes()
+    {
+        foreach(var header in new[] {"<!DOCTYPE svg>","<!--before--><!DOCTYPE svg SYSTEM 'https://example.invalid/a>b'><!----><?after ok?>","<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" 'https://example.invalid/svg.dtd'>"})
+        foreach(var keep in new[] {false,true})
+        foreach(var encoding in new[] {0,1,2,3}) yield return [header,keep,encoding];
+    }
+    [TestMethod, DynamicData(nameof(Doctypes))]
+    public async Task SvgDoctypeIsPreservedWithoutResolvingDtd(string header,bool keep,int encoding)
+    {
+        Encoding e=encoding<2?new UTF8Encoding(encoding==1):encoding==2?Encoding.Unicode:Encoding.BigEndianUnicode;
+        byte[] bytes=[..e.GetPreamble(),..e.GetBytes(header+Svg)];var uri="data:image/svg+xml;base64,"+Convert.ToBase64String(bytes);
+        var source=new HmiImageSource {Uri=uri};var html=await Render(new() {Image=source,ImageKeepAspectRatio=keep});
+        var actual=Decoded(html);StringAssert.StartsWith(actual,header);StringAssert.Contains(actual,$"preserveAspectRatio=\"{(keep?"xMidYMid meet":"none")}\"");Assert.AreEqual(uri,source.Uri);
+    }
     [TestMethod]
     [DataRow(0,0)] [DataRow(0,1)] [DataRow(0,2)] [DataRow(0,3)] [DataRow(1,0)] [DataRow(1,1)] [DataRow(1,2)] [DataRow(1,3)]
     [DataRow(2,0)] [DataRow(2,1)] [DataRow(2,2)] [DataRow(2,3)] [DataRow(3,0)] [DataRow(3,1)] [DataRow(3,2)] [DataRow(3,3)]
