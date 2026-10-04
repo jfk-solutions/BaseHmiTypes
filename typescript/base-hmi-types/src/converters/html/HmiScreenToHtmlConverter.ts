@@ -112,6 +112,7 @@ import { HmiDataGridControl } from "../../screens/controls/HmiDataGridControl.js
 import { HmiAuditTrailControl } from "../../screens/controls/HmiAuditTrailControl.js";
 import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewKind.js";
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
+import { HmiDetailedParameterControl } from "../../screens/controls/HmiDetailedParameterControl.js";
 import { HmiRecipeViewKind } from "../../screens/controls/HmiRecipeViewKind.js";
 import { HmiRadarChartControl } from "../../screens/controls/HmiRadarChartControl.js";
 import { HmiSystemDiagnosisControl } from "../../screens/controls/HmiSystemDiagnosisControl.js";
@@ -391,6 +392,8 @@ export class HmiScreenToHtmlConverter {
       await this.appendScreenWindowAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiDataGridControl) {
       appendDataGridControl(html, item, context);
+    } else if (item instanceof HmiDetailedParameterControl) {
+      appendDetailedParameterControl(html, item, context);
     } else if (item instanceof HmiRecipeControl) {
       appendRecipeControl(html, item, context);
     } else if (item instanceof HmiAuditTrailControl) {
@@ -2339,6 +2342,34 @@ function appendDataGridControl(html: string[], dataGridControl: HmiDataGridContr
 
   if (showStatusBar)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Status</div>");
+  html.push("</div>");
+}
+
+function appendDetailedParameterControl(html: string[], control: HmiDetailedParameterControl, context: HmiHtmlConvertContext): void {
+  html.push("<div");
+  appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
+  appendAttribute(html, "data-parameter-set-type-fixed", resolvePropertyPreview(control.parameterSetTypeFixed));
+  appendAttribute(html, "data-hide-details", resolvePropertyPreview(control.hideDetails));
+  appendAttribute(html, "data-edit-mode", resolvePropertyPreview(control.editMode));
+  appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(control.showToolbar));
+  appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(control.showStatusBar));
+  html.push(">");
+  if (getStaticValue(control.showToolbar)) {
+    const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
+    appendColorStyle(style, "background-color", control.toolbarBackgroundColor);
+    html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '\">Toolbar</div>');
+  }
+  html.push('<div class="hmi-parameter-selection" style="flex: 0 0 auto; padding: 2px 4px;">Parameter set type');
+  if (getStaticValue(control.parameterSetTypeFixed)) html.push(" · Fixed");
+  html.push("<br>Parameter set selection not decoded</div>");
+  if (!getStaticValue(control.hideDetails))
+    html.push('<div class="hmi-parameter-details" style="flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top: 1px solid currentColor;">Parameter data not loaded</div>');
+  if (getStaticValue(control.showStatusBar)) {
+    const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
+    appendColorStyle(style, "background-color", control.statusBarBackgroundColor);
+    appendColorStyle(style, "color", control.statusBarForegroundColor);
+    html.push('<div class="hmi-parameter-status-bar" role="status" style="', style.join(""), '\">Status</div>');
+  }
   html.push("</div>");
 }
 

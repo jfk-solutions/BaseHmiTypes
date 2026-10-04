@@ -14,7 +14,7 @@ using BaseHmiTypes.Screens.Widgets;
 
 namespace BaseHmiTypes.Converters.Html;
 
-public class HmiScreenToHtmlConverter
+public partial class HmiScreenToHtmlConverter
 {
     private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
@@ -313,6 +313,9 @@ public class HmiScreenToHtmlConverter
                 break;
             case HmiDataGridControl dataGridControl:
                 AppendDataGridControl(html, dataGridControl, context);
+                break;
+            case HmiDetailedParameterControl parameterControl:
+                AppendDetailedParameterControl(html, parameterControl, context);
                 break;
             case HmiRecipeControl recipeControl:
                 AppendRecipeControl(html, recipeControl, context);
