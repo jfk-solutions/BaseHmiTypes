@@ -1,6 +1,10 @@
 import { HmiMultilingualText } from "../common/HmiMultilingualText.js";
 
 export class HmiRecipe {
+  sourceId?: number;
+  sourceDisplayName?: string;
+  storagePath?: string;
+  readonly references = new Map<string, HmiRecipeReference>();
   displayName?: HmiMultilingualText;
   infoText?: HmiMultilingualText;
   name?: string;
@@ -8,6 +12,11 @@ export class HmiRecipe {
   lastModified?: Date;
   readonly parameters: HmiRecipeParameter[] = [];
   readonly dataSets: HmiRecipeDataSet[] = [];
+}
+
+export class HmiRecipeReference {
+  sourceId?: string;
+  name?: string;
 }
 
 export class HmiRecipeParameter {

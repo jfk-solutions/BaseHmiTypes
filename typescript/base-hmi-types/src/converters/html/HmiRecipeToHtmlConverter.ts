@@ -10,6 +10,19 @@ export class HmiRecipeToHtmlConverter {
     if (recipe.displayName != null) html.push("<p>Name: ", encode(recipe.name), "</p>");
     if (recipe.infoText != null) html.push("<p>", encode(recipe.infoText.getText(cultureLcid)), "</p>");
     if (recipe.comment != null) html.push("<p>", encode(recipe.comment), "</p>");
+    if (recipe.sourceId !== undefined || recipe.sourceDisplayName !== undefined || recipe.storagePath !== undefined) {
+      html.push("<h2>Configuration</h2><dl>");
+      appendConfiguration(html, "Parameter set type ID", recipe.sourceId?.toString());
+      appendConfiguration(html, "Source display name", recipe.sourceDisplayName);
+      appendConfiguration(html, "Storage path", recipe.storagePath);
+      html.push("</dl>");
+    }
+    if (recipe.references.size > 0) {
+      html.push("<h2>References</h2><table><thead><tr><th scope=\"col\">Role</th><th scope=\"col\">Source reference</th><th scope=\"col\">Name</th></tr></thead><tbody>");
+      for (const [role, reference] of recipe.references)
+        html.push("<tr><th scope=\"row\">", encode(role), "</th><td>", encode(reference.sourceId), "</td><td>", encode(reference.name), "</td></tr>");
+      html.push("</tbody></table>");
+    }
     html.push("<h2>Fields</h2><div class=\"table-scroll\"><table><thead><tr>");
     for (const header of ["Index", "Name", "Tag", "Data type", "Unit", "Minimum", "Maximum", "Comment", "Element ID", "Default", "Decimal places", "Maximum length", "Tag array count", "Required", "Unique", "Indexed", "Display name", "Info text"])
       html.push("<th scope=\"col\">", header, "</th>");
@@ -55,6 +68,10 @@ export class HmiRecipeToHtmlConverter {
     }
     return html.concat("</body></html>").join("");
   }
+}
+
+function appendConfiguration(html: string[], label: string, value: string | undefined): void {
+  if (value !== undefined) html.push("<dt>", label, "</dt><dd>", encode(value), "</dd>");
 }
 
 function formatFlag(value: boolean | undefined): string | undefined {
