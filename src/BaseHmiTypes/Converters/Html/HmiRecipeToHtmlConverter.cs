@@ -74,7 +74,7 @@ public sealed class HmiRecipeToHtmlConverter
         {
             html.Append("<tr>");
             foreach (var value in new[] { field.SourceIndex?.ToString(CultureInfo.InvariantCulture), field.Name,
-                         field.Tag, field.DataType, field.Unit, field.MinimumValue, field.MaximumValue, field.SourcePlcComment?.GetText(culture) ?? field.Comment,
+                         field.Tag, field.DataType, field.Unit, field.MinimumValue, field.MaximumValue, field.SourceTagComment?.GetText(culture) ?? field.SourcePlcComment?.GetText(culture) ?? field.Comment,
                          field.SourceElementId?.ToString(CultureInfo.InvariantCulture), field.DefaultValue,
                          field.DecimalPlaces?.ToString(CultureInfo.InvariantCulture), field.MaximumLength?.ToString(CultureInfo.InvariantCulture),
                          field.TagArrayCount?.ToString(CultureInfo.InvariantCulture), FormatFlag(field.Required), FormatFlag(field.Unique), FormatFlag(field.Indexed),
