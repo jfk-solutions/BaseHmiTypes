@@ -17,7 +17,15 @@ for(const quote of ["'",'"'])test(`Root policy replaced without nested/lookalike
  assert.ok(actual.includes(`preserveAspectRatio=${quote}none${quote}`));assert.ok(actual.includes("data-note='preserveAspectRatio=fake'"));assert.ok(actual.includes("<svg preserveAspectRatio='xMinYMin meet'/>"));
 });
 for(const keep of [false,true])test(`Percent-encoded SVG uses same policy: ${keep}`,async()=>assert.ok(decoded(await render({source:p('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)),imageKeepAspectRatio:p(keep)})).includes(keep?'xMidYMid meet':'none')));
-for(const source of ['data:image/svg+xml;base64,!!!','data:image/svg+xml;base64','<html><svg/></html>',"<!DOCTYPE svg SYSTEM 'https://example.invalid/x'><svg/>","<svg preserveAspectRatio='none' preserveAspectRatio='none'/>"])test(`Unsupported embedded SVG stays placeholder: ${source}`,async()=>assert.ok((await render({source:p(source.startsWith('data:')?source:uri(source)),imageKeepAspectRatio:p(false)})).includes('Graphic image')));
+for(const source of ['data:image/svg+xml;base64,!!!','data:image/svg+xml;base64','<html><svg/></html>',"<!DOCTYPE html><svg/>","<!DOCTYPE svg [<!ENTITY x 'text'>]><svg/>","<!DOCTYPEsvg><svg/>","<!DOCTYPE svg SYSTEM 'unfinished><svg/>","<!DOCTYPE svg PUBLIC 'missing-system'><svg/>","<!DOCTYPE svg><!DOCTYPE svg><svg/>","<!DOCTYPE svg SYSTEM unquoted><svg/>","<!DOCTYPE svg SYSTEM 'x'<svg/>","<svg preserveAspectRatio='none' preserveAspectRatio='none'/>"])test(`Unsupported embedded SVG stays placeholder: ${source}`,async()=>assert.ok((await render({source:p(source.startsWith('data:')?source:uri(source)),imageKeepAspectRatio:p(false)})).includes('Graphic image')));
+for(const header of ['<!DOCTYPE svg>',"<!--before--><!DOCTYPE svg SYSTEM 'https://example.invalid/a>b'><!----><?after ok?>",'<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" \'https://example.invalid/svg.dtd\'>'])for(const keep of [false,true])for(const encoding of [0,1,2,3])test(`SVG DOCTYPE preserved without resolving DTD: ${header}/${keep}/${encoding}`,async()=>{
+ const text=header+svg;let bytes;
+ if(encoding<2)bytes=Buffer.concat([encoding===1?Buffer.from([239,187,191]):Buffer.alloc(0),Buffer.from(text)]);
+ else {bytes=Buffer.concat([Buffer.from([255,254]),Buffer.from(text,'utf16le')]);if(encoding===3)bytes=Buffer.from(bytes).swap16();}
+ const original='data:image/svg+xml;base64,'+bytes.toString('base64'),source={uri:original};
+ const actual=decoded(await render({image:p(source),imageKeepAspectRatio:p(keep)}));
+ assert.ok(actual.startsWith(header));assert.ok(actual.includes(`preserveAspectRatio="${keep?'xMidYMid meet':'none'}"`));assert.equal(source.uri,original);
+});
 for(const [horizontal,h] of [Horizontal.Left,Horizontal.Center,Horizontal.Right,Horizontal.Stretch].map((x,i)=>[x,i]))for(const [vertical,v] of [Vertical.Top,Vertical.Center,Vertical.Bottom,Vertical.Stretch].map((x,i)=>[x,i]))test(`Existing image alignment controls object position: ${h}/${v}`,async()=>{
  const html=await render({source:p('picture.png'),imageScaled:p(true),imageKeepAspectRatio:p(true),imageHorizontalAlignment:p(horizontal),imageVerticalAlignment:p(vertical)});assert.ok(html.includes(`object-fit: contain; object-position: ${h===0?0:h===2?100:50}% ${v===0?0:v===2?100:50}%;`));
 });
