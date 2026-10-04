@@ -8,6 +8,7 @@ import { HmiImageType } from "../../images/HmiImageType.js";
 import { MetafileToSvgRenderer } from "../../images/converters/metafile-to-svg-renderer.js";
 import { SymbolLibraryMetafileColorizer } from "../../images/converters/symbol-library-metafile-colorizer.js";
 import { HmiSymbolLibraryFillColorMode } from "../../screens/base/HmiSymbolLibraryEnums.js";
+import { SymbolLibraryMetafileTransformer } from "../../images/converters/symbol-library-metafile-transformer.js";
 import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js";
 import { HmiColor, hmiColorFromArgb } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
@@ -3906,10 +3907,14 @@ function appendSymbolLibraryControl(
 ): void {
   let symbolImage = symbolLibraryControl.symbol;
   const appearance = getStaticValue(symbolLibraryControl.symbolAppearance ?? symbolLibraryControl.fillColorMode) ?? HmiSymbolLibraryFillColorMode.Original;
-  if (symbolImage && appearance !== HmiSymbolLibraryFillColorMode.Original &&
-      (symbolImage.imageType === HmiImageType.Wmf || getImageExtension(symbolImage)?.toLowerCase() === '.wmf' || symbolImage.mimeType?.toLowerCase().includes('wmf'))) {
+  const flip = getStaticValue(symbolLibraryControl.flip) ?? HmiSymbolLibraryFlip.None;
+  const rotation = getStaticValue(symbolLibraryControl.rotation) ?? HmiSymbolLibraryRotation.Angle0;
+  const wmf = !!symbolImage && (symbolImage.imageType === HmiImageType.Wmf || getImageExtension(symbolImage)?.toLowerCase() === '.wmf' || !!symbolImage.mimeType?.toLowerCase().includes('wmf'));
+  if (symbolImage && wmf && (appearance !== HmiSymbolLibraryFillColorMode.Original || flip !== HmiSymbolLibraryFlip.None || rotation !== HmiSymbolLibraryRotation.Angle0)) {
     const color = getStaticValue(symbolLibraryControl.foreColor ?? symbolLibraryControl.fillColor);
-    const colored = SymbolLibraryMetafileColorizer.tryRecolor(symbolImage.data, appearance, color);
+    let colored = SymbolLibraryMetafileColorizer.tryRecolor(symbolImage.data, appearance, color);
+    if (colored && (flip !== HmiSymbolLibraryFlip.None || rotation !== HmiSymbolLibraryRotation.Angle0))
+      colored = SymbolLibraryMetafileTransformer.tryTransform(colored, flip, rotation);
     if (!colored) {
       appendDiv(html, symbolLibraryControl, context.options.unsupportedItemPlaceholderCssClass, 'Symbol library control', context);
       return;
@@ -3919,7 +3924,7 @@ function appendSymbolLibraryControl(
   const symbolSvg = resolveImageSvg(symbolImage);
   if (symbolSvg?.trim()) {
     html.push("<div");
-    appendSymbolLibraryAttributes(html, symbolLibraryControl, context);
+    appendSymbolLibraryAttributes(html, symbolLibraryControl, context, wmf);
     html.push(">");
     html.push(normalizeEmbeddedSymbolSvg(symbolSvg, symbolLibraryControl));
     html.push("</div>");
@@ -3933,7 +3938,7 @@ function appendSymbolLibraryControl(
   }
 
   html.push("<div");
-  appendSymbolLibraryAttributes(html, symbolLibraryControl, context);
+  appendSymbolLibraryAttributes(html, symbolLibraryControl, context, wmf);
   html.push(">");
   html.push("<img");
   appendAttribute(html, "src", imageUri);
@@ -4016,6 +4021,7 @@ function appendSymbolLibraryAttributes(
   html: string[],
   symbolLibraryControl: HmiSymbolLibraryControl,
   context: HmiHtmlConvertContext,
+  transformGeometry = false,
 ): void {
   appendAttribute(html, "id", symbolLibraryControl.name);
   appendTextAttribute(html, "title", symbolLibraryControl.toolTipText, context);
@@ -4039,7 +4045,7 @@ function appendSymbolLibraryAttributes(
   ) {
     html.push(`background-color: ${colorToCss(getStaticValue(symbolLibraryControl.backColor)!)};`);
   }
-  appendSymbolLibraryTransform(html, symbolLibraryControl);
+  if (!transformGeometry) appendSymbolLibraryTransform(html, symbolLibraryControl);
   html.push("\"");
 }
 
