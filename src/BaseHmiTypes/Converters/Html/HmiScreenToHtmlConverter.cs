@@ -2822,6 +2822,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-wrap-around", ResolvePropertyPreview(recipeControl.WrapAround, context));
         AppendAttribute(html, "data-lines-per-item", ResolvePropertyPreview(recipeControl.LinesPerItem, context));
         AppendAttribute(html, "data-header-border-width", ResolvePropertyPreview(recipeControl.HeaderBorderWidth, context));
+        AppendAttribute(html, "data-header-corner-radius", ResolvePropertyPreview(recipeControl.HeaderCornerRadius, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(recipeControl.WordWrap, context));
         AppendAttribute(html, "data-enable-recipe-dialog", ResolvePropertyPreview(recipeControl.EnableRecipeDialog, context));
         AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(recipeControl.ShowGridLines, context));
@@ -2896,6 +2897,8 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(style, "color", recipeControl.HeaderForegroundColor);
         AppendColorStyle(style, "border-color", recipeControl.HeaderBorderColor);
         AppendHeaderBorderWidth(style, recipeControl.HeaderBorderWidth);
+        if (TryGetStaticValue(recipeControl.HeaderCornerRadius, out var radius) && radius >= 0 && !double.IsNaN(radius) && !double.IsInfinity(radius))
+            style.Append("border-radius: ").Append(ToCss(radius)).Append("px;");
         AppendFontStyle(style, recipeControl.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
     }

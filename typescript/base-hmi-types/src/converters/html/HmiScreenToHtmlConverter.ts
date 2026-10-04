@@ -2832,6 +2832,7 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-wrap-around", resolvePropertyPreview(recipeControl.wrapAround));
   appendAttribute(html, "data-lines-per-item", resolvePropertyPreview(recipeControl.linesPerItem));
   appendAttribute(html, "data-header-border-width", resolvePropertyPreview(recipeControl.headerBorderWidth));
+  appendAttribute(html, "data-header-corner-radius", resolvePropertyPreview(recipeControl.headerCornerRadius));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(recipeControl.wordWrap));
   appendAttribute(html, "data-enable-recipe-dialog", resolvePropertyPreview(recipeControl.enableRecipeDialog));
   appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(recipeControl.showGridLines));
@@ -2894,6 +2895,8 @@ function createRecipeHeaderStyle(recipeControl: HmiRecipeControl, context: HmiHt
   appendColorStyle(style, "color", recipeControl.headerForegroundColor);
   appendColorStyle(style, "border-color", recipeControl.headerBorderColor);
   appendHeaderBorderWidth(style, recipeControl.headerBorderWidth);
+  const radius = getStaticValue(recipeControl.headerCornerRadius);
+  if (radius !== undefined && Number.isFinite(radius) && radius >= 0) style.push(`border-radius: ${toCss(radius)}px;`);
   if (recipeControl.headerFont !== undefined) appendFont(style, recipeControl.headerFont.getForCulture(context.options.cultureLcid));
   return style.join("");
 }
