@@ -2743,6 +2743,8 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(recipeControl.ShowGridLines, context));
         AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(recipeControl.GridLineColor, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(recipeControl.ShowStatusBar, context));
+        AppendAttribute(html, "data-show-numbers", ResolvePropertyPreview(recipeControl.ShowNumbers, context));
+        AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(recipeControl.AlternatingRowBackgroundColor, context));
         html.Append('>');
 
         if (recipeControl.ViewKind == HmiRecipeViewKind.Selector)
@@ -2760,7 +2762,8 @@ public partial class HmiScreenToHtmlConverter
             var visibleColumns = recipeControl.ColumnDefinitions
                 .Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context))
                 .ToArray();
-            html.Append("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;")
+            html.Append(recipeControl.AlternatingRowBackgroundColor is null ? "<table" : "<table class=\"hmi-recipe-table\"");
+            html.Append(" style=\"width: 100%; border-collapse: collapse; table-layout: fixed;")
                 .Append(contentStyle).Append("\"><colgroup>");
             foreach (var column in visibleColumns)
             {
@@ -2791,7 +2794,11 @@ public partial class HmiScreenToHtmlConverter
         }
 
         if (recipeControl.ShowStatusBar is not null && ResolveStaticValue(recipeControl.ShowStatusBar, context))
-            html.Append("<div class=\"hmi-recipe-status-bar\" style=\"flex: 0 0 auto; padding: 2px 4px;\">Recipe status not loaded</div>");
+        {
+            var statusStyle = new StringBuilder("flex: 0 0 auto; padding: 2px 4px;");
+            AppendFontStyle(statusStyle, recipeControl.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
+            html.Append("<div class=\"hmi-recipe-status-bar\" style=\"").Append(statusStyle).Append("\">Recipe status not loaded</div>");
+        }
 
         if (showFooter)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
@@ -2811,6 +2818,7 @@ public partial class HmiScreenToHtmlConverter
     private static string CreateRecipeContentStyle(HmiRecipeControl recipeControl, HmiHtmlConvertContext context)
     {
         var style = new StringBuilder();
+        AppendColorStyle(style, "--hmi-recipe-even-row-background", recipeControl.AlternatingRowBackgroundColor);
         AppendColorStyle(style, "background-color", recipeControl.ContentBackgroundColor);
         AppendColorStyle(style, "color", recipeControl.ContentForegroundColor);
         AppendFontStyle(style, recipeControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));

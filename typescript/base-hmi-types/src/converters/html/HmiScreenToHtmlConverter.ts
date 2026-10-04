@@ -2752,6 +2752,8 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(recipeControl.showGridLines));
   appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(recipeControl.gridLineColor));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(recipeControl.showStatusBar));
+  appendAttribute(html, "data-show-numbers", resolvePropertyPreview(recipeControl.showNumbers));
+  appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(recipeControl.alternatingRowBackgroundColor));
   html.push(">");
 
   if (recipeControl.viewKind === HmiRecipeViewKind.Selector) {
@@ -2766,7 +2768,8 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
     const visibleColumns = recipeControl.columnDefinitions.filter(
       (column) => column.visible === undefined || getStaticValue(column.visible) === true,
     );
-    html.push("<table style=\"width: 100%; border-collapse: collapse; table-layout: fixed;", contentStyle, "\"><colgroup>");
+    html.push(recipeControl.alternatingRowBackgroundColor === undefined ? "<table" : '<table class="hmi-recipe-table"');
+    html.push(" style=\"width: 100%; border-collapse: collapse; table-layout: fixed;", contentStyle, "\"><colgroup>");
     for (const column of visibleColumns) {
       html.push("<col");
       const width = getStaticValue(column.width);
@@ -2789,8 +2792,11 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
     html.push(" style=\"", recipeControl.showGridLines || recipeControl.gridLineColor ? cellStyle.join("") : "", "text-align: center;\">Recipe data not loaded</td></tr></tbody></table>");
   }
 
-  if (recipeControl.showStatusBar && getStaticValue(recipeControl.showStatusBar))
-    html.push("<div class=\"hmi-recipe-status-bar\" style=\"flex: 0 0 auto; padding: 2px 4px;\">Recipe status not loaded</div>");
+  if (recipeControl.showStatusBar && getStaticValue(recipeControl.showStatusBar)) {
+    const statusStyle = ["flex: 0 0 auto; padding: 2px 4px;"];
+    if (recipeControl.statusBarFont !== undefined) appendFont(statusStyle, recipeControl.statusBarFont.getForCulture(context.options.cultureLcid));
+    html.push('<div class="hmi-recipe-status-bar" style="', statusStyle.join(""), '">Recipe status not loaded</div>');
+  }
 
   if (showFooter)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
@@ -2808,6 +2814,7 @@ function createRecipeHeaderStyle(recipeControl: HmiRecipeControl, context: HmiHt
 
 function createRecipeContentStyle(recipeControl: HmiRecipeControl, context: HmiHtmlConvertContext): string {
   const style: string[] = [];
+  appendColorStyle(style, "--hmi-recipe-even-row-background", recipeControl.alternatingRowBackgroundColor);
   appendColorStyle(style, "background-color", recipeControl.contentBackgroundColor);
   appendColorStyle(style, "color", recipeControl.contentForegroundColor);
   if (recipeControl.contentFont !== undefined) appendFont(style, recipeControl.contentFont.getForCulture(context.options.cultureLcid));
