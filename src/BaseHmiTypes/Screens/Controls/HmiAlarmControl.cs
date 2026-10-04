@@ -172,6 +172,10 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public IList<HmiAlarmStatusBarPanel> StatusBarPanels { get; } = new List<HmiAlarmStatusBarPanel>();
 
+    public HmiMultilingualText? StatusBarText { get; set; }
+
+    public HmiProperty<bool>? ShowStatusBarTooltips { get; set; }
+
     public HmiFont? StatusBarFont { get; set; }
 
     public HmiProperty<HmiColor>? StatusBarBackgroundColor { get; set; }

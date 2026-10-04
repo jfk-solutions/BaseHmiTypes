@@ -2943,6 +2943,8 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(alarmControl.ShowStatusBar, context));
         AppendAttribute(html, "data-status-bar-background-color", ResolvePropertyPreview(alarmControl.StatusBarBackgroundColor, context));
         AppendAttribute(html, "data-use-status-bar-background-color", ResolvePropertyPreview(alarmControl.UseStatusBarBackgroundColor, context));
+        AppendAttribute(html, "data-status-bar-text", alarmControl.StatusBarText?.GetText(context.CultureInfo), preserveEmpty: true);
+        AppendAttribute(html, "data-show-status-bar-tooltips", ResolvePropertyPreview(alarmControl.ShowStatusBarTooltips, context));
         AppendAttribute(html, "data-status-bar-foreground-color", ResolvePropertyPreview(alarmControl.StatusBarForegroundColor, context));
         html.Append('>');
 
@@ -3043,7 +3045,8 @@ public partial class HmiScreenToHtmlConverter
             AppendFontStyle(statusStyle, alarmControl.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
             html.Append("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"")
                 .Append(statusStyle).Append("\">");
-            if (alarmControl.StatusBarPanels.Count == 0) html.Append("Status");
+            if (alarmControl.StatusBarPanels.Count == 0)
+                html.Append(WebUtility.HtmlEncode(alarmControl.StatusBarText?.GetText(context.CultureInfo) ?? "Status"));
             foreach (var panel in alarmControl.StatusBarPanels.Where(panel => panel.Visible is null || ResolveStaticValue(panel.Visible, context))
                 .OrderBy(panel => panel.Order is null ? int.MaxValue : ResolveStaticValue(panel.Order, context)))
             {
@@ -3052,7 +3055,8 @@ public partial class HmiScreenToHtmlConverter
                     html.Append("width: ").Append(ToCss(ResolveStaticValue(panel.Width, context))).Append("px;");
                 html.Append('"');
                 AppendAttribute(html, "data-panel-type", panel.SourceType ?? panel.Type.ToString());
-                AppendAttribute(html, "title", panel.Tooltip?.GetDisplayText(context.CultureInfo));
+                if (alarmControl.ShowStatusBarTooltips is null || ResolveStaticValue(alarmControl.ShowStatusBarTooltips, context))
+                    AppendAttribute(html, "title", panel.Tooltip?.GetDisplayText(context.CultureInfo));
                 html.Append('>').Append(WebUtility.HtmlEncode(panel.Text?.GetDisplayText(context.CultureInfo) ?? panel.SourceType ?? panel.Type.ToString())).Append("</span>");
             }
             html.Append("</div>");
