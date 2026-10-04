@@ -1,3 +1,5 @@
+using BaseHmiTypes.Common;
+
 namespace BaseHmiTypes.Screens.Base;
 
 public sealed class HmiTrendPen
@@ -10,6 +12,7 @@ public sealed class HmiTrendPen
     public string? Name { get; set; }
 
     public string? Label { get; set; }
+    public HmiMultilingualText? LabelText { get; set; }
 
     /// <summary>The named trend window assigned to this pen.</summary>
     public string? TrendWindowName { get; set; }
@@ -131,6 +134,7 @@ public sealed class HmiTrendPen
     public string? Description { get; set; }
 
     public string? EngineeringUnit { get; set; }
+    public HmiMultilingualText? EngineeringUnitText { get; set; }
 
     public HmiProperty<bool>? LogarithmicScale { get; set; }
 

@@ -4290,7 +4290,7 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "minimum-value", trendControl.MinimumValue);
         AppendStaticAttribute(html, "maximum-value", trendControl.MaximumValue);
         AppendStaticAttribute(html, "y-axis-decimal-places", trendControl.YAxisDecimalPlaces);
-        AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens));
+        AppendAttribute(html, "pens", FormatTrendPens(trendControl.Pens, context.CultureInfo));
         AppendAttribute(html, "value-axes", FormatTrendValueAxes(trendControl.ValueAxes));
         AppendAttribute(html, "x-value-axes", FormatTrendXValueAxes(trendControl.XValueAxes));
         AppendAttribute(html, "trend-windows", FormatTrendWindows(trendControl.TrendWindows));
@@ -4614,7 +4614,7 @@ public partial class HmiScreenToHtmlConverter
             ValueAxisInTrendColor = axis.InTrendColor, ValueAxisAlignment = axis.Alignment
         }));
 
-    private static string? FormatTrendPens(IEnumerable<HmiTrendPen> pens)
+    private static string? FormatTrendPens(IEnumerable<HmiTrendPen> pens, CultureInfo? cultureInfo = null)
     {
         var entries = pens.Select(pen =>
         {
@@ -4623,7 +4623,7 @@ public partial class HmiScreenToHtmlConverter
                 "\"number\":" + pen.Number.ToString(CultureInfo.InvariantCulture)
             };
             AddTrendJsonString(properties, "name", pen.Name);
-            AddTrendJsonString(properties, "label", pen.Label);
+            AddTrendJsonString(properties, "label", pen.LabelText?.GetText(cultureInfo) ?? pen.Label);
             AddTrendJsonString(properties, "trendWindowName", pen.TrendWindowName);
             AddTrendJsonString(properties, "timeAxisName", pen.TimeAxisName);
             AddTrendJsonString(properties, "color", pen.Color?.StaticValue is HmiColor color ? ToCss(color) : null);
@@ -4660,7 +4660,7 @@ public partial class HmiScreenToHtmlConverter
             AddTrendJsonBoolean(properties, "valueAxisInTrendColor", pen.ValueAxisInTrendColor?.StaticValue);
             AddTrendJsonString(properties, "valueAxisAlignment", pen.ValueAxisAlignment?.StaticValue.ToString());
             AddTrendJsonString(properties, "valueAxisLabel", pen.ValueAxisLabel);
-            AddTrendJsonString(properties, "unit", pen.EngineeringUnit);
+            AddTrendJsonString(properties, "unit", pen.EngineeringUnitText?.GetText(cultureInfo) ?? pen.EngineeringUnit);
             return "{" + string.Join(",", properties) + "}";
         }).ToArray();
         return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";
