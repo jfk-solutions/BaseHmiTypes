@@ -15,8 +15,9 @@ for(const type of [56,92]){
  test(`Records mixed commands inside path: ${type}`,()=>assert.equal(elements(emf(record(59),polyDraw(type),record(60),record(64,0,0,39,39)))[0].d,mixed));
  test(`Close keeps native supplied endpoint as current position: ${type}`,()=>{const line=elements(emf(polyDraw(type),record(54,39,35))).find(e=>e.tag==='line');assert.equal(line.x1,'35');assert.equal(line.y1,'30');});
  test(`Draw-to without move uses existing position: ${type}`,()=>assert.equal(elements(emf(record(27,5,30),polyDraw(type,[2],[20,10])))[0].d,'M 5 30 L 20 10'));
- test(`Implicit close uses move origin instead of current position: ${type}`,()=>assert.equal(elements(emf(record(27,5,30),record(54,35,30),polyDraw(type,[3],[20,10]))).find(e=>e.tag==='path').d,'M 35 30 L 20 10 L 5 30'));
- test(`Saved move origin restored: ${type}`,()=>assert.equal(elements(emf(record(27,5,30),record(33),record(27,8,8),record(34,-1),record(54,35,30),polyDraw(type,[3],[20,10]))).find(e=>e.tag==='path').d,'M 35 30 L 20 10 L 5 30'));
+ test(`Direct implicit close uses call-start position: ${type}`,()=>assert.equal(elements(emf(record(27,5,30),record(54,35,30),polyDraw(type,[3],[20,10]))).find(e=>e.tag==='path').d,'M 35 30 L 20 10 Z'));
+ test(`Saved current position restored: ${type}`,()=>assert.equal(elements(emf(record(27,5,30),record(33),record(27,8,8),record(34,-1),record(54,35,30),polyDraw(type,[3],[20,10]))).find(e=>e.tag==='path').d,'M 35 30 L 20 10 Z'));
+ test(`Active implicit close uses existing path start: ${type}`,()=>assert.equal(elements(emf(record(59),record(27,5,30),record(54,35,30),polyDraw(type,[3],[20,10]),record(60),record(64,0,0,39,39)))[0].d,'M 5 30 L 35 30 L 20 10 Z'));
  test(`Mapping transforms mixed points: ${type}`,()=>assert.equal(elements(emf(record(9,10,10),record(11,20,30),record(12,4,7),polyDraw(type)))[0].d,'M 14 97 L 14 37 C 14 7 74 7 74 97 Z'));
  test(`Invalid commands cannot paint prefix or change position: ${type}`,()=>{
   for(const types of [[7,2,4,4,5],[6,0x82,4,4,5],[6,2,5,4,5],[6,2,4,2,5],[6,2,4,4,6]]){const shapes=elements(emf(record(27,1,2),polyDraw(type,types),record(54,8,9)));assert.equal(shapes.length,1);assert.equal(shapes[0].x1,'1');assert.equal(shapes[0].y1,'2');}
