@@ -32,6 +32,12 @@ export abstract class HmiButtonBase extends HmiWidgetBase {
   imageColor?: HmiProperty<HmiColor>;
   imageBackgroundColor?: HmiProperty<HmiColor>;
   imageBackgroundTransparent?: HmiProperty<boolean>;
+  /** RGB key for the alternate image, independent of the normal image key. */
+  alternateImageBackgroundColor?: HmiProperty<HmiColor>;
+  alternateImageBackgroundTransparent?: HmiProperty<boolean>;
+  /** RGB key for the disabled replacement image, independent of the normal image key. */
+  disabledImageBackgroundColor?: HmiProperty<HmiColor>;
+  disabledImageBackgroundTransparent?: HmiProperty<boolean>;
   imageHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   imageVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   graphicStretchMode?: HmiProperty<number>;
