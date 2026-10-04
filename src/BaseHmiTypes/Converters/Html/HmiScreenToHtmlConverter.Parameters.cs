@@ -82,9 +82,17 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(headerStyle, "color", control.HeaderForegroundColor);
         AppendFontStyle(headerStyle, control.HeaderFont);
         html.Append("</colgroup><thead><tr>");
-        foreach (var column in columns)
+        for (var index = 0; index < columns.Length; index++)
         {
-            html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append('"');
+            var column = columns[index];
+            var separator = new StringBuilder();
+            if (index < columns.Length - 1 && control.HeaderBorderColor is not null)
+            {
+                var width = control.GridLineWidth is null ? 1d : ResolveStaticValue(control.GridLineWidth, context);
+                separator.Append("border-right-style: solid;border-right-width: ").Append(ToCss(IsFinite(width) && width >= 0 ? width : 1d)).Append("px;");
+                AppendColorStyle(separator, "border-right-color", control.HeaderBorderColor);
+            }
+            html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append(separator).Append('"');
             AppendAttribute(html, "data-column-name", column.Name);
             AppendAttribute(html, "data-column-key", column.Key);
             AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));

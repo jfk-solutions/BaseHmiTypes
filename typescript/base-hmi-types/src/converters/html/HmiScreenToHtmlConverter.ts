@@ -2451,8 +2451,14 @@ function appendParameterColumns(html: string[], control: HmiDetailedParameterCon
   appendColorStyle(headerStyle, "color", control.headerForegroundColor);
   if (control.headerFont !== undefined) appendFont(headerStyle, control.headerFont);
   html.push("</colgroup><thead><tr>");
-  for (const column of columns) {
-    html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), '\"');
+  for (const [index, column] of columns.entries()) {
+    const separator: string[] = [];
+    if (index < columns.length - 1 && control.headerBorderColor !== undefined) {
+      const width = getStaticValue(control.gridLineWidth) ?? 1;
+      separator.push(`border-right-style: solid;border-right-width: ${toCss(Number.isFinite(width) && width >= 0 ? width : 1)}px;`);
+      appendColorStyle(separator, "border-right-color", control.headerBorderColor);
+    }
+    html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), separator.join(""), '\"');
     appendAttribute(html, "data-column-name", column.name);
     appendAttribute(html, "data-column-key", column.key);
     appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
