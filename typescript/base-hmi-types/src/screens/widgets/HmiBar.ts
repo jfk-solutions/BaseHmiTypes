@@ -8,6 +8,8 @@ export class HmiBar extends HmiScaleWidgetBase {
   fillDirection?: HmiProperty<HmiFillDirection>;
   /** Position of originValue in percent, used only with useAutoScaling. Valid preview positions are zero through 100. */
   originPositionPercent?: HmiProperty<number>;
+  /** Transform of normalized range positions. Automatic origin placement takes precedence. */
+  valueMapping?: HmiProperty<HmiBarValueMapping>;
   /** True places the scale right/below; false places it left/above. Omitted uses right/below. */
   scaleAfterBar?: HmiProperty<boolean>;
   /** Use the lowest enabled threshold strictly above the value; otherwise retain the foreground color. */
@@ -26,4 +28,13 @@ export class HmiBar extends HmiScaleWidgetBase {
 export enum HmiBarFillStyle {
   Solid = "Solid",
   Gradient = "Gradient",
+}
+
+/** Range-normalized mappings, not logarithms/powers of the raw process value. */
+export enum HmiBarValueMapping {
+  Linear = 0,
+  NormalizedLogarithmic = 1,
+  InverseNormalizedLogarithmic = 2,
+  Quadratic = 5,
+  Cubic = 6,
 }
