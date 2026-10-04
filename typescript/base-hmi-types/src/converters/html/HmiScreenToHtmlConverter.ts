@@ -2604,6 +2604,8 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   if (getStaticValue(control.showToolbar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
     appendColorStyle(style, "background-color", control.toolbarBackgroundColor);
+    appendColorStyle(style, "color", control.toolbarForegroundColor);
+    if (control.toolbarFont !== undefined) appendFont(style, control.toolbarFont.getForCulture(context.options.cultureLcid));
     html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '\">Toolbar</div>');
   }
   html.push('<div class="hmi-parameter-selection" style="flex: 0 0 auto; padding: 2px 4px;"><div>',
@@ -2623,6 +2625,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
     appendColorStyle(style, "background-color", control.statusBarBackgroundColor);
     appendColorStyle(style, "color", control.statusBarForegroundColor);
+    if (control.statusBarFont !== undefined) appendFont(style, control.statusBarFont.getForCulture(context.options.cultureLcid));
     html.push('<div class="hmi-parameter-status-bar" role="status" style="', style.join(""), '\">Status</div>');
   }
   html.push("</div>");
@@ -2645,6 +2648,8 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   if (getStaticValue(control.showToolbar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
     appendColorStyle(style, "background-color", control.toolbarBackgroundColor);
+    appendColorStyle(style, "color", control.toolbarForegroundColor);
+    if (control.toolbarFont !== undefined) appendFont(style, control.toolbarFont.getForCulture(context.options.cultureLcid));
     html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '\">Toolbar</div>');
   }
   if (control.filter !== undefined) html.push('<div class="hmi-parameter-filter">Filter: ', escapeHtml(getStaticValue(control.filter) ?? ""), "</div>");
@@ -2653,6 +2658,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
     appendColorStyle(style, "background-color", control.statusBarBackgroundColor);
     appendColorStyle(style, "color", control.statusBarForegroundColor);
+    if (control.statusBarFont !== undefined) appendFont(style, control.statusBarFont.getForCulture(context.options.cultureLcid));
     html.push('<div class="hmi-parameter-status-bar" role="status" style="', style.join(""), '\">Status</div>');
   }
   html.push("</div>");

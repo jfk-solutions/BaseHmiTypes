@@ -17,6 +17,9 @@ public abstract class HmiParameterControlBase : HmiControlWindowBase
     public HmiProperty<bool>? ShowToolbar { get; set; }
     public HmiProperty<bool>? ShowStatusBar { get; set; }
     public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }
+    public HmiProperty<HmiColor>? ToolbarForegroundColor { get; set; }
+    public HmiFont? ToolbarFont { get; set; }
+    public HmiFont? StatusBarFont { get; set; }
     public HmiProperty<HmiColor>? StatusBarBackgroundColor { get; set; }
     public HmiProperty<HmiColor>? StatusBarForegroundColor { get; set; }
 }

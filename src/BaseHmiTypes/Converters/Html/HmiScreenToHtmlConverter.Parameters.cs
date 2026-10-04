@@ -29,6 +29,8 @@ public partial class HmiScreenToHtmlConverter
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;");
             AppendColorStyle(style, "background-color", control.ToolbarBackgroundColor);
+            AppendColorStyle(style, "color", control.ToolbarForegroundColor);
+            AppendFontStyle(style, control.ToolbarFont?.GetForCulture(context.CultureInfo?.LCID));
             html.Append("<div class=\"hmi-parameter-toolbar\" role=\"toolbar\" style=\"").Append(style).Append("\">Toolbar</div>");
         }
         html.Append("<div class=\"hmi-parameter-selection\" style=\"flex: 0 0 auto; padding: 2px 4px;\"><div>")
@@ -52,6 +54,7 @@ public partial class HmiScreenToHtmlConverter
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;");
             AppendColorStyle(style, "background-color", control.StatusBarBackgroundColor);
             AppendColorStyle(style, "color", control.StatusBarForegroundColor);
+            AppendFontStyle(style, control.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
             html.Append("<div class=\"hmi-parameter-status-bar\" role=\"status\" style=\"").Append(style).Append("\">Status</div>");
         }
         html.Append("</div>");
@@ -76,6 +79,8 @@ public partial class HmiScreenToHtmlConverter
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;");
             AppendColorStyle(style, "background-color", control.ToolbarBackgroundColor);
+            AppendColorStyle(style, "color", control.ToolbarForegroundColor);
+            AppendFontStyle(style, control.ToolbarFont?.GetForCulture(context.CultureInfo?.LCID));
             html.Append("<div class=\"hmi-parameter-toolbar\" role=\"toolbar\" style=\"").Append(style).Append("\">Toolbar</div>");
         }
         if (control.Filter is not null)
@@ -86,6 +91,7 @@ public partial class HmiScreenToHtmlConverter
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;");
             AppendColorStyle(style, "background-color", control.StatusBarBackgroundColor);
             AppendColorStyle(style, "color", control.StatusBarForegroundColor);
+            AppendFontStyle(style, control.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
             html.Append("<div class=\"hmi-parameter-status-bar\" role=\"status\" style=\"").Append(style).Append("\">Status</div>");
         }
         html.Append("</div>");
