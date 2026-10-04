@@ -2673,8 +2673,8 @@ public partial class HmiScreenToHtmlConverter
         var showHeader = recipeControl.ShowHeader is null || ResolveStaticValue(recipeControl.ShowHeader, context);
         var showFooter = recipeControl.ShowFooter is not null && ResolveStaticValue(recipeControl.ShowFooter, context);
         var defaultRecipeName = ResolveStaticValue(recipeControl.DefaultRecipeName, context) ?? string.Empty;
-        var headerStyle = CreateRecipeHeaderStyle(recipeControl);
-        var contentStyle = CreateRecipeContentStyle(recipeControl);
+        var headerStyle = CreateRecipeHeaderStyle(recipeControl, context);
+        var contentStyle = CreateRecipeContentStyle(recipeControl, context);
 
         var cellStyle = new StringBuilder();
         cellStyle.Append(recipeControl.ShowGridLines is not null && !ResolveStaticValue(recipeControl.ShowGridLines, context) ? "border: 0;" : "border: 1px solid currentColor;");
@@ -2751,22 +2751,22 @@ public partial class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static string CreateRecipeHeaderStyle(HmiRecipeControl recipeControl)
+    private static string CreateRecipeHeaderStyle(HmiRecipeControl recipeControl, HmiHtmlConvertContext context)
     {
         var style = new StringBuilder();
         AppendColorStyle(style, "background-color", recipeControl.HeaderBackgroundColor);
         AppendColorStyle(style, "color", recipeControl.HeaderForegroundColor);
         AppendColorStyle(style, "border-color", recipeControl.HeaderBorderColor);
-        AppendFontStyle(style, recipeControl.HeaderFont);
+        AppendFontStyle(style, recipeControl.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
     }
 
-    private static string CreateRecipeContentStyle(HmiRecipeControl recipeControl)
+    private static string CreateRecipeContentStyle(HmiRecipeControl recipeControl, HmiHtmlConvertContext context)
     {
         var style = new StringBuilder();
         AppendColorStyle(style, "background-color", recipeControl.ContentBackgroundColor);
         AppendColorStyle(style, "color", recipeControl.ContentForegroundColor);
-        AppendFontStyle(style, recipeControl.ContentFont);
+        AppendFontStyle(style, recipeControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
         if (TryGetStaticValue(recipeControl.WordWrap, out var wordWrap))
             style.Append(wordWrap ? "white-space: normal;overflow-wrap: anywhere;" : "white-space: nowrap;");
         return style.ToString();
@@ -2989,7 +2989,7 @@ public partial class HmiScreenToHtmlConverter
             var statusStyle = new StringBuilder("flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;");
             AppendColorStyle(statusStyle, "background-color", alarmControl.StatusBarBackgroundColor);
             AppendColorStyle(statusStyle, "color", alarmControl.StatusBarForegroundColor);
-            AppendFontStyle(statusStyle, alarmControl.StatusBarFont);
+            AppendFontStyle(statusStyle, alarmControl.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
             html.Append("<div class=\"hmi-alarm-status-bar\" role=\"status\" style=\"")
                 .Append(statusStyle).Append("\">");
             if (alarmControl.StatusBarPanels.Count == 0) html.Append("Status");
@@ -4076,7 +4076,7 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "scale-background-color", gauge.ScaleBackgroundColor);
         AppendStaticAttribute(html, "scale-foreground-color", gauge.ScaleForegroundColor);
         AppendStaticAttribute(html, "tick-color", gauge.TickColor);
-        AppendAttribute(html, "label-font", FormatFont(gauge.LabelFont));
+        AppendAttribute(html, "label-font", FormatFont(gauge.LabelFont?.GetForCulture(context.CultureInfo?.LCID)));
         html.Append("></hmi-gauge>");
     }
 
@@ -4367,7 +4367,7 @@ public partial class HmiScreenToHtmlConverter
             var gridLineColor = ResolveStaticValue(alarmControl.GridLineColor, context);
             style.Append("--hmi-grid-line-color: ").Append(ToCss(gridLineColor)).Append(';');
         }
-        AppendFontStyle(style, alarmControl.ContentFont);
+        AppendFontStyle(style, alarmControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
     }
 
@@ -4378,7 +4378,7 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(style, "color", alarmControl.HeaderForegroundColor);
         if (alarmControl.HeaderBorderColor is not null)
             style.Append("border-bottom-color: ").Append(ToCss(ResolveStaticValue(alarmControl.HeaderBorderColor, context))).Append(';');
-        AppendFontStyle(style, alarmControl.HeaderFont);
+        AppendFontStyle(style, alarmControl.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
     }
 
@@ -4447,16 +4447,16 @@ public partial class HmiScreenToHtmlConverter
             style.Append("border-width: ")
                 .Append(ToCss(Math.Max(0d, ResolveStaticValue(alarmControl.TableHeaderBorderWidth, context))))
                 .Append("px;");
-        AppendFontStyle(style, alarmControl.HeaderFont);
+        AppendFontStyle(style, alarmControl.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
     }
 
     private static string CreateTrendControlStyle(HmiTrendControlBase trendControl, HmiHtmlConvertContext context)
     {
         var style = new StringBuilder(CreateControlWindowStyle(trendControl, context, "overflow: hidden;"));
-        AppendFontVariables(style, "content", trendControl.ContentFont);
-        AppendFontVariables(style, "header", trendControl.HeaderFont);
-        AppendFontVariables(style, "status", trendControl.StatusBarFont);
+        AppendFontVariables(style, "content", trendControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
+        AppendFontVariables(style, "header", trendControl.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
+        AppendFontVariables(style, "status", trendControl.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
         if (trendControl.ToolbarBackgroundColor is not null &&
             (trendControl.UseToolbarBackgroundColor is null || ResolveStaticValue(trendControl.UseToolbarBackgroundColor, context)))
             style.Append("--hmi-trend-toolbar-background: ")
@@ -5259,7 +5259,7 @@ public partial class HmiScreenToHtmlConverter
         var borderStyle = GetBorderStyleCss(item, context);
         var margin = item.Margin;
         var padding = item.Padding;
-        var font = GetFont(item);
+        var font = GetFont(item)?.GetForCulture(context.CultureInfo?.LCID);
         var horizontalAlignment = context.EffectiveProperties.Resolve(item, "HorizontalAlignment", GetHorizontalAlignment(item));
         var verticalAlignment = context.EffectiveProperties.Resolve(item, "VerticalAlignment", GetVerticalAlignment(item));
         var suppressBorderStyle = item is HmiCheckBoxGroup or HmiRadioButtonGroup;
