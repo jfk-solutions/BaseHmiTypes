@@ -80,6 +80,21 @@ export class HmiRecipeToHtmlConverter {
       }
       html.push('</tbody></table></div>');
     }
+    const tagTypes = [
+      ...recipe.parameters.map(field => ({ kind: "Field", name: field.name, settings: field.sourceTagTypeSettings })),
+      ...recipe.sourceTagDeclarations.map(declaration => ({ kind: "Declaration", name: declaration.name, settings: declaration.typeSettings })),
+    ].filter(row => row.settings !== undefined);
+    if (tagTypes.length > 0) {
+      html.push('<h2>Source tag type settings</h2><div class="table-scroll"><table><thead><tr><th scope="col">Kind</th><th scope="col">Name</th><th scope="col">Shape flags (raw)</th><th scope="col">Coding flags (raw)</th><th scope="col">Data type source ID</th><th scope="col">Data type name</th></tr></thead><tbody>');
+      for (const row of tagTypes) {
+        const settings = row.settings!;
+        html.push('<tr><td>', row.kind, '</td><th scope="row">', encode(row.name), '</th>');
+        for (const value of [settings.shapeFlags?.toString(), settings.codingFlags?.toString(), settings.dataType?.sourceId, settings.dataType?.name])
+          html.push('<td data-value-state="', value === undefined ? "missing" : "present", '">', encode(value ?? "Missing"), '</td>');
+        html.push('</tr>');
+      }
+      html.push('</tbody></table></div>');
+    }
     const tagLimits = [
       ...recipe.parameters.flatMap(field => field.sourceTagLimits.map(limit => ({ kind: "Field", name: field.name, limit }))),
       ...recipe.sourceTagDeclarations.flatMap(declaration => declaration.limits.map(limit => ({ kind: "Declaration", name: declaration.name, limit }))),

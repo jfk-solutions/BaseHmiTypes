@@ -105,6 +105,22 @@ public sealed class HmiRecipeToHtmlConverter
             }
             html.Append("</tbody></table></div>");
         }
+        var tagTypes = recipe.Parameters.Where(field => field.SourceTagTypeSettings != null)
+            .Select(field => (Kind: "Field", field.Name, Settings: field.SourceTagTypeSettings!))
+            .Concat(recipe.SourceTagDeclarations.Where(declaration => declaration.TypeSettings != null)
+                .Select(declaration => (Kind: "Declaration", declaration.Name, Settings: declaration.TypeSettings!))).ToArray();
+        if (tagTypes.Length > 0)
+        {
+            html.Append("<h2>Source tag type settings</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Kind</th><th scope=\"col\">Name</th><th scope=\"col\">Shape flags (raw)</th><th scope=\"col\">Coding flags (raw)</th><th scope=\"col\">Data type source ID</th><th scope=\"col\">Data type name</th></tr></thead><tbody>");
+            foreach (var row in tagTypes)
+            {
+                html.Append("<tr><td>").Append(row.Kind).Append("</td><th scope=\"row\">").Append(Encode(row.Name)).Append("</th>");
+                foreach (var value in new[] { row.Settings.ShapeFlags?.ToString(CultureInfo.InvariantCulture), row.Settings.CodingFlags?.ToString(CultureInfo.InvariantCulture), row.Settings.DataType?.SourceId, row.Settings.DataType?.Name })
+                    html.Append("<td data-value-state=\"").Append(value == null ? "missing" : "present").Append("\">").Append(Encode(value ?? "Missing")).Append("</td>");
+                html.Append("</tr>");
+            }
+            html.Append("</tbody></table></div>");
+        }
         var tagLimits = recipe.Parameters.SelectMany(field => field.SourceTagLimits.Select(limit => (Kind: "Field", field.Name, Limit: limit)))
             .Concat(recipe.SourceTagDeclarations.SelectMany(declaration => declaration.Limits.Select(limit => (Kind: "Declaration", declaration.Name, Limit: limit)))).ToArray();
         if (tagLimits.Length > 0)
