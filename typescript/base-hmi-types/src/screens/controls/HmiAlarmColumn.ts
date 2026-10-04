@@ -21,4 +21,8 @@ export class HmiAlarmColumn {
   symbol?: string;
   alignment?: HmiProperty<HmiHorizontalAlignment>;
   order?: HmiProperty<number>;
+  /** Native row-sort mode, separate from column layout order. */
+  sortMode?: HmiProperty<number>;
+  /** Native sort priority; zero removes this criterion. */
+  sortIndex?: HmiProperty<number>;
 }

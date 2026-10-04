@@ -3089,6 +3089,8 @@ public partial class HmiScreenToHtmlConverter
                 html.Append('"');
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-column-source-type", column.SourceType);
+                AppendAttribute(html, "data-sort-mode", ResolvePropertyPreview(column.SortMode, context));
+                AppendAttribute(html, "data-sort-index", ResolvePropertyPreview(column.SortIndex, context));
                 AppendAttribute(html, "data-decimal-places", ResolvePropertyPreview(column.DecimalPlaces, context));
                 AppendAttribute(html, "data-leading-zeros", ResolvePropertyPreview(column.LeadingZeros, context));
                 AppendAttribute(html, "data-automatic-decimal-places", ResolvePropertyPreview(column.AutomaticDecimalPlaces, context));

@@ -26,4 +26,8 @@ public sealed class HmiAlarmColumn
     public HmiProperty<HmiHorizontalAlignment>? Alignment { get; set; }
 
     public HmiProperty<int>? Order { get; set; }
+    /// <summary>Native row-sort mode, separate from column layout order.</summary>
+    public HmiProperty<int>? SortMode { get; set; }
+    /// <summary>Native sort priority; zero removes this criterion.</summary>
+    public HmiProperty<int>? SortIndex { get; set; }
 }
