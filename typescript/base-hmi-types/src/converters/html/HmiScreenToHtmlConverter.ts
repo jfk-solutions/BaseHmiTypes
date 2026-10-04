@@ -3933,29 +3933,29 @@ function normalizeEmbeddedSymbolSvg(svg: string, symbolLibraryControl: HmiSymbol
     return svg;
   }
 
-  const rootTag = svg.substring(svgStart, svgTagEnd);
+  let rootTag = svg.substring(svgStart, svgTagEnd);
+  const aspectRatio = getStaticValueOrDefault(symbolLibraryControl.fixedAspectRatio, false) ? "xMidYMid meet" : "none";
+  if (tryGetAttributeValue(rootTag, "preserveAspectRatio") !== undefined)
+    rootTag = replaceAttributeValue(rootTag, 0, rootTag.length, "preserveAspectRatio", aspectRatio);
   const existingStyle = tryGetAttributeValue(rootTag, "style");
   const normalizedStyle = appendCssDeclaration(
     existingStyle,
     "width: 100%; height: 100%; display: block;",
   );
-  let result = svg;
   const attributes: string[] = [];
   if (existingStyle === undefined) {
     attributes.push(` style="${escapeHtml(normalizedStyle)}"`);
   } else {
-    result = replaceAttributeValue(result, svgStart, svgTagEnd, "style", normalizedStyle);
+    rootTag = replaceAttributeValue(rootTag, 0, rootTag.length, "style", normalizedStyle);
   }
   if (!/preserveAspectRatio\s*=/i.test(rootTag)) {
-    attributes.push(getStaticValueOrDefault(symbolLibraryControl.fixedAspectRatio, false)
-      ? " preserveAspectRatio=\"xMidYMid meet\""
-      : " preserveAspectRatio=\"none\"");
+    attributes.push(` preserveAspectRatio="${aspectRatio}"`);
   }
   if (symbolLibraryControl.symbolId?.trim()) {
     attributes.push(` data-hmi-symbol-id="${escapeHtml(symbolLibraryControl.symbolId)}"`);
   }
 
-  return attributes.length === 0 ? result : result.slice(0, svgTagEnd) + attributes.join("") + result.slice(svgTagEnd);
+  return svg.slice(0, svgStart) + rootTag + attributes.join("") + svg.slice(svgTagEnd);
 }
 
 function tryGetAttributeValue(tag: string, attributeName: string): string | undefined {
