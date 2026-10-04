@@ -76,3 +76,20 @@ Item descriptors must use IDs unique within the project. Resolve them through
 the project provider, including descriptors found below device nodes. A reader
 may qualify device-local table IDs while retaining globally unique screen IDs.
 The TypeScript model mirrors these types and uses camel-case properties.
+
+## Recipe HTML export
+
+`HmiRecipeToHtmlConverter` renders an `HmiRecipe` as a standalone HTML document.
+It shows field metadata and stored records, retaining unmatched record keys and
+distinguishing missing values, null values, and empty strings. Values are HTML
+encoded and their persisted text is preserved. This export does not simulate
+runtime recipe transfer or populate records that are absent from the model.
+
+```csharp
+var html = new BaseHmiTypes.Converters.Html.HmiRecipeToHtmlConverter().Convert(recipe);
+```
+
+```typescript
+import { HmiRecipeToHtmlConverter } from "@jfk-solutions/base-hmi-types";
+const html = new HmiRecipeToHtmlConverter().convert(recipe);
+```
