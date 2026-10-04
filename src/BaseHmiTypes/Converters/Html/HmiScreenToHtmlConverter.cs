@@ -4683,6 +4683,7 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "toolbar-background-color", trendControl.ToolbarBackgroundColor);
         AppendStaticAttribute(html, "toolbar-button-size", trendControl.ToolbarButtonSize);
         AppendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.ShowStatusBar);
+        AppendAttribute(html, "status-bar-text", trendControl.StatusBarText?.GetText(context.CultureInfo), preserveEmpty: true);
         AppendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.UseStatusBarBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
         AppendStaticBooleanValueAttribute(html, "use-trend-name-as-label", trendControl.UseTrendNameAsLabel);

@@ -14,6 +14,7 @@ const trendControlProperties = {
   toolbarAlignment: String,
   toolbarButtonSize: String,
   showStatusBar: String,
+  statusBarText: String,
   displayPenIcons: String,
   useTrendNameAsLabel: String,
   displayValueBar: String,
@@ -538,7 +539,7 @@ export class HmiTrendControl extends HTMLElement {
       <div class="frame"${selectedTimeAxis ? ` data-time-axis="${escapeHtml(selectedTimeAxis.name)}"` : ""}>
         ${displayChartTitle ? `<div class="title">${escapeHtml(chartTitle)}</div>` : ""}
         ${showToolbar ? `<div class="toolbar">${renderPenLegend(visiblePens, displayPenIcons, useTrendNameAsLabel)}</div>` : ""}
-        ${showStatusBar ? `<div class="status">${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}</div>` : ""}
+        ${showStatusBar ? `<div class="status">${escapeHtml(this.getAttribute("status-bar-text") ?? `${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}`)}</div>` : ""}
         ${trendWindows.length ? `<div class="plot window-layout">${renderTrendWindows(this, trendWindows, pens, configuredValueAxes, backgroundColor, foregroundColor)}</div>` : `<div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             ${renderGrid(
