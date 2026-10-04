@@ -154,6 +154,7 @@ public sealed class MetafileToSvgRenderer
                     {
                         state.CurrentPath.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
                         state.PathStartX = state.CurrentX;
+                        state.PathFigureClosed = false;
                         state.PathStartY = state.CurrentY;
                         state.PathEndX = state.CurrentX;
                         state.PathEndY = state.CurrentY;
@@ -179,6 +180,7 @@ public sealed class MetafileToSvgRenderer
                 case EMR.BeginPath:
                     state.SelectedPath = null;
                     state.CurrentPath = new List<string>();
+                    state.PathFigureClosed = false;
                     state.PathStartX = null;
                     state.PathStartY = null;
                     state.PathEndX = null;
@@ -196,13 +198,16 @@ public sealed class MetafileToSvgRenderer
                     ResetPathConstruction(state);
                     break;
                 case EMR.CloseFigure:
-                    state.CurrentPath?.Add("Z");
-                    if (state.PathStartX is not null && state.PathStartY is not null)
+                    if (state.CurrentPath is { Count: > 0 } && !state.PathFigureClosed)
                     {
-                        state.CurrentX = state.PathStartX.Value;
-                        state.CurrentY = state.PathStartY.Value;
-                        state.PathEndX = state.CurrentX;
-                        state.PathEndY = state.CurrentY;
+                        // Pending MoveTo commands are not geometry; GDI closes
+                        // the preceding drawn figure without moving DC position.
+                        while (state.CurrentPath.Count > 0 && state.CurrentPath[state.CurrentPath.Count - 1].StartsWith("M ", StringComparison.Ordinal))
+                            state.CurrentPath.RemoveAt(state.CurrentPath.Count - 1);
+                        if (state.CurrentPath.Count > 0 && state.CurrentPath[state.CurrentPath.Count - 1] != "Z") state.CurrentPath.Add("Z");
+                        state.PathEndX = state.PathStartX;
+                        state.PathEndY = state.PathStartY;
+                        state.PathFigureClosed = true;
                     }
 
                     break;
@@ -262,6 +267,7 @@ public sealed class MetafileToSvgRenderer
                             for (var index = 1; index < points.Count; index++)
                                 state.CurrentPath.Add($"L {Number(points[index].X)} {Number(points[index].Y)}");
                             if (closed) state.CurrentPath.Add("Z");
+                            state.PathFigureClosed = closed;
                             state.PathStartX = points[0].X;
                             state.PathStartY = points[0].Y;
                             state.PathEndX = closed ? points[0].X : points[points.Count - 1].X;
@@ -287,6 +293,7 @@ public sealed class MetafileToSvgRenderer
                             if (state.CurrentPath is not null)
                             {
                                 state.PathStartX = points[0].X;
+                                state.PathFigureClosed = closed;
                                 state.PathStartY = points[0].Y;
                                 state.PathEndX = closed ? points[0].X : points[points.Count - 1].X;
                                 state.PathEndY = closed ? points[0].Y : points[points.Count - 1].Y;
@@ -678,6 +685,7 @@ public sealed class MetafileToSvgRenderer
             CurrentPath = state.CurrentPath is null ? null : new List<string>(state.CurrentPath),
             SelectedPath = state.SelectedPath is null ? null : new List<string>(state.SelectedPath),
             PathStartX = state.PathStartX,
+            PathFigureClosed = state.PathFigureClosed,
             PathStartY = state.PathStartY,
             PathEndX = state.PathEndX,
             PathEndY = state.PathEndY,
@@ -710,6 +718,7 @@ public sealed class MetafileToSvgRenderer
         target.ActiveClipId = restored.ActiveClipId;
         target.CurrentPath = restored.CurrentPath;
         target.PathStartX = restored.PathStartX;
+        target.PathFigureClosed = restored.PathFigureClosed;
         target.SelectedPath = restored.SelectedPath;
         target.PathStartY = restored.PathStartY;
         target.PathEndX = restored.PathEndX;
@@ -834,6 +843,7 @@ public sealed class MetafileToSvgRenderer
             }
         }
         path.Add("Z");
+        state.PathFigureClosed = true;
         state.PathStartX = state.PathEndX = start.X;
         state.PathStartY = state.PathEndY = start.Y;
     }
@@ -891,15 +901,17 @@ public sealed class MetafileToSvgRenderer
     private static void ResetPathConstruction(DrawState state)
     {
         state.CurrentPath = null;
+        state.PathFigureClosed = false;
         state.PathStartX = state.PathStartY = state.PathEndX = state.PathEndY = null;
     }
 
     private static void EnsurePathPosition(DrawState state)
     {
-        if (state.CurrentPath is not null && (state.PathEndX != state.CurrentX || state.PathEndY != state.CurrentY))
+        if (state.CurrentPath is not null && (state.PathFigureClosed || state.PathEndX != state.CurrentX || state.PathEndY != state.CurrentY))
         {
             state.CurrentPath.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
             state.PathStartX = state.CurrentX;
+            state.PathFigureClosed = false;
             state.PathStartY = state.CurrentY;
         }
     }
@@ -920,7 +932,7 @@ public sealed class MetafileToSvgRenderer
         else
         {
             path.Add($"M {Number(points[0].X)} {Number(points[0].Y)}");
-            if (state.CurrentPath is not null) { state.PathStartX = points[0].X; state.PathStartY = points[0].Y; }
+            if (state.CurrentPath is not null) { state.PathStartX = points[0].X; state.PathStartY = points[0].Y; state.PathFigureClosed = false; }
         }
         for (var index = to ? 0 : 1; index < points.Count; index += line ? 1 : 3)
             path.Add(line ? $"L {Number(points[index].X)} {Number(points[index].Y)}" : $"C {Number(points[index].X)} {Number(points[index].Y)} {Number(points[index + 1].X)} {Number(points[index + 1].Y)} {Number(points[index + 2].X)} {Number(points[index + 2].Y)}");
@@ -952,13 +964,21 @@ public sealed class MetafileToSvgRenderer
         if (bytes[typesOffset] != PolyDrawTypeMoveTo)
         {
             if (state.CurrentPath is not null) EnsurePathPosition(state);
-            else { path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}"); state.PathStartX = state.CurrentX; state.PathStartY = state.CurrentY; }
+            else { path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}"); state.PathStartX = state.CurrentX; state.PathStartY = state.CurrentY; state.PathFigureClosed = false; }
         }
         for (var index = 0; index < mapped.Count; index++)
         {
             var type = bytes[typesOffset + index] & ~PolyDrawTypeCloseFigure;
+            if (type != PolyDrawTypeMoveTo && state.PathFigureClosed)
+            {
+                path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+                state.PathStartX = state.CurrentX;
+                state.PathStartY = state.CurrentY;
+                state.PathFigureClosed = false;
+            }
             if (type == PolyDrawTypeMoveTo)
             {
+                state.PathFigureClosed = false;
                 path.Add($"M {Number(mapped[index].X)} {Number(mapped[index].Y)}");
                 state.PathStartX = mapped[index].X;
                 state.PathStartY = mapped[index].Y;
@@ -975,6 +995,7 @@ public sealed class MetafileToSvgRenderer
             if ((bytes[typesOffset + index] & PolyDrawTypeCloseFigure) != 0)
             {
                 path.Add("Z");
+                state.PathFigureClosed = true;
                 // Windows GDI closes the figure without moving the DC current
                 // position back from the supplied endpoint (verified natively).
                 state.PathEndX = state.PathStartX;
@@ -1393,6 +1414,7 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class DrawState
 {
+    public bool PathFigureClosed { get; set; }
     public bool ClockwiseShapes { get; set; }
     public List<string>? SelectedPath { get; set; }
     public double MiterLimit { get; set; } = 10;
