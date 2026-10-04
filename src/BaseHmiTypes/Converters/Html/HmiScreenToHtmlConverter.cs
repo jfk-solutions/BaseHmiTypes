@@ -4007,21 +4007,24 @@ public partial class HmiScreenToHtmlConverter
             return svg;
 
         var rootTag = svg.Substring(svgStart, svgTagEnd - svgStart);
+        // The control's layout policy takes precedence over the image's intrinsic policy.
+        var aspectRatio = symbolLibraryControl.FixedAspectRatio.GetStaticValueOrDefault()
+            ? "xMidYMid meet" : "none";
+        if (TryGetAttributeValue(rootTag, "preserveAspectRatio") != null)
+            rootTag = ReplaceAttributeValue(rootTag, 0, rootTag.Length, "preserveAspectRatio", aspectRatio);
         var existingStyle = TryGetAttributeValue(rootTag, "style");
         var normalizedStyle = AppendCssDeclaration(existingStyle, "width: 100%; height: 100%; display: block;");
         var attributes = new StringBuilder();
         if (existingStyle == null)
             attributes.Append(" style=\"").Append(normalizedStyle).Append('"');
         else
-            svg = ReplaceAttributeValue(svg, svgStart, svgTagEnd, "style", normalizedStyle);
+            rootTag = ReplaceAttributeValue(rootTag, 0, rootTag.Length, "style", normalizedStyle);
         if (rootTag.IndexOf("preserveAspectRatio", StringComparison.OrdinalIgnoreCase) < 0)
-            attributes.Append(symbolLibraryControl.FixedAspectRatio.GetStaticValueOrDefault()
-                ? " preserveAspectRatio=\"xMidYMid meet\""
-                : " preserveAspectRatio=\"none\"");
+            attributes.Append(" preserveAspectRatio=\"").Append(aspectRatio).Append('"');
         if (!string.IsNullOrWhiteSpace(symbolLibraryControl.SymbolId))
             attributes.Append(" data-hmi-symbol-id=\"").Append(WebUtility.HtmlEncode(symbolLibraryControl.SymbolId)).Append('"');
 
-        return attributes.Length == 0 ? svg : svg.Insert(svgTagEnd, attributes.ToString());
+        return svg.Substring(0, svgStart) + rootTag + attributes + svg.Substring(svgTagEnd);
     }
 
     private static string? TryGetAttributeValue(string tag, string attributeName)
