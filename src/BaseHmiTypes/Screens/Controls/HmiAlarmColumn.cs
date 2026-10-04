@@ -12,6 +12,8 @@ public sealed class HmiAlarmColumn
     public HmiProperty<double>? Width { get; set; }
     public HmiProperty<bool>? AutoSize { get; set; }
     public HmiProperty<int>? DecimalPlaces { get; set; }
+    /// <summary>Configured native leading-zero setting; retained without assuming a formatting range.</summary>
+    public HmiProperty<int>? LeadingZeros { get; set; }
     public HmiProperty<bool>? AutomaticDecimalPlaces { get; set; }
     public HmiProperty<bool>? ExponentialFormat { get; set; }
     public string? TimeAndDateFormat { get; set; }

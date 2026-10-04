@@ -3072,6 +3072,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-column-type", column.type);
       appendAttribute(html, "data-column-source-type", column.sourceType);
       appendAttribute(html, "data-decimal-places", resolvePropertyPreview(column.decimalPlaces));
+      appendAttribute(html, "data-leading-zeros", resolvePropertyPreview(column.leadingZeros));
       appendAttribute(html, "data-automatic-decimal-places", resolvePropertyPreview(column.automaticDecimalPlaces));
       appendAttribute(html, "data-exponential-format", resolvePropertyPreview(column.exponentialFormat));
       appendAttribute(html, "data-time-format", column.timeAndDateFormat);

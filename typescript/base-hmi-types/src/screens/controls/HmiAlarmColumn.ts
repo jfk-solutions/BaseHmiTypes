@@ -9,6 +9,8 @@ export class HmiAlarmColumn {
   width?: HmiProperty<number>;
   autoSize?: HmiProperty<boolean>;
   decimalPlaces?: HmiProperty<number>;
+  /** Configured native leading-zero setting, without assuming a formatting range. */
+  leadingZeros?: HmiProperty<number>;
   automaticDecimalPlaces?: HmiProperty<boolean>;
   exponentialFormat?: HmiProperty<boolean>;
   timeAndDateFormat?: string;
