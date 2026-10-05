@@ -2947,7 +2947,36 @@ function appendStatusForceControl(html: string[], control: HmiStatusForceControl
   appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(control.selectionForegroundColor));
   html.push(' role="region" aria-label="Status/force"><table style="width: 100%; border-collapse: collapse;', content.join(""),
     '"><thead><tr><th style="', header.join(""), '">Status/force</th></tr></thead><tbody><tr><td style="', grid.join(""),
-    'text-align: center;">Status/force data not loaded</td></tr></tbody></table></div>');
+    'text-align: center;">Status/force data not loaded</td></tr></tbody></table>');
+  appendStatusForceButtonAppearance(html,control,context);
+  html.push("</div>");
+}
+
+function appendStatusForceButtonAppearance(html:string[],control:HmiStatusForceControl,context:HmiHtmlConvertContext):void {
+  if (![control.buttonBackgroundColor, control.buttonBorderBackgroundColor, control.buttonBorderColor, control.buttonFirstGradientColor, control.buttonMiddleGradientColor, control.buttonSecondGradientColor, control.buttonBorderWidth, control.buttonCornerRadius, control.buttonEdgeStyle, control.buttonBackFillStyle, control.buttonFirstGradientOffset, control.buttonSecondGradientOffset, control.useButtonFirstGradient, control.useButtonSecondGradient].some(value=>value!==undefined)) return;
+  html.push('<div data-appearance-sample="button" data-preview="appearance"');
+  appendAttribute(html,"data-button-background-color",resolvePropertyPreview(control.buttonBackgroundColor));
+  appendAttribute(html,"data-button-border-background-color",resolvePropertyPreview(control.buttonBorderBackgroundColor));
+  appendAttribute(html,"data-button-border-color",resolvePropertyPreview(control.buttonBorderColor));
+  appendAttribute(html,"data-button-first-gradient-color",resolvePropertyPreview(control.buttonFirstGradientColor));
+  appendAttribute(html,"data-button-middle-gradient-color",resolvePropertyPreview(control.buttonMiddleGradientColor));
+  appendAttribute(html,"data-button-second-gradient-color",resolvePropertyPreview(control.buttonSecondGradientColor));
+  appendAttribute(html,"data-button-border-width",resolvePropertyPreview(control.buttonBorderWidth));
+  appendAttribute(html,"data-button-corner-radius",resolvePropertyPreview(control.buttonCornerRadius));
+  appendAttribute(html,"data-button-edge-style",resolvePropertyPreview(control.buttonEdgeStyle));
+  appendAttribute(html,"data-button-back-fill-style",resolvePropertyPreview(control.buttonBackFillStyle));
+  appendAttribute(html,"data-button-first-gradient-offset",resolvePropertyPreview(control.buttonFirstGradientOffset));
+  appendAttribute(html,"data-button-second-gradient-offset",resolvePropertyPreview(control.buttonSecondGradientOffset));
+  appendAttribute(html,"data-use-button-first-gradient",resolvePropertyPreview(control.useButtonFirstGradient));
+  appendAttribute(html,"data-use-button-second-gradient",resolvePropertyPreview(control.useButtonSecondGradient));
+  const button=["padding: 2px 4px;"];
+  appendColorStyle(button,"background-color",control.buttonBackgroundColor);
+  appendColorStyle(button,"border-color",control.buttonBorderColor);
+  appendHeaderBorderWidth(button,control.buttonBorderWidth);
+  const radius=getStaticValue(control.buttonCornerRadius);
+  if(radius!==undefined&&Number.isFinite(radius)&&radius>=0)button.push(`border-radius: ${toCss(radius)}px;`);
+  appendColorGradientStyle(button,createColorGradient({backgroundColor:control.buttonBackgroundColor,firstGradientColor:control.buttonFirstGradientColor,firstGradientOffset:control.buttonFirstGradientOffset,middleGradientColor:control.buttonMiddleGradientColor,secondGradientColor:control.buttonSecondGradientColor,secondGradientOffset:control.buttonSecondGradientOffset,useFirstGradient:control.useButtonFirstGradient,useSecondGradient:control.useButtonSecondGradient}));
+  html.push(' style="',button.join(""),'">Status/force button appearance preview</div>');
 }
 
 function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, context: HmiHtmlConvertContext): void {
