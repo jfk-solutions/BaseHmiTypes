@@ -54,6 +54,7 @@ public sealed class MetafileToSvgRenderer
 
         foreach (var record in EmfRecords(bytes))
         {
+            (state.CurrentX, state.CurrentY) = TransformPoint(state, state.LogicalCurrentX, state.LogicalCurrentY);
             var firstElement = elements.Count;
             var dataOffset = record.Offset + 8;
             var dataEnd = record.Offset + record.Size;
@@ -154,6 +155,8 @@ public sealed class MetafileToSvgRenderer
                     objects.Remove(U32(bytes, dataOffset));
                     break;
                 case EMR.MoveToEx:
+                    state.LogicalCurrentX = I32(bytes, dataOffset);
+                    state.LogicalCurrentY = I32(bytes, dataOffset + 4);
                     (state.CurrentX, state.CurrentY) = TransformPoint(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4));
                     if (state.CurrentPath is not null)
                     {
@@ -180,6 +183,8 @@ public sealed class MetafileToSvgRenderer
                             elements.Add(LineElement(state.CurrentX, state.CurrentY, point.X, point.Y, state));
                         state.CurrentX = point.X;
                         state.CurrentY = point.Y;
+                        state.LogicalCurrentX = I32(bytes, dataOffset);
+                        state.LogicalCurrentY = I32(bytes, dataOffset + 4);
                         break;
                     }
                 case EMR.BeginPath:
@@ -758,6 +763,8 @@ public sealed class MetafileToSvgRenderer
             TextColor = state.TextColor,
             CurrentX = state.CurrentX,
             CurrentY = state.CurrentY,
+            LogicalCurrentX = state.LogicalCurrentX,
+            LogicalCurrentY = state.LogicalCurrentY,
             WindowOrgX = state.WindowOrgX,
             WindowOrgY = state.WindowOrgY,
             WindowExtX = state.WindowExtX,
@@ -794,6 +801,8 @@ public sealed class MetafileToSvgRenderer
         target.TextColor = restored.TextColor;
         target.CurrentX = restored.CurrentX;
         target.CurrentY = restored.CurrentY;
+        target.LogicalCurrentX = restored.LogicalCurrentX;
+        target.LogicalCurrentY = restored.LogicalCurrentY;
         target.WindowOrgX = restored.WindowOrgX;
         target.WindowOrgY = restored.WindowOrgY;
         target.WindowExtX = restored.WindowExtX;
@@ -921,6 +930,8 @@ public sealed class MetafileToSvgRenderer
         var end = Map(angle + sweep);
         state.CurrentX = end.X;
         state.CurrentY = end.Y;
+        state.LogicalCurrentX = cx + radius * Math.Cos(angle + sweep);
+        state.LogicalCurrentY = cy + radius * Math.Sin(angle + sweep);
         if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke));
         else
         {
@@ -968,7 +979,7 @@ public sealed class MetafileToSvgRenderer
         if (type == EMR.Pie) path.Add($"L {Point(cx, cy)}");
         if (closed) path.Add("Z");
         var end = Map(cx + rx * Math.Cos(endAngle), cy + ry * Math.Sin(endAngle));
-        if (to) {state.CurrentX = end.X;state.CurrentY = end.Y;}
+        if (to) {state.CurrentX = end.X;state.CurrentY = end.Y;state.LogicalCurrentX = cx + rx * Math.Cos(endAngle);state.LogicalCurrentY = cy + ry * Math.Sin(endAngle);}
         if (state.CurrentPath is null) elements.Add(PathElement(path, state, closed ? PathPaintMode.Paint : PathPaintMode.Stroke));
         else
         {
@@ -1133,7 +1144,8 @@ public sealed class MetafileToSvgRenderer
         var line = record.Type == EMR.PolylineTo || record.Type == EMR.PolylineTo16;
         var to = line || record.Type == EMR.PolyBezierTo || record.Type == EMR.PolyBezierTo16;
         var shortPoints = record.Type == EMR.PolylineTo16 || record.Type == EMR.PolyBezier16 || record.Type == EMR.PolyBezierTo16;
-        var points = MapPoints(ReadEmfPointArray32(bytes, record, shortPoints), state);
+        var logical = ReadEmfPointArray32(bytes, record, shortPoints);
+        var points = MapPoints(logical, state);
         if (line ? points.Count < 1 : to ? points.Count < 3 || points.Count % 3 != 0 : points.Count < 4 || (points.Count - 1) % 3 != 0) return;
         var path = state.CurrentPath ?? new List<string>();
         if (to)
@@ -1149,7 +1161,7 @@ public sealed class MetafileToSvgRenderer
         for (var index = to ? 0 : 1; index < points.Count; index += line ? 1 : 3)
             path.Add(line ? $"L {Number(points[index].X)} {Number(points[index].Y)}" : $"C {Number(points[index].X)} {Number(points[index].Y)} {Number(points[index + 1].X)} {Number(points[index + 1].Y)} {Number(points[index + 2].X)} {Number(points[index + 2].Y)}");
         var end = points[points.Count - 1];
-        if (to) { state.CurrentX = end.X; state.CurrentY = end.Y; }
+        if (to) { state.CurrentX = end.X; state.CurrentY = end.Y; state.LogicalCurrentX = logical[logical.Count - 1].X; state.LogicalCurrentY = logical[logical.Count - 1].Y; }
         if (state.CurrentPath is not null) { state.PathEndX = end.X; state.PathEndY = end.Y; }
         else elements.Add(PathElement(path, state, PathPaintMode.Stroke));
     }
@@ -1171,7 +1183,8 @@ public sealed class MetafileToSvgRenderer
                 (bytes[typesOffset + index + 2] != PolyDrawTypeBezierTo && bytes[typesOffset + index + 2] != (PolyDrawTypeBezierTo | PolyDrawTypeCloseFigure))) return;
             index += 2;
         }
-        var mapped = MapPoints(ReadEmfPointArray32(bytes, record, shortPoints), state);
+        var logical = ReadEmfPointArray32(bytes, record, shortPoints);
+        var mapped = MapPoints(logical, state);
         var path = state.CurrentPath ?? new List<string>();
         if (bytes[typesOffset] != PolyDrawTypeMoveTo)
         {
@@ -1204,6 +1217,8 @@ public sealed class MetafileToSvgRenderer
             }
             state.PathEndX = state.CurrentX = mapped[index].X;
             state.PathEndY = state.CurrentY = mapped[index].Y;
+            state.LogicalCurrentX = logical[index].X;
+            state.LogicalCurrentY = logical[index].Y;
             if ((bytes[typesOffset + index] & PolyDrawTypeCloseFigure) != 0)
             {
                 path.Add("Z");
@@ -1732,6 +1747,8 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class DrawState
 {
+    public double LogicalCurrentX { get; set; }
+    public double LogicalCurrentY { get; set; }
     public bool PathFigureClosed { get; set; }
     public bool ClockwiseShapes { get; set; }
     public List<string>? SelectedPath { get; set; }
