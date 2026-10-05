@@ -46,6 +46,7 @@ interface DrawState {
   worldTransform: Transform;
   fillRule: 'evenodd' | 'nonzero';
   activeClipId?: string;
+  activeMaskId?: string;
   currentPath?: string[];
   selectedPath?: string[];
   pathStartX?: number;
@@ -291,12 +292,10 @@ export class MetafileToSvgRenderer {
           resetPathConstruction(state);
           break;
         case EMR.SELECTCLIPPATH:
-          if (state.selectedPath?.length) {
-            const id = `clip${++clipSequence}`;
-            defs.push(`<clipPath id="${id}"><path d="${state.selectedPath.join(' ')}" /></clipPath>`);
-            state.activeClipId = id;
+          if (record.size >= 12 && u32(bytes, dataOffset) >= 1 && u32(bytes, dataOffset) <= 5 && state.selectedPath?.length) {
+            selectPathClip(state, u32(bytes, dataOffset), viewBox, defs, ++clipSequence);
+            state.selectedPath = undefined;
           }
-          state.selectedPath = undefined;
           break;
         case EMR.POLYLINETO:
         case EMR.POLYLINETO16:
@@ -838,6 +837,8 @@ function createInitialState(): DrawState {
 function cloneState(state: DrawState): DrawState {
   return {
     ...state,
+    activeClipId: state.activeClipId,
+    activeMaskId: state.activeMaskId,
     pen: { ...state.pen },
     brush: { ...state.brush },
     font: { ...state.font },
@@ -1726,8 +1727,33 @@ function emfHeaderViewBox(bytes: Uint8Array): ViewBox | null {
   });
 }
 
+function selectPathClip(state: DrawState, mode: number, viewBox: ViewBox, defs: string[], sequence: number): void {
+  const geometry = `d="${state.selectedPath!.join(' ')}" fill-rule="${state.fillRule}" clip-rule="${state.fillRule}"`;
+  if (mode === 5 || (mode === 1 && !state.activeClipId && !state.activeMaskId)) {
+    const id = `clip${sequence}`;
+    defs.push(`<clipPath id="${id}"><path ${geometry} /></clipPath>`);
+    state.activeClipId = id;
+    state.activeMaskId = undefined;
+    return;
+  }
+  // White includes and black excludes within the finite image viewport.
+  const old = clipAttr(state), n = (value: number) => Number(value.toFixed(3));
+  const rect = `x="${n(viewBox.x)}" y="${n(viewBox.y)}" width="${n(viewBox.width)}" height="${n(viewBox.height)}"`;
+  const previous = `<rect ${rect} fill="#ffffff"${old} />`;
+  const include = `<path ${geometry} fill="#ffffff" />`;
+  const exclude = `<path ${geometry} fill="#000000" />`;
+  const content = mode === 1 ? `<g${old}>${include}</g>`
+    : mode === 2 ? previous + include
+    : mode === 3 ? previous + include + `<path ${geometry} fill="#000000"${old} />`
+    : previous + exclude;
+  const id = `mask${sequence}`;
+  defs.push(`<mask id="${id}" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" ${rect}>${content}</mask>`);
+  state.activeClipId = undefined;
+  state.activeMaskId = id;
+}
+
 function lineElement(x1: number, y1: number, x2: number, y2: number, state: DrawState): string {
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${strokeAttrs(state)} fill="none" />`;
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${strokeAttrs(state)} fill="none"${clipAttr(state)} />`;
 }
 
 function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, sx: number, sy: number, ex: number, ey: number, state: DrawState, elements: string[], transformPoints: boolean): void {
@@ -1840,7 +1866,7 @@ function polyElement(points: Array<[number, number]>, closed: boolean, state: Dr
     return '';
   const tag = closed ? 'polygon' : 'polyline';
   const fill = closed ? `${fillAttrs(state)} ${fillRuleAttr(state)}` : 'fill="none"';
-  return `<${tag} points="${points.map(([x, y]) => `${x},${y}`).join(' ')}" ${strokeAttrs(state)} ${fill} />`;
+  return `<${tag} points="${points.map(([x, y]) => `${x},${y}`).join(' ')}" ${strokeAttrs(state)} ${fill}${clipAttr(state)} />`;
 }
 
 function isTallFallbackDuplicate(points: Array<[number, number]>): boolean {
@@ -1896,7 +1922,8 @@ function polyFillRule(mode: number): 'evenodd' | 'nonzero' {
 }
 
 function clipAttr(state: DrawState): string {
-  return state.activeClipId ? ` clip-path="url(#${state.activeClipId})"` : '';
+  return (state.activeClipId ? ` clip-path="url(#${state.activeClipId})"` : '')
+    + (state.activeMaskId ? ` mask="url(#${state.activeMaskId})"` : '');
 }
 
 function colorRef(bytes: Uint8Array, offset: number): string {
