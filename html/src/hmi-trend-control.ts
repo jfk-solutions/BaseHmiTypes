@@ -13,6 +13,7 @@ const trendControlProperties = {
   showToolbar: String,
   toolbarAlignment: String,
   toolbarButtonSize: String,
+  toolbarButtons: String,
   showStatusBar: String,
   statusBarText: String,
   statusBarPanels: String,
@@ -344,6 +345,11 @@ export class HmiTrendControl extends HTMLElement {
           text-decoration: var(--hmi-trend-toolbar-text-decoration, inherit);
         }
 
+        .configured-toolbar-button {
+          font: inherit;
+          min-height: var(--hmi-trend-toolbar-button-size, ${toCss(toolbarButtonSize)}px);
+        }
+
         .pen-chip {
           min-width: 0;
           max-width: 220px;
@@ -554,7 +560,7 @@ export class HmiTrendControl extends HTMLElement {
       </style>
       <div class="frame"${selectedTimeAxis ? ` data-time-axis="${escapeHtml(selectedTimeAxis.name)}"` : ""}>
         ${displayChartTitle ? `<div class="title">${escapeHtml(chartTitle)}</div>` : ""}
-        ${showToolbar ? `<div class="toolbar">${renderPenLegend(visiblePens, displayPenIcons, useTrendNameAsLabel)}</div>` : ""}
+        ${showToolbar ? `<div class="toolbar">${renderToolbarButtons(this)}${renderPenLegend(visiblePens, displayPenIcons, useTrendNameAsLabel)}</div>` : ""}
         ${showStatusBar ? `<div class="status">${renderStatusPanels(this, `${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}`)}</div>` : ""}
         ${trendWindows.length ? `<div class="plot window-layout">${renderTrendWindows(this, trendWindows, pens, configuredValueAxes, backgroundColor, foregroundColor)}</div>` : `<div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -704,6 +710,23 @@ function renderTrendWindows(
     const css = Object.entries(window.colors).map(([name, color]) => `--hmi-trend-${name}:${color};`).join("");
     const attributeText = Object.entries(attributes).map(([name, value]) => `${name}="${escapeHtml(value)}"`).join(" ");
     return `<hmi-trend-control data-trend-window="${escapeHtml(window.name)}" style="position:relative;display:block;background:${escapeHtml(window.backgroundColor || backgroundColor)};color:${escapeHtml(foregroundColor)};${css}" ${attributeText}></hmi-trend-control>`;
+  }).join("");
+}
+
+function renderToolbarButtons(source: HTMLElement): string {
+  let buttons: Record<string, unknown>[] = [];
+  try {
+    const parsed: unknown = JSON.parse(source.getAttribute("toolbar-buttons") ?? "null");
+    if (Array.isArray(parsed)) buttons = parsed.filter((value): value is Record<string, unknown> =>
+      typeof value === "object" && value !== null && !Array.isArray(value));
+  } catch { return ""; }
+  const order = (button: Record<string, unknown>) => typeof button.order === "number" && Number.isFinite(button.order) ? button.order : 0;
+  return buttons.filter(button=>button.visible!==false).sort((a,b)=>order(a)-order(b)).map(button=>{
+    const identity = typeof button.sourceType === "string" ? button.sourceType : undefined;
+    const title = typeof button.tooltip === "string" ? ` title="${escapeHtml(button.tooltip)}"` : "";
+    const nativeEnabled = typeof button.enabled === "boolean" ? ` data-configured-enabled="${button.enabled}"` : "";
+    const name = identity !== undefined ? ` data-button-source-type="${escapeHtml(identity)}"` : "";
+    return `<button class="configured-toolbar-button" type="button" disabled data-preview="configuration"${name}${nativeEnabled}${title}>${escapeHtml(identity ?? "Configured toolbar button")}</button>`;
   }).join("");
 }
 

@@ -4864,6 +4864,7 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticBooleanValueAttribute(html, "use-toolbar-background-color", trendControl.UseToolbarBackgroundColor);
         AppendStaticAttribute(html, "toolbar-background-color", trendControl.ToolbarBackgroundColor);
         AppendStaticAttribute(html, "toolbar-button-size", trendControl.ToolbarButtonSize);
+        AppendAttribute(html, "toolbar-buttons", FormatTrendToolbarButtons(trendControl.ToolbarButtons, context.CultureInfo));
         AppendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.ShowStatusBar);
         AppendAttribute(html, "status-bar-text", trendControl.StatusBarText?.GetText(context.CultureInfo), preserveEmpty: true);
         AppendStaticBooleanValueAttribute(html, "show-status-bar-tooltips", trendControl.ShowStatusBarTooltips);
@@ -5321,6 +5322,21 @@ public partial class HmiScreenToHtmlConverter
             AddTrendJsonString(properties, "valueAxisAlignment", pen.ValueAxisAlignment?.StaticValue.ToString());
             AddTrendJsonString(properties, "valueAxisLabel", pen.ValueAxisLabel);
             AddTrendJsonString(properties, "unit", pen.EngineeringUnitText?.GetText(cultureInfo) ?? pen.EngineeringUnit);
+            return "{" + string.Join(",", properties) + "}";
+        }).ToArray();
+        return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";
+    }
+
+    private static string? FormatTrendToolbarButtons(IEnumerable<HmiTrendToolbarButton> buttons, CultureInfo? cultureInfo)
+    {
+        var entries = buttons.Select(button =>
+        {
+            var properties = new List<string>();
+            AddTrendJsonString(properties, "sourceType", button.SourceType);
+            AddTrendJsonBoolean(properties, "visible", button.Visible?.StaticValue);
+            AddTrendJsonBoolean(properties, "enabled", button.Enabled?.StaticValue);
+            AddTrendJsonNumber(properties, "order", button.Order?.StaticValue);
+            AddTrendJsonString(properties, "tooltip", button.Tooltip?.GetText(cultureInfo));
             return "{" + string.Join(",", properties) + "}";
         }).ToArray();
         return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";

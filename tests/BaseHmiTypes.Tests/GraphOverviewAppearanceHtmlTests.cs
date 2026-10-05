@@ -61,7 +61,7 @@ public class GraphOverviewAppearanceHtmlTests
         string Sample(string source, string kind) => Regex.Match(source, $"<div data-appearance-sample=\"{kind}\"(.*?)</div>").Value;
         var button = Sample(html, "button");
         Assert.AreEqual(configured, button.Contains("linear-gradient("));
-        Assert.IsFalse(html.Contains("<button"));
+        Assert.IsFalse(HtmlTestMarkup.WithoutScripts(html).Contains("<button"));
         if(configured)
         {
             StringAssert.Contains(button, "border-radius: 0px;"); StringAssert.Contains(button, "border-width: 2.5px;");

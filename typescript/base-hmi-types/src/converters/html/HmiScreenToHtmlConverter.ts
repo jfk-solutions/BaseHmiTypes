@@ -5135,6 +5135,10 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendStaticBooleanValueAttribute(html, "use-toolbar-background-color", trendControl.useToolbarBackgroundColor);
   appendStaticAttribute(html, "toolbar-background-color", trendControl.toolbarBackgroundColor);
   appendStaticAttribute(html, "toolbar-button-size", trendControl.toolbarButtonSize);
+  if (trendControl.toolbarButtons.length > 0) appendAttribute(html, "toolbar-buttons", JSON.stringify(trendControl.toolbarButtons.map(button=>({
+    sourceType:button.sourceType, visible:getStaticValue(button.visible), enabled:getStaticValue(button.enabled),
+    order:getStaticValue(button.order), tooltip:button.tooltip?.getText(context.options.cultureLcid),
+  }))));
   appendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.showStatusBar);
   appendAttribute(html, "status-bar-text", trendControl.statusBarText?.getText(context.options.cultureLcid), true);
   appendStaticBooleanValueAttribute(html, "show-status-bar-tooltips", trendControl.showStatusBarTooltips);

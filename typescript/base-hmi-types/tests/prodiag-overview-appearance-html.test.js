@@ -1,3 +1,4 @@
+import { withoutRuntimeScripts } from "./html-test-markup.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {HmiProcessDiagnosisOverviewControl,HmiScreen,HmiLayer,HmiScreenToHtmlConverter,HmiFont,staticProperty,hmiColorFromArgb,getStaticValue} from "../dist/index.js";
@@ -37,7 +38,7 @@ for(const configured of [false,true]) test(`ProDiag overview appearance metadata
  for(const key of ["data-header-background-color=","data-header-foreground-color=","data-content-background-color=","data-content-foreground-color=","data-output-grid-line-color=","data-output-label-foreground-color=","data-error-icon-background-color=","data-info-icon-background-color=","data-toolbar-background-color=","data-use-toolbar-background-color=","data-show-message-view-button=","data-button-background-color=","data-button-border-background-color=","data-button-border-color=","data-button-first-gradient-color=","data-button-middle-gradient-color=","data-button-second-gradient-color=","data-button-border-width=","data-button-corner-radius=","data-button-edge-style=","data-button-back-fill-style=","data-button-first-gradient-offset=","data-button-second-gradient-offset=","data-use-button-first-gradient=","data-use-button-second-gradient="]) assert.equal(html.includes(key),configured,key);
  for(const kind of ["header","output","output-label","error-icon","info-icon","toolbar","button"]) assert.equal([...html.matchAll(new RegExp(`data-appearance-sample="${kind}"`,"gu"))].length,1);
  const sample=(source,kind)=>new RegExp(`<div data-appearance-sample="${kind}"(.*?)</div>`,"u").exec(source)?.[0]??"";
- const button=sample(html,"button");assert.equal(button.includes("linear-gradient("),configured);assert.ok(!html.includes("<button"));
+ const button=sample(html,"button");assert.equal(button.includes("linear-gradient("),configured);assert.ok(!withoutRuntimeScripts(html).includes("<button"));
  if(configured){
   for(const [kind,css] of [["header","background-color: rgba(1,2,3,0);"],["header","color: #020203;"],["header","font-family: Preview Header;"],["output","background-color: #030203;"],["output","color: #040203;"],["output","border-bottom-color: #050203;"],["output","font-family: Preview Content;"],["output-label","color: #060203;"],["error-icon","background-color: #070203;"],["info-icon","background-color: #080203;"],["toolbar","background-color: #090203;"]]) assert.ok(sample(html,kind).includes(css),`${kind}: ${css}`);
   assert.ok(button.includes("border-radius: 0px;"));assert.ok(button.includes("border-width: 2.5px;"));

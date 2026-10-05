@@ -41,7 +41,7 @@ public class SystemDiagnosisAppearanceHtmlTests
         StringAssert.Contains(Sample(html,"header"),"linear-gradient("); StringAssert.Contains(Sample(html,"button"),"linear-gradient(");
         StringAssert.Contains(html,"data-toolbar-alignment=\"-2147483648\""); StringAssert.Contains(html,"data-show-navigation-buttons=\"false\"");
         StringAssert.Contains(html,"data-information-area-font-reference-device-size=\"123\""); Assert.IsFalse(html.Contains("font-size: 123px"));
-        Assert.IsFalse(html.Contains("<button")); Assert.AreEqual(-10d,a.HeaderFirstGradientOffset!.StaticValue); Assert.AreEqual(120d,a.HeaderSecondGradientOffset!.StaticValue);
+        Assert.IsFalse(HtmlTestMarkup.WithoutScripts(html).Contains("<button")); Assert.AreEqual(-10d,a.HeaderFirstGradientOffset!.StaticValue); Assert.AreEqual(120d,a.HeaderSecondGradientOffset!.StaticValue);
         Assert.AreEqual(HmiColor.FromArgb(255,1,1,1),control.ContentBackgroundColor!.StaticValue);
         a.UseToolbarBackgroundColor = false; a.ShowGridLines = false; a.UseHeaderFirstGradient = false; a.UseHeaderSecondGradient = false; a.UseButtonFirstGradient = false;
         html = await renderer.ConvertAsync(screen);

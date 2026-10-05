@@ -328,6 +328,7 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiProperty<bool>? ShowStatusBarTooltips { get; set; }
 
     public IList<HmiTrendStatusBarPanel> StatusBarPanels { get; } = new List<HmiTrendStatusBarPanel>();
+    public IList<HmiTrendToolbarButton> ToolbarButtons { get; } = new List<HmiTrendToolbarButton>();
 
     public HmiProperty<bool>? ShowTimePeriodBar { get; set; }
 
