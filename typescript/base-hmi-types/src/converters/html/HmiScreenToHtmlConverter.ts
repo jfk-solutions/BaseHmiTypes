@@ -3430,7 +3430,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAlarmMessageBlocks(html, alarmControl, context);
   const configuredViews = alarmControl.columnSets.filter(set => set.allowSort !== undefined || set.allowFilter !== undefined || set.allowColumnReorder !== undefined || set.allowColumnResize !== undefined ||
     set.backgroundColor !== undefined || set.foregroundColor !== undefined || set.headerBackgroundColor !== undefined ||
-    set.headerForegroundColor !== undefined || set.headerBorderColor !== undefined || set.contentFont !== undefined || set.headerFont !== undefined);
+    set.headerForegroundColor !== undefined || set.headerBorderColor !== undefined || set.contentFont !== undefined || set.headerFont !== undefined ||
+    set.gridLineColor !== undefined || set.gridLineWidth !== undefined || set.gridLineVisibility !== undefined || set.rowHeight !== undefined ||
+    set.cellPaddingLeft !== undefined || set.cellPaddingTop !== undefined || set.cellPaddingRight !== undefined || set.cellPaddingBottom !== undefined);
   if (configuredViews.length > 0) {
     html.push('<template class="hmi-alarm-view-settings">');
     for (const set of configuredViews) {
@@ -3483,7 +3485,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     }
     html.push("</colgroup>");
   }
-  const gridCellStyle = createAlarmGridCellStyle(alarmControl);
+  const gridCellStyle = createAlarmGridCellStyle(alarmControl, selectedSet);
   if (showHeader && (visibleColumns.length > 0 || columns.length === 0)) {
     const headerCellStyle = createAlarmTableHeaderCellStyle(alarmControl, gridCellStyle, context, selectedSet);
     html.push("<thead><tr>");
@@ -3536,6 +3538,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAlarmSelectionRectangleStyle(html, alarmControl);
   appendColorStyle(html, "background-color", selectedSet?.backgroundColor);
   appendColorStyle(html, "color", selectedSet?.foregroundColor);
+  const rowHeight = getStaticValue(selectedSet?.rowHeight);
+  if (rowHeight !== undefined && Number.isFinite(rowHeight) && rowHeight >= 0)
+    html.push(rowHeight === 0 ? "height: auto;" : `height: ${toCss(rowHeight)}px;`);
   html.push("\">Alarm data not loaded</td></tr></tbody></table>");
 
   const showAcknowledgeButton = getStaticValue(alarmControl.showAcknowledgeButton) === true;
@@ -5486,6 +5491,14 @@ function appendAlarmViewSettings(html: string[], set: HmiAlarmColumnSet | undefi
   appendAttribute(html, "data-view-header-background-color", resolvePropertyPreview(set.headerBackgroundColor));
   appendAttribute(html, "data-view-header-foreground-color", resolvePropertyPreview(set.headerForegroundColor));
   appendAttribute(html, "data-view-header-border-color", resolvePropertyPreview(set.headerBorderColor));
+  appendAttribute(html, "data-view-grid-line-color", resolvePropertyPreview(set.gridLineColor));
+  appendAttribute(html, "data-view-grid-line-width", resolvePropertyPreview(set.gridLineWidth));
+  appendAttribute(html, "data-view-grid-line-visibility", resolvePropertyPreview(set.gridLineVisibility));
+  appendAttribute(html, "data-view-cell-padding-left", resolvePropertyPreview(set.cellPaddingLeft));
+  appendAttribute(html, "data-view-cell-padding-top", resolvePropertyPreview(set.cellPaddingTop));
+  appendAttribute(html, "data-view-cell-padding-right", resolvePropertyPreview(set.cellPaddingRight));
+  appendAttribute(html, "data-view-cell-padding-bottom", resolvePropertyPreview(set.cellPaddingBottom));
+  appendAttribute(html, "data-view-row-height", resolvePropertyPreview(set.rowHeight));
   for (const [role, font] of [["content", set.contentFont], ["header", set.headerFont]] as const) {
     if (font === undefined) continue;
     const style: string[] = [];
@@ -5535,14 +5548,21 @@ function createAlarmTableStyle(alarmControl: HmiAlarmControl, set: HmiAlarmColum
   return parts.join("");
 }
 
-function createAlarmGridCellStyle(alarmControl: HmiAlarmControl): string {
-  const horizontal = getStaticValue(alarmControl.showHorizontalGridLines) !== false;
-  const vertical = getStaticValue(alarmControl.showVerticalGridLines) !== false;
-  const width = Math.max(0, getStaticValue(alarmControl.gridLineWidth) ?? 1);
+function createAlarmGridCellStyle(alarmControl: HmiAlarmControl, set: HmiAlarmColumnSet | undefined): string {
+  let horizontal = getStaticValue(alarmControl.showHorizontalGridLines) !== false;
+  let vertical = getStaticValue(alarmControl.showVerticalGridLines) !== false;
+  let width = Math.max(0, getStaticValue(alarmControl.gridLineWidth) ?? 1);
+  const mode = getStaticValue(set?.gridLineVisibility);
+  if (mode === 0) { horizontal = false; vertical = false; }
+  else if (mode === 1) { horizontal = false; vertical = true; }
+  else if (mode === 2) { horizontal = true; vertical = false; }
+  const configuredWidth = getStaticValue(set?.gridLineWidth);
+  if (configuredWidth !== undefined && Number.isFinite(configuredWidth) && configuredWidth >= 0) width = configuredWidth;
   const parts = [`border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: ${horizontal ? toCss(width) : "0"}px ${vertical ? toCss(width) : "0"}px;`];
+  appendColorStyle(parts, "border-color", set?.gridLineColor);
   for (const [side, property] of [
-    ["top", alarmControl.cellPaddingTop], ["right", alarmControl.cellPaddingRight],
-    ["bottom", alarmControl.cellPaddingBottom], ["left", alarmControl.cellPaddingLeft],
+    ["top", set?.cellPaddingTop ?? alarmControl.cellPaddingTop], ["right", set?.cellPaddingRight ?? alarmControl.cellPaddingRight],
+    ["bottom", set?.cellPaddingBottom ?? alarmControl.cellPaddingBottom], ["left", set?.cellPaddingLeft ?? alarmControl.cellPaddingLeft],
   ] as const) {
     const value = getStaticValue(property);
     if (value !== undefined && Number.isFinite(value) && value >= 0) parts.push(`padding-${side}: ${toCss(value)}px;`);
