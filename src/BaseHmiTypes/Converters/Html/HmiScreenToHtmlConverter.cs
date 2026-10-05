@@ -3524,6 +3524,9 @@ public partial class HmiScreenToHtmlConverter
                     html.Append("<th style=\"").Append(header).Append("overflow: hidden; text-overflow: ellipsis;\"");
                     AppendAttribute(html, "data-column-source-type", column.SourceType);
                     AppendAttribute(html, "data-output-format", column.Format);
+                    AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
+                    AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
+                    AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
                     html.Append('>').Append(WebUtility.HtmlEncode(column.HeaderText?.GetText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString())).Append("</th>");
                 }
                 html.Append("</tr></thead>");

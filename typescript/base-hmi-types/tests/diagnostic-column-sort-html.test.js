@@ -1,0 +1,8 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {HmiSystemDiagnosisControl,HmiSystemDiagnosisColumn,HmiScreen,HmiLayer,HmiScreenToHtmlConverter,staticProperty} from "../dist/index.js";
+for(const type of [HmiSystemDiagnosisControl])test(`Sort metadata preserves definition order: ${type.name}`,async()=>{
+ const control=new type(),screen=new HmiScreen(),layer=new HmiLayer();layer.items.push(control);screen.layers.push(layer);const renderer=new HmiScreenToHtmlConverter();control.columnDefinitions.push(Object.assign(new HmiSystemDiagnosisColumn(),{sourceType:"A"}),Object.assign(new HmiSystemDiagnosisColumn(),{sourceType:"B"}));assert.ok(!(await renderer.convertAsync(screen)).includes("data-sort-order"));
+ Object.assign(control.columnDefinitions[0],{sortOrder:staticProperty(0),sortDirection:staticProperty(-2147483648),allowSort:staticProperty(false)});Object.assign(control.columnDefinitions[1],{sortOrder:staticProperty(-7),sortDirection:staticProperty(37)});control.columnDefinitions.push(Object.assign(new HmiSystemDiagnosisColumn(),{sourceType:"Hidden",visible:staticProperty(false),sortOrder:staticProperty(1),sortDirection:staticProperty(0)}));
+ const html=await renderer.convertAsync(screen);for(const fragment of ['data-allow-sort="false"','data-sort-order="0"','data-sort-direction="-2147483648"','data-sort-order="-7"','data-sort-direction="37"','Diagnostic data not loaded'])assert.ok(html.includes(fragment),fragment);assert.ok(html.indexOf('data-column-source-type="A"')<html.indexOf('data-column-source-type="B"'));assert.ok(!html.includes('data-column-source-type="Hidden"'));
+});

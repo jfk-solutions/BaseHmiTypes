@@ -20,4 +20,10 @@ public sealed class HmiSystemDiagnosisColumn
     public string? Format { get; set; }
 
     public HmiProperty<int>? Order { get; set; }
+
+    public HmiProperty<bool>? AllowSort { get; set; }
+
+    public HmiProperty<int>? SortOrder { get; set; }
+
+    public HmiProperty<int>? SortDirection { get; set; }
 }
