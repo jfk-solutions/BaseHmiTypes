@@ -304,6 +304,18 @@ export class MetafileToSvgRenderer {
           if (record.size >= 24)
             combineRectClip(i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12), record.type === EMR.INTERSECTCLIPRECT ? 1 : 4, state, viewBox, defs, ++clipSequence, true);
           break;
+        case EMR.EXTSELECTCLIPRGN: {
+          if (record.size < 16) break;
+          const regionBytes = u32(bytes, dataOffset), mode = u32(bytes, dataOffset + 4);
+          if (mode < 1 || mode > 5) break;
+          if (regionBytes === 0) {
+            if (mode === 5) { state.activeClipId = undefined; state.activeMaskId = undefined; }
+            break;
+          }
+          const geometry = readEmfClipRegion(bytes, record, regionBytes);
+          if (geometry !== undefined) combineClipGeometry(state, geometry, mode, viewBox, defs, ++clipSequence);
+          break;
+        }
         case EMR.POLYLINETO:
         case EMR.POLYLINETO16:
         case EMR.POLYBEZIER:
@@ -594,6 +606,7 @@ export class MetafileToSvgRenderer {
 const PlaceableWmfKey = 0x9ac6cdd7;
 
 const EMR = {
+  EXTSELECTCLIPRGN: 0x004b,
   EXCLUDECLIPRECT: 0x001d,
   INTERSECTCLIPRECT: 0x001e,
   SETMITERLIMIT: 0x003a,
@@ -1748,6 +1761,26 @@ function emfHeaderViewBox(bytes: Uint8Array): ViewBox | null {
     width: (frameRight - frameLeft) * xScale,
     height: (frameBottom - frameTop) * yScale,
   });
+}
+
+function readEmfClipRegion(bytes: Uint8Array, record: EmfRecord, regionBytes: number): string | undefined {
+  if (regionBytes < 32 || regionBytes > record.size - 16) return undefined;
+  const at = record.offset + 16;
+  if (u32(bytes, at) !== 32 || u32(bytes, at + 4) !== 1) return undefined;
+  const count = u32(bytes, at + 8);
+  if (count > Math.floor((regionBytes - 32) / 16)) return undefined;
+  const rectangleBytes = count * 16, declaredBytes = u32(bytes, at + 12);
+  if (declaredBytes !== 0 && declaredBytes !== rectangleBytes) return undefined;
+  const path: string[] = [];
+  for (let index = 0; index < count; index++) {
+    const p = at + 32 + index * 16;
+    const left = i32(bytes, p), top = i32(bytes, p + 4), right = i32(bytes, p + 8), bottom = i32(bytes, p + 12);
+    if (left > right || top > bottom) return undefined;
+    if (left === right || top === bottom) continue;
+    // Native recorded region geometry is already in device coordinates.
+    path.push(`M ${left} ${top} L ${right} ${top} L ${right} ${bottom} L ${left} ${bottom} Z`);
+  }
+  return `d="${path.join(' ')}" fill-rule="nonzero" clip-rule="nonzero"`;
 }
 
 function selectPathClip(state: DrawState, mode: number, viewBox: ViewBox, defs: string[], sequence: number): void {
