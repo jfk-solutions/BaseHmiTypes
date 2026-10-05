@@ -3483,6 +3483,9 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-selection-border-width", ResolvePropertyPreview(systemDiagnosisControl.SelectionBorderWidth, context));
         AppendAttribute(html, "data-row-height", ResolvePropertyPreview(systemDiagnosisControl.RowHeight, context));
         AppendAttribute(html, "data-grid-line-width", ResolvePropertyPreview(systemDiagnosisControl.GridLineWidth, context));
+        AppendAttribute(html, "data-grid-line-visibility", ResolvePropertyPreview(systemDiagnosisControl.GridLineVisibility, context));
+        AppendAttribute(html, "data-horizontal-scroll-bar-visibility", ResolvePropertyPreview(systemDiagnosisControl.HorizontalScrollBarVisibility, context));
+        AppendAttribute(html, "data-vertical-scroll-bar-visibility", ResolvePropertyPreview(systemDiagnosisControl.VerticalScrollBarVisibility, context));
         html.Append("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">")
             .Append(WebUtility.HtmlEncode(title)).Append("</div>");
         if (systemDiagnosisControl.Appearance is not null) AppendSystemDiagnosisAppearance(html, systemDiagnosisControl.Appearance, context);
@@ -3496,6 +3499,8 @@ public partial class HmiScreenToHtmlConverter
         if (systemDiagnosisControl.ShowToolbar is not null && ResolveStaticValue(systemDiagnosisControl.ShowToolbar, context))
             Bar("toolbar", systemDiagnosisControl.ToolbarBackgroundColor, systemDiagnosisControl.ToolbarForegroundColor, systemDiagnosisControl.ToolbarFont, "Diagnostic commands not loaded");
         var content = new StringBuilder("flex: 1 1 auto; overflow: hidden;");
+        AppendParameterScrollStyle(content, "x", systemDiagnosisControl.HorizontalScrollBarVisibility, context);
+        AppendParameterScrollStyle(content, "y", systemDiagnosisControl.VerticalScrollBarVisibility, context);
         AppendColorStyle(content, "background-color", systemDiagnosisControl.ContentBackgroundColor);
         AppendColorStyle(content, "color", systemDiagnosisControl.ContentForegroundColor);
         AppendFontStyle(content, systemDiagnosisControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
@@ -3550,6 +3555,11 @@ public partial class HmiScreenToHtmlConverter
                 html.Append("</tr></thead>");
             }
             var cell = new StringBuilder(grid.ToString());
+            if (TryGetStaticValue(systemDiagnosisControl.GridLineVisibility, out var gridMode))
+            {
+                if (gridMode == 0 || gridMode == 1) cell.Append("border-top-width: 0;border-bottom-width: 0;");
+                if (gridMode == 0 || gridMode == 2) cell.Append("border-left-width: 0;border-right-width: 0;");
+            }
             void Dimension(string css, HmiProperty<double>? property)
             {
                 if (TryGetStaticValue(property, out var value) && IsFinite(value) && value >= 0) cell.Append(css).Append(": ").Append(ToCss(value)).Append("px;");

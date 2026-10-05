@@ -47,6 +47,12 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? GridLineColor { get; set; }
 
+    public HmiProperty<int>? GridLineVisibility { get; set; }
+
+    public HmiProperty<int>? HorizontalScrollBarVisibility { get; set; }
+
+    public HmiProperty<int>? VerticalScrollBarVisibility { get; set; }
+
     public HmiProperty<bool>? ShowHorizontalScrollbar { get; set; }
 
     public HmiProperty<bool>? ShowVerticalScrollbar { get; set; }
