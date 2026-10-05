@@ -248,6 +248,10 @@ public sealed class MetafileToSvgRenderer
                             : RectElement(rect.Left, rect.Top, rect.Right, rect.Bottom, state));
                         break;
                     }
+                case EMR.RoundRect:
+                    if (record.Size >= 32)
+                        DrawRoundRect(I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12), I32(bytes, dataOffset + 16), I32(bytes, dataOffset + 20), state, elements, true);
+                    break;
                 case EMR.Polygon16:
                 case EMR.Polyline16:
                 case EMR.Polygon:
@@ -426,6 +430,15 @@ public sealed class MetafileToSvgRenderer
                         elements.Add(RectElement(left, top, right, bottom, state));
                         break;
                     }
+                case META.RoundRect:
+                    if (record.SizeBytes >= 18)
+                    {
+                        var left = I16(bytes, p + 10);var top = I16(bytes, p + 8);
+                        var right = I16(bytes, p + 6);var bottom = I16(bytes, p + 4);
+                        bounds.Add(left, top);bounds.Add(right, bottom);
+                        DrawRoundRect(left, top, right, bottom, I16(bytes, p + 2), I16(bytes, p), state, elements, false);
+                    }
+                    break;
                 case META.Ellipse:
                     {
                         var left = I16(bytes, p + 6);
@@ -800,6 +813,43 @@ public sealed class MetafileToSvgRenderer
     private static (double X, double Y) TransformPointWithTransform(Transform transform, double x, double y)
     {
         return (x * transform.M11 + y * transform.M21 + transform.Dx, x * transform.M12 + y * transform.M22 + transform.Dy);
+    }
+
+    private static void DrawRoundRect(double x1, double y1, double x2, double y2, double cornerWidth, double cornerHeight, DrawState state, List<string> elements, bool transformPoints)
+    {
+        var left = Math.Min(x1, x2);var right = Math.Max(x1, x2);var top = Math.Min(y1, y2);var bottom = Math.Max(y1, y2);
+        var rx = Math.Min(Math.Abs(cornerWidth), right - left) / 2;
+        var ry = Math.Min(Math.Abs(cornerHeight), bottom - top) / 2;
+        if (rx == 0 || ry == 0) rx = ry = 0;
+        (double X, double Y) Map(double x, double y)
+        {
+            if (state.ClockwiseShapes) y = top + bottom - y;
+            return transformPoints ? TransformPoint(state, x, y) : (x, y);
+        }
+        string Point(double x, double y) { var point = Map(x, y);return $"{Number(point.X)} {Number(point.Y)}"; }
+        var start = Map(right, top + ry);
+        var path = new List<string> { $"M {Number(start.X)} {Number(start.Y)}" };
+        if (rx == 0)
+            path.AddRange(new[] { $"L {Point(left, top)}", $"L {Point(left, bottom)}", $"L {Point(right, bottom)}" });
+        else
+        {
+            const double kappa = 0.5522847498307936;
+            var kx = rx * kappa;var ky = ry * kappa;
+            path.Add($"C {Point(right, top + ry - ky)} {Point(right - rx + kx, top)} {Point(right - rx, top)}");
+            path.Add($"L {Point(left + rx, top)}");
+            path.Add($"C {Point(left + rx - kx, top)} {Point(left, top + ry - ky)} {Point(left, top + ry)}");
+            path.Add($"L {Point(left, bottom - ry)}");
+            path.Add($"C {Point(left, bottom - ry + ky)} {Point(left + rx - kx, bottom)} {Point(left + rx, bottom)}");
+            path.Add($"L {Point(right - rx, bottom)}");
+            path.Add($"C {Point(right - rx + kx, bottom)} {Point(right, bottom - ry + ky)} {Point(right, bottom - ry)}");
+        }
+        path.Add("Z");
+        if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Paint));
+        else
+        {
+            state.CurrentPath.AddRange(path);state.PathFigureClosed = true;
+            state.PathStartX = state.PathEndX = start.X;state.PathStartY = state.PathEndY = start.Y;
+        }
     }
 
     private static void AppendEmfShapePath(byte[] bytes, int offset, bool ellipse, DrawState state)
@@ -1604,6 +1654,7 @@ internal static class EMR
     public const uint CreateBrushIndirect = 0x0027;
     public const uint DeleteObject = 0x0028;
     public const uint Rectangle = 0x002b;
+    public const uint RoundRect = 0x002c;
     public const uint SetArcDirection = 0x0039;
     public const uint Ellipse = 0x002a;
     public const uint Polygon16 = 0x0056;
@@ -1636,6 +1687,7 @@ internal static class META
     public const ushort Polyline = 0x0325;
     public const ushort PolyPolygon = 0x0538;
     public const ushort Rectangle = 0x041b;
+    public const ushort RoundRect = 0x061c;
     public const ushort Ellipse = 0x0418;
     public const ushort StretchDib = 0x0f43;
 }
