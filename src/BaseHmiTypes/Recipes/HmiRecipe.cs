@@ -49,6 +49,28 @@ public sealed class HmiClassicRecipeConfiguration
     public bool? Synchronized { get; set; }
 }
 
+/// <summary>Parsed PLC array declaration; dimensions are retained without expanding instances.</summary>
+public sealed class HmiRecipePlcArray
+{
+    public string? OriginalTypeName { get; set; }
+    public string? ElementTypeName { get; set; }
+    public bool IsStarArray { get; set; }
+    public IList<HmiRecipeArrayDimension>? Dimensions { get; set; }
+    public IList<HmiRecipeResolvedArrayDimension>? ResolvedDimensions { get; set; }
+}
+
+public sealed class HmiRecipeArrayDimension
+{
+    public string? Start { get; set; }
+    public string? End { get; set; }
+}
+
+public sealed class HmiRecipeResolvedArrayDimension
+{
+    public int Start { get; set; }
+    public int End { get; set; }
+}
+
 public sealed class HmiRecipeReference
 {
     public string? SourceId { get; set; }
@@ -57,6 +79,7 @@ public sealed class HmiRecipeReference
 
 public sealed class HmiRecipeParameter : IHmiObject
 {
+    public HmiRecipePlcArray? SourcePlcArray { get; set; }
     public IDictionary<string, HmiRecipeReference> References { get; } = new Dictionary<string, HmiRecipeReference>();
     public bool? TriggerRedraw { get; set; }
     public string? SourcePlcStartValue { get; set; }
@@ -145,6 +168,7 @@ public sealed class HmiRecipeTagDeclaration
 /// <summary>Retains source parent and sparse declarations alongside scalar recipe fields.</summary>
 public sealed class HmiRecipePlcDeclaration
 {
+    public HmiRecipePlcArray? Array { get; set; }
     public string? Name { get; set; }
     public string? DataType { get; set; }
     public string? StartValue { get; set; }

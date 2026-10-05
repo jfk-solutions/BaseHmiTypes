@@ -40,12 +40,32 @@ export class HmiClassicRecipeConfiguration {
   synchronized?: boolean;
 }
 
+/** Parsed PLC array declaration; dimensions are retained without expanding instances. */
+export class HmiRecipePlcArray {
+  originalTypeName?: string;
+  elementTypeName?: string;
+  isStarArray = false;
+  dimensions?: HmiRecipeArrayDimension[];
+  resolvedDimensions?: HmiRecipeResolvedArrayDimension[];
+}
+
+export class HmiRecipeArrayDimension {
+  start?: string;
+  end?: string;
+}
+
+export class HmiRecipeResolvedArrayDimension {
+  start = 0;
+  end = 0;
+}
+
 export class HmiRecipeReference {
   sourceId?: string;
   name?: string;
 }
 
 export class HmiRecipeParameter {
+  sourcePlcArray?: HmiRecipePlcArray;
   readonly sourceTagLimits: HmiRecipeTagLimit[] = [];
   readonly references = new Map<string, HmiRecipeReference>();
   triggerRedraw?: boolean;
@@ -116,6 +136,7 @@ export class HmiRecipeTagDeclaration {
 }
 
 export class HmiRecipePlcDeclaration {
+  array?: HmiRecipePlcArray;
   name?: string;
   dataType?: string;
   startValue?: string;

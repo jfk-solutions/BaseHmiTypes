@@ -177,6 +177,7 @@ export class HmiRecipeToHtmlConverter {
           html.push('<tr><th scope="row">', encode(declaration.name), '</th><td>', encode(key), '</td><td data-value-state="present">', encode(comment.getText(cultureLcid)), '</td></tr>');
       html.push('</tbody></table></div>');
     }
+    appendPlcArrays(html,recipe);
     html.push("<h2>Stored records</h2>");
     if (recipe.dataSets.length === 0) html.push("<p>No stored records.</p>");
     else {
@@ -230,6 +231,33 @@ export class HmiRecipeToHtmlConverter {
     appendRecipeViews(html, recipe, cultureLcid);
     return html.concat("</body></html>").join("");
   }
+}
+
+function appendPlcArrays(html: string[], recipe: HmiRecipe): void {
+  const arrays = [
+    ...recipe.parameters.flatMap(p => p.sourcePlcArray === undefined ? [] : [{ kind: "Field", name: p.name, array: p.sourcePlcArray }]),
+    ...recipe.sourcePlcDeclarations.flatMap(d => d.array === undefined ? [] : [{ kind: "Composite declaration", name: d.name, array: d.array }]),
+  ];
+  if (!arrays.length) return;
+  html.push('<h2>Source PLC array declarations</h2><div class="table-scroll"><table><thead><tr><th scope="col">Kind</th><th scope="col">Declaration</th><th scope="col">Original type</th><th scope="col">Element type</th><th scope="col">Open array</th><th scope="col">Declared dimensions</th><th scope="col">Resolved dimensions</th></tr></thead><tbody>');
+  for (const entry of arrays) {
+    html.push('<tr>');
+    for (const value of [entry.kind,entry.name,entry.array.originalTypeName,entry.array.elementTypeName,entry.array.isStarArray ? "Yes" : "No",entry.array.dimensions?.length,entry.array.resolvedDimensions?.length]) appendViewValue(html,value);
+    html.push('</tr>');
+  }
+  html.push('</tbody></table></div>');
+  if (!arrays.some(e => (e.array.dimensions?.length ?? 0) > 0 || (e.array.resolvedDimensions?.length ?? 0) > 0)) return;
+  html.push('<h2>Source PLC array bounds</h2><div class="table-scroll"><table><thead><tr><th scope="col">Kind</th><th scope="col">Declaration</th><th scope="col">Bounds</th><th scope="col">List position</th><th scope="col">Start</th><th scope="col">End</th></tr></thead><tbody>');
+  for (const entry of arrays) {
+    function row(kind: string, position: number, start: string | number | undefined, end: string | number | undefined): void {
+      html.push('<tr>');
+      for (const value of [entry.kind,entry.name,kind,position,start,end]) appendViewValue(html,value);
+      html.push('</tr>');
+    }
+    entry.array.dimensions?.forEach((d,i)=>row("Declared",i+1,d.start,d.end));
+    entry.array.resolvedDimensions?.forEach((d,i)=>row("Resolved",i+1,d.start,d.end));
+  }
+  html.push('</tbody></table></div>');
 }
 
 function appendRecipeViews(html: string[], recipe: HmiRecipe, cultureLcid?: number): void {
