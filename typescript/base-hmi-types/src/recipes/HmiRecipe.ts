@@ -1,3 +1,4 @@
+import { HmiTextList } from "../text-graphic-lists/HmiTextList.js";
 import { HmiMultilingualText } from "../common/HmiMultilingualText.js";
 
 export class HmiRecipe {
@@ -65,6 +66,7 @@ export class HmiRecipeReference {
 }
 
 export class HmiRecipeParameter {
+  textList?: HmiTextList;
   sourcePlcArray?: HmiRecipePlcArray;
   readonly sourceTagLimits: HmiRecipeTagLimit[] = [];
   readonly references = new Map<string, HmiRecipeReference>();

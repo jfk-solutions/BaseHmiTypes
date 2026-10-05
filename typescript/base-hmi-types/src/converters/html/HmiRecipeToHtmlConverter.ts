@@ -177,6 +177,7 @@ export class HmiRecipeToHtmlConverter {
           html.push('<tr><th scope="row">', encode(declaration.name), '</th><td>', encode(key), '</td><td data-value-state="present">', encode(comment.getText(cultureLcid)), '</td></tr>');
       html.push('</tbody></table></div>');
     }
+    appendFieldTextLists(html,recipe,cultureLcid);
     appendPlcArrays(html,recipe);
     html.push("<h2>Stored records</h2>");
     if (recipe.dataSets.length === 0) html.push("<p>No stored records.</p>");
@@ -231,6 +232,30 @@ export class HmiRecipeToHtmlConverter {
     appendRecipeViews(html, recipe, cultureLcid);
     return html.concat("</body></html>").join("");
   }
+}
+
+function appendFieldTextLists(html: string[], recipe: HmiRecipe, cultureLcid?: number): void {
+  const fields = recipe.parameters.filter(field => field.textList !== undefined);
+  if (!fields.length) return;
+  html.push('<h2>Field text lists</h2><div class="table-scroll"><table><thead><tr><th scope="col">Field</th><th scope="col">Index</th><th scope="col">Element ID</th><th scope="col">Source reference</th><th scope="col">List name</th><th scope="col">Range mode</th><th scope="col">Comment</th><th scope="col">Entries</th></tr></thead><tbody>');
+  for (const field of fields) {
+    const list = field.textList!;
+    html.push('<tr>');
+    for (const value of [field.name,field.sourceIndex,field.sourceElementId,field.references.get("TextList")?.sourceId,list.name,list.rangeType,list.comment?.getText(cultureLcid),list.entries.length]) appendViewValue(html,value);
+    html.push('</tr>');
+  }
+  html.push('</tbody></table></div>');
+  if (!fields.some(field=>field.textList!.entries.length>0)) return;
+  html.push('<h2>Field text-list entries</h2><div class="table-scroll"><table><thead><tr><th scope="col">Field</th><th scope="col">Index</th><th scope="col">Element ID</th><th scope="col">Source reference</th><th scope="col">Position</th><th scope="col">Entry</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Default entry</th><th scope="col">Text</th></tr></thead><tbody>');
+  for (const field of fields) {
+    let position = 0;
+    for (const entry of field.textList!.entries) {
+      html.push('<tr>');
+      for (const value of [field.name,field.sourceIndex,field.sourceElementId,field.references.get("TextList")?.sourceId,++position,entry.name,entry.from,entry.to,entry.default ? "Yes" : "No",entry.text?.getText(cultureLcid)]) appendViewValue(html,value);
+      html.push('</tr>');
+    }
+  }
+  html.push('</tbody></table></div>');
 }
 
 function appendPlcArrays(html: string[], recipe: HmiRecipe): void {
