@@ -267,35 +267,42 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(headerStyle, "background-color", control.HeaderBackgroundColor);
         AppendColorStyle(headerStyle, "color", control.HeaderForegroundColor);
         AppendFontStyle(headerStyle, control.HeaderFont);
-        html.Append("</colgroup><thead><tr>");
-        for (var index = 0; index < columns.Length; index++)
+        html.Append("</colgroup>");
+        var columnHeaderType = control.ColumnHeaderType is null ? (int?)null : ResolveStaticValue(control.ColumnHeaderType, context);
+        if (columnHeaderType != 0)
         {
-            var column = columns[index];
-            var separator = new StringBuilder();
-            if (index < columns.Length - 1 && control.HeaderBorderColor is not null)
+            html.Append("<thead><tr>");
+            for (var index = 0; index < columns.Length; index++)
             {
-                var width = control.GridLineWidth is null ? 1d : ResolveStaticValue(control.GridLineWidth, context);
-                separator.Append("border-right-style: solid;border-right-width: ").Append(ToCss(IsFinite(width) && width >= 0 ? width : 1d)).Append("px;");
-                AppendColorStyle(separator, "border-right-color", control.HeaderBorderColor);
+                var column = columns[index];
+                var separator = new StringBuilder();
+                if (index < columns.Length - 1 && control.HeaderBorderColor is not null)
+                {
+                    var width = control.GridLineWidth is null ? 1d : ResolveStaticValue(control.GridLineWidth, context);
+                    separator.Append("border-right-style: solid;border-right-width: ").Append(ToCss(IsFinite(width) && width >= 0 ? width : 1d)).Append("px;");
+                    AppendColorStyle(separator, "border-right-color", control.HeaderBorderColor);
+                }
+                html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append(separator).Append('"');
+                AppendAttribute(html, "data-column-name", column.Name);
+                AppendAttribute(html, "data-column-key", column.Key);
+                AppendAttribute(html, "data-enabled", ResolvePropertyPreview(column.Enabled, context));
+                AppendAttribute(html, "data-content-background-color", ResolvePropertyPreview(column.BackgroundColor, context));
+                AppendAttribute(html, "data-content-foreground-color", ResolvePropertyPreview(column.ForegroundColor, context));
+                AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
+                AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
+                AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));
+                AppendAttribute(html, "data-minimum-width", ResolvePropertyPreview(column.MinimumWidth, context));
+                AppendAttribute(html, "data-maximum-width", ResolvePropertyPreview(column.MaximumWidth, context));
+                AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
+                AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
+                AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
+                AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context));
+                var headingText = columnHeaderType == 1 ? (index + 1).ToString(CultureInfo.InvariantCulture) : column.HeaderText?.GetText(context.CultureInfo) ?? column.Name ?? column.Key ?? "Column";
+                html.Append('>').Append(WebUtility.HtmlEncode(headingText)).Append("</th>");
             }
-            html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append(separator).Append('"');
-            AppendAttribute(html, "data-column-name", column.Name);
-            AppendAttribute(html, "data-column-key", column.Key);
-            AppendAttribute(html, "data-enabled", ResolvePropertyPreview(column.Enabled, context));
-            AppendAttribute(html, "data-content-background-color", ResolvePropertyPreview(column.BackgroundColor, context));
-            AppendAttribute(html, "data-content-foreground-color", ResolvePropertyPreview(column.ForegroundColor, context));
-            AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
-            AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
-            AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));
-            AppendAttribute(html, "data-minimum-width", ResolvePropertyPreview(column.MinimumWidth, context));
-            AppendAttribute(html, "data-maximum-width", ResolvePropertyPreview(column.MaximumWidth, context));
-            AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
-            AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
-            AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
-            AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context));
-            html.Append('>').Append(WebUtility.HtmlEncode(column.HeaderText?.GetText(context.CultureInfo) ?? column.Name ?? column.Key ?? "Column")).Append("</th>");
+            html.Append("</tr></thead>");
         }
-        html.Append("</tr></thead><tbody><tr><td colspan=\"").Append(columns.Length.ToString(CultureInfo.InvariantCulture))
+        html.Append("<tbody><tr><td colspan=\"").Append(columns.Length.ToString(CultureInfo.InvariantCulture))
             .Append("\" style=\"text-align: center; padding: 2px 4px;").Append(CreateParameterCellLayoutStyle(control, context))
             .Append("\">Parameter data not loaded</td></tr></tbody></table>");
     }

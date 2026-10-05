@@ -2916,32 +2916,38 @@ function appendParameterColumns(html: string[], control: HmiParameterControlBase
   appendColorStyle(headerStyle, "background-color", control.headerBackgroundColor);
   appendColorStyle(headerStyle, "color", control.headerForegroundColor);
   if (control.headerFont !== undefined) appendFont(headerStyle, control.headerFont.getForCulture(context.options.cultureLcid));
-  html.push("</colgroup><thead><tr>");
-  for (const [index, column] of columns.entries()) {
-    const separator: string[] = [];
-    if (index < columns.length - 1 && control.headerBorderColor !== undefined) {
-      const width = getStaticValue(control.gridLineWidth) ?? 1;
-      separator.push(`border-right-style: solid;border-right-width: ${toCss(Number.isFinite(width) && width >= 0 ? width : 1)}px;`);
-      appendColorStyle(separator, "border-right-color", control.headerBorderColor);
+  html.push("</colgroup>");
+  const columnHeaderType = getStaticValue(control.columnHeaderType);
+  if (columnHeaderType !== 0) {
+    html.push("<thead><tr>");
+    for (const [index, column] of columns.entries()) {
+      const separator: string[] = [];
+      if (index < columns.length - 1 && control.headerBorderColor !== undefined) {
+        const width = getStaticValue(control.gridLineWidth) ?? 1;
+        separator.push(`border-right-style: solid;border-right-width: ${toCss(Number.isFinite(width) && width >= 0 ? width : 1)}px;`);
+        appendColorStyle(separator, "border-right-color", control.headerBorderColor);
+      }
+      html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), separator.join(""), '\"');
+      appendAttribute(html, "data-column-name", column.name);
+      appendAttribute(html, "data-column-key", column.key);
+      appendAttribute(html, "data-enabled", resolvePropertyPreview(column.enabled));
+      appendAttribute(html, "data-content-background-color", resolvePropertyPreview(column.backgroundColor));
+      appendAttribute(html, "data-content-foreground-color", resolvePropertyPreview(column.foregroundColor));
+      appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
+      appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
+      appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
+      appendAttribute(html, "data-minimum-width", resolvePropertyPreview(column.minimumWidth));
+      appendAttribute(html, "data-maximum-width", resolvePropertyPreview(column.maximumWidth));
+      appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
+      appendAttribute(html, "data-sort-order", resolvePropertyPreview(column.sortOrder));
+      appendAttribute(html, "data-sort-direction", resolvePropertyPreview(column.sortDirection));
+      appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat));
+      const headingText = columnHeaderType === 1 ? String(index + 1) : column.headerText?.getText(context.options.cultureLcid) ?? column.name ?? column.key ?? "Column";
+      html.push(">", escapeHtml(headingText), "</th>");
     }
-    html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), separator.join(""), '\"');
-    appendAttribute(html, "data-column-name", column.name);
-    appendAttribute(html, "data-column-key", column.key);
-    appendAttribute(html, "data-enabled", resolvePropertyPreview(column.enabled));
-    appendAttribute(html, "data-content-background-color", resolvePropertyPreview(column.backgroundColor));
-    appendAttribute(html, "data-content-foreground-color", resolvePropertyPreview(column.foregroundColor));
-    appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
-    appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
-    appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
-    appendAttribute(html, "data-minimum-width", resolvePropertyPreview(column.minimumWidth));
-    appendAttribute(html, "data-maximum-width", resolvePropertyPreview(column.maximumWidth));
-    appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
-    appendAttribute(html, "data-sort-order", resolvePropertyPreview(column.sortOrder));
-    appendAttribute(html, "data-sort-direction", resolvePropertyPreview(column.sortDirection));
-    appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat));
-    html.push(">", escapeHtml(column.headerText?.getText(context.options.cultureLcid) ?? column.name ?? column.key ?? "Column"), "</th>");
+    html.push("</tr></thead>");
   }
-  html.push('</tr></thead><tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;', createParameterCellLayoutStyle(control, context), '">Parameter data not loaded</td></tr></tbody></table>');
+  html.push('<tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;', createParameterCellLayoutStyle(control, context), '">Parameter data not loaded</td></tr></tbody></table>');
 }
 
 function createParameterCellLayoutStyle(control: HmiParameterControlBase, context: HmiHtmlConvertContext): string {
