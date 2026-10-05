@@ -31,6 +31,18 @@ export abstract class HmiParameterControlBase extends HmiControlWindowBase {
   cellPaddingBottom?: HmiProperty<number>;
   /** Native editing-mode value; no cross-family enum translation is assumed. */
   editMode?: HmiProperty<number>;
+  toolbarEnabled?: HmiProperty<boolean>;
+  toolbarShowToolTips?: HmiProperty<boolean>;
+  toolbarPaddingLeft?: HmiProperty<number>;
+  toolbarPaddingTop?: HmiProperty<number>;
+  toolbarPaddingRight?: HmiProperty<number>;
+  toolbarPaddingBottom?: HmiProperty<number>;
+  statusBarEnabled?: HmiProperty<boolean>;
+  statusBarShowToolTips?: HmiProperty<boolean>;
+  statusBarPaddingLeft?: HmiProperty<number>;
+  statusBarPaddingTop?: HmiProperty<number>;
+  statusBarPaddingRight?: HmiProperty<number>;
+  statusBarPaddingBottom?: HmiProperty<number>;
   showToolbar?: HmiProperty<boolean>;
   showStatusBar?: HmiProperty<boolean>;
   toolbarBackgroundColor?: HmiProperty<HmiColor>;

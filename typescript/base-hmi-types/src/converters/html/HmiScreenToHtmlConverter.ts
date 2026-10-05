@@ -2695,6 +2695,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   appendAttribute(html, "data-current-parameter-set-id", resolvePropertyPreview(control.currentParameterSetId));
   appendAttribute(html, "data-current-parameter-set-type-id", resolvePropertyPreview(control.currentParameterSetTypeId));
   appendAttribute(html, "data-hide-details", resolvePropertyPreview(control.hideDetails));
+  appendParameterBarAttributes(html, control);
   appendParameterHeaderAttributes(html, control);
   appendParameterGridAttributes(html, control);
   appendParameterSelectionAttributes(html, control);
@@ -2709,10 +2710,13 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   html.push(">");
   if (getStaticValue(control.showToolbar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
+    appendParameterBarStyle(style, control.toolbarPaddingLeft, control.toolbarPaddingTop, control.toolbarPaddingRight, control.toolbarPaddingBottom);
     appendColorStyle(style, "background-color", control.toolbarBackgroundColor);
     appendColorStyle(style, "color", control.toolbarForegroundColor);
     if (control.toolbarFont !== undefined) appendFont(style, control.toolbarFont.getForCulture(context.options.cultureLcid));
-    html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '\">Toolbar</div>');
+    html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '"');
+    if (control.toolbarEnabled !== undefined) appendAttribute(html, "aria-disabled", getStaticValue(control.toolbarEnabled) ? "false" : "true");
+    html.push('>Toolbar</div>');
   }
   html.push('<div class="hmi-parameter-selection" style="flex: 0 0 auto; padding: 2px 4px;"><div>',
     escapeHtml(getStaticValue(control.parameterSetTypeLabel)?.getText(context.options.cultureLcid) ?? "Parameter set type"));
@@ -2729,10 +2733,13 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   if (!getStaticValue(control.hideDetails)) appendParameterView(html, control, context);
   if (getStaticValue(control.showStatusBar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
+    appendParameterBarStyle(style, control.statusBarPaddingLeft, control.statusBarPaddingTop, control.statusBarPaddingRight, control.statusBarPaddingBottom);
     appendColorStyle(style, "background-color", control.statusBarBackgroundColor);
     appendColorStyle(style, "color", control.statusBarForegroundColor);
     if (control.statusBarFont !== undefined) appendFont(style, control.statusBarFont.getForCulture(context.options.cultureLcid));
-    html.push('<div class="hmi-parameter-status-bar" role="status" style="', style.join(""), '\">Status</div>');
+    html.push('<div class="hmi-parameter-status-bar" role="status" style="', style.join(""), '"');
+    if (control.statusBarEnabled !== undefined) appendAttribute(html, "aria-disabled", getStaticValue(control.statusBarEnabled) ? "false" : "true");
+    html.push('>Status</div>');
   }
   html.push("</div>");
 }
@@ -2742,6 +2749,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
   appendAttribute(html, "data-parameter-control-view", "overview");
   appendAttribute(html, "data-filter", resolvePropertyPreview(control.filter));
+  appendParameterBarAttributes(html, control);
   appendParameterHeaderAttributes(html, control);
   appendParameterGridAttributes(html, control);
   appendParameterSelectionAttributes(html, control);
@@ -2756,19 +2764,25 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   html.push(">");
   if (getStaticValue(control.showToolbar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
+    appendParameterBarStyle(style, control.toolbarPaddingLeft, control.toolbarPaddingTop, control.toolbarPaddingRight, control.toolbarPaddingBottom);
     appendColorStyle(style, "background-color", control.toolbarBackgroundColor);
     appendColorStyle(style, "color", control.toolbarForegroundColor);
     if (control.toolbarFont !== undefined) appendFont(style, control.toolbarFont.getForCulture(context.options.cultureLcid));
-    html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '\">Toolbar</div>');
+    html.push('<div class="hmi-parameter-toolbar" role="toolbar" style="', style.join(""), '"');
+    if (control.toolbarEnabled !== undefined) appendAttribute(html, "aria-disabled", getStaticValue(control.toolbarEnabled) ? "false" : "true");
+    html.push('>Toolbar</div>');
   }
   if (control.filter !== undefined) html.push('<div class="hmi-parameter-filter">Filter: ', escapeHtml(getStaticValue(control.filter) ?? ""), "</div>");
   appendParameterView(html, control, context);
   if (getStaticValue(control.showStatusBar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
+    appendParameterBarStyle(style, control.statusBarPaddingLeft, control.statusBarPaddingTop, control.statusBarPaddingRight, control.statusBarPaddingBottom);
     appendColorStyle(style, "background-color", control.statusBarBackgroundColor);
     appendColorStyle(style, "color", control.statusBarForegroundColor);
     if (control.statusBarFont !== undefined) appendFont(style, control.statusBarFont.getForCulture(context.options.cultureLcid));
-    html.push('<div class="hmi-parameter-status-bar" role="status" style="', style.join(""), '\">Status</div>');
+    html.push('<div class="hmi-parameter-status-bar" role="status" style="', style.join(""), '"');
+    if (control.statusBarEnabled !== undefined) appendAttribute(html, "aria-disabled", getStaticValue(control.statusBarEnabled) ? "false" : "true");
+    html.push('>Status</div>');
   }
   html.push("</div>");
 }
@@ -2792,6 +2806,30 @@ function appendParameterView(html: string[], control: HmiParameterControlBase, c
   appendParameterHeaderSelectionPreview(html, control, context);
   appendParameterSelectionPreview(html, control, context);
   html.push("</div>");
+}
+
+function appendParameterBarAttributes(html: string[], control: HmiParameterControlBase): void {
+  appendAttribute(html, "data-toolbar-enabled", resolvePropertyPreview(control.toolbarEnabled));
+  appendAttribute(html, "data-toolbar-show-tooltips", resolvePropertyPreview(control.toolbarShowToolTips));
+  appendAttribute(html, "data-toolbar-padding-left", resolvePropertyPreview(control.toolbarPaddingLeft));
+  appendAttribute(html, "data-toolbar-padding-top", resolvePropertyPreview(control.toolbarPaddingTop));
+  appendAttribute(html, "data-toolbar-padding-right", resolvePropertyPreview(control.toolbarPaddingRight));
+  appendAttribute(html, "data-toolbar-padding-bottom", resolvePropertyPreview(control.toolbarPaddingBottom));
+  appendAttribute(html, "data-status-bar-enabled", resolvePropertyPreview(control.statusBarEnabled));
+  appendAttribute(html, "data-status-bar-show-tooltips", resolvePropertyPreview(control.statusBarShowToolTips));
+  appendAttribute(html, "data-status-bar-padding-left", resolvePropertyPreview(control.statusBarPaddingLeft));
+  appendAttribute(html, "data-status-bar-padding-top", resolvePropertyPreview(control.statusBarPaddingTop));
+  appendAttribute(html, "data-status-bar-padding-right", resolvePropertyPreview(control.statusBarPaddingRight));
+  appendAttribute(html, "data-status-bar-padding-bottom", resolvePropertyPreview(control.statusBarPaddingBottom));
+}
+
+function appendParameterBarStyle(style: string[], left: HmiProperty<number> | undefined, top: HmiProperty<number> | undefined,
+  right: HmiProperty<number> | undefined, bottom: HmiProperty<number> | undefined): void {
+  const appendPadding = (side: string, property: HmiProperty<number> | undefined): void => {
+    const value = getStaticValue(property);
+    if (typeof value === "number" && Number.isFinite(value) && value >= 0) style.push(`padding-${side}: ${toCss(value)}px;`);
+  };
+  appendPadding("left", left); appendPadding("top", top); appendPadding("right", right); appendPadding("bottom", bottom);
 }
 
 function appendParameterHeaderAttributes(html: string[], control: HmiParameterControlBase): void {

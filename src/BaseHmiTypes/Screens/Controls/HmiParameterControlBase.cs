@@ -32,6 +32,18 @@ public abstract class HmiParameterControlBase : HmiControlWindowBase
     public HmiProperty<double>? CellPaddingBottom { get; set; }
     /// <summary>Native editing-mode value; no cross-family enum translation is assumed.</summary>
     public HmiProperty<int>? EditMode { get; set; }
+    public HmiProperty<bool>? ToolbarEnabled { get; set; }
+    public HmiProperty<bool>? ToolbarShowToolTips { get; set; }
+    public HmiProperty<double>? ToolbarPaddingLeft { get; set; }
+    public HmiProperty<double>? ToolbarPaddingTop { get; set; }
+    public HmiProperty<double>? ToolbarPaddingRight { get; set; }
+    public HmiProperty<double>? ToolbarPaddingBottom { get; set; }
+    public HmiProperty<bool>? StatusBarEnabled { get; set; }
+    public HmiProperty<bool>? StatusBarShowToolTips { get; set; }
+    public HmiProperty<double>? StatusBarPaddingLeft { get; set; }
+    public HmiProperty<double>? StatusBarPaddingTop { get; set; }
+    public HmiProperty<double>? StatusBarPaddingRight { get; set; }
+    public HmiProperty<double>? StatusBarPaddingBottom { get; set; }
     public HmiProperty<bool>? ShowToolbar { get; set; }
     public HmiProperty<bool>? ShowStatusBar { get; set; }
     public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }

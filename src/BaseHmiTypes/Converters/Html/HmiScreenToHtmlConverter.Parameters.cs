@@ -16,6 +16,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-current-parameter-set-id", ResolvePropertyPreview(control.CurrentParameterSetId, context));
         AppendAttribute(html, "data-current-parameter-set-type-id", ResolvePropertyPreview(control.CurrentParameterSetTypeId, context));
         AppendAttribute(html, "data-hide-details", ResolvePropertyPreview(control.HideDetails, context));
+        AppendParameterBarAttributes(html, control, context);
         AppendParameterHeaderAttributes(html, control, context);
         AppendParameterGridAttributes(html, control, context);
         AppendParameterSelectionAttributes(html, control, context);
@@ -31,10 +32,13 @@ public partial class HmiScreenToHtmlConverter
         if (ResolveStaticValue(control.ShowToolbar, context))
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;");
+            AppendParameterBarStyle(style, control.ToolbarPaddingLeft, control.ToolbarPaddingTop, control.ToolbarPaddingRight, control.ToolbarPaddingBottom, context);
             AppendColorStyle(style, "background-color", control.ToolbarBackgroundColor);
             AppendColorStyle(style, "color", control.ToolbarForegroundColor);
             AppendFontStyle(style, control.ToolbarFont?.GetForCulture(context.CultureInfo?.LCID));
-            html.Append("<div class=\"hmi-parameter-toolbar\" role=\"toolbar\" style=\"").Append(style).Append("\">Toolbar</div>");
+            html.Append("<div class=\"hmi-parameter-toolbar\" role=\"toolbar\" style=\"").Append(style).Append('"');
+            if (control.ToolbarEnabled is not null) AppendAttribute(html, "aria-disabled", ResolveStaticValue(control.ToolbarEnabled, context) ? "false" : "true");
+            html.Append(">Toolbar</div>");
         }
         html.Append("<div class=\"hmi-parameter-selection\" style=\"flex: 0 0 auto; padding: 2px 4px;\"><div>")
             .Append(WebUtility.HtmlEncode(ResolveStaticValue(control.ParameterSetTypeLabel, context)?.GetText(context.CultureInfo) ?? "Parameter set type"));
@@ -55,10 +59,13 @@ public partial class HmiScreenToHtmlConverter
         if (ResolveStaticValue(control.ShowStatusBar, context))
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;");
+            AppendParameterBarStyle(style, control.StatusBarPaddingLeft, control.StatusBarPaddingTop, control.StatusBarPaddingRight, control.StatusBarPaddingBottom, context);
             AppendColorStyle(style, "background-color", control.StatusBarBackgroundColor);
             AppendColorStyle(style, "color", control.StatusBarForegroundColor);
             AppendFontStyle(style, control.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
-            html.Append("<div class=\"hmi-parameter-status-bar\" role=\"status\" style=\"").Append(style).Append("\">Status</div>");
+            html.Append("<div class=\"hmi-parameter-status-bar\" role=\"status\" style=\"").Append(style).Append('"');
+            if (control.StatusBarEnabled is not null) AppendAttribute(html, "aria-disabled", ResolveStaticValue(control.StatusBarEnabled, context) ? "false" : "true");
+            html.Append(">Status</div>");
         }
         html.Append("</div>");
     }
@@ -69,6 +76,7 @@ public partial class HmiScreenToHtmlConverter
         AppendCommonAttributes(html, control, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-parameter-control-view", "overview");
         AppendAttribute(html, "data-filter", ResolvePropertyPreview(control.Filter, context));
+        AppendParameterBarAttributes(html, control, context);
         AppendParameterHeaderAttributes(html, control, context);
         AppendParameterGridAttributes(html, control, context);
         AppendParameterSelectionAttributes(html, control, context);
@@ -84,10 +92,13 @@ public partial class HmiScreenToHtmlConverter
         if (ResolveStaticValue(control.ShowToolbar, context))
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;");
+            AppendParameterBarStyle(style, control.ToolbarPaddingLeft, control.ToolbarPaddingTop, control.ToolbarPaddingRight, control.ToolbarPaddingBottom, context);
             AppendColorStyle(style, "background-color", control.ToolbarBackgroundColor);
             AppendColorStyle(style, "color", control.ToolbarForegroundColor);
             AppendFontStyle(style, control.ToolbarFont?.GetForCulture(context.CultureInfo?.LCID));
-            html.Append("<div class=\"hmi-parameter-toolbar\" role=\"toolbar\" style=\"").Append(style).Append("\">Toolbar</div>");
+            html.Append("<div class=\"hmi-parameter-toolbar\" role=\"toolbar\" style=\"").Append(style).Append('"');
+            if (control.ToolbarEnabled is not null) AppendAttribute(html, "aria-disabled", ResolveStaticValue(control.ToolbarEnabled, context) ? "false" : "true");
+            html.Append(">Toolbar</div>");
         }
         if (control.Filter is not null)
             html.Append("<div class=\"hmi-parameter-filter\">Filter: ").Append(WebUtility.HtmlEncode(ResolveStaticValue(control.Filter, context))).Append("</div>");
@@ -95,10 +106,13 @@ public partial class HmiScreenToHtmlConverter
         if (ResolveStaticValue(control.ShowStatusBar, context))
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;");
+            AppendParameterBarStyle(style, control.StatusBarPaddingLeft, control.StatusBarPaddingTop, control.StatusBarPaddingRight, control.StatusBarPaddingBottom, context);
             AppendColorStyle(style, "background-color", control.StatusBarBackgroundColor);
             AppendColorStyle(style, "color", control.StatusBarForegroundColor);
             AppendFontStyle(style, control.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
-            html.Append("<div class=\"hmi-parameter-status-bar\" role=\"status\" style=\"").Append(style).Append("\">Status</div>");
+            html.Append("<div class=\"hmi-parameter-status-bar\" role=\"status\" style=\"").Append(style).Append('"');
+            if (control.StatusBarEnabled is not null) AppendAttribute(html, "aria-disabled", ResolveStaticValue(control.StatusBarEnabled, context) ? "false" : "true");
+            html.Append(">Status</div>");
         }
         html.Append("</div>");
     }
@@ -123,6 +137,34 @@ public partial class HmiScreenToHtmlConverter
         AppendParameterHeaderSelectionPreview(html, control, context);
         AppendParameterSelectionPreview(html, control, context);
         html.Append("</div>");
+    }
+
+    private static void AppendParameterBarAttributes(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    {
+        AppendAttribute(html, "data-toolbar-enabled", ResolvePropertyPreview(control.ToolbarEnabled, context));
+        AppendAttribute(html, "data-toolbar-show-tooltips", ResolvePropertyPreview(control.ToolbarShowToolTips, context));
+        AppendAttribute(html, "data-toolbar-padding-left", ResolvePropertyPreview(control.ToolbarPaddingLeft, context));
+        AppendAttribute(html, "data-toolbar-padding-top", ResolvePropertyPreview(control.ToolbarPaddingTop, context));
+        AppendAttribute(html, "data-toolbar-padding-right", ResolvePropertyPreview(control.ToolbarPaddingRight, context));
+        AppendAttribute(html, "data-toolbar-padding-bottom", ResolvePropertyPreview(control.ToolbarPaddingBottom, context));
+        AppendAttribute(html, "data-status-bar-enabled", ResolvePropertyPreview(control.StatusBarEnabled, context));
+        AppendAttribute(html, "data-status-bar-show-tooltips", ResolvePropertyPreview(control.StatusBarShowToolTips, context));
+        AppendAttribute(html, "data-status-bar-padding-left", ResolvePropertyPreview(control.StatusBarPaddingLeft, context));
+        AppendAttribute(html, "data-status-bar-padding-top", ResolvePropertyPreview(control.StatusBarPaddingTop, context));
+        AppendAttribute(html, "data-status-bar-padding-right", ResolvePropertyPreview(control.StatusBarPaddingRight, context));
+        AppendAttribute(html, "data-status-bar-padding-bottom", ResolvePropertyPreview(control.StatusBarPaddingBottom, context));
+    }
+
+    private static void AppendParameterBarStyle(StringBuilder style, HmiProperty<double>? left, HmiProperty<double>? top,
+        HmiProperty<double>? right, HmiProperty<double>? bottom, HmiHtmlConvertContext context)
+    {
+        void AppendPadding(string side, HmiProperty<double>? property)
+        {
+            if (property is null) return;
+            var value = ResolveStaticValue(property, context);
+            if (IsFinite(value) && value >= 0) style.Append("padding-").Append(side).Append(": ").Append(ToCss(value)).Append("px;");
+        }
+        AppendPadding("left", left); AppendPadding("top", top); AppendPadding("right", right); AppendPadding("bottom", bottom);
     }
 
     private static void AppendParameterHeaderAttributes(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
