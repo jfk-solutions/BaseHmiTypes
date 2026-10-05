@@ -41,6 +41,9 @@ export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   cellPaddingBottom?: HmiProperty<number>;
   gridLineWidth?: HmiProperty<number>;
   gridLineColor?: HmiProperty<HmiColor>;
+  gridLineVisibility?: HmiProperty<number>;
+  horizontalScrollBarVisibility?: HmiProperty<number>;
+  verticalScrollBarVisibility?: HmiProperty<number>;
   showHorizontalScrollbar?: HmiProperty<boolean>;
   showVerticalScrollbar?: HmiProperty<boolean>;
   detailsPaneVisible?: HmiProperty<boolean>;

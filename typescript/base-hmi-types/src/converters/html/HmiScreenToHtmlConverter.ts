@@ -3983,6 +3983,9 @@ function appendSystemDiagnosisControl(
   appendAttribute(html, "data-selection-border-width", resolvePropertyPreview(systemDiagnosisControl.selectionBorderWidth));
   appendAttribute(html, "data-row-height", resolvePropertyPreview(systemDiagnosisControl.rowHeight));
   appendAttribute(html, "data-grid-line-width", resolvePropertyPreview(systemDiagnosisControl.gridLineWidth));
+  appendAttribute(html, "data-grid-line-visibility", resolvePropertyPreview(systemDiagnosisControl.gridLineVisibility));
+  appendAttribute(html, "data-horizontal-scroll-bar-visibility", resolvePropertyPreview(systemDiagnosisControl.horizontalScrollBarVisibility));
+  appendAttribute(html, "data-vertical-scroll-bar-visibility", resolvePropertyPreview(systemDiagnosisControl.verticalScrollBarVisibility));
   html.push("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">", escapeHtml(title), "</div>");
   if (systemDiagnosisControl.appearance) appendSystemDiagnosisAppearance(html,systemDiagnosisControl.appearance,context);
   const bar = (role: string, background: HmiProperty<HmiColor> | undefined, foreground: HmiProperty<HmiColor> | undefined, font: HmiFont | undefined, text: string) => {
@@ -3994,6 +3997,8 @@ function appendSystemDiagnosisControl(
   if (getStaticValue(systemDiagnosisControl.showToolbar) === true)
     bar("toolbar", systemDiagnosisControl.toolbarBackgroundColor, systemDiagnosisControl.toolbarForegroundColor, systemDiagnosisControl.toolbarFont, "Diagnostic commands not loaded");
   const content = ["flex: 1 1 auto; overflow: hidden;"];
+  appendParameterScrollStyle(content, "x", systemDiagnosisControl.horizontalScrollBarVisibility);
+  appendParameterScrollStyle(content, "y", systemDiagnosisControl.verticalScrollBarVisibility);
   appendColorStyle(content, "background-color", systemDiagnosisControl.contentBackgroundColor); appendColorStyle(content, "color", systemDiagnosisControl.contentForegroundColor);
   if (systemDiagnosisControl.contentFont) appendFont(content, systemDiagnosisControl.contentFont.getForCulture(context.options.cultureLcid));
   html.push('<div style="', content.join(""), '">');
@@ -4035,6 +4040,9 @@ function appendSystemDiagnosisControl(
       html.push("</tr></thead>");
     }
     const cell = [...grid];
+    const gridMode = getStaticValue(systemDiagnosisControl.gridLineVisibility);
+    if (gridMode === 0 || gridMode === 1) cell.push("border-top-width: 0;border-bottom-width: 0;");
+    if (gridMode === 0 || gridMode === 2) cell.push("border-left-width: 0;border-right-width: 0;");
     const dimension = (css: string, property: HmiProperty<number> | undefined) => {
       const value = getStaticValue(property); if (value !== undefined && Number.isFinite(value) && value >= 0) cell.push(`${css}: ${toCss(value)}px;`);
     };
