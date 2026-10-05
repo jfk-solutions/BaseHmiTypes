@@ -3411,7 +3411,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-status-bar-text", alarmControl.statusBarText?.getText(context.options.cultureLcid), true);
   appendAttribute(html, "data-show-status-bar-tooltips", resolvePropertyPreview(alarmControl.showStatusBarTooltips));
   appendAttribute(html, "data-status-bar-foreground-color", resolvePropertyPreview(alarmControl.statusBarForegroundColor));
+  if (alarmControl.messageBlocks.length > 0) appendAttribute(html, "data-message-block-count", String(alarmControl.messageBlocks.length));
   html.push(">");
+  appendAlarmMessageBlocks(html, alarmControl, context);
 
   if (showTitle) {
     const title = resolveAlarmTitle(alarmControl, listMode, context);
@@ -5370,6 +5372,23 @@ function createAlarmControlStyle(alarmControl: HmiAlarmControl, context: HmiHtml
   if (alarmControl.contentFont !== undefined)
     appendFont(parts, alarmControl.contentFont.getForCulture(context.options.cultureLcid));
   return parts.join("");
+}
+
+function appendAlarmMessageBlocks(html: string[], control: HmiAlarmControl, context: HmiHtmlConvertContext): void {
+  if (control.messageBlocks.length === 0) return;
+  html.push('<details class="hmi-alarm-message-blocks" style="flex: 0 0 auto;"><summary>Configured message blocks</summary><table><thead><tr><th>Name</th><th>Caption</th><th>Date format</th><th>Time format</th></tr></thead><tbody>');
+  for (const block of control.messageBlocks) {
+    html.push('<tr');
+    appendAttribute(html, "data-message-block-name", block.name, true);
+    appendAttribute(html, "data-alignment", resolvePropertyPreview(block.alignment));
+    appendAttribute(html, "data-decimal-places", resolvePropertyPreview(block.decimalPlaces));
+    appendAttribute(html, "data-leading-zeros", resolvePropertyPreview(block.leadingZeros));
+    appendAttribute(html, "data-automatic-decimal-places", resolvePropertyPreview(block.automaticDecimalPlaces));
+    appendAttribute(html, "data-exponential-format", resolvePropertyPreview(block.exponentialFormat));
+    appendAttribute(html, "data-show-date", resolvePropertyPreview(block.showDate));
+    html.push('><td>',escapeHtml(block.name ?? ''),'</td><td>',escapeHtml(block.caption?.getText(context.options.cultureLcid) ?? ''),'</td><td>',escapeHtml(block.dateFormat ?? ''),'</td><td>',escapeHtml(block.timeFormat ?? ''),'</td></tr>');
+  }
+  html.push('</tbody></table></details>');
 }
 
 function createAlarmHeaderStyle(alarmControl: HmiAlarmControl, context: HmiHtmlConvertContext): string {

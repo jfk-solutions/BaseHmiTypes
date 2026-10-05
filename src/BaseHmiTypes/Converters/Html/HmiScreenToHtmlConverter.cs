@@ -3196,7 +3196,9 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-status-bar-text", alarmControl.StatusBarText?.GetText(context.CultureInfo), preserveEmpty: true);
         AppendAttribute(html, "data-show-status-bar-tooltips", ResolvePropertyPreview(alarmControl.ShowStatusBarTooltips, context));
         AppendAttribute(html, "data-status-bar-foreground-color", ResolvePropertyPreview(alarmControl.StatusBarForegroundColor, context));
+        if (alarmControl.MessageBlocks.Count > 0) AppendAttribute(html, "data-message-block-count", alarmControl.MessageBlocks.Count.ToString(CultureInfo.InvariantCulture));
         html.Append('>');
+        AppendAlarmMessageBlocks(html, alarmControl, context);
 
         if (showTitle)
         {
@@ -4976,6 +4978,26 @@ public partial class HmiScreenToHtmlConverter
         }
         AppendFontStyle(style, alarmControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
+    }
+
+    private static void AppendAlarmMessageBlocks(StringBuilder html, HmiAlarmControl control, HmiHtmlConvertContext context)
+    {
+        if (control.MessageBlocks.Count == 0) return;
+        html.Append("<details class=\"hmi-alarm-message-blocks\" style=\"flex: 0 0 auto;\"><summary>Configured message blocks</summary><table><thead><tr><th>Name</th><th>Caption</th><th>Date format</th><th>Time format</th></tr></thead><tbody>");
+        foreach (var block in control.MessageBlocks)
+        {
+            html.Append("<tr");
+            AppendAttribute(html, "data-message-block-name", block.Name, preserveEmpty: true);
+            AppendAttribute(html, "data-alignment", ResolvePropertyPreview(block.Alignment, context));
+            AppendAttribute(html, "data-decimal-places", ResolvePropertyPreview(block.DecimalPlaces, context));
+            AppendAttribute(html, "data-leading-zeros", ResolvePropertyPreview(block.LeadingZeros, context));
+            AppendAttribute(html, "data-automatic-decimal-places", ResolvePropertyPreview(block.AutomaticDecimalPlaces, context));
+            AppendAttribute(html, "data-exponential-format", ResolvePropertyPreview(block.ExponentialFormat, context));
+            AppendAttribute(html, "data-show-date", ResolvePropertyPreview(block.ShowDate, context));
+            html.Append("><td>").Append(WebUtility.HtmlEncode(block.Name)).Append("</td><td>").Append(WebUtility.HtmlEncode(block.Caption?.GetText(context.CultureInfo)))
+                .Append("</td><td>").Append(WebUtility.HtmlEncode(block.DateFormat)).Append("</td><td>").Append(WebUtility.HtmlEncode(block.TimeFormat)).Append("</td></tr>");
+        }
+        html.Append("</tbody></table></details>");
     }
 
     private static string CreateAlarmHeaderStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
