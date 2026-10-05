@@ -1,0 +1,98 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {HmiProcessDiagnosisPlcCodeViewerControl,HmiScreen,HmiLayer,HmiScreenToHtmlConverter,HmiFont,staticProperty,hmiColorFromArgb,getStaticValue} from "../dist/index.js";
+for (const configured of [false,true]) test(`PLC code viewer appearance configured=${configured}`,async()=>{
+ const control = new HmiProcessDiagnosisPlcCodeViewerControl(); control.name="Code <A> & B";
+ if (configured) {
+  control.headerBackgroundColor=staticProperty(hmiColorFromArgb(0,1,2,3));
+  control.headerForegroundColor=staticProperty(hmiColorFromArgb(255,2,2,3));
+  control.headerBorderColor=staticProperty(hmiColorFromArgb(255,3,2,3));
+  control.headerBorderWidth=staticProperty(0);
+  control.contentBackgroundColor=staticProperty(hmiColorFromArgb(255,5,2,3));
+  control.contentForegroundColor=staticProperty(hmiColorFromArgb(255,6,2,3));
+  control.drawingAreaBackgroundColor=staticProperty(hmiColorFromArgb(255,7,2,3));
+  control.drawingAreaForegroundColor=staticProperty(hmiColorFromArgb(255,8,2,3));
+  control.pathHeaderBackgroundColor=staticProperty(hmiColorFromArgb(255,9,2,3));
+  control.pathHeaderForegroundColor=staticProperty(hmiColorFromArgb(255,10,2,3));
+  control.showGridLines=staticProperty(true);
+  control.alternatingRowBackgroundColor=staticProperty(hmiColorFromArgb(255,12,2,3));
+  control.gridLineColor=staticProperty(hmiColorFromArgb(255,13,2,3));
+  control.toolbarBackgroundColor=staticProperty(hmiColorFromArgb(255,14,2,3));
+  control.showToolbar=staticProperty(true);
+  control.useToolbarBackgroundColor=staticProperty(true);
+  control.toolbarAlignment=staticProperty(-7);
+  control.buttonBackgroundColor=staticProperty(hmiColorFromArgb(255,18,2,3));
+  control.buttonBorderBackgroundColor=staticProperty(hmiColorFromArgb(255,19,2,3));
+  control.buttonBorderColor=staticProperty(hmiColorFromArgb(255,20,2,3));
+  control.buttonFirstGradientColor=staticProperty(hmiColorFromArgb(255,21,2,3));
+  control.buttonMiddleGradientColor=staticProperty(hmiColorFromArgb(255,22,2,3));
+  control.buttonSecondGradientColor=staticProperty(hmiColorFromArgb(255,23,2,3));
+  control.buttonBorderWidth=staticProperty(2.5);
+  control.buttonCornerRadius=staticProperty(0);
+  control.buttonEdgeStyle=staticProperty(-7);
+  control.buttonBackFillStyle=staticProperty(-7);
+  control.buttonFirstGradientOffset=staticProperty(-10);
+  control.buttonSecondGradientOffset=staticProperty(120);
+  control.useButtonFirstGradient=staticProperty(true);
+  control.useButtonSecondGradient=staticProperty(true);
+  control.headerBorderBackgroundColor=staticProperty(hmiColorFromArgb(255,32,2,3));
+  control.headerCornerRadius=staticProperty(0);
+  control.headerBackFillStyle=staticProperty(-7);
+  control.headerEdgeStyle=staticProperty(-7);
+  control.headerFirstGradientColor=staticProperty(hmiColorFromArgb(255,36,2,3));
+  control.headerMiddleGradientColor=staticProperty(hmiColorFromArgb(255,37,2,3));
+  control.headerSecondGradientColor=staticProperty(hmiColorFromArgb(255,38,2,3));
+  control.headerFirstGradientOffset=staticProperty(-10);
+  control.headerSecondGradientOffset=staticProperty(120);
+  control.useHeaderFirstGradient=staticProperty(true);
+  control.useHeaderSecondGradient=staticProperty(true);
+  control.headerFont=new HmiFont();control.headerFont.name=staticProperty("Header Preview");control.headerFont.size=staticProperty(11);
+  control.contentFont=new HmiFont();control.contentFont.name=staticProperty("Content Preview");control.contentFont.size=staticProperty(13);
+ }
+ const screen=new HmiScreen(),layer=new HmiLayer();screen.layers.push(layer);layer.items.push(control);
+ const renderer=new HmiScreenToHtmlConverter();const html=await renderer.convertAsync(screen);
+ const sample=(source,kind)=>new RegExp(`<div data-appearance-sample="${kind}"(.*?)</div>`,"u").exec(source)?.[0]??"";
+ assert.ok(html.includes("Code &lt;A&gt; &amp; B"));assert.ok(html.includes('aria-label="PLC code viewer"'));assert.ok(html.includes("PLC code viewer data not loaded"));assert.ok(!html.includes("<button"));
+ for (const key of ["data-header-background-color=","data-header-foreground-color=","data-header-border-color=","data-header-border-width=","data-content-background-color=","data-content-foreground-color=","data-drawing-area-background-color=","data-drawing-area-foreground-color=","data-path-header-background-color=","data-path-header-foreground-color=","data-show-grid-lines=","data-alternating-row-background-color=","data-grid-line-color=","data-toolbar-background-color=","data-show-toolbar=","data-use-toolbar-background-color=","data-toolbar-alignment=","data-button-background-color=","data-button-border-background-color=","data-button-border-color=","data-button-first-gradient-color=","data-button-middle-gradient-color=","data-button-second-gradient-color=","data-button-border-width=","data-button-corner-radius=","data-button-edge-style=","data-button-back-fill-style=","data-button-first-gradient-offset=","data-button-second-gradient-offset=","data-use-button-first-gradient=","data-use-button-second-gradient=","data-header-border-background-color=","data-header-corner-radius=","data-header-back-fill-style=","data-header-edge-style=","data-header-first-gradient-color=","data-header-middle-gradient-color=","data-header-second-gradient-color=","data-header-first-gradient-offset=","data-header-second-gradient-offset=","data-use-header-first-gradient=","data-use-header-second-gradient="]) assert.equal(html.includes(key),configured,key);
+ for(const kind of ["path-header","drawing","table-header","content","alternate","toolbar","button"]) assert.equal([...html.matchAll(new RegExp(`data-appearance-sample="${kind}"`,"gu"))].length,1);
+ assert.equal(sample(html,"table-header").includes("linear-gradient("),configured);assert.equal(sample(html,"button").includes("linear-gradient("),configured);
+ if(configured){
+  assert.ok(sample(html,"path-header").includes("background-color: #090203;"),"path-header: background-color: #090203;");
+  assert.ok(sample(html,"path-header").includes("color: #0A0203;"),"path-header: color: #0A0203;");
+  assert.ok(sample(html,"drawing").includes("background-color: #070203;"),"drawing: background-color: #070203;");
+  assert.ok(sample(html,"drawing").includes("color: #080203;"),"drawing: color: #080203;");
+  assert.ok(sample(html,"table-header").includes("background-color: rgba(1,2,3,0);"),"table-header: background-color: rgba(1,2,3,0);");
+  assert.ok(sample(html,"table-header").includes("color: #020203;"),"table-header: color: #020203;");
+  assert.ok(sample(html,"table-header").includes("border-color: #030203;"),"table-header: border-color: #030203;");
+  assert.ok(sample(html,"table-header").includes("border-width: 0px;"),"table-header: border-width: 0px;");
+  assert.ok(sample(html,"table-header").includes("border-radius: 0px;"),"table-header: border-radius: 0px;");
+  assert.ok(sample(html,"table-header").includes("font-family: Header Preview;"),"table-header: font-family: Header Preview;");
+  assert.ok(sample(html,"content").includes("background-color: #050203;"),"content: background-color: #050203;");
+  assert.ok(sample(html,"content").includes("color: #060203;"),"content: color: #060203;");
+  assert.ok(sample(html,"content").includes("border-bottom-color: #0D0203;"),"content: border-bottom-color: #0D0203;");
+  assert.ok(sample(html,"content").includes("font-family: Content Preview;"),"content: font-family: Content Preview;");
+  assert.ok(sample(html,"alternate").includes("background-color: #0C0203;"),"alternate: background-color: #0C0203;");
+  assert.ok(sample(html,"alternate").includes("color: #060203;"),"alternate: color: #060203;");
+  assert.ok(sample(html,"toolbar").includes("background-color: #0E0203;"),"toolbar: background-color: #0E0203;");
+  assert.ok(sample(html,"button").includes("border-width: 2.5px;"),"button: border-width: 2.5px;");
+  assert.ok(sample(html,"button").includes("border-radius: 0px;"),"button: border-radius: 0px;");
+  assert.ok(html.includes('data-toolbar-alignment="-7"'));assert.equal(getStaticValue(control.headerFirstGradientOffset),-10);assert.equal(getStaticValue(control.headerSecondGradientOffset),120);
+  control.showToolbar=staticProperty(false);control.showGridLines=staticProperty(false);
+  control.useHeaderFirstGradient=staticProperty(false);control.useHeaderSecondGradient=staticProperty(false);control.useButtonFirstGradient=staticProperty(false);control.useButtonSecondGradient=staticProperty(false);
+  const hidden=await renderer.convertAsync(screen);
+  assert.equal(sample(hidden,"toolbar"),"");assert.ok(!sample(hidden,"content").includes("border-bottom:"));
+  assert.ok(!sample(hidden,"table-header").includes("linear-gradient("));assert.ok(!sample(hidden,"button").includes("linear-gradient("));
+  assert.ok(hidden.includes('data-toolbar-background-color="#0E0203"'));assert.ok(hidden.includes('data-show-toolbar="false"'));
+  delete control.showToolbar;control.useToolbarBackgroundColor=staticProperty(false);delete control.alternatingRowBackgroundColor;
+  const fallback=await renderer.convertAsync(screen);assert.ok(!sample(fallback,"toolbar").includes("background-color:"));assert.ok(sample(fallback,"alternate").includes("background-color: #050203;"));
+  control.buttonCornerRadius=staticProperty(-1);
+  for(const width of [-1,NaN,Infinity]){
+   control.headerCornerRadius=staticProperty(width);control.headerBorderWidth=staticProperty(width);control.buttonBorderWidth=staticProperty(width);
+   const invalid=await renderer.convertAsync(screen);for(const kind of ["table-header","button"]){assert.ok(!sample(invalid,kind).includes("border-width:"));assert.ok(!sample(invalid,kind).includes("border-radius:"));}
+  }
+  delete control.headerBackgroundColor;delete control.headerBorderColor;delete control.headerBorderWidth;
+  delete control.headerFirstGradientColor;delete control.headerMiddleGradientColor;delete control.headerSecondGradientColor;
+  const codes=await renderer.convertAsync(screen);assert.ok(codes.includes("data-header-border-background-color="));assert.ok(codes.includes('data-header-back-fill-style="-7"'));
+  assert.ok(!sample(codes,"table-header").includes("background-color:"));assert.ok(!sample(codes,"table-header").includes("border-style:"));
+ }
+});
