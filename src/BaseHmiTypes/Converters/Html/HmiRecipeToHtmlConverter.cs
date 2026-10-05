@@ -283,19 +283,19 @@ public sealed class HmiRecipeToHtmlConverter
     {
         var fields = recipe.Parameters.Where(field => field.TextList != null).ToArray();
         if (fields.Length == 0) return;
-        html.Append("<h2>Field text lists</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Field</th><th scope=\"col\">Index</th><th scope=\"col\">Element ID</th><th scope=\"col\">Source reference</th><th scope=\"col\">List name</th><th scope=\"col\">Range mode</th><th scope=\"col\">Comment</th><th scope=\"col\">Entries</th></tr></thead><tbody>");
+        html.Append("<h2>Field text lists</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Field</th><th scope=\"col\">Index</th><th scope=\"col\">Element ID</th><th scope=\"col\">Source reference</th><th scope=\"col\">List name</th><th scope=\"col\">Range mode</th><th scope=\"col\">Comment</th><th scope=\"col\">Default entry source ID</th><th scope=\"col\">Default entry name</th><th scope=\"col\">Entries</th></tr></thead><tbody>");
         foreach (var field in fields)
         {
             field.References.TryGetValue("TextList", out var reference);
             var list = field.TextList!;
             html.Append("<tr>");
             foreach (var value in new[] { field.Name, field.SourceIndex?.ToString(CultureInfo.InvariantCulture), field.SourceElementId?.ToString(CultureInfo.InvariantCulture),
-                reference?.SourceId, list.Name, list.RangeType.ToString(), list.Comment?.GetText(culture), list.Entries.Count.ToString(CultureInfo.InvariantCulture) }) AppendViewValue(html, value);
+                reference?.SourceId, list.Name, list.RangeType.ToString(), list.Comment?.GetText(culture), list.DefaultEntryReference?.SourceId, list.DefaultEntryReference?.Name, list.Entries.Count.ToString(CultureInfo.InvariantCulture) }) AppendViewValue(html, value);
             html.Append("</tr>");
         }
         html.Append("</tbody></table></div>");
         if (!fields.Any(field => field.TextList!.Entries.Count > 0)) return;
-        html.Append("<h2>Field text-list entries</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Field</th><th scope=\"col\">Index</th><th scope=\"col\">Element ID</th><th scope=\"col\">Source reference</th><th scope=\"col\">Position</th><th scope=\"col\">Entry</th><th scope=\"col\">From</th><th scope=\"col\">To</th><th scope=\"col\">Default entry</th><th scope=\"col\">Text</th></tr></thead><tbody>");
+        html.Append("<h2>Field text-list entries</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Field</th><th scope=\"col\">Index</th><th scope=\"col\">Element ID</th><th scope=\"col\">Source reference</th><th scope=\"col\">Position</th><th scope=\"col\">Entry</th><th scope=\"col\">From</th><th scope=\"col\">To</th><th scope=\"col\">Default entry</th><th scope=\"col\">Text</th><th scope=\"col\">Entry source ID</th><th scope=\"col\">Entry mode</th></tr></thead><tbody>");
         foreach (var field in fields)
         {
             field.References.TryGetValue("TextList", out var reference);
@@ -305,7 +305,7 @@ public sealed class HmiRecipeToHtmlConverter
                 html.Append("<tr>");
                 foreach (var value in new[] { field.Name, field.SourceIndex?.ToString(CultureInfo.InvariantCulture), field.SourceElementId?.ToString(CultureInfo.InvariantCulture),
                     reference?.SourceId, (++position).ToString(CultureInfo.InvariantCulture), entry.Name, entry.From.ToString(CultureInfo.InvariantCulture),
-                    entry.To.ToString(CultureInfo.InvariantCulture), FormatFlag(entry.Default), entry.Text?.GetText(culture) }) AppendViewValue(html, value);
+                    entry.To.ToString(CultureInfo.InvariantCulture), FormatFlag(entry.Default), entry.Text?.GetText(culture), entry.SourceId, entry.EntryType?.ToString() }) AppendViewValue(html, value);
                 html.Append("</tr>");
             }
         }

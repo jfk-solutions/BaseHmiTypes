@@ -1,3 +1,4 @@
+import { HmiTextListEntryType } from "../../text-graphic-lists/HmiTextList.js";
 import { HmiRecipe, HmiRecipeCommunicationType, HmiRecipeSizeType, HmiRecipeStorageMedia } from "../../recipes/HmiRecipe.js";
 
 /** Renders stored engineering recipe definitions and records as a standalone HTML document. */
@@ -237,21 +238,21 @@ export class HmiRecipeToHtmlConverter {
 function appendFieldTextLists(html: string[], recipe: HmiRecipe, cultureLcid?: number): void {
   const fields = recipe.parameters.filter(field => field.textList !== undefined);
   if (!fields.length) return;
-  html.push('<h2>Field text lists</h2><div class="table-scroll"><table><thead><tr><th scope="col">Field</th><th scope="col">Index</th><th scope="col">Element ID</th><th scope="col">Source reference</th><th scope="col">List name</th><th scope="col">Range mode</th><th scope="col">Comment</th><th scope="col">Entries</th></tr></thead><tbody>');
+  html.push('<h2>Field text lists</h2><div class="table-scroll"><table><thead><tr><th scope="col">Field</th><th scope="col">Index</th><th scope="col">Element ID</th><th scope="col">Source reference</th><th scope="col">List name</th><th scope="col">Range mode</th><th scope="col">Comment</th><th scope="col">Default entry source ID</th><th scope="col">Default entry name</th><th scope="col">Entries</th></tr></thead><tbody>');
   for (const field of fields) {
     const list = field.textList!;
     html.push('<tr>');
-    for (const value of [field.name,field.sourceIndex,field.sourceElementId,field.references.get("TextList")?.sourceId,list.name,list.rangeType,list.comment?.getText(cultureLcid),list.entries.length]) appendViewValue(html,value);
+    for (const value of [field.name,field.sourceIndex,field.sourceElementId,field.references.get("TextList")?.sourceId,list.name,list.rangeType,list.comment?.getText(cultureLcid),list.defaultEntryReference?.sourceId,list.defaultEntryReference?.name,list.entries.length]) appendViewValue(html,value);
     html.push('</tr>');
   }
   html.push('</tbody></table></div>');
   if (!fields.some(field=>field.textList!.entries.length>0)) return;
-  html.push('<h2>Field text-list entries</h2><div class="table-scroll"><table><thead><tr><th scope="col">Field</th><th scope="col">Index</th><th scope="col">Element ID</th><th scope="col">Source reference</th><th scope="col">Position</th><th scope="col">Entry</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Default entry</th><th scope="col">Text</th></tr></thead><tbody>');
+  html.push('<h2>Field text-list entries</h2><div class="table-scroll"><table><thead><tr><th scope="col">Field</th><th scope="col">Index</th><th scope="col">Element ID</th><th scope="col">Source reference</th><th scope="col">Position</th><th scope="col">Entry</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Default entry</th><th scope="col">Text</th><th scope="col">Entry source ID</th><th scope="col">Entry mode</th></tr></thead><tbody>');
   for (const field of fields) {
     let position = 0;
     for (const entry of field.textList!.entries) {
       html.push('<tr>');
-      for (const value of [field.name,field.sourceIndex,field.sourceElementId,field.references.get("TextList")?.sourceId,++position,entry.name,entry.from,entry.to,entry.default ? "Yes" : "No",entry.text?.getText(cultureLcid)]) appendViewValue(html,value);
+      for (const value of [field.name,field.sourceIndex,field.sourceElementId,field.references.get("TextList")?.sourceId,++position,entry.name,entry.from,entry.to,entry.default ? "Yes" : "No",entry.text?.getText(cultureLcid),entry.sourceId,entry.entryType === undefined ? undefined : (HmiTextListEntryType[entry.entryType] ?? String(entry.entryType))]) appendViewValue(html,value);
       html.push('</tr>');
     }
   }
