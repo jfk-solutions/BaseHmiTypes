@@ -3226,6 +3226,9 @@ public partial class HmiScreenToHtmlConverter
                 html.Append("<col");
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-column-source-type", column.SourceType);
+                AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
+                AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
+                AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
                 AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));
                 AppendAttribute(html, "data-auto-size", ResolvePropertyPreview(column.AutoSize, context));
                 if ((column.AutoSize is null || !ResolveStaticValue(column.AutoSize, context)) &&
@@ -3255,6 +3258,9 @@ public partial class HmiScreenToHtmlConverter
                 html.Append('"');
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-column-source-type", column.SourceType);
+                AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
+                AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
+                AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
                 AppendAttribute(html, "data-sort-mode", ResolvePropertyPreview(column.SortMode, context));
                 AppendAttribute(html, "data-sort-index", ResolvePropertyPreview(column.SortIndex, context));
                 AppendAttribute(html, "data-decimal-places", ResolvePropertyPreview(column.DecimalPlaces, context));
