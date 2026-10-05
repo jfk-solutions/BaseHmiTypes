@@ -3218,8 +3218,25 @@ public partial class HmiScreenToHtmlConverter
         if (alarmControl.UseAlternatingRowColors is not null && ResolveStaticValue(alarmControl.UseAlternatingRowColors, context))
             html.Append(" hmi-alarm-table--alternating");
         html.Append("\" style=\"").Append(CreateAlarmTableStyle(alarmControl, context)).Append("\">");
+        if (visibleColumns.Length > 0)
+        {
+            html.Append("<colgroup>");
+            foreach (var column in visibleColumns)
+            {
+                html.Append("<col");
+                AppendAttribute(html, "data-column-type", column.Type.ToString());
+                AppendAttribute(html, "data-column-source-type", column.SourceType);
+                AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));
+                AppendAttribute(html, "data-auto-size", ResolvePropertyPreview(column.AutoSize, context));
+                if ((column.AutoSize is null || !ResolveStaticValue(column.AutoSize, context)) &&
+                    TryGetStaticValue(column.Width, out var columnWidth) && IsFinite(columnWidth) && columnWidth >= 0)
+                    AppendAttribute(html, "style", "width: " + ToCss(columnWidth) + "px;");
+                html.Append('>');
+            }
+            html.Append("</colgroup>");
+        }
         var gridCellStyle = CreateAlarmGridCellStyle(alarmControl, context);
-        if (showHeader)
+        if (showHeader && (visibleColumns.Length > 0 || columns.Count == 0))
         {
             var headerCellStyle = CreateAlarmTableHeaderCellStyle(alarmControl, context, gridCellStyle);
             html.Append("<thead><tr>");
