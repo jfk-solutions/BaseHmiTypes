@@ -29,6 +29,10 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
 
     public HmiProperty<bool>? ShowColumnHeadings { get; set; }
 
+    public HmiProperty<int>? ColumnHeaderType { get; set; }
+
+    public HmiProperty<int>? RowHeaderType { get; set; }
+
     public HmiProperty<bool>? ShowHorizontalGridLines { get; set; }
 
     public HmiProperty<bool>? ShowVerticalGridLines { get; set; }

@@ -3971,6 +3971,8 @@ function appendSystemDiagnosisControl(
     "display: flex; flex-direction: column; overflow: hidden;",
   );
   appendAttribute(html, "data-view-kind", systemDiagnosisControl.viewKind);
+  appendAttribute(html, "data-column-header-type", resolvePropertyPreview(systemDiagnosisControl.columnHeaderType));
+  appendAttribute(html, "data-row-header-type", resolvePropertyPreview(systemDiagnosisControl.rowHeaderType));
   appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(systemDiagnosisControl.showToolbar));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(systemDiagnosisControl.showStatusBar));
   appendAttribute(html, "data-allow-sort", resolvePropertyPreview(systemDiagnosisControl.allowSortByColumn));
@@ -4019,9 +4021,12 @@ function appendSystemDiagnosisControl(
       html.push(">");
     }
     html.push("</colgroup>");
-    if (getStaticValue(systemDiagnosisControl.showColumnHeadings) !== false) {
+    const columnHeaderType = getStaticValue(systemDiagnosisControl.columnHeaderType);
+    if (columnHeaderType !== 0 && getStaticValue(systemDiagnosisControl.showColumnHeadings) !== false) {
       html.push("<thead><tr>");
+      let columnIndex = 0;
       for (const column of columns) {
+        columnIndex++;
         const columnStyle = [...header];
         const horizontal = getStaticValue(column.headerHorizontalAlignment);
         if (horizontal !== undefined) columnStyle.push(`text-align: ${horizontalAlignmentToCss(horizontal)};`);
@@ -4035,7 +4040,8 @@ function appendSystemDiagnosisControl(
         appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
         appendAttribute(html, "data-sort-order", resolvePropertyPreview(column.sortOrder));
         appendAttribute(html, "data-sort-direction", resolvePropertyPreview(column.sortDirection));
-        html.push(">", escapeHtml(column.headerText?.getText(context.options.cultureLcid) ?? column.sourceType ?? HmiSystemDiagnosisColumnType[column.type]), "</th>");
+        const headingText = columnHeaderType === 1 ? String(columnIndex) : column.headerText?.getText(context.options.cultureLcid) ?? column.sourceType ?? HmiSystemDiagnosisColumnType[column.type];
+        html.push(">", escapeHtml(headingText), "</th>");
       }
       html.push("</tr></thead>");
     }
