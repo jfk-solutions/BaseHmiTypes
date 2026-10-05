@@ -13,7 +13,7 @@ const svg=bytes=>new MetafileToSvgRenderer().render(bytes,'.emf');
 const elements=bytes=>[...svg(bytes).matchAll(/<(polygon|polyline|path|line)\b([^>]+)>/g)].map(m=>({tag:m[1],...Object.fromEntries([...m[2].matchAll(/([\w-]+)="([^"]*)"/g)].map(a=>[a[1],a[2]]))}));
 for(const [type,tag,fill] of [[86,'polygon','#ffffff'],[87,'polyline','none']]){
  test(`Short point array selected objects: ${type}`,()=>{const shape=elements(emf(record(37,0x80000000),points(type)))[0];assert.equal(shape.tag,tag);assert.equal(shape.points,'5,5 35,5 20,35');assert.equal(shape.fill,fill);assert.equal(shape.stroke,'#000000');});
- test(`Short signed coordinates and mapping: ${type}`,()=>assert.equal(elements(emf(record(9,10,10),record(11,20,30),record(12,4,7),points(type,[-32768,32767,10,-10])))[0].points,'-65532,98308 24,-23'));
+ test(`Short signed coordinates and mapping: ${type}`,()=>assert.equal(elements(emf(record(17,8),record(9,10,10),record(11,20,30),record(12,4,7),points(type,[-32768,32767,10,-10])))[0].points,'-65532,98308 24,-23'));
  const expected='M 5 5 L 35 5 L 20 35'+(type===86?' Z':'');
  test(`Short independent path figure: ${type}`,()=>{const shapes=elements(emf(record(59),points(type),record(60),record(64,0,0,39,39)));assert.equal(shapes.length,1);assert.equal(shapes[0].tag,'path');assert.equal(shapes[0].d,expected);});
  test(`Short AbortPath discards figure: ${type}`,()=>assert.equal(elements(emf(record(59),points(type),record(68))).length,0));

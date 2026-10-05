@@ -22,7 +22,7 @@ test('RoundRect reversed bounds normalized',()=>assert.equal(shape(round()).d,sh
 test('RoundRect clockwise winding',()=>assert.ok(shape(record(57,2),round()).d.startsWith('M 35 25 C 35 30.523 32.761 35 30 35 L 10 35')));
 test('RoundRect SaveDC restores direction',()=>assert.equal(shape(round()).d,shape(record(33),record(57,2),record(34,-1),round()).d));
 for(const active of [false,true])test(`RoundRect affine corner transformation: ${active}`,()=>{const r=[record(35,0,0x3f800000,0xbf800000,0,0x42200000,0)];if(active)r.push(record(59));r.push(round());if(active)r.push(record(60),record(64,0,0,39,39));assert.ok(shape(...r).d.startsWith('M 25 35 C 30.523 35 35 32.761 35 30 L 35 10'));});
-test('RoundRect viewport mapping',()=>assert.ok(shape(record(9,10,10),record(11,20,30),record(12,4,7),round()).d.startsWith('M 74 52 C 74 35.431 69.523 22 64 22 L 24 22')));
+test('RoundRect viewport mapping',()=>assert.ok(shape(record(17,8),record(9,10,10),record(11,20,30),record(12,4,7),round()).d.startsWith('M 74 52 C 74 35.431 69.523 22 64 22 L 24 22')));
 for(const count of [0,1,2,3,4,5])test(`RoundRect truncated EMF ignored: ${count}`,()=>assert.equal(elements(emf(record(44,...Array(count).fill(5)))).length,0));
 test('RoundRect clip applied to direct rounded shape',()=>{const b=emf(record(59),round(),record(60),record(67,5),record(44,0,0,39,39,10,10));assert.equal([...render(b).matchAll(/<clipPath\b/g)].length,1);assert.equal(elements(b).at(-1)['clip-path'],'url(#clip1)');});
 for(const [mode,expected] of [[1,'evenodd'],[2,'nonzero']])test(`RoundRect selected fill rule: ${mode}`,()=>assert.equal(shape(record(19,mode),round())['fill-rule'],expected));

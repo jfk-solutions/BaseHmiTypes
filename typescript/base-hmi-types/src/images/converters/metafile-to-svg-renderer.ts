@@ -29,6 +29,7 @@ const CLIP_VIEWPORT_TOKEN = '__METAFILE_CLIP_VIEWPORT__';
 const DEFAULT_CLIP_VIEWPORT_TOKEN = '__METAFILE_DEFAULT_CLIP_VIEWPORT__';
 
 interface DrawState {
+  mapMode: number;
   pathFigureClosed: boolean;
   clockwiseShapes: boolean;
   miterLimit: number;
@@ -134,6 +135,7 @@ export class MetafileToSvgRenderer {
       height: i32(bytes, 20) - i32(bytes, 12) + 1,
     });
     const state = createInitialState();
+    const mappingDevice = emfMappingDevice(bytes);
     const stateStack: DrawState[] = [];
     const objects = new Map<number, MetafileObject>();
     const emfPlusState: EmfPlusState = {
@@ -159,21 +161,20 @@ export class MetafileToSvgRenderer {
         case EMR.GDICOMMENT:
           hasEmfPlusDrawing = processEmfPlusComment(this, bytes, dataOffset, state, emfPlusState, elements) || hasEmfPlusDrawing;
           break;
+        case EMR.SETMAPMODE:
+          if (record.size >= 12) setEmfMapMode(state, i32(bytes, dataOffset), mappingDevice);
+          break;
         case EMR.SETWINDOWORGEX:
-          state.windowOrgX = i32(bytes, dataOffset);
-          state.windowOrgY = i32(bytes, dataOffset + 4);
+          if (record.size >= 16) { state.windowOrgX = i32(bytes, dataOffset); state.windowOrgY = i32(bytes, dataOffset + 4); }
           break;
         case EMR.SETWINDOWEXTEX:
-          state.windowExtX = i32(bytes, dataOffset) || 1;
-          state.windowExtY = i32(bytes, dataOffset + 4) || 1;
+          if (record.size >= 16) setEmfExtents(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), false);
           break;
         case EMR.SETVIEWPORTORGEX:
-          state.viewportOrgX = i32(bytes, dataOffset);
-          state.viewportOrgY = i32(bytes, dataOffset + 4);
+          if (record.size >= 16) { state.viewportOrgX = i32(bytes, dataOffset); state.viewportOrgY = i32(bytes, dataOffset + 4); }
           break;
         case EMR.SETVIEWPORTEXTEX:
-          state.viewportExtX = i32(bytes, dataOffset) || 1;
-          state.viewportExtY = i32(bytes, dataOffset + 4) || 1;
+          if (record.size >= 16) setEmfExtents(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), true);
           break;
         case EMR.SETPOLYFILLMODE:
           state.fillRule = polyFillRule(u32(bytes, dataOffset));
@@ -660,6 +661,7 @@ const EMR = {
   SETWINDOWORGEX: 0x000a,
   SETVIEWPORTEXTEX: 0x000b,
   SETVIEWPORTORGEX: 0x000c,
+  SETMAPMODE: 0x0011,
   SETPOLYFILLMODE: 0x0013,
   SETTEXTCOLOR: 0x0018,
   SAVEDC: 0x0021,
@@ -891,6 +893,7 @@ function addWmfObject(objects: Array<MetafileObject | null>, object: MetafileObj
 
 function createInitialState(): DrawState {
   return {
+    mapMode: 1,
     pen: { kind: 'pen', color: '#000000', width: 1, none: false },
     brush: { kind: 'brush', color: 'none', none: true },
     font: { kind: 'font', family: 'Arial', height: 12, weight: 400, italic: false },
@@ -1159,6 +1162,46 @@ function transformRect(state: DrawState, left: number, top: number, right: numbe
   const [x1, y1] = transformPoint(state, left, top);
   const [x2, y2] = transformPoint(state, right, bottom);
   return [x1, y1, x2, y2];
+}
+
+function emfMappingDevice(bytes: Uint8Array): [number, number, number, number] {
+  // No reference-device metrics: deterministic 96-DPI approximation, not host settings.
+  if (bytes.length >= 88 && u32(bytes, 4) >= 88 && u32(bytes, 4) <= bytes.length) {
+    const x = i32(bytes, 72), y = i32(bytes, 76), mmX = i32(bytes, 80), mmY = i32(bytes, 84);
+    if (x > 0 && y > 0 && mmX > 0 && mmY > 0 && mmX <= Math.floor(0x7fffffff / 100) && mmY <= Math.floor(0x7fffffff / 100))
+      return [x, y, mmX, mmY];
+  }
+  return [960, 960, 254, 254];
+}
+
+function setEmfMapMode(state: DrawState, mode: number, device: [number, number, number, number]): void {
+  if (mode < 1 || mode > 8) return;
+  if (mode === 8 || (mode === 7 && state.mapMode === 7)) { state.mapMode = mode; return; }
+  state.mapMode = mode;
+  if (mode === 1) {
+    state.windowExtX = state.windowExtY = state.viewportExtX = state.viewportExtY = 1;
+    return;
+  }
+  const unitsPerMillimeter = mode === 3 ? 100 : mode === 4 ? 1000 / 254 : mode === 5 ? 10000 / 254 : mode === 6 ? 14400 / 254 : 10;
+  state.windowExtX = Math.round(device[2] * unitsPerMillimeter);
+  state.windowExtY = Math.round(device[3] * unitsPerMillimeter);
+  state.viewportExtX = device[0]; state.viewportExtY = -device[1];
+  if (mode === 7) adjustIsotropicExtents(state);
+}
+
+function setEmfExtents(state: DrawState, x: number, y: number, viewport: boolean): void {
+  if (state.mapMode < 7 || x === 0 || y === 0) return;
+  if (viewport) { state.viewportExtX = x; state.viewportExtY = y; }
+  else { state.windowExtX = x; state.windowExtY = y; }
+  if (state.mapMode === 7) adjustIsotropicExtents(state);
+}
+
+function adjustIsotropicExtents(state: DrawState): void {
+  const xScale = Math.abs(state.viewportExtX / state.windowExtX), yScale = Math.abs(state.viewportExtY / state.windowExtY);
+  if (xScale > yScale)
+    state.viewportExtX = Math.sign(state.viewportExtX) * Math.round(Math.abs(state.windowExtX) * yScale);
+  else if (yScale > xScale)
+    state.viewportExtY = Math.sign(state.viewportExtY) * Math.round(Math.abs(state.windowExtY) * xScale);
 }
 
 function scaledPenWidth(state: DrawState, width: number): number {

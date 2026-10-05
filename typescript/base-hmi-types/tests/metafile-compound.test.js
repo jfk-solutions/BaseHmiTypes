@@ -18,7 +18,7 @@ for(const type of [7,8,90,91]){
   assert.equal(shape.d,path(type));assert.equal(shape.fill,closed(type)?'#ffffff':'none');assert.equal(line.x1,'1');assert.equal(line.y1,'2');assert.deepEqual(bytes,original);
  });
  test(`Records compound figures inside active path: ${type}`,()=>assert.equal(elements(emf(record(59),compound(type),record(60),record(64,0,0,39,39)))[0].d,path(type)));
- test(`Mapping transforms every compound figure: ${type}`,()=>assert.equal(elements(emf(record(9,10,10),record(11,20,30),record(12,4,7),compound(type)))[0].d,'M 8 13 L 80 13 L 80 121 L 8 121'+(closed(type)?' Z':'')+' M 28 43 L 60 43 L 60 91 L 28 91'+(closed(type)?' Z':'')));
+ test(`Mapping transforms every compound figure: ${type}`,()=>assert.equal(elements(emf(record(17,8),record(9,10,10),record(11,20,30),record(12,4,7),compound(type)))[0].d,'M 8 13 L 80 13 L 80 121 L 8 121'+(closed(type)?' Z':'')+' M 28 43 L 60 43 L 60 91 L 28 91'+(closed(type)?' Z':'')));
  test(`Malformed compound records do not consume following records: ${type}`,()=>{
   for(const [offset,value] of [[24,0xffffffff],[28,0xffffffff],[28,7],[32,0],[36,1],[36,0xffffffff]]){
    const bytes=compound(type);bytes.writeUInt32LE(value,offset);const shapes=elements(emf(bytes,record(27,1,2),record(54,8,9)));assert.equal(shapes.length,1);assert.equal(shapes[0].tag,'line');
