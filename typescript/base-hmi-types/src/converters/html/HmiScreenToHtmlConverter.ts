@@ -2952,6 +2952,27 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-use-header-first-gradient", resolvePropertyPreview(recipeControl.useHeaderFirstGradient));
   appendAttribute(html, "data-use-header-second-gradient", resolvePropertyPreview(recipeControl.useHeaderSecondGradient));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(recipeControl.wordWrap));
+  appendAttribute(html, "data-button-background-color", resolvePropertyPreview(recipeControl.buttonBackgroundColor));
+  appendAttribute(html, "data-button-border-background-color", resolvePropertyPreview(recipeControl.buttonBorderBackgroundColor));
+  appendAttribute(html, "data-button-border-color", resolvePropertyPreview(recipeControl.buttonBorderColor));
+  appendAttribute(html, "data-button-first-gradient-color", resolvePropertyPreview(recipeControl.buttonFirstGradientColor));
+  appendAttribute(html, "data-button-middle-gradient-color", resolvePropertyPreview(recipeControl.buttonMiddleGradientColor));
+  appendAttribute(html, "data-button-second-gradient-color", resolvePropertyPreview(recipeControl.buttonSecondGradientColor));
+  appendAttribute(html, "data-button-border-width", resolvePropertyPreview(recipeControl.buttonBorderWidth));
+  appendAttribute(html, "data-button-corner-radius", resolvePropertyPreview(recipeControl.buttonCornerRadius));
+  appendAttribute(html, "data-button-edge-style", resolvePropertyPreview(recipeControl.buttonEdgeStyle));
+  appendAttribute(html, "data-button-back-fill-style", resolvePropertyPreview(recipeControl.buttonBackFillStyle));
+  appendAttribute(html, "data-button-first-gradient-offset", resolvePropertyPreview(recipeControl.buttonFirstGradientOffset));
+  appendAttribute(html, "data-button-second-gradient-offset", resolvePropertyPreview(recipeControl.buttonSecondGradientOffset));
+  appendAttribute(html, "data-use-button-first-gradient", resolvePropertyPreview(recipeControl.useButtonFirstGradient));
+  appendAttribute(html, "data-use-button-second-gradient", resolvePropertyPreview(recipeControl.useButtonSecondGradient));
+  appendAttribute(html, "data-textual-objects-border-background-color", resolvePropertyPreview(recipeControl.textualObjectsBorderBackgroundColor));
+  appendAttribute(html, "data-textual-objects-border-color", resolvePropertyPreview(recipeControl.textualObjectsBorderColor));
+  appendAttribute(html, "data-textual-objects-border-width", resolvePropertyPreview(recipeControl.textualObjectsBorderWidth));
+  appendAttribute(html, "data-textual-objects-corner-radius", resolvePropertyPreview(recipeControl.textualObjectsCornerRadius));
+  appendAttribute(html, "data-textual-objects-edge-style", resolvePropertyPreview(recipeControl.textualObjectsEdgeStyle));
+  const buttonPreview = createRecipeButtonPreviewStyle(recipeControl);
+  if (buttonPreview.length > 0) appendAttribute(html, "data-button-preview-style", buttonPreview);
   appendAttribute(html, "data-enable-recipe-dialog", resolvePropertyPreview(recipeControl.enableRecipeDialog));
   appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(recipeControl.showGridLines));
   appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(recipeControl.gridLineColor));
@@ -2965,7 +2986,7 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
       html.push("<div style=\"flex: 0 0 auto; border-bottom: 1px solid currentColor; padding: 2px 4px;", headerStyle, "\">Recipe selector</div>");
     html.push(
       "<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;", contentStyle, "\">",
-      escapeHtml(defaultRecipeName),
+      createRecipeSelectorTextPreview(recipeControl, defaultRecipeName),
       "</div>",
     );
   } else {
@@ -3005,6 +3026,31 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   if (showFooter)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
   html.push("</div>");
+}
+
+function createRecipeButtonPreviewStyle(control: HmiRecipeControl): string {
+  const style: string[] = [];
+  appendColorStyle(style, "background-color", control.buttonBackgroundColor);
+  appendColorStyle(style, "border-color", control.buttonBorderColor);
+  appendHeaderBorderWidth(style, control.buttonBorderWidth);
+  const radius = getStaticValue(control.buttonCornerRadius);
+  if (radius !== undefined && radius >= 0) style.push(`border-radius: ${toCss(radius)}px;`);
+  appendColorGradientStyle(style, createColorGradient({
+    backgroundColor: control.buttonBackgroundColor, firstGradientColor: control.buttonFirstGradientColor, firstGradientOffset: control.buttonFirstGradientOffset,
+    middleGradientColor: control.buttonMiddleGradientColor, secondGradientColor: control.buttonSecondGradientColor, secondGradientOffset: control.buttonSecondGradientOffset,
+    useFirstGradient: control.useButtonFirstGradient, useSecondGradient: control.useButtonSecondGradient,
+  }));
+  return style.join("");
+}
+
+function createRecipeSelectorTextPreview(control: HmiRecipeControl, text: string): string {
+  const style: string[] = [];
+  appendColorStyle(style, "border-color", control.textualObjectsBorderColor);
+  appendHeaderBorderWidth(style, control.textualObjectsBorderWidth);
+  const radius = getStaticValue(control.textualObjectsCornerRadius);
+  if (radius !== undefined && radius >= 0) style.push(`border-radius: ${toCss(radius)}px;`);
+  if (style.length === 0) return escapeHtml(text);
+  return `<span data-recipe-selector-text="true" style="${style.join("")}">${escapeHtml(text)}</span>`;
 }
 
 function createRecipeHeaderStyle(recipeControl: HmiRecipeControl, context: HmiHtmlConvertContext): string {
