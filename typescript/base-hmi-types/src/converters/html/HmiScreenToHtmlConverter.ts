@@ -3977,6 +3977,10 @@ function appendSystemDiagnosisControl(
   appendAttribute(html, "data-allow-filter-by-column", resolvePropertyPreview(systemDiagnosisControl.allowFilterByColumn));
   appendAttribute(html, "data-allow-column-resize", resolvePropertyPreview(systemDiagnosisControl.allowColumnResize));
   appendAttribute(html, "data-allow-column-reorder", resolvePropertyPreview(systemDiagnosisControl.allowColumnReorder));
+  appendAttribute(html, "data-grid-selection-mode", resolvePropertyPreview(systemDiagnosisControl.gridSelectionMode));
+  appendAttribute(html, "data-select-full-row", resolvePropertyPreview(systemDiagnosisControl.selectFullRow));
+  appendAttribute(html, "data-selection-border-color", resolvePropertyPreview(systemDiagnosisControl.selectionBorderColor));
+  appendAttribute(html, "data-selection-border-width", resolvePropertyPreview(systemDiagnosisControl.selectionBorderWidth));
   appendAttribute(html, "data-row-height", resolvePropertyPreview(systemDiagnosisControl.rowHeight));
   appendAttribute(html, "data-grid-line-width", resolvePropertyPreview(systemDiagnosisControl.gridLineWidth));
   html.push("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">", escapeHtml(title), "</div>");

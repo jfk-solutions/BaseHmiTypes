@@ -19,6 +19,14 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
 
     public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
 
+    public HmiProperty<int>? GridSelectionMode { get; set; }
+
+    public HmiProperty<bool>? SelectFullRow { get; set; }
+
+    public HmiProperty<HmiColor>? SelectionBorderColor { get; set; }
+
+    public HmiProperty<double>? SelectionBorderWidth { get; set; }
+
     public HmiProperty<bool>? ShowColumnHeadings { get; set; }
 
     public HmiProperty<bool>? ShowHorizontalGridLines { get; set; }
