@@ -9,7 +9,7 @@ public class MetafileMappingOrderTests
     private static byte[][] Mapping(int variant)
     {
         float[] m=variant switch{1=>new float[]{2,0,0,3,10,20},2=>new float[]{0,1,-1,0,40,0},3=>new float[]{1,.5f,1,1,0,0},4=>new float[]{-1,0,0,1,40,0},_=>new float[]{1,0,0,1,0,0}};
-        return new[]{Record(35,m.Select(BitConverter.SingleToInt32Bits).ToArray()),Record(9,10,10),Record(11,variant==4?-20:20,30),Record(10,3,4),Record(12,10,20)};
+        return new[]{Record(35,m.Select(BitConverter.SingleToInt32Bits).ToArray()),Record(17,8),Record(9,10,10),Record(11,variant==4?-20:20,30),Record(10,3,4),Record(12,10,20)};
     }
     private static XElement Svg(IEnumerable<byte[]> r)=>XDocument.Parse(new MetafileToSvgRenderer().Render(Emf(r.ToArray()),".emf")!).Root!;
     private static XElement Draw(XElement s)=>s.Elements().Single(e=>e.Name.LocalName!="defs");
@@ -24,7 +24,7 @@ public class MetafileMappingOrderTests
     [TestMethod] public void SaveRestorePreservesCombinedMapping(){var d=Draw(Svg(Mapping(1).Concat(new[]{Record(33),Record(35,BitConverter.SingleToInt32Bits(1),0,0,BitConverter.SingleToInt32Bits(1),0,0),Record(34,-1),Record(27,2,3),Record(54,4,5)})));Assert.AreEqual("32",(string?)d.Attribute("x1"));Assert.AreEqual("113",(string?)d.Attribute("y2"));}
     [TestMethod] public void LogicalDcPointIsRemappedAfterMappingChanges(){var d=Draw(Svg(new[]{Record(27,2,3)}.Concat(Mapping(1)).Append(Record(54,4,5))));Assert.AreEqual("32",(string?)d.Attribute("x1"));Assert.AreEqual("95",(string?)d.Attribute("y1"));Assert.AreEqual("40",(string?)d.Attribute("x2"));}
     [TestMethod] public void BezierControlsUseSameCombinedMapping(){var d=Draw(Svg(Mapping(1).Append(Points(2,new[]{2,3,4,5,6,7,8,9}))));Assert.AreEqual("M 32 95 C 40 113 48 131 56 149",(string?)d.Attribute("d"));}
-    private static byte[][] Reset()=>new[]{Record(35,BitConverter.SingleToInt32Bits(1),0,0,BitConverter.SingleToInt32Bits(1),0,0),Record(9,1,1),Record(11,1,1),Record(10,0,0),Record(12,0,0)};
+    private static byte[][] Reset()=>new[]{Record(35,BitConverter.SingleToInt32Bits(1),0,0,BitConverter.SingleToInt32Bits(1),0,0),Record(17,8),Record(9,1,1),Record(11,1,1),Record(10,0,0),Record(12,0,0)};
     [TestMethod] [DataRow(0)] [DataRow(1)] [DataRow(2)] [DataRow(3)] [DataRow(4)] [DataRow(5)] [DataRow(6)] [DataRow(7)] [DataRow(8)] [DataRow(9)]
     public void PositionChangingRecordsRetainLogicalEndpoint(int kind)
     {

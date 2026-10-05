@@ -41,7 +41,7 @@ public class MetafilePolyDrawTests
         =>Assert.AreEqual("M 5 30 L 35 30 L 20 10 Z",Svg(Emf(Record(59),Record(27,5,30),Record(54,35,30),PolyDraw(type,new byte[]{3},new[]{20,10}),Record(60),Record(64,0,0,39,39))).Elements().Single().Attribute("d")?.Value);
     [TestMethod] [DataRow(56u)] [DataRow(92u)]
     public void MappingTransformsAllMixedPoints(uint type)
-        =>Assert.AreEqual("M 14 97 L 14 37 C 14 7 74 7 74 97 Z",Svg(Emf(Record(9,10,10),Record(11,20,30),Record(12,4,7),PolyDraw(type))).Elements().Single().Attribute("d")?.Value);
+        =>Assert.AreEqual("M 14 97 L 14 37 C 14 7 74 7 74 97 Z",Svg(Emf(Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7),PolyDraw(type))).Elements().Single().Attribute("d")?.Value);
     [TestMethod] [DataRow(56u)] [DataRow(92u)]
     public void InvalidCommandsNeverPaintPartialPrefixOrChangePosition(uint type)
     {

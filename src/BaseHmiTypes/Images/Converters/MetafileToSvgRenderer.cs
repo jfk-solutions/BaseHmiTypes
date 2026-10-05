@@ -45,6 +45,7 @@ public sealed class MetafileToSvgRenderer
             Height = I32(bytes, 20) - I32(bytes, 12) + 1,
         });
         var state = CreateInitialState();
+        var mappingDevice = EmfMappingDevice(bytes);
         var stateStack = new Stack<DrawState>();
         var objects = new Dictionary<uint, MetafileObject>();
         var elements = new List<string>();
@@ -63,21 +64,20 @@ public sealed class MetafileToSvgRenderer
 
             switch (record.Type)
             {
+                case EMR.SetMapMode:
+                    if (record.Size >= 12) SetEmfMapMode(state, I32(bytes, dataOffset), mappingDevice);
+                    break;
                 case EMR.SetWindowOrgEx:
-                    state.WindowOrgX = I32(bytes, dataOffset);
-                    state.WindowOrgY = I32(bytes, dataOffset + 4);
+                    if (record.Size >= 16) { state.WindowOrgX = I32(bytes, dataOffset); state.WindowOrgY = I32(bytes, dataOffset + 4); }
                     break;
                 case EMR.SetWindowExtEx:
-                    state.WindowExtX = I32(bytes, dataOffset) is var wx && wx != 0 ? wx : 1;
-                    state.WindowExtY = I32(bytes, dataOffset + 4) is var wy && wy != 0 ? wy : 1;
+                    if (record.Size >= 16) SetEmfExtents(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4), false);
                     break;
                 case EMR.SetViewportOrgEx:
-                    state.ViewportOrgX = I32(bytes, dataOffset);
-                    state.ViewportOrgY = I32(bytes, dataOffset + 4);
+                    if (record.Size >= 16) { state.ViewportOrgX = I32(bytes, dataOffset); state.ViewportOrgY = I32(bytes, dataOffset + 4); }
                     break;
                 case EMR.SetViewportExtEx:
-                    state.ViewportExtX = I32(bytes, dataOffset) is var vx && vx != 0 ? vx : 1;
-                    state.ViewportExtY = I32(bytes, dataOffset + 4) is var vy && vy != 0 ? vy : 1;
+                    if (record.Size >= 16) SetEmfExtents(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4), true);
                     break;
                 case EMR.SetPolyFillMode:
                     state.FillRule = PolyFillRule(U32(bytes, dataOffset));
@@ -774,6 +774,7 @@ public sealed class MetafileToSvgRenderer
             CurrentY = state.CurrentY,
             LogicalCurrentX = state.LogicalCurrentX,
             LogicalCurrentY = state.LogicalCurrentY,
+            MapMode = state.MapMode,
             WindowOrgX = state.WindowOrgX,
             WindowOrgY = state.WindowOrgY,
             WindowExtX = state.WindowExtX,
@@ -823,6 +824,7 @@ public sealed class MetafileToSvgRenderer
         target.CurrentY = restored.CurrentY;
         target.LogicalCurrentX = restored.LogicalCurrentX;
         target.LogicalCurrentY = restored.LogicalCurrentY;
+        target.MapMode = restored.MapMode;
         target.WindowOrgX = restored.WindowOrgX;
         target.WindowOrgY = restored.WindowOrgY;
         target.WindowExtX = restored.WindowExtX;
@@ -904,6 +906,54 @@ public sealed class MetafileToSvgRenderer
         }
 
         return new FontObject { Family = family, Height = height == 0 ? 12 : height, Weight = weight == 0 ? 400 : weight, Italic = italic };
+    }
+
+    private static (double X, double Y, double MmX, double MmY) EmfMappingDevice(byte[] bytes)
+    {
+        // Missing reference-device metrics cannot establish physical units.
+        // Use a deterministic 96-DPI reference rather than host display settings.
+        if (bytes.Length >= 88 && U32(bytes, 4) >= 88 && U32(bytes, 4) <= bytes.Length)
+        {
+            var x = I32(bytes, 72); var y = I32(bytes, 76); var mmX = I32(bytes, 80); var mmY = I32(bytes, 84);
+            if (x > 0 && y > 0 && mmX > 0 && mmY > 0 && mmX <= int.MaxValue / 100 && mmY <= int.MaxValue / 100)
+                return (x, y, mmX, mmY);
+        }
+        return (960, 960, 254, 254);
+    }
+
+    private static void SetEmfMapMode(DrawState state, int mode, (double X, double Y, double MmX, double MmY) device)
+    {
+        if (mode < 1 || mode > 8) return;
+        if (mode == 8 || (mode == 7 && state.MapMode == 7)) { state.MapMode = mode; return; }
+        state.MapMode = mode;
+        if (mode == 1)
+        {
+            state.WindowExtX = state.WindowExtY = state.ViewportExtX = state.ViewportExtY = 1;
+            return;
+        }
+        var unitsPerMillimeter = mode switch { 3 => 100d, 4 => 1000d / 254, 5 => 10000d / 254, 6 => 14400d / 254, _ => 10d };
+        state.WindowExtX = Math.Round(device.MmX * unitsPerMillimeter, MidpointRounding.AwayFromZero);
+        state.WindowExtY = Math.Round(device.MmY * unitsPerMillimeter, MidpointRounding.AwayFromZero);
+        state.ViewportExtX = device.X; state.ViewportExtY = -device.Y;
+        if (mode == 7) AdjustIsotropicExtents(state);
+    }
+
+    private static void SetEmfExtents(DrawState state, int x, int y, bool viewport)
+    {
+        if (state.MapMode < 7 || x == 0 || y == 0) return;
+        if (viewport) { state.ViewportExtX = x; state.ViewportExtY = y; }
+        else { state.WindowExtX = x; state.WindowExtY = y; }
+        if (state.MapMode == 7) AdjustIsotropicExtents(state);
+    }
+
+    private static void AdjustIsotropicExtents(DrawState state)
+    {
+        var xScale = Math.Abs(state.ViewportExtX / state.WindowExtX);
+        var yScale = Math.Abs(state.ViewportExtY / state.WindowExtY);
+        if (xScale > yScale)
+            state.ViewportExtX = Math.Sign(state.ViewportExtX) * Math.Round(Math.Abs(state.WindowExtX) * yScale, MidpointRounding.AwayFromZero);
+        else if (yScale > xScale)
+            state.ViewportExtY = Math.Sign(state.ViewportExtY) * Math.Round(Math.Abs(state.WindowExtY) * xScale, MidpointRounding.AwayFromZero);
     }
 
     private static int ScaledPenWidth(DrawState state, int width)
@@ -1780,6 +1830,7 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class DrawState
 {
+    public int MapMode { get; set; } = 1;
     public double LogicalCurrentX { get; set; }
     public double LogicalCurrentY { get; set; }
     public bool PathFigureClosed { get; set; }
@@ -1951,6 +2002,7 @@ internal static class EMR
     public const uint SetWindowOrgEx = 0x000a;
     public const uint SetViewportExtEx = 0x000b;
     public const uint SetViewportOrgEx = 0x000c;
+    public const uint SetMapMode = 0x0011;
     public const uint SetPolyFillMode = 0x0013;
     public const uint SetTextColor = 0x0018;
     public const uint SaveDc = 0x0021;

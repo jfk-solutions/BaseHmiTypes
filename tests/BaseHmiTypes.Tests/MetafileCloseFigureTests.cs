@@ -72,7 +72,7 @@ public class MetafileCloseFigureTests
         Assert.AreEqual("M 5 5 L 35 5 L 35 35"+(closed?" Z M 35 35":"")+" L 5 35",Path(records.ToArray()));
     }
     [TestMethod] public void MappingPreservesClosedEndpointContinuity()
-        =>StringAssert.EndsWith(Path(new[]{Record(9,10,10),Record(11,20,30),Record(12,4,7)}.Concat(Open()).Concat(new[]{Record(61),Record(54,5,35)}).Concat(Paint()).ToArray()),"Z M 74 112 L 14 112");
+        =>StringAssert.EndsWith(Path(new[]{Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7)}.Concat(Open()).Concat(new[]{Record(61),Record(54,5,35)}).Concat(Paint()).ToArray()),"Z M 74 112 L 14 112");
     [TestMethod] [DataRow(false)] [DataRow(true)]
     public async Task HtmlRendersNewFigureWithoutChangingSource(bool coincident)
     {

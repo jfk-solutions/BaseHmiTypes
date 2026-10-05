@@ -31,7 +31,7 @@ public class MetafileCurveTests
     }
     [TestMethod] [DataRow(2u)] [DataRow(5u)] [DataRow(6u)] [DataRow(85u)] [DataRow(88u)] [DataRow(89u)]
     public void UsesCurrentMapping(uint type)
-        =>Assert.AreEqual(Line(type)?"M 14 97 L 34 37 L 74 97":"M 14 97 C 14 7 74 7 74 97",Svg(Emf(Record(9,10,10),Record(11,20,30),Record(12,4,7),Record(27,5,30),Curve(type))).Elements().Single().Attribute("d")?.Value);
+        =>Assert.AreEqual(Line(type)?"M 14 97 L 34 37 L 74 97":"M 14 97 C 14 7 74 7 74 97",Svg(Emf(Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7),Record(27,5,30),Curve(type))).Elements().Single().Attribute("d")?.Value);
     [TestMethod] [DataRow(2u)] [DataRow(5u)] [DataRow(6u)] [DataRow(85u)] [DataRow(88u)] [DataRow(89u)]
     public void MalformedArraysCannotDrawOrChangeCurrentPosition(uint type)
     {

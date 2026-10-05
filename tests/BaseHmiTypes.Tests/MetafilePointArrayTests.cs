@@ -35,7 +35,7 @@ public class MetafilePointArrayTests
     [TestMethod] [DataRow(3u)] [DataRow(4u)]
     public void AppliesCurrentMapping(uint type)
     {
-        var shape=Svg(Emf(Record(9,10,10),Record(11,20,30),Record(12,4,7),Points(type))).Elements().Single();
+        var shape=Svg(Emf(Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7),Points(type))).Elements().Single();
         Assert.AreEqual("14,22 74,22 44,112",shape.Attribute("points")?.Value);
     }
 

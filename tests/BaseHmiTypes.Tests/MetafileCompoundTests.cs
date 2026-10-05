@@ -32,7 +32,7 @@ public class MetafileCompoundTests
         =>Assert.AreEqual(rule,Svg(Emf(Record(19,mode),Compound(type))).Elements().Single().Attribute("fill-rule")?.Value);
     [TestMethod] [DataRow(7u)] [DataRow(8u)] [DataRow(90u)] [DataRow(91u)]
     public void MappingTransformsAllFigures(uint type)
-        =>Assert.AreEqual("M 8 13 L 80 13 L 80 121 L 8 121"+(Closed(type)?" Z":"")+" M 28 43 L 60 43 L 60 91 L 28 91"+(Closed(type)?" Z":""),Svg(Emf(Record(9,10,10),Record(11,20,30),Record(12,4,7),Compound(type))).Elements().Single().Attribute("d")?.Value);
+        =>Assert.AreEqual("M 8 13 L 80 13 L 80 121 L 8 121"+(Closed(type)?" Z":"")+" M 28 43 L 60 43 L 60 91 L 28 91"+(Closed(type)?" Z":""),Svg(Emf(Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7),Compound(type))).Elements().Single().Attribute("d")?.Value);
     [TestMethod] [DataRow(7u)] [DataRow(8u)]
     public void LargeSignedCoordinatesRemain32Bit(uint type)
     {

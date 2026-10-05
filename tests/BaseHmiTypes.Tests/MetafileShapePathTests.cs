@@ -52,7 +52,7 @@ public class MetafileShapePathTests
         foreach(var shape in svg.Elements().Where(e=>e.Name.LocalName=="rect"||e.Name.LocalName=="ellipse"))Assert.AreEqual("url(#clip1)",shape.Attribute("clip-path")?.Value);
     }
     [TestMethod] [DataRow(43u)] [DataRow(42u)]
-    public void AppliesMapping(uint type)=>StringAssert.StartsWith(Path(Svg(Record(9,10,10),Record(11,20,30),Record(12,4,7),Record(59),Shape(type),Record(60),Record(64,0,0,39,39))),type==43?"M 74 22 L 14 22 L 14 112 L 74 112":"M 74 67 C 74 42.147 60.569 22 44 22");
+    public void AppliesMapping(uint type)=>StringAssert.StartsWith(Path(Svg(Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7),Record(59),Shape(type),Record(60),Record(64,0,0,39,39))),type==43?"M 74 22 L 14 22 L 14 112 L 74 112":"M 74 67 C 74 42.147 60.569 22 44 22");
     [TestMethod] [DataRow(43u)] [DataRow(42u)]
     public void TransformsAllCornersAndCurveControls(uint type)
         =>StringAssert.StartsWith(Path(Svg(Rotation(),Record(59),Shape(type),Record(60),Record(64,0,0,39,39))),type==43?"M 35 35 L 35 5 L 5 5 L 5 35":"M 20 35 C 28.284 35 35 28.284 35 20");

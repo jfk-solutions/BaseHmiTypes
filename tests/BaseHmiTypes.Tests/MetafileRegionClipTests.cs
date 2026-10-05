@@ -38,7 +38,7 @@ public class MetafileRegionClipTests
     [TestMethod] [DataRow(false)] [DataRow(true)]
     public void RegionGeometryIgnoresWorldAndWindowTransforms(bool world)
     {
-        var r=world?new[]{Record(35,BitConverter.SingleToInt32Bits(2),0,0,BitConverter.SingleToInt32Bits(3),BitConverter.SingleToInt32Bits(10),BitConverter.SingleToInt32Bits(20)),Region()}:new[]{Record(9,10,10),Record(11,20,30),Record(12,4,7),Region()};Assert.AreEqual("M 5 6 L 35 6 L 35 36 L 5 36 Z",Svg(r).Descendants().Single(e=>e.Name.LocalName=="path").Attribute("d")?.Value);
+        var r=world?new[]{Record(35,BitConverter.SingleToInt32Bits(2),0,0,BitConverter.SingleToInt32Bits(3),BitConverter.SingleToInt32Bits(10),BitConverter.SingleToInt32Bits(20)),Region()}:new[]{Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7),Region()};Assert.AreEqual("M 5 6 L 35 6 L 35 36 L 5 36 Z",Svg(r).Descendants().Single(e=>e.Name.LocalName=="path").Attribute("d")?.Value);
     }
     [TestMethod] public void RegionBoundsAreNotDrawnInsteadOfRectangles()=>Assert.AreEqual("M 5 6 L 35 6 L 35 36 L 5 36 Z",Svg(Change(Region(),32,int.MinValue)).Descendants().Single(e=>e.Name.LocalName=="path").Attribute("d")?.Value);
     [TestMethod] public void UnknownRectangleBufferSizeIsAccepted()=>Assert.AreEqual("url(#clip1)",Drawing(Svg(Change(Region(),28,0),Record(43,0,0,39,39))).Attribute("clip-path")?.Value);
