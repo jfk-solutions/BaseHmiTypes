@@ -224,6 +224,21 @@ public sealed class MetafileToSvgRenderer
                     if (record.Size >= 24)
                         CombineRectClip(I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12), record.Type == EMR.IntersectClipRect ? 1u : 4u, state, viewBox, defs, ++clipSequence, true);
                     break;
+                case EMR.ExtSelectClipRgn:
+                    {
+                        if (record.Size < 16) break;
+                        var regionBytes = U32(bytes, dataOffset);
+                        var mode = U32(bytes, dataOffset + 4);
+                        if (mode < 1 || mode > 5) break;
+                        if (regionBytes == 0)
+                        {
+                            if (mode == 5) { state.ActiveClipId = null; state.ActiveMaskId = null; }
+                            break;
+                        }
+                        var geometry = ReadEmfClipRegion(bytes, record, regionBytes);
+                        if (geometry is not null) CombineClipGeometry(state, geometry, mode, viewBox, defs, ++clipSequence);
+                        break;
+                    }
                 case EMR.PolylineTo:
                 case EMR.PolylineTo16:
                 case EMR.PolyBezier:
@@ -1369,6 +1384,31 @@ public sealed class MetafileToSvgRenderer
         return new List<string> { $"<g transform=\"translate(0 {Number(viewBox.Y * 2 + viewBox.Height)}) scale(1 -1)\">{string.Join(string.Empty, elements)}</g>" };
     }
 
+    private static string? ReadEmfClipRegion(byte[] bytes, EmfRecord record, uint regionBytes)
+    {
+        if (regionBytes < 32 || regionBytes > record.Size - 16) return null;
+        var at = record.Offset + 16;
+        if (U32(bytes, at) != 32 || U32(bytes, at + 4) != 1) return null;
+        var count = U32(bytes, at + 8);
+        if (count > (regionBytes - 32) / 16) return null;
+        var rectangleBytes = count * 16;
+        var declaredBytes = U32(bytes, at + 12);
+        if (declaredBytes != 0 && declaredBytes != rectangleBytes) return null;
+        var path = new List<string>();
+        for (var index = 0u; index < count; index++)
+        {
+            var p = at + 32 + (int)index * 16;
+            var left = I32(bytes, p); var top = I32(bytes, p + 4);
+            var right = I32(bytes, p + 8); var bottom = I32(bytes, p + 12);
+            if (left > right || top > bottom) return null;
+            if (left == right || top == bottom) continue;
+            // Serialized region rectangles are device-space geometry, not paths
+            // in the current world/window transform (native EMF recording agrees).
+            path.Add($"M {Number(left)} {Number(top)} L {Number(right)} {Number(top)} L {Number(right)} {Number(bottom)} L {Number(left)} {Number(bottom)} Z");
+        }
+        return $"d=\"{string.Join(" ", path)}\" fill-rule=\"nonzero\" clip-rule=\"nonzero\"";
+    }
+
     private static void SelectPathClip(DrawState state, uint mode, ViewBox viewBox, List<string> defs, int sequence)
     {
         var geometry = $"d=\"{string.Join(" ", state.SelectedPath!)}\" fill-rule=\"{state.FillRule}\" clip-rule=\"{state.FillRule}\"";
@@ -1785,6 +1825,7 @@ internal enum PathPaintMode
 
 internal static class EMR
 {
+    public const uint ExtSelectClipRgn = 0x004b;
     public const uint ExcludeClipRect = 0x001d;
     public const uint IntersectClipRect = 0x001e;
     public const uint AngleArc = 0x0029;
