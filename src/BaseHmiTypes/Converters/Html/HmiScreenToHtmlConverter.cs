@@ -5522,6 +5522,13 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "id", item.Name);
         AppendTextAttribute(html, "title", item.ToolTipText, context);
         AppendStaticAttribute(html, "tabindex", item.TabIndex, context);
+        var focusColor = item is HmiWidgetBase focusWidget ? focusWidget.FocusColor : (item as HmiWindowBase)?.FocusColor;
+        var focusWidth = item is HmiWidgetBase widthWidget ? widthWidget.FocusWidth : (item as HmiWindowBase)?.FocusWidth;
+        var hasFocusColor = TryGetStaticValue(focusColor, out var configuredFocusColor);
+        var hasFocusWidth = TryGetStaticValue(focusWidth, out var configuredFocusWidth) && IsFinite(configuredFocusWidth) && configuredFocusWidth >= 0;
+        AppendAttribute(html, "data-focus-color", ResolvePropertyPreview(focusColor, context));
+        AppendAttribute(html, "data-focus-width", ResolvePropertyPreview(focusWidth, context));
+        if (hasFocusColor || hasFocusWidth) AppendAttribute(html, "data-hmi-focus-appearance", "true");
         AppendAttribute(html, "data-hmi-security-code", item.SecurityCode);
         AppendStaticAttribute(html, "data-adapt-border-to-content", item.AdaptBorderToContent, context);
         AppendDisabledAttribute(html, item, context);
@@ -5536,6 +5543,8 @@ public partial class HmiScreenToHtmlConverter
             AppendStyle(html, paintedItem, context);
         if (!string.IsNullOrWhiteSpace(additionalStyle))
             html.Append(additionalStyle);
+        if (hasFocusColor) html.Append("--hmi-focus-color: ").Append(ToCss(configuredFocusColor)).Append(';');
+        if (hasFocusWidth) html.Append("--hmi-focus-width: ").Append(ToCss(configuredFocusWidth)).Append("px;");
         AppendItemTransform(html, item);
         html.Append("\"");
     }
