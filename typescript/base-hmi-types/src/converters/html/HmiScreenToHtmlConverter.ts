@@ -3273,6 +3273,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     const toolbarStyle = ["flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;"];
     if (alarmControl.useToolbarBackgroundColor === undefined || getStaticValue(alarmControl.useToolbarBackgroundColor) === true)
       appendColorStyle(toolbarStyle, "background-color", alarmControl.toolbarBackgroundColor);
+    appendToolbarFontStyle(toolbarStyle, alarmControl.toolbarFont?.getForCulture(context.options.cultureLcid));
     appendColorStyle(toolbarStyle, "color", alarmControl.toolbarForegroundColor);
     html.push("<div class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"", ...toolbarStyle, "\">");
     if (alarmControl.toolbarButtons.length) {
@@ -4871,6 +4872,8 @@ function createTrendControlStyle(trendControl: HmiTrendControlBase, context: Hmi
   const parts = [createControlWindowStyle(trendControl, "overflow: hidden;")];
   appendFontVariables(parts, "content", trendControl.contentFont?.getForCulture(context.options.cultureLcid));
   appendFontVariables(parts, "header", trendControl.headerFont?.getForCulture(context.options.cultureLcid));
+  appendFontVariables(parts, "toolbar", trendControl.toolbarFont?.getForCulture(context.options.cultureLcid));
+  appendColorStyle(parts, "--hmi-trend-toolbar-foreground", trendControl.toolbarForegroundColor);
   appendFontVariables(parts, "status", trendControl.statusBarFont?.getForCulture(context.options.cultureLcid));
   const toolbarBackground = getStaticValue(trendControl.toolbarBackgroundColor);
   if (toolbarBackground !== undefined && getStaticValue(trendControl.useToolbarBackgroundColor) !== false)
@@ -4924,6 +4927,11 @@ function appendFontVariables(html: string[], role: string, font: HmiFont | undef
   const decorations = [];
   if (getStaticValueOrDefault(font.underline, false)) decorations.push("underline");
   if (getStaticValueOrDefault(font.strikethrough, false)) decorations.push("line-through");
+  if (role === "toolbar") {
+    if (getStaticValue(font.italic) === false) html.push(`${prefix}font-style: normal;`);
+    if (getStaticValue(font.bold) === false && (weight ?? 0) <= 0) html.push(`${prefix}font-weight: normal;`);
+    if (getStaticValue(font.underline) === false && getStaticValue(font.strikethrough) === false) html.push(`${prefix}text-decoration: none;`);
+  }
   if (decorations.length > 0) html.push(`${prefix}text-decoration: ${decorations.join(" ")};`);
 }
 
@@ -5704,6 +5712,14 @@ function getVerticalAlignment(item: HmiScreenItemBase): HmiProperty<HmiVerticalA
     return item.verticalAlignment;
   }
   return undefined;
+}
+
+function appendToolbarFontStyle(style: string[], font: HmiFont | undefined): void {
+  if (font === undefined) return;
+  appendFont(style, font);
+  if (getStaticValue(font.italic) === false) style.push("font-style: normal;");
+  if (getStaticValue(font.bold) === false && (getStaticValue(font.weight) ?? 0) <= 0) style.push("font-weight: normal;");
+  if (getStaticValue(font.underline) === false && getStaticValue(font.strikethrough) === false) style.push("text-decoration: none;");
 }
 
 function appendFont(html: string[], font: HmiFont): void {

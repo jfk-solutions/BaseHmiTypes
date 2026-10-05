@@ -302,6 +302,9 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 
     public HmiProperty<bool>? UseToolbarBackgroundColor { get; set; }
 
+    public HmiFont? ToolbarFont { get; set; }
+    public HmiProperty<HmiColor>? ToolbarForegroundColor { get; set; }
+
     public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }
 
     /// <summary>

@@ -136,6 +136,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showQualityMessages?: HmiProperty<boolean>;
   showBorder?: HmiProperty<boolean>;
   iconStyle?: HmiProperty<string>;
+  toolbarFont?: HmiFont;
   toolbarForegroundColor?: HmiProperty<HmiColor>;
   toolbarBackgroundColor?: HmiProperty<HmiColor>;
   toolbarIconSize?: HmiProperty<string>;
