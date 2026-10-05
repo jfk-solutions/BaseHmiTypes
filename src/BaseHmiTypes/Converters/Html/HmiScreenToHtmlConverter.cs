@@ -3126,7 +3126,8 @@ public partial class HmiScreenToHtmlConverter
         var showHeader = alarmControl.ShowHeader is null || ResolveStaticValue(alarmControl.ShowHeader, context);
         var showTitle = alarmControl.ShowTitle is not null && ResolveStaticValue(alarmControl.ShowTitle, context);
         var listMode = ResolveStaticValue(alarmControl.ListMode, context);
-        var selectedSet = alarmControl.ActiveColumnSet is null ? null : alarmControl.ColumnSets.FirstOrDefault(set => set.Name == alarmControl.ActiveColumnSet);
+        var setName = alarmControl.ActiveColumnSet ?? alarmControl.DefaultColumnSet;
+        var selectedSet = setName is null ? null : alarmControl.ColumnSets.FirstOrDefault(set => set.Name == setName);
         var columns = selectedSet?.Columns
             ?? alarmControl.ColumnDefinitions;
         var visibleColumns = columns
@@ -3152,6 +3153,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-toolbar-foreground-color", ResolvePropertyPreview(alarmControl.ToolbarForegroundColor, context));
         AppendAttribute(html, "data-view-kind", alarmControl.ViewKind.ToString());
         AppendAttribute(html, "data-active-column-set", alarmControl.ActiveColumnSet);
+        AppendAttribute(html, "data-default-column-set", alarmControl.DefaultColumnSet);
         AppendAttribute(html, "data-list-mode", listMode.ToString());
         AppendAttribute(html, "data-time-base", ResolvePropertyPreview(alarmControl.TimeBase, context));
         AppendAttribute(html, "data-shorten-cell-contents", ResolvePropertyPreview(alarmControl.ShortenCellContents, context));
@@ -3199,7 +3201,9 @@ public partial class HmiScreenToHtmlConverter
         if (alarmControl.MessageBlocks.Count > 0) AppendAttribute(html, "data-message-block-count", alarmControl.MessageBlocks.Count.ToString(CultureInfo.InvariantCulture));
         html.Append('>');
         AppendAlarmMessageBlocks(html, alarmControl, context);
-        var configuredViews = alarmControl.ColumnSets.Where(set => set.AllowSort is not null || set.AllowFilter is not null || set.AllowColumnReorder is not null || set.AllowColumnResize is not null).ToArray();
+        var configuredViews = alarmControl.ColumnSets.Where(set => set.AllowSort is not null || set.AllowFilter is not null || set.AllowColumnReorder is not null || set.AllowColumnResize is not null ||
+            set.BackgroundColor is not null || set.ForegroundColor is not null || set.HeaderBackgroundColor is not null ||
+            set.HeaderForegroundColor is not null || set.HeaderBorderColor is not null || set.ContentFont is not null || set.HeaderFont is not null).ToArray();
         if (configuredViews.Length > 0)
         {
             html.Append("<template class=\"hmi-alarm-view-settings\">");
@@ -3231,7 +3235,7 @@ public partial class HmiScreenToHtmlConverter
             html.Append(" hmi-alarm-table--alternating");
         html.Append('"');
         AppendAlarmViewSettings(html, selectedSet, context);
-        html.Append(" style=\"").Append(CreateAlarmTableStyle(alarmControl, context)).Append("\">");
+        html.Append(" style=\"").Append(CreateAlarmTableStyle(alarmControl, context, selectedSet)).Append("\">");
         if (visibleColumns.Length > 0)
         {
             html.Append("<colgroup>");
@@ -3262,7 +3266,7 @@ public partial class HmiScreenToHtmlConverter
         var gridCellStyle = CreateAlarmGridCellStyle(alarmControl, context);
         if (showHeader && (visibleColumns.Length > 0 || columns.Count == 0))
         {
-            var headerCellStyle = CreateAlarmTableHeaderCellStyle(alarmControl, context, gridCellStyle);
+            var headerCellStyle = CreateAlarmTableHeaderCellStyle(alarmControl, context, gridCellStyle, selectedSet);
             html.Append("<thead><tr>");
             if (visibleColumns.Length == 0)
                 html.Append("<th style=\"").Append(headerCellStyle).Append("\">")
@@ -3320,6 +3324,8 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(html, "background-color", alarmControl.SelectionBackgroundColor);
         AppendColorStyle(html, "color", alarmControl.SelectionForegroundColor);
         AppendAlarmSelectionRectangleStyle(html, alarmControl, context);
+        AppendColorStyle(html, "background-color", selectedSet?.BackgroundColor);
+        AppendColorStyle(html, "color", selectedSet?.ForegroundColor);
         html.Append("\">Alarm data not loaded</td></tr></tbody></table>");
 
         var showAcknowledgeButton = alarmControl.ShowAcknowledgeButton is not null && ResolveStaticValue(alarmControl.ShowAcknowledgeButton, context);
@@ -5083,6 +5089,20 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-view-allow-filter", ResolvePropertyPreview(set.AllowFilter, context));
         AppendAttribute(html, "data-view-allow-column-reorder", ResolvePropertyPreview(set.AllowColumnReorder, context));
         AppendAttribute(html, "data-view-allow-column-resize", ResolvePropertyPreview(set.AllowColumnResize, context));
+        AppendAttribute(html, "data-view-background-color", ResolvePropertyPreview(set.BackgroundColor, context));
+        AppendAttribute(html, "data-view-foreground-color", ResolvePropertyPreview(set.ForegroundColor, context));
+        AppendAttribute(html, "data-view-header-background-color", ResolvePropertyPreview(set.HeaderBackgroundColor, context));
+        AppendAttribute(html, "data-view-header-foreground-color", ResolvePropertyPreview(set.HeaderForegroundColor, context));
+        AppendAttribute(html, "data-view-header-border-color", ResolvePropertyPreview(set.HeaderBorderColor, context));
+        Font("content", set.ContentFont); Font("header", set.HeaderFont);
+
+        void Font(string role, HmiFont? font)
+        {
+            if (font is null) return;
+            var style = new StringBuilder();
+            AppendFontStyle(style, font.GetForCulture(context.CultureInfo?.LCID), encodeName: false);
+            AppendAttribute(html, "data-view-" + role + "-font-style", style.ToString(), preserveEmpty: true);
+        }
     }
 
     private static void AppendAlarmMessageBlocks(StringBuilder html, HmiAlarmControl control, HmiHtmlConvertContext context)
@@ -5116,13 +5136,14 @@ public partial class HmiScreenToHtmlConverter
         return style.ToString();
     }
 
-    private static string CreateAlarmTableStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
+    private static string CreateAlarmTableStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context, HmiAlarmColumnSet? set)
     {
         var style = new StringBuilder("width: 100%; border-collapse: collapse; table-layout: fixed;");
-        if (alarmControl.TableBackgroundColor is not null)
-            style.Append("background-color: ").Append(ToCss(ResolveStaticValue(alarmControl.TableBackgroundColor, context))).Append(';');
-        if (alarmControl.TableForegroundColor is not null)
-            style.Append("color: ").Append(ToCss(ResolveStaticValue(alarmControl.TableForegroundColor, context))).Append(';');
+        var background = set?.BackgroundColor ?? alarmControl.TableBackgroundColor;
+        var foreground = set?.ForegroundColor ?? alarmControl.TableForegroundColor;
+        if (background is not null) style.Append("background-color: ").Append(ToCss(ResolveStaticValue(background, context))).Append(';');
+        if (foreground is not null) style.Append("color: ").Append(ToCss(ResolveStaticValue(foreground, context))).Append(';');
+        AppendFontStyle(style, set?.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
         if (alarmControl.AlternatingRowBackgroundColor is not null)
             style.Append("--hmi-alarm-alternating-row-background: ")
                 .Append(ToCss(ResolveStaticValue(alarmControl.AlternatingRowBackgroundColor, context))).Append(';');
@@ -5186,21 +5207,22 @@ public partial class HmiScreenToHtmlConverter
     private static string CreateAlarmTableHeaderCellStyle(
         HmiAlarmControl alarmControl,
         HmiHtmlConvertContext context,
-        string gridCellStyle)
+        string gridCellStyle,
+        HmiAlarmColumnSet? set)
     {
         var style = new StringBuilder(gridCellStyle);
         style.Append(CreateAlarmShorteningStyle(alarmControl.ShortenColumnTitles, context));
-        AppendColorStyle(style, "background-color", alarmControl.TableHeaderBackgroundColor);
-        AppendColorStyle(style, "color", alarmControl.TableHeaderForegroundColor);
+        AppendColorStyle(style, "background-color", set?.HeaderBackgroundColor ?? alarmControl.TableHeaderBackgroundColor);
+        AppendColorStyle(style, "color", set?.HeaderForegroundColor ?? alarmControl.TableHeaderForegroundColor);
         if (alarmControl.TableHeaderHorizontalAlignment is not null)
             style.Append("text-align: ")
                 .Append(ToCss(ResolveStaticValue(alarmControl.TableHeaderHorizontalAlignment, context))).Append(';');
-        AppendColorStyle(style, "border-color", alarmControl.TableHeaderBorderColor);
+        AppendColorStyle(style, "border-color", set?.HeaderBorderColor ?? alarmControl.TableHeaderBorderColor);
         if (alarmControl.TableHeaderBorderWidth is not null)
             style.Append("border-width: ")
                 .Append(ToCss(Math.Max(0d, ResolveStaticValue(alarmControl.TableHeaderBorderWidth, context))))
                 .Append("px;");
-        AppendFontStyle(style, alarmControl.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
+        AppendFontStyle(style, (set?.HeaderFont ?? alarmControl.HeaderFont)?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
     }
 
@@ -5293,13 +5315,13 @@ public partial class HmiScreenToHtmlConverter
         if (font?.Underline?.StaticValue == false && font.Strikethrough?.StaticValue == false) style.Append("text-decoration: none;");
     }
 
-    private static void AppendFontStyle(StringBuilder style, HmiFont? font)
+    private static void AppendFontStyle(StringBuilder style, HmiFont? font, bool encodeName = true)
     {
         if (font is null)
             return;
         var name = font.Name.GetStaticValue();
         if (!string.IsNullOrWhiteSpace(name))
-            style.Append("font-family: ").Append(WebUtility.HtmlEncode(name)).Append(';');
+            style.Append("font-family: ").Append(encodeName ? WebUtility.HtmlEncode(name) : name).Append(';');
         if (TryGetStaticValue(font.Size, out var size))
             style.Append("font-size: ").Append(ToCss(size)).Append("px;");
         if (font.Weight.GetStaticValue() is { } weight && weight > 0)

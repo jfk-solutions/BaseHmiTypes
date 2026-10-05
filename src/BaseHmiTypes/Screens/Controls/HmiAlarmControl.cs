@@ -43,6 +43,8 @@ public class HmiAlarmControl : HmiControlWindowBase
     public IList<HmiAlarmColumn> ColumnDefinitions { get; } = new List<HmiAlarmColumn>();
     public IList<HmiAlarmColumnSet> ColumnSets { get; } = new List<HmiAlarmColumnSet>();
     public string? ActiveColumnSet { get; set; }
+    /// <summary>Default named set for the engineering preview; does not identify the native Runtime active view.</summary>
+    public string? DefaultColumnSet { get; set; }
 
     public HmiProperty<bool>? UseProjectSettings { get; set; }
 
