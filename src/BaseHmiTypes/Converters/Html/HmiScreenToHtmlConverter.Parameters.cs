@@ -281,6 +281,9 @@ public partial class HmiScreenToHtmlConverter
             html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append(separator).Append('"');
             AppendAttribute(html, "data-column-name", column.Name);
             AppendAttribute(html, "data-column-key", column.Key);
+            AppendAttribute(html, "data-enabled", ResolvePropertyPreview(column.Enabled, context));
+            AppendAttribute(html, "data-content-background-color", ResolvePropertyPreview(column.BackgroundColor, context));
+            AppendAttribute(html, "data-content-foreground-color", ResolvePropertyPreview(column.ForegroundColor, context));
             AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
             AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
             AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));

@@ -11,6 +11,9 @@ public sealed class HmiParameterColumn
     public HmiProperty<HmiHorizontalAlignment>? HeaderHorizontalAlignment { get; set; }
     public HmiProperty<HmiVerticalAlignment>? HeaderVerticalAlignment { get; set; }
     public HmiProperty<bool>? Visible { get; set; }
+    public HmiProperty<bool>? Enabled { get; set; }
+    public HmiProperty<HmiColor>? BackgroundColor { get; set; }
+    public HmiProperty<HmiColor>? ForegroundColor { get; set; }
     public HmiProperty<uint>? Width { get; set; }
     public HmiProperty<uint>? MinimumWidth { get; set; }
     public HmiProperty<uint>? MaximumWidth { get; set; }
