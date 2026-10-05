@@ -5560,7 +5560,7 @@ function formatTrendTimeAxes(axes: readonly HmiTrendTimeAxis[], cultureLcid?: nu
       const value = getStaticValue(axis[key]);
       if (value !== undefined) result[key] = value;
     }
-    for (const key of ["dateFormat", "alignment", "timeFormat", "rangeType", "startTime", "endTime"] as const) {
+    for (const key of ["dateFormat", "alignment", "timeFormat", "timeFormatPattern", "rangeType", "startTime", "endTime"] as const) {
       const value = getStaticValue(axis[key]);
       if (value !== undefined) result[key] = value;
     }
