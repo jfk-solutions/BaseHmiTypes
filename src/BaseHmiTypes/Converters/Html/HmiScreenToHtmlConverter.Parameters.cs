@@ -16,6 +16,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-current-parameter-set-id", ResolvePropertyPreview(control.CurrentParameterSetId, context));
         AppendAttribute(html, "data-current-parameter-set-type-id", ResolvePropertyPreview(control.CurrentParameterSetTypeId, context));
         AppendAttribute(html, "data-hide-details", ResolvePropertyPreview(control.HideDetails, context));
+        AppendParameterSelectionAttributes(html, control, context);
         AppendAttribute(html, "data-row-height", ResolvePropertyPreview(control.RowHeight, context));
         AppendAttribute(html, "data-cell-padding-left", ResolvePropertyPreview(control.CellPaddingLeft, context));
         AppendAttribute(html, "data-cell-padding-top", ResolvePropertyPreview(control.CellPaddingTop, context));
@@ -66,6 +67,7 @@ public partial class HmiScreenToHtmlConverter
         AppendCommonAttributes(html, control, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-parameter-control-view", "overview");
         AppendAttribute(html, "data-filter", ResolvePropertyPreview(control.Filter, context));
+        AppendParameterSelectionAttributes(html, control, context);
         AppendAttribute(html, "data-row-height", ResolvePropertyPreview(control.RowHeight, context));
         AppendAttribute(html, "data-cell-padding-left", ResolvePropertyPreview(control.CellPaddingLeft, context));
         AppendAttribute(html, "data-cell-padding-top", ResolvePropertyPreview(control.CellPaddingTop, context));
@@ -110,6 +112,35 @@ public partial class HmiScreenToHtmlConverter
         html.Append("<div class=\"hmi-parameter-details\" style=\"").Append(style).Append("\">");
         if (columns.Length > 0) AppendParameterColumns(html, control, columns, context);
         else html.Append("Parameter data not loaded");
+        AppendParameterSelectionPreview(html, control, context);
+        html.Append("</div>");
+    }
+
+    private static void AppendParameterSelectionAttributes(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    {
+        AppendAttribute(html, "data-select-full-row", ResolvePropertyPreview(control.SelectFullRow, context));
+        AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(control.SelectionBackgroundColor, context));
+        AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(control.SelectionForegroundColor, context));
+        AppendAttribute(html, "data-selection-border-color", ResolvePropertyPreview(control.SelectionBorderColor, context));
+        AppendAttribute(html, "data-selection-border-width", ResolvePropertyPreview(control.SelectionBorderWidth, context));
+    }
+
+    private static void AppendParameterSelectionPreview(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    {
+        if (control.SelectFullRow is null && control.SelectionBackgroundColor is null && control.SelectionForegroundColor is null &&
+            control.SelectionBorderColor is null && control.SelectionBorderWidth is null) return;
+        var style = new StringBuilder("padding: 2px 4px; box-sizing: border-box;");
+        AppendColorStyle(style, "background-color", control.SelectionBackgroundColor);
+        AppendColorStyle(style, "color", control.SelectionForegroundColor);
+        AppendColorStyle(style, "border-color", control.SelectionBorderColor);
+        AppendFontStyle(style, control.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
+        if (control.SelectionBorderWidth is not null)
+        {
+            var width = ResolveStaticValue(control.SelectionBorderWidth, context);
+            if (IsFinite(width) && width >= 0) style.Append("border-style: solid; border-width: ").Append(ToCss(width)).Append("px;");
+        }
+        html.Append("<div class=\"hmi-parameter-selection-preview\" data-preview=\"appearance\" style=\"").Append(style).Append("\">Selection appearance preview");
+        if (control.SelectFullRow is not null) html.Append(ResolveStaticValue(control.SelectFullRow, context) ? " · Entire row" : " · Cell");
         html.Append("</div>");
     }
 

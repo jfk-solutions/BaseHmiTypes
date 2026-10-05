@@ -4,6 +4,11 @@ namespace BaseHmiTypes.Screens.Controls;
 
 public abstract class HmiParameterControlBase : HmiControlWindowBase
 {
+    public HmiProperty<bool>? SelectFullRow { get; set; }
+    public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
+    public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
+    public HmiProperty<HmiColor>? SelectionBorderColor { get; set; }
+    public HmiProperty<double>? SelectionBorderWidth { get; set; }
     public IList<HmiParameterColumn> ColumnDefinitions { get; } = new List<HmiParameterColumn>();
     public HmiProperty<HmiColor>? GridLineColor { get; set; }
     public HmiProperty<double>? GridLineWidth { get; set; }
