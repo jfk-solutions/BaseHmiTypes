@@ -11,4 +11,7 @@ export class HmiSystemDiagnosisColumn {
   alignment?: HmiProperty<HmiHorizontalAlignment>;
   format?: string;
   order?: HmiProperty<number>;
+  allowSort?: HmiProperty<boolean>;
+  sortOrder?: HmiProperty<number>;
+  sortDirection?: HmiProperty<number>;
 }

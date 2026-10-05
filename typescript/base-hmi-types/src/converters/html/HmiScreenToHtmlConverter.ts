@@ -4009,6 +4009,9 @@ function appendSystemDiagnosisControl(
       for (const column of columns) {
         html.push('<th style="', header.join(""), 'overflow: hidden; text-overflow: ellipsis;"');
         appendAttribute(html, "data-column-source-type", column.sourceType); appendAttribute(html, "data-output-format", column.format);
+        appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
+        appendAttribute(html, "data-sort-order", resolvePropertyPreview(column.sortOrder));
+        appendAttribute(html, "data-sort-direction", resolvePropertyPreview(column.sortDirection));
         html.push(">", escapeHtml(column.headerText?.getText(context.options.cultureLcid) ?? column.sourceType ?? HmiSystemDiagnosisColumnType[column.type]), "</th>");
       }
       html.push("</tr></thead>");
