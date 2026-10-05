@@ -17,6 +17,8 @@ public sealed class HmiTrendTimeAxis
     public HmiMultilingualText? LabelText { get; set; }
     public HmiProperty<HmiTrendTimeFormat>? TimeFormat { get; set; }
     public HmiProperty<bool>? DisplayMilliseconds { get; set; }
+    public HmiProperty<double>? TimeRangeFactor { get; set; }
+    public HmiProperty<double>? TimeRangeBaseMilliseconds { get; set; }
     public HmiProperty<double>? TimeSpan { get; set; }
     public string? TimeSpanUnit { get; set; }
     public HmiProperty<HmiTrendTimeRangeType>? RangeType { get; set; }
