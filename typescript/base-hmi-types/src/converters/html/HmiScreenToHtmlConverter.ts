@@ -5510,7 +5510,7 @@ function formatTrendTimeAxes(axes: readonly HmiTrendTimeAxis[], cultureLcid?: nu
     }
     const color = getStaticValue(axis.color);
     if (color !== undefined) result.color = colorToCss(color);
-    for (const key of ["timeRangeFactor", "timeRangeBaseMilliseconds"] as const) {
+    for (const key of ["timeRangeBaseCode", "timeRangeFactor", "timeRangeBaseMilliseconds"] as const) {
       const value = getStaticValue(axis[key]);
       if (typeof value === "number" && Number.isFinite(value)) result[key] = value;
     }
