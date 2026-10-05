@@ -212,14 +212,11 @@ public sealed class MetafileToSvgRenderer
 
                     break;
                 case EMR.SelectClipPath:
-                    if (state.SelectedPath is { Count: > 0 })
+                    if (record.Size >= 12 && U32(bytes, dataOffset) is var clipMode && clipMode >= 1 && clipMode <= 5 && state.SelectedPath is { Count: > 0 })
                     {
-                        var id = $"clip{++clipSequence}";
-                        defs.Add($"<clipPath id=\"{id}\"><path d=\"{string.Join(" ", state.SelectedPath)}\" /></clipPath>");
-                        state.ActiveClipId = id;
+                        SelectPathClip(state, clipMode, viewBox, defs, ++clipSequence);
+                        state.SelectedPath = null;
                     }
-
-                    state.SelectedPath = null;
                     break;
                 case EMR.PolylineTo:
                 case EMR.PolylineTo16:
@@ -712,6 +709,7 @@ public sealed class MetafileToSvgRenderer
             ClockwiseShapes = state.ClockwiseShapes,
             MiterLimit = state.MiterLimit,
             ActiveClipId = state.ActiveClipId,
+            ActiveMaskId = state.ActiveMaskId,
             CurrentPath = state.CurrentPath is null ? null : new List<string>(state.CurrentPath),
             SelectedPath = state.SelectedPath is null ? null : new List<string>(state.SelectedPath),
             PathStartX = state.PathStartX,
@@ -746,6 +744,7 @@ public sealed class MetafileToSvgRenderer
         target.ClockwiseShapes = restored.ClockwiseShapes;
         target.MiterLimit = restored.MiterLimit;
         target.ActiveClipId = restored.ActiveClipId;
+        target.ActiveMaskId = restored.ActiveMaskId;
         target.CurrentPath = restored.CurrentPath;
         target.PathStartX = restored.PathStartX;
         target.PathFigureClosed = restored.PathFigureClosed;
@@ -1317,9 +1316,40 @@ public sealed class MetafileToSvgRenderer
         return new List<string> { $"<g transform=\"translate(0 {Number(viewBox.Y * 2 + viewBox.Height)}) scale(1 -1)\">{string.Join(string.Empty, elements)}</g>" };
     }
 
+    private static void SelectPathClip(DrawState state, uint mode, ViewBox viewBox, List<string> defs, int sequence)
+    {
+        var geometry = $"d=\"{string.Join(" ", state.SelectedPath!)}\" fill-rule=\"{state.FillRule}\" clip-rule=\"{state.FillRule}\"";
+        if (mode == 5 || (mode == 1 && state.ActiveClipId is null && state.ActiveMaskId is null))
+        {
+            var id = $"clip{sequence}";
+            defs.Add($"<clipPath id=\"{id}\"><path {geometry} /></clipPath>");
+            state.ActiveClipId = id;
+            state.ActiveMaskId = null;
+            return;
+        }
+        // Boolean regions use luminance masks: white includes, black excludes.
+        // The finite mask domain is the image viewport, which already bounds output.
+        var old = ClipAttr(state);
+        var rect = $"x=\"{Number(viewBox.X)}\" y=\"{Number(viewBox.Y)}\" width=\"{Number(viewBox.Width)}\" height=\"{Number(viewBox.Height)}\"";
+        var previous = $"<rect {rect} fill=\"#ffffff\"{old} />";
+        var include = $"<path {geometry} fill=\"#ffffff\" />";
+        var exclude = $"<path {geometry} fill=\"#000000\" />";
+        var content = mode switch
+        {
+            1 => $"<g{old}>{include}</g>",
+            2 => previous + include,
+            3 => previous + include + $"<path {geometry} fill=\"#000000\"{old} />",
+            _ => previous + exclude,
+        };
+        var maskId = $"mask{sequence}";
+        defs.Add($"<mask id=\"{maskId}\" maskUnits=\"userSpaceOnUse\" maskContentUnits=\"userSpaceOnUse\" {rect}>{content}</mask>");
+        state.ActiveClipId = null;
+        state.ActiveMaskId = maskId;
+    }
+
     private static string LineElement(double x1, double y1, double x2, double y2, DrawState state)
     {
-        return $"<line x1=\"{Number(x1)}\" y1=\"{Number(y1)}\" x2=\"{Number(x2)}\" y2=\"{Number(y2)}\" {StrokeAttrs(state)} fill=\"none\" />";
+        return $"<line x1=\"{Number(x1)}\" y1=\"{Number(y1)}\" x2=\"{Number(x2)}\" y2=\"{Number(y2)}\" {StrokeAttrs(state)} fill=\"none\"{ClipAttr(state)} />";
     }
 
     private static string RectElement(double left, double top, double right, double bottom, DrawState state)
@@ -1340,7 +1370,7 @@ public sealed class MetafileToSvgRenderer
             return string.Empty;
         var tag = closed ? "polygon" : "polyline";
         var fill = closed ? $"{FillAttrs(state)} {FillRuleAttr(state)}" : "fill=\"none\"";
-        return $"<{tag} points=\"{string.Join(" ", points.ConvertAll(point => $"{Number(point.X)},{Number(point.Y)}"))}\" {StrokeAttrs(state)} {fill} />";
+        return $"<{tag} points=\"{string.Join(" ", points.ConvertAll(point => $"{Number(point.X)},{Number(point.Y)}"))}\" {StrokeAttrs(state)} {fill}{ClipAttr(state)} />";
     }
 
     private static string PathElement(List<string> path, DrawState state, PathPaintMode mode)
@@ -1383,7 +1413,8 @@ public sealed class MetafileToSvgRenderer
 
     private static string ClipAttr(DrawState state)
     {
-        return state.ActiveClipId is null ? string.Empty : $" clip-path=\"url(#{state.ActiveClipId})\"";
+        return (state.ActiveClipId is null ? string.Empty : $" clip-path=\"url(#{state.ActiveClipId})\"")
+            + (state.ActiveMaskId is null ? string.Empty : $" mask=\"url(#{state.ActiveMaskId})\"");
     }
 
     private static string ColorRef(byte[] bytes, int offset)
@@ -1566,6 +1597,7 @@ internal sealed class DrawState
     public string FillRule { get; set; } = "evenodd";
 
     public string? ActiveClipId { get; set; }
+    public string? ActiveMaskId { get; set; }
 
     public List<string>? CurrentPath { get; set; }
 
