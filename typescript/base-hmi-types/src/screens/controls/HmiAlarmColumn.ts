@@ -1,5 +1,5 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
-import { HmiHorizontalAlignment, HmiProperty } from "../base.js";
+import { HmiHorizontalAlignment, HmiVerticalAlignment, HmiProperty } from "../base.js";
 import { HmiAlarmColumnType } from "./HmiAlarmColumnType.js";
 
 export class HmiAlarmColumn {
@@ -21,6 +21,10 @@ export class HmiAlarmColumn {
   timeFormat?: string;
   showDate?: HmiProperty<boolean>;
   headerText?: HmiMultilingualText;
+  headerHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  headerVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;
+  contentHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  contentVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   symbol?: string;
   alignment?: HmiProperty<HmiHorizontalAlignment>;
   order?: HmiProperty<number>;

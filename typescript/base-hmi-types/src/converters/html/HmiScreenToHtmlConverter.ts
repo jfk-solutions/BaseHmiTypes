@@ -3453,6 +3453,10 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-minimum-width", resolvePropertyPreview(column.minimumWidth));
       appendAttribute(html, "data-maximum-width", resolvePropertyPreview(column.maximumWidth));
       appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat), true);
+      appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
+      appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
+      appendAttribute(html, "data-content-horizontal-alignment", resolvePropertyPreview(column.contentHorizontalAlignment));
+      appendAttribute(html, "data-content-vertical-alignment", resolvePropertyPreview(column.contentVerticalAlignment));
       appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
       appendAttribute(html, "data-auto-size", resolvePropertyPreview(column.autoSize));
       const width = getStaticValue(column.width);
@@ -3474,8 +3478,11 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       const width = getStaticValue(column.width);
       if (getStaticValue(column.autoSize) !== true && width !== undefined && Number.isFinite(width) && width >= 0)
         html.push(`width: ${toCss(width)}px;`);
-      const alignment = getStaticValue(column.alignment);
+      const alignment = getStaticValue(column.headerHorizontalAlignment ?? column.alignment);
       if (alignment !== undefined) html.push(`text-align: ${horizontalAlignmentToCss(alignment)};`);
+      const vertical = getStaticValue(column.headerVerticalAlignment);
+      if (vertical !== undefined && vertical !== HmiVerticalAlignment.Stretch)
+        html.push(`vertical-align: ${vertical === HmiVerticalAlignment.Top ? "top" : vertical === HmiVerticalAlignment.Bottom ? "bottom" : "middle"};`);
       html.push('"');
       appendAttribute(html, "data-column-type", column.type);
       appendAttribute(html, "data-column-source-type", column.sourceType);
@@ -3485,6 +3492,10 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-minimum-width", resolvePropertyPreview(column.minimumWidth));
       appendAttribute(html, "data-maximum-width", resolvePropertyPreview(column.maximumWidth));
       appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat), true);
+      appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
+      appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
+      appendAttribute(html, "data-content-horizontal-alignment", resolvePropertyPreview(column.contentHorizontalAlignment));
+      appendAttribute(html, "data-content-vertical-alignment", resolvePropertyPreview(column.contentVerticalAlignment));
       appendAttribute(html, "data-sort-mode", resolvePropertyPreview(column.sortMode));
       appendAttribute(html, "data-sort-index", resolvePropertyPreview(column.sortIndex));
       appendAttribute(html, "data-decimal-places", resolvePropertyPreview(column.decimalPlaces));
