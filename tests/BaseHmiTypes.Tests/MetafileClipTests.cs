@@ -54,6 +54,11 @@ public class MetafileClipTests
     {
         var rect=Svg(Clip(5,25).Concat(Clip(15,35,1)).Concat(Clip(1,10)).Concat(new[]{Record(43,0,0,39,39)}).ToArray()).Elements().Single(e=>e.Name.LocalName=="rect");Assert.AreEqual("url(#clip3)",rect.Attribute("clip-path")?.Value);Assert.IsNull(rect.Attribute("mask"));
     }
+    [TestMethod] [DataRow(false)] [DataRow(true)]
+    public void SaveRestoreReturnsToUnclippedState(bool mask)
+    {
+        var r=new List<byte[]>{Record(33)};r.AddRange(Clip(5,25));if(mask)r.AddRange(Clip(15,35,1));r.AddRange(new[]{Record(34,-1),Record(43,0,0,39,39)});var rect=Svg(r.ToArray()).Elements().Single(e=>e.Name.LocalName=="rect");Assert.IsNull(rect.Attribute("clip-path"));Assert.IsNull(rect.Attribute("mask"));
+    }
     [TestMethod] public void ValidSelectionConsumesFinishedPath()
         =>Assert.AreEqual(1,Svg(Clip(5,25).Concat(new[]{Record(64,0,0,39,39),Record(43,0,0,39,39)}).ToArray()).Elements().Count(e=>e.Name.LocalName!="defs"));
     [TestMethod] [DataRow(1)] [DataRow(2)]
