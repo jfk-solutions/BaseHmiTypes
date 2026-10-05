@@ -3450,6 +3450,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
       appendAttribute(html, "data-sort-order", resolvePropertyPreview(column.sortOrder));
       appendAttribute(html, "data-sort-direction", resolvePropertyPreview(column.sortDirection));
+      appendAttribute(html, "data-minimum-width", resolvePropertyPreview(column.minimumWidth));
+      appendAttribute(html, "data-maximum-width", resolvePropertyPreview(column.maximumWidth));
+      appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat), true);
       appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
       appendAttribute(html, "data-auto-size", resolvePropertyPreview(column.autoSize));
       const width = getStaticValue(column.width);
@@ -3479,6 +3482,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
       appendAttribute(html, "data-sort-order", resolvePropertyPreview(column.sortOrder));
       appendAttribute(html, "data-sort-direction", resolvePropertyPreview(column.sortDirection));
+      appendAttribute(html, "data-minimum-width", resolvePropertyPreview(column.minimumWidth));
+      appendAttribute(html, "data-maximum-width", resolvePropertyPreview(column.maximumWidth));
+      appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat), true);
       appendAttribute(html, "data-sort-mode", resolvePropertyPreview(column.sortMode));
       appendAttribute(html, "data-sort-index", resolvePropertyPreview(column.sortIndex));
       appendAttribute(html, "data-decimal-places", resolvePropertyPreview(column.decimalPlaces));

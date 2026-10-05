@@ -3229,6 +3229,9 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
                 AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
                 AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
+                AppendAttribute(html, "data-minimum-width", ResolvePropertyPreview(column.MinimumWidth, context));
+                AppendAttribute(html, "data-maximum-width", ResolvePropertyPreview(column.MaximumWidth, context));
+                AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context), preserveEmpty: true);
                 AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));
                 AppendAttribute(html, "data-auto-size", ResolvePropertyPreview(column.AutoSize, context));
                 if ((column.AutoSize is null || !ResolveStaticValue(column.AutoSize, context)) &&
@@ -3261,6 +3264,9 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
                 AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
                 AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
+                AppendAttribute(html, "data-minimum-width", ResolvePropertyPreview(column.MinimumWidth, context));
+                AppendAttribute(html, "data-maximum-width", ResolvePropertyPreview(column.MaximumWidth, context));
+                AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context), preserveEmpty: true);
                 AppendAttribute(html, "data-sort-mode", ResolvePropertyPreview(column.SortMode, context));
                 AppendAttribute(html, "data-sort-index", ResolvePropertyPreview(column.SortIndex, context));
                 AppendAttribute(html, "data-decimal-places", ResolvePropertyPreview(column.DecimalPlaces, context));
