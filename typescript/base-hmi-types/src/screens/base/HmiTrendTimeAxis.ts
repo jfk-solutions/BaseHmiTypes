@@ -19,6 +19,8 @@ export class HmiTrendTimeAxis {
   labelText?: HmiMultilingualText;
   timeFormat?: HmiProperty<HmiTrendTimeFormat>;
   displayMilliseconds?: HmiProperty<boolean>;
+  timeRangeFactor?: HmiProperty<number>;
+  timeRangeBaseMilliseconds?: HmiProperty<number>;
   timeSpan?: HmiProperty<number>;
   timeSpanUnit?: string;
   rangeType?: HmiProperty<HmiTrendTimeRangeType>;
