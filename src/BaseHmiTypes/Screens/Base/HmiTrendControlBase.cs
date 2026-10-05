@@ -7,6 +7,10 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
 {
     public int? DefinitionVersion { get; set; }
 
+    public HmiProperty<bool>? ShowTableGridLines { get; set; }
+    public HmiProperty<HmiColor>? TableGridLineColor { get; set; }
+    public HmiProperty<HmiColor>? AlternatingRowBackgroundColor { get; set; }
+
     public IList<HmiTrendPen> Pens { get; } = new List<HmiTrendPen>();
 
     /// <summary>Configured value axes, including axes with no assigned pen.</summary>

@@ -4935,6 +4935,15 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "x-value-axes", FormatTrendXValueAxes(trendControl.XValueAxes));
         AppendAttribute(html, "trend-windows", FormatTrendWindows(trendControl.TrendWindows));
         AppendAttribute(html, "time-axes", FormatTrendTimeAxes(trendControl.TimeAxes, context.CultureInfo));
+        AppendAttribute(html, "data-table-header-background-color", ResolvePropertyPreview(trendControl.HeaderBackgroundColor, context));
+        AppendAttribute(html, "data-table-header-foreground-color", ResolvePropertyPreview(trendControl.HeaderForegroundColor, context));
+        AppendAttribute(html, "data-table-header-border-color", ResolvePropertyPreview(trendControl.HeaderBorderColor, context));
+        AppendAttribute(html, "data-table-header-border-width", ResolvePropertyPreview(trendControl.HeaderBorderWidth, context));
+        AppendAttribute(html, "data-table-background-color", ResolvePropertyPreview(trendControl.ContentBackgroundColor, context));
+        AppendAttribute(html, "data-table-foreground-color", ResolvePropertyPreview(trendControl.ContentForegroundColor, context));
+        AppendAttribute(html, "data-table-grid-lines-visible", ResolvePropertyPreview(trendControl.ShowTableGridLines, context));
+        AppendAttribute(html, "data-table-grid-line-color", ResolvePropertyPreview(trendControl.TableGridLineColor, context));
+        AppendAttribute(html, "data-table-alternating-row-background-color", ResolvePropertyPreview(trendControl.AlternatingRowBackgroundColor, context));
         html.Append("></hmi-trend-control>");
     }
 

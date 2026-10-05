@@ -5320,6 +5320,15 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendAttribute(html, "x-value-axes", formatTrendXValueAxes(trendControl.xValueAxes));
   appendAttribute(html, "trend-windows", formatTrendWindows(trendControl.trendWindows));
   appendAttribute(html, "time-axes", formatTrendTimeAxes(trendControl.timeAxes, context.options.cultureLcid));
+  appendAttribute(html, "data-table-header-background-color", resolvePropertyPreview(trendControl.headerBackgroundColor));
+  appendAttribute(html, "data-table-header-foreground-color", resolvePropertyPreview(trendControl.headerForegroundColor));
+  appendAttribute(html, "data-table-header-border-color", resolvePropertyPreview(trendControl.headerBorderColor));
+  appendAttribute(html, "data-table-header-border-width", resolvePropertyPreview(trendControl.headerBorderWidth));
+  appendAttribute(html, "data-table-background-color", resolvePropertyPreview(trendControl.contentBackgroundColor));
+  appendAttribute(html, "data-table-foreground-color", resolvePropertyPreview(trendControl.contentForegroundColor));
+  appendAttribute(html, "data-table-grid-lines-visible", resolvePropertyPreview(trendControl.showTableGridLines));
+  appendAttribute(html, "data-table-grid-line-color", resolvePropertyPreview(trendControl.tableGridLineColor));
+  appendAttribute(html, "data-table-alternating-row-background-color", resolvePropertyPreview(trendControl.alternatingRowBackgroundColor));
   html.push("></hmi-trend-control>");
 }
 

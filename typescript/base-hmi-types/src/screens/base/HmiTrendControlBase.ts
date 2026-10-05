@@ -38,6 +38,10 @@ import { HmiTrendWindowStyle } from "./HmiTrendWindowStyle.js";
 
 export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   definitionVersion?: number;
+
+  showTableGridLines?: HmiProperty<boolean>;
+  tableGridLineColor?: HmiProperty<HmiColor>;
+  alternatingRowBackgroundColor?: HmiProperty<HmiColor>;
   readonly pens: HmiTrendPen[] = [];
   /** Configured value axes, including axes with no assigned pen. */
   readonly valueAxes: HmiTrendValueAxis[] = [];
