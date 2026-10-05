@@ -40,7 +40,7 @@ public class MetafileRoundRectTests
     {
         var records=new List<byte[]>{Record(35,0,BitConverter.SingleToInt32Bits(1),BitConverter.SingleToInt32Bits(-1),0,BitConverter.SingleToInt32Bits(40),0)};if(active)records.Add(Record(59));records.Add(Round());if(active)records.AddRange(new[]{Record(60),Record(64,0,0,39,39)});StringAssert.StartsWith(Shape(records.ToArray()).Attribute("d")!.Value,"M 25 35 C 30.523 35 35 32.761 35 30 L 35 10");
     }
-    [TestMethod] public void AppliesViewportMapping()=>StringAssert.StartsWith(Shape(Record(9,10,10),Record(11,20,30),Record(12,4,7),Round()).Attribute("d")!.Value,"M 74 52 C 74 35.431 69.523 22 64 22 L 24 22");
+    [TestMethod] public void AppliesViewportMapping()=>StringAssert.StartsWith(Shape(Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7),Round()).Attribute("d")!.Value,"M 74 52 C 74 35.431 69.523 22 64 22 L 24 22");
     [TestMethod] [DataRow(0)] [DataRow(1)] [DataRow(2)] [DataRow(3)] [DataRow(4)] [DataRow(5)]
     public void TruncatedEmfNeverReadsNextRecord(int count)=>Assert.AreEqual(0,Svg(Emf(Record(44,Enumerable.Repeat(5,count).ToArray()))).Elements().Count());
     [TestMethod] public void RoundedClipAppliesToDirectRoundedShape()

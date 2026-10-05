@@ -38,7 +38,7 @@ public class MetafileRestoreDepthTests
     [TestMethod] public void DeepRestoreRestoresLogicalCurrentPosition() { var d=Line(Svg(Record(34,-3),Record(54,4,5))); Assert.AreEqual("1",d.Attribute("x1")?.Value); Assert.AreEqual("2",d.Attribute("y1")?.Value); }
     [TestMethod] public void DeepRestoreRestoresWorldTransformAndMapping() {
         var world=Record(35,new float[]{2,0,0,3,10,20}.Select(BitConverter.SingleToInt32Bits).ToArray());
-        var d=Line(Svg(Record(9,2,4),Record(11,4,8),world,Record(34,-3),Record(54,4,5)));
+        var d=Line(Svg(Record(17,8),Record(9,2,4),Record(11,4,8),world,Record(34,-3),Record(54,4,5)));
         Assert.AreEqual("5",d.Attribute("x2")?.Value); Assert.AreEqual("7",d.Attribute("y2")?.Value);
     }
     [TestMethod] public void DeepRestoreRestoresClipAndSelectedObjects() {

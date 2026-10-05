@@ -38,7 +38,7 @@ public class MetafileAngleArcTests
     {
         var r=new List<byte[]>{Record(35,0,BitConverter.SingleToInt32Bits(1),BitConverter.SingleToInt32Bits(-1),0,BitConverter.SingleToInt32Bits(40),0)};if(active)r.Add(Record(59));r.Add(Arc());if(active)r.AddRange(new[]{Record(60),Record(64,0,0,39,39)});StringAssert.Contains(Shape(r.ToArray()).Attribute("d")!.Value,"L 20 35 C 28.284 35 35 28.284 35 20");
     }
-    [TestMethod] public void ViewportMappingAppliesToAllControls()=>StringAssert.Contains(Shape(Record(9,10,10),Record(11,20,30),Record(12,4,7),Arc()).Attribute("d")!.Value,"L 74 67 C 74 42.147 60.569 22 44 22");
+    [TestMethod] public void ViewportMappingAppliesToAllControls()=>StringAssert.Contains(Shape(Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7),Arc()).Attribute("d")!.Value,"L 74 67 C 74 42.147 60.569 22 44 22");
     [TestMethod] public void AbortDiscardsGeometryButPreservesCurrentPosition()
     {
         var svg=Svg(Record(59),Arc(),Record(68),Record(54,8,9));Assert.AreEqual(1,svg.Elements().Count());Assert.AreEqual("20",svg.Elements().Single().Attribute("x1")?.Value);Assert.AreEqual("5",svg.Elements().Single().Attribute("y1")?.Value);

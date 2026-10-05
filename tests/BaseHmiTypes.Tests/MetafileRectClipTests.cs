@@ -43,7 +43,7 @@ public class MetafileRectClipTests
     public void RotatedClipTransformsEveryCorner(bool exclude)=>Assert.AreEqual("M 34 5 L 34 35 L 4 35 L 4 5 Z",ClipPath(ESvg(Record(35,0,BitConverter.SingleToInt32Bits(1),BitConverter.SingleToInt32Bits(-1),0,BitConverter.SingleToInt32Bits(40),0),Clip(exclude))).Attribute("d")?.Value);
     [TestMethod] public void ShearedClipIsNotItsBoundingRectangle()=>Assert.AreEqual("M 5 8.5 L 35 23.5 L 35 53.5 L 5 38.5 Z",ClipPath(ESvg(Record(35,BitConverter.SingleToInt32Bits(1),BitConverter.SingleToInt32Bits(.5f),0,BitConverter.SingleToInt32Bits(1),0,0),Clip(false))).Attribute("d")?.Value);
     [TestMethod] [DataRow(false)] [DataRow(true)]
-    public void ViewportMappingTransformsClip(bool exclude)=>Assert.AreEqual("M 14 25 L 74 25 L 74 115 L 14 115 Z",ClipPath(ESvg(Record(9,10,10),Record(11,20,30),Record(12,4,7),Clip(exclude))).Attribute("d")?.Value);
+    public void ViewportMappingTransformsClip(bool exclude)=>Assert.AreEqual("M 14 25 L 74 25 L 74 115 L 14 115 Z",ClipPath(ESvg(Record(17,8),Record(9,10,10),Record(11,20,30),Record(12,4,7),Clip(exclude))).Attribute("d")?.Value);
     [TestMethod] [DataRow(false,false)] [DataRow(false,true)] [DataRow(true,false)] [DataRow(true,true)]
     public void RectangleCombinesWithExistingClipOrMask(bool exclude,bool mask)
     {
