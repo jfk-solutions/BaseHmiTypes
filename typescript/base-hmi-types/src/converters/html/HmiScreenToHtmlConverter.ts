@@ -3371,12 +3371,49 @@ function appendRadarChartControl(html: string[], radarChartControl: HmiRadarChar
 }
 
 function appendProcessDiagnosisControl(html: string[], item: HmiScreenItemBase, kind: string, label: string, context: HmiHtmlConvertContext): void {
+  if (item instanceof HmiProcessDiagnosisCriteriaAnalysisControl) {
+    appendCriteriaAnalysisControl(html, item, context);
+    return;
+  }
   html.push("<div");
   appendCommonAttributes(html, item, context, true, "display: grid; place-items: center; overflow: hidden;");
   appendAttribute(html, "data-process-diagnosis-kind", kind);
   appendAttribute(html, "role", "region");
   appendAttribute(html, "aria-label", label);
   html.push(">", escapeHtml(label), " data not loaded</div>");
+}
+
+function appendCriteriaAnalysisControl(html: string[], criteria: HmiProcessDiagnosisCriteriaAnalysisControl, context: HmiHtmlConvertContext): void {
+  html.push("<div");
+  appendCommonAttributes(html, criteria, context, true, "display: flex; flex-direction: column; overflow: hidden;");
+  appendAttribute(html, "data-process-diagnosis-kind", "CriteriaAnalysis");
+  appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(criteria.showGridLines));
+  appendAttribute(html, "data-show-column-headings", resolvePropertyPreview(criteria.showColumnHeadings));
+  appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(criteria.gridLineColor));
+  appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(criteria.alternatingRowBackgroundColor));
+  html.push(' role="region" aria-label="Criteria analysis appearance preview"><div>Criteria analysis appearance preview; diagnostic data not loaded</div>');
+  if (criteria.showColumnHeadings === undefined || getStaticValue(criteria.showColumnHeadings)) {
+    const header = ["padding: 2px 4px;"];
+    appendColorStyle(header, "background-color", criteria.headerBackgroundColor);
+    appendColorStyle(header, "color", criteria.headerForegroundColor);
+    appendColorStyle(header, "border-color", criteria.headerBorderColor);
+    const width = getStaticValue(criteria.headerBorderWidth);
+    if (width !== undefined && Number.isFinite(width) && width >= 0) header.push(`border-width: ${toCss(width)}px; border-style: solid;`);
+    if (criteria.headerFont) appendFont(header, criteria.headerFont.getForCulture(context.options.cultureLcid));
+    html.push('<div data-appearance-sample="header" style="', header.join(""), '">Header appearance</div>');
+  }
+  for (let alternate = 0; alternate < 2; alternate++) {
+    const content = ["padding: 2px 4px;"];
+    appendColorStyle(content, "background-color", alternate === 1 ? criteria.alternatingRowBackgroundColor ?? criteria.contentBackgroundColor : criteria.contentBackgroundColor);
+    appendColorStyle(content, "color", criteria.contentForegroundColor);
+    if (criteria.contentFont) appendFont(content, criteria.contentFont.getForCulture(context.options.cultureLcid));
+    if (getStaticValue(criteria.showGridLines)) {
+      content.push("border-bottom: 1px solid currentColor;");
+      appendColorStyle(content, "border-bottom-color", criteria.gridLineColor);
+    }
+    html.push('<div data-appearance-sample="', alternate === 1 ? "alternate" : "content", '" style="', content.join(""), '">', alternate === 1 ? "Alternate row appearance" : "Content appearance", "</div>");
+  }
+  html.push("</div>");
 }
 
 function appendGraphOverviewControl(html: string[], graphOverview: HmiProcessDiagnosisGraphOverviewControl, context: HmiHtmlConvertContext): void {
