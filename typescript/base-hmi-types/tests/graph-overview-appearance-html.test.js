@@ -1,3 +1,4 @@
+import { withoutRuntimeScripts } from "./html-test-markup.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {HmiProcessDiagnosisGraphOverviewControl,HmiScreen,HmiLayer,HmiScreenToHtmlConverter,HmiFont,staticProperty,hmiColorFromArgb,getStaticValue} from "../dist/index.js";
@@ -42,7 +43,7 @@ for(const configured of [false,true]) test(`GRAPH overview appearance metadata c
  assert.ok(html.includes('aria-label="Graph overview"'));
  assert.equal(html.includes("data-associated-graph-db-tag-source-id="),configured);assert.equal(html.includes("data-associated-graph-db-tag-name="),configured);
  const sample=(source,kind)=>new RegExp(`<div data-appearance-sample="${kind}"(.*?)</div>`,"u").exec(source)?.[0]??"";
- const button=sample(html,"button");assert.equal(button.includes("linear-gradient("),configured);assert.ok(!html.includes("<button"));
+ const button=sample(html,"button");assert.equal(button.includes("linear-gradient("),configured);assert.ok(!withoutRuntimeScripts(html).includes("<button"));
  if(configured){
   for(const [kind,css] of [["path-header","background-color: rgba(1,2,3,0);"],["path-header","color: #020203;"],["path-header","font-family: Preview Header;"],["step","background-color: #030203;"],["step","color: #040203;"],["step","font-family: Preview Content;"],["error","background-color: #050203;"],["highlight","background-color: #060203;"],["selected-step","background-color: #070203;"],["separator","background-color: #080203;"],["toolbar","background-color: #090203;"]]) assert.ok(sample(html,kind).includes(css),`${kind}: ${css}`);
   assert.ok(html.includes('data-associated-graph-db-tag-source-id="17:9223372036854775807"'));assert.ok(html.includes('data-associated-graph-db-tag-name="GraphDbTag &lt;A&gt; &amp; B"'));

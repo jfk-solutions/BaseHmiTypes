@@ -1,3 +1,4 @@
+import { withoutRuntimeScripts } from "./html-test-markup.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {HmiSystemDiagnosisControl,HmiSystemDiagnosisAppearance,HmiScreen,HmiLayer,HmiScreenToHtmlConverter,staticProperty,hmiColorFromArgb,getStaticValue} from "../dist/index.js";
@@ -12,7 +13,7 @@ test("Optional diagnostic appearance separates palettes and preserves raw config
  let html=await renderer.convertAsync(screen);assert.ok(html.includes("Diagnostics &lt;A&gt; &amp; B"));assert.ok(html.includes("Diagnostic data not loaded"));
  for(const [kind,css] of [["information","background-color: rgba(17,34,51,0);"],["error","background-color: #030303;"],["selection","background-color: #050505;"],["alternate","background-color: #070707;"],["navigation","color: #090909;"],["toolbar","background-color: #0A0A0A;"]]) assert.ok(sample(html,kind).includes(css),kind);
  assert.ok(sample(html,"information").includes("border-bottom-color: #080808;"));assert.ok(sample(html,"header").includes("linear-gradient("));assert.ok(sample(html,"button").includes("linear-gradient("));
- assert.ok(html.includes('data-toolbar-alignment="-2147483648"'));assert.ok(html.includes('data-show-navigation-buttons="false"'));assert.ok(html.includes('data-information-area-font-reference-device-size="123"'));assert.ok(!html.includes("font-size: 123px"));assert.ok(!html.includes("<button"));
+ assert.ok(html.includes('data-toolbar-alignment="-2147483648"'));assert.ok(html.includes('data-show-navigation-buttons="false"'));assert.ok(html.includes('data-information-area-font-reference-device-size="123"'));assert.ok(!html.includes("font-size: 123px"));assert.ok(!withoutRuntimeScripts(html).includes("<button"));
  assert.equal(getStaticValue(a.headerFirstGradientOffset),-10);assert.equal(getStaticValue(a.headerSecondGradientOffset),120);assert.deepEqual(getStaticValue(control.contentBackgroundColor),hmiColorFromArgb(255,1,1,1));
  for(const key of ["useToolbarBackgroundColor","showGridLines","useHeaderFirstGradient","useHeaderSecondGradient","useButtonFirstGradient"]) a[key]=staticProperty(false);
  html=await renderer.convertAsync(screen);assert.ok(!sample(html,"toolbar").includes("background-color:"));assert.ok(!sample(html,"information").includes("border-bottom:"));assert.ok(!sample(html,"header").includes("linear-gradient("));assert.ok(!sample(html,"button").includes("linear-gradient("));

@@ -1,3 +1,4 @@
+import { withoutRuntimeScripts } from "./html-test-markup.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { HmiTextBox, HmiGraphicView } from "../dist/index.js";
@@ -697,7 +698,7 @@ test(`HTML renderer supports widget numeric font weight (${kind}, ${weight}, ${b
   layer.items.push(item);
   screen.layers.push(layer);
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
-  const opening = html.match(kind === 2 ? /<div[^>]*data-hmi-bar-scale[^>]*>/ : kind === 0 ? /<button[^>]*>/ : /<input[^>]*>/)?.[0] ?? "";
+  const opening = withoutRuntimeScripts(html).match(kind === 2 ? /<div[^>]*data-hmi-bar-scale[^>]*>/ : kind === 0 ? /<button[^>]*>/ : /<input[^>]*>/)?.[0] ?? "";
   assert.notEqual(opening, "");
   if (weight > 0) {
     assert.ok(opening.includes(`font-weight: ${weight};`));
@@ -723,7 +724,7 @@ test(`HTML renderer supports widget font decorations (${kind}, ${underline}, ${s
   layer.items.push(item);
   screen.layers.push(layer);
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
-  const opening = html.match(kind === 2 ? /<div[^>]*data-hmi-bar-scale[^>]*>/ : kind === 0 ? /<button[^>]*>/ : /<input[^>]*>/)?.[0] ?? "";
+  const opening = withoutRuntimeScripts(html).match(kind === 2 ? /<div[^>]*data-hmi-bar-scale[^>]*>/ : kind === 0 ? /<button[^>]*>/ : /<input[^>]*>/)?.[0] ?? "";
   assert.notEqual(opening, "");
   const decorations = underline ? (strike ? "underline line-through" : "underline") : "line-through";
   if (underline || strike) assert.ok(opening.includes(`text-decoration: ${decorations};`));
@@ -3304,5 +3305,5 @@ test("HTML converter renders inert system diagnosis previews", async () => {
   assert.match(html, /data-view-kind="AutomaticEventSummary"/);
   assert.match(html, />Automatic diagnostic event summary<\/div>/);
   assert.equal((html.match(/>Diagnostic data not loaded<\/div>/g) ?? []).length, 3);
-  assert.doesNotMatch(html, /<button/);
+  assert.doesNotMatch(withoutRuntimeScripts(html), /<button/);
 });

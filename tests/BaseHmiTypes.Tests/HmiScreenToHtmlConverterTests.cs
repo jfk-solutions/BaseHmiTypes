@@ -899,7 +899,7 @@ public class HmiScreenToHtmlConverterTests
         layer.Items.Add(item);
         screen.Layers.Add(layer);
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
-        var opening = System.Text.RegularExpressions.Regex.Match(html, kind == 2
+        var opening = System.Text.RegularExpressions.Regex.Match(HtmlTestMarkup.WithoutScripts(html), kind == 2
             ? "<div[^>]*data-hmi-bar-scale[^>]*>" : kind == 0 ? "<button[^>]*>" : "<input[^>]*>").Value;
         Assert.IsFalse(string.IsNullOrEmpty(opening));
         if (weight > 0)
@@ -941,7 +941,7 @@ public class HmiScreenToHtmlConverterTests
         layer.Items.Add(item);
         screen.Layers.Add(layer);
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
-        var opening = System.Text.RegularExpressions.Regex.Match(html, kind == 2
+        var opening = System.Text.RegularExpressions.Regex.Match(HtmlTestMarkup.WithoutScripts(html), kind == 2
             ? "<div[^>]*data-hmi-bar-scale[^>]*>" : kind == 0 ? "<button[^>]*>" : "<input[^>]*>").Value;
         Assert.IsFalse(string.IsNullOrEmpty(opening));
         var decorations = underline ? (strike ? "underline line-through" : "underline") : "line-through";
@@ -3145,7 +3145,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-view-kind=\"AutomaticEventSummary\"");
         StringAssert.Contains(html, ">Automatic diagnostic event summary</div>");
         Assert.AreEqual(3, CountOccurrences(html, ">Diagnostic data not loaded</div>"));
-        Assert.IsFalse(html.Contains("<button", StringComparison.Ordinal));
+        Assert.IsFalse(HtmlTestMarkup.WithoutScripts(html).Contains("<button", StringComparison.Ordinal));
     }
 
     [TestMethod]
