@@ -287,6 +287,8 @@ public partial class HmiScreenToHtmlConverter
             AppendAttribute(html, "data-minimum-width", ResolvePropertyPreview(column.MinimumWidth, context));
             AppendAttribute(html, "data-maximum-width", ResolvePropertyPreview(column.MaximumWidth, context));
             AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
+            AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
+            AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
             AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context));
             html.Append('>').Append(WebUtility.HtmlEncode(column.HeaderText?.GetText(context.CultureInfo) ?? column.Name ?? column.Key ?? "Column")).Append("</th>");
         }

@@ -1,0 +1,8 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {HmiDetailedParameterControl,HmiOverviewParameterControl,HmiParameterColumn,HmiScreen,HmiLayer,HmiScreenToHtmlConverter,staticProperty} from "../dist/index.js";
+for(const type of [HmiDetailedParameterControl,HmiOverviewParameterControl])test(`Sort metadata preserves definition order: ${type.name}`,async()=>{
+ const control=new type(),screen=new HmiScreen(),layer=new HmiLayer();layer.items.push(control);screen.layers.push(layer);const renderer=new HmiScreenToHtmlConverter();control.columnDefinitions.push(Object.assign(new HmiParameterColumn(),{name:"A"}),Object.assign(new HmiParameterColumn(),{name:"B"}));assert.ok(!(await renderer.convertAsync(screen)).includes("data-sort-order"));
+ Object.assign(control.columnDefinitions[0],{sortOrder:staticProperty(0),sortDirection:staticProperty(-2147483648),allowSort:staticProperty(false)});Object.assign(control.columnDefinitions[1],{sortOrder:staticProperty(-7),sortDirection:staticProperty(37)});control.columnDefinitions.push(Object.assign(new HmiParameterColumn(),{name:"Hidden",visible:staticProperty(false),sortOrder:staticProperty(1),sortDirection:staticProperty(0)}));
+ const html=await renderer.convertAsync(screen);for(const fragment of ['data-sort-order="0"','data-sort-direction="-2147483648"','data-sort-order="-7"','data-sort-direction="37"','Parameter data not loaded'])assert.ok(html.includes(fragment),fragment);assert.ok(html.indexOf('data-column-name="A"')<html.indexOf('data-column-name="B"'));assert.ok(!html.includes('data-column-name="Hidden"'));
+});
