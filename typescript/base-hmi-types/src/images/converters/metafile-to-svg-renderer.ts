@@ -354,6 +354,8 @@ export class MetafileToSvgRenderer {
         case EMR.ELLIPSE:
           if (record.size < 24) break;
           if (state.currentPath !== undefined) appendEmfShapePath(bytes, dataOffset, record.type === EMR.ELLIPSE, state);
+          else if (state.worldTransform.m12 !== 0 || state.worldTransform.m21 !== 0)
+            elements.push(pathElement(emfShapePath(bytes, dataOffset, record.type === EMR.ELLIPSE, state).path, state, 'paint'));
           else {
             const rect = transformRect(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12));
             elements.push(record.type === EMR.ELLIPSE ? ellipseElement(...rect, state) : rectElement(...rect, state));
@@ -1997,12 +1999,20 @@ function drawRoundRect(x1: number, y1: number, x2: number, y2: number, cornerWid
 }
 
 function appendEmfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean, state: DrawState): void {
+  const {path, start} = emfShapePath(bytes, offset, ellipse, state);
+  state.currentPath!.push(...path);
+  state.pathStartX = state.pathEndX = start[0];
+  state.pathFigureClosed = true;
+  state.pathStartY = state.pathEndY = start[1];
+}
+
+function emfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean, state: DrawState): { path: string[]; start: [number, number] } {
   // GDI's recorder already adjusts GM_COMPATIBLE bounds to inclusive edges.
   const left = Math.min(i32(bytes, offset), i32(bytes, offset + 8));
   const right = Math.max(i32(bytes, offset), i32(bytes, offset + 8));
   const top = Math.min(i32(bytes, offset + 4), i32(bytes, offset + 12));
   const bottom = Math.max(i32(bytes, offset + 4), i32(bytes, offset + 12));
-  const path = state.currentPath!;
+  const path: string[] = [];
   const point = (x: number, y: number) => transformPoint(state, x, y).map(value => Number(value.toFixed(3))).join(' ');
   const start = transformPoint(state, right, ellipse ? (top + bottom) / 2 : state.clockwiseShapes ? bottom : top);
   path.push(`M ${point(right, ellipse ? (top + bottom) / 2 : state.clockwiseShapes ? bottom : top)}`);
@@ -2019,9 +2029,7 @@ function appendEmfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean,
     }
   }
   path.push('Z');
-  state.pathStartX = state.pathEndX = start[0];
-  state.pathFigureClosed = true;
-  state.pathStartY = state.pathEndY = start[1];
+  return {path, start};
 }
 
 function rectElement(left: number, top: number, right: number, bottom: number, state: DrawState): string {
