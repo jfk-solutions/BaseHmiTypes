@@ -260,8 +260,43 @@ public sealed class HmiRecipeToHtmlConverter
                         .Append(Encode(pair.Value == null ? "Null" : pair.Value)).Append("</td></tr>");
             html.Append("</tbody></table></div>");
         }
+        AppendRecipeViews(html, recipe, culture);
         return html.Append("</body></html>").ToString();
     }
+
+    private static void AppendRecipeViews(StringBuilder html, HmiRecipe recipe, CultureInfo? culture)
+    {
+        if (recipe.Views.Count == 0) return;
+        html.Append("<h2>Recipe views</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Name</th><th scope=\"col\">Source ID</th><th scope=\"col\">Number</th><th scope=\"col\">Display name</th><th scope=\"col\">Statement (stored)</th><th scope=\"col\">Display name source ID</th><th scope=\"col\">Display name reference</th></tr></thead><tbody>");
+        foreach (var view in recipe.Views)
+        {
+            html.Append("<tr>");
+            AppendViewValue(html, view.Name); AppendViewValue(html, view.SourceId);
+            AppendViewValue(html, view.SourceNumber?.ToString(CultureInfo.InvariantCulture));
+            AppendViewValue(html, view.DisplayName?.GetText(culture)); AppendViewValue(html, view.Statement);
+            AppendViewValue(html, view.DisplayNameReference?.SourceId); AppendViewValue(html, view.DisplayNameReference?.Name);
+            html.Append("</tr>");
+        }
+        html.Append("</tbody></table></div>");
+        if (!recipe.Views.Any(v => v.Elements.Count > 0)) return;
+        html.Append("<h2>Recipe view elements</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">View</th><th scope=\"col\">View source ID</th><th scope=\"col\">Name</th><th scope=\"col\">Source ID</th><th scope=\"col\">Number</th><th scope=\"col\">Display name</th><th scope=\"col\">Target source ID</th><th scope=\"col\">Target name</th><th scope=\"col\">Display name source ID</th><th scope=\"col\">Display name reference</th></tr></thead><tbody>");
+        foreach (var view in recipe.Views) foreach (var element in view.Elements)
+        {
+            html.Append("<tr>");
+            AppendViewValue(html, view.Name); AppendViewValue(html, view.SourceId);
+            AppendViewValue(html, element.Name); AppendViewValue(html, element.SourceId);
+            AppendViewValue(html, element.SourceNumber?.ToString(CultureInfo.InvariantCulture));
+            AppendViewValue(html, element.DisplayName?.GetText(culture));
+            AppendViewValue(html, element.TargetElement?.SourceId); AppendViewValue(html, element.TargetElement?.Name);
+            AppendViewValue(html, element.DisplayNameReference?.SourceId); AppendViewValue(html, element.DisplayNameReference?.Name);
+            html.Append("</tr>");
+        }
+        html.Append("</tbody></table></div>");
+    }
+
+    private static void AppendViewValue(StringBuilder html, string? value)
+        => html.Append("<td data-value-state=\"").Append(value is null ? "missing" : "present").Append("\">")
+            .Append(Encode(value ?? "Missing")).Append("</td>");
 
     private static void AppendConfiguration(StringBuilder html, string label, string? value)
     {

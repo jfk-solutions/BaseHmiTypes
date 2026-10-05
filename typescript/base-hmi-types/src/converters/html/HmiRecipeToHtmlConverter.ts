@@ -215,8 +215,32 @@ export class HmiRecipeToHtmlConverter {
             "</td><td data-value-state=\"", value == null ? "null" : "present", "\">", encode(value == null ? "Null" : value), "</td></tr>");
       html.push("</tbody></table></div>");
     }
+    appendRecipeViews(html, recipe, cultureLcid);
     return html.concat("</body></html>").join("");
   }
+}
+
+function appendRecipeViews(html: string[], recipe: HmiRecipe, cultureLcid?: number): void {
+  if (recipe.views.length === 0) return;
+  html.push('<h2>Recipe views</h2><div class="table-scroll"><table><thead><tr><th scope="col">Name</th><th scope="col">Source ID</th><th scope="col">Number</th><th scope="col">Display name</th><th scope="col">Statement (stored)</th><th scope="col">Display name source ID</th><th scope="col">Display name reference</th></tr></thead><tbody>');
+  for (const view of recipe.views) {
+    html.push("<tr>");
+    for (const value of [view.name,view.sourceId,view.sourceNumber,view.displayName?.getText(cultureLcid),view.statement,view.displayNameReference?.sourceId,view.displayNameReference?.name]) appendViewValue(html,value);
+    html.push("</tr>");
+  }
+  html.push("</tbody></table></div>");
+  if (!recipe.views.some(v=>v.elements.length>0)) return;
+  html.push('<h2>Recipe view elements</h2><div class="table-scroll"><table><thead><tr><th scope="col">View</th><th scope="col">View source ID</th><th scope="col">Name</th><th scope="col">Source ID</th><th scope="col">Number</th><th scope="col">Display name</th><th scope="col">Target source ID</th><th scope="col">Target name</th><th scope="col">Display name source ID</th><th scope="col">Display name reference</th></tr></thead><tbody>');
+  for (const view of recipe.views) for (const element of view.elements) {
+    html.push("<tr>");
+    for (const value of [view.name,view.sourceId,element.name,element.sourceId,element.sourceNumber,element.displayName?.getText(cultureLcid),element.targetElement?.sourceId,element.targetElement?.name,element.displayNameReference?.sourceId,element.displayNameReference?.name]) appendViewValue(html,value);
+    html.push("</tr>");
+  }
+  html.push("</tbody></table></div>");
+}
+
+function appendViewValue(html: string[], value: string | number | undefined): void {
+  html.push('<td data-value-state="',value===undefined?"missing":"present",'">',encode(value===undefined?"Missing":String(value)),"</td>");
 }
 
 function appendConfiguration(html: string[], label: string, value: string | undefined): void {
