@@ -3232,6 +3232,10 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-minimum-width", ResolvePropertyPreview(column.MinimumWidth, context));
                 AppendAttribute(html, "data-maximum-width", ResolvePropertyPreview(column.MaximumWidth, context));
                 AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context), preserveEmpty: true);
+                AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
+                AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
+                AppendAttribute(html, "data-content-horizontal-alignment", ResolvePropertyPreview(column.ContentHorizontalAlignment, context));
+                AppendAttribute(html, "data-content-vertical-alignment", ResolvePropertyPreview(column.ContentVerticalAlignment, context));
                 AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));
                 AppendAttribute(html, "data-auto-size", ResolvePropertyPreview(column.AutoSize, context));
                 if ((column.AutoSize is null || !ResolveStaticValue(column.AutoSize, context)) &&
@@ -3257,7 +3261,14 @@ public partial class HmiScreenToHtmlConverter
                 if (column.AutoSize is null || !ResolveStaticValue(column.AutoSize, context))
                     if (column.Width is not null && IsFinite(ResolveStaticValue(column.Width, context)) && ResolveStaticValue(column.Width, context) >= 0)
                         html.Append("width: ").Append(ToCss(ResolveStaticValue(column.Width, context))).Append("px;");
-                if (column.Alignment is not null) html.Append("text-align: ").Append(ToCss(ResolveStaticValue(column.Alignment, context))).Append(';');
+                var headingAlignment = column.HeaderHorizontalAlignment ?? column.Alignment;
+                if (headingAlignment is not null) html.Append("text-align: ").Append(ToCss(ResolveStaticValue(headingAlignment, context))).Append(';');
+                if (column.HeaderVerticalAlignment is not null)
+                {
+                    var alignment = ResolveStaticValue(column.HeaderVerticalAlignment, context);
+                    if (alignment != HmiVerticalAlignment.Stretch)
+                        html.Append("vertical-align: ").Append(alignment == HmiVerticalAlignment.Top ? "top" : alignment == HmiVerticalAlignment.Bottom ? "bottom" : "middle").Append(';');
+                }
                 html.Append('"');
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-column-source-type", column.SourceType);
@@ -3267,6 +3278,10 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-minimum-width", ResolvePropertyPreview(column.MinimumWidth, context));
                 AppendAttribute(html, "data-maximum-width", ResolvePropertyPreview(column.MaximumWidth, context));
                 AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context), preserveEmpty: true);
+                AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
+                AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
+                AppendAttribute(html, "data-content-horizontal-alignment", ResolvePropertyPreview(column.ContentHorizontalAlignment, context));
+                AppendAttribute(html, "data-content-vertical-alignment", ResolvePropertyPreview(column.ContentVerticalAlignment, context));
                 AppendAttribute(html, "data-sort-mode", ResolvePropertyPreview(column.SortMode, context));
                 AppendAttribute(html, "data-sort-index", ResolvePropertyPreview(column.SortIndex, context));
                 AppendAttribute(html, "data-decimal-places", ResolvePropertyPreview(column.DecimalPlaces, context));

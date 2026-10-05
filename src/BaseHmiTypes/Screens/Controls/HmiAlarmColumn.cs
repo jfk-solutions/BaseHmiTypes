@@ -24,6 +24,10 @@ public sealed class HmiAlarmColumn
     public string? TimeFormat { get; set; }
     public HmiProperty<bool>? ShowDate { get; set; }
     public HmiMultilingualText? HeaderText { get; set; }
+    public HmiProperty<HmiHorizontalAlignment>? HeaderHorizontalAlignment { get; set; }
+    public HmiProperty<HmiVerticalAlignment>? HeaderVerticalAlignment { get; set; }
+    public HmiProperty<HmiHorizontalAlignment>? ContentHorizontalAlignment { get; set; }
+    public HmiProperty<HmiVerticalAlignment>? ContentVerticalAlignment { get; set; }
     public string? Symbol { get; set; }
 
     public HmiProperty<HmiHorizontalAlignment>? Alignment { get; set; }
