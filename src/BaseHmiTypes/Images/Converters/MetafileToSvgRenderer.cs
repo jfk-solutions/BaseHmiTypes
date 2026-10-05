@@ -249,6 +249,10 @@ public sealed class MetafileToSvgRenderer
                     if (record.Size >= 32)
                         DrawRoundRect(I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12), I32(bytes, dataOffset + 16), I32(bytes, dataOffset + 20), state, elements, true);
                     break;
+                case EMR.AngleArc:
+                    if (record.Size >= 28)
+                        DrawAngleArc(I32(bytes, dataOffset), I32(bytes, dataOffset + 4), U32(bytes, dataOffset + 8), F32(bytes, dataOffset + 12), F32(bytes, dataOffset + 16), state, elements);
+                    break;
                 case EMR.Arc:
                 case EMR.Chord:
                 case EMR.Pie:
@@ -829,6 +833,40 @@ public sealed class MetafileToSvgRenderer
     private static (double X, double Y) TransformPointWithTransform(Transform transform, double x, double y)
     {
         return (x * transform.M11 + y * transform.M21 + transform.Dx, x * transform.M12 + y * transform.M22 + transform.Dy);
+    }
+
+    private static void DrawAngleArc(double cx, double cy, uint radius, double startDegrees, double sweepDegrees, DrawState state, List<string> elements)
+    {
+        // Bound expansion of hostile FLOAT sweep values, without dropping ordinary
+        // repeated turns (which matter for recorded path winding).
+        if (double.IsNaN(startDegrees) || double.IsInfinity(startDegrees) || double.IsNaN(sweepDegrees) || double.IsInfinity(sweepDegrees) || Math.Abs(sweepDegrees) > 4096 * 90)
+            return;
+        var angle = -(startDegrees % 360) * Math.PI / 180;
+        var sweep = -sweepDegrees * Math.PI / 180;
+        (double X, double Y) Map(double a) => TransformPoint(state, cx + radius * Math.Cos(a), cy + radius * Math.Sin(a));
+        string Point(double x, double y) { var p = TransformPoint(state, x, y); return $"{Number(p.X)} {Number(p.Y)}"; }
+        var start = Map(angle);
+        var path = state.CurrentPath ?? new List<string>();
+        if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+        else EnsurePathPosition(state);
+        path.Add($"L {Number(start.X)} {Number(start.Y)}");
+        var segments = radius == 0 ? 0 : (int)Math.Ceiling(Math.Abs(sweepDegrees) / 90);
+        var step = segments == 0 ? 0 : sweep / segments;
+        for (var index = 0; index < segments; index++)
+        {
+            var a = angle + index * step; var b = a + step; var k = 4.0 / 3 * Math.Tan(step / 4);
+            path.Add($"C {Point(cx + radius * (Math.Cos(a) - k * Math.Sin(a)), cy + radius * (Math.Sin(a) + k * Math.Cos(a)))} {Point(cx + radius * (Math.Cos(b) + k * Math.Sin(b)), cy + radius * (Math.Sin(b) - k * Math.Cos(b)))} {Point(cx + radius * Math.Cos(b), cy + radius * Math.Sin(b))}");
+        }
+        var end = Map(angle + sweep);
+        state.CurrentX = end.X;
+        state.CurrentY = end.Y;
+        if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke));
+        else
+        {
+            state.PathFigureClosed = false;
+            state.PathEndX = end.X;
+            state.PathEndY = end.Y;
+        }
     }
 
     private static void DrawArc(uint type, double x1, double y1, double x2, double y2, double sx, double sy, double ex, double ey, DrawState state, List<string> elements, bool transformPoints)
@@ -1714,6 +1752,7 @@ internal enum PathPaintMode
 
 internal static class EMR
 {
+    public const uint AngleArc = 0x0029;
     public const uint SetMiterLimit = 0x003a;
     public const uint Header = 0x0001;
     public const uint Eof = 0x000e;
