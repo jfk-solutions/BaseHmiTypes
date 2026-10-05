@@ -50,6 +50,7 @@ interface DrawState {
   fillRule: 'evenodd' | 'nonzero';
   activeClipId?: string;
   activeMaskId?: string;
+  metaMaskId?: string;
   currentPath?: string[];
   selectedPath?: string[];
   pathStartX?: number;
@@ -145,6 +146,7 @@ export class MetafileToSvgRenderer {
     let hasEmfPlusDrawing = false;
 
     for (const record of emfRecords(bytes)) {
+      const firstElement = elements.length;
       const dataOffset = record.offset + 8;
       const dataEnd = record.offset + record.size;
       if (dataEnd > bytes.length)
@@ -326,6 +328,9 @@ export class MetafileToSvgRenderer {
             clipSequence = offsetSelectedClip(dx, dy, state, defs, clipSequence, clipExpansion);
           }
           break;
+        case EMR.SETMETARGN:
+          clipSequence = setMetaRegion(state, defs, clipSequence);
+          break;
         case EMR.POLYLINETO:
         case EMR.POLYLINETO16:
         case EMR.POLYBEZIER:
@@ -442,6 +447,11 @@ export class MetafileToSvgRenderer {
             elements.push(image);
           break;
         }
+      }
+      // The metaregion is independent of the selected clip on each drawing.
+      if (state.metaMaskId && elements.length > firstElement) {
+        elements.splice(firstElement, 0, `<g mask="url(#${state.metaMaskId})">`);
+        elements.push('</g>');
       }
     }
 
@@ -624,6 +634,7 @@ const PlaceableWmfKey = 0x9ac6cdd7;
 
 const EMR = {
   OFFSETCLIPRGN: 0x001a,
+  SETMETARGN: 0x001c,
   EXTSELECTCLIPRGN: 0x004b,
   EXCLUDECLIPRECT: 0x001d,
   INTERSECTCLIPRECT: 0x001e,
@@ -894,6 +905,7 @@ function cloneState(state: DrawState): DrawState {
     ...state,
     activeClipId: state.activeClipId,
     activeMaskId: state.activeMaskId,
+    metaMaskId: state.metaMaskId,
     pen: { ...state.pen },
     brush: { ...state.brush },
     font: { ...state.font },
@@ -1824,6 +1836,19 @@ function resolveClipViewport(defs: string[], viewBox: ViewBox, expansion: { x: n
   const domain = { x: viewBox.x - expansion.x, y: viewBox.y - expansion.y, width: viewBox.width + 2 * expansion.x, height: viewBox.height + 2 * expansion.y };
   for (let index = 0; index < defs.length; index++)
     defs[index] = defs[index].split(CLIP_VIEWPORT_TOKEN).join(clipViewportAttrs(domain)).split(DEFAULT_CLIP_VIEWPORT_TOKEN).join(clipViewportAttrs(viewBox));
+}
+
+function setMetaRegion(state: DrawState, defs: string[], sequence: number): number {
+  // A null selected clip imposes no extra constraint on the metaregion.
+  if (!state.activeClipId && !state.activeMaskId) return sequence;
+  const id = `mask${++sequence}`;
+  let selected = `<rect ${CLIP_VIEWPORT_TOKEN} fill="#ffffff"${clipAttr(state)} />`;
+  if (state.metaMaskId) selected = `<g mask="url(#${state.metaMaskId})">${selected}</g>`;
+  defs.push(`<mask id="${id}" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" ${CLIP_VIEWPORT_TOKEN}>${selected}</mask>`);
+  state.metaMaskId = id;
+  state.activeClipId = undefined;
+  state.activeMaskId = undefined;
+  return sequence;
 }
 
 function offsetSelectedClip(dx: number, dy: number, state: DrawState, defs: string[], sequence: number, expansion: { x: number; y: number }): number {
