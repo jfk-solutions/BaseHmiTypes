@@ -1,9 +1,14 @@
 using BaseHmiTypes.Screens.Base;
+using BaseHmiTypes.Recipes;
 
 namespace BaseHmiTypes.Screens.Controls;
 
 public abstract class HmiParameterControlBase : HmiControlWindowBase
 {
+    public string? DefaultParameterSetTypeReferenceKey { get; set; }
+    public HmiRecipeReference? DefaultParameterSetTypeReference { get; set; }
+    public HmiRecipe? DefaultParameterSetType { get; set; }
+
     public HmiProperty<bool>? AllowSortByColumn { get; set; }
     public HmiProperty<bool>? AllowFilterByColumn { get; set; }
     public HmiProperty<int>? GridLineVisibility { get; set; }

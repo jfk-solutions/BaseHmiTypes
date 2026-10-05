@@ -2695,6 +2695,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   appendAttribute(html, "data-current-parameter-set-id", resolvePropertyPreview(control.currentParameterSetId));
   appendAttribute(html, "data-current-parameter-set-type-id", resolvePropertyPreview(control.currentParameterSetTypeId));
   appendAttribute(html, "data-hide-details", resolvePropertyPreview(control.hideDetails));
+  appendParameterDefinitionAttributes(html, control);
   appendParameterBarAttributes(html, control);
   appendParameterHeaderAttributes(html, control);
   appendParameterGridAttributes(html, control);
@@ -2749,6 +2750,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
   appendAttribute(html, "data-parameter-control-view", "overview");
   appendAttribute(html, "data-filter", resolvePropertyPreview(control.filter));
+  appendParameterDefinitionAttributes(html, control);
   appendParameterBarAttributes(html, control);
   appendParameterHeaderAttributes(html, control);
   appendParameterGridAttributes(html, control);
@@ -2788,6 +2790,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
 }
 
 function appendParameterView(html: string[], control: HmiParameterControlBase, context: HmiHtmlConvertContext): void {
+  appendParameterDefinitionPreview(html, control, context);
   const columns = control.columnDefinitions.filter(column => column.visible === undefined || getStaticValue(column.visible) === true);
   const style = ["flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;"];
   if (columns.length > 0) style.push("display: block; overflow: auto;");
@@ -2806,6 +2809,23 @@ function appendParameterView(html: string[], control: HmiParameterControlBase, c
   appendParameterHeaderSelectionPreview(html, control, context);
   appendParameterSelectionPreview(html, control, context);
   html.push("</div>");
+}
+
+function appendParameterDefinitionAttributes(html: string[], control: HmiParameterControlBase): void {
+  appendAttribute(html, "data-default-parameter-set-type-reference-key", control.defaultParameterSetTypeReferenceKey, true);
+  appendAttribute(html, "data-default-parameter-set-type-source-id", control.defaultParameterSetTypeReference?.sourceId);
+  appendAttribute(html, "data-default-parameter-set-type-name", control.defaultParameterSetTypeReference?.name, true);
+  if (control.defaultParameterSetType !== undefined)
+    appendAttribute(html, "data-default-parameter-set-type-field-count", String(control.defaultParameterSetType.parameters.length));
+}
+
+function appendParameterDefinitionPreview(html: string[], control: HmiParameterControlBase, context: HmiHtmlConvertContext): void {
+  const definition = control.defaultParameterSetType;
+  if (definition === undefined) return;
+  html.push('<details class="hmi-parameter-definition-preview"><summary>Configured parameter set type: ', escapeHtml((definition.displayName?.getText(context.options.cultureLcid) ?? definition.name) ?? ""), '</summary><table><thead><tr><th>Field</th><th>Data type</th><th>Default value</th></tr></thead><tbody>');
+  for (const field of definition.parameters)
+    html.push('<tr><td>', escapeHtml((field.displayName?.getText(context.options.cultureLcid) ?? field.name) ?? ""), '</td><td>', escapeHtml((field.dataType) ?? ""), '</td><td>', escapeHtml((field.defaultValue) ?? ""), '</td></tr>');
+  html.push('</tbody></table></details>');
 }
 
 function appendParameterBarAttributes(html: string[], control: HmiParameterControlBase): void {

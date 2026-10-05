@@ -1,8 +1,13 @@
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiColor, HmiFont, HmiProperty } from "../base.js";
+import { HmiRecipe, HmiRecipeReference } from "../../recipes/HmiRecipe.js";
 import { HmiParameterColumn } from "./HmiParameterColumn.js";
 
 export abstract class HmiParameterControlBase extends HmiControlWindowBase {
+  defaultParameterSetTypeReferenceKey?: string;
+  defaultParameterSetTypeReference?: HmiRecipeReference;
+  defaultParameterSetType?: HmiRecipe;
+
   allowSortByColumn?: HmiProperty<boolean>;
   allowFilterByColumn?: HmiProperty<boolean>;
   gridLineVisibility?: HmiProperty<number>;
