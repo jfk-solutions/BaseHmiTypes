@@ -3199,6 +3199,18 @@ public partial class HmiScreenToHtmlConverter
         if (alarmControl.MessageBlocks.Count > 0) AppendAttribute(html, "data-message-block-count", alarmControl.MessageBlocks.Count.ToString(CultureInfo.InvariantCulture));
         html.Append('>');
         AppendAlarmMessageBlocks(html, alarmControl, context);
+        var configuredViews = alarmControl.ColumnSets.Where(set => set.AllowSort is not null || set.AllowFilter is not null || set.AllowColumnReorder is not null || set.AllowColumnResize is not null).ToArray();
+        if (configuredViews.Length > 0)
+        {
+            html.Append("<template class=\"hmi-alarm-view-settings\">");
+            foreach (var set in configuredViews)
+            {
+                html.Append("<div");
+                AppendAlarmViewSettings(html, set, context);
+                html.Append("></div>");
+            }
+            html.Append("</template>");
+        }
 
         if (showTitle)
         {
@@ -3217,7 +3229,9 @@ public partial class HmiScreenToHtmlConverter
         html.Append("<table class=\"hmi-alarm-table");
         if (alarmControl.UseAlternatingRowColors is not null && ResolveStaticValue(alarmControl.UseAlternatingRowColors, context))
             html.Append(" hmi-alarm-table--alternating");
-        html.Append("\" style=\"").Append(CreateAlarmTableStyle(alarmControl, context)).Append("\">");
+        html.Append('"');
+        AppendAlarmViewSettings(html, selectedSet, context);
+        html.Append(" style=\"").Append(CreateAlarmTableStyle(alarmControl, context)).Append("\">");
         if (visibleColumns.Length > 0)
         {
             html.Append("<colgroup>");
@@ -5059,6 +5073,16 @@ public partial class HmiScreenToHtmlConverter
         }
         AppendFontStyle(style, alarmControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
+    }
+
+    private static void AppendAlarmViewSettings(StringBuilder html, HmiAlarmColumnSet? set, HmiHtmlConvertContext context)
+    {
+        if (set is null) return;
+        AppendAttribute(html, "data-column-set-name", set.Name, preserveEmpty: true);
+        AppendAttribute(html, "data-view-allow-sort", ResolvePropertyPreview(set.AllowSort, context));
+        AppendAttribute(html, "data-view-allow-filter", ResolvePropertyPreview(set.AllowFilter, context));
+        AppendAttribute(html, "data-view-allow-column-reorder", ResolvePropertyPreview(set.AllowColumnReorder, context));
+        AppendAttribute(html, "data-view-allow-column-resize", ResolvePropertyPreview(set.AllowColumnResize, context));
     }
 
     private static void AppendAlarmMessageBlocks(StringBuilder html, HmiAlarmControl control, HmiHtmlConvertContext context)
