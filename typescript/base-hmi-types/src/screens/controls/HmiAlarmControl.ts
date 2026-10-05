@@ -2,6 +2,7 @@ import { HmiColor, HmiFont, HmiHorizontalAlignment, HmiLineStyle, HmiProperty, H
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
+import { HmiAlarmMessageBlock } from "./HmiAlarmMessageBlock.js";
 import { HmiAlarmColumn } from "./HmiAlarmColumn.js";
 import { HmiAlarmColumnSet } from "./HmiAlarmColumnSet.js";
 import { HmiAlarmConditionPresentation } from "./HmiAlarmConditionPresentation.js";
@@ -28,6 +29,8 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   }
 
   suppressFlashing?: HmiProperty<boolean>;
+  readonly messageBlocks: HmiAlarmMessageBlock[] = [];
+
   readonly alarmConnections = new HmiAlarmConnectionBindings();
   viewKind = HmiAlarmViewKind.Unknown;
   acknowledgmentFlashingRate?: HmiProperty<number>;
