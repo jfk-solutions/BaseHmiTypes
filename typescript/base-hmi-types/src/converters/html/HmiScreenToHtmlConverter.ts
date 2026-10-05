@@ -3371,6 +3371,10 @@ function appendRadarChartControl(html: string[], radarChartControl: HmiRadarChar
 }
 
 function appendProcessDiagnosisControl(html: string[], item: HmiScreenItemBase, kind: string, label: string, context: HmiHtmlConvertContext): void {
+  if (item instanceof HmiProcessDiagnosisOverviewControl) {
+    appendProcessDiagnosisOverviewControl(html, item, context);
+    return;
+  }
   if (item instanceof HmiProcessDiagnosisCriteriaAnalysisControl) {
     appendCriteriaAnalysisControl(html, item, context);
     return;
@@ -3381,6 +3385,71 @@ function appendProcessDiagnosisControl(html: string[], item: HmiScreenItemBase, 
   appendAttribute(html, "role", "region");
   appendAttribute(html, "aria-label", label);
   html.push(">", escapeHtml(label), " data not loaded</div>");
+}
+
+function appendProcessDiagnosisOverviewControl(html: string[], control: HmiProcessDiagnosisOverviewControl, context: HmiHtmlConvertContext): void {
+  html.push("<div");
+  appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
+  appendAttribute(html, "data-process-diagnosis-kind", "Overview");
+  appendAttribute(html, "data-preview", "appearance");
+  appendAttribute(html, "data-header-background-color", resolvePropertyPreview(control.headerBackgroundColor));
+  appendAttribute(html, "data-header-foreground-color", resolvePropertyPreview(control.headerForegroundColor));
+  appendAttribute(html, "data-content-background-color", resolvePropertyPreview(control.contentBackgroundColor));
+  appendAttribute(html, "data-content-foreground-color", resolvePropertyPreview(control.contentForegroundColor));
+  appendAttribute(html, "data-output-grid-line-color", resolvePropertyPreview(control.outputGridLineColor));
+  appendAttribute(html, "data-output-label-foreground-color", resolvePropertyPreview(control.outputLabelForegroundColor));
+  appendAttribute(html, "data-error-icon-background-color", resolvePropertyPreview(control.errorIconBackgroundColor));
+  appendAttribute(html, "data-info-icon-background-color", resolvePropertyPreview(control.infoIconBackgroundColor));
+  appendAttribute(html, "data-toolbar-background-color", resolvePropertyPreview(control.toolbarBackgroundColor));
+  appendAttribute(html, "data-use-toolbar-background-color", resolvePropertyPreview(control.useToolbarBackgroundColor));
+  appendAttribute(html, "data-show-message-view-button", resolvePropertyPreview(control.showMessageViewButton));
+  appendAttribute(html, "data-button-background-color", resolvePropertyPreview(control.buttonBackgroundColor));
+  appendAttribute(html, "data-button-border-background-color", resolvePropertyPreview(control.buttonBorderBackgroundColor));
+  appendAttribute(html, "data-button-border-color", resolvePropertyPreview(control.buttonBorderColor));
+  appendAttribute(html, "data-button-first-gradient-color", resolvePropertyPreview(control.buttonFirstGradientColor));
+  appendAttribute(html, "data-button-middle-gradient-color", resolvePropertyPreview(control.buttonMiddleGradientColor));
+  appendAttribute(html, "data-button-second-gradient-color", resolvePropertyPreview(control.buttonSecondGradientColor));
+  appendAttribute(html, "data-button-border-width", resolvePropertyPreview(control.buttonBorderWidth));
+  appendAttribute(html, "data-button-corner-radius", resolvePropertyPreview(control.buttonCornerRadius));
+  appendAttribute(html, "data-button-edge-style", resolvePropertyPreview(control.buttonEdgeStyle));
+  appendAttribute(html, "data-button-back-fill-style", resolvePropertyPreview(control.buttonBackFillStyle));
+  appendAttribute(html, "data-button-first-gradient-offset", resolvePropertyPreview(control.buttonFirstGradientOffset));
+  appendAttribute(html, "data-button-second-gradient-offset", resolvePropertyPreview(control.buttonSecondGradientOffset));
+  appendAttribute(html, "data-use-button-first-gradient", resolvePropertyPreview(control.useButtonFirstGradient));
+  appendAttribute(html, "data-use-button-second-gradient", resolvePropertyPreview(control.useButtonSecondGradient));
+  html.push(' role="region" aria-label="Process diagnosis overview appearance preview"><div>Process diagnosis overview appearance preview; Process diagnosis data not loaded</div>');
+  const sample = (kind: string, label: string, background: HmiProperty<HmiColor> | undefined, foreground: HmiProperty<HmiColor> | undefined, additionalStyle = "", font?: HmiFont) => {
+    const style = ["padding: 2px 4px;"];
+    appendColorStyle(style, "background-color", background);
+    appendColorStyle(style, "color", foreground);
+    if (font) appendFont(style, font.getForCulture(context.options.cultureLcid));
+    style.push(additionalStyle);
+    html.push('<div data-appearance-sample="', kind, '" style="', style.join(""), '">', label, "</div>");
+  };
+  sample("header", "Header appearance", control.headerBackgroundColor, control.headerForegroundColor, "", control.headerFont);
+  const outputGrid: string[] = [];
+  if (control.outputGridLineColor !== undefined) {
+    outputGrid.push("border-bottom: 1px solid currentColor;");
+    appendColorStyle(outputGrid, "border-bottom-color", control.outputGridLineColor);
+  }
+  sample("output", "Output appearance", control.contentBackgroundColor, control.contentForegroundColor, outputGrid.join(""), control.contentFont);
+  sample("output-label", "Output label appearance", control.contentBackgroundColor, control.outputLabelForegroundColor, "", control.contentFont);
+  sample("error-icon", "Error icon background", control.errorIconBackgroundColor, undefined);
+  sample("info-icon", "Information icon background", control.infoIconBackgroundColor, undefined);
+  sample("toolbar", "Toolbar background appearance", getStaticValue(control.useToolbarBackgroundColor) !== false ? control.toolbarBackgroundColor : undefined, undefined);
+  const button: string[] = [];
+  appendColorStyle(button, "background-color", control.buttonBackgroundColor);
+  appendColorStyle(button, "border-color", control.buttonBorderColor);
+  appendHeaderBorderWidth(button, control.buttonBorderWidth);
+  const radius = getStaticValue(control.buttonCornerRadius);
+  if (radius !== undefined && Number.isFinite(radius) && radius >= 0) button.push(`border-radius: ${toCss(radius)}px;`);
+  appendColorGradientStyle(button, createColorGradient({
+    backgroundColor: control.buttonBackgroundColor, firstGradientColor: control.buttonFirstGradientColor, firstGradientOffset: control.buttonFirstGradientOffset,
+    middleGradientColor: control.buttonMiddleGradientColor, secondGradientColor: control.buttonSecondGradientColor, secondGradientOffset: control.buttonSecondGradientOffset,
+    useFirstGradient: control.useButtonFirstGradient, useSecondGradient: control.useButtonSecondGradient,
+  }));
+  sample("button", "Button appearance", undefined, undefined, button.join(""));
+  html.push("</div>");
 }
 
 function appendCriteriaAnalysisControl(html: string[], criteria: HmiProcessDiagnosisCriteriaAnalysisControl, context: HmiHtmlConvertContext): void {
