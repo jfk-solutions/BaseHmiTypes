@@ -11,6 +11,12 @@ public abstract class HmiParameterControlBase : HmiControlWindowBase
     public HmiProperty<int>? ColoringMode { get; set; }
     public HmiProperty<int>? HorizontalScrollBarVisibility { get; set; }
     public HmiProperty<int>? VerticalScrollBarVisibility { get; set; }
+    public HmiProperty<bool>? AllowColumnReorder { get; set; }
+    public HmiProperty<bool>? AllowColumnResize { get; set; }
+    public HmiProperty<int>? ColumnHeaderType { get; set; }
+    public HmiProperty<int>? RowHeaderType { get; set; }
+    public HmiProperty<HmiColor>? HeaderSelectionBackgroundColor { get; set; }
+    public HmiProperty<HmiColor>? HeaderSelectionForegroundColor { get; set; }
     public HmiProperty<bool>? SelectFullRow { get; set; }
     public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
     public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }

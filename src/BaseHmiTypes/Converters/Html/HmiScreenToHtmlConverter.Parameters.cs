@@ -16,6 +16,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-current-parameter-set-id", ResolvePropertyPreview(control.CurrentParameterSetId, context));
         AppendAttribute(html, "data-current-parameter-set-type-id", ResolvePropertyPreview(control.CurrentParameterSetTypeId, context));
         AppendAttribute(html, "data-hide-details", ResolvePropertyPreview(control.HideDetails, context));
+        AppendParameterHeaderAttributes(html, control, context);
         AppendParameterGridAttributes(html, control, context);
         AppendParameterSelectionAttributes(html, control, context);
         AppendAttribute(html, "data-row-height", ResolvePropertyPreview(control.RowHeight, context));
@@ -68,6 +69,7 @@ public partial class HmiScreenToHtmlConverter
         AppendCommonAttributes(html, control, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-parameter-control-view", "overview");
         AppendAttribute(html, "data-filter", ResolvePropertyPreview(control.Filter, context));
+        AppendParameterHeaderAttributes(html, control, context);
         AppendParameterGridAttributes(html, control, context);
         AppendParameterSelectionAttributes(html, control, context);
         AppendAttribute(html, "data-row-height", ResolvePropertyPreview(control.RowHeight, context));
@@ -118,8 +120,29 @@ public partial class HmiScreenToHtmlConverter
         html.Append("<div class=\"hmi-parameter-details\" style=\"").Append(style).Append("\">");
         if (columns.Length > 0) AppendParameterColumns(html, control, columns, context);
         else html.Append("Parameter data not loaded");
+        AppendParameterHeaderSelectionPreview(html, control, context);
         AppendParameterSelectionPreview(html, control, context);
         html.Append("</div>");
+    }
+
+    private static void AppendParameterHeaderAttributes(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    {
+        AppendAttribute(html, "data-allow-column-reorder", ResolvePropertyPreview(control.AllowColumnReorder, context));
+        AppendAttribute(html, "data-allow-column-resize", ResolvePropertyPreview(control.AllowColumnResize, context));
+        AppendAttribute(html, "data-column-header-type", ResolvePropertyPreview(control.ColumnHeaderType, context));
+        AppendAttribute(html, "data-row-header-type", ResolvePropertyPreview(control.RowHeaderType, context));
+        AppendAttribute(html, "data-header-selection-background-color", ResolvePropertyPreview(control.HeaderSelectionBackgroundColor, context));
+        AppendAttribute(html, "data-header-selection-foreground-color", ResolvePropertyPreview(control.HeaderSelectionForegroundColor, context));
+    }
+
+    private static void AppendParameterHeaderSelectionPreview(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    {
+        if (control.HeaderSelectionBackgroundColor is null && control.HeaderSelectionForegroundColor is null) return;
+        var style = new StringBuilder("padding: 2px 4px; box-sizing: border-box;");
+        AppendColorStyle(style, "background-color", control.HeaderSelectionBackgroundColor);
+        AppendColorStyle(style, "color", control.HeaderSelectionForegroundColor);
+        AppendFontStyle(style, control.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
+        html.Append("<div class=\"hmi-parameter-header-selection-preview\" data-preview=\"appearance\" style=\"").Append(style).Append("\">Header selection appearance preview</div>");
     }
 
     private static void AppendParameterGridAttributes(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
