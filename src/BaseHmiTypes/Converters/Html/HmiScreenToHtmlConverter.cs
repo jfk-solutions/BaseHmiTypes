@@ -3524,7 +3524,18 @@ public partial class HmiScreenToHtmlConverter
                 html.Append("<thead><tr>");
                 foreach (var column in columns)
                 {
-                    html.Append("<th style=\"").Append(header).Append("overflow: hidden; text-overflow: ellipsis;\"");
+                    var columnStyle = new StringBuilder(header.ToString());
+                    if (column.HeaderHorizontalAlignment is not null)
+                        columnStyle.Append("text-align: ").Append(ToCss(ResolveStaticValue(column.HeaderHorizontalAlignment, context))).Append(';');
+                    if (column.HeaderVerticalAlignment is not null)
+                    {
+                        var alignment = ResolveStaticValue(column.HeaderVerticalAlignment, context);
+                        if (alignment != HmiVerticalAlignment.Stretch)
+                            columnStyle.Append("vertical-align: ").Append(alignment == HmiVerticalAlignment.Top ? "top" : alignment == HmiVerticalAlignment.Bottom ? "bottom" : "middle").Append(';');
+                    }
+                    html.Append("<th style=\"").Append(columnStyle).Append("overflow: hidden; text-overflow: ellipsis;\"");
+                    AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
+                    AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
                     AppendAttribute(html, "data-column-source-type", column.SourceType);
                     AppendAttribute(html, "data-output-format", column.Format);
                     AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));

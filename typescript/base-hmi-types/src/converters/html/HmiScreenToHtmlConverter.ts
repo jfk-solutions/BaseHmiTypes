@@ -4010,7 +4010,15 @@ function appendSystemDiagnosisControl(
     if (getStaticValue(systemDiagnosisControl.showColumnHeadings) !== false) {
       html.push("<thead><tr>");
       for (const column of columns) {
-        html.push('<th style="', header.join(""), 'overflow: hidden; text-overflow: ellipsis;"');
+        const columnStyle = [...header];
+        const horizontal = getStaticValue(column.headerHorizontalAlignment);
+        if (horizontal !== undefined) columnStyle.push(`text-align: ${horizontalAlignmentToCss(horizontal)};`);
+        const vertical = getStaticValue(column.headerVerticalAlignment);
+        if (vertical !== undefined && vertical !== HmiVerticalAlignment.Stretch)
+          columnStyle.push(`vertical-align: ${vertical === HmiVerticalAlignment.Top ? "top" : vertical === HmiVerticalAlignment.Bottom ? "bottom" : "middle"};`);
+        html.push('<th style="', columnStyle.join(""), 'overflow: hidden; text-overflow: ellipsis;"');
+        appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
+        appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
         appendAttribute(html, "data-column-source-type", column.sourceType); appendAttribute(html, "data-output-format", column.format);
         appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
         appendAttribute(html, "data-sort-order", resolvePropertyPreview(column.sortOrder));
