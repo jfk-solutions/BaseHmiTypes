@@ -126,3 +126,9 @@ input[data-hmi-slider]::-moz-range-track {
 [data-hmi-focus-appearance]:focus-visible {
   outline: var(--hmi-focus-width, 1px) solid var(--hmi-focus-color, currentColor);
 }
+
+/* The unloaded alarm placeholder spans columns and must not be striped as a record. */
+.hmi-alarm-table--alternating-columns tbody tr > td:not([colspan]):nth-child(even) {
+  background-color: var(--hmi-alarm-alternating-row-background, inherit);
+  color: var(--hmi-alarm-alternating-row-foreground, inherit);
+}
