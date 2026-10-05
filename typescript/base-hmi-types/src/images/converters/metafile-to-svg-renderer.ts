@@ -322,6 +322,12 @@ export class MetafileToSvgRenderer {
         case EMR.ROUNDRECT:
           if (record.size >= 32) drawRoundRect(i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12), i32(bytes, dataOffset + 16), i32(bytes, dataOffset + 20), state, elements, true);
           break;
+        case EMR.ARC:
+        case EMR.CHORD:
+        case EMR.PIE:
+        case EMR.ARCTO:
+          if (record.size >= 40) drawArc(record.type, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12), i32(bytes, dataOffset + 16), i32(bytes, dataOffset + 20), i32(bytes, dataOffset + 24), i32(bytes, dataOffset + 28), state, elements, true);
+          break;
         case EMR.POLYGON16:
         case EMR.POLYLINE16:
         case EMR.POLYGON:
@@ -512,6 +518,15 @@ export class MetafileToSvgRenderer {
           drawRoundRect(left, top, right, bottom, i16(bytes, p + 2), i16(bytes, p), state, elements, false);
           break;
         }
+        case META.ARC:
+        case META.CHORD:
+        case META.PIE: {
+          if (record.sizeBytes < 22) break;
+          const left = i16(bytes, p + 14), top = i16(bytes, p + 12), right = i16(bytes, p + 10), bottom = i16(bytes, p + 8);
+          addBoundsPoint(bounds, left, top); addBoundsPoint(bounds, right, bottom);
+          drawArc(record.type === META.ARC ? EMR.ARC : record.type === META.CHORD ? EMR.CHORD : EMR.PIE, left, top, right, bottom, i16(bytes, p + 6), i16(bytes, p + 4), i16(bytes, p + 2), i16(bytes, p), state, elements, false);
+          break;
+        }
         case META.ELLIPSE: {
           const left = i16(bytes, p + 6);
           const top = i16(bytes, p + 4);
@@ -601,6 +616,10 @@ const EMR = {
   DELETEOBJECT: 0x0028,
   RECTANGLE: 0x002b,
   ROUNDRECT: 0x002c,
+  ARC: 0x002d,
+  CHORD: 0x002e,
+  PIE: 0x002f,
+  ARCTO: 0x0037,
   ELLIPSE: 0x002a,
   POLYGON16: 0x0056,
   POLYGON: 0x0003,
@@ -658,6 +677,9 @@ const META = {
   POLYPOLYGON: 0x0538,
   RECTANGLE: 0x041b,
   ROUNDRECT: 0x061c,
+  ARC: 0x0817,
+  CHORD: 0x0830,
+  PIE: 0x081a,
   ELLIPSE: 0x0418,
   STRETCHDIB: 0x0f43,
 };
@@ -1706,6 +1728,44 @@ function emfHeaderViewBox(bytes: Uint8Array): ViewBox | null {
 
 function lineElement(x1: number, y1: number, x2: number, y2: number, state: DrawState): string {
   return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${strokeAttrs(state)} fill="none" />`;
+}
+
+function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, sx: number, sy: number, ex: number, ey: number, state: DrawState, elements: string[], transformPoints: boolean): void {
+  const left = Math.min(x1, x2), right = Math.max(x1, x2), top = Math.min(y1, y2), bottom = Math.max(y1, y2);
+  const rx = (right - left) / 2, ry = (bottom - top) / 2;
+  if (rx === 0 || ry === 0) return;
+  const cx = (left + right) / 2, cy = (top + bottom) / 2;
+  const angle = Math.atan2((sy - cy) / ry, (sx - cx) / rx), endAngle = Math.atan2((ey - cy) / ry, (ex - cx) / rx);
+  let sweep = endAngle - angle;
+  if (Math.abs(sweep) < 1e-12) sweep = state.clockwiseShapes ? Math.PI * 2 : -Math.PI * 2;
+  else if (state.clockwiseShapes) { while (sweep <= 0) sweep += Math.PI * 2; }
+  else { while (sweep >= 0) sweep -= Math.PI * 2; }
+  const map = (x: number, y: number): [number, number] => transformPoints ? transformPoint(state, x, y) : [x, y];
+  const point = (x: number, y: number) => map(x, y).map(value => Number(value.toFixed(3))).join(' ');
+  const start = map(cx + rx * Math.cos(angle), cy + ry * Math.sin(angle));
+  const to = type === EMR.ARCTO, closed = type === EMR.CHORD || type === EMR.PIE, path = state.currentPath ?? [];
+  if (to) {
+    if (state.currentPath === undefined) path.push(`M ${state.currentX} ${state.currentY}`);
+    else ensurePathPosition(state);
+    path.push(`L ${start.map(value => Number(value.toFixed(3))).join(' ')}`);
+  } else {
+    path.push(`M ${start.map(value => Number(value.toFixed(3))).join(' ')}`);
+    if (state.currentPath !== undefined) { state.pathStartX = start[0]; state.pathStartY = start[1]; }
+  }
+  const segments = Math.max(1, Math.ceil(Math.abs(sweep) / (Math.PI / 2) - 1e-12)), step = sweep / segments;
+  for (let index = 0; index < segments; index++) {
+    const a = angle + index * step, b = a + step, k = 4 / 3 * Math.tan(step / 4);
+    path.push(`C ${point(cx + rx * (Math.cos(a) - k * Math.sin(a)), cy + ry * (Math.sin(a) + k * Math.cos(a)))} ${point(cx + rx * (Math.cos(b) + k * Math.sin(b)), cy + ry * (Math.sin(b) - k * Math.cos(b)))} ${point(cx + rx * Math.cos(b), cy + ry * Math.sin(b))}`);
+  }
+  if (type === EMR.PIE) path.push(`L ${point(cx, cy)}`);
+  if (closed) path.push('Z');
+  const end = map(cx + rx * Math.cos(endAngle), cy + ry * Math.sin(endAngle));
+  if (to) { state.currentX = end[0]; state.currentY = end[1]; }
+  if (state.currentPath === undefined) elements.push(pathElement(path, state, closed ? 'paint' : 'stroke'));
+  else {
+    state.pathFigureClosed = closed;
+    state.pathEndX = closed ? state.pathStartX : end[0]; state.pathEndY = closed ? state.pathStartY : end[1];
+  }
 }
 
 function drawRoundRect(x1: number, y1: number, x2: number, y2: number, cornerWidth: number, cornerHeight: number, state: DrawState, elements: string[], transformPoints: boolean): void {
