@@ -25,6 +25,8 @@ interface FontObject {
   italic: boolean;
 }
 
+const CLIP_VIEWPORT_TOKEN = '__METAFILE_CLIP_VIEWPORT__';
+
 interface DrawState {
   pathFigureClosed: boolean;
   clockwiseShapes: boolean;
@@ -297,6 +299,11 @@ export class MetafileToSvgRenderer {
             state.selectedPath = undefined;
           }
           break;
+        case EMR.INTERSECTCLIPRECT:
+        case EMR.EXCLUDECLIPRECT:
+          if (record.size >= 24)
+            combineRectClip(i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12), record.type === EMR.INTERSECTCLIPRECT ? 1 : 4, state, viewBox, defs, ++clipSequence, true);
+          break;
         case EMR.POLYLINETO:
         case EMR.POLYLINETO16:
         case EMR.POLYBEZIER:
@@ -447,6 +454,8 @@ export class MetafileToSvgRenderer {
     const state = createInitialState();
     const objects: Array<MetafileObject | null> = [];
     const elements: string[] = [];
+    const defs: string[] = [];
+    let clipSequence = 0;
     let windowOrg = { x: viewBox.x, y: viewBox.y };
     let windowExt = { x: viewBox.width, y: viewBox.height };
     let hasExplicitWindow = false;
@@ -468,6 +477,11 @@ export class MetafileToSvgRenderer {
           break;
         case META.SETPOLYFILLMODE:
           state.fillRule = polyFillRule(u16(bytes, p));
+          break;
+        case META.INTERSECTCLIPRECT:
+        case META.EXCLUDECLIPRECT:
+          if (record.sizeBytes >= 14)
+            combineRectClip(i16(bytes, p + 6), i16(bytes, p + 4), i16(bytes, p + 2), i16(bytes, p), record.type === META.INTERSECTCLIPRECT ? 1 : 4, state, undefined, defs, ++clipSequence, false);
           break;
         case META.CREATEPENINDIRECT:
           addWmfObject(objects, {
@@ -573,13 +587,15 @@ export class MetafileToSvgRenderer {
     let mirroredElements = elements;
     if (mirrorVertically)
       mirroredElements = mirrorElementsVertically(mirroredElements, viewBox);
-    return svgDocument(viewBox, mirroredElements);
+    return svgDocument(viewBox, mirroredElements, defs.map(def => def.split(CLIP_VIEWPORT_TOKEN).join(clipViewportAttrs(viewBox))));
   }
 }
 
 const PlaceableWmfKey = 0x9ac6cdd7;
 
 const EMR = {
+  EXCLUDECLIPRECT: 0x001d,
+  INTERSECTCLIPRECT: 0x001e,
   SETMITERLIMIT: 0x003a,
   SETARCDIRECTION: 0x0039,
   HEADER: 0x0001,
@@ -666,6 +682,8 @@ const EmfPlusSolidColorBrushFlag = 0x8000;
 const PngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 const META = {
+  EXCLUDECLIPRECT: 0x0415,
+  INTERSECTCLIPRECT: 0x0416,
   ESCAPE: 0x0626,
   SETWINDOWORG: 0x020b,
   SETWINDOWEXT: 0x020c,
@@ -1734,6 +1752,22 @@ function emfHeaderViewBox(bytes: Uint8Array): ViewBox | null {
 
 function selectPathClip(state: DrawState, mode: number, viewBox: ViewBox, defs: string[], sequence: number): void {
   const geometry = `d="${state.selectedPath!.join(' ')}" fill-rule="${state.fillRule}" clip-rule="${state.fillRule}"`;
+  combineClipGeometry(state, geometry, mode, viewBox, defs, sequence);
+}
+
+function combineRectClip(x1: number, y1: number, x2: number, y2: number, mode: number, state: DrawState, viewBox: ViewBox | undefined, defs: string[], sequence: number, transformPoints: boolean): void {
+  const left = Math.min(x1, x2), right = Math.max(x1, x2), top = Math.min(y1, y2), bottom = Math.max(y1, y2);
+  const point = (x: number, y: number) => (transformPoints ? transformPoint(state, x, y) : [x, y]).map(v => Number(v.toFixed(3))).join(' ');
+  const path = left === right || top === bottom ? '' : `M ${point(left, top)} L ${point(right, top)} L ${point(right, bottom)} L ${point(left, bottom)} Z`;
+  combineClipGeometry(state, `d="${path}" fill-rule="nonzero" clip-rule="nonzero"`, mode, viewBox, defs, sequence);
+}
+
+function clipViewportAttrs(viewBox: ViewBox): string {
+  const n = (value: number) => Number(value.toFixed(3));
+  return `x="${n(viewBox.x)}" y="${n(viewBox.y)}" width="${n(viewBox.width)}" height="${n(viewBox.height)}"`;
+}
+
+function combineClipGeometry(state: DrawState, geometry: string, mode: number, viewBox: ViewBox | undefined, defs: string[], sequence: number): void {
   if (mode === 5 || (mode === 1 && !state.activeClipId && !state.activeMaskId)) {
     const id = `clip${sequence}`;
     defs.push(`<clipPath id="${id}"><path ${geometry} /></clipPath>`);
@@ -1742,8 +1776,9 @@ function selectPathClip(state: DrawState, mode: number, viewBox: ViewBox, defs: 
     return;
   }
   // White includes and black excludes within the finite image viewport.
-  const old = clipAttr(state), n = (value: number) => Number(value.toFixed(3));
-  const rect = `x="${n(viewBox.x)}" y="${n(viewBox.y)}" width="${n(viewBox.width)}" height="${n(viewBox.height)}"`;
+  const old = clipAttr(state);
+  // WMF drawing bounds may be known only after the last record.
+  const rect = viewBox ? clipViewportAttrs(viewBox) : CLIP_VIEWPORT_TOKEN;
   const previous = `<rect ${rect} fill="#ffffff"${old} />`;
   const include = `<path ${geometry} fill="#ffffff" />`;
   const exclude = `<path ${geometry} fill="#000000" />`;
