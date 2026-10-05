@@ -1,3 +1,4 @@
+using BaseHmiTypes.TextGraphicLists;
 using BaseHmiTypes.Common;
 
 namespace BaseHmiTypes.Recipes;
@@ -79,6 +80,7 @@ public sealed class HmiRecipeReference
 
 public sealed class HmiRecipeParameter : IHmiObject
 {
+    public HmiTextList? TextList { get; set; }
     public HmiRecipePlcArray? SourcePlcArray { get; set; }
     public IDictionary<string, HmiRecipeReference> References { get; } = new Dictionary<string, HmiRecipeReference>();
     public bool? TriggerRedraw { get; set; }
