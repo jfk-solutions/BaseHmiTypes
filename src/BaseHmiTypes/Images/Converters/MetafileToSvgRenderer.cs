@@ -282,6 +282,11 @@ public sealed class MetafileToSvgRenderer
                             AppendEmfShapePath(bytes, dataOffset, record.Type == EMR.Ellipse, state);
                             break;
                         }
+                        if (state.WorldTransform.M12 != 0 || state.WorldTransform.M21 != 0)
+                        {
+                            elements.Add(PathElement(EmfShapePath(bytes, dataOffset, record.Type == EMR.Ellipse, state, out _), state, PathPaintMode.Paint));
+                            break;
+                        }
                         var rect = TransformRect(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12));
                         elements.Add(record.Type == EMR.Ellipse
                             ? EllipseElement(rect.Left, rect.Top, rect.Right, rect.Bottom, state)
@@ -1027,19 +1032,27 @@ public sealed class MetafileToSvgRenderer
 
     private static void AppendEmfShapePath(byte[] bytes, int offset, bool ellipse, DrawState state)
     {
+        state.CurrentPath!.AddRange(EmfShapePath(bytes, offset, ellipse, state, out var start));
+        state.PathFigureClosed = true;
+        state.PathStartX = state.PathEndX = start.X;
+        state.PathStartY = state.PathEndY = start.Y;
+    }
+
+    private static List<string> EmfShapePath(byte[] bytes, int offset, bool ellipse, DrawState state, out (double X, double Y) start)
+    {
         // EMF records already carry inclusive bounds: GDI's recorder adjusts
         // GM_COMPATIBLE right/bottom edges before writing these records.
         double left = Math.Min(I32(bytes, offset), I32(bytes, offset + 8));
         double right = Math.Max(I32(bytes, offset), I32(bytes, offset + 8));
         double top = Math.Min(I32(bytes, offset + 4), I32(bytes, offset + 12));
         double bottom = Math.Max(I32(bytes, offset + 4), I32(bytes, offset + 12));
-        var path = state.CurrentPath!;
+        var path = new List<string>();
         string Point(double x, double y)
         {
             var point = TransformPoint(state, x, y);
             return $"{Number(point.X)} {Number(point.Y)}";
         }
-        var start = TransformPoint(state, right, ellipse ? (top + bottom) / 2 : state.ClockwiseShapes ? bottom : top);
+        start = TransformPoint(state, right, ellipse ? (top + bottom) / 2 : state.ClockwiseShapes ? bottom : top);
         path.Add($"M {Number(start.X)} {Number(start.Y)}");
         if (!ellipse)
         {
@@ -1066,9 +1079,7 @@ public sealed class MetafileToSvgRenderer
             }
         }
         path.Add("Z");
-        state.PathFigureClosed = true;
-        state.PathStartX = state.PathEndX = start.X;
-        state.PathStartY = state.PathEndY = start.Y;
+        return path;
     }
 
     private static (double Left, double Top, double Right, double Bottom) TransformRect(DrawState state, int left, int top, int right, int bottom)
