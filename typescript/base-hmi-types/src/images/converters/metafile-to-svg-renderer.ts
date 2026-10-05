@@ -200,10 +200,14 @@ export class MetafileToSvgRenderer {
           restoreState(state, stateStack.pop());
           break;
         case EMR.SETWORLDTRANSFORM:
-          state.worldTransform = readTransform(bytes, dataOffset);
+          if (record.size >= 32) {
+            const value = readTransform(bytes, dataOffset);
+            if (!isSingularTransform(value)) state.worldTransform = value;
+          }
           break;
         case EMR.MODIFYWORLDTRANSFORM:
-          state.worldTransform = modifyWorldTransform(state.worldTransform, readTransform(bytes, dataOffset), u32(bytes, dataOffset + 24));
+          if (record.size >= 36)
+            state.worldTransform = modifyWorldTransform(state.worldTransform, readTransform(bytes, dataOffset), u32(bytes, dataOffset + 24));
           break;
         case EMR.CREATEPEN:
           if (record.size < 28) break;
@@ -1101,6 +1105,8 @@ const ModifyWorldTransformRightMultiply = 3;
 const ModifyWorldTransformSet = 4;
 
 function modifyWorldTransform(current: Transform, next: Transform, mode: number): Transform {
+  // IDENTITY ignores Xform; native GDI rejects singular SET/multipliers.
+  if (mode !== ModifyWorldTransformIdentity && isSingularTransform(next)) return current;
   switch (mode) {
     case ModifyWorldTransformIdentity:
       return identityTransform();
@@ -1111,8 +1117,12 @@ function modifyWorldTransform(current: Transform, next: Transform, mode: number)
     case ModifyWorldTransformSet:
       return next;
     default:
-      return next;
+      return current;
   }
+}
+
+function isSingularTransform(value: Transform): boolean {
+  return value.m11 * value.m22 - value.m12 * value.m21 === 0;
 }
 
 function multiplyTransforms(first: Transform, second: Transform): Transform {
