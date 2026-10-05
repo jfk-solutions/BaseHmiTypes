@@ -217,6 +217,7 @@ public sealed class HmiRecipeToHtmlConverter
                         .Append("</td><td data-value-state=\"present\">").Append(Encode(pair.Value.GetText(culture))).Append("</td></tr>");
             html.Append("</tbody></table></div>");
         }
+        AppendPlcArrays(html, recipe);
         html.Append("<h2>Stored records</h2>");
         if (recipe.DataSets.Count == 0)
             html.Append("<p>No stored records.</p>");
@@ -275,6 +276,36 @@ public sealed class HmiRecipeToHtmlConverter
         }
         AppendRecipeViews(html, recipe, culture);
         return html.Append("</body></html>").ToString();
+    }
+
+    private static void AppendPlcArrays(StringBuilder html, HmiRecipe recipe)
+    {
+        var arrays = recipe.Parameters.Where(p => p.SourcePlcArray != null).Select(p => (Kind: "Field", p.Name, Array: p.SourcePlcArray!))
+            .Concat(recipe.SourcePlcDeclarations.Where(d => d.Array != null).Select(d => (Kind: "Composite declaration", d.Name, Array: d.Array!))).ToArray();
+        if (arrays.Length == 0) return;
+        html.Append("<h2>Source PLC array declarations</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Kind</th><th scope=\"col\">Declaration</th><th scope=\"col\">Original type</th><th scope=\"col\">Element type</th><th scope=\"col\">Open array</th><th scope=\"col\">Declared dimensions</th><th scope=\"col\">Resolved dimensions</th></tr></thead><tbody>");
+        foreach (var entry in arrays)
+        {
+            html.Append("<tr>");
+            foreach (var value in new[] { entry.Kind, entry.Name, entry.Array.OriginalTypeName, entry.Array.ElementTypeName, FormatFlag(entry.Array.IsStarArray),
+                entry.Array.Dimensions?.Count.ToString(CultureInfo.InvariantCulture), entry.Array.ResolvedDimensions?.Count.ToString(CultureInfo.InvariantCulture) }) AppendViewValue(html, value);
+            html.Append("</tr>");
+        }
+        html.Append("</tbody></table></div>");
+        if (!arrays.Any(e => e.Array.Dimensions?.Count > 0 || e.Array.ResolvedDimensions?.Count > 0)) return;
+        html.Append("<h2>Source PLC array bounds</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Kind</th><th scope=\"col\">Declaration</th><th scope=\"col\">Bounds</th><th scope=\"col\">List position</th><th scope=\"col\">Start</th><th scope=\"col\">End</th></tr></thead><tbody>");
+        foreach (var entry in arrays)
+        {
+            void Row(string kind, int position, string? start, string? end)
+            {
+                html.Append("<tr>");
+                foreach (var value in new[] { entry.Kind, entry.Name, kind, position.ToString(CultureInfo.InvariantCulture), start, end }) AppendViewValue(html, value);
+                html.Append("</tr>");
+            }
+            if (entry.Array.Dimensions != null) for (var i = 0; i < entry.Array.Dimensions.Count; i++) Row("Declared", i + 1, entry.Array.Dimensions[i].Start, entry.Array.Dimensions[i].End);
+            if (entry.Array.ResolvedDimensions != null) for (var i = 0; i < entry.Array.ResolvedDimensions.Count; i++) Row("Resolved", i + 1, entry.Array.ResolvedDimensions[i].Start.ToString(CultureInfo.InvariantCulture), entry.Array.ResolvedDimensions[i].End.ToString(CultureInfo.InvariantCulture));
+        }
+        html.Append("</tbody></table></div>");
     }
 
     private static void AppendRecipeViews(StringBuilder html, HmiRecipe recipe, CultureInfo? culture)
