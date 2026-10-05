@@ -9,6 +9,18 @@ export class HmiProcessDiagnosisCriteriaAnalysisControl extends HmiCompanionBase
   gridLineColor?: HmiProperty<HmiColor>;
   alternatingRowBackgroundColor?: HmiProperty<HmiColor>;
 
+  headerBorderBackgroundColor?: HmiProperty<HmiColor>;
+  headerCornerRadius?: HmiProperty<number>;
+  headerBackFillStyle?: HmiProperty<number>;
+  headerEdgeStyle?: HmiProperty<number>;
+  headerFirstGradientColor?: HmiProperty<HmiColor>;
+  headerMiddleGradientColor?: HmiProperty<HmiColor>;
+  headerSecondGradientColor?: HmiProperty<HmiColor>;
+  headerFirstGradientOffset?: HmiProperty<number>;
+  headerSecondGradientOffset?: HmiProperty<number>;
+  useHeaderFirstGradient?: HmiProperty<boolean>;
+  useHeaderSecondGradient?: HmiProperty<boolean>;
+
   constructor() {
     super();
     this.hmiObjectType = HmiObjectType.HmiProcessDiagnosisCriteriaAnalysisControl;

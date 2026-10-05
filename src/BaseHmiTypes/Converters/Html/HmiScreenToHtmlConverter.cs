@@ -3322,6 +3322,17 @@ public partial class HmiScreenToHtmlConverter
         html.Append("<div");
         AppendCommonAttributes(html, criteria, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-process-diagnosis-kind", "CriteriaAnalysis");
+        AppendAttribute(html, "data-header-border-background-color", ResolvePropertyPreview(criteria.HeaderBorderBackgroundColor, context));
+        AppendAttribute(html, "data-header-corner-radius", ResolvePropertyPreview(criteria.HeaderCornerRadius, context));
+        AppendAttribute(html, "data-header-back-fill-style", ResolvePropertyPreview(criteria.HeaderBackFillStyle, context));
+        AppendAttribute(html, "data-header-edge-style", ResolvePropertyPreview(criteria.HeaderEdgeStyle, context));
+        AppendAttribute(html, "data-header-first-gradient-color", ResolvePropertyPreview(criteria.HeaderFirstGradientColor, context));
+        AppendAttribute(html, "data-header-middle-gradient-color", ResolvePropertyPreview(criteria.HeaderMiddleGradientColor, context));
+        AppendAttribute(html, "data-header-second-gradient-color", ResolvePropertyPreview(criteria.HeaderSecondGradientColor, context));
+        AppendAttribute(html, "data-header-first-gradient-offset", ResolvePropertyPreview(criteria.HeaderFirstGradientOffset, context));
+        AppendAttribute(html, "data-header-second-gradient-offset", ResolvePropertyPreview(criteria.HeaderSecondGradientOffset, context));
+        AppendAttribute(html, "data-use-header-first-gradient", ResolvePropertyPreview(criteria.UseHeaderFirstGradient, context));
+        AppendAttribute(html, "data-use-header-second-gradient", ResolvePropertyPreview(criteria.UseHeaderSecondGradient, context));
         AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(criteria.ShowGridLines, context));
         AppendAttribute(html, "data-show-column-headings", ResolvePropertyPreview(criteria.ShowColumnHeadings, context));
         AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(criteria.GridLineColor, context));
@@ -3338,6 +3349,12 @@ public partial class HmiScreenToHtmlConverter
                 var width = ResolveStaticValue(criteria.HeaderBorderWidth, context);
                 if (IsFinite(width) && width >= 0) header.Append("border-width: ").Append(ToCss(width)).Append("px; border-style: solid;");
             }
+            if (criteria.HeaderCornerRadius?.StaticValue is double radius && IsFinite(radius) && radius >= 0)
+                header.Append("border-radius: ").Append(ToCss(radius)).Append("px;");
+            AppendColorGradientStyle(header, CreateColorGradient(
+                criteria.HeaderBackgroundColor, criteria.HeaderFirstGradientColor, criteria.HeaderFirstGradientOffset,
+                criteria.HeaderMiddleGradientColor, criteria.HeaderSecondGradientColor, criteria.HeaderSecondGradientOffset,
+                criteria.UseHeaderFirstGradient, criteria.UseHeaderSecondGradient, null));
             AppendFontStyle(header, criteria.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
             html.Append("<div data-appearance-sample=\"header\" style=\"").Append(header).Append("\">Header appearance</div>");
         }

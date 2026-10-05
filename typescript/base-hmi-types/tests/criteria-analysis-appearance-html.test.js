@@ -1,6 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { HmiProcessDiagnosisCriteriaAnalysisControl, HmiScreen, HmiLayer, HmiScreenToHtmlConverter, staticProperty, hmiColorFromArgb } from "../dist/index.js";
+import { getStaticValue } from "../dist/index.js";
+
+for (const visible of [false,true]) test(`Criteria header gradients retain hidden settings visible=${visible}`,async()=>{
+ const item=new HmiProcessDiagnosisCriteriaAnalysisControl();item.name="Criteria <A> & B";item.showColumnHeadings=staticProperty(visible);
+ item.headerBackgroundColor=staticProperty(hmiColorFromArgb(0,17,34,51));item.headerBorderBackgroundColor=staticProperty(hmiColorFromArgb(255,21,22,23));
+ item.headerCornerRadius=staticProperty(0);item.headerBackFillStyle=staticProperty(-7);item.headerEdgeStyle=staticProperty(-2147483648);
+ item.headerFirstGradientColor=staticProperty(hmiColorFromArgb(255,31,32,33));item.headerMiddleGradientColor=staticProperty(hmiColorFromArgb(255,41,42,43));item.headerSecondGradientColor=staticProperty(hmiColorFromArgb(255,51,52,53));
+ item.headerFirstGradientOffset=staticProperty(-10);item.headerSecondGradientOffset=staticProperty(120);item.useHeaderFirstGradient=staticProperty(true);item.useHeaderSecondGradient=staticProperty(true);
+ const screen=new HmiScreen(),layer=new HmiLayer();screen.layers.push(layer);layer.items.push(item);const renderer=new HmiScreenToHtmlConverter();
+ const header=html=>/<div data-appearance-sample="header"(.*?)<\/div>/u.exec(html)?.[0]??"";
+ const html=await renderer.convertAsync(screen);assert.ok(html.includes("Criteria &lt;A&gt; &amp; B"));
+ for(const key of ["header-border-background-color","header-corner-radius","header-back-fill-style","header-edge-style","header-first-gradient-color","header-middle-gradient-color","header-second-gradient-color","header-first-gradient-offset","header-second-gradient-offset","use-header-first-gradient","use-header-second-gradient"]) assert.ok(html.includes(`data-${key}=`),key);
+ assert.ok(html.includes('data-header-edge-style="-2147483648"'));assert.equal(header(html).includes("linear-gradient("),visible);assert.equal(header(html).includes("border-radius: 0px;"),visible);
+ assert.equal(getStaticValue(item.headerFirstGradientOffset),-10);assert.equal(getStaticValue(item.headerSecondGradientOffset),120);
+ item.showColumnHeadings=staticProperty(true);item.useHeaderFirstGradient=staticProperty(false);item.useHeaderSecondGradient=staticProperty(false);
+ const disabled=header(await renderer.convertAsync(screen));assert.ok(!disabled.includes("linear-gradient("));assert.ok(disabled.includes("background-color: rgba(17,34,51,0);"));
+ for(const radius of [-1,NaN,Infinity]){item.headerCornerRadius=staticProperty(radius);assert.ok(!header(await renderer.convertAsync(screen)).includes("border-radius:"));}
+ delete item.headerBackgroundColor;delete item.headerFirstGradientColor;delete item.headerMiddleGradientColor;delete item.headerSecondGradientColor;
+ const codes=await renderer.convertAsync(screen);assert.ok(codes.includes('data-header-back-fill-style="-7"'));assert.ok(codes.includes("data-header-border-background-color="));assert.ok(!header(codes).includes("background-color:"));
+});
 
 test("Criteria analysis renders independent appearance samples and visibility", async () => {
   const item = new HmiProcessDiagnosisCriteriaAnalysisControl();
