@@ -3553,6 +3553,17 @@ function appendCriteriaAnalysisControl(html: string[], criteria: HmiProcessDiagn
   html.push("<div");
   appendCommonAttributes(html, criteria, context, true, "display: flex; flex-direction: column; overflow: hidden;");
   appendAttribute(html, "data-process-diagnosis-kind", "CriteriaAnalysis");
+  appendAttribute(html, "data-header-border-background-color", resolvePropertyPreview(criteria.headerBorderBackgroundColor));
+  appendAttribute(html, "data-header-corner-radius", resolvePropertyPreview(criteria.headerCornerRadius));
+  appendAttribute(html, "data-header-back-fill-style", resolvePropertyPreview(criteria.headerBackFillStyle));
+  appendAttribute(html, "data-header-edge-style", resolvePropertyPreview(criteria.headerEdgeStyle));
+  appendAttribute(html, "data-header-first-gradient-color", resolvePropertyPreview(criteria.headerFirstGradientColor));
+  appendAttribute(html, "data-header-middle-gradient-color", resolvePropertyPreview(criteria.headerMiddleGradientColor));
+  appendAttribute(html, "data-header-second-gradient-color", resolvePropertyPreview(criteria.headerSecondGradientColor));
+  appendAttribute(html, "data-header-first-gradient-offset", resolvePropertyPreview(criteria.headerFirstGradientOffset));
+  appendAttribute(html, "data-header-second-gradient-offset", resolvePropertyPreview(criteria.headerSecondGradientOffset));
+  appendAttribute(html, "data-use-header-first-gradient", resolvePropertyPreview(criteria.useHeaderFirstGradient));
+  appendAttribute(html, "data-use-header-second-gradient", resolvePropertyPreview(criteria.useHeaderSecondGradient));
   appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(criteria.showGridLines));
   appendAttribute(html, "data-show-column-headings", resolvePropertyPreview(criteria.showColumnHeadings));
   appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(criteria.gridLineColor));
@@ -3565,6 +3576,13 @@ function appendCriteriaAnalysisControl(html: string[], criteria: HmiProcessDiagn
     appendColorStyle(header, "border-color", criteria.headerBorderColor);
     const width = getStaticValue(criteria.headerBorderWidth);
     if (width !== undefined && Number.isFinite(width) && width >= 0) header.push(`border-width: ${toCss(width)}px; border-style: solid;`);
+    const radius = getStaticValue(criteria.headerCornerRadius);
+    if (radius !== undefined && Number.isFinite(radius) && radius >= 0) header.push(`border-radius: ${toCss(radius)}px;`);
+    appendColorGradientStyle(header, createColorGradient({
+      backgroundColor: criteria.headerBackgroundColor, firstGradientColor: criteria.headerFirstGradientColor, firstGradientOffset: criteria.headerFirstGradientOffset,
+      middleGradientColor: criteria.headerMiddleGradientColor, secondGradientColor: criteria.headerSecondGradientColor, secondGradientOffset: criteria.headerSecondGradientOffset,
+      useFirstGradient: criteria.useHeaderFirstGradient, useSecondGradient: criteria.useHeaderSecondGradient,
+    }));
     if (criteria.headerFont) appendFont(header, criteria.headerFont.getForCulture(context.options.cultureLcid));
     html.push('<div data-appearance-sample="header" style="', header.join(""), '">Header appearance</div>');
   }
