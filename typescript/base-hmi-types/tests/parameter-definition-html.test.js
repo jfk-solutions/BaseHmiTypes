@@ -1,0 +1,9 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {HmiOverviewParameterControl,HmiDetailedParameterControl,HmiRecipe,HmiRecipeParameter,HmiRecipeReference,HmiScreen,HmiLayer,HmiScreenToHtmlConverter,staticProperty} from "../dist/index.js";
+for(const type of [HmiDetailedParameterControl,HmiOverviewParameterControl]) test(`Configured fields remain separate from runtime records: ${type.name}`,async()=>{
+ const control=new type(),screen=new HmiScreen(),layer=new HmiLayer(); layer.items.push(control); screen.layers.push(layer); const renderer=new HmiScreenToHtmlConverter(); assert.ok(!(await renderer.convertAsync(screen)).includes("hmi-parameter-definition-preview"));
+ control.defaultParameterSetTypeReferenceKey=""; control.defaultParameterSetTypeReference=Object.assign(new HmiRecipeReference(),{sourceId:"17-23",name:"Type <A>"}); control.defaultParameterSetType=Object.assign(new HmiRecipe(),{name:"Type <A>"}); control.defaultParameterSetType.parameters.push(Object.assign(new HmiRecipeParameter(),{name:"Field <A>",dataType:"Type & B",defaultValue:"<script>example</script>"}));
+ let html=await renderer.convertAsync(screen); for(const fragment of ['data-default-parameter-set-type-reference-key=""','data-default-parameter-set-type-field-count="1"','Configured parameter set type: Type &lt;A&gt;','Field &lt;A&gt;','Type &amp; B','&lt;script&gt;example&lt;/script&gt;','Parameter data not loaded']) assert.ok(html.includes(fragment),fragment); assert.equal(control.defaultParameterSetType.dataSets.length,0);
+ if(control instanceof HmiDetailedParameterControl) {control.hideDetails=staticProperty(true);html=await renderer.convertAsync(screen);assert.ok(!html.includes("hmi-parameter-definition-preview"));assert.ok(html.includes('data-default-parameter-set-type-field-count="1"'));}
+});

@@ -16,6 +16,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-current-parameter-set-id", ResolvePropertyPreview(control.CurrentParameterSetId, context));
         AppendAttribute(html, "data-current-parameter-set-type-id", ResolvePropertyPreview(control.CurrentParameterSetTypeId, context));
         AppendAttribute(html, "data-hide-details", ResolvePropertyPreview(control.HideDetails, context));
+        AppendParameterDefinitionAttributes(html, control);
         AppendParameterBarAttributes(html, control, context);
         AppendParameterHeaderAttributes(html, control, context);
         AppendParameterGridAttributes(html, control, context);
@@ -76,6 +77,7 @@ public partial class HmiScreenToHtmlConverter
         AppendCommonAttributes(html, control, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-parameter-control-view", "overview");
         AppendAttribute(html, "data-filter", ResolvePropertyPreview(control.Filter, context));
+        AppendParameterDefinitionAttributes(html, control);
         AppendParameterBarAttributes(html, control, context);
         AppendParameterHeaderAttributes(html, control, context);
         AppendParameterGridAttributes(html, control, context);
@@ -119,6 +121,7 @@ public partial class HmiScreenToHtmlConverter
 
     private static void AppendParameterView(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
     {
+        AppendParameterDefinitionPreview(html, control, context);
         var columns = control.ColumnDefinitions.Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context)).ToArray();
         var style = new StringBuilder("flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;");
         if (columns.Length > 0) style.Append("display: block; overflow: auto;");
@@ -137,6 +140,26 @@ public partial class HmiScreenToHtmlConverter
         AppendParameterHeaderSelectionPreview(html, control, context);
         AppendParameterSelectionPreview(html, control, context);
         html.Append("</div>");
+    }
+
+    private static void AppendParameterDefinitionAttributes(StringBuilder html, HmiParameterControlBase control)
+    {
+        AppendAttribute(html, "data-default-parameter-set-type-reference-key", control.DefaultParameterSetTypeReferenceKey, preserveEmpty: true);
+        AppendAttribute(html, "data-default-parameter-set-type-source-id", control.DefaultParameterSetTypeReference?.SourceId);
+        AppendAttribute(html, "data-default-parameter-set-type-name", control.DefaultParameterSetTypeReference?.Name, preserveEmpty: true);
+        if (control.DefaultParameterSetType is { } definition)
+            AppendAttribute(html, "data-default-parameter-set-type-field-count", definition.Parameters.Count.ToString(CultureInfo.InvariantCulture));
+    }
+
+    private static void AppendParameterDefinitionPreview(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    {
+        if (control.DefaultParameterSetType is not { } definition) return;
+        html.Append("<details class=\"hmi-parameter-definition-preview\"><summary>Configured parameter set type: ")
+            .Append(WebUtility.HtmlEncode(definition.DisplayName?.GetText(context.CultureInfo) ?? definition.Name)).Append("</summary><table><thead><tr><th>Field</th><th>Data type</th><th>Default value</th></tr></thead><tbody>");
+        foreach (var field in definition.Parameters)
+            html.Append("<tr><td>").Append(WebUtility.HtmlEncode(field.DisplayName?.GetText(context.CultureInfo) ?? field.Name)).Append("</td><td>")
+                .Append(WebUtility.HtmlEncode(field.DataType)).Append("</td><td>").Append(WebUtility.HtmlEncode(field.DefaultValue)).Append("</td></tr>");
+        html.Append("</tbody></table></details>");
     }
 
     private static void AppendParameterBarAttributes(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
