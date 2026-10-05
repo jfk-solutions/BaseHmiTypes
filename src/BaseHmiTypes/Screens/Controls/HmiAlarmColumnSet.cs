@@ -31,5 +31,13 @@ public sealed class HmiAlarmColumnSet
     public HmiProperty<int>? VerticalScrollBarVisibility { get; set; }
     public HmiProperty<int>? GridSelectionMode { get; set; }
     public HmiProperty<bool>? SelectFullRow { get; set; }
+    public HmiProperty<HmiColor>? AlternateBackgroundColor { get; set; }
+    public HmiProperty<HmiColor>? AlternateForegroundColor { get; set; }
+    public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
+    public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
+    public HmiProperty<HmiColor>? SelectionBorderColor { get; set; }
+    public HmiProperty<HmiColor>? HeaderSelectionBackgroundColor { get; set; }
+    public HmiProperty<HmiColor>? HeaderSelectionForegroundColor { get; set; }
+    public HmiProperty<double>? SelectionBorderWidth { get; set; }
     public IList<HmiAlarmColumn> Columns { get; } = new List<HmiAlarmColumn>();
 }
