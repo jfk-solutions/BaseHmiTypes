@@ -15,5 +15,7 @@ public sealed class HmiParameterColumn
     public HmiProperty<uint>? MinimumWidth { get; set; }
     public HmiProperty<uint>? MaximumWidth { get; set; }
     public HmiProperty<bool>? AllowSort { get; set; }
+    public HmiProperty<int>? SortOrder { get; set; }
+    public HmiProperty<int>? SortDirection { get; set; }
     public HmiProperty<string>? OutputFormat { get; set; }
 }

@@ -15,5 +15,7 @@ export class HmiParameterColumn {
   minimumWidth?: HmiProperty<number>;
   maximumWidth?: HmiProperty<number>;
   allowSort?: HmiProperty<boolean>;
+  sortOrder?: HmiProperty<number>;
+  sortDirection?: HmiProperty<number>;
   outputFormat?: HmiProperty<string>;
 }
