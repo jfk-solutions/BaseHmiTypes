@@ -4721,6 +4721,13 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendStaticAttribute(html, "toolbar-button-size", trendControl.toolbarButtonSize);
   appendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.showStatusBar);
   appendAttribute(html, "status-bar-text", trendControl.statusBarText?.getText(context.options.cultureLcid), true);
+  appendStaticBooleanValueAttribute(html, "show-status-bar-tooltips", trendControl.showStatusBarTooltips);
+  if (trendControl.statusBarPanels.length > 0) appendAttribute(html, "status-bar-panels", JSON.stringify(trendControl.statusBarPanels.map(panel => ({
+    sourceType: panel.sourceType, visible: getStaticValue(panel.visible), order: getStaticValue(panel.order),
+    text: panel.text?.getText(context.options.cultureLcid), tooltip: panel.tooltip?.getText(context.options.cultureLcid),
+    width: Number.isFinite(getStaticValue(panel.width)) ? getStaticValue(panel.width) : undefined,
+    autoSize: getStaticValue(panel.autoSize),
+  }))));
   appendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.useStatusBarBackgroundColor);
   appendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.displayPenIcons);
   appendStaticBooleanValueAttribute(html, "use-trend-name-as-label", trendControl.useTrendNameAsLabel);

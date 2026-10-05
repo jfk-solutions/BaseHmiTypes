@@ -1,4 +1,5 @@
 using BaseHmiTypes.Common;
+using BaseHmiTypes.Screens.Controls;
 
 namespace BaseHmiTypes.Screens.Base;
 
@@ -323,6 +324,10 @@ public abstract class HmiTrendControlBase : HmiControlWindowBase
     public HmiFont? StatusBarFont { get; set; }
 
     public HmiMultilingualText? StatusBarText { get; set; }
+
+    public HmiProperty<bool>? ShowStatusBarTooltips { get; set; }
+
+    public IList<HmiTrendStatusBarPanel> StatusBarPanels { get; } = new List<HmiTrendStatusBarPanel>();
 
     public HmiProperty<bool>? ShowTimePeriodBar { get; set; }
 
