@@ -356,6 +356,9 @@ public partial class HmiScreenToHtmlConverter
             case HmiMediaControl mediaControl:
                 AppendMediaControl(html, mediaControl, context);
                 break;
+            case HmiNcPartProgramControl ncProgram:
+                AppendNcPartProgramControl(html, ncProgram, context);
+                break;
             case HmiNcKeyboardControl ncKeyboard:
                 AppendNcKeyboardControl(html, ncKeyboard, context);
                 break;

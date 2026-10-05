@@ -123,6 +123,7 @@ import { HmiAuditTrailViewKind } from "../../screens/controls/HmiAuditTrailViewK
 import { HmiUserViewControl } from "../../screens/controls/HmiUserViewControl.js";
 import { HmiStatusForceControl } from "../../screens/controls/HmiStatusForceControl.js";
 import { HmiRecipeControl } from "../../screens/controls/HmiRecipeControl.js";
+import { HmiNcPartProgramControl } from "../../screens/controls/HmiNcPartProgramControl.js";
 import { HmiNcKeyboardControl } from "../../screens/controls/HmiNcKeyboardControl.js";
 import { HmiDetailedParameterControl } from "../../screens/controls/HmiDetailedParameterControl.js";
 import { HmiOverviewParameterControl } from "../../screens/controls/HmiOverviewParameterControl.js";
@@ -450,6 +451,8 @@ export class HmiScreenToHtmlConverter {
       appendSystemDiagnosisControl(html, item, context);
     } else if (item instanceof HmiMediaControl) {
       appendMediaControl(html, item, context);
+    } else if (item instanceof HmiNcPartProgramControl) {
+      appendNcPartProgramControl(html, item, context);
     } else if (item instanceof HmiNcKeyboardControl) {
       appendNcKeyboardControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
@@ -2478,6 +2481,74 @@ function appendMediaControl(html: string[], mediaControl: HmiMediaControl, conte
   if (getStaticValue(mediaControl.showStatusBar) === true)
     bar("status", mediaControl.statusBarBackgroundColor, mediaControl.statusBarForegroundColor, mediaControl.statusBarFont, "Media status not loaded");
   html.push("</div>");
+}
+
+function appendNcPartProgramControl(html: string[], control: HmiNcPartProgramControl, context: HmiHtmlConvertContext): void {
+  html.push("<div");
+  appendCommonAttributes(html, control, context, true, createControlWindowStyle(control, "overflow: hidden;"));
+  appendAttribute(html, "data-list-background-color", resolvePropertyPreview(control.listBackgroundColor));
+  appendAttribute(html, "data-list-foreground-color", resolvePropertyPreview(control.listForegroundColor));
+  appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(control.selectionBackgroundColor));
+  appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(control.selectionForegroundColor));
+  appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(control.alternatingRowBackgroundColor));
+  appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(control.gridLineColor));
+  appendAttribute(html, "data-show-grid-lines", resolvePropertyPreview(control.showGridLines));
+  appendAttribute(html, "data-button-background-color", resolvePropertyPreview(control.buttonBackgroundColor));
+  appendAttribute(html, "data-button-border-background-color", resolvePropertyPreview(control.buttonBorderBackgroundColor));
+  appendAttribute(html, "data-button-border-color", resolvePropertyPreview(control.buttonBorderColor));
+  appendAttribute(html, "data-button-first-gradient-color", resolvePropertyPreview(control.buttonFirstGradientColor));
+  appendAttribute(html, "data-button-middle-gradient-color", resolvePropertyPreview(control.buttonMiddleGradientColor));
+  appendAttribute(html, "data-button-second-gradient-color", resolvePropertyPreview(control.buttonSecondGradientColor));
+  appendAttribute(html, "data-button-border-width", resolvePropertyPreview(control.buttonBorderWidth));
+  appendAttribute(html, "data-button-corner-radius", resolvePropertyPreview(control.buttonCornerRadius));
+  appendAttribute(html, "data-button-edge-style", resolvePropertyPreview(control.buttonEdgeStyle));
+  appendAttribute(html, "data-button-back-fill-style", resolvePropertyPreview(control.buttonBackFillStyle));
+  appendAttribute(html, "data-button-first-gradient-offset", resolvePropertyPreview(control.buttonFirstGradientOffset));
+  appendAttribute(html, "data-button-second-gradient-offset", resolvePropertyPreview(control.buttonSecondGradientOffset));
+  appendAttribute(html, "data-use-button-first-gradient", resolvePropertyPreview(control.useButtonFirstGradient));
+  appendAttribute(html, "data-use-button-second-gradient", resolvePropertyPreview(control.useButtonSecondGradient));
+  appendAttribute(html, "data-textual-objects-border-background-color", resolvePropertyPreview(control.textualObjectsBorderBackgroundColor));
+  appendAttribute(html, "data-textual-objects-border-color", resolvePropertyPreview(control.textualObjectsBorderColor));
+  appendAttribute(html, "data-textual-objects-border-width", resolvePropertyPreview(control.textualObjectsBorderWidth));
+  appendAttribute(html, "data-textual-objects-corner-radius", resolvePropertyPreview(control.textualObjectsCornerRadius));
+  appendAttribute(html, "data-textual-objects-edge-style", resolvePropertyPreview(control.textualObjectsEdgeStyle));
+  html.push(' role="region" aria-label="NC part program viewer" data-preview="appearance"><div style="overflow:auto;height:100%;"><div>NC program data not decoded</div>');
+  const content: string[] = [];
+  appendColorStyle(content, "background-color", control.listBackgroundColor);
+  appendColorStyle(content, "color", control.listForegroundColor);
+  if (control.contentFont) appendFont(content, control.contentFont.getForCulture(context.options.cultureLcid));
+  sample("list", "List appearance", content);
+  const selection: string[] = [];
+  appendColorStyle(selection, "background-color", control.selectionBackgroundColor);
+  appendColorStyle(selection, "color", control.selectionForegroundColor);
+  sample("selection", "Selection appearance", selection);
+  const alternate: string[] = [];
+  appendColorStyle(alternate, "background-color", control.alternatingRowBackgroundColor);
+  appendColorStyle(alternate, "color", control.listForegroundColor);
+  sample("alternate", "Alternating row appearance", alternate);
+  const button: string[] = [];
+  appendColorStyle(button, "background-color", control.buttonBackgroundColor);
+  appendColorStyle(button, "border-color", control.buttonBorderColor);
+  appendHeaderBorderWidth(button, control.buttonBorderWidth);
+  const buttonRadius = getStaticValue(control.buttonCornerRadius);
+  if (buttonRadius !== undefined && buttonRadius >= 0) button.push(`border-radius: ${toCss(buttonRadius)}px;`);
+  appendColorGradientStyle(button, createColorGradient({
+    backgroundColor: control.buttonBackgroundColor, firstGradientColor: control.buttonFirstGradientColor, firstGradientOffset: control.buttonFirstGradientOffset,
+    middleGradientColor: control.buttonMiddleGradientColor, secondGradientColor: control.buttonSecondGradientColor, secondGradientOffset: control.buttonSecondGradientOffset,
+    useFirstGradient: control.useButtonFirstGradient, useSecondGradient: control.useButtonSecondGradient,
+  }));
+  sample("button", "Button appearance", button);
+  const text: string[] = [];
+  appendColorStyle(text, "border-color", control.textualObjectsBorderColor);
+  appendHeaderBorderWidth(text, control.textualObjectsBorderWidth);
+  const textRadius = getStaticValue(control.textualObjectsCornerRadius);
+  if (textRadius !== undefined && textRadius >= 0) text.push(`border-radius: ${toCss(textRadius)}px;`);
+  sample("text", "Text field appearance", text);
+  html.push("</div></div>");
+
+  function sample(kind: string, label: string, style: string[]): void {
+    html.push('<div data-appearance="', kind, '" style="padding:4px;', style.join(""), '">', label, "</div>");
+  }
 }
 
 function appendNcKeyboardControl(html: string[], control: HmiNcKeyboardControl, context: HmiHtmlConvertContext): void {

@@ -74,6 +74,7 @@ public static class HmiObjectType
     public const string HmiTrendCompanion = nameof(HmiTrendCompanion);
     public const string HmiTrendControl = nameof(HmiTrendControl);
     public const string HmiUnkown = nameof(HmiUnkown);
+    public const string HmiNcPartProgramControl = nameof(HmiNcPartProgramControl);
     public const string HmiNcKeyboardControl = nameof(HmiNcKeyboardControl);
     public const string HmiWebControl = nameof(HmiWebControl);
 }
