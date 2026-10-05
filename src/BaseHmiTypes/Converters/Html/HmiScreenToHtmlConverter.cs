@@ -2831,7 +2831,40 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(control.SelectionForegroundColor, context));
         html.Append(" role=\"region\" aria-label=\"Status/force\"><table style=\"width: 100%; border-collapse: collapse;").Append(content)
             .Append("\"><thead><tr><th style=\"").Append(header).Append("\">Status/force</th></tr></thead><tbody><tr><td style=\"")
-            .Append(grid).Append("text-align: center;\">Status/force data not loaded</td></tr></tbody></table></div>");
+            .Append(grid).Append("text-align: center;\">Status/force data not loaded</td></tr></tbody></table>");
+        AppendStatusForceButtonAppearance(html, control, context);
+        html.Append("</div>");
+    }
+
+    private static void AppendStatusForceButtonAppearance(StringBuilder html, HmiStatusForceControl control, HmiHtmlConvertContext context)
+    {
+        if (control.ButtonBackgroundColor is null && control.ButtonBorderBackgroundColor is null && control.ButtonBorderColor is null &&
+            control.ButtonFirstGradientColor is null && control.ButtonMiddleGradientColor is null && control.ButtonSecondGradientColor is null &&
+            control.ButtonBorderWidth is null && control.ButtonCornerRadius is null && control.ButtonEdgeStyle is null &&
+            control.ButtonBackFillStyle is null && control.ButtonFirstGradientOffset is null && control.ButtonSecondGradientOffset is null &&
+            control.UseButtonFirstGradient is null && control.UseButtonSecondGradient is null) return;
+        html.Append("<div data-appearance-sample=\"button\" data-preview=\"appearance\"");
+        AppendAttribute(html, "data-button-background-color", ResolvePropertyPreview(control.ButtonBackgroundColor, context));
+        AppendAttribute(html, "data-button-border-background-color", ResolvePropertyPreview(control.ButtonBorderBackgroundColor, context));
+        AppendAttribute(html, "data-button-border-color", ResolvePropertyPreview(control.ButtonBorderColor, context));
+        AppendAttribute(html, "data-button-first-gradient-color", ResolvePropertyPreview(control.ButtonFirstGradientColor, context));
+        AppendAttribute(html, "data-button-middle-gradient-color", ResolvePropertyPreview(control.ButtonMiddleGradientColor, context));
+        AppendAttribute(html, "data-button-second-gradient-color", ResolvePropertyPreview(control.ButtonSecondGradientColor, context));
+        AppendAttribute(html, "data-button-border-width", ResolvePropertyPreview(control.ButtonBorderWidth, context));
+        AppendAttribute(html, "data-button-corner-radius", ResolvePropertyPreview(control.ButtonCornerRadius, context));
+        AppendAttribute(html, "data-button-edge-style", ResolvePropertyPreview(control.ButtonEdgeStyle, context));
+        AppendAttribute(html, "data-button-back-fill-style", ResolvePropertyPreview(control.ButtonBackFillStyle, context));
+        AppendAttribute(html, "data-button-first-gradient-offset", ResolvePropertyPreview(control.ButtonFirstGradientOffset, context));
+        AppendAttribute(html, "data-button-second-gradient-offset", ResolvePropertyPreview(control.ButtonSecondGradientOffset, context));
+        AppendAttribute(html, "data-use-button-first-gradient", ResolvePropertyPreview(control.UseButtonFirstGradient, context));
+        AppendAttribute(html, "data-use-button-second-gradient", ResolvePropertyPreview(control.UseButtonSecondGradient, context));
+        var button = new StringBuilder("padding: 2px 4px;");
+        AppendColorStyle(button, "background-color", control.ButtonBackgroundColor);
+        AppendColorStyle(button, "border-color", control.ButtonBorderColor);
+        AppendHeaderBorderWidth(button, control.ButtonBorderWidth);
+        if (control.ButtonCornerRadius?.StaticValue is int radius && radius >= 0) button.Append("border-radius: ").Append(ToCss(radius)).Append("px;");
+        AppendColorGradientStyle(button, CreateColorGradient(control.ButtonBackgroundColor, control.ButtonFirstGradientColor, control.ButtonFirstGradientOffset, control.ButtonMiddleGradientColor, control.ButtonSecondGradientColor, control.ButtonSecondGradientOffset, control.UseButtonFirstGradient, control.UseButtonSecondGradient, null));
+        html.Append(" style=\"").Append(button).Append("\">Status/force button appearance preview</div>");
     }
 
     private static void AppendRecipeControl(StringBuilder html, HmiRecipeControl recipeControl, HmiHtmlConvertContext context)

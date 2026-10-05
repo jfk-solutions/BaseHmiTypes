@@ -24,4 +24,19 @@ export class HmiStatusForceControl extends HmiControlWindowBase {
   useHeaderSecondGradient?: HmiProperty<boolean>;
   headerFontReferenceDeviceSize?: HmiProperty<number>;
   contentFontReferenceDeviceSize?: HmiProperty<number>;
+
+  buttonBackgroundColor?: HmiProperty<HmiColor>;
+  buttonBorderBackgroundColor?: HmiProperty<HmiColor>;
+  buttonBorderColor?: HmiProperty<HmiColor>;
+  buttonFirstGradientColor?: HmiProperty<HmiColor>;
+  buttonMiddleGradientColor?: HmiProperty<HmiColor>;
+  buttonSecondGradientColor?: HmiProperty<HmiColor>;
+  buttonBorderWidth?: HmiProperty<number>;
+  buttonCornerRadius?: HmiProperty<number>;
+  buttonEdgeStyle?: HmiProperty<number>;
+  buttonBackFillStyle?: HmiProperty<number>;
+  buttonFirstGradientOffset?: HmiProperty<number>;
+  buttonSecondGradientOffset?: HmiProperty<number>;
+  useButtonFirstGradient?: HmiProperty<boolean>;
+  useButtonSecondGradient?: HmiProperty<boolean>;
 }
