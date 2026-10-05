@@ -4,6 +4,8 @@ namespace BaseHmiTypes.Screens.Controls;
 
 public class HmiSystemDiagnosisControl : HmiControlWindowBase
 {
+    public HmiSystemDiagnosisAppearance? Appearance { get; set; }
+
     public HmiSystemDiagnosisControl()
     {
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiSystemDiagnosisControl;

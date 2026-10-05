@@ -1,3 +1,4 @@
+import { HmiSystemDiagnosisAppearance } from "./HmiSystemDiagnosisAppearance.js";
 import { HmiControlWindowBase } from "../base/HmiControlWindowBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiColor } from "../base/HmiColor.js";
@@ -15,6 +16,8 @@ import { HmiAlarmStateAppearance } from "./HmiAlarmStateAppearance.js";
 import { HmiSystemDiagnosisSortCriterion } from "./HmiSystemDiagnosisSortCriterion.js";
 
 export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
+  appearance?: HmiSystemDiagnosisAppearance;
+
   constructor() {
     super();
     this.hmiObjectType = HmiObjectType.HmiSystemDiagnosisControl;

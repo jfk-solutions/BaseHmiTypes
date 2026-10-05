@@ -64,6 +64,7 @@ export * from "./controls/HmiProcessControl.js";
 export * from "./controls/HmiProcessDiagnosisGraphOverviewControl.js";
 export * from "./controls/HmiProcessDiagnosisOverviewControl.js";
 export * from "./controls/HmiProcessDiagnosisPlcCodeViewerControl.js";
+export * from "./controls/HmiSystemDiagnosisAppearance.js";
 export * from "./controls/HmiSystemDiagnosisControl.js";
 export * from "./controls/HmiSystemDiagnosisColumn.js";
 export * from "./controls/HmiSystemDiagnosisColumnType.js";
