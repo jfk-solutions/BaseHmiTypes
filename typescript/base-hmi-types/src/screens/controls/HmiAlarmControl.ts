@@ -47,6 +47,8 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   readonly columnDefinitions: HmiAlarmColumn[] = [];
   readonly columnSets: HmiAlarmColumnSet[] = [];
   activeColumnSet?: string;
+  /** Default named set for the engineering preview; not the native Runtime active view. */
+  defaultColumnSet?: string;
   readonly toolbarButtons: HmiAlarmToolbarButton[] = [];
   useProjectSettings?: HmiProperty<boolean>;
   showHeader?: HmiProperty<boolean>;

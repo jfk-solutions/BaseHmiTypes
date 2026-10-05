@@ -3353,7 +3353,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   const showHeader = alarmControl.showHeader === undefined || getStaticValue(alarmControl.showHeader) === true;
   const showTitle = getStaticValue(alarmControl.showTitle) === true;
   const listMode = getStaticValue(alarmControl.listMode) ?? HmiAlarmListMode.All;
-  const selectedSet = alarmControl.activeColumnSet === undefined ? undefined : alarmControl.columnSets.find(set => set.name === alarmControl.activeColumnSet);
+  const setName = alarmControl.activeColumnSet ?? alarmControl.defaultColumnSet;
+  const selectedSet = setName === undefined ? undefined : alarmControl.columnSets.find(set => set.name === setName);
   const columns = selectedSet?.columns ?? alarmControl.columnDefinitions;
   const visibleColumns = columns.filter(
     (column) => column.visible === undefined || getStaticValue(column.visible) === true,
@@ -3379,6 +3380,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-toolbar-foreground-color", resolvePropertyPreview(alarmControl.toolbarForegroundColor));
   appendAttribute(html, "data-view-kind", alarmControl.viewKind);
   appendAttribute(html, "data-active-column-set", alarmControl.activeColumnSet);
+  appendAttribute(html, "data-default-column-set", alarmControl.defaultColumnSet);
   appendAttribute(html, "data-list-mode", listMode);
   appendAttribute(html, "data-time-base", resolvePropertyPreview(alarmControl.timeBase));
   appendAttribute(html, "data-shorten-cell-contents", resolvePropertyPreview(alarmControl.shortenCellContents));
@@ -3426,12 +3428,14 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (alarmControl.messageBlocks.length > 0) appendAttribute(html, "data-message-block-count", String(alarmControl.messageBlocks.length));
   html.push(">");
   appendAlarmMessageBlocks(html, alarmControl, context);
-  const configuredViews = alarmControl.columnSets.filter(set => set.allowSort !== undefined || set.allowFilter !== undefined || set.allowColumnReorder !== undefined || set.allowColumnResize !== undefined);
+  const configuredViews = alarmControl.columnSets.filter(set => set.allowSort !== undefined || set.allowFilter !== undefined || set.allowColumnReorder !== undefined || set.allowColumnResize !== undefined ||
+    set.backgroundColor !== undefined || set.foregroundColor !== undefined || set.headerBackgroundColor !== undefined ||
+    set.headerForegroundColor !== undefined || set.headerBorderColor !== undefined || set.contentFont !== undefined || set.headerFont !== undefined);
   if (configuredViews.length > 0) {
     html.push('<template class="hmi-alarm-view-settings">');
     for (const set of configuredViews) {
       html.push("<div");
-      appendAlarmViewSettings(html, set);
+      appendAlarmViewSettings(html, set, context);
       html.push("></div>");
     }
     html.push("</template>");
@@ -3452,8 +3456,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (getStaticValue(alarmControl.useAlternatingRowColors) === true)
     html.push(" hmi-alarm-table--alternating");
   html.push('"');
-  appendAlarmViewSettings(html, selectedSet);
-  html.push(" style=\"", createAlarmTableStyle(alarmControl), "\">");
+  appendAlarmViewSettings(html, selectedSet, context);
+  html.push(" style=\"", createAlarmTableStyle(alarmControl, selectedSet, context), "\">");
   if (visibleColumns.length > 0) {
     html.push("<colgroup>");
     for (const column of visibleColumns) {
@@ -3481,7 +3485,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   }
   const gridCellStyle = createAlarmGridCellStyle(alarmControl);
   if (showHeader && (visibleColumns.length > 0 || columns.length === 0)) {
-    const headerCellStyle = createAlarmTableHeaderCellStyle(alarmControl, gridCellStyle, context);
+    const headerCellStyle = createAlarmTableHeaderCellStyle(alarmControl, gridCellStyle, context, selectedSet);
     html.push("<thead><tr>");
     if (visibleColumns.length === 0)
       html.push("<th style=\"", headerCellStyle, "\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
@@ -3530,6 +3534,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendColorStyle(html, "background-color", alarmControl.selectionBackgroundColor);
   appendColorStyle(html, "color", alarmControl.selectionForegroundColor);
   appendAlarmSelectionRectangleStyle(html, alarmControl);
+  appendColorStyle(html, "background-color", selectedSet?.backgroundColor);
+  appendColorStyle(html, "color", selectedSet?.foregroundColor);
   html.push("\">Alarm data not loaded</td></tr></tbody></table>");
 
   const showAcknowledgeButton = getStaticValue(alarmControl.showAcknowledgeButton) === true;
@@ -5468,13 +5474,24 @@ function createAlarmControlStyle(alarmControl: HmiAlarmControl, context: HmiHtml
   return parts.join("");
 }
 
-function appendAlarmViewSettings(html: string[], set: HmiAlarmColumnSet | undefined): void {
+function appendAlarmViewSettings(html: string[], set: HmiAlarmColumnSet | undefined, context: HmiHtmlConvertContext): void {
   if (set === undefined) return;
   appendAttribute(html, "data-column-set-name", set.name, true);
   appendAttribute(html, "data-view-allow-sort", resolvePropertyPreview(set.allowSort));
   appendAttribute(html, "data-view-allow-filter", resolvePropertyPreview(set.allowFilter));
   appendAttribute(html, "data-view-allow-column-reorder", resolvePropertyPreview(set.allowColumnReorder));
   appendAttribute(html, "data-view-allow-column-resize", resolvePropertyPreview(set.allowColumnResize));
+  appendAttribute(html, "data-view-background-color", resolvePropertyPreview(set.backgroundColor));
+  appendAttribute(html, "data-view-foreground-color", resolvePropertyPreview(set.foregroundColor));
+  appendAttribute(html, "data-view-header-background-color", resolvePropertyPreview(set.headerBackgroundColor));
+  appendAttribute(html, "data-view-header-foreground-color", resolvePropertyPreview(set.headerForegroundColor));
+  appendAttribute(html, "data-view-header-border-color", resolvePropertyPreview(set.headerBorderColor));
+  for (const [role, font] of [["content", set.contentFont], ["header", set.headerFont]] as const) {
+    if (font === undefined) continue;
+    const style: string[] = [];
+    appendFont(style, font.getForCulture(context.options.cultureLcid), false);
+    appendAttribute(html, `data-view-${role}-font-style`, style.join(""), true);
+  }
 }
 
 function appendAlarmMessageBlocks(html: string[], control: HmiAlarmControl, context: HmiHtmlConvertContext): void {
@@ -5504,10 +5521,11 @@ function createAlarmHeaderStyle(alarmControl: HmiAlarmControl, context: HmiHtmlC
   return parts.join("");
 }
 
-function createAlarmTableStyle(alarmControl: HmiAlarmControl): string {
+function createAlarmTableStyle(alarmControl: HmiAlarmControl, set: HmiAlarmColumnSet | undefined, context: HmiHtmlConvertContext): string {
   const parts = ["width: 100%; border-collapse: collapse; table-layout: fixed;"];
-  appendColorStyle(parts, "background-color", alarmControl.tableBackgroundColor);
-  appendColorStyle(parts, "color", alarmControl.tableForegroundColor);
+  appendColorStyle(parts, "background-color", set?.backgroundColor ?? alarmControl.tableBackgroundColor);
+  appendColorStyle(parts, "color", set?.foregroundColor ?? alarmControl.tableForegroundColor);
+  if (set?.contentFont !== undefined) appendFont(parts, set.contentFont.getForCulture(context.options.cultureLcid));
   const alternatingBackground = getStaticValue(alarmControl.alternatingRowBackgroundColor);
   if (alternatingBackground !== undefined)
     parts.push(`--hmi-alarm-alternating-row-background: ${colorToCss(alternatingBackground)};`);
@@ -5552,17 +5570,18 @@ function createAlarmShorteningStyle(property: HmiProperty<boolean> | undefined):
   return value ? "overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" : "overflow: hidden; text-overflow: clip;";
 }
 
-function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCellStyle: string, context: HmiHtmlConvertContext): string {
+function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCellStyle: string, context: HmiHtmlConvertContext, set: HmiAlarmColumnSet | undefined): string {
   const parts = [gridCellStyle, createAlarmShorteningStyle(alarmControl.shortenColumnTitles)];
-  appendColorStyle(parts, "background-color", alarmControl.tableHeaderBackgroundColor);
-  appendColorStyle(parts, "color", alarmControl.tableHeaderForegroundColor);
+  appendColorStyle(parts, "background-color", set?.headerBackgroundColor ?? alarmControl.tableHeaderBackgroundColor);
+  appendColorStyle(parts, "color", set?.headerForegroundColor ?? alarmControl.tableHeaderForegroundColor);
   const horizontalAlignment = getStaticValue(alarmControl.tableHeaderHorizontalAlignment);
   if (horizontalAlignment !== undefined)
     parts.push(`text-align: ${horizontalAlignmentToCss(horizontalAlignment)};`);
-  appendColorStyle(parts, "border-color", alarmControl.tableHeaderBorderColor);
+  appendColorStyle(parts, "border-color", set?.headerBorderColor ?? alarmControl.tableHeaderBorderColor);
   const borderWidth = getStaticValue(alarmControl.tableHeaderBorderWidth);
   if (borderWidth !== undefined) parts.push(`border-width: ${toCss(Math.max(0, borderWidth))}px;`);
-  if (alarmControl.headerFont !== undefined) appendFont(parts, alarmControl.headerFont.getForCulture(context.options.cultureLcid));
+  const font = set?.headerFont ?? alarmControl.headerFont;
+  if (font !== undefined) appendFont(parts, font.getForCulture(context.options.cultureLcid));
   return parts.join("");
 }
 
@@ -6433,12 +6452,12 @@ function appendToolbarFontStyle(style: string[], font: HmiFont | undefined): voi
   if (getStaticValue(font.underline) === false && getStaticValue(font.strikethrough) === false) style.push("text-decoration: none;");
 }
 
-function appendFont(html: string[], font: HmiFont): void {
+function appendFont(html: string[], font: HmiFont, encodeName = true): void {
   const name = getStaticValue(font.name);
   const size = getStaticValue(font.size);
   const weight = getStaticValue(font.weight);
   if (name?.trim()) {
-    html.push(`font-family: ${escapeHtml(name)};`);
+    html.push(`font-family: ${encodeName ? escapeHtml(name) : name};`);
   }
   if (size !== undefined) {
     html.push(`font-size: ${toCss(size)}px;`);
