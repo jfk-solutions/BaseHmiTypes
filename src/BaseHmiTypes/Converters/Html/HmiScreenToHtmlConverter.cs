@@ -3140,7 +3140,7 @@ public partial class HmiScreenToHtmlConverter
             html,
             alarmControl,
             context,
-            additionalStyle: CreateAlarmControlStyle(alarmControl, context));
+            additionalStyle: CreateAlarmControlStyle(alarmControl, context, selectedSet));
         AppendAttribute(html, "data-window-resizable", ResolvePropertyPreview(alarmControl.Resizable, context));
         AppendAttribute(html, "data-window-movable", ResolvePropertyPreview(alarmControl.Movable, context));
         AppendAttribute(html, "data-window-closeable", ResolvePropertyPreview(alarmControl.Closeable, context));
@@ -3205,7 +3205,8 @@ public partial class HmiScreenToHtmlConverter
             set.BackgroundColor is not null || set.ForegroundColor is not null || set.HeaderBackgroundColor is not null ||
             set.HeaderForegroundColor is not null || set.HeaderBorderColor is not null || set.ContentFont is not null || set.HeaderFont is not null ||
             set.GridLineColor is not null || set.GridLineWidth is not null || set.GridLineVisibility is not null || set.RowHeight is not null ||
-            set.CellPaddingLeft is not null || set.CellPaddingTop is not null || set.CellPaddingRight is not null || set.CellPaddingBottom is not null).ToArray();
+            set.CellPaddingLeft is not null || set.CellPaddingTop is not null || set.CellPaddingRight is not null || set.CellPaddingBottom is not null ||
+            set.HorizontalScrollBarVisibility is not null || set.VerticalScrollBarVisibility is not null || set.GridSelectionMode is not null || set.SelectFullRow is not null).ToArray();
         if (configuredViews.Length > 0)
         {
             html.Append("<template class=\"hmi-alarm-view-settings\">");
@@ -5064,7 +5065,7 @@ public partial class HmiScreenToHtmlConverter
         return baseStyle + "resize: both;";
     }
 
-    private static string CreateAlarmControlStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
+    private static string CreateAlarmControlStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context, HmiAlarmColumnSet? set)
     {
         var style = new StringBuilder(CreateControlWindowStyle(
             alarmControl,
@@ -5074,6 +5075,8 @@ public partial class HmiScreenToHtmlConverter
             ResolveStaticValue(alarmControl.ShowHorizontalScrollbar, context) ? "auto" : "hidden";
         var verticalOverflow = alarmControl.ShowVerticalScrollbar is not null &&
             ResolveStaticValue(alarmControl.ShowVerticalScrollbar, context) ? "auto" : "hidden";
+        horizontalOverflow = ScrollBarOverflow(set?.HorizontalScrollBarVisibility, horizontalOverflow);
+        verticalOverflow = ScrollBarOverflow(set?.VerticalScrollBarVisibility, verticalOverflow);
         style.Append("overflow-x: ").Append(horizontalOverflow).Append(';')
             .Append("overflow-y: ").Append(verticalOverflow).Append(';');
         if (alarmControl.GridLineColor is not null)
@@ -5083,6 +5086,9 @@ public partial class HmiScreenToHtmlConverter
         }
         AppendFontStyle(style, alarmControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
         return style.ToString();
+
+        static string ScrollBarOverflow(HmiProperty<int>? property, string fallback) =>
+            TryGetStaticValue(property, out var mode) ? mode switch { 0 => "auto", 1 => "scroll", 2 => "hidden", _ => fallback } : fallback;
     }
 
     private static void AppendAlarmViewSettings(StringBuilder html, HmiAlarmColumnSet? set, HmiHtmlConvertContext context)
@@ -5106,6 +5112,10 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-view-cell-padding-right", ResolvePropertyPreview(set.CellPaddingRight, context));
         AppendAttribute(html, "data-view-cell-padding-bottom", ResolvePropertyPreview(set.CellPaddingBottom, context));
         AppendAttribute(html, "data-view-row-height", ResolvePropertyPreview(set.RowHeight, context));
+        AppendAttribute(html, "data-view-horizontal-scrollbar-visibility", ResolvePropertyPreview(set.HorizontalScrollBarVisibility, context));
+        AppendAttribute(html, "data-view-vertical-scrollbar-visibility", ResolvePropertyPreview(set.VerticalScrollBarVisibility, context));
+        AppendAttribute(html, "data-view-grid-selection-mode", ResolvePropertyPreview(set.GridSelectionMode, context));
+        AppendAttribute(html, "data-view-select-full-row", ResolvePropertyPreview(set.SelectFullRow, context));
         Font("content", set.ContentFont); Font("header", set.HeaderFont);
 
         void Font(string role, HmiFont? font)

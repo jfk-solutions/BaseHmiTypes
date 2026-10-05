@@ -25,5 +25,9 @@ export class HmiAlarmColumnSet {
   cellPaddingBottom?: HmiProperty<number>;
   /** Configured row height; zero requests automatic sizing. */
   rowHeight?: HmiProperty<number>;
+  horizontalScrollBarVisibility?: HmiProperty<number>;
+  verticalScrollBarVisibility?: HmiProperty<number>;
+  gridSelectionMode?: HmiProperty<number>;
+  selectFullRow?: HmiProperty<boolean>;
   readonly columns: HmiAlarmColumn[] = [];
 }
