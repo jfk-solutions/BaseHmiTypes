@@ -3203,7 +3203,9 @@ public partial class HmiScreenToHtmlConverter
         AppendAlarmMessageBlocks(html, alarmControl, context);
         var configuredViews = alarmControl.ColumnSets.Where(set => set.AllowSort is not null || set.AllowFilter is not null || set.AllowColumnReorder is not null || set.AllowColumnResize is not null ||
             set.BackgroundColor is not null || set.ForegroundColor is not null || set.HeaderBackgroundColor is not null ||
-            set.HeaderForegroundColor is not null || set.HeaderBorderColor is not null || set.ContentFont is not null || set.HeaderFont is not null).ToArray();
+            set.HeaderForegroundColor is not null || set.HeaderBorderColor is not null || set.ContentFont is not null || set.HeaderFont is not null ||
+            set.GridLineColor is not null || set.GridLineWidth is not null || set.GridLineVisibility is not null || set.RowHeight is not null ||
+            set.CellPaddingLeft is not null || set.CellPaddingTop is not null || set.CellPaddingRight is not null || set.CellPaddingBottom is not null).ToArray();
         if (configuredViews.Length > 0)
         {
             html.Append("<template class=\"hmi-alarm-view-settings\">");
@@ -3263,7 +3265,7 @@ public partial class HmiScreenToHtmlConverter
             }
             html.Append("</colgroup>");
         }
-        var gridCellStyle = CreateAlarmGridCellStyle(alarmControl, context);
+        var gridCellStyle = CreateAlarmGridCellStyle(alarmControl, context, selectedSet);
         if (showHeader && (visibleColumns.Length > 0 || columns.Count == 0))
         {
             var headerCellStyle = CreateAlarmTableHeaderCellStyle(alarmControl, context, gridCellStyle, selectedSet);
@@ -3326,6 +3328,8 @@ public partial class HmiScreenToHtmlConverter
         AppendAlarmSelectionRectangleStyle(html, alarmControl, context);
         AppendColorStyle(html, "background-color", selectedSet?.BackgroundColor);
         AppendColorStyle(html, "color", selectedSet?.ForegroundColor);
+        if (TryGetStaticValue(selectedSet?.RowHeight, out var rowHeight) && IsFinite(rowHeight) && rowHeight >= 0)
+            html.Append(rowHeight == 0 ? "height: auto;" : "height: " + ToCss(rowHeight) + "px;");
         html.Append("\">Alarm data not loaded</td></tr></tbody></table>");
 
         var showAcknowledgeButton = alarmControl.ShowAcknowledgeButton is not null && ResolveStaticValue(alarmControl.ShowAcknowledgeButton, context);
@@ -5094,6 +5098,14 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-view-header-background-color", ResolvePropertyPreview(set.HeaderBackgroundColor, context));
         AppendAttribute(html, "data-view-header-foreground-color", ResolvePropertyPreview(set.HeaderForegroundColor, context));
         AppendAttribute(html, "data-view-header-border-color", ResolvePropertyPreview(set.HeaderBorderColor, context));
+        AppendAttribute(html, "data-view-grid-line-color", ResolvePropertyPreview(set.GridLineColor, context));
+        AppendAttribute(html, "data-view-grid-line-width", ResolvePropertyPreview(set.GridLineWidth, context));
+        AppendAttribute(html, "data-view-grid-line-visibility", ResolvePropertyPreview(set.GridLineVisibility, context));
+        AppendAttribute(html, "data-view-cell-padding-left", ResolvePropertyPreview(set.CellPaddingLeft, context));
+        AppendAttribute(html, "data-view-cell-padding-top", ResolvePropertyPreview(set.CellPaddingTop, context));
+        AppendAttribute(html, "data-view-cell-padding-right", ResolvePropertyPreview(set.CellPaddingRight, context));
+        AppendAttribute(html, "data-view-cell-padding-bottom", ResolvePropertyPreview(set.CellPaddingBottom, context));
+        AppendAttribute(html, "data-view-row-height", ResolvePropertyPreview(set.RowHeight, context));
         Font("content", set.ContentFont); Font("header", set.HeaderFont);
 
         void Font(string role, HmiFont? font)
@@ -5153,16 +5165,24 @@ public partial class HmiScreenToHtmlConverter
         return style.ToString();
     }
 
-    private static string CreateAlarmGridCellStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
+    private static string CreateAlarmGridCellStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context, HmiAlarmColumnSet? set)
     {
         var horizontal = alarmControl.ShowHorizontalGridLines is null || ResolveStaticValue(alarmControl.ShowHorizontalGridLines, context);
         var vertical = alarmControl.ShowVerticalGridLines is null || ResolveStaticValue(alarmControl.ShowVerticalGridLines, context);
         var width = alarmControl.GridLineWidth is null
             ? 1d
             : Math.Max(0d, ResolveStaticValue(alarmControl.GridLineWidth, context));
+        if (TryGetStaticValue(set?.GridLineVisibility, out var mode))
+        {
+            if (mode == 0) { horizontal = false; vertical = false; }
+            else if (mode == 1) { horizontal = false; vertical = true; }
+            else if (mode == 2) { horizontal = true; vertical = false; }
+        }
+        if (TryGetStaticValue(set?.GridLineWidth, out var configuredWidth) && IsFinite(configuredWidth) && configuredWidth >= 0) width = configuredWidth;
         var style = new StringBuilder($"border-style: solid; border-color: var(--hmi-grid-line-color, currentColor); border-width: {(horizontal ? ToCss(width) : "0")}px {(vertical ? ToCss(width) : "0")}px;");
-        Padding("top", alarmControl.CellPaddingTop); Padding("right", alarmControl.CellPaddingRight);
-        Padding("bottom", alarmControl.CellPaddingBottom); Padding("left", alarmControl.CellPaddingLeft);
+        AppendColorStyle(style, "border-color", set?.GridLineColor);
+        Padding("top", set?.CellPaddingTop ?? alarmControl.CellPaddingTop); Padding("right", set?.CellPaddingRight ?? alarmControl.CellPaddingRight);
+        Padding("bottom", set?.CellPaddingBottom ?? alarmControl.CellPaddingBottom); Padding("left", set?.CellPaddingLeft ?? alarmControl.CellPaddingLeft);
         return style.ToString();
 
         void Padding(string side, HmiProperty<double>? property)

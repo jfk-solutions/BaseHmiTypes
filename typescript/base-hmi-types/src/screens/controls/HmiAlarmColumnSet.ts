@@ -15,5 +15,15 @@ export class HmiAlarmColumnSet {
   headerBorderColor?: HmiProperty<HmiColor>;
   contentFont?: HmiFont;
   headerFont?: HmiFont;
+  gridLineColor?: HmiProperty<HmiColor>;
+  gridLineWidth?: HmiProperty<number>;
+  /** Native visibility code; unknown values are not treated as flags. */
+  gridLineVisibility?: HmiProperty<number>;
+  cellPaddingLeft?: HmiProperty<number>;
+  cellPaddingTop?: HmiProperty<number>;
+  cellPaddingRight?: HmiProperty<number>;
+  cellPaddingBottom?: HmiProperty<number>;
+  /** Configured row height; zero requests automatic sizing. */
+  rowHeight?: HmiProperty<number>;
   readonly columns: HmiAlarmColumn[] = [];
 }
