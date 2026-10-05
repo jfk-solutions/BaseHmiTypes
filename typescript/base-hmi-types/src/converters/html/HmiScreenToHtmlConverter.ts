@@ -2695,6 +2695,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   appendAttribute(html, "data-current-parameter-set-id", resolvePropertyPreview(control.currentParameterSetId));
   appendAttribute(html, "data-current-parameter-set-type-id", resolvePropertyPreview(control.currentParameterSetTypeId));
   appendAttribute(html, "data-hide-details", resolvePropertyPreview(control.hideDetails));
+  appendParameterGridAttributes(html, control);
   appendParameterSelectionAttributes(html, control);
   appendAttribute(html, "data-row-height", resolvePropertyPreview(control.rowHeight));
   appendAttribute(html, "data-cell-padding-left", resolvePropertyPreview(control.cellPaddingLeft));
@@ -2740,6 +2741,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
   appendAttribute(html, "data-parameter-control-view", "overview");
   appendAttribute(html, "data-filter", resolvePropertyPreview(control.filter));
+  appendParameterGridAttributes(html, control);
   appendParameterSelectionAttributes(html, control);
   appendAttribute(html, "data-row-height", resolvePropertyPreview(control.rowHeight));
   appendAttribute(html, "data-cell-padding-left", resolvePropertyPreview(control.cellPaddingLeft));
@@ -2774,7 +2776,11 @@ function appendParameterView(html: string[], control: HmiParameterControlBase, c
   const style = ["flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;"];
   if (columns.length > 0) style.push("display: block; overflow: auto;");
   const width = getStaticValue(control.gridLineWidth) ?? 1;
-  style.push(`border-top-width: ${toCss(Number.isFinite(width) && width >= 0 ? width : 1)}px;`);
+  let separatorWidth = Number.isFinite(width) && width >= 0 ? width : 1;
+  if (control.gridLineVisibility !== undefined && getStaticValue(control.gridLineVisibility) !== 2) separatorWidth = 0;
+  style.push(`border-top-width: ${toCss(separatorWidth)}px;`);
+  appendParameterScrollStyle(style, "x", control.horizontalScrollBarVisibility);
+  appendParameterScrollStyle(style, "y", control.verticalScrollBarVisibility);
   appendColorStyle(style, "background-color", control.contentBackgroundColor);
   appendColorStyle(style, "color", control.contentForegroundColor);
   appendColorStyle(style, "border-top-color", control.gridLineColor);
@@ -2783,6 +2789,22 @@ function appendParameterView(html: string[], control: HmiParameterControlBase, c
   else html.push("Parameter data not loaded");
   appendParameterSelectionPreview(html, control, context);
   html.push("</div>");
+}
+
+function appendParameterGridAttributes(html: string[], control: HmiParameterControlBase): void {
+  appendAttribute(html, "data-allow-sort-by-column", resolvePropertyPreview(control.allowSortByColumn));
+  appendAttribute(html, "data-allow-filter-by-column", resolvePropertyPreview(control.allowFilterByColumn));
+  appendAttribute(html, "data-grid-line-visibility", resolvePropertyPreview(control.gridLineVisibility));
+  appendAttribute(html, "data-grid-selection-mode", resolvePropertyPreview(control.gridSelectionMode));
+  appendAttribute(html, "data-coloring-mode", resolvePropertyPreview(control.coloringMode));
+  appendAttribute(html, "data-horizontal-scroll-bar-visibility", resolvePropertyPreview(control.horizontalScrollBarVisibility));
+  appendAttribute(html, "data-vertical-scroll-bar-visibility", resolvePropertyPreview(control.verticalScrollBarVisibility));
+}
+
+function appendParameterScrollStyle(style: string[], axis: string, property: HmiProperty<number> | undefined): void {
+  const mode = getStaticValue(property);
+  const overflow = mode === 0 ? "auto" : mode === 1 ? "scroll" : mode === 2 ? "hidden" : undefined;
+  if (overflow !== undefined) style.push(`overflow-${axis}: ${overflow};`);
 }
 
 function appendParameterSelectionAttributes(html: string[], control: HmiParameterControlBase): void {

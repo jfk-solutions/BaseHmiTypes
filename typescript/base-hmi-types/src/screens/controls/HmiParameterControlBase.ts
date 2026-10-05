@@ -3,6 +3,13 @@ import { HmiColor, HmiFont, HmiProperty } from "../base.js";
 import { HmiParameterColumn } from "./HmiParameterColumn.js";
 
 export abstract class HmiParameterControlBase extends HmiControlWindowBase {
+  allowSortByColumn?: HmiProperty<boolean>;
+  allowFilterByColumn?: HmiProperty<boolean>;
+  gridLineVisibility?: HmiProperty<number>;
+  gridSelectionMode?: HmiProperty<number>;
+  coloringMode?: HmiProperty<number>;
+  horizontalScrollBarVisibility?: HmiProperty<number>;
+  verticalScrollBarVisibility?: HmiProperty<number>;
   selectFullRow?: HmiProperty<boolean>;
   selectionBackgroundColor?: HmiProperty<HmiColor>;
   selectionForegroundColor?: HmiProperty<HmiColor>;
