@@ -10,6 +10,9 @@ public sealed class HmiAlarmColumn
     public HmiProperty<bool>? Visible { get; set; }
 
     public HmiProperty<double>? Width { get; set; }
+    public HmiProperty<uint>? MinimumWidth { get; set; }
+    public HmiProperty<uint>? MaximumWidth { get; set; }
+    public HmiProperty<string>? OutputFormat { get; set; }
     public HmiProperty<bool>? AutoSize { get; set; }
     public HmiProperty<int>? DecimalPlaces { get; set; }
     /// <summary>Configured native leading-zero setting; retained without assuming a formatting range.</summary>

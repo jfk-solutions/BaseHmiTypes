@@ -7,6 +7,9 @@ export class HmiAlarmColumn {
   sourceType?: string;
   visible?: HmiProperty<boolean>;
   width?: HmiProperty<number>;
+  minimumWidth?: HmiProperty<number>;
+  maximumWidth?: HmiProperty<number>;
+  outputFormat?: HmiProperty<string>;
   autoSize?: HmiProperty<boolean>;
   decimalPlaces?: HmiProperty<number>;
   /** Configured native leading-zero setting, without assuming a formatting range. */
