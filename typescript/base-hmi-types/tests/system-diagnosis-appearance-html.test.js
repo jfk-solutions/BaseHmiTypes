@@ -1,0 +1,23 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {HmiSystemDiagnosisControl,HmiSystemDiagnosisAppearance,HmiScreen,HmiLayer,HmiScreenToHtmlConverter,staticProperty,hmiColorFromArgb,getStaticValue} from "../dist/index.js";
+test("Optional diagnostic appearance separates palettes and preserves raw configuration",async()=>{
+ const control=new HmiSystemDiagnosisControl();control.name="Diagnostics <A> & B";control.contentBackgroundColor=staticProperty(hmiColorFromArgb(255,1,1,1));
+ const screen=new HmiScreen(),layer=new HmiLayer();screen.layers.push(layer);layer.items.push(control);const renderer=new HmiScreenToHtmlConverter();
+ assert.ok(!(await renderer.convertAsync(screen)).includes("data-system-diagnosis-appearance="));
+ const a=control.appearance=new HmiSystemDiagnosisAppearance();
+ for(const [key,rgb] of [["informationAreaBackgroundColor",[17,34,51]],["informationAreaForegroundColor",[2,2,2]],["errorBackgroundColor",[3,3,3]],["errorForegroundColor",[4,4,4]],["selectionBackgroundColor",[5,5,5]],["selectionForegroundColor",[6,6,6]],["alternatingRowBackgroundColor",[7,7,7]],["gridLineColor",[8,8,8]],["navigationForegroundColor",[9,9,9]],["toolbarBackgroundColor",[10,10,10]],["informationAreaFocusColor",[11,11,11]],["headerBackgroundColor",[12,12,12]],["headerBorderBackgroundColor",[13,13,13]],["headerFirstGradientColor",[14,14,14]],["headerSecondGradientColor",[15,15,15]],["buttonBackgroundColor",[16,16,16]],["buttonFirstGradientColor",[17,17,17]]]) a[key]=staticProperty(hmiColorFromArgb(key==="informationAreaBackgroundColor"?0:255,...rgb));
+ for(const [key,value] of [["showGridLines",true],["showNavigationButtons",false],["useToolbarBackgroundColor",true],["toolbarAlignment",-2147483648],["informationAreaFocusWidth",0],["informationAreaFontReferenceDeviceSize",123],["navigationFontReferenceDeviceSize",456],["headerFontReferenceDeviceSize",789],["headerCornerRadius",0],["headerBorderWidth",0],["headerBackFillStyle",-7],["headerEdgeStyle",-9],["headerFirstGradientOffset",-10],["headerSecondGradientOffset",120],["useHeaderFirstGradient",true],["useHeaderSecondGradient",true],["buttonCornerRadius",0],["buttonBorderWidth",0],["useButtonFirstGradient",true]]) a[key]=staticProperty(value);
+ const sample=(html,kind)=>new RegExp(`<div data-appearance-sample="${kind}"(.*?)</div>`,"u").exec(html)?.[0]??"";
+ let html=await renderer.convertAsync(screen);assert.ok(html.includes("Diagnostics &lt;A&gt; &amp; B"));assert.ok(html.includes("Diagnostic data not loaded"));
+ for(const [kind,css] of [["information","background-color: rgba(17,34,51,0);"],["error","background-color: #030303;"],["selection","background-color: #050505;"],["alternate","background-color: #070707;"],["navigation","color: #090909;"],["toolbar","background-color: #0A0A0A;"]]) assert.ok(sample(html,kind).includes(css),kind);
+ assert.ok(sample(html,"information").includes("border-bottom-color: #080808;"));assert.ok(sample(html,"header").includes("linear-gradient("));assert.ok(sample(html,"button").includes("linear-gradient("));
+ assert.ok(html.includes('data-toolbar-alignment="-2147483648"'));assert.ok(html.includes('data-show-navigation-buttons="false"'));assert.ok(html.includes('data-information-area-font-reference-device-size="123"'));assert.ok(!html.includes("font-size: 123px"));assert.ok(!html.includes("<button"));
+ assert.equal(getStaticValue(a.headerFirstGradientOffset),-10);assert.equal(getStaticValue(a.headerSecondGradientOffset),120);assert.deepEqual(getStaticValue(control.contentBackgroundColor),hmiColorFromArgb(255,1,1,1));
+ for(const key of ["useToolbarBackgroundColor","showGridLines","useHeaderFirstGradient","useHeaderSecondGradient","useButtonFirstGradient"]) a[key]=staticProperty(false);
+ html=await renderer.convertAsync(screen);assert.ok(!sample(html,"toolbar").includes("background-color:"));assert.ok(!sample(html,"information").includes("border-bottom:"));assert.ok(!sample(html,"header").includes("linear-gradient("));assert.ok(!sample(html,"button").includes("linear-gradient("));
+ a.buttonCornerRadius=staticProperty(-1);
+ for(const invalid of [-1,NaN,Infinity]){a.headerCornerRadius=staticProperty(invalid);a.headerBorderWidth=staticProperty(invalid);a.buttonBorderWidth=staticProperty(invalid);html=await renderer.convertAsync(screen);for(const kind of ["header","button"]){assert.ok(!sample(html,kind).includes("border-radius:"));assert.ok(!sample(html,kind).includes("border-width:"));}}
+ delete a.headerBackgroundColor;delete a.headerFirstGradientColor;delete a.headerSecondGradientColor;
+ html=await renderer.convertAsync(screen);assert.ok(html.includes('data-header-back-fill-style="-7"'));assert.ok(!sample(html,"header").includes("background-color:"));
+});

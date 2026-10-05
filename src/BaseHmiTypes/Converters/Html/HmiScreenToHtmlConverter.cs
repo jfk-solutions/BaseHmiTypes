@@ -3399,6 +3399,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-grid-line-width", ResolvePropertyPreview(systemDiagnosisControl.GridLineWidth, context));
         html.Append("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">")
             .Append(WebUtility.HtmlEncode(title)).Append("</div>");
+        if (systemDiagnosisControl.Appearance is not null) AppendSystemDiagnosisAppearance(html, systemDiagnosisControl.Appearance, context);
         void Bar(string role, HmiProperty<HmiColor>? background, HmiProperty<HmiColor>? foreground, HmiFont? font, string text)
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px;");

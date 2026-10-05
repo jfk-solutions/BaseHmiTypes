@@ -135,6 +135,7 @@ import { HmiProcessDiagnosisOverviewControl } from "../../screens/controls/HmiPr
 import { HmiProcessDiagnosisPlcCodeViewerControl } from "../../screens/controls/HmiProcessDiagnosisPlcCodeViewerControl.js";
 import { HmiProcessDiagnosisCriteriaAnalysisControl } from "../../screens/controls/HmiProcessDiagnosisCriteriaAnalysisControl.js";
 import { HmiProcessDiagnosisGraphOverviewControl } from "../../screens/controls/HmiProcessDiagnosisGraphOverviewControl.js";
+import { HmiSystemDiagnosisAppearance } from "../../screens/controls/HmiSystemDiagnosisAppearance.js";
 import { HmiSystemDiagnosisControl } from "../../screens/controls/HmiSystemDiagnosisControl.js";
 import { HmiSystemDiagnosisColumnType } from "../../screens/controls/HmiSystemDiagnosisColumnType.js";
 import { HmiSystemDiagnosisViewKind } from "../../screens/controls/HmiSystemDiagnosisViewKind.js";
@@ -3665,6 +3666,81 @@ function appendGraphOverviewControl(html: string[], control: HmiProcessDiagnosis
   html.push("</div>");
 }
 
+function appendSystemDiagnosisAppearance(html: string[], control: HmiSystemDiagnosisAppearance, context: HmiHtmlConvertContext): void {
+  html.push('<div data-system-diagnosis-appearance="true" data-preview="appearance"');
+  appendAttribute(html,"data-information-area-background-color",resolvePropertyPreview(control.informationAreaBackgroundColor));
+  appendAttribute(html,"data-information-area-foreground-color",resolvePropertyPreview(control.informationAreaForegroundColor));
+  appendAttribute(html,"data-error-background-color",resolvePropertyPreview(control.errorBackgroundColor));
+  appendAttribute(html,"data-error-foreground-color",resolvePropertyPreview(control.errorForegroundColor));
+  appendAttribute(html,"data-information-area-focus-color",resolvePropertyPreview(control.informationAreaFocusColor));
+  appendAttribute(html,"data-information-area-focus-width",resolvePropertyPreview(control.informationAreaFocusWidth));
+  appendAttribute(html,"data-information-area-font-reference-device-size",resolvePropertyPreview(control.informationAreaFontReferenceDeviceSize));
+  appendAttribute(html,"data-selection-background-color",resolvePropertyPreview(control.selectionBackgroundColor));
+  appendAttribute(html,"data-selection-foreground-color",resolvePropertyPreview(control.selectionForegroundColor));
+  appendAttribute(html,"data-show-grid-lines",resolvePropertyPreview(control.showGridLines));
+  appendAttribute(html,"data-header-background-color",resolvePropertyPreview(control.headerBackgroundColor));
+  appendAttribute(html,"data-header-foreground-color",resolvePropertyPreview(control.headerForegroundColor));
+  appendAttribute(html,"data-navigation-font-reference-device-size",resolvePropertyPreview(control.navigationFontReferenceDeviceSize));
+  appendAttribute(html,"data-navigation-foreground-color",resolvePropertyPreview(control.navigationForegroundColor));
+  appendAttribute(html,"data-show-navigation-buttons",resolvePropertyPreview(control.showNavigationButtons));
+  appendAttribute(html,"data-use-toolbar-background-color",resolvePropertyPreview(control.useToolbarBackgroundColor));
+  appendAttribute(html,"data-alternating-row-background-color",resolvePropertyPreview(control.alternatingRowBackgroundColor));
+  appendAttribute(html,"data-grid-line-color",resolvePropertyPreview(control.gridLineColor));
+  appendAttribute(html,"data-toolbar-alignment",resolvePropertyPreview(control.toolbarAlignment));
+  appendAttribute(html,"data-toolbar-background-color",resolvePropertyPreview(control.toolbarBackgroundColor));
+  appendAttribute(html,"data-header-font-reference-device-size",resolvePropertyPreview(control.headerFontReferenceDeviceSize));
+  appendAttribute(html,"data-button-background-color",resolvePropertyPreview(control.buttonBackgroundColor));
+  appendAttribute(html,"data-button-border-background-color",resolvePropertyPreview(control.buttonBorderBackgroundColor));
+  appendAttribute(html,"data-button-border-color",resolvePropertyPreview(control.buttonBorderColor));
+  appendAttribute(html,"data-button-first-gradient-color",resolvePropertyPreview(control.buttonFirstGradientColor));
+  appendAttribute(html,"data-button-middle-gradient-color",resolvePropertyPreview(control.buttonMiddleGradientColor));
+  appendAttribute(html,"data-button-second-gradient-color",resolvePropertyPreview(control.buttonSecondGradientColor));
+  appendAttribute(html,"data-button-border-width",resolvePropertyPreview(control.buttonBorderWidth));
+  appendAttribute(html,"data-button-corner-radius",resolvePropertyPreview(control.buttonCornerRadius));
+  appendAttribute(html,"data-button-edge-style",resolvePropertyPreview(control.buttonEdgeStyle));
+  appendAttribute(html,"data-button-back-fill-style",resolvePropertyPreview(control.buttonBackFillStyle));
+  appendAttribute(html,"data-button-first-gradient-offset",resolvePropertyPreview(control.buttonFirstGradientOffset));
+  appendAttribute(html,"data-button-second-gradient-offset",resolvePropertyPreview(control.buttonSecondGradientOffset));
+  appendAttribute(html,"data-use-button-first-gradient",resolvePropertyPreview(control.useButtonFirstGradient));
+  appendAttribute(html,"data-use-button-second-gradient",resolvePropertyPreview(control.useButtonSecondGradient));
+  appendAttribute(html,"data-header-border-color",resolvePropertyPreview(control.headerBorderColor));
+  appendAttribute(html,"data-header-border-width",resolvePropertyPreview(control.headerBorderWidth));
+  appendAttribute(html,"data-header-border-background-color",resolvePropertyPreview(control.headerBorderBackgroundColor));
+  appendAttribute(html,"data-header-corner-radius",resolvePropertyPreview(control.headerCornerRadius));
+  appendAttribute(html,"data-header-back-fill-style",resolvePropertyPreview(control.headerBackFillStyle));
+  appendAttribute(html,"data-header-edge-style",resolvePropertyPreview(control.headerEdgeStyle));
+  appendAttribute(html,"data-header-first-gradient-color",resolvePropertyPreview(control.headerFirstGradientColor));
+  appendAttribute(html,"data-header-middle-gradient-color",resolvePropertyPreview(control.headerMiddleGradientColor));
+  appendAttribute(html,"data-header-second-gradient-color",resolvePropertyPreview(control.headerSecondGradientColor));
+  appendAttribute(html,"data-header-first-gradient-offset",resolvePropertyPreview(control.headerFirstGradientOffset));
+  appendAttribute(html,"data-header-second-gradient-offset",resolvePropertyPreview(control.headerSecondGradientOffset));
+  appendAttribute(html,"data-use-header-first-gradient",resolvePropertyPreview(control.useHeaderFirstGradient));
+  appendAttribute(html,"data-use-header-second-gradient",resolvePropertyPreview(control.useHeaderSecondGradient));
+  html.push("><div>System diagnostics appearance preview</div>");
+  const sample=(kind:string,label:string,background:HmiProperty<HmiColor>|undefined,foreground:HmiProperty<HmiColor>|undefined,extra="")=>{
+    const style=["padding: 2px 4px;"];appendColorStyle(style,"background-color",background);appendColorStyle(style,"color",foreground);style.push(extra);
+    html.push('<div data-appearance-sample="',kind,'" style="',style.join(""),'">',label,"</div>");
+  };
+  const grid:string[]=[];
+  if(getStaticValue(control.showGridLines)){grid.push("border-bottom: 1px solid currentColor;");appendColorStyle(grid,"border-bottom-color",control.gridLineColor);}
+  sample("information","Information area appearance",control.informationAreaBackgroundColor,control.informationAreaForegroundColor,grid.join(""));
+  sample("alternate","Alternate row appearance",control.alternatingRowBackgroundColor??control.informationAreaBackgroundColor,control.informationAreaForegroundColor,grid.join(""));
+  sample("error","Error text appearance",control.errorBackgroundColor,control.errorForegroundColor);
+  sample("selection","Selection appearance",control.selectionBackgroundColor,control.selectionForegroundColor);
+  sample("focus-frame","Focus frame color palette",control.informationAreaFocusColor,undefined);
+  sample("navigation","Navigation path text appearance",undefined,control.navigationForegroundColor);
+  sample("toolbar","Toolbar background appearance",getStaticValue(control.useToolbarBackgroundColor)!==false?control.toolbarBackgroundColor:undefined,undefined);
+  const header:string[]=[];appendColorStyle(header,"background-color",control.headerBackgroundColor);appendColorStyle(header,"border-color",control.headerBorderColor);appendHeaderBorderWidth(header,control.headerBorderWidth);
+  const headerRadius=getStaticValue(control.headerCornerRadius);if(headerRadius!==undefined&&Number.isFinite(headerRadius)&&headerRadius>=0)header.push(`border-radius: ${toCss(headerRadius)}px;`);
+  appendColorGradientStyle(header,createColorGradient({backgroundColor:control.headerBackgroundColor,firstGradientColor:control.headerFirstGradientColor,firstGradientOffset:control.headerFirstGradientOffset,middleGradientColor:control.headerMiddleGradientColor,secondGradientColor:control.headerSecondGradientColor,secondGradientOffset:control.headerSecondGradientOffset,useFirstGradient:control.useHeaderFirstGradient,useSecondGradient:control.useHeaderSecondGradient}));
+  sample("header","Header appearance",undefined,control.headerForegroundColor,header.join(""));
+  const button:string[]=[];appendColorStyle(button,"background-color",control.buttonBackgroundColor);appendColorStyle(button,"border-color",control.buttonBorderColor);appendHeaderBorderWidth(button,control.buttonBorderWidth);
+  const buttonRadius=getStaticValue(control.buttonCornerRadius);if(buttonRadius!==undefined&&Number.isFinite(buttonRadius)&&buttonRadius>=0)button.push(`border-radius: ${toCss(buttonRadius)}px;`);
+  appendColorGradientStyle(button,createColorGradient({backgroundColor:control.buttonBackgroundColor,firstGradientColor:control.buttonFirstGradientColor,firstGradientOffset:control.buttonFirstGradientOffset,middleGradientColor:control.buttonMiddleGradientColor,secondGradientColor:control.buttonSecondGradientColor,secondGradientOffset:control.buttonSecondGradientOffset,useFirstGradient:control.useButtonFirstGradient,useSecondGradient:control.useButtonSecondGradient}));
+  sample("button","Button appearance",undefined,undefined,button.join(""));
+  html.push("</div>");
+}
+
 function appendSystemDiagnosisControl(
   html: string[],
   systemDiagnosisControl: HmiSystemDiagnosisControl,
@@ -3693,6 +3769,7 @@ function appendSystemDiagnosisControl(
   appendAttribute(html, "data-row-height", resolvePropertyPreview(systemDiagnosisControl.rowHeight));
   appendAttribute(html, "data-grid-line-width", resolvePropertyPreview(systemDiagnosisControl.gridLineWidth));
   html.push("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">", escapeHtml(title), "</div>");
+  if (systemDiagnosisControl.appearance) appendSystemDiagnosisAppearance(html,systemDiagnosisControl.appearance,context);
   const bar = (role: string, background: HmiProperty<HmiColor> | undefined, foreground: HmiProperty<HmiColor> | undefined, font: HmiFont | undefined, text: string) => {
     const style = ["flex: 0 0 auto; padding: 2px 4px;"];
     appendColorStyle(style, "background-color", background); appendColorStyle(style, "color", foreground);
