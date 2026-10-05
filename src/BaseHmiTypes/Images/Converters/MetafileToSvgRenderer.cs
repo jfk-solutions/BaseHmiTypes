@@ -54,6 +54,7 @@ public sealed class MetafileToSvgRenderer
 
         foreach (var record in EmfRecords(bytes))
         {
+            var firstElement = elements.Count;
             var dataOffset = record.Offset + 8;
             var dataEnd = record.Offset + record.Size;
             if (dataEnd > bytes.Length)
@@ -252,6 +253,9 @@ public sealed class MetafileToSvgRenderer
                         OffsetSelectedClip(dx, dy, state, defs, ref clipSequence, clipExpansion);
                     }
                     break;
+                case EMR.SetMetaRgn:
+                    SetMetaRegion(state, defs, ref clipSequence);
+                    break;
                 case EMR.PolylineTo:
                 case EMR.PolylineTo16:
                 case EMR.PolyBezier:
@@ -379,6 +383,12 @@ public sealed class MetafileToSvgRenderer
                             elements.Add(image);
                         break;
                     }
+            }
+            // The metaregion is independent of the selected clip on each drawing.
+            if (state.MetaMaskId is not null && elements.Count > firstElement)
+            {
+                elements.Insert(firstElement, $"<g mask=\"url(#{state.MetaMaskId})\">");
+                elements.Add("</g>");
             }
         }
 
@@ -762,6 +772,7 @@ public sealed class MetafileToSvgRenderer
             MiterLimit = state.MiterLimit,
             ActiveClipId = state.ActiveClipId,
             ActiveMaskId = state.ActiveMaskId,
+            MetaMaskId = state.MetaMaskId,
             CurrentPath = state.CurrentPath is null ? null : new List<string>(state.CurrentPath),
             SelectedPath = state.SelectedPath is null ? null : new List<string>(state.SelectedPath),
             PathStartX = state.PathStartX,
@@ -797,6 +808,7 @@ public sealed class MetafileToSvgRenderer
         target.MiterLimit = restored.MiterLimit;
         target.ActiveClipId = restored.ActiveClipId;
         target.ActiveMaskId = restored.ActiveMaskId;
+        target.MetaMaskId = restored.MetaMaskId;
         target.CurrentPath = restored.CurrentPath;
         target.PathStartX = restored.PathStartX;
         target.PathFigureClosed = restored.PathFigureClosed;
@@ -1454,6 +1466,19 @@ public sealed class MetafileToSvgRenderer
             defs[index] = defs[index].Replace(ClipViewportToken, ClipViewportAttrs(domain)).Replace(DefaultClipViewportToken, ClipViewportAttrs(viewBox));
     }
 
+    private static void SetMetaRegion(DrawState state, List<string> defs, ref int sequence)
+    {
+        // A null selected clip imposes no extra constraint on the metaregion.
+        if (state.ActiveClipId is null && state.ActiveMaskId is null) return;
+        var id = $"mask{++sequence}";
+        var selected = $"<rect {ClipViewportToken} fill=\"#ffffff\"{ClipAttr(state)} />";
+        if (state.MetaMaskId is not null) selected = $"<g mask=\"url(#{state.MetaMaskId})\">{selected}</g>";
+        defs.Add($"<mask id=\"{id}\" maskUnits=\"userSpaceOnUse\" maskContentUnits=\"userSpaceOnUse\" {ClipViewportToken}>{selected}</mask>");
+        state.MetaMaskId = id;
+        state.ActiveClipId = null;
+        state.ActiveMaskId = null;
+    }
+
     private static void OffsetSelectedClip(double dx, double dy, DrawState state, List<string> defs, ref int sequence, ClipExpansion expansion)
     {
         if ((state.ActiveClipId is null && state.ActiveMaskId is null) || (dx == 0 && dy == 0) || double.IsNaN(dx) || double.IsInfinity(dx) || double.IsNaN(dy) || double.IsInfinity(dy)) return;
@@ -1745,6 +1770,7 @@ internal sealed class DrawState
 
     public string? ActiveClipId { get; set; }
     public string? ActiveMaskId { get; set; }
+    public string? MetaMaskId { get; set; }
 
     public List<string>? CurrentPath { get; set; }
 
@@ -1862,6 +1888,7 @@ internal enum PathPaintMode
 internal static class EMR
 {
     public const uint OffsetClipRgn = 0x001a;
+    public const uint SetMetaRgn = 0x001c;
     public const uint ExtSelectClipRgn = 0x004b;
     public const uint ExcludeClipRect = 0x001d;
     public const uint IntersectClipRect = 0x001e;
