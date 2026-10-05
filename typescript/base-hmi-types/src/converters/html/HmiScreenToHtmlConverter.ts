@@ -58,6 +58,7 @@ import {
 import { HmiVerticalAlignment } from "../../screens/base/HmiVerticalAlignment.js";
 import { HmiWindowBase } from "../../screens/base/HmiWindowBase.js";
 import { HmiAlarmControl } from "../../screens/controls/HmiAlarmControl.js";
+import type { HmiAlarmColumnSet } from "../../screens/controls/HmiAlarmColumnSet.js";
 import { HmiAlarmLineControl } from "../../screens/controls/HmiAlarmLineControl.js";
 import { HmiAlarmListMode } from "../../screens/controls/HmiAlarmListMode.js";
 import { HmiAlarmViewKind } from "../../screens/controls/HmiAlarmViewKind.js";
@@ -3425,6 +3426,16 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (alarmControl.messageBlocks.length > 0) appendAttribute(html, "data-message-block-count", String(alarmControl.messageBlocks.length));
   html.push(">");
   appendAlarmMessageBlocks(html, alarmControl, context);
+  const configuredViews = alarmControl.columnSets.filter(set => set.allowSort !== undefined || set.allowFilter !== undefined || set.allowColumnReorder !== undefined || set.allowColumnResize !== undefined);
+  if (configuredViews.length > 0) {
+    html.push('<template class="hmi-alarm-view-settings">');
+    for (const set of configuredViews) {
+      html.push("<div");
+      appendAlarmViewSettings(html, set);
+      html.push("></div>");
+    }
+    html.push("</template>");
+  }
 
   if (showTitle) {
     const title = resolveAlarmTitle(alarmControl, listMode, context);
@@ -3440,7 +3451,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   html.push("<table class=\"hmi-alarm-table");
   if (getStaticValue(alarmControl.useAlternatingRowColors) === true)
     html.push(" hmi-alarm-table--alternating");
-  html.push("\" style=\"", createAlarmTableStyle(alarmControl), "\">");
+  html.push('"');
+  appendAlarmViewSettings(html, selectedSet);
+  html.push(" style=\"", createAlarmTableStyle(alarmControl), "\">");
   if (visibleColumns.length > 0) {
     html.push("<colgroup>");
     for (const column of visibleColumns) {
@@ -5453,6 +5466,15 @@ function createAlarmControlStyle(alarmControl: HmiAlarmControl, context: HmiHtml
   if (alarmControl.contentFont !== undefined)
     appendFont(parts, alarmControl.contentFont.getForCulture(context.options.cultureLcid));
   return parts.join("");
+}
+
+function appendAlarmViewSettings(html: string[], set: HmiAlarmColumnSet | undefined): void {
+  if (set === undefined) return;
+  appendAttribute(html, "data-column-set-name", set.name, true);
+  appendAttribute(html, "data-view-allow-sort", resolvePropertyPreview(set.allowSort));
+  appendAttribute(html, "data-view-allow-filter", resolvePropertyPreview(set.allowFilter));
+  appendAttribute(html, "data-view-allow-column-reorder", resolvePropertyPreview(set.allowColumnReorder));
+  appendAttribute(html, "data-view-allow-column-resize", resolvePropertyPreview(set.allowColumnResize));
 }
 
 function appendAlarmMessageBlocks(html: string[], control: HmiAlarmControl, context: HmiHtmlConvertContext): void {
