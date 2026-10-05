@@ -5212,6 +5212,7 @@ public partial class HmiScreenToHtmlConverter
             AddTrendJsonString(properties, "label", axis.LabelText?.GetText(cultureInfo) ?? axis.Label);
             AddTrendJsonString(properties, "timeFormat", axis.TimeFormat?.StaticValue.ToString());
             AddTrendJsonBoolean(properties, "displayMilliseconds", axis.DisplayMilliseconds?.StaticValue);
+            AddTrendJsonNumber(properties, "timeRangeBaseCode", axis.TimeRangeBaseCode?.StaticValue);
             AddTrendJsonNumber(properties, "timeRangeFactor", axis.TimeRangeFactor?.StaticValue);
             AddTrendJsonNumber(properties, "timeRangeBaseMilliseconds", axis.TimeRangeBaseMilliseconds?.StaticValue);
             AddTrendJsonNumber(properties, "timeSpan", axis.TimeSpan?.StaticValue);
