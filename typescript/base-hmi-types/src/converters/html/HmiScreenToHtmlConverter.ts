@@ -5303,6 +5303,13 @@ function appendCommonAttributes(
   appendAttribute(html, "id", item.name);
   appendTextAttribute(html, "title", item.toolTipText, context);
   appendStaticAttribute(html, "tabindex", item.tabIndex);
+  const focusItem = item instanceof HmiWidgetBase || item instanceof HmiWindowBase ? item : undefined;
+  const focusColor = getStaticValue(focusItem?.focusColor);
+  const focusWidth = getStaticValue(focusItem?.focusWidth);
+  const hasFocusWidth = focusWidth !== undefined && Number.isFinite(focusWidth) && focusWidth >= 0;
+  appendAttribute(html, "data-focus-color", resolvePropertyPreview(focusItem?.focusColor));
+  appendAttribute(html, "data-focus-width", resolvePropertyPreview(focusItem?.focusWidth));
+  if (focusColor !== undefined || hasFocusWidth) appendAttribute(html, "data-hmi-focus-appearance", "true");
   appendAttribute(html, "data-hmi-security-code", item.securityCode);
   appendStaticAttribute(html, "data-adapt-border-to-content", item.adaptBorderToContent);
   appendDisabledAttribute(html, item);
@@ -5320,6 +5327,8 @@ function appendCommonAttributes(
   if (additionalStyle) {
     html.push(additionalStyle);
   }
+  if (focusColor !== undefined) html.push(`--hmi-focus-color: ${colorToCss(focusColor)};`);
+  if (hasFocusWidth) html.push(`--hmi-focus-width: ${toCss(focusWidth)}px;`);
   appendItemTransform(html, item);
   html.push("\"");
 }

@@ -117,3 +117,12 @@ input[data-hmi-slider]::-moz-range-track {
 .hmi-recipe-table tbody tr:nth-child(even) > td {
   background-color: var(--hmi-recipe-even-row-background);
 }
+
+[data-hmi-focus-appearance] {
+  --hmi-focus-width: 1px;
+  --hmi-focus-color: currentColor;
+}
+
+[data-hmi-focus-appearance]:focus-visible {
+  outline: var(--hmi-focus-width, 1px) solid var(--hmi-focus-color, currentColor);
+}
