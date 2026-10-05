@@ -222,6 +222,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiProperty<string>? IconStyle { get; set; }
 
+    public HmiFont? ToolbarFont { get; set; }
+
     public HmiProperty<HmiColor>? ToolbarForegroundColor { get; set; }
 
     public HmiProperty<HmiColor>? ToolbarBackgroundColor { get; set; }

@@ -3193,6 +3193,7 @@ public partial class HmiScreenToHtmlConverter
             var toolbarStyle = new StringBuilder("flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;");
             if (alarmControl.UseToolbarBackgroundColor is null || ResolveStaticValue(alarmControl.UseToolbarBackgroundColor, context))
                 AppendColorStyle(toolbarStyle, "background-color", alarmControl.ToolbarBackgroundColor);
+            AppendToolbarFontStyle(toolbarStyle, alarmControl.ToolbarFont?.GetForCulture(context.CultureInfo?.LCID));
             AppendColorStyle(toolbarStyle, "color", alarmControl.ToolbarForegroundColor);
             html.Append("<div class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"").Append(toolbarStyle).Append("\">");
             if (alarmControl.ToolbarButtons.Count > 0)
@@ -4927,6 +4928,8 @@ public partial class HmiScreenToHtmlConverter
         var style = new StringBuilder(CreateControlWindowStyle(trendControl, context, "overflow: hidden;"));
         AppendFontVariables(style, "content", trendControl.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
         AppendFontVariables(style, "header", trendControl.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
+        AppendFontVariables(style, "toolbar", trendControl.ToolbarFont?.GetForCulture(context.CultureInfo?.LCID));
+        AppendColorStyle(style, "--hmi-trend-toolbar-foreground", trendControl.ToolbarForegroundColor);
         AppendFontVariables(style, "status", trendControl.StatusBarFont?.GetForCulture(context.CultureInfo?.LCID));
         if (trendControl.ToolbarBackgroundColor is not null &&
             (trendControl.UseToolbarBackgroundColor is null || ResolveStaticValue(trendControl.UseToolbarBackgroundColor, context)))
@@ -4991,8 +4994,22 @@ public partial class HmiScreenToHtmlConverter
             decorations.Add("underline");
         if (font.Strikethrough.GetStaticValueOrDefault())
             decorations.Add("line-through");
+        if (role == "toolbar")
+        {
+            if (font.Italic?.StaticValue == false) style.Append(prefix).Append("font-style: normal;");
+            if (font.Bold?.StaticValue == false && (font.Weight?.StaticValue ?? 0) <= 0) style.Append(prefix).Append("font-weight: normal;");
+            if (font.Underline?.StaticValue == false && font.Strikethrough?.StaticValue == false) style.Append(prefix).Append("text-decoration: none;");
+        }
         if (decorations.Count > 0)
             style.Append(prefix).Append("text-decoration: ").Append(string.Join(" ", decorations)).Append(';');
+    }
+
+    private static void AppendToolbarFontStyle(StringBuilder style, HmiFont? font)
+    {
+        AppendFontStyle(style, font);
+        if (font?.Italic?.StaticValue == false) style.Append("font-style: normal;");
+        if (font?.Bold?.StaticValue == false && (font.Weight?.StaticValue ?? 0) <= 0) style.Append("font-weight: normal;");
+        if (font?.Underline?.StaticValue == false && font.Strikethrough?.StaticValue == false) style.Append("text-decoration: none;");
     }
 
     private static void AppendFontStyle(StringBuilder style, HmiFont? font)

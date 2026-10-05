@@ -333,9 +333,13 @@ export class HmiTrendControl extends HTMLElement {
           align-items: center;
           gap: 6px;
           overflow: hidden;
-          color: #20242a;
+          color: var(--hmi-trend-toolbar-foreground, #20242a);
           background: var(--hmi-trend-toolbar-background, transparent);
-          font-size: clamp(10px, 1.8vmin, 16px);
+          font-family: var(--hmi-trend-toolbar-font-family, inherit);
+          font-size: var(--hmi-trend-toolbar-font-size, clamp(10px, 1.8vmin, 16px));
+          font-weight: var(--hmi-trend-toolbar-font-weight, inherit);
+          font-style: var(--hmi-trend-toolbar-font-style, inherit);
+          text-decoration: var(--hmi-trend-toolbar-text-decoration, inherit);
         }
 
         .pen-chip {

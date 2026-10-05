@@ -183,6 +183,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   /** Whether the toolbar is aligned to the top or bottom edge. */
   toolbarAlignment?: HmiProperty<HmiVerticalAlignment>;
   useToolbarBackgroundColor?: HmiProperty<boolean>;
+  toolbarFont?: HmiFont;
+  toolbarForegroundColor?: HmiProperty<HmiColor>;
   toolbarBackgroundColor?: HmiProperty<HmiColor>;
   toolbarButtonSize?: HmiProperty<number>;
   showStatusBar?: HmiProperty<boolean>;
