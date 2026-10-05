@@ -2927,6 +2927,9 @@ function appendParameterColumns(html: string[], control: HmiParameterControlBase
     html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), separator.join(""), '\"');
     appendAttribute(html, "data-column-name", column.name);
     appendAttribute(html, "data-column-key", column.key);
+    appendAttribute(html, "data-enabled", resolvePropertyPreview(column.enabled));
+    appendAttribute(html, "data-content-background-color", resolvePropertyPreview(column.backgroundColor));
+    appendAttribute(html, "data-content-foreground-color", resolvePropertyPreview(column.foregroundColor));
     appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
     appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
     appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
