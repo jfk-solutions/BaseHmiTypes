@@ -3366,7 +3366,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     alarmControl,
     context,
     true,
-    createAlarmControlStyle(alarmControl, context),
+    createAlarmControlStyle(alarmControl, context, selectedSet),
   );
   appendAttribute(html, "data-window-resizable", resolvePropertyPreview(alarmControl.resizable));
   appendAttribute(html, "data-window-movable", resolvePropertyPreview(alarmControl.movable));
@@ -3432,7 +3432,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     set.backgroundColor !== undefined || set.foregroundColor !== undefined || set.headerBackgroundColor !== undefined ||
     set.headerForegroundColor !== undefined || set.headerBorderColor !== undefined || set.contentFont !== undefined || set.headerFont !== undefined ||
     set.gridLineColor !== undefined || set.gridLineWidth !== undefined || set.gridLineVisibility !== undefined || set.rowHeight !== undefined ||
-    set.cellPaddingLeft !== undefined || set.cellPaddingTop !== undefined || set.cellPaddingRight !== undefined || set.cellPaddingBottom !== undefined);
+    set.cellPaddingLeft !== undefined || set.cellPaddingTop !== undefined || set.cellPaddingRight !== undefined || set.cellPaddingBottom !== undefined ||
+    set.horizontalScrollBarVisibility !== undefined || set.verticalScrollBarVisibility !== undefined || set.gridSelectionMode !== undefined || set.selectFullRow !== undefined);
   if (configuredViews.length > 0) {
     html.push('<template class="hmi-alarm-view-settings">');
     for (const set of configuredViews) {
@@ -5463,9 +5464,9 @@ function createControlWindowStyle(window: HmiWindowBase, baseStyle: string): str
   return getStaticValue(window.resizable) === true ? `${baseStyle}resize: both;` : baseStyle;
 }
 
-function createAlarmControlStyle(alarmControl: HmiAlarmControl, context: HmiHtmlConvertContext): string {
-  const horizontalOverflow = getStaticValue(alarmControl.showHorizontalScrollbar) === true ? "auto" : "hidden";
-  const verticalOverflow = getStaticValue(alarmControl.showVerticalScrollbar) === true ? "auto" : "hidden";
+function createAlarmControlStyle(alarmControl: HmiAlarmControl, context: HmiHtmlConvertContext, set: HmiAlarmColumnSet | undefined): string {
+  const horizontalOverflow = scrollBarOverflow(set?.horizontalScrollBarVisibility, getStaticValue(alarmControl.showHorizontalScrollbar) === true ? "auto" : "hidden");
+  const verticalOverflow = scrollBarOverflow(set?.verticalScrollBarVisibility, getStaticValue(alarmControl.showVerticalScrollbar) === true ? "auto" : "hidden");
   let style = createControlWindowStyle(
     alarmControl,
     `display: flex; flex-direction: column; overflow-x: ${horizontalOverflow};overflow-y: ${verticalOverflow};`,
@@ -5477,6 +5478,10 @@ function createAlarmControlStyle(alarmControl: HmiAlarmControl, context: HmiHtml
   if (alarmControl.contentFont !== undefined)
     appendFont(parts, alarmControl.contentFont.getForCulture(context.options.cultureLcid));
   return parts.join("");
+
+  function scrollBarOverflow(property: HmiProperty<number> | undefined, fallback: string): string {
+    switch (getStaticValue(property)) { case 0: return "auto"; case 1: return "scroll"; case 2: return "hidden"; default: return fallback; }
+  }
 }
 
 function appendAlarmViewSettings(html: string[], set: HmiAlarmColumnSet | undefined, context: HmiHtmlConvertContext): void {
@@ -5499,6 +5504,10 @@ function appendAlarmViewSettings(html: string[], set: HmiAlarmColumnSet | undefi
   appendAttribute(html, "data-view-cell-padding-right", resolvePropertyPreview(set.cellPaddingRight));
   appendAttribute(html, "data-view-cell-padding-bottom", resolvePropertyPreview(set.cellPaddingBottom));
   appendAttribute(html, "data-view-row-height", resolvePropertyPreview(set.rowHeight));
+  appendAttribute(html, "data-view-horizontal-scrollbar-visibility", resolvePropertyPreview(set.horizontalScrollBarVisibility));
+  appendAttribute(html, "data-view-vertical-scrollbar-visibility", resolvePropertyPreview(set.verticalScrollBarVisibility));
+  appendAttribute(html, "data-view-grid-selection-mode", resolvePropertyPreview(set.gridSelectionMode));
+  appendAttribute(html, "data-view-select-full-row", resolvePropertyPreview(set.selectFullRow));
   for (const [role, font] of [["content", set.contentFont], ["header", set.headerFont]] as const) {
     if (font === undefined) continue;
     const style: string[] = [];

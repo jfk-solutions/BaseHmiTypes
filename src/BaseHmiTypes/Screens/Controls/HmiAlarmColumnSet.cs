@@ -27,5 +27,9 @@ public sealed class HmiAlarmColumnSet
     public HmiProperty<double>? CellPaddingBottom { get; set; }
     /// <summary>Configured row height; zero requests automatic sizing.</summary>
     public HmiProperty<double>? RowHeight { get; set; }
+    public HmiProperty<int>? HorizontalScrollBarVisibility { get; set; }
+    public HmiProperty<int>? VerticalScrollBarVisibility { get; set; }
+    public HmiProperty<int>? GridSelectionMode { get; set; }
+    public HmiProperty<bool>? SelectFullRow { get; set; }
     public IList<HmiAlarmColumn> Columns { get; } = new List<HmiAlarmColumn>();
 }
