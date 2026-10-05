@@ -2929,6 +2929,8 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(recipeControl.GridLineColor, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(recipeControl.ShowStatusBar, context));
         AppendAttribute(html, "data-show-numbers", ResolvePropertyPreview(recipeControl.ShowNumbers, context));
+        AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(recipeControl.SelectionBackgroundColor, context));
+        AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(recipeControl.SelectionForegroundColor, context));
         AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(recipeControl.AlternatingRowBackgroundColor, context));
         html.Append('>');
 
@@ -2968,7 +2970,7 @@ public partial class HmiScreenToHtmlConverter
                         .Append(headerStyle).Append('"');
                     AppendAttribute(html, "data-column-type", column.Type.ToString());
                     html.Append('>')
-                        .Append(WebUtility.HtmlEncode(column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.Type.ToString()))
+                        .Append(WebUtility.HtmlEncode(column.HeaderText?.GetText(context.CultureInfo) ?? column.Type.ToString()))
                         .Append("</th>");
                 }
                 html.Append("</tr></thead>");
@@ -2977,6 +2979,8 @@ public partial class HmiScreenToHtmlConverter
             AppendAttribute(html, "colspan", Math.Max(visibleColumns.Length, 1).ToString(CultureInfo.InvariantCulture));
             html.Append(" style=\"").Append(recipeControl.ShowGridLines is not null || recipeControl.GridLineColor is not null ? cellStyle.ToString() : string.Empty).Append("text-align: center;\">Recipe data not loaded</td></tr></tbody></table>");
         }
+
+        AppendRecipeSelectionPreview(html, recipeControl, context);
 
         if (recipeControl.ShowStatusBar is not null && ResolveStaticValue(recipeControl.ShowStatusBar, context))
         {
@@ -2988,6 +2992,16 @@ public partial class HmiScreenToHtmlConverter
         if (showFooter)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
         html.Append("</div>");
+    }
+
+    private static void AppendRecipeSelectionPreview(StringBuilder html, HmiRecipeControl control, HmiHtmlConvertContext context)
+    {
+        if (control.SelectionBackgroundColor is null && control.SelectionForegroundColor is null) return;
+        var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px;");
+        AppendColorStyle(style, "background-color", control.SelectionBackgroundColor);
+        AppendColorStyle(style, "color", control.SelectionForegroundColor);
+        AppendFontStyle(style, control.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
+        html.Append("<div class=\"hmi-recipe-selection-preview\" data-preview=\"appearance\" style=\"").Append(style).Append("\">Selection appearance preview</div>");
     }
 
     private static string CreateRecipeButtonPreviewStyle(HmiRecipeControl control)

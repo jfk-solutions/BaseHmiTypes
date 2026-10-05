@@ -3147,6 +3147,8 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-grid-line-color", resolvePropertyPreview(recipeControl.gridLineColor));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(recipeControl.showStatusBar));
   appendAttribute(html, "data-show-numbers", resolvePropertyPreview(recipeControl.showNumbers));
+  appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(recipeControl.selectionBackgroundColor));
+  appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(recipeControl.selectionForegroundColor));
   appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(recipeControl.alternatingRowBackgroundColor));
   html.push(">");
 
@@ -3177,7 +3179,7 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
       for (const column of visibleColumns) {
         html.push("<th style=\"", cellStyle.join(""), "overflow: hidden; text-overflow: ellipsis;", headerStyle, "\"");
         appendAttribute(html, "data-column-type", column.type);
-        html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.type), "</th>");
+        html.push(">", escapeHtml(column.headerText?.getText(context.options.cultureLcid) ?? column.type), "</th>");
       }
       html.push("</tr></thead>");
     }
@@ -3185,6 +3187,8 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
     appendAttribute(html, "colspan", Math.max(visibleColumns.length, 1).toString());
     html.push(" style=\"", recipeControl.showGridLines || recipeControl.gridLineColor ? cellStyle.join("") : "", "text-align: center;\">Recipe data not loaded</td></tr></tbody></table>");
   }
+
+  appendRecipeSelectionPreview(html, recipeControl, context);
 
   if (recipeControl.showStatusBar && getStaticValue(recipeControl.showStatusBar)) {
     const statusStyle = ["flex: 0 0 auto; padding: 2px 4px;"];
@@ -3195,6 +3199,15 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   if (showFooter)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
   html.push("</div>");
+}
+
+function appendRecipeSelectionPreview(html: string[], control: HmiRecipeControl, context: HmiHtmlConvertContext): void {
+  if (control.selectionBackgroundColor === undefined && control.selectionForegroundColor === undefined) return;
+  const style = ["flex: 0 0 auto; padding: 2px 4px;"];
+  appendColorStyle(style, "background-color", control.selectionBackgroundColor);
+  appendColorStyle(style, "color", control.selectionForegroundColor);
+  if (control.contentFont !== undefined) appendFont(style, control.contentFont.getForCulture(context.options.cultureLcid));
+  html.push('<div class="hmi-recipe-selection-preview" data-preview="appearance" style="', style.join(""), '">Selection appearance preview</div>');
 }
 
 function createRecipeButtonPreviewStyle(control: HmiRecipeControl): string {
