@@ -3294,6 +3294,11 @@ public partial class HmiScreenToHtmlConverter
 
     private static void AppendProcessDiagnosisControl(StringBuilder html, HmiScreenItemBase item, string kind, string label, HmiHtmlConvertContext context)
     {
+        if (item is HmiProcessDiagnosisOverviewControl overview)
+        {
+            AppendProcessDiagnosisOverviewControl(html, overview, context);
+            return;
+        }
         if (item is HmiProcessDiagnosisCriteriaAnalysisControl criteria)
         {
             AppendCriteriaAnalysisControl(html, criteria, context);
