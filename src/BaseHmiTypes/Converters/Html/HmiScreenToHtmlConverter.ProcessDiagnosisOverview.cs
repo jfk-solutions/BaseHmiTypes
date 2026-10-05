@@ -37,7 +37,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-button-second-gradient-offset", ResolvePropertyPreview(control.ButtonSecondGradientOffset, context));
         AppendAttribute(html, "data-use-button-first-gradient", ResolvePropertyPreview(control.UseButtonFirstGradient, context));
         AppendAttribute(html, "data-use-button-second-gradient", ResolvePropertyPreview(control.UseButtonSecondGradient, context));
-        html.Append(" role=\"region\" aria-label=\"Process diagnosis overview appearance preview\"><div>Process diagnosis overview appearance preview; Process diagnosis data not loaded</div>");
+        html.Append(" role=\"region\" aria-label=\"Process diagnosis overview\"><div>Process diagnosis overview appearance preview; Process diagnosis data not loaded</div>");
         void Sample(string kind, string label, HmiProperty<HmiColor>? background, HmiProperty<HmiColor>? foreground, string? additionalStyle = null, HmiFont? font = null)
         {
             var style = new StringBuilder("padding: 2px 4px;");

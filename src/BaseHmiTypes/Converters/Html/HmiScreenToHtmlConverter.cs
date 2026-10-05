@@ -3321,7 +3321,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-column-headings", ResolvePropertyPreview(criteria.ShowColumnHeadings, context));
         AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(criteria.GridLineColor, context));
         AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(criteria.AlternatingRowBackgroundColor, context));
-        html.Append(" role=\"region\" aria-label=\"Criteria analysis appearance preview\"><div>Criteria analysis appearance preview; diagnostic data not loaded</div>");
+        html.Append(" role=\"region\" aria-label=\"Criteria analysis\"><div>Criteria analysis appearance preview; diagnostic data not loaded</div>");
         if (criteria.ShowColumnHeadings is null || ResolveStaticValue(criteria.ShowColumnHeadings, context))
         {
             var header = new StringBuilder("padding: 2px 4px;");
@@ -3351,15 +3351,6 @@ public partial class HmiScreenToHtmlConverter
                 .Append(content).Append("\">").Append(alternate == 1 ? "Alternate row appearance" : "Content appearance").Append("</div>");
         }
         html.Append("</div>");
-    }
-
-    private static void AppendGraphOverviewControl(StringBuilder html, HmiProcessDiagnosisGraphOverviewControl graphOverview, HmiHtmlConvertContext context)
-    {
-        html.Append("<div");
-        AppendCommonAttributes(html, graphOverview, context, additionalStyle: "display: grid; place-items: center; overflow: hidden;");
-        AppendAttribute(html, "data-associated-graph-db-tag-source-id", graphOverview.AssociatedGraphDbTagSourceId);
-        AppendAttribute(html, "data-associated-graph-db-tag-name", graphOverview.AssociatedGraphDbTagName);
-        html.Append(" role=\"region\" aria-label=\"Graph overview\">Graph diagnostics not loaded</div>");
     }
 
     private static void AppendSystemDiagnosisControl(StringBuilder html, HmiSystemDiagnosisControl systemDiagnosisControl, HmiHtmlConvertContext context)
