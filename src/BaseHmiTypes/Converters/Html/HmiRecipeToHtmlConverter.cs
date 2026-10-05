@@ -260,6 +260,19 @@ public sealed class HmiRecipeToHtmlConverter
                         .Append(Encode(pair.Value == null ? "Null" : pair.Value)).Append("</td></tr>");
             html.Append("</tbody></table></div>");
         }
+        if (recipe.DataSets.Any(record => record.LastModification != null || record.LastUser != null))
+        {
+            html.Append("<h2>Stored record metadata</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th><th scope=\"col\">Last modification (stored)</th><th scope=\"col\">Last user</th></tr></thead><tbody>");
+            foreach (var record in recipe.DataSets)
+            {
+                html.Append("<tr><th scope=\"row\">").Append(Encode(record.Name)).Append("</th>");
+                AppendViewValue(html, record.SourceNumber?.ToString(CultureInfo.InvariantCulture));
+                AppendViewValue(html, record.LastModification?.ToString("O", CultureInfo.InvariantCulture));
+                AppendViewValue(html, record.LastUser);
+                html.Append("</tr>");
+            }
+            html.Append("</tbody></table></div>");
+        }
         AppendRecipeViews(html, recipe, culture);
         return html.Append("</body></html>").ToString();
     }

@@ -160,6 +160,9 @@ public sealed class HmiRecipePlcDeclaration
 
 public sealed class HmiRecipeDataSet : IHmiObject
 {
+    public DateTime? LastModification { get; set; }
+    public string? LastUser { get; set; }
+
     public HmiMultilingualText? DisplayName { get; set; }
     public int? SourceNumber { get; set; }
     public string? Name { get; set; }

@@ -215,6 +215,18 @@ export class HmiRecipeToHtmlConverter {
             "</td><td data-value-state=\"", value == null ? "null" : "present", "\">", encode(value == null ? "Null" : value), "</td></tr>");
       html.push("</tbody></table></div>");
     }
+    if (recipe.dataSets.some(record=>record.lastModification!==undefined || record.lastUser!==undefined)) {
+      html.push('<h2>Stored record metadata</h2><div class="table-scroll"><table><thead><tr><th scope="col">Record</th><th scope="col">Number</th><th scope="col">Last modification (stored)</th><th scope="col">Last user</th></tr></thead><tbody>');
+      for(const record of recipe.dataSets) {
+        html.push('<tr><th scope="row">',encode(record.name),'</th>');
+        appendViewValue(html,record.sourceNumber);
+        const modified=record.lastModification;
+        appendViewValue(html,modified instanceof Date && Number.isFinite(modified.getTime())?modified.toISOString():undefined);
+        appendViewValue(html,record.lastUser);
+        html.push('</tr>');
+      }
+      html.push('</tbody></table></div>');
+    }
     appendRecipeViews(html, recipe, cultureLcid);
     return html.concat("</body></html>").join("");
   }
