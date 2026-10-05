@@ -100,7 +100,7 @@ public sealed class MetafileToSvgRenderer
                     stateStack.Push(CloneState(state));
                     break;
                 case EMR.RestoreDc:
-                    RestoreState(state, stateStack.Count > 0 ? stateStack.Pop() : null);
+                    if (record.Size >= 12) RestoreRelativeState(state, stateStack, I32(bytes, dataOffset));
                     break;
                 case EMR.SetWorldTransform:
                     if (record.Size >= 32)
@@ -797,6 +797,17 @@ public sealed class MetafileToSvgRenderer
             PathEndX = state.PathEndX,
             PathEndY = state.PathEndY,
         };
+    }
+
+    private static void RestoreRelativeState(DrawState target, Stack<DrawState> saved, int relative)
+    {
+        // EMF permits negative relative levels only. Invalid requests must not
+        // consume snapshots; a valid restore destroys that level and newer ones.
+        var count = -(long)relative;
+        if (relative >= 0 || count > saved.Count) return;
+        DrawState? restored = null;
+        for (long index = 0; index < count; index++) restored = saved.Pop();
+        RestoreState(target, restored);
     }
 
     private static void RestoreState(DrawState target, DrawState? source)
