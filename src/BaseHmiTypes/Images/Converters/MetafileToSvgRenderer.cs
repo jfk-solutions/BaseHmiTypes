@@ -885,9 +885,10 @@ public sealed class MetafileToSvgRenderer
 
     private static (double X, double Y) TransformPoint(DrawState state, double x, double y)
     {
-        var mappedX = state.ViewportOrgX + (x - state.WindowOrgX) * state.ViewportExtX / (state.WindowExtX == 0 ? 1 : state.WindowExtX);
-        var mappedY = state.ViewportOrgY + (y - state.WindowOrgY) * state.ViewportExtY / (state.WindowExtY == 0 ? 1 : state.WindowExtY);
-        return TransformPointWithTransform(state.WorldTransform, mappedX, mappedY);
+        // GDI maps world to page space first, then page to device space.
+        var world = TransformPointWithTransform(state.WorldTransform, x, y);
+        return (state.ViewportOrgX + (world.X - state.WindowOrgX) * state.ViewportExtX / (state.WindowExtX == 0 ? 1 : state.WindowExtX),
+            state.ViewportOrgY + (world.Y - state.WindowOrgY) * state.ViewportExtY / (state.WindowExtY == 0 ? 1 : state.WindowExtY));
     }
 
     private static (double X, double Y) TransformPointWithTransform(Transform transform, double x, double y)
