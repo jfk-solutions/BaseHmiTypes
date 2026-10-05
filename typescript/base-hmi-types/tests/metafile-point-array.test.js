@@ -24,7 +24,7 @@ for(const [type,tag,fill] of [[3,'polygon','#ffffff'],[4,'polyline','none']])tes
 });
 for(const type of [3,4]){
  test(`Signed coordinates exceed 16-bit range: ${type}`,()=>assert.equal(elements(emf(points(type,[-70000,80000,-2147483648,2147483647])))[0].points,'-70000,80000 -2147483648,2147483647'));
- test(`Applies current mapping: ${type}`,()=>assert.equal(elements(emf(record(9,10,10),record(11,20,30),record(12,4,7),points(type)))[0].points,'14,22 74,22 44,112'));
+ test(`Applies current mapping: ${type}`,()=>assert.equal(elements(emf(record(17,8),record(9,10,10),record(11,20,30),record(12,4,7),points(type)))[0].points,'14,22 74,22 44,112'));
  test(`Does not change current position: ${type}`,()=>{const line=elements(emf(record(27,1,2),points(type),record(54,8,9))).find(e=>e.tag==='line');assert.equal(line.x1,'1');assert.equal(line.y1,'2');});
  test(`Records independent figures inside paths: ${type}`,()=>{const shapes=elements(emf(record(59),points(type),record(60),record(64,0,0,39,39)));assert.equal(shapes.length,1);assert.equal(shapes[0].tag,'path');assert.equal(shapes[0].d,'M 5 5 L 35 5 L 20 35'+(type===3?' Z':''));});
  for(const count of [0,1,4,0xffffffff])test(`Invalid count never consumes following record: ${type}/${count}`,()=>{const shapes=elements(emf(points(type,undefined,count),record(27,1,2),record(54,8,9)));assert.equal(shapes.length,1);assert.equal(shapes[0].tag,'line');});

@@ -18,7 +18,7 @@ for(const start of [90,450,-270])test(`AngleArc start measured counterclockwise:
 test('AngleArc zero radius connects and moves DC point',()=>{assert.equal(shape(record(27,1,2),arc(0,90,0)).d,'M 1 2 L 20 20');const line=elements(render(arc(0,90,0),record(54,8,9))).find(e=>e.tag==='line');assert.equal(line.x1,'20');assert.equal(line.y1,'20');});
 test('AngleArc radius is unsigned',()=>assert.ok(shape(arc(0,0,-1)).d.includes('L 4294967315 20')));
 for(const active of [false,true])test(`AngleArc transforms cubic controls: ${active}`,()=>{const r=[record(35,0,bits(1),bits(-1),0,bits(40),0)];if(active)r.push(record(59));r.push(arc());if(active)r.push(record(60),record(64,0,0,39,39));assert.ok(shape(...r).d.includes('L 20 35 C 28.284 35 35 28.284 35 20'));});
-test('AngleArc viewport mapping affects all controls',()=>assert.ok(shape(record(9,10,10),record(11,20,30),record(12,4,7),arc()).d.includes('L 74 67 C 74 42.147 60.569 22 44 22')));
+test('AngleArc viewport mapping affects all controls',()=>assert.ok(shape(record(17,8),record(9,10,10),record(11,20,30),record(12,4,7),arc()).d.includes('L 74 67 C 74 42.147 60.569 22 44 22')));
 test('AngleArc abort drops geometry but keeps endpoint',()=>{const e=elements(render(record(59),arc(),record(68),record(54,8,9)));assert.equal(e.length,1);assert.equal(Number(e[0].x1),20);assert.equal(Number(e[0].y1),5);});
 test('AngleArc starts new figure after closed polygon',()=>assert.ok(shape(record(27,1,2),record(59),polygon(),arc(),record(60),record(64,0,0,39,39)).d.includes('Z M 1 2 L 35 20 C')));
 test('Recorded line continues from AngleArc endpoint',()=>assert.ok(shape(record(59),arc(),record(54,8,9),record(60),record(64,0,0,39,39)).d.endsWith('20 5 L 8 9')));
