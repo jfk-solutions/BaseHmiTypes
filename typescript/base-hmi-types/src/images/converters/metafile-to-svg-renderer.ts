@@ -197,7 +197,7 @@ export class MetafileToSvgRenderer {
           stateStack.push(cloneState(state));
           break;
         case EMR.RESTOREDC:
-          restoreState(state, stateStack.pop());
+          if (record.size >= 12) restoreRelativeState(state, stateStack, i32(bytes, dataOffset));
           break;
         case EMR.SETWORLDTRANSFORM:
           if (record.size >= 32) {
@@ -928,6 +928,15 @@ function cloneState(state: DrawState): DrawState {
     currentPath: state.currentPath ? [...state.currentPath] : undefined,
     selectedPath: state.selectedPath ? [...state.selectedPath] : undefined,
   };
+}
+
+function restoreRelativeState(target: DrawState, saved: DrawState[], relative: number): void {
+  // EMF permits negative relative levels only. Invalid requests leave the stack intact.
+  const count = -relative;
+  if (relative >= 0 || count > saved.length) return;
+  const index = saved.length - count;
+  restoreState(target, saved[index]);
+  saved.length = index;
 }
 
 function restoreState(target: DrawState, source: DrawState | undefined): void {
