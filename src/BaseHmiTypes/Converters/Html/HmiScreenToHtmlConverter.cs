@@ -3294,12 +3294,58 @@ public partial class HmiScreenToHtmlConverter
 
     private static void AppendProcessDiagnosisControl(StringBuilder html, HmiScreenItemBase item, string kind, string label, HmiHtmlConvertContext context)
     {
+        if (item is HmiProcessDiagnosisCriteriaAnalysisControl criteria)
+        {
+            AppendCriteriaAnalysisControl(html, criteria, context);
+            return;
+        }
         html.Append("<div");
         AppendCommonAttributes(html, item, context, additionalStyle: "display: grid; place-items: center; overflow: hidden;");
         AppendAttribute(html, "data-process-diagnosis-kind", kind);
         AppendAttribute(html, "role", "region");
         AppendAttribute(html, "aria-label", label);
         html.Append('>').Append(WebUtility.HtmlEncode(label)).Append(" data not loaded</div>");
+    }
+
+    private static void AppendCriteriaAnalysisControl(StringBuilder html, HmiProcessDiagnosisCriteriaAnalysisControl criteria, HmiHtmlConvertContext context)
+    {
+        html.Append("<div");
+        AppendCommonAttributes(html, criteria, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
+        AppendAttribute(html, "data-process-diagnosis-kind", "CriteriaAnalysis");
+        AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(criteria.ShowGridLines, context));
+        AppendAttribute(html, "data-show-column-headings", ResolvePropertyPreview(criteria.ShowColumnHeadings, context));
+        AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(criteria.GridLineColor, context));
+        AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(criteria.AlternatingRowBackgroundColor, context));
+        html.Append(" role=\"region\" aria-label=\"Criteria analysis appearance preview\"><div>Criteria analysis appearance preview; diagnostic data not loaded</div>");
+        if (criteria.ShowColumnHeadings is null || ResolveStaticValue(criteria.ShowColumnHeadings, context))
+        {
+            var header = new StringBuilder("padding: 2px 4px;");
+            AppendColorStyle(header, "background-color", criteria.HeaderBackgroundColor);
+            AppendColorStyle(header, "color", criteria.HeaderForegroundColor);
+            AppendColorStyle(header, "border-color", criteria.HeaderBorderColor);
+            if (criteria.HeaderBorderWidth is not null)
+            {
+                var width = ResolveStaticValue(criteria.HeaderBorderWidth, context);
+                if (IsFinite(width) && width >= 0) header.Append("border-width: ").Append(ToCss(width)).Append("px; border-style: solid;");
+            }
+            AppendFontStyle(header, criteria.HeaderFont?.GetForCulture(context.CultureInfo?.LCID));
+            html.Append("<div data-appearance-sample=\"header\" style=\"").Append(header).Append("\">Header appearance</div>");
+        }
+        for (var alternate = 0; alternate < 2; alternate++)
+        {
+            var content = new StringBuilder("padding: 2px 4px;");
+            AppendColorStyle(content, "background-color", alternate == 1 ? criteria.AlternatingRowBackgroundColor ?? criteria.ContentBackgroundColor : criteria.ContentBackgroundColor);
+            AppendColorStyle(content, "color", criteria.ContentForegroundColor);
+            AppendFontStyle(content, criteria.ContentFont?.GetForCulture(context.CultureInfo?.LCID));
+            if (criteria.ShowGridLines is not null && ResolveStaticValue(criteria.ShowGridLines, context))
+            {
+                content.Append("border-bottom: 1px solid currentColor;");
+                AppendColorStyle(content, "border-bottom-color", criteria.GridLineColor);
+            }
+            html.Append("<div data-appearance-sample=\"").Append(alternate == 1 ? "alternate" : "content").Append("\" style=\"")
+                .Append(content).Append("\">").Append(alternate == 1 ? "Alternate row appearance" : "Content appearance").Append("</div>");
+        }
+        html.Append("</div>");
     }
 
     private static void AppendGraphOverviewControl(StringBuilder html, HmiProcessDiagnosisGraphOverviewControl graphOverview, HmiHtmlConvertContext context)
