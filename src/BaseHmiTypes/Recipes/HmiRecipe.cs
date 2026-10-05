@@ -18,6 +18,7 @@ public sealed class HmiRecipe : IHmiObject
 
     public DateTime? LastModified { get; set; }
 
+    public IList<HmiRecipeView> Views { get; } = new List<HmiRecipeView>();
     public IList<HmiRecipeParameter> Parameters { get; } = new List<HmiRecipeParameter>();
 
     public IList<HmiRecipeDataSet> DataSets { get; } = new List<HmiRecipeDataSet>();
@@ -166,4 +167,25 @@ public sealed class HmiRecipeDataSet : IHmiObject
     public IDictionary<string, string?> Values { get; } = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
     public IDictionary<string, string?> SourceValues { get; } = new Dictionary<string, string?>(StringComparer.Ordinal);
+}
+
+public sealed class HmiRecipeView
+{
+    public string? SourceId { get; set; }
+    public string? Name { get; set; }
+    public int? SourceNumber { get; set; }
+    public HmiMultilingualText? DisplayName { get; set; }
+    public HmiRecipeReference? DisplayNameReference { get; set; }
+    public string? Statement { get; set; }
+    public IList<HmiRecipeViewElement> Elements { get; } = new List<HmiRecipeViewElement>();
+}
+
+public sealed class HmiRecipeViewElement
+{
+    public string? SourceId { get; set; }
+    public string? Name { get; set; }
+    public int? SourceNumber { get; set; }
+    public HmiMultilingualText? DisplayName { get; set; }
+    public HmiRecipeReference? DisplayNameReference { get; set; }
+    public HmiRecipeReference? TargetElement { get; set; }
 }

@@ -11,6 +11,7 @@ export class HmiRecipe {
   name?: string;
   comment?: string;
   lastModified?: Date;
+  readonly views: HmiRecipeView[] = [];
   readonly parameters: HmiRecipeParameter[] = [];
   readonly dataSets: HmiRecipeDataSet[] = [];
   readonly sourceTagDeclarations: HmiRecipeTagDeclaration[] = [];
@@ -134,4 +135,23 @@ export class HmiRecipeDataSet {
   name?: string;
   readonly values: Record<string, string | undefined> = Object.create(null);
   readonly sourceValues = new Map<string, string | undefined>();
+}
+
+export class HmiRecipeView {
+  sourceId?: string;
+  name?: string;
+  sourceNumber?: number;
+  displayName?: HmiMultilingualText;
+  displayNameReference?: HmiRecipeReference;
+  statement?: string;
+  readonly elements: HmiRecipeViewElement[] = [];
+}
+
+export class HmiRecipeViewElement {
+  sourceId?: string;
+  name?: string;
+  sourceNumber?: number;
+  displayName?: HmiMultilingualText;
+  displayNameReference?: HmiRecipeReference;
+  targetElement?: HmiRecipeReference;
 }
