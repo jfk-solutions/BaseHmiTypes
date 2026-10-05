@@ -26,6 +26,7 @@ interface FontObject {
 }
 
 const CLIP_VIEWPORT_TOKEN = '__METAFILE_CLIP_VIEWPORT__';
+const DEFAULT_CLIP_VIEWPORT_TOKEN = '__METAFILE_DEFAULT_CLIP_VIEWPORT__';
 
 interface DrawState {
   pathFigureClosed: boolean;
@@ -140,6 +141,7 @@ export class MetafileToSvgRenderer {
     const elements: string[] = [];
     const defs: string[] = [];
     let clipSequence = 0;
+    const clipExpansion = { x: 0, y: 0 };
     let hasEmfPlusDrawing = false;
 
     for (const record of emfRecords(bytes)) {
@@ -316,6 +318,14 @@ export class MetafileToSvgRenderer {
           if (geometry !== undefined) combineClipGeometry(state, geometry, mode, viewBox, defs, ++clipSequence);
           break;
         }
+        case EMR.OFFSETCLIPRGN:
+          if (record.size >= 16) {
+            const x = i32(bytes, dataOffset), y = i32(bytes, dataOffset + 4), t = state.worldTransform;
+            const dx = (x * t.m11 + y * t.m21) * state.viewportExtX / (state.windowExtX || 1);
+            const dy = (x * t.m12 + y * t.m22) * state.viewportExtY / (state.windowExtY || 1);
+            clipSequence = offsetSelectedClip(dx, dy, state, defs, clipSequence, clipExpansion);
+          }
+          break;
         case EMR.POLYLINETO:
         case EMR.POLYLINETO16:
         case EMR.POLYBEZIER:
@@ -435,6 +445,7 @@ export class MetafileToSvgRenderer {
       }
     }
 
+    resolveClipViewport(defs, viewBox, clipExpansion);
     return svgDocument(viewBox, elements, defs);
   }
 
@@ -468,6 +479,7 @@ export class MetafileToSvgRenderer {
     const elements: string[] = [];
     const defs: string[] = [];
     let clipSequence = 0;
+    const clipExpansion = { x: 0, y: 0 };
     let windowOrg = { x: viewBox.x, y: viewBox.y };
     let windowExt = { x: viewBox.width, y: viewBox.height };
     let hasExplicitWindow = false;
@@ -494,6 +506,10 @@ export class MetafileToSvgRenderer {
         case META.EXCLUDECLIPRECT:
           if (record.sizeBytes >= 14)
             combineRectClip(i16(bytes, p + 6), i16(bytes, p + 4), i16(bytes, p + 2), i16(bytes, p), record.type === META.INTERSECTCLIPRECT ? 1 : 4, state, undefined, defs, ++clipSequence, false);
+          break;
+        case META.OFFSETCLIPRGN:
+          if (record.sizeBytes >= 10)
+            clipSequence = offsetSelectedClip(i16(bytes, p + 2), i16(bytes, p), state, defs, clipSequence, clipExpansion);
           break;
         case META.CREATEPENINDIRECT:
           addWmfObject(objects, {
@@ -599,13 +615,15 @@ export class MetafileToSvgRenderer {
     let mirroredElements = elements;
     if (mirrorVertically)
       mirroredElements = mirrorElementsVertically(mirroredElements, viewBox);
-    return svgDocument(viewBox, mirroredElements, defs.map(def => def.split(CLIP_VIEWPORT_TOKEN).join(clipViewportAttrs(viewBox))));
+    resolveClipViewport(defs, viewBox, clipExpansion);
+    return svgDocument(viewBox, mirroredElements, defs);
   }
 }
 
 const PlaceableWmfKey = 0x9ac6cdd7;
 
 const EMR = {
+  OFFSETCLIPRGN: 0x001a,
   EXTSELECTCLIPRGN: 0x004b,
   EXCLUDECLIPRECT: 0x001d,
   INTERSECTCLIPRECT: 0x001e,
@@ -695,6 +713,7 @@ const EmfPlusSolidColorBrushFlag = 0x8000;
 const PngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 const META = {
+  OFFSETCLIPRGN: 0x0220,
   EXCLUDECLIPRECT: 0x0415,
   INTERSECTCLIPRECT: 0x0416,
   ESCAPE: 0x0626,
@@ -1800,6 +1819,22 @@ function clipViewportAttrs(viewBox: ViewBox): string {
   return `x="${n(viewBox.x)}" y="${n(viewBox.y)}" width="${n(viewBox.width)}" height="${n(viewBox.height)}"`;
 }
 
+function resolveClipViewport(defs: string[], viewBox: ViewBox, expansion: { x: number; y: number }): void {
+  // Absolute sums cover nonchronological Save/Restore offset chains as well.
+  const domain = { x: viewBox.x - expansion.x, y: viewBox.y - expansion.y, width: viewBox.width + 2 * expansion.x, height: viewBox.height + 2 * expansion.y };
+  for (let index = 0; index < defs.length; index++)
+    defs[index] = defs[index].split(CLIP_VIEWPORT_TOKEN).join(clipViewportAttrs(domain)).split(DEFAULT_CLIP_VIEWPORT_TOKEN).join(clipViewportAttrs(viewBox));
+}
+
+function offsetSelectedClip(dx: number, dy: number, state: DrawState, defs: string[], sequence: number, expansion: { x: number; y: number }): number {
+  if ((!state.activeClipId && !state.activeMaskId) || (dx === 0 && dy === 0) || !Number.isFinite(dx) || !Number.isFinite(dy)) return sequence;
+  expansion.x += Math.abs(dx); expansion.y += Math.abs(dy);
+  const id = `mask${++sequence}`, n = (value: number) => Number(value.toFixed(3));
+  defs.push(`<mask id="${id}" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" ${CLIP_VIEWPORT_TOKEN}><g transform="translate(${n(dx)} ${n(dy)})"><rect ${CLIP_VIEWPORT_TOKEN} fill="#ffffff"${clipAttr(state)} /></g></mask>`);
+  state.activeClipId = undefined; state.activeMaskId = id;
+  return sequence;
+}
+
 function combineClipGeometry(state: DrawState, geometry: string, mode: number, viewBox: ViewBox | undefined, defs: string[], sequence: number): void {
   if (mode === 5 || (mode === 1 && !state.activeClipId && !state.activeMaskId)) {
     const id = `clip${sequence}`;
@@ -1808,11 +1843,10 @@ function combineClipGeometry(state: DrawState, geometry: string, mode: number, v
     state.activeMaskId = undefined;
     return;
   }
-  // White includes and black excludes within the finite image viewport.
+  // Resource bounds expand for offsets; captured default regions do not.
   const old = clipAttr(state);
-  // WMF drawing bounds may be known only after the last record.
-  const rect = viewBox ? clipViewportAttrs(viewBox) : CLIP_VIEWPORT_TOKEN;
-  const previous = `<rect ${rect} fill="#ffffff"${old} />`;
+  const rect = CLIP_VIEWPORT_TOKEN;
+  const previous = `<rect ${old ? rect : DEFAULT_CLIP_VIEWPORT_TOKEN} fill="#ffffff"${old} />`;
   const include = `<path ${geometry} fill="#ffffff" />`;
   const exclude = `<path ${geometry} fill="#000000" />`;
   const content = mode === 1 ? `<g${old}>${include}</g>`
