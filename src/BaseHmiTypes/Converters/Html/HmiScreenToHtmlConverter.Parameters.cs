@@ -16,6 +16,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-current-parameter-set-id", ResolvePropertyPreview(control.CurrentParameterSetId, context));
         AppendAttribute(html, "data-current-parameter-set-type-id", ResolvePropertyPreview(control.CurrentParameterSetTypeId, context));
         AppendAttribute(html, "data-hide-details", ResolvePropertyPreview(control.HideDetails, context));
+        AppendParameterGridAttributes(html, control, context);
         AppendParameterSelectionAttributes(html, control, context);
         AppendAttribute(html, "data-row-height", ResolvePropertyPreview(control.RowHeight, context));
         AppendAttribute(html, "data-cell-padding-left", ResolvePropertyPreview(control.CellPaddingLeft, context));
@@ -67,6 +68,7 @@ public partial class HmiScreenToHtmlConverter
         AppendCommonAttributes(html, control, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-parameter-control-view", "overview");
         AppendAttribute(html, "data-filter", ResolvePropertyPreview(control.Filter, context));
+        AppendParameterGridAttributes(html, control, context);
         AppendParameterSelectionAttributes(html, control, context);
         AppendAttribute(html, "data-row-height", ResolvePropertyPreview(control.RowHeight, context));
         AppendAttribute(html, "data-cell-padding-left", ResolvePropertyPreview(control.CellPaddingLeft, context));
@@ -105,7 +107,11 @@ public partial class HmiScreenToHtmlConverter
         var style = new StringBuilder("flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;");
         if (columns.Length > 0) style.Append("display: block; overflow: auto;");
         var width = control.GridLineWidth is null ? 1d : ResolveStaticValue(control.GridLineWidth, context);
-        style.Append("border-top-width: ").Append(ToCss(IsFinite(width) && width >= 0 ? width : 1d)).Append("px;");
+        var separatorWidth = IsFinite(width) && width >= 0 ? width : 1d;
+        if (control.GridLineVisibility is not null && ResolveStaticValue(control.GridLineVisibility, context) != 2) separatorWidth = 0;
+        style.Append("border-top-width: ").Append(ToCss(separatorWidth)).Append("px;");
+        AppendParameterScrollStyle(style, "x", control.HorizontalScrollBarVisibility, context);
+        AppendParameterScrollStyle(style, "y", control.VerticalScrollBarVisibility, context);
         AppendColorStyle(style, "background-color", control.ContentBackgroundColor);
         AppendColorStyle(style, "color", control.ContentForegroundColor);
         AppendColorStyle(style, "border-top-color", control.GridLineColor);
@@ -114,6 +120,25 @@ public partial class HmiScreenToHtmlConverter
         else html.Append("Parameter data not loaded");
         AppendParameterSelectionPreview(html, control, context);
         html.Append("</div>");
+    }
+
+    private static void AppendParameterGridAttributes(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    {
+        AppendAttribute(html, "data-allow-sort-by-column", ResolvePropertyPreview(control.AllowSortByColumn, context));
+        AppendAttribute(html, "data-allow-filter-by-column", ResolvePropertyPreview(control.AllowFilterByColumn, context));
+        AppendAttribute(html, "data-grid-line-visibility", ResolvePropertyPreview(control.GridLineVisibility, context));
+        AppendAttribute(html, "data-grid-selection-mode", ResolvePropertyPreview(control.GridSelectionMode, context));
+        AppendAttribute(html, "data-coloring-mode", ResolvePropertyPreview(control.ColoringMode, context));
+        AppendAttribute(html, "data-horizontal-scroll-bar-visibility", ResolvePropertyPreview(control.HorizontalScrollBarVisibility, context));
+        AppendAttribute(html, "data-vertical-scroll-bar-visibility", ResolvePropertyPreview(control.VerticalScrollBarVisibility, context));
+    }
+
+    private static void AppendParameterScrollStyle(StringBuilder style, string axis, HmiProperty<int>? property, HmiHtmlConvertContext context)
+    {
+        if (property is null) return;
+        var mode = ResolveStaticValue(property, context);
+        var overflow = mode == 0 ? "auto" : mode == 1 ? "scroll" : mode == 2 ? "hidden" : null;
+        if (overflow is not null) style.Append("overflow-").Append(axis).Append(": ").Append(overflow).Append(';');
     }
 
     private static void AppendParameterSelectionAttributes(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
