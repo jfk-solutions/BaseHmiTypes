@@ -130,6 +130,8 @@ export class HmiRecipePlcDeclaration {
 }
 
 export class HmiRecipeDataSet {
+  lastModification?: Date;
+  lastUser?: string;
   displayName?: HmiMultilingualText;
   sourceNumber?: number;
   name?: string;
