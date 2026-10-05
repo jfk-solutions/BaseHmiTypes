@@ -1,5 +1,5 @@
 import { HmiTextListEntryType } from "../../text-graphic-lists/HmiTextList.js";
-import { HmiRecipe, HmiRecipeCommunicationType, HmiRecipeSizeType, HmiRecipeStorageMedia } from "../../recipes/HmiRecipe.js";
+import { recipeValueKey, HmiRecipe, HmiRecipeCommunicationType, HmiRecipeSizeType, HmiRecipeStorageMedia } from "../../recipes/HmiRecipe.js";
 
 /** Renders stored engineering recipe definitions and records as a standalone HTML document. */
 export class HmiRecipeToHtmlConverter {
@@ -187,7 +187,7 @@ export class HmiRecipeToHtmlConverter {
       const columns: string[] = [];
       const seen = new Set<string>();
       const addColumn = (name: string) => {
-        const key = ordinalKey(name);
+        const key = recipeValueKey(name);
         if (!seen.has(key)) { seen.add(key); columns.push(name); }
       };
       for (const field of recipe.parameters) if (field.name != null) addColumn(field.name);
@@ -198,9 +198,9 @@ export class HmiRecipeToHtmlConverter {
       for (const record of recipe.dataSets) {
         html.push("<tr><th scope=\"row\">", encode(record.name), "</th><td>", encode(record.sourceNumber?.toString()), "</td><td>",
           encode(record.displayName?.getText(cultureLcid)), "</td>");
-        const keys = new Map(Object.keys(record.values).map(key => [ordinalKey(key), key]));
+        const keys = new Map(Object.keys(record.values).map(key => [recipeValueKey(key), key]));
         for (const column of columns) {
-          const key = keys.get(ordinalKey(column));
+          const key = keys.get(recipeValueKey(column));
           const found = key !== undefined;
           const value = found ? record.values[key] : undefined;
           const state = !found ? "missing" : value == null ? "null" : "present";
@@ -328,13 +328,4 @@ function encode(value: string | undefined): string {
       default: return `&#${character.codePointAt(0)};`;
     }
   });
-}
-
-function ordinalKey(value: string): string {
-  // Ordinal case matching does not expand letters or map non-ASCII letters into ASCII.
-  return Array.from(value, character => {
-    const upper = character.toUpperCase();
-    return upper.length !== character.length || (character.charCodeAt(0) > 127 && upper.charCodeAt(0) <= 127)
-      ? character : upper;
-  }).join("");
 }

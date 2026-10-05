@@ -180,3 +180,12 @@ export class HmiRecipeViewElement {
   displayNameReference?: HmiRecipeReference;
   targetElement?: HmiRecipeReference;
 }
+
+export function recipeValueKey(value: string): string {
+  // Ordinal case matching does not expand letters or map non-ASCII letters into ASCII.
+  return Array.from(value, character => {
+    const upper = character.toUpperCase();
+    return upper.length !== character.length || (character.charCodeAt(0) > 127 && upper.charCodeAt(0) <= 127)
+      ? character : upper;
+  }).join("");
+}
