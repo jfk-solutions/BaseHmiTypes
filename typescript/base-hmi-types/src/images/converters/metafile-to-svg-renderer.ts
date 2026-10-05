@@ -38,6 +38,8 @@ interface DrawState {
   textColor: string;
   currentX: number;
   currentY: number;
+  logicalCurrentX: number;
+  logicalCurrentY: number;
   windowOrgX: number;
   windowOrgY: number;
   windowExtX: number;
@@ -146,6 +148,7 @@ export class MetafileToSvgRenderer {
     let hasEmfPlusDrawing = false;
 
     for (const record of emfRecords(bytes)) {
+      [state.currentX, state.currentY] = transformPoint(state, state.logicalCurrentX, state.logicalCurrentY);
       const firstElement = elements.length;
       const dataOffset = record.offset + 8;
       const dataEnd = record.offset + record.size;
@@ -243,6 +246,8 @@ export class MetafileToSvgRenderer {
           objects.delete(u32(bytes, dataOffset));
           break;
         case EMR.MOVETOEX:
+          state.logicalCurrentX = i32(bytes, dataOffset);
+          state.logicalCurrentY = i32(bytes, dataOffset + 4);
           [state.currentX, state.currentY] = transformPoint(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4));
           if (state.currentPath) {
             state.currentPath.push(`M ${state.currentX} ${state.currentY}`);
@@ -265,6 +270,8 @@ export class MetafileToSvgRenderer {
             elements.push(lineElement(state.currentX, state.currentY, x, y, state));
           state.currentX = x;
           state.currentY = y;
+          state.logicalCurrentX = i32(bytes, dataOffset);
+          state.logicalCurrentY = i32(bytes, dataOffset + 4);
           break;
         }
         case EMR.BEGINPATH:
@@ -884,6 +891,8 @@ function createInitialState(): DrawState {
     textColor: '#000000',
     currentX: 0,
     currentY: 0,
+    logicalCurrentX: 0,
+    logicalCurrentY: 0,
     windowOrgX: 0,
     windowOrgY: 0,
     windowExtX: 1,
@@ -1116,6 +1125,7 @@ function multiplyTransforms(first: Transform, second: Transform): Transform {
 }
 
 function transformPoint(state: DrawState, x: number, y: number): [number, number] {
+  // GDI maps world to page space first, then page to device space.
   const worldX = x * state.worldTransform.m11 + y * state.worldTransform.m21 + state.worldTransform.dx;
   const worldY = x * state.worldTransform.m12 + y * state.worldTransform.m22 + state.worldTransform.dy;
   return [
@@ -1159,7 +1169,8 @@ function drawEmfPointCurve(bytes: Uint8Array, record: EmfRecord, state: DrawStat
   const line = record.type === EMR.POLYLINETO || record.type === EMR.POLYLINETO16;
   const to = line || record.type === EMR.POLYBEZIERTO || record.type === EMR.POLYBEZIERTO16;
   const shortPoints = record.type === EMR.POLYLINETO16 || record.type === EMR.POLYBEZIER16 || record.type === EMR.POLYBEZIERTO16;
-  const points = readEmfPointArray32(bytes, record, shortPoints).map(([x, y]) => transformPoint(state, x, y));
+  const logical = readEmfPointArray32(bytes, record, shortPoints);
+  const points = logical.map(([x, y]) => transformPoint(state, x, y));
   if (line ? points.length < 1 : to ? points.length < 3 || points.length % 3 !== 0 : points.length < 4 || (points.length - 1) % 3 !== 0) return;
   const path = state.currentPath ?? [];
   if (to) {
@@ -1172,7 +1183,7 @@ function drawEmfPointCurve(bytes: Uint8Array, record: EmfRecord, state: DrawStat
   for (let index = to ? 0 : 1; index < points.length; index += line ? 1 : 3)
     path.push(line ? `L ${points[index][0]} ${points[index][1]}` : `C ${points[index][0]} ${points[index][1]} ${points[index+1][0]} ${points[index+1][1]} ${points[index+2][0]} ${points[index+2][1]}`);
   const end = points.at(-1)!;
-  if (to) { state.currentX = end[0]; state.currentY = end[1]; }
+  if (to) { state.currentX = end[0]; state.currentY = end[1]; [state.logicalCurrentX, state.logicalCurrentY] = logical.at(-1)!; }
   if (state.currentPath !== undefined) { state.pathEndX = end[0]; state.pathEndY = end[1]; }
   else elements.push(pathElement(path, state, 'stroke'));
 }
@@ -1227,7 +1238,8 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
         (bytes[typesOffset + index + 2] !== 4 && bytes[typesOffset + index + 2] !== 5)) return;
     index += 2;
   }
-  const mapped = readEmfPointArray32(bytes, record, shortPoints).map(([x, y]) => transformPoint(state, x, y));
+  const logical = readEmfPointArray32(bytes, record, shortPoints);
+  const mapped = logical.map(([x, y]) => transformPoint(state, x, y));
   const path = state.currentPath ?? [];
   if (bytes[typesOffset] !== 6) {
     if (state.currentPath !== undefined) ensurePathPosition(state);
@@ -1251,6 +1263,7 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
       index += 2;
     }
     state.currentX = state.pathEndX = mapped[index][0]; state.currentY = state.pathEndY = mapped[index][1];
+    [state.logicalCurrentX, state.logicalCurrentY] = logical[index];
     if ((bytes[typesOffset + index] & 1) !== 0) {
       path.push('Z');
       // Native Windows GDI retains the supplied endpoint as the DC position.
@@ -1907,6 +1920,8 @@ function drawAngleArc(cx: number, cy: number, radius: number, startDegrees: numb
   }
   const end = map(angle + sweep);
   [state.currentX, state.currentY] = end;
+  state.logicalCurrentX = cx + radius * Math.cos(angle + sweep);
+  state.logicalCurrentY = cy + radius * Math.sin(angle + sweep);
   if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke'));
   else {
     state.pathFigureClosed = false;
@@ -1944,7 +1959,7 @@ function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, s
   if (type === EMR.PIE) path.push(`L ${point(cx, cy)}`);
   if (closed) path.push('Z');
   const end = map(cx + rx * Math.cos(endAngle), cy + ry * Math.sin(endAngle));
-  if (to) { state.currentX = end[0]; state.currentY = end[1]; }
+  if (to) { state.currentX = end[0]; state.currentY = end[1]; state.logicalCurrentX = cx + rx * Math.cos(endAngle); state.logicalCurrentY = cy + ry * Math.sin(endAngle); }
   if (state.currentPath === undefined) elements.push(pathElement(path, state, closed ? 'paint' : 'stroke'));
   else {
     state.pathFigureClosed = closed;
