@@ -29,5 +29,13 @@ export class HmiAlarmColumnSet {
   verticalScrollBarVisibility?: HmiProperty<number>;
   gridSelectionMode?: HmiProperty<number>;
   selectFullRow?: HmiProperty<boolean>;
+  alternateBackgroundColor?: HmiProperty<HmiColor>;
+  alternateForegroundColor?: HmiProperty<HmiColor>;
+  selectionBackgroundColor?: HmiProperty<HmiColor>;
+  selectionForegroundColor?: HmiProperty<HmiColor>;
+  selectionBorderColor?: HmiProperty<HmiColor>;
+  headerSelectionBackgroundColor?: HmiProperty<HmiColor>;
+  headerSelectionForegroundColor?: HmiProperty<HmiColor>;
+  selectionBorderWidth?: HmiProperty<number>;
   readonly columns: HmiAlarmColumn[] = [];
 }

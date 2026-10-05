@@ -3433,7 +3433,8 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     set.headerForegroundColor !== undefined || set.headerBorderColor !== undefined || set.contentFont !== undefined || set.headerFont !== undefined ||
     set.gridLineColor !== undefined || set.gridLineWidth !== undefined || set.gridLineVisibility !== undefined || set.rowHeight !== undefined ||
     set.cellPaddingLeft !== undefined || set.cellPaddingTop !== undefined || set.cellPaddingRight !== undefined || set.cellPaddingBottom !== undefined ||
-    set.horizontalScrollBarVisibility !== undefined || set.verticalScrollBarVisibility !== undefined || set.gridSelectionMode !== undefined || set.selectFullRow !== undefined);
+    set.horizontalScrollBarVisibility !== undefined || set.verticalScrollBarVisibility !== undefined || set.gridSelectionMode !== undefined || set.selectFullRow !== undefined ||
+    set.alternateBackgroundColor !== undefined || set.alternateForegroundColor !== undefined || set.selectionBackgroundColor !== undefined || set.selectionForegroundColor !== undefined || set.selectionBorderColor !== undefined || set.headerSelectionBackgroundColor !== undefined || set.headerSelectionForegroundColor !== undefined || set.selectionBorderWidth !== undefined);
   if (configuredViews.length > 0) {
     html.push('<template class="hmi-alarm-view-settings">');
     for (const set of configuredViews) {
@@ -5508,6 +5509,14 @@ function appendAlarmViewSettings(html: string[], set: HmiAlarmColumnSet | undefi
   appendAttribute(html, "data-view-vertical-scrollbar-visibility", resolvePropertyPreview(set.verticalScrollBarVisibility));
   appendAttribute(html, "data-view-grid-selection-mode", resolvePropertyPreview(set.gridSelectionMode));
   appendAttribute(html, "data-view-select-full-row", resolvePropertyPreview(set.selectFullRow));
+  appendAttribute(html, "data-view-alternate-background-color", resolvePropertyPreview(set.alternateBackgroundColor));
+  appendAttribute(html, "data-view-alternate-foreground-color", resolvePropertyPreview(set.alternateForegroundColor));
+  appendAttribute(html, "data-view-selection-background-color", resolvePropertyPreview(set.selectionBackgroundColor));
+  appendAttribute(html, "data-view-selection-foreground-color", resolvePropertyPreview(set.selectionForegroundColor));
+  appendAttribute(html, "data-view-selection-border-color", resolvePropertyPreview(set.selectionBorderColor));
+  appendAttribute(html, "data-view-header-selection-background-color", resolvePropertyPreview(set.headerSelectionBackgroundColor));
+  appendAttribute(html, "data-view-header-selection-foreground-color", resolvePropertyPreview(set.headerSelectionForegroundColor));
+  appendAttribute(html, "data-view-selection-border-width", resolvePropertyPreview(set.selectionBorderWidth));
   for (const [role, font] of [["content", set.contentFont], ["header", set.headerFont]] as const) {
     if (font === undefined) continue;
     const style: string[] = [];
@@ -5548,10 +5557,10 @@ function createAlarmTableStyle(alarmControl: HmiAlarmControl, set: HmiAlarmColum
   appendColorStyle(parts, "background-color", set?.backgroundColor ?? alarmControl.tableBackgroundColor);
   appendColorStyle(parts, "color", set?.foregroundColor ?? alarmControl.tableForegroundColor);
   if (set?.contentFont !== undefined) appendFont(parts, set.contentFont.getForCulture(context.options.cultureLcid));
-  const alternatingBackground = getStaticValue(alarmControl.alternatingRowBackgroundColor);
+  const alternatingBackground = getStaticValue(set?.alternateBackgroundColor ?? alarmControl.alternatingRowBackgroundColor);
   if (alternatingBackground !== undefined)
     parts.push(`--hmi-alarm-alternating-row-background: ${colorToCss(alternatingBackground)};`);
-  const alternatingForeground = getStaticValue(alarmControl.alternatingRowForegroundColor);
+  const alternatingForeground = getStaticValue(set?.alternateForegroundColor ?? alarmControl.alternatingRowForegroundColor);
   if (alternatingForeground !== undefined)
     parts.push(`--hmi-alarm-alternating-row-foreground: ${colorToCss(alternatingForeground)};`);
   return parts.join("");
