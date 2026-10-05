@@ -103,10 +103,14 @@ public sealed class MetafileToSvgRenderer
                     RestoreState(state, stateStack.Count > 0 ? stateStack.Pop() : null);
                     break;
                 case EMR.SetWorldTransform:
-                    state.WorldTransform = ReadTransform(bytes, dataOffset);
+                    if (record.Size >= 32)
+                    {
+                        var value = ReadTransform(bytes, dataOffset);
+                        if (!IsSingularTransform(value)) state.WorldTransform = value;
+                    }
                     break;
                 case EMR.ModifyWorldTransform:
-                    state.WorldTransform = ModifyWorldTransform(state.WorldTransform, ReadTransform(bytes, dataOffset), U32(bytes, dataOffset + 24));
+                    if (record.Size >= 36) state.WorldTransform = ModifyWorldTransform(state.WorldTransform, ReadTransform(bytes, dataOffset), U32(bytes, dataOffset + 24));
                     break;
                 case EMR.CreatePen:
                     if (record.Size < 28) break;
@@ -1101,12 +1105,14 @@ public sealed class MetafileToSvgRenderer
 
     private static Transform ModifyWorldTransform(Transform current, Transform value, uint mode)
     {
+        // IDENTITY ignores Xform; native GDI rejects singular SET/multipliers.
+        if (mode != 1 && IsSingularTransform(value)) return current;
         return mode switch
         {
             1 => IdentityTransform(),
-            2 => value,
-            3 => MultiplyTransform(value, current),
-            4 => MultiplyTransform(current, value),
+            2 => MultiplyTransform(value, current),
+            3 => MultiplyTransform(current, value),
+            4 => value,
             _ => current,
         };
     }
@@ -1122,6 +1128,11 @@ public sealed class MetafileToSvgRenderer
             Dx = a.Dx * b.M11 + a.Dy * b.M21 + b.Dx,
             Dy = a.Dx * b.M12 + a.Dy * b.M22 + b.Dy,
         };
+    }
+
+    private static bool IsSingularTransform(Transform value)
+    {
+        return value.M11 * value.M22 - value.M12 * value.M21 == 0;
     }
 
     private static List<(double X, double Y)> MapPoints(IEnumerable<(double X, double Y)> points, DrawState state)
