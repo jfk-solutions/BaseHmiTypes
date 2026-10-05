@@ -252,6 +252,13 @@ public sealed class MetafileToSvgRenderer
                     if (record.Size >= 32)
                         DrawRoundRect(I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12), I32(bytes, dataOffset + 16), I32(bytes, dataOffset + 20), state, elements, true);
                     break;
+                case EMR.Arc:
+                case EMR.Chord:
+                case EMR.Pie:
+                case EMR.ArcTo:
+                    if (record.Size >= 40)
+                        DrawArc(record.Type, I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12), I32(bytes, dataOffset + 16), I32(bytes, dataOffset + 20), I32(bytes, dataOffset + 24), I32(bytes, dataOffset + 28), state, elements, true);
+                    break;
                 case EMR.Polygon16:
                 case EMR.Polyline16:
                 case EMR.Polygon:
@@ -437,6 +444,16 @@ public sealed class MetafileToSvgRenderer
                         var right = I16(bytes, p + 6);var bottom = I16(bytes, p + 4);
                         bounds.Add(left, top);bounds.Add(right, bottom);
                         DrawRoundRect(left, top, right, bottom, I16(bytes, p + 2), I16(bytes, p), state, elements, false);
+                    }
+                    break;
+                case META.Arc:
+                case META.Chord:
+                case META.Pie:
+                    if (record.SizeBytes >= 22)
+                    {
+                        var left = I16(bytes, p + 14);var top = I16(bytes, p + 12);var right = I16(bytes, p + 10);var bottom = I16(bytes, p + 8);
+                        bounds.Add(left, top);bounds.Add(right, bottom);
+                        DrawArc(record.Type == META.Arc ? EMR.Arc : record.Type == META.Chord ? EMR.Chord : EMR.Pie, left, top, right, bottom, I16(bytes, p + 6), I16(bytes, p + 4), I16(bytes, p + 2), I16(bytes, p), state, elements, false);
                     }
                     break;
                 case META.Ellipse:
@@ -813,6 +830,53 @@ public sealed class MetafileToSvgRenderer
     private static (double X, double Y) TransformPointWithTransform(Transform transform, double x, double y)
     {
         return (x * transform.M11 + y * transform.M21 + transform.Dx, x * transform.M12 + y * transform.M22 + transform.Dy);
+    }
+
+    private static void DrawArc(uint type, double x1, double y1, double x2, double y2, double sx, double sy, double ex, double ey, DrawState state, List<string> elements, bool transformPoints)
+    {
+        var left = Math.Min(x1, x2);var right = Math.Max(x1, x2);var top = Math.Min(y1, y2);var bottom = Math.Max(y1, y2);
+        var rx = (right - left) / 2;var ry = (bottom - top) / 2;
+        if (rx == 0 || ry == 0) return;
+        var cx = (left + right) / 2;var cy = (top + bottom) / 2;
+        var angle = Math.Atan2((sy - cy) / ry, (sx - cx) / rx);
+        var endAngle = Math.Atan2((ey - cy) / ry, (ex - cx) / rx);
+        var sweep = endAngle - angle;
+        if (Math.Abs(sweep) < 1e-12) sweep = state.ClockwiseShapes ? Math.PI * 2 : -Math.PI * 2;
+        else if (state.ClockwiseShapes) { while (sweep <= 0) sweep += Math.PI * 2; }
+        else { while (sweep >= 0) sweep -= Math.PI * 2; }
+        (double X, double Y) Map(double x, double y)=>transformPoints ? TransformPoint(state, x, y) : (x, y);
+        string Point(double x, double y) {var point = Map(x, y);return $"{Number(point.X)} {Number(point.Y)}";}
+        var start = Map(cx + rx * Math.Cos(angle), cy + ry * Math.Sin(angle));
+        var to = type == EMR.ArcTo;var closed = type == EMR.Chord || type == EMR.Pie;
+        var path = state.CurrentPath ?? new List<string>();
+        if (to)
+        {
+            if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+            else EnsurePathPosition(state);
+            path.Add($"L {Number(start.X)} {Number(start.Y)}");
+        }
+        else
+        {
+            path.Add($"M {Number(start.X)} {Number(start.Y)}");
+            if (state.CurrentPath is not null) {state.PathStartX = start.X;state.PathStartY = start.Y;}
+        }
+        var segments = Math.Max(1, (int)Math.Ceiling(Math.Abs(sweep) / (Math.PI / 2) - 1e-12));
+        var step = sweep / segments;
+        for (var index = 0; index < segments; index++)
+        {
+            var a = angle + index * step;var b = a + step;var k = 4.0 / 3 * Math.Tan(step / 4);
+            path.Add($"C {Point(cx + rx * (Math.Cos(a) - k * Math.Sin(a)), cy + ry * (Math.Sin(a) + k * Math.Cos(a)))} {Point(cx + rx * (Math.Cos(b) + k * Math.Sin(b)), cy + ry * (Math.Sin(b) - k * Math.Cos(b)))} {Point(cx + rx * Math.Cos(b), cy + ry * Math.Sin(b))}");
+        }
+        if (type == EMR.Pie) path.Add($"L {Point(cx, cy)}");
+        if (closed) path.Add("Z");
+        var end = Map(cx + rx * Math.Cos(endAngle), cy + ry * Math.Sin(endAngle));
+        if (to) {state.CurrentX = end.X;state.CurrentY = end.Y;}
+        if (state.CurrentPath is null) elements.Add(PathElement(path, state, closed ? PathPaintMode.Paint : PathPaintMode.Stroke));
+        else
+        {
+            state.PathFigureClosed = closed;
+            state.PathEndX = closed ? state.PathStartX : end.X;state.PathEndY = closed ? state.PathStartY : end.Y;
+        }
     }
 
     private static void DrawRoundRect(double x1, double y1, double x2, double y2, double cornerWidth, double cornerHeight, DrawState state, List<string> elements, bool transformPoints)
@@ -1655,6 +1719,10 @@ internal static class EMR
     public const uint DeleteObject = 0x0028;
     public const uint Rectangle = 0x002b;
     public const uint RoundRect = 0x002c;
+    public const uint Arc = 0x002d;
+    public const uint Chord = 0x002e;
+    public const uint Pie = 0x002f;
+    public const uint ArcTo = 0x0037;
     public const uint SetArcDirection = 0x0039;
     public const uint Ellipse = 0x002a;
     public const uint Polygon16 = 0x0056;
@@ -1688,6 +1756,9 @@ internal static class META
     public const ushort PolyPolygon = 0x0538;
     public const ushort Rectangle = 0x041b;
     public const ushort RoundRect = 0x061c;
+    public const ushort Arc = 0x0817;
+    public const ushort Chord = 0x0830;
+    public const ushort Pie = 0x081a;
     public const ushort Ellipse = 0x0418;
     public const ushort StretchDib = 0x0f43;
 }
