@@ -3474,6 +3474,9 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(systemDiagnosisControl.ShowToolbar, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(systemDiagnosisControl.ShowStatusBar, context));
         AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(systemDiagnosisControl.AllowSortByColumn, context));
+        AppendAttribute(html, "data-allow-filter-by-column", ResolvePropertyPreview(systemDiagnosisControl.AllowFilterByColumn, context));
+        AppendAttribute(html, "data-allow-column-resize", ResolvePropertyPreview(systemDiagnosisControl.AllowColumnResize, context));
+        AppendAttribute(html, "data-allow-column-reorder", ResolvePropertyPreview(systemDiagnosisControl.AllowColumnReorder, context));
         AppendAttribute(html, "data-row-height", ResolvePropertyPreview(systemDiagnosisControl.RowHeight, context));
         AppendAttribute(html, "data-grid-line-width", ResolvePropertyPreview(systemDiagnosisControl.GridLineWidth, context));
         html.Append("><div style=\"flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor; font-weight: bold;\">")

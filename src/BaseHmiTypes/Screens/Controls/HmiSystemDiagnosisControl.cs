@@ -79,6 +79,10 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
 
     public HmiProperty<bool>? AllowColumnResize { get; set; }
 
+    public HmiProperty<bool>? AllowColumnReorder { get; set; }
+
+    public HmiProperty<bool>? AllowFilterByColumn { get; set; }
+
     public HmiProperty<bool>? AllowSortByColumn { get; set; }
 
     public HmiProperty<bool>? DisplayContextMenu { get; set; }

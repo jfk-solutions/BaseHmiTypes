@@ -57,6 +57,8 @@ export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   statusBarIconSize?: HmiProperty<string>;
   showTooltips?: HmiProperty<boolean>;
   allowColumnResize?: HmiProperty<boolean>;
+  allowColumnReorder?: HmiProperty<boolean>;
+  allowFilterByColumn?: HmiProperty<boolean>;
   allowSortByColumn?: HmiProperty<boolean>;
   displayContextMenu?: HmiProperty<boolean>;
   rowDoubleClickAction?: HmiProperty<HmiAlarmRowDoubleClickAction>;
