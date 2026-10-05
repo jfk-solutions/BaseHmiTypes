@@ -71,6 +71,7 @@ export enum HmiObjectType {
   HmiTrendCompanion = "HmiTrendCompanion",
   HmiTrendControl = "HmiTrendControl",
   HmiUnkown = "HmiUnkown",
+  HmiNcPartProgramControl = "HmiNcPartProgramControl",
   HmiNcKeyboardControl = "HmiNcKeyboardControl",
   HmiWebControl = "HmiWebControl"
 }
