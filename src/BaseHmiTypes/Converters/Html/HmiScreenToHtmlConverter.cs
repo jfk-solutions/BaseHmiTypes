@@ -4738,6 +4738,8 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "toolbar-button-size", trendControl.ToolbarButtonSize);
         AppendStaticBooleanValueAttribute(html, "show-status-bar", trendControl.ShowStatusBar);
         AppendAttribute(html, "status-bar-text", trendControl.StatusBarText?.GetText(context.CultureInfo), preserveEmpty: true);
+        AppendStaticBooleanValueAttribute(html, "show-status-bar-tooltips", trendControl.ShowStatusBarTooltips);
+        AppendAttribute(html, "status-bar-panels", FormatTrendStatusBarPanels(trendControl.StatusBarPanels, context.CultureInfo));
         AppendStaticBooleanValueAttribute(html, "use-status-bar-background-color", trendControl.UseStatusBarBackgroundColor);
         AppendStaticBooleanValueAttribute(html, "display-pen-icons", trendControl.DisplayPenIcons);
         AppendStaticBooleanValueAttribute(html, "use-trend-name-as-label", trendControl.UseTrendNameAsLabel);
@@ -5191,6 +5193,23 @@ public partial class HmiScreenToHtmlConverter
             AddTrendJsonString(properties, "valueAxisAlignment", pen.ValueAxisAlignment?.StaticValue.ToString());
             AddTrendJsonString(properties, "valueAxisLabel", pen.ValueAxisLabel);
             AddTrendJsonString(properties, "unit", pen.EngineeringUnitText?.GetText(cultureInfo) ?? pen.EngineeringUnit);
+            return "{" + string.Join(",", properties) + "}";
+        }).ToArray();
+        return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";
+    }
+
+    private static string? FormatTrendStatusBarPanels(IEnumerable<HmiTrendStatusBarPanel> panels, CultureInfo? cultureInfo)
+    {
+        var entries = panels.Select(panel =>
+        {
+            var properties = new List<string>();
+            AddTrendJsonString(properties, "sourceType", panel.SourceType);
+            AddTrendJsonBoolean(properties, "visible", panel.Visible?.StaticValue);
+            AddTrendJsonNumber(properties, "order", panel.Order?.StaticValue);
+            AddTrendJsonString(properties, "text", panel.Text?.GetText(cultureInfo));
+            AddTrendJsonString(properties, "tooltip", panel.Tooltip?.GetText(cultureInfo));
+            AddTrendJsonNumber(properties, "width", panel.Width?.StaticValue);
+            AddTrendJsonBoolean(properties, "autoSize", panel.AutoSize?.StaticValue);
             return "{" + string.Join(",", properties) + "}";
         }).ToArray();
         return entries.Length == 0 ? null : "[" + string.Join(",", entries) + "]";

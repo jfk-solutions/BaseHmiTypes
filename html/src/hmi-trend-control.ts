@@ -15,6 +15,8 @@ const trendControlProperties = {
   toolbarButtonSize: String,
   showStatusBar: String,
   statusBarText: String,
+  statusBarPanels: String,
+  showStatusBarTooltips: String,
   displayPenIcons: String,
   useTrendNameAsLabel: String,
   displayValueBar: String,
@@ -521,6 +523,16 @@ export class HmiTrendControl extends HTMLElement {
           white-space: nowrap;
         }
 
+        .status-panel {
+          min-width: 0;
+          display: inline-block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          vertical-align: bottom;
+        }
+
+        .status:has(.status-panel) { display: flex; gap: 6px; }
+
         .scrollbar {
           position: absolute;
           left: 10%;
@@ -543,7 +555,7 @@ export class HmiTrendControl extends HTMLElement {
       <div class="frame"${selectedTimeAxis ? ` data-time-axis="${escapeHtml(selectedTimeAxis.name)}"` : ""}>
         ${displayChartTitle ? `<div class="title">${escapeHtml(chartTitle)}</div>` : ""}
         ${showToolbar ? `<div class="toolbar">${renderPenLegend(visiblePens, displayPenIcons, useTrendNameAsLabel)}</div>` : ""}
-        ${showStatusBar ? `<div class="status">${escapeHtml(this.getAttribute("status-bar-text") ?? `${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}`)}</div>` : ""}
+        ${showStatusBar ? `<div class="status">${renderStatusPanels(this, `${chartLiveMode ? "LIVE" : "HISTORICAL"}${autoScale ? " · AUTO" : ""}`)}</div>` : ""}
         ${trendWindows.length ? `<div class="plot window-layout">${renderTrendWindows(this, trendWindows, pens, configuredValueAxes, backgroundColor, foregroundColor)}</div>` : `<div class="plot">
           <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             ${renderGrid(
@@ -692,6 +704,25 @@ function renderTrendWindows(
     const css = Object.entries(window.colors).map(([name, color]) => `--hmi-trend-${name}:${color};`).join("");
     const attributeText = Object.entries(attributes).map(([name, value]) => `${name}="${escapeHtml(value)}"`).join(" ");
     return `<hmi-trend-control data-trend-window="${escapeHtml(window.name)}" style="position:relative;display:block;background:${escapeHtml(window.backgroundColor || backgroundColor)};color:${escapeHtml(foregroundColor)};${css}" ${attributeText}></hmi-trend-control>`;
+  }).join("");
+}
+
+function renderStatusPanels(source: HTMLElement, fallback: string): string {
+  let panels: Record<string, unknown>[] = [];
+  try {
+    const parsed: unknown = JSON.parse(source.getAttribute("status-bar-panels") ?? "null");
+    if (Array.isArray(parsed)) panels = parsed.filter((value): value is Record<string, unknown> =>
+      typeof value === "object" && value !== null && !Array.isArray(value));
+  } catch { /* Malformed configuration falls back to the default status text. */ }
+  if (panels.length === 0) return escapeHtml(source.getAttribute("status-bar-text") ?? fallback);
+  const tooltips = readBooleanAttribute(source, "show-status-bar-tooltips", true);
+  const order = (panel: Record<string, unknown>) => typeof panel.order === "number" && Number.isFinite(panel.order) ? panel.order : 0;
+  return panels.filter(panel => panel.visible !== false).sort((a, b) => order(a) - order(b)).map(panel => {
+    const width = typeof panel.width === "number" && Number.isFinite(panel.width) && panel.width >= 0 ? panel.width : undefined;
+    const style = panel.autoSize === true ? "flex: 1 1 auto;" : width !== undefined ? `flex: 0 0 ${toCss(width)}px;width: ${toCss(width)}px;` : "flex: 0 1 auto;";
+    const title = tooltips && typeof panel.tooltip === "string" ? ` title="${escapeHtml(panel.tooltip)}"` : "";
+    const identity = typeof panel.sourceType === "string" ? ` data-panel-source-type="${escapeHtml(panel.sourceType)}"` : "";
+    return `<span class="status-panel"${identity}${title} style="${style}">${escapeHtml(typeof panel.text === "string" ? panel.text : "")}</span>`;
   }).join("");
 }
 

@@ -16,6 +16,7 @@ import { HmiTrendDataServer } from "./HmiTrendDataServer.js";
 import { HmiTrendNumericRadix } from "./HmiTrendNumericRadix.js";
 import { HmiTrendLegendPosition } from "./HmiTrendLegendPosition.js";
 import { HmiTrendOverlay } from "./HmiTrendOverlay.js";
+import { HmiTrendStatusBarPanel } from "../controls/HmiTrendStatusBarPanel.js";
 import { HmiTrendPen } from "./HmiTrendPen.js";
 import { HmiTrendValueAxis } from "./HmiTrendValueAxis.js";
 import { HmiTrendXValueAxis } from "./HmiTrendXValueAxis.js";
@@ -193,6 +194,8 @@ export abstract class HmiTrendControlBase extends HmiControlWindowBase {
   statusBarForegroundColor?: HmiProperty<HmiColor>;
   statusBarFont?: HmiFont;
   statusBarText?: HmiMultilingualText;
+  showStatusBarTooltips?: HmiProperty<boolean>;
+  statusBarPanels: HmiTrendStatusBarPanel[] = [];
   showTimePeriodBar?: HmiProperty<boolean>;
   showTagExplorer?: HmiProperty<boolean>;
   collapseTagExplorer?: HmiProperty<boolean>;
