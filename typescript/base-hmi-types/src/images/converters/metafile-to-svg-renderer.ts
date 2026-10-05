@@ -321,6 +321,10 @@ export class MetafileToSvgRenderer {
         case EMR.ROUNDRECT:
           if (record.size >= 32) drawRoundRect(i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12), i32(bytes, dataOffset + 16), i32(bytes, dataOffset + 20), state, elements, true);
           break;
+        case EMR.ANGLEARC:
+          if (record.size >= 28)
+            drawAngleArc(i32(bytes, dataOffset), i32(bytes, dataOffset + 4), u32(bytes, dataOffset + 8), f32(bytes, dataOffset + 12), f32(bytes, dataOffset + 16), state, elements);
+          break;
         case EMR.ARC:
         case EMR.CHORD:
         case EMR.PIE:
@@ -614,6 +618,7 @@ const EMR = {
   CREATEBRUSHINDIRECT: 0x0027,
   DELETEOBJECT: 0x0028,
   RECTANGLE: 0x002b,
+  ANGLEARC: 0x0029,
   ROUNDRECT: 0x002c,
   ARC: 0x002d,
   CHORD: 0x002e,
@@ -1753,7 +1758,33 @@ function selectPathClip(state: DrawState, mode: number, viewBox: ViewBox, defs: 
 }
 
 function lineElement(x1: number, y1: number, x2: number, y2: number, state: DrawState): string {
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${strokeAttrs(state)} fill="none"${clipAttr(state)} />`;
+  const n = (value: number) => Number(value.toFixed(3));
+  return `<line x1="${n(x1)}" y1="${n(y1)}" x2="${n(x2)}" y2="${n(y2)}" ${strokeAttrs(state)} fill="none"${clipAttr(state)} />`;
+}
+
+function drawAngleArc(cx: number, cy: number, radius: number, startDegrees: number, sweepDegrees: number, state: DrawState, elements: string[]): void {
+  // Bound hostile FLOAT expansion while retaining ordinary repeated path turns.
+  if (!Number.isFinite(startDegrees) || !Number.isFinite(sweepDegrees) || Math.abs(sweepDegrees) > 4096 * 90) return;
+  const angle = -(startDegrees % 360) * Math.PI / 180, sweep = -sweepDegrees * Math.PI / 180;
+  const map = (a: number) => transformPoint(state, cx + radius * Math.cos(a), cy + radius * Math.sin(a));
+  const n = (value: number) => Number(value.toFixed(3));
+  const point = (x: number, y: number) => transformPoint(state, x, y).map(n).join(' ');
+  const start = map(angle), path = state.currentPath ?? [];
+  if (state.currentPath === undefined) path.push(`M ${n(state.currentX)} ${n(state.currentY)}`);
+  else ensurePathPosition(state);
+  path.push(`L ${start.map(n).join(' ')}`);
+  const segments = radius === 0 ? 0 : Math.ceil(Math.abs(sweepDegrees) / 90), step = segments === 0 ? 0 : sweep / segments;
+  for (let index = 0; index < segments; index++) {
+    const a = angle + index * step, b = a + step, k = 4 / 3 * Math.tan(step / 4);
+    path.push(`C ${point(cx + radius * (Math.cos(a) - k * Math.sin(a)), cy + radius * (Math.sin(a) + k * Math.cos(a)))} ${point(cx + radius * (Math.cos(b) + k * Math.sin(b)), cy + radius * (Math.sin(b) - k * Math.cos(b)))} ${point(cx + radius * Math.cos(b), cy + radius * Math.sin(b))}`);
+  }
+  const end = map(angle + sweep);
+  [state.currentX, state.currentY] = end;
+  if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke'));
+  else {
+    state.pathFigureClosed = false;
+    [state.pathEndX, state.pathEndY] = end;
+  }
 }
 
 function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, sx: number, sy: number, ex: number, ey: number, state: DrawState, elements: string[], transformPoints: boolean): void {
