@@ -3207,7 +3207,7 @@ public partial class HmiScreenToHtmlConverter
             set.GridLineColor is not null || set.GridLineWidth is not null || set.GridLineVisibility is not null || set.RowHeight is not null ||
             set.CellPaddingLeft is not null || set.CellPaddingTop is not null || set.CellPaddingRight is not null || set.CellPaddingBottom is not null ||
             set.HorizontalScrollBarVisibility is not null || set.VerticalScrollBarVisibility is not null || set.GridSelectionMode is not null || set.SelectFullRow is not null ||
-            set.AlternateBackgroundColor is not null || set.AlternateForegroundColor is not null || set.SelectionBackgroundColor is not null || set.SelectionForegroundColor is not null || set.SelectionBorderColor is not null || set.HeaderSelectionBackgroundColor is not null || set.HeaderSelectionForegroundColor is not null || set.SelectionBorderWidth is not null).ToArray();
+            set.AlternateBackgroundColor is not null || set.AlternateForegroundColor is not null || set.SelectionBackgroundColor is not null || set.SelectionForegroundColor is not null || set.SelectionBorderColor is not null || set.HeaderSelectionBackgroundColor is not null || set.HeaderSelectionForegroundColor is not null || set.SelectionBorderWidth is not null || set.ColoringMode is not null || set.ColumnHeaderType is not null || set.RowHeaderType is not null).ToArray();
         if (configuredViews.Length > 0)
         {
             html.Append("<template class=\"hmi-alarm-view-settings\">");
@@ -3235,8 +3235,12 @@ public partial class HmiScreenToHtmlConverter
         }
 
         html.Append("<table class=\"hmi-alarm-table");
-        if (alarmControl.UseAlternatingRowColors is not null && ResolveStaticValue(alarmControl.UseAlternatingRowColors, context))
+        var coloringMode = TryGetStaticValue(selectedSet?.ColoringMode, out var configuredColoringMode) ? configuredColoringMode : (int?)null;
+        if (coloringMode == 2 || ((coloringMode is null || coloringMode < 0 || coloringMode > 2) &&
+            alarmControl.UseAlternatingRowColors is not null && ResolveStaticValue(alarmControl.UseAlternatingRowColors, context)))
             html.Append(" hmi-alarm-table--alternating");
+        else if (coloringMode == 1)
+            html.Append(" hmi-alarm-table--alternating-columns");
         html.Append('"');
         AppendAlarmViewSettings(html, selectedSet, context);
         html.Append(" style=\"").Append(CreateAlarmTableStyle(alarmControl, context, selectedSet)).Append("\">");
@@ -3268,7 +3272,8 @@ public partial class HmiScreenToHtmlConverter
             html.Append("</colgroup>");
         }
         var gridCellStyle = CreateAlarmGridCellStyle(alarmControl, context, selectedSet);
-        if (showHeader && (visibleColumns.Length > 0 || columns.Count == 0))
+        var columnHeaderType = TryGetStaticValue(selectedSet?.ColumnHeaderType, out var configuredHeaderType) ? configuredHeaderType : (int?)null;
+        if (showHeader && columnHeaderType != 0 && (visibleColumns.Length > 0 || columns.Count == 0))
         {
             var headerCellStyle = CreateAlarmTableHeaderCellStyle(alarmControl, context, gridCellStyle, selectedSet);
             html.Append("<thead><tr>");
@@ -3276,8 +3281,10 @@ public partial class HmiScreenToHtmlConverter
                 html.Append("<th style=\"").Append(headerCellStyle).Append("\">")
                     .Append(WebUtility.HtmlEncode(ResolveAlarmViewLabel(alarmControl.ViewKind)))
                     .Append("</th>");
+            var headingIndex = 0;
             foreach (var column in visibleColumns)
             {
+                headingIndex++;
                 html.Append("<th style=\"").Append(headerCellStyle).Append(alarmControl.ShortenColumnTitles is null
                     ? "overflow: hidden; text-overflow: ellipsis;" : string.Empty);
                 if (column.AutoSize is null || !ResolveStaticValue(column.AutoSize, context))
@@ -3316,7 +3323,7 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-show-date", ResolvePropertyPreview(column.ShowDate, context));
                 AppendAttribute(html, "data-symbol", column.Symbol);
                 html.Append('>')
-                    .Append(WebUtility.HtmlEncode(column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString()))
+                    .Append(WebUtility.HtmlEncode(columnHeaderType == 1 ? headingIndex.ToString(CultureInfo.InvariantCulture) : column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString()))
                     .Append("</th>");
             }
             html.Append("</tr></thead>");
@@ -5125,6 +5132,9 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-view-header-selection-background-color", ResolvePropertyPreview(set.HeaderSelectionBackgroundColor, context));
         AppendAttribute(html, "data-view-header-selection-foreground-color", ResolvePropertyPreview(set.HeaderSelectionForegroundColor, context));
         AppendAttribute(html, "data-view-selection-border-width", ResolvePropertyPreview(set.SelectionBorderWidth, context));
+        AppendAttribute(html, "data-view-coloring-mode", ResolvePropertyPreview(set.ColoringMode, context));
+        AppendAttribute(html, "data-view-column-header-type", ResolvePropertyPreview(set.ColumnHeaderType, context));
+        AppendAttribute(html, "data-view-row-header-type", ResolvePropertyPreview(set.RowHeaderType, context));
         Font("content", set.ContentFont); Font("header", set.HeaderFont);
 
         void Font(string role, HmiFont? font)

@@ -39,5 +39,8 @@ public sealed class HmiAlarmColumnSet
     public HmiProperty<HmiColor>? HeaderSelectionBackgroundColor { get; set; }
     public HmiProperty<HmiColor>? HeaderSelectionForegroundColor { get; set; }
     public HmiProperty<double>? SelectionBorderWidth { get; set; }
+    public HmiProperty<int>? ColoringMode { get; set; }
+    public HmiProperty<int>? ColumnHeaderType { get; set; }
+    public HmiProperty<int>? RowHeaderType { get; set; }
     public IList<HmiAlarmColumn> Columns { get; } = new List<HmiAlarmColumn>();
 }

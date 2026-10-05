@@ -3434,7 +3434,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     set.gridLineColor !== undefined || set.gridLineWidth !== undefined || set.gridLineVisibility !== undefined || set.rowHeight !== undefined ||
     set.cellPaddingLeft !== undefined || set.cellPaddingTop !== undefined || set.cellPaddingRight !== undefined || set.cellPaddingBottom !== undefined ||
     set.horizontalScrollBarVisibility !== undefined || set.verticalScrollBarVisibility !== undefined || set.gridSelectionMode !== undefined || set.selectFullRow !== undefined ||
-    set.alternateBackgroundColor !== undefined || set.alternateForegroundColor !== undefined || set.selectionBackgroundColor !== undefined || set.selectionForegroundColor !== undefined || set.selectionBorderColor !== undefined || set.headerSelectionBackgroundColor !== undefined || set.headerSelectionForegroundColor !== undefined || set.selectionBorderWidth !== undefined);
+    set.alternateBackgroundColor !== undefined || set.alternateForegroundColor !== undefined || set.selectionBackgroundColor !== undefined || set.selectionForegroundColor !== undefined || set.selectionBorderColor !== undefined || set.headerSelectionBackgroundColor !== undefined || set.headerSelectionForegroundColor !== undefined || set.selectionBorderWidth !== undefined || set.coloringMode !== undefined || set.columnHeaderType !== undefined || set.rowHeaderType !== undefined);
   if (configuredViews.length > 0) {
     html.push('<template class="hmi-alarm-view-settings">');
     for (const set of configuredViews) {
@@ -3457,8 +3457,11 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   }
 
   html.push("<table class=\"hmi-alarm-table");
-  if (getStaticValue(alarmControl.useAlternatingRowColors) === true)
+  const coloringMode = getStaticValue(selectedSet?.coloringMode);
+  if (coloringMode === 2 || ((coloringMode !== 0 && coloringMode !== 1 && coloringMode !== 2) && getStaticValue(alarmControl.useAlternatingRowColors) === true))
     html.push(" hmi-alarm-table--alternating");
+  else if (coloringMode === 1)
+    html.push(" hmi-alarm-table--alternating-columns");
   html.push('"');
   appendAlarmViewSettings(html, selectedSet, context);
   html.push(" style=\"", createAlarmTableStyle(alarmControl, selectedSet, context), "\">");
@@ -3488,12 +3491,15 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     html.push("</colgroup>");
   }
   const gridCellStyle = createAlarmGridCellStyle(alarmControl, selectedSet);
-  if (showHeader && (visibleColumns.length > 0 || columns.length === 0)) {
+  const columnHeaderType = getStaticValue(selectedSet?.columnHeaderType);
+  if (showHeader && columnHeaderType !== 0 && (visibleColumns.length > 0 || columns.length === 0)) {
     const headerCellStyle = createAlarmTableHeaderCellStyle(alarmControl, gridCellStyle, context, selectedSet);
     html.push("<thead><tr>");
     if (visibleColumns.length === 0)
       html.push("<th style=\"", headerCellStyle, "\">", escapeHtml(resolveAlarmViewLabel(alarmControl.viewKind)), "</th>");
+    let headingIndex = 0;
     for (const column of visibleColumns) {
+      headingIndex++;
       html.push("<th style=\"", headerCellStyle, alarmControl.shortenColumnTitles === undefined
         ? "overflow: hidden; text-overflow: ellipsis;" : "");
       const width = getStaticValue(column.width);
@@ -3528,7 +3534,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-time-format-pattern", column.timeFormat, true);
       appendAttribute(html, "data-show-date", resolvePropertyPreview(column.showDate));
       appendAttribute(html, "data-symbol", column.symbol);
-      html.push(">", escapeHtml(column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.sourceType ?? column.type), "</th>");
+      html.push(">", escapeHtml(columnHeaderType === 1 ? headingIndex.toString() : column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.sourceType ?? column.type), "</th>");
     }
     html.push("</tr></thead>");
   }
@@ -5509,6 +5515,9 @@ function appendAlarmViewSettings(html: string[], set: HmiAlarmColumnSet | undefi
   appendAttribute(html, "data-view-vertical-scrollbar-visibility", resolvePropertyPreview(set.verticalScrollBarVisibility));
   appendAttribute(html, "data-view-grid-selection-mode", resolvePropertyPreview(set.gridSelectionMode));
   appendAttribute(html, "data-view-select-full-row", resolvePropertyPreview(set.selectFullRow));
+  appendAttribute(html, "data-view-coloring-mode", resolvePropertyPreview(set.coloringMode));
+  appendAttribute(html, "data-view-column-header-type", resolvePropertyPreview(set.columnHeaderType));
+  appendAttribute(html, "data-view-row-header-type", resolvePropertyPreview(set.rowHeaderType));
   appendAttribute(html, "data-view-alternate-background-color", resolvePropertyPreview(set.alternateBackgroundColor));
   appendAttribute(html, "data-view-alternate-foreground-color", resolvePropertyPreview(set.alternateForegroundColor));
   appendAttribute(html, "data-view-selection-background-color", resolvePropertyPreview(set.selectionBackgroundColor));

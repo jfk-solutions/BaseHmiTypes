@@ -37,5 +37,8 @@ export class HmiAlarmColumnSet {
   headerSelectionBackgroundColor?: HmiProperty<HmiColor>;
   headerSelectionForegroundColor?: HmiProperty<HmiColor>;
   selectionBorderWidth?: HmiProperty<number>;
+  coloringMode?: HmiProperty<number>;
+  columnHeaderType?: HmiProperty<number>;
+  rowHeaderType?: HmiProperty<number>;
   readonly columns: HmiAlarmColumn[] = [];
 }
