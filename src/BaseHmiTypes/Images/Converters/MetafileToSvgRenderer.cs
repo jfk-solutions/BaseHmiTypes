@@ -7,6 +7,7 @@ namespace BaseHmiTypes.Images.Converters;
 
 public sealed class MetafileToSvgRenderer
 {
+    private const string ClipViewportToken = "__METAFILE_CLIP_VIEWPORT__";
     public string? Render(byte[] bytes, string? extension = null)
     {
         var normalized = extension?.ToLowerInvariant();
@@ -218,6 +219,11 @@ public sealed class MetafileToSvgRenderer
                         state.SelectedPath = null;
                     }
                     break;
+                case EMR.IntersectClipRect:
+                case EMR.ExcludeClipRect:
+                    if (record.Size >= 24)
+                        CombineRectClip(I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12), record.Type == EMR.IntersectClipRect ? 1u : 4u, state, viewBox, defs, ++clipSequence, true);
+                    break;
                 case EMR.PolylineTo:
                 case EMR.PolylineTo16:
                 case EMR.PolyBezier:
@@ -375,6 +381,8 @@ public sealed class MetafileToSvgRenderer
         var state = CreateInitialState();
         var objects = new List<MetafileObject?>();
         var elements = new List<string>();
+        var defs = new List<string>();
+        var clipSequence = 0;
         var windowOrg = (X: viewBox.X, Y: viewBox.Y);
         var windowExt = (X: viewBox.Width, Y: viewBox.Height);
         var hasExplicitWindow = false;
@@ -398,6 +406,11 @@ public sealed class MetafileToSvgRenderer
                     break;
                 case META.SetPolyFillMode:
                     state.FillRule = PolyFillRule(U16(bytes, p));
+                    break;
+                case META.IntersectClipRect:
+                case META.ExcludeClipRect:
+                    if (record.SizeBytes >= 14)
+                        CombineRectClip(I16(bytes, p + 6), I16(bytes, p + 4), I16(bytes, p + 2), I16(bytes, p), record.Type == META.IntersectClipRect ? 1u : 4u, state, null, defs, ++clipSequence, false);
                     break;
                 case META.CreatePenIndirect:
                     AddWmfObject(objects, new PenObject { Width = Math.Max(1, Math.Abs((int)I16(bytes, p + 2))), Color = ColorRef(bytes, p + 6), None = U16(bytes, p) == 5 });
@@ -506,7 +519,9 @@ public sealed class MetafileToSvgRenderer
         if (mirrorVertically)
             mirroredElements = MirrorElementsVertically(mirroredElements, viewBox);
 
-        return SvgDocument(viewBox, mirroredElements);
+        for (var index = 0; index < defs.Count; index++)
+            defs[index] = defs[index].Replace(ClipViewportToken, ClipViewportAttrs(viewBox));
+        return SvgDocument(viewBox, mirroredElements, defs);
     }
 
     private static void AddWmfObject(IList<MetafileObject?> objects, MetafileObject obj)
@@ -1357,6 +1372,23 @@ public sealed class MetafileToSvgRenderer
     private static void SelectPathClip(DrawState state, uint mode, ViewBox viewBox, List<string> defs, int sequence)
     {
         var geometry = $"d=\"{string.Join(" ", state.SelectedPath!)}\" fill-rule=\"{state.FillRule}\" clip-rule=\"{state.FillRule}\"";
+        CombineClipGeometry(state, geometry, mode, viewBox, defs, sequence);
+    }
+
+    private static void CombineRectClip(double x1, double y1, double x2, double y2, uint mode, DrawState state, ViewBox? viewBox, List<string> defs, int sequence, bool transformPoints)
+    {
+        var left = Math.Min(x1, x2); var right = Math.Max(x1, x2);
+        var top = Math.Min(y1, y2); var bottom = Math.Max(y1, y2);
+        string Point(double x, double y) { var p = transformPoints ? TransformPoint(state, x, y) : (X: x, Y: y); return $"{Number(p.X)} {Number(p.Y)}"; }
+        var path = left == right || top == bottom ? string.Empty : $"M {Point(left, top)} L {Point(right, top)} L {Point(right, bottom)} L {Point(left, bottom)} Z";
+        CombineClipGeometry(state, $"d=\"{path}\" fill-rule=\"nonzero\" clip-rule=\"nonzero\"", mode, viewBox, defs, sequence);
+    }
+
+    private static string ClipViewportAttrs(ViewBox viewBox)
+        => $"x=\"{Number(viewBox.X)}\" y=\"{Number(viewBox.Y)}\" width=\"{Number(viewBox.Width)}\" height=\"{Number(viewBox.Height)}\"";
+
+    private static void CombineClipGeometry(DrawState state, string geometry, uint mode, ViewBox? viewBox, List<string> defs, int sequence)
+    {
         if (mode == 5 || (mode == 1 && state.ActiveClipId is null && state.ActiveMaskId is null))
         {
             var id = $"clip{sequence}";
@@ -1368,7 +1400,8 @@ public sealed class MetafileToSvgRenderer
         // Boolean regions use luminance masks: white includes, black excludes.
         // The finite mask domain is the image viewport, which already bounds output.
         var old = ClipAttr(state);
-        var rect = $"x=\"{Number(viewBox.X)}\" y=\"{Number(viewBox.Y)}\" width=\"{Number(viewBox.Width)}\" height=\"{Number(viewBox.Height)}\"";
+        // WMF bounds can be inferred only after drawing records have been read.
+        var rect = viewBox is null ? ClipViewportToken : ClipViewportAttrs(viewBox);
         var previous = $"<rect {rect} fill=\"#ffffff\"{old} />";
         var include = $"<path {geometry} fill=\"#ffffff\" />";
         var exclude = $"<path {geometry} fill=\"#000000\" />";
@@ -1752,6 +1785,8 @@ internal enum PathPaintMode
 
 internal static class EMR
 {
+    public const uint ExcludeClipRect = 0x001d;
+    public const uint IntersectClipRect = 0x001e;
     public const uint AngleArc = 0x0029;
     public const uint SetMiterLimit = 0x003a;
     public const uint Header = 0x0001;
@@ -1812,6 +1847,8 @@ internal static class EMR
 
 internal static class META
 {
+    public const ushort ExcludeClipRect = 0x0415;
+    public const ushort IntersectClipRect = 0x0416;
     public const ushort Escape = 0x0626;
     public const ushort SetWindowOrg = 0x020b;
     public const ushort SetWindowExt = 0x020c;
