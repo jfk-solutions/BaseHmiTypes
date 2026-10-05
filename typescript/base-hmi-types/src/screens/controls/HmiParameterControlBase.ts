@@ -10,6 +10,12 @@ export abstract class HmiParameterControlBase extends HmiControlWindowBase {
   coloringMode?: HmiProperty<number>;
   horizontalScrollBarVisibility?: HmiProperty<number>;
   verticalScrollBarVisibility?: HmiProperty<number>;
+  allowColumnReorder?: HmiProperty<boolean>;
+  allowColumnResize?: HmiProperty<boolean>;
+  columnHeaderType?: HmiProperty<number>;
+  rowHeaderType?: HmiProperty<number>;
+  headerSelectionBackgroundColor?: HmiProperty<HmiColor>;
+  headerSelectionForegroundColor?: HmiProperty<HmiColor>;
   selectFullRow?: HmiProperty<boolean>;
   selectionBackgroundColor?: HmiProperty<HmiColor>;
   selectionForegroundColor?: HmiProperty<HmiColor>;

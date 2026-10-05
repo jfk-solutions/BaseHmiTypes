@@ -2695,6 +2695,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   appendAttribute(html, "data-current-parameter-set-id", resolvePropertyPreview(control.currentParameterSetId));
   appendAttribute(html, "data-current-parameter-set-type-id", resolvePropertyPreview(control.currentParameterSetTypeId));
   appendAttribute(html, "data-hide-details", resolvePropertyPreview(control.hideDetails));
+  appendParameterHeaderAttributes(html, control);
   appendParameterGridAttributes(html, control);
   appendParameterSelectionAttributes(html, control);
   appendAttribute(html, "data-row-height", resolvePropertyPreview(control.rowHeight));
@@ -2741,6 +2742,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
   appendAttribute(html, "data-parameter-control-view", "overview");
   appendAttribute(html, "data-filter", resolvePropertyPreview(control.filter));
+  appendParameterHeaderAttributes(html, control);
   appendParameterGridAttributes(html, control);
   appendParameterSelectionAttributes(html, control);
   appendAttribute(html, "data-row-height", resolvePropertyPreview(control.rowHeight));
@@ -2787,8 +2789,27 @@ function appendParameterView(html: string[], control: HmiParameterControlBase, c
   html.push('<div class="hmi-parameter-details" style="', style.join(""), '\">');
   if (columns.length > 0) appendParameterColumns(html, control, columns, context);
   else html.push("Parameter data not loaded");
+  appendParameterHeaderSelectionPreview(html, control, context);
   appendParameterSelectionPreview(html, control, context);
   html.push("</div>");
+}
+
+function appendParameterHeaderAttributes(html: string[], control: HmiParameterControlBase): void {
+  appendAttribute(html, "data-allow-column-reorder", resolvePropertyPreview(control.allowColumnReorder));
+  appendAttribute(html, "data-allow-column-resize", resolvePropertyPreview(control.allowColumnResize));
+  appendAttribute(html, "data-column-header-type", resolvePropertyPreview(control.columnHeaderType));
+  appendAttribute(html, "data-row-header-type", resolvePropertyPreview(control.rowHeaderType));
+  appendAttribute(html, "data-header-selection-background-color", resolvePropertyPreview(control.headerSelectionBackgroundColor));
+  appendAttribute(html, "data-header-selection-foreground-color", resolvePropertyPreview(control.headerSelectionForegroundColor));
+}
+
+function appendParameterHeaderSelectionPreview(html: string[], control: HmiParameterControlBase, context: HmiHtmlConvertContext): void {
+  if (control.headerSelectionBackgroundColor === undefined && control.headerSelectionForegroundColor === undefined) return;
+  const style = ["padding: 2px 4px; box-sizing: border-box;"];
+  appendColorStyle(style, "background-color", control.headerSelectionBackgroundColor);
+  appendColorStyle(style, "color", control.headerSelectionForegroundColor);
+  if (control.headerFont !== undefined) appendFont(style, control.headerFont.getForCulture(context.options.cultureLcid));
+  html.push('<div class="hmi-parameter-header-selection-preview" data-preview="appearance" style="', style.join(""), '">Header selection appearance preview</div>');
 }
 
 function appendParameterGridAttributes(html: string[], control: HmiParameterControlBase): void {
