@@ -2695,6 +2695,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   appendAttribute(html, "data-current-parameter-set-id", resolvePropertyPreview(control.currentParameterSetId));
   appendAttribute(html, "data-current-parameter-set-type-id", resolvePropertyPreview(control.currentParameterSetTypeId));
   appendAttribute(html, "data-hide-details", resolvePropertyPreview(control.hideDetails));
+  appendParameterSelectionAttributes(html, control);
   appendAttribute(html, "data-row-height", resolvePropertyPreview(control.rowHeight));
   appendAttribute(html, "data-cell-padding-left", resolvePropertyPreview(control.cellPaddingLeft));
   appendAttribute(html, "data-cell-padding-top", resolvePropertyPreview(control.cellPaddingTop));
@@ -2739,6 +2740,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
   appendAttribute(html, "data-parameter-control-view", "overview");
   appendAttribute(html, "data-filter", resolvePropertyPreview(control.filter));
+  appendParameterSelectionAttributes(html, control);
   appendAttribute(html, "data-row-height", resolvePropertyPreview(control.rowHeight));
   appendAttribute(html, "data-cell-padding-left", resolvePropertyPreview(control.cellPaddingLeft));
   appendAttribute(html, "data-cell-padding-top", resolvePropertyPreview(control.cellPaddingTop));
@@ -2779,6 +2781,30 @@ function appendParameterView(html: string[], control: HmiParameterControlBase, c
   html.push('<div class="hmi-parameter-details" style="', style.join(""), '\">');
   if (columns.length > 0) appendParameterColumns(html, control, columns, context);
   else html.push("Parameter data not loaded");
+  appendParameterSelectionPreview(html, control, context);
+  html.push("</div>");
+}
+
+function appendParameterSelectionAttributes(html: string[], control: HmiParameterControlBase): void {
+  appendAttribute(html, "data-select-full-row", resolvePropertyPreview(control.selectFullRow));
+  appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(control.selectionBackgroundColor));
+  appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(control.selectionForegroundColor));
+  appendAttribute(html, "data-selection-border-color", resolvePropertyPreview(control.selectionBorderColor));
+  appendAttribute(html, "data-selection-border-width", resolvePropertyPreview(control.selectionBorderWidth));
+}
+
+function appendParameterSelectionPreview(html: string[], control: HmiParameterControlBase, context: HmiHtmlConvertContext): void {
+  if (control.selectFullRow === undefined && control.selectionBackgroundColor === undefined && control.selectionForegroundColor === undefined &&
+      control.selectionBorderColor === undefined && control.selectionBorderWidth === undefined) return;
+  const style = ["padding: 2px 4px; box-sizing: border-box;"];
+  appendColorStyle(style, "background-color", control.selectionBackgroundColor);
+  appendColorStyle(style, "color", control.selectionForegroundColor);
+  appendColorStyle(style, "border-color", control.selectionBorderColor);
+  if (control.contentFont !== undefined) appendFont(style, control.contentFont.getForCulture(context.options.cultureLcid));
+  const width = getStaticValue(control.selectionBorderWidth);
+  if (typeof width === "number" && Number.isFinite(width) && width >= 0) style.push(`border-style: solid; border-width: ${toCss(width)}px;`);
+  html.push('<div class="hmi-parameter-selection-preview" data-preview="appearance" style="', style.join(""), '">Selection appearance preview');
+  if (control.selectFullRow !== undefined) html.push(getStaticValue(control.selectFullRow) ? " · Entire row" : " · Cell");
   html.push("</div>");
 }
 
