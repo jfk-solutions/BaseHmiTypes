@@ -319,6 +319,9 @@ export class MetafileToSvgRenderer {
             elements.push(record.type === EMR.ELLIPSE ? ellipseElement(...rect, state) : rectElement(...rect, state));
           }
           break;
+        case EMR.ROUNDRECT:
+          if (record.size >= 32) drawRoundRect(i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12), i32(bytes, dataOffset + 16), i32(bytes, dataOffset + 20), state, elements, true);
+          break;
         case EMR.POLYGON16:
         case EMR.POLYLINE16:
         case EMR.POLYGON:
@@ -502,6 +505,13 @@ export class MetafileToSvgRenderer {
           elements.push(rectElement(left, top, right, bottom, state));
           break;
         }
+        case META.ROUNDRECT: {
+          if (record.sizeBytes < 18) break;
+          const left = i16(bytes, p + 10), top = i16(bytes, p + 8), right = i16(bytes, p + 6), bottom = i16(bytes, p + 4);
+          addBoundsPoint(bounds, left, top); addBoundsPoint(bounds, right, bottom);
+          drawRoundRect(left, top, right, bottom, i16(bytes, p + 2), i16(bytes, p), state, elements, false);
+          break;
+        }
         case META.ELLIPSE: {
           const left = i16(bytes, p + 6);
           const top = i16(bytes, p + 4);
@@ -590,6 +600,7 @@ const EMR = {
   CREATEBRUSHINDIRECT: 0x0027,
   DELETEOBJECT: 0x0028,
   RECTANGLE: 0x002b,
+  ROUNDRECT: 0x002c,
   ELLIPSE: 0x002a,
   POLYGON16: 0x0056,
   POLYGON: 0x0003,
@@ -646,6 +657,7 @@ const META = {
   POLYLINE: 0x0325,
   POLYPOLYGON: 0x0538,
   RECTANGLE: 0x041b,
+  ROUNDRECT: 0x061c,
   ELLIPSE: 0x0418,
   STRETCHDIB: 0x0f43,
 };
@@ -1694,6 +1706,35 @@ function emfHeaderViewBox(bytes: Uint8Array): ViewBox | null {
 
 function lineElement(x1: number, y1: number, x2: number, y2: number, state: DrawState): string {
   return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${strokeAttrs(state)} fill="none" />`;
+}
+
+function drawRoundRect(x1: number, y1: number, x2: number, y2: number, cornerWidth: number, cornerHeight: number, state: DrawState, elements: string[], transformPoints: boolean): void {
+  const left = Math.min(x1, x2), right = Math.max(x1, x2), top = Math.min(y1, y2), bottom = Math.max(y1, y2);
+  let rx = Math.min(Math.abs(cornerWidth), right - left) / 2, ry = Math.min(Math.abs(cornerHeight), bottom - top) / 2;
+  if (rx === 0 || ry === 0) rx = ry = 0;
+  const map = (x: number, y: number): [number, number] => {
+    if (state.clockwiseShapes) y = top + bottom - y;
+    return transformPoints ? transformPoint(state, x, y) : [x, y];
+  };
+  const point = (x: number, y: number) => map(x, y).map(value => Number(value.toFixed(3))).join(' ');
+  const start = map(right, top + ry), path = [`M ${point(right, top + ry)}`];
+  if (rx === 0) path.push(`L ${point(left, top)}`, `L ${point(left, bottom)}`, `L ${point(right, bottom)}`);
+  else {
+    const kappa = 0.5522847498307936, kx = rx * kappa, ky = ry * kappa;
+    path.push(`C ${point(right, top + ry - ky)} ${point(right - rx + kx, top)} ${point(right - rx, top)}`,
+      `L ${point(left + rx, top)}`,
+      `C ${point(left + rx - kx, top)} ${point(left, top + ry - ky)} ${point(left, top + ry)}`,
+      `L ${point(left, bottom - ry)}`,
+      `C ${point(left, bottom - ry + ky)} ${point(left + rx - kx, bottom)} ${point(left + rx, bottom)}`,
+      `L ${point(right - rx, bottom)}`,
+      `C ${point(right - rx + kx, bottom)} ${point(right, bottom - ry + ky)} ${point(right, bottom - ry)}`);
+  }
+  path.push('Z');
+  if (state.currentPath === undefined) elements.push(pathElement(path, state, 'paint'));
+  else {
+    state.currentPath.push(...path); state.pathFigureClosed = true;
+    state.pathStartX = state.pathEndX = start[0]; state.pathStartY = state.pathEndY = start[1];
+  }
 }
 
 function appendEmfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean, state: DrawState): void {
