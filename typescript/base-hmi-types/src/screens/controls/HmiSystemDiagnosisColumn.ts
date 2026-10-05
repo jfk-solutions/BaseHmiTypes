@@ -1,5 +1,5 @@
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
-import { HmiHorizontalAlignment, HmiProperty } from "../base.js";
+import { HmiHorizontalAlignment, HmiVerticalAlignment, HmiProperty } from "../base.js";
 import { HmiSystemDiagnosisColumnType } from "./HmiSystemDiagnosisColumnType.js";
 
 export class HmiSystemDiagnosisColumn {
@@ -9,6 +9,8 @@ export class HmiSystemDiagnosisColumn {
   width?: HmiProperty<number>;
   headerText?: HmiMultilingualText;
   alignment?: HmiProperty<HmiHorizontalAlignment>;
+  headerHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  headerVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   format?: string;
   order?: HmiProperty<number>;
   allowSort?: HmiProperty<boolean>;
