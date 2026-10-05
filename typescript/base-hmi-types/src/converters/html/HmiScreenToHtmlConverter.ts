@@ -3441,8 +3441,23 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (getStaticValue(alarmControl.useAlternatingRowColors) === true)
     html.push(" hmi-alarm-table--alternating");
   html.push("\" style=\"", createAlarmTableStyle(alarmControl), "\">");
+  if (visibleColumns.length > 0) {
+    html.push("<colgroup>");
+    for (const column of visibleColumns) {
+      html.push("<col");
+      appendAttribute(html, "data-column-type", column.type);
+      appendAttribute(html, "data-column-source-type", column.sourceType);
+      appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
+      appendAttribute(html, "data-auto-size", resolvePropertyPreview(column.autoSize));
+      const width = getStaticValue(column.width);
+      if (getStaticValue(column.autoSize) !== true && width !== undefined && Number.isFinite(width) && width >= 0)
+        appendAttribute(html, "style", `width: ${toCss(width)}px;`);
+      html.push(">");
+    }
+    html.push("</colgroup>");
+  }
   const gridCellStyle = createAlarmGridCellStyle(alarmControl);
-  if (showHeader) {
+  if (showHeader && (visibleColumns.length > 0 || columns.length === 0)) {
     const headerCellStyle = createAlarmTableHeaderCellStyle(alarmControl, gridCellStyle, context);
     html.push("<thead><tr>");
     if (visibleColumns.length === 0)
