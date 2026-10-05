@@ -3471,6 +3471,8 @@ public partial class HmiScreenToHtmlConverter
             context,
             additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-view-kind", systemDiagnosisControl.ViewKind.ToString());
+        AppendAttribute(html, "data-column-header-type", ResolvePropertyPreview(systemDiagnosisControl.ColumnHeaderType, context));
+        AppendAttribute(html, "data-row-header-type", ResolvePropertyPreview(systemDiagnosisControl.RowHeaderType, context));
         AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(systemDiagnosisControl.ShowToolbar, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(systemDiagnosisControl.ShowStatusBar, context));
         AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(systemDiagnosisControl.AllowSortByColumn, context));
@@ -3528,11 +3530,14 @@ public partial class HmiScreenToHtmlConverter
                 html.Append('>');
             }
             html.Append("</colgroup>");
-            if (systemDiagnosisControl.ShowColumnHeadings is null || ResolveStaticValue(systemDiagnosisControl.ShowColumnHeadings, context))
+            var columnHeaderType = systemDiagnosisControl.ColumnHeaderType is null ? (int?)null : ResolveStaticValue(systemDiagnosisControl.ColumnHeaderType, context);
+            if (columnHeaderType != 0 && (systemDiagnosisControl.ShowColumnHeadings is null || ResolveStaticValue(systemDiagnosisControl.ShowColumnHeadings, context)))
             {
                 html.Append("<thead><tr>");
+                var columnIndex = 0;
                 foreach (var column in columns)
                 {
+                    columnIndex++;
                     var columnStyle = new StringBuilder(header.ToString());
                     if (column.HeaderHorizontalAlignment is not null)
                         columnStyle.Append("text-align: ").Append(ToCss(ResolveStaticValue(column.HeaderHorizontalAlignment, context))).Append(';');
@@ -3550,7 +3555,8 @@ public partial class HmiScreenToHtmlConverter
                     AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
                     AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
                     AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
-                    html.Append('>').Append(WebUtility.HtmlEncode(column.HeaderText?.GetText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString())).Append("</th>");
+                    var headingText = columnHeaderType == 1 ? columnIndex.ToString(CultureInfo.InvariantCulture) : column.HeaderText?.GetText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString();
+                    html.Append('>').Append(WebUtility.HtmlEncode(headingText)).Append("</th>");
                 }
                 html.Append("</tr></thead>");
             }
