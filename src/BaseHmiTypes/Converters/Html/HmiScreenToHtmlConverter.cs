@@ -2840,6 +2840,27 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-use-header-first-gradient", ResolvePropertyPreview(recipeControl.UseHeaderFirstGradient, context));
         AppendAttribute(html, "data-use-header-second-gradient", ResolvePropertyPreview(recipeControl.UseHeaderSecondGradient, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(recipeControl.WordWrap, context));
+        AppendAttribute(html, "data-button-background-color", ResolvePropertyPreview(recipeControl.ButtonBackgroundColor, context));
+        AppendAttribute(html, "data-button-border-background-color", ResolvePropertyPreview(recipeControl.ButtonBorderBackgroundColor, context));
+        AppendAttribute(html, "data-button-border-color", ResolvePropertyPreview(recipeControl.ButtonBorderColor, context));
+        AppendAttribute(html, "data-button-first-gradient-color", ResolvePropertyPreview(recipeControl.ButtonFirstGradientColor, context));
+        AppendAttribute(html, "data-button-middle-gradient-color", ResolvePropertyPreview(recipeControl.ButtonMiddleGradientColor, context));
+        AppendAttribute(html, "data-button-second-gradient-color", ResolvePropertyPreview(recipeControl.ButtonSecondGradientColor, context));
+        AppendAttribute(html, "data-button-border-width", ResolvePropertyPreview(recipeControl.ButtonBorderWidth, context));
+        AppendAttribute(html, "data-button-corner-radius", ResolvePropertyPreview(recipeControl.ButtonCornerRadius, context));
+        AppendAttribute(html, "data-button-edge-style", ResolvePropertyPreview(recipeControl.ButtonEdgeStyle, context));
+        AppendAttribute(html, "data-button-back-fill-style", ResolvePropertyPreview(recipeControl.ButtonBackFillStyle, context));
+        AppendAttribute(html, "data-button-first-gradient-offset", ResolvePropertyPreview(recipeControl.ButtonFirstGradientOffset, context));
+        AppendAttribute(html, "data-button-second-gradient-offset", ResolvePropertyPreview(recipeControl.ButtonSecondGradientOffset, context));
+        AppendAttribute(html, "data-use-button-first-gradient", ResolvePropertyPreview(recipeControl.UseButtonFirstGradient, context));
+        AppendAttribute(html, "data-use-button-second-gradient", ResolvePropertyPreview(recipeControl.UseButtonSecondGradient, context));
+        AppendAttribute(html, "data-textual-objects-border-background-color", ResolvePropertyPreview(recipeControl.TextualObjectsBorderBackgroundColor, context));
+        AppendAttribute(html, "data-textual-objects-border-color", ResolvePropertyPreview(recipeControl.TextualObjectsBorderColor, context));
+        AppendAttribute(html, "data-textual-objects-border-width", ResolvePropertyPreview(recipeControl.TextualObjectsBorderWidth, context));
+        AppendAttribute(html, "data-textual-objects-corner-radius", ResolvePropertyPreview(recipeControl.TextualObjectsCornerRadius, context));
+        AppendAttribute(html, "data-textual-objects-edge-style", ResolvePropertyPreview(recipeControl.TextualObjectsEdgeStyle, context));
+        var buttonPreview = CreateRecipeButtonPreviewStyle(recipeControl);
+        if (buttonPreview.Length > 0) AppendAttribute(html, "data-button-preview-style", buttonPreview);
         AppendAttribute(html, "data-enable-recipe-dialog", ResolvePropertyPreview(recipeControl.EnableRecipeDialog, context));
         AppendAttribute(html, "data-show-grid-lines", ResolvePropertyPreview(recipeControl.ShowGridLines, context));
         AppendAttribute(html, "data-grid-line-color", ResolvePropertyPreview(recipeControl.GridLineColor, context));
@@ -2855,7 +2876,7 @@ public partial class HmiScreenToHtmlConverter
                     .Append(headerStyle).Append("\">Recipe selector</div>");
             html.Append("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;")
                 .Append(contentStyle).Append("\">")
-                .Append(WebUtility.HtmlEncode(defaultRecipeName))
+                .Append(CreateRecipeSelectorTextPreview(recipeControl, defaultRecipeName))
                 .Append("</div>");
         }
         else
@@ -2904,6 +2925,32 @@ public partial class HmiScreenToHtmlConverter
         if (showFooter)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
         html.Append("</div>");
+    }
+
+    private static string CreateRecipeButtonPreviewStyle(HmiRecipeControl control)
+    {
+        var style = new StringBuilder();
+        AppendColorStyle(style, "background-color", control.ButtonBackgroundColor);
+        AppendColorStyle(style, "border-color", control.ButtonBorderColor);
+        AppendHeaderBorderWidth(style, control.ButtonBorderWidth);
+        if (control.ButtonCornerRadius?.StaticValue is int radius && radius >= 0)
+            style.Append("border-radius: ").Append(ToCss(radius)).Append("px;");
+        AppendColorGradientStyle(style, CreateColorGradient(
+            control.ButtonBackgroundColor, control.ButtonFirstGradientColor, control.ButtonFirstGradientOffset,
+            control.ButtonMiddleGradientColor, control.ButtonSecondGradientColor, control.ButtonSecondGradientOffset,
+            control.UseButtonFirstGradient, control.UseButtonSecondGradient, null));
+        return style.ToString();
+    }
+
+    private static string CreateRecipeSelectorTextPreview(HmiRecipeControl control, string text)
+    {
+        var style = new StringBuilder();
+        AppendColorStyle(style, "border-color", control.TextualObjectsBorderColor);
+        AppendHeaderBorderWidth(style, control.TextualObjectsBorderWidth);
+        if (control.TextualObjectsCornerRadius?.StaticValue is int radius && radius >= 0)
+            style.Append("border-radius: ").Append(ToCss(radius)).Append("px;");
+        if (style.Length == 0) return WebUtility.HtmlEncode(text);
+        return "<span data-recipe-selector-text=\"true\" style=\"" + style + "\">" + WebUtility.HtmlEncode(text) + "</span>";
     }
 
     private static string CreateRecipeHeaderStyle(HmiRecipeControl recipeControl, HmiHtmlConvertContext context)
