@@ -8,6 +8,8 @@ namespace BaseHmiTypes.Images.Converters;
 public sealed class MetafileToSvgRenderer
 {
     private const string ClipViewportToken = "__METAFILE_CLIP_VIEWPORT__";
+    private const string DefaultClipViewportToken = "__METAFILE_DEFAULT_CLIP_VIEWPORT__";
+    private sealed class ClipExpansion { public double X; public double Y; }
     public string? Render(byte[] bytes, string? extension = null)
     {
         var normalized = extension?.ToLowerInvariant();
@@ -48,6 +50,7 @@ public sealed class MetafileToSvgRenderer
         var elements = new List<string>();
         var defs = new List<string>();
         var clipSequence = 0;
+        var clipExpansion = new ClipExpansion();
 
         foreach (var record in EmfRecords(bytes))
         {
@@ -239,6 +242,16 @@ public sealed class MetafileToSvgRenderer
                         if (geometry is not null) CombineClipGeometry(state, geometry, mode, viewBox, defs, ++clipSequence);
                         break;
                     }
+                case EMR.OffsetClipRgn:
+                    if (record.Size >= 16)
+                    {
+                        var x = (double)I32(bytes, dataOffset); var y = (double)I32(bytes, dataOffset + 4);
+                        var t = state.WorldTransform;
+                        var dx = (x * t.M11 + y * t.M21) * state.ViewportExtX / (state.WindowExtX == 0 ? 1 : state.WindowExtX);
+                        var dy = (x * t.M12 + y * t.M22) * state.ViewportExtY / (state.WindowExtY == 0 ? 1 : state.WindowExtY);
+                        OffsetSelectedClip(dx, dy, state, defs, ref clipSequence, clipExpansion);
+                    }
+                    break;
                 case EMR.PolylineTo:
                 case EMR.PolylineTo16:
                 case EMR.PolyBezier:
@@ -369,6 +382,7 @@ public sealed class MetafileToSvgRenderer
             }
         }
 
+        ResolveClipViewport(defs, viewBox, clipExpansion);
         return SvgDocument(viewBox, elements, defs);
     }
 
@@ -398,6 +412,7 @@ public sealed class MetafileToSvgRenderer
         var elements = new List<string>();
         var defs = new List<string>();
         var clipSequence = 0;
+        var clipExpansion = new ClipExpansion();
         var windowOrg = (X: viewBox.X, Y: viewBox.Y);
         var windowExt = (X: viewBox.Width, Y: viewBox.Height);
         var hasExplicitWindow = false;
@@ -426,6 +441,10 @@ public sealed class MetafileToSvgRenderer
                 case META.ExcludeClipRect:
                     if (record.SizeBytes >= 14)
                         CombineRectClip(I16(bytes, p + 6), I16(bytes, p + 4), I16(bytes, p + 2), I16(bytes, p), record.Type == META.IntersectClipRect ? 1u : 4u, state, null, defs, ++clipSequence, false);
+                    break;
+                case META.OffsetClipRgn:
+                    if (record.SizeBytes >= 10)
+                        OffsetSelectedClip(I16(bytes, p + 2), I16(bytes, p), state, defs, ref clipSequence, clipExpansion);
                     break;
                 case META.CreatePenIndirect:
                     AddWmfObject(objects, new PenObject { Width = Math.Max(1, Math.Abs((int)I16(bytes, p + 2))), Color = ColorRef(bytes, p + 6), None = U16(bytes, p) == 5 });
@@ -534,8 +553,7 @@ public sealed class MetafileToSvgRenderer
         if (mirrorVertically)
             mirroredElements = MirrorElementsVertically(mirroredElements, viewBox);
 
-        for (var index = 0; index < defs.Count; index++)
-            defs[index] = defs[index].Replace(ClipViewportToken, ClipViewportAttrs(viewBox));
+        ResolveClipViewport(defs, viewBox, clipExpansion);
         return SvgDocument(viewBox, mirroredElements, defs);
     }
 
@@ -1427,6 +1445,24 @@ public sealed class MetafileToSvgRenderer
     private static string ClipViewportAttrs(ViewBox viewBox)
         => $"x=\"{Number(viewBox.X)}\" y=\"{Number(viewBox.Y)}\" width=\"{Number(viewBox.Width)}\" height=\"{Number(viewBox.Height)}\"";
 
+    private static void ResolveClipViewport(List<string> defs, ViewBox viewBox, ClipExpansion expansion)
+    {
+        // Sum of absolute offsets also covers chains restored through SaveDC,
+        // unlike a net displacement or chronological min/max prefix range.
+        var domain = new ViewBox { X = viewBox.X - expansion.X, Y = viewBox.Y - expansion.Y, Width = viewBox.Width + 2 * expansion.X, Height = viewBox.Height + 2 * expansion.Y };
+        for (var index = 0; index < defs.Count; index++)
+            defs[index] = defs[index].Replace(ClipViewportToken, ClipViewportAttrs(domain)).Replace(DefaultClipViewportToken, ClipViewportAttrs(viewBox));
+    }
+
+    private static void OffsetSelectedClip(double dx, double dy, DrawState state, List<string> defs, ref int sequence, ClipExpansion expansion)
+    {
+        if ((state.ActiveClipId is null && state.ActiveMaskId is null) || (dx == 0 && dy == 0) || double.IsNaN(dx) || double.IsInfinity(dx) || double.IsNaN(dy) || double.IsInfinity(dy)) return;
+        expansion.X += Math.Abs(dx); expansion.Y += Math.Abs(dy);
+        var id = $"mask{++sequence}";
+        defs.Add($"<mask id=\"{id}\" maskUnits=\"userSpaceOnUse\" maskContentUnits=\"userSpaceOnUse\" {ClipViewportToken}><g transform=\"translate({Number(dx)} {Number(dy)})\"><rect {ClipViewportToken} fill=\"#ffffff\"{ClipAttr(state)} /></g></mask>");
+        state.ActiveClipId = null; state.ActiveMaskId = id;
+    }
+
     private static void CombineClipGeometry(DrawState state, string geometry, uint mode, ViewBox? viewBox, List<string> defs, int sequence)
     {
         if (mode == 5 || (mode == 1 && state.ActiveClipId is null && state.ActiveMaskId is null))
@@ -1438,11 +1474,11 @@ public sealed class MetafileToSvgRenderer
             return;
         }
         // Boolean regions use luminance masks: white includes, black excludes.
-        // The finite mask domain is the image viewport, which already bounds output.
+        // Resource bounds expand for later offsets, without expanding a captured
+        // default clipping region itself.
         var old = ClipAttr(state);
-        // WMF bounds can be inferred only after drawing records have been read.
-        var rect = viewBox is null ? ClipViewportToken : ClipViewportAttrs(viewBox);
-        var previous = $"<rect {rect} fill=\"#ffffff\"{old} />";
+        var rect = ClipViewportToken;
+        var previous = $"<rect {(old.Length == 0 ? DefaultClipViewportToken : rect)} fill=\"#ffffff\"{old} />";
         var include = $"<path {geometry} fill=\"#ffffff\" />";
         var exclude = $"<path {geometry} fill=\"#000000\" />";
         var content = mode switch
@@ -1825,6 +1861,7 @@ internal enum PathPaintMode
 
 internal static class EMR
 {
+    public const uint OffsetClipRgn = 0x001a;
     public const uint ExtSelectClipRgn = 0x004b;
     public const uint ExcludeClipRect = 0x001d;
     public const uint IntersectClipRect = 0x001e;
@@ -1888,6 +1925,7 @@ internal static class EMR
 
 internal static class META
 {
+    public const ushort OffsetClipRgn = 0x0220;
     public const ushort ExcludeClipRect = 0x0415;
     public const ushort IntersectClipRect = 0x0416;
     public const ushort Escape = 0x0626;
