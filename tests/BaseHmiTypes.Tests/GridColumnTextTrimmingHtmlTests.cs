@@ -30,6 +30,13 @@ public class GridColumnTextTrimmingHtmlTests
             var html = await Html();
             var table = Regex.Match(html, "<table class=\"hmi-(?:alarm|parameter|diagnosis)-table[^>]*>.*?</table>", RegexOptions.Singleline).Value;
             var header = Regex.Match(table, "<thead>.*?</thead>", RegexOptions.Singleline).Value;
+            if (control is HmiAlarmControl)
+            {
+                var columns = Regex.Match(table, "<colgroup>(.*?)</colgroup>", RegexOptions.Singleline).Groups[1].Value;
+                Assert.IsFalse(string.IsNullOrEmpty(columns), "Alarm table retains its column definitions");
+                Assert.AreEqual("", Regex.Replace(columns, @"<col\b[^>]*>", "").Trim(), "Column group contains only column elements, never CSS text");
+                Assert.AreEqual(1, Regex.Matches(columns, @"<col\b").Count, "Hidden columns do not produce layout entries");
+            }
             StringAssert.Contains(header, "Caption &lt;A&gt;");
             Assert.IsFalse(header.Contains("Hidden caption"));
             Assert.AreEqual(mode == 1, header.Contains("<span style=\"display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\">"));

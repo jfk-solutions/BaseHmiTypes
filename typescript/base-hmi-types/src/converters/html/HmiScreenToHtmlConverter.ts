@@ -3506,7 +3506,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (visibleColumns.length > 0) {
     html.push("<colgroup>");
     for (const column of visibleColumns) {
-      html.push(createGridHeaderTextTrimmingStyle(column.headerTextTrimming), "<col");
+      html.push("<col");
       appendAttribute(html, "data-column-type", column.type);
       appendAttribute(html, "data-column-source-type", column.sourceType);
       appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
