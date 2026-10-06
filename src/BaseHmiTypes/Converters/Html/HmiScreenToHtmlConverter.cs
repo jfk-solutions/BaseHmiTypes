@@ -6359,15 +6359,15 @@ public partial class HmiScreenToHtmlConverter
         }
         else if (foregroundColor?.StaticValue != null)
         {
-            html.Append("color: ").Append(ToCss(foregroundColor.StaticValue)).Append(";");
+            html.Append("color: ").Append(ToCss(ResolveStaticValue(foregroundColor, context))).Append(";");
         }
         if (useDisabledForegroundColor &&
             context.EffectiveProperties.Resolve(
                 item,
                 nameof(HmiPaintedScreenItemBase.DisabledForegroundShadowColor),
-                item.DisabledForegroundShadowColor)?.StaticValue is HmiColor disabledShadowColor)
+                item.DisabledForegroundShadowColor) is { } disabledShadowProperty)
         {
-            html.Append("text-shadow: 1px 1px ").Append(ToCss(disabledShadowColor)).Append(';');
+            html.Append("text-shadow: 1px 1px ").Append(ToCss(ResolveStaticValue(disabledShadowProperty, context))).Append(';');
         }
         if (backgroundColor is HmiBlinkProperty<HmiColor> backgroundBlink &&
             backgroundBlink.StaticValue is HmiColor backgroundOff &&
@@ -6380,10 +6380,10 @@ public partial class HmiScreenToHtmlConverter
         }
         else if (backgroundColor?.StaticValue != null && item is not HmiGauge)
         {
-            html.Append("background-color: ").Append(ToCss(backgroundColor.StaticValue)).Append(";");
+            html.Append("background-color: ").Append(ToCss(ResolveStaticValue(backgroundColor, context))).Append(";");
         }
-        if (item is HmiBar && backgroundColor?.StaticValue is HmiColor barTrackColor)
-            html.Append("--hmi-bar-track-background: ").Append(ToCss(barTrackColor)).Append(';');
+        if (item is HmiBar && backgroundColor is not null)
+            html.Append("--hmi-bar-track-background: ").Append(ToCss(ResolveStaticValue(backgroundColor, context))).Append(';');
         if (borderColor is HmiBlinkProperty<HmiColor> borderBlink &&
             borderBlink.StaticValue is HmiColor borderOff && borderBlink.BlinkValue is HmiColor borderOn)
         {
@@ -6393,7 +6393,7 @@ public partial class HmiScreenToHtmlConverter
         }
         else if (borderColor?.StaticValue != null)
         {
-            html.Append("border-color: ").Append(ToCss(borderColor.StaticValue)).Append(";");
+            html.Append("border-color: ").Append(ToCss(ResolveStaticValue(borderColor, context))).Append(";");
         }
         if (animations.Count > 0)
             html.Append("animation: ").Append(string.Join(", ", animations)).Append(';');
@@ -6407,14 +6407,14 @@ public partial class HmiScreenToHtmlConverter
                 html.Append("border-width: 0px;outline-style: ").Append(borderStyle)
                     .Append(";outline-width: ").Append(ToCss(borderWidth.StaticValue)).Append("px;")
                     .Append("outline-offset: ").Append(ToCss(-borderWidth.StaticValue / 2)).Append("px;")
-                    .Append("outline-color: ").Append(borderColor?.StaticValue is HmiColor color ? ToCss(color) : "currentColor").Append(';');
+                    .Append("outline-color: ").Append(borderColor is not null ? ToCss(ResolveStaticValue(borderColor, context)) : "currentColor").Append(';');
             }
         }
 
         if (item is HmiShapeBase shape && !framedShapeBorder)
         {
             if (shape.LineColor != null)
-                html.Append("border-color: ").Append(ToCss(shape.LineColor.StaticValue)).Append(";");
+                html.Append("border-color: ").Append(ToCss(ResolveStaticValue(shape.LineColor, context))).Append(";");
             if (shape.LineWidth != null)
             {
                 html.Append("border-style: ").Append(borderStyle).Append(";");
@@ -6427,9 +6427,9 @@ public partial class HmiScreenToHtmlConverter
         if (item is HmiBar)
             AppendColorGradientStyle(html, colorGradient, "--hmi-bar-track-background");
         if (item is HmiBar coloredTrackBar && context.EffectiveProperties.Resolve(
-            coloredTrackBar, nameof(HmiBar.TrackColor), coloredTrackBar.TrackColor)?.StaticValue is HmiColor explicitTrackColor)
+            coloredTrackBar, nameof(HmiBar.TrackColor), coloredTrackBar.TrackColor) is { } explicitTrackProperty)
             // Keep a separate track independent of widget background gradients and blink animation.
-            html.Append("--hmi-bar-track-background: ").Append(ToCss(explicitTrackColor)).Append(" !important;");
+            html.Append("--hmi-bar-track-background: ").Append(ToCss(ResolveStaticValue(explicitTrackProperty, context))).Append(" !important;");
         if (margin != null)
         {
             html.Append("margin: ")
