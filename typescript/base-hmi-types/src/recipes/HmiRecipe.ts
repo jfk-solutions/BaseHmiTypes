@@ -160,6 +160,8 @@ export class HmiRecipeDataSet {
   name?: string;
   readonly values: Record<string, string | undefined> = Object.create(null);
   readonly sourceValues = new Map<string, string | undefined>();
+  /** Flat stored members in storage order, with exact source keys; no PLC bounds are inferred. */
+  readonly sourceArrayValues = new Map<string, Array<string | undefined>>();
 }
 
 export class HmiRecipeView {
