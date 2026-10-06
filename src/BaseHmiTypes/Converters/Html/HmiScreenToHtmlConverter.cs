@@ -6704,7 +6704,7 @@ public partial class HmiScreenToHtmlConverter
 
         private static CultureInfo? GetCultureInfo(int? lcid)
         {
-            if (lcid == null)
+            if (lcid == null || lcid < 0)
                 return null;
 
             try

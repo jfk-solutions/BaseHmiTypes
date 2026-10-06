@@ -12,13 +12,28 @@ public sealed class HmiRecipeToHtmlConverter
         => Convert(recipe, null);
 
     public string Convert(HmiRecipe recipe, int? cultureLcid)
+        => ConvertCore(recipe, cultureLcid, true);
+
+    /// <summary>Renders the same stored definition and records without an enclosing HTML document.</summary>
+    public string ConvertFragment(HmiRecipe recipe, int? cultureLcid = null)
+        => ConvertCore(recipe, cultureLcid, false);
+
+    private static string ConvertCore(HmiRecipe recipe, int? cultureLcid, bool standalone)
     {
         if (recipe is null) throw new ArgumentNullException(nameof(recipe));
         var culture = cultureLcid is { } lcid ? CultureInfo.GetCultureInfo(lcid) : null;
         var title = recipe.DisplayName?.GetText(culture) ?? recipe.Name ?? "Recipe";
-        var html = new StringBuilder("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>");
-        html.Append(Encode(title));
-        html.Append("</title><style>body{font-family:system-ui,sans-serif;margin:24px;color:#202124}table{border-collapse:collapse;margin-bottom:24px}th,td{border:1px solid #ccd0d5;padding:8px;text-align:left;vertical-align:top;white-space:pre-wrap}thead{background:#edf1f5}td[data-value-state=missing],td[data-value-state=null]{color:#666;font-style:italic}.table-scroll{overflow:auto}</style></head><body><h1>");
+        var html = new StringBuilder();
+        if (standalone)
+        {
+            html.Append("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>");
+            html.Append(Encode(title));
+            html.Append("</title><style>body{font-family:system-ui,sans-serif;margin:24px;color:#202124}table{border-collapse:collapse;margin-bottom:24px}th,td{border:1px solid #ccd0d5;padding:8px;text-align:left;vertical-align:top;white-space:pre-wrap}thead{background:#edf1f5}td[data-value-state=missing],td[data-value-state=null]{color:#666;font-style:italic}.table-scroll{overflow:auto}</style></head><body><h1>");
+        }
+        else
+        {
+            html.Append("<section class=\"hmi-recipe-definition\"><style>.hmi-recipe-definition table{border-collapse:collapse;margin-bottom:24px}.hmi-recipe-definition th,.hmi-recipe-definition td{border:1px solid #ccd0d5;padding:8px;text-align:left;vertical-align:top;white-space:pre-wrap}.hmi-recipe-definition thead{background:#edf1f5}.hmi-recipe-definition td[data-value-state=missing],.hmi-recipe-definition td[data-value-state=null]{color:#666;font-style:italic}.hmi-recipe-definition .table-scroll{overflow:auto}</style><h1>");
+        }
         html.Append(Encode(title)).Append("</h1>");
         if (recipe.DisplayName != null) html.Append("<p>Name: ").Append(Encode(recipe.Name)).Append("</p>");
         if (recipe.InfoText != null) html.Append("<p>").Append(Encode(recipe.InfoText.GetText(culture))).Append("</p>");
@@ -278,7 +293,7 @@ public sealed class HmiRecipeToHtmlConverter
             html.Append("</tbody></table></div>");
         }
         AppendRecipeViews(html, recipe, culture);
-        return html.Append("</body></html>").ToString();
+        return html.Append(standalone ? "</body></html>" : "</section>").ToString();
     }
 
     private static void AppendStoredArrayValues(StringBuilder html, HmiRecipe recipe)

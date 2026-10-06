@@ -1,3 +1,4 @@
+import { HmiRecipeToHtmlConverter } from "./HmiRecipeToHtmlConverter.js";
 import { HmiCharacterScreen } from "../../screens/screen/HmiCharacterScreen.js";
 import { formatScaleLabel } from "./format-scale-label.js";
 import { nativeBarSigmaRampFactors } from "./bar-sigma-ramp.generated.js";
@@ -2916,10 +2917,8 @@ function appendParameterDefinitionAttributes(html: string[], control: HmiParamet
 function appendParameterDefinitionPreview(html: string[], control: HmiParameterControlBase, context: HmiHtmlConvertContext): void {
   const definition = control.defaultParameterSetType;
   if (definition === undefined) return;
-  html.push('<details class="hmi-parameter-definition-preview"><summary>Configured parameter set type: ', escapeHtml((definition.displayName?.getText(context.options.cultureLcid) ?? definition.name) ?? ""), '</summary><table><thead><tr><th>Field</th><th>Data type</th><th>Default value</th></tr></thead><tbody>');
-  for (const field of definition.parameters)
-    html.push('<tr><td>', escapeHtml((field.displayName?.getText(context.options.cultureLcid) ?? field.name) ?? ""), '</td><td>', escapeHtml((field.dataType) ?? ""), '</td><td>', escapeHtml((field.defaultValue) ?? ""), '</td></tr>');
-  html.push('</tbody></table></details>');
+  html.push('<details class="hmi-parameter-definition-preview"><summary>Configured parameter set type: ', escapeHtml((definition.displayName?.getText(context.options.cultureLcid) ?? definition.name) ?? ""), '</summary>',
+    new HmiRecipeToHtmlConverter().convertFragment(definition, context.options.cultureLcid), '</details>');
 }
 
 function appendParameterBarAttributes(html: string[], control: HmiParameterControlBase): void {

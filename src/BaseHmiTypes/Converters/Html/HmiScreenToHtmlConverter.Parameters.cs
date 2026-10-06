@@ -157,11 +157,9 @@ public partial class HmiScreenToHtmlConverter
     {
         if (control.DefaultParameterSetType is not { } definition) return;
         html.Append("<details class=\"hmi-parameter-definition-preview\"><summary>Configured parameter set type: ")
-            .Append(WebUtility.HtmlEncode(definition.DisplayName?.GetText(context.CultureInfo) ?? definition.Name)).Append("</summary><table><thead><tr><th>Field</th><th>Data type</th><th>Default value</th></tr></thead><tbody>");
-        foreach (var field in definition.Parameters)
-            html.Append("<tr><td>").Append(WebUtility.HtmlEncode(field.DisplayName?.GetText(context.CultureInfo) ?? field.Name)).Append("</td><td>")
-                .Append(WebUtility.HtmlEncode(field.DataType)).Append("</td><td>").Append(WebUtility.HtmlEncode(field.DefaultValue)).Append("</td></tr>");
-        html.Append("</tbody></table></details>");
+            .Append(WebUtility.HtmlEncode(definition.DisplayName?.GetText(context.CultureInfo) ?? definition.Name)).Append("</summary>")
+            .Append(new HmiRecipeToHtmlConverter().ConvertFragment(definition, context.CultureInfo?.LCID))
+            .Append("</details>");
     }
 
     private static void AppendParameterBarAttributes(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)

@@ -4,9 +4,20 @@ import { recipeValueKey, HmiRecipeDataSet, HmiRecipeBinaryValue, HmiRecipe, HmiR
 /** Renders stored engineering recipe definitions and records as a standalone HTML document. */
 export class HmiRecipeToHtmlConverter {
   convert(recipe: HmiRecipe, cultureLcid?: number): string {
+    return this.convertCore(recipe, cultureLcid, true);
+  }
+
+  /** Renders stored definitions and records without an enclosing HTML document. */
+  convertFragment(recipe: HmiRecipe, cultureLcid?: number): string {
+    return this.convertCore(recipe, cultureLcid, false);
+  }
+
+  private convertCore(recipe: HmiRecipe, cultureLcid: number | undefined, standalone: boolean): string {
     const title = recipe.displayName?.getText(cultureLcid) ?? recipe.name ?? "Recipe";
-    const html = ["<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>", encode(title),
+    const html = standalone ? ["<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>", encode(title),
       "</title><style>body{font-family:system-ui,sans-serif;margin:24px;color:#202124}table{border-collapse:collapse;margin-bottom:24px}th,td{border:1px solid #ccd0d5;padding:8px;text-align:left;vertical-align:top;white-space:pre-wrap}thead{background:#edf1f5}td[data-value-state=missing],td[data-value-state=null]{color:#666;font-style:italic}.table-scroll{overflow:auto}</style></head><body><h1>",
+      encode(title), "</h1>"] : [
+      '<section class="hmi-recipe-definition"><style>.hmi-recipe-definition table{border-collapse:collapse;margin-bottom:24px}.hmi-recipe-definition th,.hmi-recipe-definition td{border:1px solid #ccd0d5;padding:8px;text-align:left;vertical-align:top;white-space:pre-wrap}.hmi-recipe-definition thead{background:#edf1f5}.hmi-recipe-definition td[data-value-state=missing],.hmi-recipe-definition td[data-value-state=null]{color:#666;font-style:italic}.hmi-recipe-definition .table-scroll{overflow:auto}</style><h1>',
       encode(title), "</h1>"];
     if (recipe.displayName != null) html.push("<p>Name: ", encode(recipe.name), "</p>");
     if (recipe.infoText != null) html.push("<p>", encode(recipe.infoText.getText(cultureLcid)), "</p>");
@@ -233,7 +244,7 @@ export class HmiRecipeToHtmlConverter {
       html.push('</tbody></table></div>');
     }
     appendRecipeViews(html, recipe, cultureLcid);
-    return html.concat("</body></html>").join("");
+    return html.concat(standalone ? "</body></html>" : "</section>").join("");
   }
 }
 
