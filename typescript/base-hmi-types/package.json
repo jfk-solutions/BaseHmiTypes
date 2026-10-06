@@ -1,6 +1,6 @@
 {
   "name": "@jfk-solutions/base-hmi-types",
-  "version": "0.1.0",
+  "version": "2026.10.6-1",
   "description": "Neutral TypeScript mirror of the BaseHmiTypes C# HMI model.",
   "type": "module",
   "main": "./dist/index.js",
