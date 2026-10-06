@@ -1,3 +1,4 @@
+import { HmiRecipeStructuredValue } from "./HmiRecipeStructuredValue.js";
 import { HmiTextList } from "../text-graphic-lists/HmiTextList.js";
 import { HmiMultilingualText } from "../common/HmiMultilingualText.js";
 
@@ -159,6 +160,7 @@ export class HmiRecipeDataSet {
   sourceNumber?: number;
   name?: string;
   readonly values: Record<string, string | undefined> = Object.create(null);
+  readonly sourceStructuredValues = new Map<string, HmiRecipeStructuredValue>();
   readonly sourceValues = new Map<string, string | undefined>();
   /** Flat stored members in storage order, with exact source keys; no PLC bounds are inferred. */
   readonly sourceArrayValues = new Map<string, Array<string | undefined>>();

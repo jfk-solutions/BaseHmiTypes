@@ -1,3 +1,4 @@
+import { HmiRecipeStructuredValue, HmiRecipeValueKind } from "../../recipes/HmiRecipeStructuredValue.js";
 import { HmiTextListEntryType } from "../../text-graphic-lists/HmiTextList.js";
 import { recipeValueKey, HmiRecipeDataSet, HmiRecipeBinaryValue, HmiRecipe, HmiRecipeCommunicationType, HmiRecipeSizeType, HmiRecipeStorageMedia } from "../../recipes/HmiRecipe.js";
 
@@ -231,6 +232,7 @@ export class HmiRecipeToHtmlConverter {
     }
     appendStoredArrayValues(html, recipe);
     appendStoredBinaryValues(html, recipe);
+    appendStoredStructuredValues(html, recipe);
     if (recipe.dataSets.some(record=>record.lastModification!==undefined || record.lastUser!==undefined)) {
       html.push('<h2>Stored record metadata</h2><div class="table-scroll"><table><thead><tr><th scope="col">Record</th><th scope="col">Number</th><th scope="col">Last modification (stored)</th><th scope="col">Last user</th></tr></thead><tbody>');
       for(const record of recipe.dataSets) {
@@ -246,6 +248,67 @@ export class HmiRecipeToHtmlConverter {
     appendRecipeViews(html, recipe, cultureLcid);
     return html.concat(standalone ? "</body></html>" : "</section>").join("");
   }
+}
+
+function appendStoredStructuredValues(html: string[], recipe: HmiRecipe): void {
+  if (!recipe.dataSets.some(record => record.sourceStructuredValues.size > 0)) return;
+  html.push('<h2>Stored structured values</h2><div class="table-scroll"><table><thead><tr><th>Record</th><th>Number</th><th>Source key</th><th>Value</th></tr></thead><tbody>');
+  for (const record of recipe.dataSets) for (const [key, value] of record.sourceStructuredValues) {
+    html.push('<tr><th scope="row">', encode(record.name), '</th><td>', encode(record.sourceNumber?.toString()), '</td><td>', encode(key), '</td><td>');
+    appendStructuredValue(html, value, new Set(), 0); html.push('</td></tr>');
+  }
+  html.push('</tbody></table></div>');
+}
+
+function appendStructuredValue(html: string[], value: HmiRecipeStructuredValue, path: Set<HmiRecipeStructuredValue>, depth: number): void {
+  let kind = value.kind;
+  if (kind === HmiRecipeValueKind.Map || kind === HmiRecipeValueKind.Array) {
+    if (path.has(value)) kind = HmiRecipeValueKind.Recursive;
+    else if (depth >= 128) kind = HmiRecipeValueKind.DepthLimit;
+  }
+  html.push('<div data-structured-kind="', encode(kind), '" data-source-type="', encode(value.sourceType), '">');
+  const added = !path.has(value); path.add(value);
+  switch (kind) {
+    case HmiRecipeValueKind.Null: html.push('Null'); break;
+    case HmiRecipeValueKind.Scalar: html.push(encode(value.value)); break;
+    case HmiRecipeValueKind.Map:
+      html.push('<details open><summary>Map (', String(value.entries.length), ' entries)</summary>');
+      if (!value.entries.length) html.push('Empty map');
+      else {
+        html.push('<dl>');
+        for (const entry of value.entries) { html.push('<dt>', encode(entry.key), '</dt><dd>'); appendStructuredValue(html, entry.value, path, depth + 1); html.push('</dd>'); }
+        html.push('</dl>');
+      }
+      html.push('</details>'); break;
+    case HmiRecipeValueKind.Array:
+      html.push('<details open><summary>Array (', String(value.items.length), ' members)</summary>');
+      if (!value.items.length) html.push('Empty array');
+      else {
+        html.push('<ol start="0">');
+        for (const member of value.items) { html.push('<li>'); appendStructuredValue(html, member, path, depth + 1); html.push('</li>'); }
+        html.push('</ol>');
+      }
+      html.push('</details>'); break;
+    case HmiRecipeValueKind.Binary:
+      html.push('<dl>');
+      structuredDetail(html, 'Source type', value.binary?.sourceType);
+      structuredDetail(html, 'Blob mode', value.binary?.sourceBlobType?.toString());
+      structuredDetail(html, 'Declared bytes', value.binary?.sourceDeclaredLength);
+      structuredDetail(html, 'Decoded bytes', value.binary?.decodedByteLength?.toString());
+      structuredDetail(html, 'Payload (Base64)', value.binary?.payloadBase64 === undefined ? 'Payload unavailable' : value.binary.payloadBase64.length === 0 ? 'Empty payload' : value.binary.payloadBase64);
+      html.push('</dl>'); break;
+    case HmiRecipeValueKind.Reference:
+      html.push('<dl>'); structuredDetail(html, 'Source reference', value.reference?.sourceId); structuredDetail(html, 'Name', value.reference?.name); html.push('</dl>'); break;
+    case HmiRecipeValueKind.Recursive: html.push('Recursive value'); break;
+    case HmiRecipeValueKind.DepthLimit: html.push('Depth limit'); break;
+    default: html.push('Unsupported value: ', encode(value.sourceType)); break;
+  }
+  if (added) path.delete(value);
+  html.push('</div>');
+}
+
+function structuredDetail(html: string[], label: string, value: string | undefined): void {
+  html.push('<dt>', encode(label), '</dt><dd data-value-state="', value === undefined ? 'missing' : 'present', '">', encode(value ?? 'Missing'), '</dd>');
 }
 
 function appendStoredArrayValues(html: string[], recipe: HmiRecipe): void {
