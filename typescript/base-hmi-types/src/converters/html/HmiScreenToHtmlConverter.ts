@@ -1623,14 +1623,14 @@ async function appendButton(
   const state = button.states.find(candidate => candidate.value === stateValue)
     ?? button.states[0];
   const mode = getStaticValue(button.mode);
-  const down = isButtonDownVisual(button);
+  const down = isButtonDownVisual(button, context);
   const caption = state?.text ?? (down ? resolveStaticValue(button.alternateText, context, tryConvertFaceplateTextValue) : undefined)
     ?? resolveStaticValue(button.text, context, tryConvertFaceplateTextValue);
   html.push("<button");
-  appendCommonAttributes(html, button, context, true, createButtonStyle(button, state));
+  appendCommonAttributes(html, button, context, true, createButtonStyle(button, state, context));
   appendAttribute(html, "aria-label", caption?.getDisplayText(context.options.cultureLcid));
-  if (getStaticValue(button.toggle) === true)
-    appendAttribute(html, "aria-pressed", getStaticValue(button.pressed) === true ? "true" : "false");
+  if (resolveStaticValue(button.toggle, context, tryConvertFaceplateBooleanValue) === true)
+    appendAttribute(html, "aria-pressed", resolveStaticValue(button.pressed, context, tryConvertFaceplateBooleanValue) === true ? "true" : "false");
   const enabled = button.enabled === undefined || resolveStaticValue(button.enabled, context, tryConvertFaceplateBooleanValue) === true;
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
@@ -1645,7 +1645,7 @@ async function appendButton(
       ? getImageColorKey(button.alternateImageBackgroundTransparent, button.alternateImageBackgroundColor)
       : getImageColorKey(button.imageBackgroundTransparent, button.imageBackgroundColor);
   const disabledImageMode = getStaticValue(button.disabledImageMode);
-  const showDisabledAppearance = !enabled && getStaticValue(button.showDisabledState) === true;
+  const showDisabledAppearance = !enabled && resolveStaticValue(button.showDisabledState, context, tryConvertFaceplateBooleanValue) === true;
   if (
     showDisabledAppearance &&
     (disabledImageMode === HmiDisabledImageMode.Reference ||
@@ -1653,14 +1653,14 @@ async function appendButton(
   ) {
     const disabledImage = getStaticValue(button.disabledImage);
     image = disabledImage ??
-      (getStaticValue(button.disabledImageFallbackToNormal) !== false ? image : undefined);
+      (resolveStaticValue(button.disabledImageFallbackToNormal, context, tryConvertFaceplateBooleanValue) !== false ? image : undefined);
     if (disabledImage !== undefined)
       imageKey = getImageColorKey(button.disabledImageBackgroundTransparent, button.disabledImageBackgroundColor);
   }
   const imageUri = mode === HmiButtonType.Text ? undefined : await resolveImageUri(image, project, signal);
   const hasImage = imageUri !== undefined && imageUri.trim() !== "";
   const imageFallback = mode === HmiButtonType.GraphicOrText && hasImage;
-  const overlay = hasImage && getStaticValue(button.overlayContent) === true;
+  const overlay = hasImage && resolveStaticValue(button.overlayContent, context, tryConvertFaceplateBooleanValue) === true;
   if (imageFallback) html.push(" data-hmi-button-image-fallback");
   html.push(">");
   if (hasImage) {
@@ -1676,6 +1676,7 @@ async function appendButton(
       imageUri,
       showDisabledAppearance && disabledImageMode === HmiDisabledImageMode.Grayscale,
       imageKey,
+      context,
     );
     html.push("</span>");
   }
@@ -1685,13 +1686,13 @@ async function appendButton(
   html.push("</button>");
 }
 
-function isButtonDownVisual(button: HmiButton): boolean {
-  return getStaticValue(button.pressed) === true && getStaticValue(button.downStateSameAsUp) !== true;
+function isButtonDownVisual(button: HmiButton, context: HmiHtmlConvertContext): boolean {
+  return resolveStaticValue(button.pressed, context, tryConvertFaceplateBooleanValue) === true && resolveStaticValue(button.downStateSameAsUp, context, tryConvertFaceplateBooleanValue) !== true;
 }
 
-function getButtonPressedContentOffset(button: HmiButton): number {
+function getButtonPressedContentOffset(button: HmiButton, context: HmiHtmlConvertContext): number {
   const offset = getStaticValue(button.pressedContentOffset) ?? 0;
-  return isButtonDownVisual(button) && Number.isFinite(offset) && offset > 0 ? offset : 0;
+  return isButtonDownVisual(button, context) && Number.isFinite(offset) && offset > 0 ? offset : 0;
 }
 
 function appendButtonCaption(html: string[], button: HmiButton, state: HmiState | undefined,
@@ -1714,12 +1715,12 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
     const y = getStaticValue(button.verticalAlignment) ?? HmiVerticalAlignment.Center;
     html.push('<span data-hmi-button-caption-layout');
     const imageHorizontal = getStaticValue(button.imageHorizontalAlignment);
-    if (getStaticValue(button.avoidImageCaptionOverlap) === true && x === imageHorizontal &&
+    if (resolveStaticValue(button.avoidImageCaptionOverlap, context, tryConvertFaceplateBooleanValue) === true && x === imageHorizontal &&
         (x === HmiHorizontalAlignment.Left || x === HmiHorizontalAlignment.Right))
       appendAttribute(html, 'data-hmi-button-caption-avoid-image', x === HmiHorizontalAlignment.Left ? 'start' : 'end');
     html.push(' style="display: flex;box-sizing: border-box;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ' + horizontalAlignmentToFlexCss(x) + ';align-items: ' + verticalAlignmentToCss(y) + ';">');
   }
-  const offset = getButtonPressedContentOffset(button);
+  const offset = getButtonPressedContentOffset(button, context);
   if (offset > 0) html.push('<span data-hmi-button-pressed-caption style="display: inline-block;transform: translate(' + toCss(offset) + 'px, ' + toCss(offset) + 'px);">');
   appendFormattedText(html, button, caption, context);
   if (offset > 0) html.push("</span>");
@@ -1731,7 +1732,7 @@ function getImageColorKey(enabled: HmiProperty<boolean> | undefined, color: HmiP
   return getStaticValue(enabled) === true ? getStaticValue(color) : undefined;
 }
 
-function appendButtonImage(html: string[], button: HmiButton, imageUri: string, grayscale: boolean, imageKey: HmiColor | undefined): void {
+function appendButtonImage(html: string[], button: HmiButton, imageUri: string, grayscale: boolean, imageKey: HmiColor | undefined, context: HmiHtmlConvertContext): void {
   const aligned = button.imageHorizontalAlignment !== undefined || button.imageVerticalAlignment !== undefined;
   if (aligned) {
     const horizontal = getStaticValue(button.imageHorizontalAlignment);
@@ -1744,7 +1745,7 @@ function appendButtonImage(html: string[], button: HmiButton, imageUri: string, 
     html.push(' style="display: grid;grid-template-columns: minmax(0, 1fr);grid-template-rows: minmax(0, 1fr);width: 100%;height: 100%;overflow: hidden;justify-items: ' + x + ";align-items: " + y + ';">');
   }
   const horizontal = getStaticValue(button.imageHorizontalAlignment);
-  const offset = horizontal !== undefined && horizontal !== HmiHorizontalAlignment.Stretch ? getButtonPressedContentOffset(button) : 0;
+  const offset = horizontal !== undefined && horizontal !== HmiHorizontalAlignment.Stretch ? getButtonPressedContentOffset(button, context) : 0;
   appendInnerImage(html, imageUri, grayscale, offset, imageKey);
   if (aligned) html.push("</span>");
 }
@@ -1756,7 +1757,7 @@ function getButtonCaptionBlink(button: HmiButton, state: HmiState | undefined): 
   return blink.staticValue !== undefined && blink.blinkValue !== undefined ? blink : undefined;
 }
 
-function createButtonStyle(button: HmiButton, state: HmiState | undefined): string | null {
+function createButtonStyle(button: HmiButton, state: HmiState | undefined, context: HmiHtmlConvertContext): string | null {
   const captionColor = getStaticValue(button.captionColor);
   const stateHasCaptionColor = (state?.captionColor ?? state?.foregroundColor) !== undefined;
   const captionBlink = getButtonCaptionBlink(button, state);
@@ -1785,7 +1786,7 @@ function createButtonStyle(button: HmiButton, state: HmiState | undefined): stri
   let bottomColor = getStaticValue(button.threeDBorderBottomColor);
   topColor ??= bottomColor;
   bottomColor ??= topColor;
-  if (isButtonDownVisual(button)) [topColor, bottomColor] = [bottomColor, topColor];
+  if (isButtonDownVisual(button, context)) [topColor, bottomColor] = [bottomColor, topColor];
   const top = topColor === undefined ? "currentColor" : colorToCss(topColor);
   const bottom = bottomColor === undefined ? "currentColor" : colorToCss(bottomColor);
   const width = toCss(borderWidth);
