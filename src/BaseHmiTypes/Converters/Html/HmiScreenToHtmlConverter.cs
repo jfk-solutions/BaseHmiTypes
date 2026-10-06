@@ -3201,6 +3201,10 @@ public partial class HmiScreenToHtmlConverter
         if (alarmControl.MessageBlocks.Count > 0) AppendAttribute(html, "data-message-block-count", alarmControl.MessageBlocks.Count.ToString(CultureInfo.InvariantCulture));
         html.Append('>');
         AppendAlarmMessageBlocks(html, alarmControl, context);
+        if (alarmControl.ColumnSets.Count > 0)
+            foreach (var set in alarmControl.ColumnSets)
+                AppendGridColumnTextTrimmingMetadata(html, set.Columns.Select(column => (column.SourceType, column.HeaderTextTrimming, column.ContentTextTrimming)), context, set.Name);
+        else AppendGridColumnTextTrimmingMetadata(html, alarmControl.ColumnDefinitions.Select(column => (column.SourceType, column.HeaderTextTrimming, column.ContentTextTrimming)), context);
         var configuredViews = alarmControl.ColumnSets.Where(set => set.AllowSort is not null || set.AllowFilter is not null || set.AllowColumnReorder is not null || set.AllowColumnResize is not null ||
             set.BackgroundColor is not null || set.ForegroundColor is not null || set.HeaderBackgroundColor is not null ||
             set.HeaderForegroundColor is not null || set.HeaderBorderColor is not null || set.ContentFont is not null || set.HeaderFont is not null ||
@@ -3260,6 +3264,9 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context), preserveEmpty: true);
                 AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
                 AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
+
+                AppendAttribute(html, "data-header-text-trimming", ResolvePropertyPreview(column.HeaderTextTrimming, context));
+                AppendAttribute(html, "data-content-text-trimming", ResolvePropertyPreview(column.ContentTextTrimming, context));
                 AppendAttribute(html, "data-content-horizontal-alignment", ResolvePropertyPreview(column.ContentHorizontalAlignment, context));
                 AppendAttribute(html, "data-content-vertical-alignment", ResolvePropertyPreview(column.ContentVerticalAlignment, context));
                 AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));
@@ -3298,7 +3305,7 @@ public partial class HmiScreenToHtmlConverter
                     if (alignment != HmiVerticalAlignment.Stretch)
                         html.Append("vertical-align: ").Append(alignment == HmiVerticalAlignment.Top ? "top" : alignment == HmiVerticalAlignment.Bottom ? "bottom" : "middle").Append(';');
                 }
-                html.Append('"');
+                html.Append(CreateGridHeaderTextTrimmingStyle(column.HeaderTextTrimming)).Append('"');
                 AppendAttribute(html, "data-column-type", column.Type.ToString());
                 AppendAttribute(html, "data-column-source-type", column.SourceType);
                 AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
@@ -3309,6 +3316,9 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context), preserveEmpty: true);
                 AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
                 AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
+
+                AppendAttribute(html, "data-header-text-trimming", ResolvePropertyPreview(column.HeaderTextTrimming, context));
+                AppendAttribute(html, "data-content-text-trimming", ResolvePropertyPreview(column.ContentTextTrimming, context));
                 AppendAttribute(html, "data-content-horizontal-alignment", ResolvePropertyPreview(column.ContentHorizontalAlignment, context));
                 AppendAttribute(html, "data-content-vertical-alignment", ResolvePropertyPreview(column.ContentVerticalAlignment, context));
                 AppendAttribute(html, "data-sort-mode", ResolvePropertyPreview(column.SortMode, context));
@@ -3322,9 +3332,9 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-time-format-pattern", column.TimeFormat, preserveEmpty: true);
                 AppendAttribute(html, "data-show-date", ResolvePropertyPreview(column.ShowDate, context));
                 AppendAttribute(html, "data-symbol", column.Symbol);
-                html.Append('>')
-                    .Append(WebUtility.HtmlEncode(columnHeaderType == 1 ? headingIndex.ToString(CultureInfo.InvariantCulture) : column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString()))
-                    .Append("</th>");
+                html.Append('>');
+                AppendGridHeaderText(html, columnHeaderType == 1 ? headingIndex.ToString(CultureInfo.InvariantCulture) : column.HeaderText?.GetDisplayText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString(), column.HeaderTextTrimming);
+                html.Append("</th>");
             }
             html.Append("</tr></thead>");
         }
@@ -3605,6 +3615,7 @@ public partial class HmiScreenToHtmlConverter
                 if (TryGetStaticValue(column.Width, out var columnWidth) && IsFinite(columnWidth) && columnWidth >= 0)
                     AppendAttribute(html, "style", "width: " + ToCss(columnWidth) + "px;");
                 html.Append('>');
+        AppendGridColumnTextTrimmingMetadata(html, systemDiagnosisControl.ColumnDefinitions.Select(column => (column.SourceType, column.HeaderTextTrimming, column.ContentTextTrimming)), context);
             }
             html.Append("</colgroup>");
             var columnHeaderType = systemDiagnosisControl.ColumnHeaderType is null ? (int?)null : ResolveStaticValue(systemDiagnosisControl.ColumnHeaderType, context);
@@ -3624,16 +3635,21 @@ public partial class HmiScreenToHtmlConverter
                         if (alignment != HmiVerticalAlignment.Stretch)
                             columnStyle.Append("vertical-align: ").Append(alignment == HmiVerticalAlignment.Top ? "top" : alignment == HmiVerticalAlignment.Bottom ? "bottom" : "middle").Append(';');
                     }
-                    html.Append("<th style=\"").Append(columnStyle).Append("overflow: hidden; text-overflow: ellipsis;\"");
+                    html.Append("<th style=\"").Append(columnStyle).Append("overflow: hidden; text-overflow: ellipsis;").Append(CreateGridHeaderTextTrimmingStyle(column.HeaderTextTrimming)).Append('"');
                     AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
                     AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
+
+                    AppendAttribute(html, "data-header-text-trimming", ResolvePropertyPreview(column.HeaderTextTrimming, context));
+                    AppendAttribute(html, "data-content-text-trimming", ResolvePropertyPreview(column.ContentTextTrimming, context));
                     AppendAttribute(html, "data-column-source-type", column.SourceType);
                     AppendAttribute(html, "data-output-format", column.Format);
                     AppendAttribute(html, "data-allow-sort", ResolvePropertyPreview(column.AllowSort, context));
                     AppendAttribute(html, "data-sort-order", ResolvePropertyPreview(column.SortOrder, context));
                     AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
                     var headingText = columnHeaderType == 1 ? columnIndex.ToString(CultureInfo.InvariantCulture) : column.HeaderText?.GetText(context.CultureInfo) ?? column.SourceType ?? column.Type.ToString();
-                    html.Append('>').Append(WebUtility.HtmlEncode(headingText)).Append("</th>");
+                    html.Append('>');
+                    AppendGridHeaderText(html, headingText, column.HeaderTextTrimming);
+                    html.Append("</th>");
                 }
                 html.Append("</tr></thead>");
             }
@@ -5253,6 +5269,42 @@ public partial class HmiScreenToHtmlConverter
         return ResolveStaticValue(property, context)
             ? "overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
             : "overflow: hidden; text-overflow: clip;";
+    }
+
+    private static void AppendGridColumnTextTrimmingMetadata(StringBuilder html,
+        IEnumerable<(string? Name, HmiProperty<int>? Header, HmiProperty<int>? Content)> columns, HmiHtmlConvertContext context, string? columnSetName = null)
+    {
+        var list = columns.ToArray();
+        if (!list.Any(column => column.Header != null || column.Content != null)) return;
+        html.Append("<template class=\"hmi-grid-column-text-trimming\"");
+        AppendAttribute(html, "data-column-set-name", columnSetName, preserveEmpty: true);
+        html.Append('>');
+        for (var index = 0; index < list.Length; index++)
+        {
+            var column = list[index];
+            html.Append("<div");
+            AppendAttribute(html, "data-column-index", index.ToString(CultureInfo.InvariantCulture));
+            AppendAttribute(html, "data-column-source-name", column.Name, preserveEmpty: true);
+            AppendAttribute(html, "data-header-text-trimming", ResolvePropertyPreview(column.Header, context));
+            AppendAttribute(html, "data-content-text-trimming", ResolvePropertyPreview(column.Content, context));
+            html.Append("></div>");
+        }
+        html.Append("</template>");
+    }
+
+    private static string CreateGridHeaderTextTrimmingStyle(HmiProperty<int>? trimming)
+    {
+        if (!TryGetStaticValue(trimming, out var value)) return string.Empty;
+        return value == 0 ? "overflow: visible;text-overflow: clip;white-space: normal;"
+            : value == 1 ? "overflow: hidden;text-overflow: ellipsis;white-space: nowrap;" : string.Empty;
+    }
+
+    private static void AppendGridHeaderText(StringBuilder html, string text, HmiProperty<int>? trimming)
+    {
+        var ellipsis = TryGetStaticValue(trimming, out var value) && value == 1;
+        if (ellipsis) html.Append("<span style=\"display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\">");
+        html.Append(WebUtility.HtmlEncode(text));
+        if (ellipsis) html.Append("</span>");
     }
 
     private static string CreateAlarmTableHeaderCellStyle(

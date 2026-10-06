@@ -8,6 +8,8 @@ export class HmiSystemDiagnosisColumn {
   visible?: HmiProperty<boolean>;
   width?: HmiProperty<number>;
   headerText?: HmiMultilingualText;
+  headerTextTrimming?: HmiProperty<number>;
+  contentTextTrimming?: HmiProperty<number>;
   alignment?: HmiProperty<HmiHorizontalAlignment>;
   headerHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   headerVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;

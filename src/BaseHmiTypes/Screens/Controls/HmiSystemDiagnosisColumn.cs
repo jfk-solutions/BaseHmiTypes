@@ -14,6 +14,8 @@ public sealed class HmiSystemDiagnosisColumn
     public HmiProperty<double>? Width { get; set; }
 
     public HmiMultilingualText? HeaderText { get; set; }
+    public HmiProperty<int>? HeaderTextTrimming { get; set; }
+    public HmiProperty<int>? ContentTextTrimming { get; set; }
 
     public HmiProperty<HmiHorizontalAlignment>? Alignment { get; set; }
 

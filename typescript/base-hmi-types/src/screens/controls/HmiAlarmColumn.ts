@@ -21,6 +21,8 @@ export class HmiAlarmColumn {
   timeFormat?: string;
   showDate?: HmiProperty<boolean>;
   headerText?: HmiMultilingualText;
+  headerTextTrimming?: HmiProperty<number>;
+  contentTextTrimming?: HmiProperty<number>;
   headerHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   headerVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   contentHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;

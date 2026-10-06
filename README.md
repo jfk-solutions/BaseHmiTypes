@@ -134,3 +134,5 @@ settings use ValueAxisDivisionCount and ValueAxisAutoScale; TypeScript mirrors
 these properties in camel case.
 
 Stored recipe arrays can be supplied through `HmiRecipeDataSet.SourceArrayValues` / `sourceArrayValues`: exact source keys mapped to ordered nullable member strings. Recipe HTML renders these independently of scalar values, preserving empty arrays and null/empty members. List positions represent storage order; PLC bounds and dimensions require separate source evidence.
+
+Alarm, parameter and system-diagnostic columns expose independent `HeaderTextTrimming` / `headerTextTrimming` and `ContentTextTrimming` / `contentTextTrimming`. Screen HTML previews header modes 0 (no trimming) and 1 (character ellipsis); unknown modes preserve metadata and existing preview behavior. Body modes are retained while records are unloaded. Hidden columns/headings and inactive alarm views keep their configuration in metadata templates.

@@ -9,6 +9,8 @@ export class HmiParameterColumn {
   name?: string;
   key?: string;
   headerText?: HmiMultilingualText;
+  headerTextTrimming?: HmiProperty<number>;
+  contentTextTrimming?: HmiProperty<number>;
   headerHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   headerVerticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   visible?: HmiProperty<boolean>;

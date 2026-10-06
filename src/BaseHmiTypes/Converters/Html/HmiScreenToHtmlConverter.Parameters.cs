@@ -30,6 +30,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(control.ShowToolbar, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(control.ShowStatusBar, context));
         html.Append('>');
+        AppendGridColumnTextTrimmingMetadata(html, control.ColumnDefinitions.Select(column => (column.Name ?? column.Key, column.HeaderTextTrimming, column.ContentTextTrimming)), context);
         if (ResolveStaticValue(control.ShowToolbar, context))
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;");
@@ -91,6 +92,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(control.ShowToolbar, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(control.ShowStatusBar, context));
         html.Append('>');
+        AppendGridColumnTextTrimmingMetadata(html, control.ColumnDefinitions.Select(column => (column.Name ?? column.Key, column.HeaderTextTrimming, column.ContentTextTrimming)), context);
         if (ResolveStaticValue(control.ShowToolbar, context))
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;");
@@ -282,7 +284,7 @@ public partial class HmiScreenToHtmlConverter
                     separator.Append("border-right-style: solid;border-right-width: ").Append(ToCss(IsFinite(width) && width >= 0 ? width : 1d)).Append("px;");
                     AppendColorStyle(separator, "border-right-color", control.HeaderBorderColor);
                 }
-                html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append(separator).Append('"');
+                html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append(separator).Append(CreateGridHeaderTextTrimmingStyle(column.HeaderTextTrimming)).Append('"');
                 AppendAttribute(html, "data-column-name", column.Name);
                 AppendAttribute(html, "data-column-key", column.Key);
                 AppendAttribute(html, "data-enabled", ResolvePropertyPreview(column.Enabled, context));
@@ -290,6 +292,8 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-content-foreground-color", ResolvePropertyPreview(column.ForegroundColor, context));
                 AppendAttribute(html, "data-header-horizontal-alignment", ResolvePropertyPreview(column.HeaderHorizontalAlignment, context));
                 AppendAttribute(html, "data-header-vertical-alignment", ResolvePropertyPreview(column.HeaderVerticalAlignment, context));
+                AppendAttribute(html, "data-header-text-trimming", ResolvePropertyPreview(column.HeaderTextTrimming, context));
+                AppendAttribute(html, "data-content-text-trimming", ResolvePropertyPreview(column.ContentTextTrimming, context));
                 AppendAttribute(html, "data-width", ResolvePropertyPreview(column.Width, context));
                 AppendAttribute(html, "data-minimum-width", ResolvePropertyPreview(column.MinimumWidth, context));
                 AppendAttribute(html, "data-maximum-width", ResolvePropertyPreview(column.MaximumWidth, context));
@@ -298,7 +302,9 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-sort-direction", ResolvePropertyPreview(column.SortDirection, context));
                 AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context));
                 var headingText = columnHeaderType == 1 ? (index + 1).ToString(CultureInfo.InvariantCulture) : column.HeaderText?.GetText(context.CultureInfo) ?? column.Name ?? column.Key ?? "Column";
-                html.Append('>').Append(WebUtility.HtmlEncode(headingText)).Append("</th>");
+                html.Append('>');
+                AppendGridHeaderText(html, headingText, column.HeaderTextTrimming);
+                html.Append("</th>");
             }
             html.Append("</tr></thead>");
         }
