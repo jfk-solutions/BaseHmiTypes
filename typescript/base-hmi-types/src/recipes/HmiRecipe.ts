@@ -162,6 +162,22 @@ export class HmiRecipeDataSet {
   readonly sourceValues = new Map<string, string | undefined>();
   /** Flat stored members in storage order, with exact source keys; no PLC bounds are inferred. */
   readonly sourceArrayValues = new Map<string, Array<string | undefined>>();
+  readonly sourceBinaryValues = new Map<string, HmiRecipeBinaryValue>();
+  readonly sourceBinaryArrayValues = new Map<string, HmiRecipeBinaryArray>();
+}
+
+/** Decoded byte snapshot; absent payload means unavailable, empty Base64 means an empty payload. */
+export class HmiRecipeBinaryValue {
+  sourceType?: string;
+  sourceBlobType?: number;
+  sourceDeclaredLength?: string;
+  decodedByteLength?: number;
+  payloadBase64?: string;
+}
+
+export class HmiRecipeBinaryArray {
+  sourceElementType?: string;
+  readonly values: Array<HmiRecipeBinaryValue | undefined> = [];
 }
 
 export class HmiRecipeView {

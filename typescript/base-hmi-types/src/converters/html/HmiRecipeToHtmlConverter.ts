@@ -1,5 +1,5 @@
 import { HmiTextListEntryType } from "../../text-graphic-lists/HmiTextList.js";
-import { recipeValueKey, HmiRecipe, HmiRecipeCommunicationType, HmiRecipeSizeType, HmiRecipeStorageMedia } from "../../recipes/HmiRecipe.js";
+import { recipeValueKey, HmiRecipeDataSet, HmiRecipeBinaryValue, HmiRecipe, HmiRecipeCommunicationType, HmiRecipeSizeType, HmiRecipeStorageMedia } from "../../recipes/HmiRecipe.js";
 
 /** Renders stored engineering recipe definitions and records as a standalone HTML document. */
 export class HmiRecipeToHtmlConverter {
@@ -219,6 +219,7 @@ export class HmiRecipeToHtmlConverter {
       html.push("</tbody></table></div>");
     }
     appendStoredArrayValues(html, recipe);
+    appendStoredBinaryValues(html, recipe);
     if (recipe.dataSets.some(record=>record.lastModification!==undefined || record.lastUser!==undefined)) {
       html.push('<h2>Stored record metadata</h2><div class="table-scroll"><table><thead><tr><th scope="col">Record</th><th scope="col">Number</th><th scope="col">Last modification (stored)</th><th scope="col">Last user</th></tr></thead><tbody>');
       for(const record of recipe.dataSets) {
@@ -252,6 +253,31 @@ function appendStoredArrayValues(html: string[], recipe: HmiRecipe): void {
       html.push('</td></tr>');
     }
   html.push('</tbody></table></div>');
+}
+
+function appendStoredBinaryValues(html: string[], recipe: HmiRecipe): void {
+  if (!recipe.dataSets.some(record => record.sourceBinaryValues.size > 0 || record.sourceBinaryArrayValues.size > 0)) return;
+  html.push('<h2>Stored binary values</h2><div class="table-scroll"><table><thead><tr><th>Record</th><th>Number</th><th>Source key</th><th>Array count</th><th>Storage position</th><th>Source type</th><th>Blob mode</th><th>Declared bytes</th><th>Decoded bytes</th><th>Payload</th></tr></thead><tbody>');
+  for (const record of recipe.dataSets) {
+    for (const [key, value] of record.sourceBinaryValues) appendBinaryValueRow(html, record, key, undefined, undefined, value);
+    for (const [key, value] of record.sourceBinaryArrayValues) {
+      if (value.values.length === 0) { const empty = new HmiRecipeBinaryValue(); empty.sourceType = value.sourceElementType; appendBinaryValueRow(html, record, key, 0, undefined, empty, true); }
+      else for (const [index, member] of value.values.entries()) appendBinaryValueRow(html, record, key, value.values.length, index, member);
+    }
+  }
+  html.push('</tbody></table></div>');
+}
+
+function appendBinaryValueRow(html: string[], record: HmiRecipeDataSet, key: string, count: number | undefined, position: number | undefined, value: HmiRecipeBinaryValue | undefined, emptyArray = false): void {
+  html.push('<tr data-binary-value-state="', emptyArray ? 'empty-array' : value === undefined ? 'null' : value.payloadBase64 === undefined ? 'unavailable' : 'present', '">');
+  for (const cell of [record.name, record.sourceNumber, key, count, position, value?.sourceType, value?.sourceBlobType, value?.sourceDeclaredLength, value?.decodedByteLength]) html.push('<td>', encode(cell?.toString()), '</td>');
+  html.push('<td>');
+  if (emptyArray) html.push('Empty array');
+  else if (value === undefined) html.push('Null');
+  else if (value.payloadBase64 === undefined) html.push('Payload unavailable');
+  else if (value.payloadBase64.length === 0) html.push('Empty payload');
+  else html.push('<details><summary>Payload (Base64)</summary><code style="overflow-wrap: anywhere;">', encode(value.payloadBase64), '</code></details>');
+  html.push('</td></tr>');
 }
 
 function appendFieldTextLists(html: string[], recipe: HmiRecipe, cultureLcid?: number): void {

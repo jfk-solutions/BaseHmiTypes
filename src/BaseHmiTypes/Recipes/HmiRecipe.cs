@@ -199,6 +199,25 @@ public sealed class HmiRecipeDataSet : IHmiObject
 
     /// <summary>Flat stored array members in storage order, keyed by the exact source key; no PLC bounds are inferred.</summary>
     public IDictionary<string, IList<string?>> SourceArrayValues { get; } = new Dictionary<string, IList<string?>>(StringComparer.Ordinal);
+
+    public IDictionary<string, HmiRecipeBinaryValue> SourceBinaryValues { get; } = new Dictionary<string, HmiRecipeBinaryValue>(StringComparer.Ordinal);
+    public IDictionary<string, HmiRecipeBinaryArray> SourceBinaryArrayValues { get; } = new Dictionary<string, HmiRecipeBinaryArray>(StringComparer.Ordinal);
+}
+
+/// <summary>Snapshot of decoded bytes; null payload means unavailable, while an empty Base64 string means an empty payload.</summary>
+public sealed class HmiRecipeBinaryValue
+{
+    public string? SourceType { get; set; }
+    public int? SourceBlobType { get; set; }
+    public string? SourceDeclaredLength { get; set; }
+    public int? DecodedByteLength { get; set; }
+    public string? PayloadBase64 { get; set; }
+}
+
+public sealed class HmiRecipeBinaryArray
+{
+    public string? SourceElementType { get; set; }
+    public IList<HmiRecipeBinaryValue?> Values { get; } = new List<HmiRecipeBinaryValue?>();
 }
 
 public sealed class HmiRecipeView
