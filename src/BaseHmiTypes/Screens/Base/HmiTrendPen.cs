@@ -105,6 +105,7 @@ public sealed class HmiTrendPen
     public HmiProperty<HmiHorizontalAlignment>? ValueAxisAlignment { get; set; }
 
     public string? ValueAxisLabel { get; set; }
+    public HmiMultilingualText? ValueAxisLabelText { get; set; }
 
     /// <summary>
     /// Gets or sets the current minimum value used to scale this pen.

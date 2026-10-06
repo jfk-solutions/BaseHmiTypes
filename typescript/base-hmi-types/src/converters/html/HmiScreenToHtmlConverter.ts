@@ -5620,7 +5620,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendStaticAttribute(html, "x-axis-color", trendControl.xAxisColor);
   appendStaticBooleanValueAttribute(html, "x-axis-in-trend-color", trendControl.xAxisInTrendColor);
   appendStaticAttribute(html, "x-axis-alignment", trendControl.xAxisAlignment);
-  appendAttribute(html, "x-axis-label", trendControl.xAxisLabel);
+  appendAttribute(html, "x-axis-label", trendControl.xAxisLabelText?.getText(context.options.cultureLcid) ?? trendControl.xAxisLabel);
   appendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.xAxisDateVisible);
   appendStaticValueAttribute(html, "x-axis-date-format", trendControl.xAxisDateFormat);
   appendStaticBooleanValueAttribute(html, "x-axis-flipped", trendControl.xAxisFlipped);
@@ -5640,7 +5640,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendStaticAttribute(html, "y-axis-color", trendControl.yAxisColor);
   appendStaticBooleanValueAttribute(html, "y-axis-in-trend-color", trendControl.yAxisInTrendColor);
   appendStaticAttribute(html, "y-axis-alignment", trendControl.yAxisAlignment);
-  appendAttribute(html, "y-axis-label", trendControl.yAxisLabel);
+  appendAttribute(html, "y-axis-label", trendControl.yAxisLabelText?.getText(context.options.cultureLcid) ?? trendControl.yAxisLabel);
   appendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.yAxisGridVisible);
   appendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.showPercentageAxis);
   appendStaticAttribute(html, "percentage-axis-color", trendControl.percentageAxisColor);
@@ -6081,7 +6081,8 @@ function formatTrendPens(pens: readonly HmiTrendPen[], cultureLcid?: number): st
     if (valueAxisInTrendColor !== undefined) result.valueAxisInTrendColor = valueAxisInTrendColor;
     const valueAxisAlignment = getStaticValue(pen.valueAxisAlignment);
     if (valueAxisAlignment !== undefined) result.valueAxisAlignment = valueAxisAlignment;
-    if (pen.valueAxisLabel !== undefined) result.valueAxisLabel = pen.valueAxisLabel;
+    const valueAxisLabel = pen.valueAxisLabelText?.getText(cultureLcid) ?? pen.valueAxisLabel;
+    if (valueAxisLabel !== undefined) result.valueAxisLabel = valueAxisLabel;
     const unit = pen.engineeringUnitText?.getText(cultureLcid) ?? pen.engineeringUnit;
     if (unit !== undefined) result.unit = unit;
     return result;
