@@ -19,6 +19,11 @@ public sealed class HmiRecipeControl : HmiControlWindowBase
 
     public HmiProperty<bool>? EnableRecipeDialog { get; set; }
 
+    public HmiProperty<double>? HeaderFontReferenceDeviceSize { get; set; }
+    public HmiProperty<double>? ContentFontReferenceDeviceSize { get; set; }
+    public HmiProperty<double>? StatusBarFontReferenceDeviceSize { get; set; }
+    public HmiProperty<double>? ComboBoxFontReferenceDeviceSize { get; set; }
+
     public HmiProperty<double>? HeaderCornerRadius { get; set; }
     public HmiProperty<HmiColor>? HeaderBorderBackgroundColor { get; set; }
     public HmiProperty<int>? HeaderBackFillStyle { get; set; }

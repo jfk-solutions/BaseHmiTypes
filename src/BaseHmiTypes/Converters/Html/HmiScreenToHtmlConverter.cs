@@ -3001,6 +3001,10 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-header-second-gradient-offset", ResolvePropertyPreview(recipeControl.HeaderSecondGradientOffset, context));
         AppendAttribute(html, "data-use-header-first-gradient", ResolvePropertyPreview(recipeControl.UseHeaderFirstGradient, context));
         AppendAttribute(html, "data-use-header-second-gradient", ResolvePropertyPreview(recipeControl.UseHeaderSecondGradient, context));
+        AppendAttribute(html, "data-header-font-reference-device-size", ResolvePropertyPreview(recipeControl.HeaderFontReferenceDeviceSize, context));
+        AppendAttribute(html, "data-content-font-reference-device-size", ResolvePropertyPreview(recipeControl.ContentFontReferenceDeviceSize, context));
+        AppendAttribute(html, "data-status-bar-font-reference-device-size", ResolvePropertyPreview(recipeControl.StatusBarFontReferenceDeviceSize, context));
+        AppendAttribute(html, "data-combo-box-font-reference-device-size", ResolvePropertyPreview(recipeControl.ComboBoxFontReferenceDeviceSize, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(recipeControl.WordWrap, context));
         AppendAttribute(html, "data-button-background-color", ResolvePropertyPreview(recipeControl.ButtonBackgroundColor, context));
         AppendAttribute(html, "data-button-border-background-color", ResolvePropertyPreview(recipeControl.ButtonBorderBackgroundColor, context));
