@@ -1,5 +1,7 @@
 import { IHmiProject } from "../../projects/IHmiProject.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
+import { HmiFaceplateContainer } from "../../screens/base/HmiFaceplateContainer.js";
+import { HmiHtmlReferenceResolver, isScreenInStack } from "./HmiHtmlReferences.js";
 import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiLayer } from "../../screens/base/HmiLayer.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
@@ -10,7 +12,7 @@ import { HmiSymbolContainer } from "../../screens/base/HmiSymbolContainer.js";
 import { HmiScreenWindow } from "../../screens/screen/HmiScreenWindow.js";
 
 export type HmiInspectionNodeKind = "screen" | "template" | "layer" | "item" | "reference";
-export type HmiInspectionOrigin = "root" | "template" | "subscreen";
+export type HmiInspectionOrigin = "root" | "template" | "subscreen" | "faceplate";
 export type HmiInspectionReferenceStatus = "missing" | "recursive";
 
 export interface HmiInspectionNode {
@@ -58,10 +60,11 @@ export async function inspectHmiScreenAsync(
   screen: HmiScreenBase,
   project?: IHmiProject,
   signal?: AbortSignal,
+  references = new HmiHtmlReferenceResolver(project),
 ): Promise<HmiScreenInspection> {
   const modelsByKey = new Map<string, object>();
-  const screenStack = new Set<string>();
-  const root = await inspectScreen(screen, project, "screen", "root", true, screenStack, modelsByKey, signal);
+  const screenStack = new Set<HmiScreenBase>();
+  const root = await inspectScreen(screen, project, "screen", "root", true, screenStack, modelsByKey, references, signal);
   return { root, modelsByKey };
 }
 
@@ -87,14 +90,13 @@ async function inspectScreen(
   key: string,
   origin: HmiInspectionOrigin,
   rendered: boolean,
-  screenStack: Set<string>,
+  screenStack: Set<HmiScreenBase>,
   modelsByKey: Map<string, object>,
+  references: HmiHtmlReferenceResolver,
   signal?: AbortSignal,
 ): Promise<HmiInspectionNode> {
   throwIfAborted(signal);
-  const screenKeys = getScreenReferenceKeys(screen);
-  for (const screenKey of screenKeys)
-    screenStack.add(screenKey);
+  screenStack.add(screen);
 
   const node = createModelNode(screen, key, origin === "template" ? "template" : "screen", origin, rendered, modelsByKey);
   try {
@@ -105,10 +107,10 @@ async function inspectScreen(
       const referenceName = templateName || templateId || "Template";
       if (!template) {
         node.children.push(createReferenceNode(`${key}/template-reference`, referenceName, "template", "missing"));
-      } else if (getScreenReferenceKeys(template).some(candidate => screenStack.has(candidate))) {
+      } else if (isScreenInStack(template, screenStack)) {
         node.children.push(createReferenceNode(`${key}/template-reference`, template.name || referenceName, "template", "recursive"));
       } else {
-        node.children.push(await inspectScreen(template, project, `${key}/template`, "template", rendered, screenStack, modelsByKey, signal));
+        node.children.push(await inspectScreen(template, project, `${key}/template`, "template", rendered, screenStack, modelsByKey, references, signal));
       }
     }
 
@@ -123,13 +125,13 @@ async function inspectScreen(
         layerRendered,
         screenStack,
         modelsByKey,
+        references,
         signal,
       ));
     }
     return node;
   } finally {
-    for (const screenKey of screenKeys)
-      screenStack.delete(screenKey);
+    screenStack.delete(screen);
   }
 }
 
@@ -139,8 +141,9 @@ async function inspectLayer(
   key: string,
   origin: HmiInspectionOrigin,
   rendered: boolean,
-  screenStack: Set<string>,
+  screenStack: Set<HmiScreenBase>,
   modelsByKey: Map<string, object>,
+  references: HmiHtmlReferenceResolver,
   signal?: AbortSignal,
 ): Promise<HmiInspectionNode> {
   const node = createModelNode(layer, key, "layer", origin, rendered, modelsByKey);
@@ -153,6 +156,7 @@ async function inspectLayer(
       rendered,
       screenStack,
       modelsByKey,
+      references,
       signal,
     ));
   }
@@ -165,8 +169,9 @@ async function inspectItem(
   key: string,
   origin: HmiInspectionOrigin,
   parentRendered: boolean,
-  screenStack: Set<string>,
+  screenStack: Set<HmiScreenBase>,
   modelsByKey: Map<string, object>,
+  references: HmiHtmlReferenceResolver,
   signal?: AbortSignal,
 ): Promise<HmiInspectionNode> {
   throwIfAborted(signal);
@@ -180,11 +185,24 @@ async function inspectItem(
       project,
       `${key}/item:${childIndex}`,
       origin,
-      rendered,
+      item instanceof HmiFaceplateContainer ? false : rendered,
       screenStack,
       modelsByKey,
+      references,
       signal,
     ));
+  }
+
+  if (item instanceof HmiFaceplateContainer) {
+    const referenced = await references.resolveFaceplateAsync(item, signal);
+    const referenceName = item.faceplateName ?? item.faceplateId ?? "Faceplate";
+    if (!referenced) {
+      node.children.push(createReferenceNode(`${key}/faceplate-reference`, referenceName, "faceplate", "missing"));
+    } else if (isScreenInStack(referenced, screenStack)) {
+      node.children.push(createReferenceNode(`${key}/faceplate-reference`, referenced.name ?? referenceName, "faceplate", "recursive"));
+    } else {
+      node.children.push(await inspectScreen(referenced, project, `${key}/faceplate`, "faceplate", rendered, screenStack, modelsByKey, references, signal));
+    }
   }
 
   if (item instanceof HmiScreenWindow) {
@@ -194,10 +212,10 @@ async function inspectItem(
     const referenceName = screenName || screenId || "Subscreen";
     if (!referenced) {
       node.children.push(createReferenceNode(`${key}/subscreen-reference`, referenceName, "subscreen", "missing"));
-    } else if (getScreenReferenceKeys(referenced).some(candidate => screenStack.has(candidate))) {
+    } else if (isScreenInStack(referenced, screenStack)) {
       node.children.push(createReferenceNode(`${key}/subscreen-reference`, referenced.name || referenceName, "subscreen", "recursive"));
     } else {
-      node.children.push(await inspectScreen(referenced, project, `${key}/subscreen`, "subscreen", rendered, screenStack, modelsByKey, signal));
+      node.children.push(await inspectScreen(referenced, project, `${key}/subscreen`, "subscreen", rendered, screenStack, modelsByKey, references, signal));
     }
   }
   return node;
@@ -233,7 +251,9 @@ function createReferenceNode(
   return {
     key,
     name,
-    typeName: referenceStatus === "missing" ? "Missing screen reference" : "Recursive screen reference",
+    typeName: referenceStatus === "missing"
+      ? origin === "faceplate" ? "Missing faceplate reference" : "Missing screen reference"
+      : origin === "faceplate" ? "Recursive faceplate reference" : "Recursive screen reference",
     kind: "reference",
     origin,
     rendered: false,
@@ -270,14 +290,6 @@ async function resolveScreen(
   return name ? project.getScreen(name, signal) : undefined;
 }
 
-function getScreenReferenceKeys(screen: HmiScreenBase): string[] {
-  const result: string[] = [];
-  if (screen.id?.trim())
-    result.push(`id:${screen.id}`);
-  if (screen.name?.trim())
-    result.push(`name:${screen.name}`);
-  return result;
-}
 
 function inspectProperty(
   name: string,
