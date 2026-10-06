@@ -66,6 +66,9 @@ public partial class HmiScreenToHtmlConverter
         IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
+        if (includeRuntime && screen is HmiFaceplateType faceplateType)
+            context = context.WithFaceplateInterfaceValues(Array.Empty<HmiFaceplateInterfaceValue>(), faceplateType.InterfaceProperties);
+
         if (screen is HmiCharacterScreen characterScreen)
             return ConvertCharacterScreen(characterScreen, context.Options);
 
@@ -655,7 +658,7 @@ public partial class HmiScreenToHtmlConverter
         }
         else
         {
-            var childContext = context.WithFaceplateInterfaceValues(faceplateContainer.InterfaceValues);
+            var childContext = context.WithFaceplateInterfaceValues(faceplateContainer.InterfaceValues, resolved.InterfaceProperties);
             html.Append(await ConvertCoreAsync(resolved, project, childContext, false, screenStack, cancellationToken).ConfigureAwait(false));
         }
 
@@ -6679,12 +6682,25 @@ public partial class HmiScreenToHtmlConverter
                 FaceplateInterfaceValues);
         }
 
-        public HmiHtmlConvertContext WithFaceplateInterfaceValues(IEnumerable<HmiFaceplateInterfaceValue> values)
+        public HmiHtmlConvertContext WithFaceplateInterfaceValues(
+            IEnumerable<HmiFaceplateInterfaceValue> values,
+            IEnumerable<HmiFaceplateInterfaceMember> defaults)
         {
-            var dictionary = values
-                .Where(value => !string.IsNullOrWhiteSpace(value.Name) && !value.IsTagBinding)
-                .GroupBy(value => value.Name!, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+            var dictionary = new Dictionary<string, HmiFaceplateInterfaceValue>(StringComparer.OrdinalIgnoreCase);
+            var suppliedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var value in values)
+            {
+                if (string.IsNullOrWhiteSpace(value.Name)) continue;
+                suppliedNames.Add(value.Name!);
+                if (!value.IsTagBinding && !dictionary.ContainsKey(value.Name!))
+                    dictionary.Add(value.Name!, value);
+            }
+            foreach (var member in defaults)
+            {
+                if (member.IsTag || string.IsNullOrWhiteSpace(member.Name) ||
+                    suppliedNames.Contains(member.Name!) || dictionary.ContainsKey(member.Name!)) continue;
+                dictionary.Add(member.Name!, new HmiFaceplateInterfaceValue { Name = member.Name, Value = member.DefaultValue });
+            }
 
             return new HmiHtmlConvertContext(
                 Options,
