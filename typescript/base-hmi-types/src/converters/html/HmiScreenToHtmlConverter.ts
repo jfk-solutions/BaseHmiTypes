@@ -1227,7 +1227,7 @@ function appendStrokeAttributes(html: string[], item: HmiShapeBase, fillColor: H
   const strokeColor = getStrokeColorProperty(item, context);
   appendAttribute(html, "stroke", lineStyle === HmiLineStyle.None
     ? "none"
-    : colorToCss(strokeColor?.staticValue ?? { alpha: 255, red: 0, green: 0, blue: 0 }));
+    : colorToCss(getStrokeColor(item, context)));
   const strokeBlink = strokeColor?.kind === HmiPropertyKind.Blink
     ? strokeColor as HmiBlinkProperty<HmiColor>
     : undefined;
@@ -1555,9 +1555,9 @@ function getFillPattern(item: HmiPaintedScreenItemBase, context: HmiHtmlConvertC
 }
 
 function getPatternColor(item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): HmiColor {
-  return context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "PatternColor", item.patternColor).value
+  return resolveStaticValue(context.effectiveProperties.resolve(item, "PatternColor", item.patternColor), context, tryConvertFaceplateColorValue)
     ?? (item instanceof HmiShapeBase ? getStrokeColor(item, context) : undefined)
-    ?? context.effectiveProperties.tryGetStaticValue<HmiColor>(item, "ForegroundColor", item.foregroundColor).value
+    ?? resolveStaticValue(context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor), context, tryConvertFaceplateColorValue)
     ?? { alpha: 255, red: 0, green: 0, blue: 0 };
 }
 
@@ -1579,19 +1579,22 @@ function tryGetFillPercentage(animation: HmiFillAnimation | undefined): number |
 
 function getStrokeColorProperty(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiProperty<HmiColor> | undefined {
   const lineColor = context.effectiveProperties.resolve(item, "LineColor", item.lineColor);
-  if (lineColor?.staticValue !== undefined) return lineColor;
+  if (resolveStaticValue(lineColor, context, tryConvertFaceplateColorValue) !== undefined) return lineColor;
   const borderColor = context.effectiveProperties.resolve(item, "BorderColor", item.borderColor);
-  if (borderColor?.staticValue !== undefined) return borderColor;
-  const foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
-  return foregroundColor?.staticValue !== undefined ? foregroundColor : undefined;
+  if (resolveStaticValue(borderColor, context, tryConvertFaceplateColorValue) !== undefined) return borderColor;
+  let foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
+  if (!(resolveStaticValue(item.enabled, context, tryConvertFaceplateBooleanValue) ?? true) &&
+      (resolveStaticValue(item.useDisabledForegroundColor, context, tryConvertFaceplateBooleanValue) ?? false))
+    foregroundColor = context.effectiveProperties.resolve(item, "DisabledForegroundColor", item.disabledForegroundColor) ?? foregroundColor;
+  return resolveStaticValue(foregroundColor, context, tryConvertFaceplateColorValue) !== undefined ? foregroundColor : undefined;
 }
 
 function getStrokeColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor {
-  return getStrokeColorProperty(item, context)?.staticValue ?? { alpha: 255, red: 0, green: 0, blue: 0 };
+  return resolveStaticValue(getStrokeColorProperty(item, context), context, tryConvertFaceplateColorValue) ?? { alpha: 255, red: 0, green: 0, blue: 0 };
 }
 
 function getFillColor(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiColor | undefined {
-  return getFillColorProperty(item, context)?.staticValue;
+  return resolveStaticValue(getFillColorProperty(item, context), context, tryConvertFaceplateColorValue);
 }
 
 function getFillColorProperty(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiProperty<HmiColor> | undefined {

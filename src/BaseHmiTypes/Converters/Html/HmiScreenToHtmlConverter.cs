@@ -1235,7 +1235,7 @@ public partial class HmiScreenToHtmlConverter
         var strokeColor = GetStrokeColorProperty(item, context);
         AppendAttribute(html, "stroke", lineStyle == HmiLineStyle.None
             ? "none"
-            : ToCss(strokeColor?.StaticValue ?? HmiColor.FromArgb(255, 0, 0, 0)));
+            : ToCss(GetStrokeColor(item, context)));
         if (lineStyle != HmiLineStyle.None && strokeColor is HmiBlinkProperty<HmiColor> strokeBlink &&
             strokeBlink.StaticValue is HmiColor strokeOff && strokeBlink.BlinkValue is HmiColor strokeOn)
         {
@@ -1576,12 +1576,12 @@ public partial class HmiScreenToHtmlConverter
 
     private static HmiColor GetPatternColor(HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
-        if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiPaintedScreenItemBase.PatternColor), item.PatternColor, out var color))
-            return color;
+        if (context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.PatternColor), item.PatternColor) is { } colorProperty)
+            return ResolveStaticValue(colorProperty, context);
         if (item is HmiShapeBase shape)
             return GetStrokeColor(shape, context);
-        if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiPaintedScreenItemBase.ForegroundColor), item.ForegroundColor, out var foregroundColor))
-            return foregroundColor;
+        if (context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.ForegroundColor), item.ForegroundColor) is { } foregroundProperty)
+            return ResolveStaticValue(foregroundProperty, context);
         return HmiColor.FromArgb(255, 0, 0, 0);
     }
 
@@ -1694,12 +1694,16 @@ public partial class HmiScreenToHtmlConverter
         return foregroundColor?.StaticValue is not null ? foregroundColor : null;
     }
 
-    private static HmiColor GetStrokeColor(HmiShapeBase item, HmiHtmlConvertContext context) =>
-        GetStrokeColorProperty(item, context)?.StaticValue ?? HmiColor.FromArgb(255, 0, 0, 0);
+    private static HmiColor GetStrokeColor(HmiShapeBase item, HmiHtmlConvertContext context)
+    {
+        var property = GetStrokeColorProperty(item, context);
+        return property is null ? HmiColor.FromArgb(255, 0, 0, 0) : ResolveStaticValue(property, context);
+    }
 
     private static HmiColor? GetFillColor(HmiShapeBase item, HmiHtmlConvertContext context)
     {
-        return GetFillColorProperty(item, context)?.StaticValue;
+        var property = GetFillColorProperty(item, context);
+        return property is null ? null : ResolveStaticValue(property, context);
     }
 
     private static HmiProperty<HmiColor>? GetFillColorProperty(HmiShapeBase item, HmiHtmlConvertContext context) =>
