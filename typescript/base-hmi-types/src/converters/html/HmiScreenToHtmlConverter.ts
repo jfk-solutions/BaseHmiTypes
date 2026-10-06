@@ -1629,7 +1629,7 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
   }
   const offset = getButtonPressedContentOffset(button);
   if (offset > 0) html.push('<span data-hmi-button-pressed-caption style="display: inline-block;transform: translate(' + toCss(offset) + 'px, ' + toCss(offset) + 'px);">');
-  appendMultilingualText(html, caption, context);
+  appendFormattedText(html, button, caption, context);
   if (offset > 0) html.push("</span>");
   if (overlay) html.push("</span>");
   if (wrapped) html.push("</span>");
@@ -4605,7 +4605,9 @@ function appendTextBox(html: string[], item: HmiTextBox, context: HmiHtmlConvert
   html.push("<textarea");
   const resize = getStaticValue(item.resizable) === true ? "both" : "none";
   appendCommonAttributes(html, item, context, undefined,
-    `overflow: auto;resize: ${resize};` + (createTextOrientationStyle(item, context) ?? ""));
+    `overflow: auto;resize: ${resize};` + (createTextOrientationStyle(item, context) ?? "") + createTextWrappingStyle(getTextLayoutProperties(item, context).wrapping));
+  const wrapping = getStaticValue(getTextLayoutProperties(item, context).wrapping);
+  if (wrapping === 0 || wrapping === 1) appendAttribute(html, "wrap", wrapping === 0 ? "off" : "soft");
   if (getStaticValueOrDefault(item.enabled, true) === false) appendAttribute(html, "disabled", "disabled");
   if (getStaticValue(item.readOnly) === true) appendAttribute(html, "readonly", "readonly");
   const length = getStaticValue(item.fieldLength);
@@ -4625,8 +4627,31 @@ function appendTextBlock(
   html.push("<div");
   appendCommonAttributes(html, item, context, undefined, "overflow: hidden;" + (createTextOrientationStyle(item, context) ?? ""));
   html.push(">");
-  appendMultilingualText(html, getStaticValue(text), context);
+  appendFormattedText(html, item, getStaticValue(text), context);
   html.push("</div>");
+}
+
+function getTextLayoutProperties(item: HmiScreenItemBase, context: HmiHtmlConvertContext): { wrapping: HmiProperty<number> | undefined; trimming: HmiProperty<number> | undefined } {
+  const source = item instanceof HmiText || item instanceof HmiWidgetBase ? item : undefined;
+  return { wrapping: context.effectiveProperties.resolve(item, "TextWrapping", source?.textWrapping), trimming: context.effectiveProperties.resolve(item, "TextTrimming", source?.textTrimming) };
+}
+
+function createTextWrappingStyle(wrapping: HmiProperty<number> | undefined): string {
+  const mode = getStaticValue(wrapping);
+  return mode === 0 ? "white-space: pre;overflow-wrap: normal;word-break: normal;"
+    : mode === 1 ? "white-space: pre-wrap;overflow-wrap: normal;word-break: normal;" : "";
+}
+
+function appendFormattedText(html: string[], item: HmiScreenItemBase, text: HmiMultilingualText | undefined, context: HmiHtmlConvertContext): void {
+  const properties = getTextLayoutProperties(item, context);
+  let style = createTextWrappingStyle(properties.wrapping);
+  const trimming = getStaticValue(properties.trimming);
+  if (trimming === 0) style += "text-overflow: clip;";
+  // CSS ellipsis is reliable for a configured non-wrapping line. Wrapped ellipsis needs separate layout handling.
+  else if (trimming === 1 && getStaticValue(properties.wrapping) === 0) style += "text-overflow: ellipsis;";
+  if (style.length > 0) html.push('<span data-hmi-text-content style="display: block;min-inline-size: 0;max-inline-size: 100%;overflow: hidden;', style, '">');
+  appendMultilingualText(html, text, context);
+  if (style.length > 0) html.push("</span>");
 }
 
 function createTextOrientationStyle(item: HmiScreenItemBase, context: HmiHtmlConvertContext): string | undefined {
@@ -6123,6 +6148,11 @@ function appendCommonAttributes(
   if (focusColor !== undefined || hasFocusWidth) appendAttribute(html, "data-hmi-focus-appearance", "true");
   appendAttribute(html, "data-hmi-security-code", item.securityCode);
   appendStaticAttribute(html, "data-adapt-border-to-content", item.adaptBorderToContent);
+  if (item instanceof HmiText || item instanceof HmiWidgetBase) {
+    const textLayout = getTextLayoutProperties(item, context);
+    appendAttribute(html, "data-text-wrapping", resolvePropertyPreview(textLayout.wrapping));
+    appendAttribute(html, "data-text-trimming", resolvePropertyPreview(textLayout.trimming));
+  }
   appendDisabledAttribute(html, item);
   appendHotKeyAttributes(html, item);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
