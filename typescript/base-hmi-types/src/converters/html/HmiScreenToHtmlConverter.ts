@@ -114,7 +114,7 @@ import { HmiWidgetBase } from "../../screens/widgets/HmiWidgetBase.js";
 import { HmiDefaultProfiles } from "../../screens/defaults/HmiDefaultProfiles.js";
 import { HmiEffectivePropertyResolver } from "../../screens/defaults/HmiEffectivePropertyResolver.js";
 import { HmiDefaultProfile } from "../../screens/defaults/HmiDefaultProfile.js";
-import { HmiHtmlConvertOptions } from "./HmiHtmlConvertOptions.js";
+import { HmiHtmlConvertOptions, HmiHtmlItemDiagnostic } from "./HmiHtmlConvertOptions.js";
 import { hmiHtmlCommonStyle } from "./HmiHtmlCommonStyle.generated.js";
 import { hmiHtmlRuntimeModuleScript } from "./HmiHtmlRuntimeModule.generated.js";
 import { HmiTrendControl } from "../../screens/controls/HmiTrendControl.js";
@@ -298,12 +298,14 @@ export class HmiScreenToHtmlConverter {
     signal?: AbortSignal,
   ): Promise<void> {
     if (!getStaticValueOrDefault(item.visible, true)) {
+      reportItemDiagnostic(item, context, "Hidden");
       return;
     }
     context = context.withNodeKey(includeInspectionAttributes ? key : undefined);
 
     const materializedReference = item.referenceObject?.materializedObject;
     if (materializedReference !== undefined && materializedReference !== item) {
+      reportItemDiagnostic(item, context, "ReferenceObject");
       html.push("<div");
       appendCommonAttributes(html, item, context, undefined, "overflow: hidden;");
       appendAttribute(html, "class", "hmi-reference-object");
@@ -328,72 +330,106 @@ export class HmiScreenToHtmlConverter {
     }
 
     if (item instanceof HmiToggleSwitch) {
+      reportItemDiagnostic(item, context, "HmiToggleSwitch", false);
       await appendToggleSwitch(html, item, project, context, signal);
     } else if (item instanceof HmiCheckBoxGroup) {
+      reportItemDiagnostic(item, context, "HmiCheckBoxGroup", false);
       await appendSelectionGroup(html, "hmi-checkbox-group", item, project, context, signal);
     } else if (item instanceof HmiRadioButtonGroup) {
+      reportItemDiagnostic(item, context, "HmiRadioButtonGroup", false);
       await appendSelectionGroup(html, "hmi-radio-button-group", item, project, context, signal);
     } else if (item instanceof HmiComboBox) {
+      reportItemDiagnostic(item, context, "HmiComboBox", false);
       appendComboBox(html, item, context);
     } else if (item instanceof HmiListBox) {
+      reportItemDiagnostic(item, context, "HmiListBox", false);
       appendListBox(html, item, context);
     } else if (item instanceof HmiButton) {
+      reportItemDiagnostic(item, context, "HmiButton", false);
       await appendButton(html, item, project, context, signal);
     } else if (item instanceof HmiIOField) {
+      reportItemDiagnostic(item, context, "HmiIOField", false);
       appendInput(html, item, context);
     } else if (item instanceof HmiSymbolicIOField) {
+      reportItemDiagnostic(item, context, "HmiSymbolicIOField", false);
       await appendSymbolicInput(html, item, project, context, signal);
     } else if (item instanceof HmiTextBox) {
+      reportItemDiagnostic(item, context, "HmiTextBox", false);
       appendTextBox(html, item, context);
     } else if (item instanceof HmiLabel || item instanceof HmiText) {
+      reportItemDiagnostic(item, context, item instanceof HmiLabel ? "HmiLabel" : "HmiText", false);
       appendTextBlock(html, item, item.text, context);
     } else if (item instanceof HmiGraphicView) {
+      reportItemDiagnostic(item, context, "HmiGraphicView", false);
       await this.appendGraphicViewAsync(html, item, project, context, signal);
     } else if (item instanceof HmiRectangle) {
+      reportItemDiagnostic(item, context, "HmiRectangle", false);
       appendRectangle(html, item, context);
     } else if (item instanceof HmiLine) {
+      reportItemDiagnostic(item, context, "HmiLine", false);
       appendLine(html, item, context);
     } else if (item instanceof HmiPolyline) {
+      reportItemDiagnostic(item, context, "HmiPolyline", false);
       appendPointShape(html, item, "polyline", false, context);
     } else if (item instanceof HmiPolygon) {
+      reportItemDiagnostic(item, context, "HmiPolygon", false);
       appendPointShape(html, item, "polygon", true, context);
     } else if (item instanceof HmiCircleSegment) {
+      reportItemDiagnostic(item, context, "HmiCircleSegment", false);
       appendCircularSegment(html, item, context);
     } else if (item instanceof HmiEllipseSegment) {
+      reportItemDiagnostic(item, context, "HmiEllipseSegment", false);
       appendEllipticalSegment(html, item, context);
     } else if (item instanceof HmiCircularArc) {
+      reportItemDiagnostic(item, context, "HmiCircularArc", false);
       appendCircularArc(html, item, context);
     } else if (item instanceof HmiEllipticalArc) {
+      reportItemDiagnostic(item, context, "HmiEllipticalArc", false);
       appendEllipticalArc(html, item, context);
     } else if (item instanceof HmiCircle) {
+      reportItemDiagnostic(item, context, "HmiCircle", false);
       appendCircle(html, item, context);
     } else if (item instanceof HmiEllipse) {
+      reportItemDiagnostic(item, context, "HmiEllipse", false);
       appendEllipse(html, item, context);
     } else if (item instanceof HmiDynamicSvg) {
+      reportItemDiagnostic(item, context, "HmiDynamicSvg", false);
       appendDynamicSvg(html, item, context);
     } else if (item instanceof HmiSlider) {
+      reportItemDiagnostic(item, context, "HmiSlider", false);
       appendSlider(html, item, context);
     } else if (item instanceof HmiBar) {
+      reportItemDiagnostic(item, context, "HmiBar", false);
       appendBar(html, item, context);
     } else if (item instanceof HmiScale) {
+      reportItemDiagnostic(item, context, "HmiScale", false);
       appendScale(html, item, context);
     } else if (item instanceof HmiDateTimeField) {
+      reportItemDiagnostic(item, context, "HmiDateTimeField", false);
       appendDateTimeField(html, item, context);
     } else if (item instanceof HmiClock) {
+      reportItemDiagnostic(item, context, "HmiClock", false);
       appendClock(html, item, context);
     } else if (item instanceof HmiArrowIndicator) {
+      reportItemDiagnostic(item, context, "HmiArrowIndicator", false);
       appendArrowIndicator(html, item, context);
     } else if (item instanceof HmiAlarmIndicator) {
+      reportItemDiagnostic(item, context, "HmiAlarmIndicator", false);
       appendAlarmIndicator(html, item, context);
     } else if (item instanceof HmiGauge) {
+      reportItemDiagnostic(item, context, "HmiGauge", false);
       appendGauge(html, item, context);
     } else if (item instanceof HmiTrendControlBase) {
+      reportItemDiagnostic(item, context, "HmiTrendControlBase", false);
       appendTrendControl(html, item, context);
     } else if (item instanceof HmiSymbolContainer) {
+      reportItemDiagnostic(item, context, "HmiSymbolContainer", false);
       await this.appendSymbolContainerAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiSymbolLibraryControl) {
+      reportItemDiagnostic(item, context, "HmiSymbolLibraryControl", false);
       appendSymbolLibraryControl(html, item, context);
     } else if (item instanceof HmiGroup) {
+      reportItemDiagnostic(item, context, "HmiGroup", false);
       if (item.isLogicGrouping) {
         for (let childIndex = 0; childIndex < item.items.length; childIndex++) {
           await this.appendItemAsync(
@@ -411,10 +447,13 @@ export class HmiScreenToHtmlConverter {
         await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
       }
     } else if (item instanceof HmiOcxControl) {
+      reportItemDiagnostic(item, context, "HmiOcxControl", false);
       await this.appendOcxControlAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiDotNetControlContainer) {
+      reportItemDiagnostic(item, context, "HmiDotNetControlContainer", false);
       await this.appendDotNetControlAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiUserViewControl) {
+      reportItemDiagnostic(item, context, "HmiUserViewControl", false);
       appendUserViewControl(html, item, context);
       const childContext = item.childCoordinateSpace === HmiChildCoordinateSpace.ScreenAbsolute
         ? context.withPositionOffset(-getStaticValueOrDefault(item.x, 0), -getStaticValueOrDefault(item.y, 0)) : context;
@@ -424,48 +463,70 @@ export class HmiScreenToHtmlConverter {
       }
       html.push("</div>");
     } else if (item instanceof HmiLayoutContainerBase || item instanceof HmiContainerBase) {
+      reportItemDiagnostic(item, context, item instanceof HmiLayoutContainerBase ? "HmiLayoutContainerBase" : "HmiContainerBase", false);
       await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiScreenWindow) {
+      reportItemDiagnostic(item, context, "HmiScreenWindow", false);
       await this.appendScreenWindowAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiDataGridControl) {
+      reportItemDiagnostic(item, context, "HmiDataGridControl", false);
       appendDataGridControl(html, item, context);
     } else if (item instanceof HmiOverviewParameterControl) {
+      reportItemDiagnostic(item, context, "HmiOverviewParameterControl", false);
       appendOverviewParameterControl(html, item, context);
     } else if (item instanceof HmiDetailedParameterControl) {
+      reportItemDiagnostic(item, context, "HmiDetailedParameterControl", false);
       appendDetailedParameterControl(html, item, context);
     } else if (item instanceof HmiStatusForceControl) {
+      reportItemDiagnostic(item, context, "HmiStatusForceControl", false);
       appendStatusForceControl(html, item, context);
     } else if (item instanceof HmiRecipeControl) {
+      reportItemDiagnostic(item, context, "HmiRecipeControl", false);
       appendRecipeControl(html, item, context);
     } else if (item instanceof HmiAuditTrailControl) {
+      reportItemDiagnostic(item, context, "HmiAuditTrailControl", false);
       appendAuditTrailControl(html, item, context);
     } else if (item instanceof HmiRadarChartControl) {
+      reportItemDiagnostic(item, context, "HmiRadarChartControl", false);
       appendRadarChartControl(html, item, context);
     } else if (item instanceof HmiProcessDiagnosisOverviewControl) {
+      reportItemDiagnostic(item, context, "HmiProcessDiagnosisOverviewControl", false);
       appendProcessDiagnosisControl(html, item, "Overview", "Process diagnosis overview", context);
     } else if (item instanceof HmiProcessDiagnosisPlcCodeViewerControl) {
+      reportItemDiagnostic(item, context, "HmiProcessDiagnosisPlcCodeViewerControl", false);
       appendProcessDiagnosisControl(html, item, "PlcCodeViewer", "PLC code viewer", context);
     } else if (item instanceof HmiProcessDiagnosisCriteriaAnalysisControl) {
+      reportItemDiagnostic(item, context, "HmiProcessDiagnosisCriteriaAnalysisControl", false);
       appendProcessDiagnosisControl(html, item, "CriteriaAnalysis", "Criteria analysis", context);
     } else if (item instanceof HmiProcessDiagnosisGraphOverviewControl) {
+      reportItemDiagnostic(item, context, "HmiProcessDiagnosisGraphOverviewControl", false);
       appendGraphOverviewControl(html, item, context);
     } else if (item instanceof HmiSystemDiagnosisControl) {
+      reportItemDiagnostic(item, context, "HmiSystemDiagnosisControl", false);
       appendSystemDiagnosisControl(html, item, context);
     } else if (item instanceof HmiMediaControl) {
+      reportItemDiagnostic(item, context, "HmiMediaControl", false);
       appendMediaControl(html, item, context);
     } else if (item instanceof HmiNcPartProgramControl) {
+      reportItemDiagnostic(item, context, "HmiNcPartProgramControl", false);
       appendNcPartProgramControl(html, item, context);
     } else if (item instanceof HmiNcKeyboardControl) {
+      reportItemDiagnostic(item, context, "HmiNcKeyboardControl", false);
       appendNcKeyboardControl(html, item, context);
     } else if (item instanceof HmiWebControl) {
+      reportItemDiagnostic(item, context, "HmiWebControl", false);
       appendWebControl(html, item, context);
     } else if (item instanceof HmiAlarmLineControl) {
+      reportItemDiagnostic(item, context, "HmiAlarmLineControl", false);
       appendAlarmLineControl(html, item, context);
     } else if (item instanceof HmiAlarmControl) {
+      reportItemDiagnostic(item, context, "HmiAlarmControl", false);
       appendAlarmControl(html, item, context);
     } else if (item instanceof HmiUnkown) {
+      reportItemDiagnostic(item, context, "UnknownPlaceholder", true);
       appendDiv(html, item, undefined, `Unkown:${item.type ?? ""}`, context);
     } else {
+      reportItemDiagnostic(item, context, "UnsupportedPlaceholder", true);
       appendDiv(html, item, context.options.unsupportedItemPlaceholderCssClass, item.constructor.name, context);
     }
   }
@@ -4599,6 +4660,26 @@ async function appendSelectionGroupItem(
   appendAttribute(html, "image", await resolveImageUri(item.image, project, signal));
   appendAttribute(html, "image-name", item.imageName ?? item.image?.imageName);
   html.push("></span>");
+}
+
+function reportItemDiagnostic(item: HmiScreenItemBase, context: HmiHtmlConvertContext, route: string, placeholder = false): void {
+  const observer = context.options.itemDiagnostic;
+  if (observer === undefined) return;
+  const diagnostic = new HmiHtmlItemDiagnostic();
+  diagnostic.itemId = item.id;
+  diagnostic.itemName = item.name;
+  diagnostic.modelType = item.constructor.name;
+  diagnostic.hmiObjectType = item.hmiObjectType;
+  diagnostic.sourceFormat = item.sourceFormat;
+  diagnostic.nativeTypeName = item.sourceProperties["TiaTypeName"];
+  diagnostic.nativeSubtype = item.sourceProperties["Subtype"];
+  diagnostic.nativeClassName = item.sourceProperties["WinCC.Object.ClassName"];
+  diagnostic.nativeClassId = item.sourceProperties["WinCC.Object.ClassId"];
+  diagnostic.rendererRoute = route;
+  diagnostic.isPlaceholder = placeholder;
+  diagnostic.childCount = item instanceof HmiContainerBase || item instanceof HmiLayoutContainerBase ? item.items.length : 0;
+  diagnostic.sourcePropertyNames = Object.keys(item.sourceProperties).sort();
+  observer(diagnostic);
 }
 
 function appendTextBox(html: string[], item: HmiTextBox, context: HmiHtmlConvertContext): void {
