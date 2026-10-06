@@ -262,6 +262,7 @@ public sealed class HmiRecipeToHtmlConverter
                         .Append(Encode(pair.Value == null ? "Null" : pair.Value)).Append("</td></tr>");
             html.Append("</tbody></table></div>");
         }
+        AppendStoredArrayValues(html, recipe);
         if (recipe.DataSets.Any(record => record.LastModification != null || record.LastUser != null))
         {
             html.Append("<h2>Stored record metadata</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th><th scope=\"col\">Last modification (stored)</th><th scope=\"col\">Last user</th></tr></thead><tbody>");
@@ -277,6 +278,30 @@ public sealed class HmiRecipeToHtmlConverter
         }
         AppendRecipeViews(html, recipe, culture);
         return html.Append("</body></html>").ToString();
+    }
+
+    private static void AppendStoredArrayValues(StringBuilder html, HmiRecipe recipe)
+    {
+        if (!recipe.DataSets.Any(record => record.SourceArrayValues.Count > 0)) return;
+        html.Append("<h2>Stored array values</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th><th scope=\"col\">Source key</th><th scope=\"col\">Count</th><th scope=\"col\">Values (storage order)</th></tr></thead><tbody>");
+        foreach (var record in recipe.DataSets)
+            foreach (var pair in record.SourceArrayValues)
+            {
+                html.Append("<tr><th scope=\"row\">").Append(Encode(record.Name)).Append("</th><td>")
+                    .Append(record.SourceNumber?.ToString(CultureInfo.InvariantCulture)).Append("</td><td>").Append(Encode(pair.Key))
+                    .Append("</td><td>").Append(pair.Value.Count.ToString(CultureInfo.InvariantCulture)).Append("</td><td>");
+                if (pair.Value.Count == 0) html.Append("Empty array");
+                else
+                {
+                    html.Append("<ol start=\"0\">");
+                    foreach (var value in pair.Value)
+                        html.Append("<li data-value-state=\"").Append(value == null ? "null" : "present").Append("\">")
+                            .Append(Encode(value == null ? "Null" : value)).Append("</li>");
+                    html.Append("</ol>");
+                }
+                html.Append("</td></tr>");
+            }
+        html.Append("</tbody></table></div>");
     }
 
     private static void AppendFieldTextLists(StringBuilder html, HmiRecipe recipe, CultureInfo? culture)

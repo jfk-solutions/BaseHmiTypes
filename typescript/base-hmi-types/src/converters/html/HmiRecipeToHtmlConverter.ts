@@ -218,6 +218,7 @@ export class HmiRecipeToHtmlConverter {
             "</td><td data-value-state=\"", value == null ? "null" : "present", "\">", encode(value == null ? "Null" : value), "</td></tr>");
       html.push("</tbody></table></div>");
     }
+    appendStoredArrayValues(html, recipe);
     if (recipe.dataSets.some(record=>record.lastModification!==undefined || record.lastUser!==undefined)) {
       html.push('<h2>Stored record metadata</h2><div class="table-scroll"><table><thead><tr><th scope="col">Record</th><th scope="col">Number</th><th scope="col">Last modification (stored)</th><th scope="col">Last user</th></tr></thead><tbody>');
       for(const record of recipe.dataSets) {
@@ -233,6 +234,24 @@ export class HmiRecipeToHtmlConverter {
     appendRecipeViews(html, recipe, cultureLcid);
     return html.concat("</body></html>").join("");
   }
+}
+
+function appendStoredArrayValues(html: string[], recipe: HmiRecipe): void {
+  if (!recipe.dataSets.some(record => record.sourceArrayValues.size > 0)) return;
+  html.push('<h2>Stored array values</h2><div class="table-scroll"><table><thead><tr><th scope="col">Record</th><th scope="col">Number</th><th scope="col">Source key</th><th scope="col">Count</th><th scope="col">Values (storage order)</th></tr></thead><tbody>');
+  for (const record of recipe.dataSets)
+    for (const [key, values] of record.sourceArrayValues) {
+      html.push('<tr><th scope="row">', encode(record.name), '</th><td>', encode(record.sourceNumber?.toString()), '</td><td>', encode(key), '</td><td>', String(values.length), '</td><td>');
+      if (values.length === 0) html.push('Empty array');
+      else {
+        html.push('<ol start="0">');
+        for (const value of values)
+          html.push('<li data-value-state="', value == null ? 'null' : 'present', '">', encode(value == null ? 'Null' : value), '</li>');
+        html.push('</ol>');
+      }
+      html.push('</td></tr>');
+    }
+  html.push('</tbody></table></div>');
 }
 
 function appendFieldTextLists(html: string[], recipe: HmiRecipe, cultureLcid?: number): void {

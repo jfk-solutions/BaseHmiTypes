@@ -132,3 +132,5 @@ logarithmic labels. Automatic or missing ranges, equal bounds, unsupported scali
 and invalid logarithmic bounds receive explicit messages. Associated per-pen axis
 settings use ValueAxisDivisionCount and ValueAxisAutoScale; TypeScript mirrors
 these properties in camel case.
+
+Stored recipe arrays can be supplied through `HmiRecipeDataSet.SourceArrayValues` / `sourceArrayValues`: exact source keys mapped to ordered nullable member strings. Recipe HTML renders these independently of scalar values, preserving empty arrays and null/empty members. List positions represent storage order; PLC bounds and dimensions require separate source evidence.
