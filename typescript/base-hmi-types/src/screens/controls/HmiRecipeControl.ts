@@ -15,6 +15,10 @@ export class HmiRecipeControl extends HmiControlWindowBase {
   fieldLength?: HmiProperty<number>;
   horizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
   enableRecipeDialog?: HmiProperty<boolean>;
+  headerFontReferenceDeviceSize?: HmiProperty<number>;
+  contentFontReferenceDeviceSize?: HmiProperty<number>;
+  statusBarFontReferenceDeviceSize?: HmiProperty<number>;
+  comboBoxFontReferenceDeviceSize?: HmiProperty<number>;
   headerCornerRadius?: HmiProperty<number>;
   headerBorderBackgroundColor?: HmiProperty<HmiColor>;
   headerBackFillStyle?: HmiProperty<number>;

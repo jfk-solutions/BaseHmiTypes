@@ -3285,6 +3285,10 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-header-second-gradient-offset", resolvePropertyPreview(recipeControl.headerSecondGradientOffset));
   appendAttribute(html, "data-use-header-first-gradient", resolvePropertyPreview(recipeControl.useHeaderFirstGradient));
   appendAttribute(html, "data-use-header-second-gradient", resolvePropertyPreview(recipeControl.useHeaderSecondGradient));
+  appendAttribute(html, "data-header-font-reference-device-size", resolvePropertyPreview(recipeControl.headerFontReferenceDeviceSize));
+  appendAttribute(html, "data-content-font-reference-device-size", resolvePropertyPreview(recipeControl.contentFontReferenceDeviceSize));
+  appendAttribute(html, "data-status-bar-font-reference-device-size", resolvePropertyPreview(recipeControl.statusBarFontReferenceDeviceSize));
+  appendAttribute(html, "data-combo-box-font-reference-device-size", resolvePropertyPreview(recipeControl.comboBoxFontReferenceDeviceSize));
   appendAttribute(html, "data-word-wrap", resolvePropertyPreview(recipeControl.wordWrap));
   appendAttribute(html, "data-button-background-color", resolvePropertyPreview(recipeControl.buttonBackgroundColor));
   appendAttribute(html, "data-button-border-background-color", resolvePropertyPreview(recipeControl.buttonBorderBackgroundColor));
