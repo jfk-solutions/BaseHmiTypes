@@ -15,6 +15,12 @@ for (const Type of [HmiAlarmControl, HmiDetailedParameterControl, HmiOverviewPar
     const screen = new HmiScreen(), layer = new HmiLayer(); layer.items.push(control); screen.layers.push(layer);
     const renderer = new HmiScreenToHtmlConverter(), htmlFor = async () => withoutRuntimeScripts(await renderer.convertAsync(screen));
     let html = await htmlFor(), table = html.match(/<table class="hmi-(?:alarm|parameter|diagnosis)-table[^>]*>.*?<\/table>/su)?.[0] ?? "", header = table.match(/<thead>.*?<\/thead>/su)?.[0] ?? "";
+    if (control instanceof HmiAlarmControl) {
+      const columns = table.match(/<colgroup>(.*?)<\/colgroup>/su)?.[1];
+      assert.ok(columns, "Alarm table retains its column definitions");
+      assert.equal(columns.replace(/<col\b[^>]*>/gu, "").trim(), "", "Column group contains only column elements, never CSS text");
+      assert.equal((columns.match(/<col\b/gu) ?? []).length, 1, "Hidden columns do not produce layout entries");
+    }
     assert.ok(header.includes("Caption &lt;A&gt;")); assert.ok(!header.includes("Hidden caption"));
     assert.equal(header.includes('<span style="display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">'), mode === 1);
     if (mode === 0) assert.ok(header.includes("overflow: visible;text-overflow: clip;white-space: normal;"));
