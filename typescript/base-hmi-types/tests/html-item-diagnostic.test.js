@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { HmiScreen, HmiLayer, HmiGroup, HmiButton, HmiUnkown, HmiText, HmiScreenItemBase, HmiFaceplateContainer, HmiScreenToHtmlConverter, HmiHtmlConvertOptions, staticProperty } from "../dist/index.js";
+import { HmiScreen, HmiLayer, HmiGroup, HmiButton, HmiUnkown, HmiText, HmiScreenItemBase, HmiContainerBase, HmiScreenToHtmlConverter, HmiHtmlConvertOptions, staticProperty } from "../dist/index.js";
 class DerivedText extends HmiText {}
 class Unsupported extends HmiScreenItemBase {}
 
@@ -23,11 +23,11 @@ test("Hidden container reports its retained child count", async () => {
 });
 
 test("Container diagnostics identify the actual generic container route", async () => {
-  const screen = new HmiScreen(), layer = new HmiLayer(), container = new HmiFaceplateContainer();
+  const screen = new HmiScreen(), layer = new HmiLayer(), container = new HmiContainerBase();
   container.items.push(new HmiButton()); layer.items.push(container); screen.layers.push(layer);
   const rows = [], options = new HmiHtmlConvertOptions(); options.itemDiagnostic = row => rows.push(row);
   await new HmiScreenToHtmlConverter().convertAsync(screen, undefined, options);
-  assert.equal(rows[0].modelType, "HmiFaceplateContainer");
+  assert.equal(rows[0].modelType, "HmiContainerBase");
   assert.equal(rows[0].rendererRoute, "HmiContainerBase");
   assert.equal(rows[0].childCount, 1); assert.equal(rows[1].rendererRoute, "HmiButton");
 });

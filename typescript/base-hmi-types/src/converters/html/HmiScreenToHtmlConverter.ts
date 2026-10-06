@@ -13,6 +13,9 @@ import { tryOverrideSvgImageAspectRatio } from "../../images/converters/svg-imag
 import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js";
 import { HmiColor, hmiColorFromArgb } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
+import { HmiFaceplateContainer } from "../../screens/base/HmiFaceplateContainer.js";
+import { HmiFaceplateType } from "../../screens/base/HmiFaceplateType.js";
+import { HmiFaceplateInterfaceValue } from "../../screens/base/HmiFaceplateInterfaceValue.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
 import { HmiCustomWidgetContainer } from "../../screens/base/HmiCustomWidgetContainer.js";
 import { HmiDynamicSvg } from "../../screens/base/HmiDynamicSvg.js";
@@ -41,7 +44,7 @@ import { HmiTrendChartStyle } from "../../screens/base/HmiTrendChartStyle.js";
 import { HmiFunctionTrendControl } from "../../screens/controls/HmiFunctionTrendControl.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
-import { staticProperty, getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
+import { staticProperty, getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiFaceplateInterfaceProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
 import { HmiScreenBase } from "../../screens/base/HmiScreenBase.js";
 import { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
 import { HmiSymbolContainer } from "../../screens/base/HmiSymbolContainer.js";
@@ -165,7 +168,7 @@ export class HmiScreenToHtmlConverter {
     signal?: AbortSignal,
   ): Promise<string> {
     const context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(resolveDefaultProfile(project)));
-    return this.convertCoreAsync(screen, project, context, true, new Set<string>(), "screen", false, signal);
+    return this.convertCoreAsync(screen, project, context, true, new Set<HmiScreenBase>(), "screen", false, signal);
   }
 
   async convertInspectableAsync(
@@ -176,7 +179,7 @@ export class HmiScreenToHtmlConverter {
   ): Promise<HmiInspectableScreenHtml> {
     const inspection = await inspectHmiScreenAsync(screen, project, signal);
     const context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(resolveDefaultProfile(project)));
-    const html = await this.convertCoreAsync(screen, project, context, true, new Set<string>(), "screen", true, signal);
+    const html = await this.convertCoreAsync(screen, project, context, true, new Set<HmiScreenBase>(), "screen", true, signal);
     return { html, inspection };
   }
 
@@ -185,7 +188,7 @@ export class HmiScreenToHtmlConverter {
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
     includeRuntime: boolean,
-    screenStack: Set<string>,
+    screenStack: Set<HmiScreenBase>,
     key: string,
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
@@ -200,10 +203,15 @@ export class HmiScreenToHtmlConverter {
       }
       return html.join("") + '</section>';
     }
-    const currentKeys = getScreenReferenceKeys(screen);
-    for (const key of currentKeys) {
-      screenStack.add(key);
+    signal?.throwIfAborted();
+    if (isScreenInStack(screen, screenStack)) {
+      const placeholder = ["<div"];
+      appendAttribute(placeholder, "class", context.options.missingScreenPlaceholderCssClass);
+      appendAttribute(placeholder, "data-hmi-recursive-screen", screen.id ?? screen.name ?? "anonymous");
+      placeholder.push(">Recursive screen reference: ", escapeHtml(screen.name ?? screen.id ?? "Unnamed screen"), "</div>");
+      return placeholder.join("");
     }
+    screenStack.add(screen);
 
     const html: string[] = [];
     try {
@@ -281,9 +289,7 @@ export class HmiScreenToHtmlConverter {
       html.push("</div>");
       return html.join("");
     } finally {
-      for (const key of currentKeys) {
-        screenStack.delete(key);
-      }
+      screenStack.delete(screen);
     }
   }
 
@@ -292,7 +298,7 @@ export class HmiScreenToHtmlConverter {
     item: HmiScreenItemBase,
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
-    screenStack: Set<string>,
+    screenStack: Set<HmiScreenBase>,
     key: string,
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
@@ -462,8 +468,14 @@ export class HmiScreenToHtmlConverter {
           `${key}/item:${childIndex}`, includeInspectionAttributes, signal);
       }
       html.push("</div>");
-    } else if (item instanceof HmiLayoutContainerBase || item instanceof HmiContainerBase) {
-      reportItemDiagnostic(item, context, item instanceof HmiLayoutContainerBase ? "HmiLayoutContainerBase" : "HmiContainerBase", false);
+    } else if (item instanceof HmiLayoutContainerBase) {
+      reportItemDiagnostic(item, context, "HmiLayoutContainerBase", false);
+      await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
+    } else if (item instanceof HmiFaceplateContainer) {
+      reportItemDiagnostic(item, context, "HmiFaceplateContainer", false);
+      await this.appendFaceplateContainerAsync(html, item, project, context, screenStack, key, includeInspectionAttributes, signal);
+    } else if (item instanceof HmiContainerBase) {
+      reportItemDiagnostic(item, context, "HmiContainerBase", false);
       await this.appendContainerAsync(html, item, item.items, project, context, screenStack, key, includeInspectionAttributes, signal);
     } else if (item instanceof HmiScreenWindow) {
       reportItemDiagnostic(item, context, "HmiScreenWindow", false);
@@ -531,12 +543,43 @@ export class HmiScreenToHtmlConverter {
     }
   }
 
+  private async appendFaceplateContainerAsync(
+    html: string[],
+    faceplateContainer: HmiFaceplateContainer,
+    project: IHmiProject | undefined,
+    context: HmiHtmlConvertContext,
+    screenStack: Set<HmiScreenBase>,
+    key: string,
+    includeInspectionAttributes: boolean,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    let resolved: HmiFaceplateType | undefined;
+    if (project && faceplateContainer.faceplateId?.trim())
+      resolved = await project.getFaceplate(faceplateContainer.faceplateId, signal);
+    if (!resolved && project && faceplateContainer.faceplateName?.trim() && faceplateContainer.faceplateVersion?.trim())
+      resolved = await project.getFaceplateByNameAndVersion(faceplateContainer.faceplateName, faceplateContainer.faceplateVersion, signal);
+
+    html.push("<div");
+    appendCommonAttributes(html, faceplateContainer, context);
+    html.push(">");
+    if (!resolved) {
+      html.push("<div");
+      appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);
+      html.push(">", escapeHtml(faceplateContainer.faceplateName ?? faceplateContainer.faceplateId ?? "Missing faceplate"), "</div>");
+    } else {
+      const childContext = context.withFaceplateInterfaceValues(faceplateContainer.interfaceValues);
+      html.push(await this.convertCoreAsync(resolved, project, childContext, false, screenStack,
+        `${key}/faceplate`, includeInspectionAttributes, signal));
+    }
+    html.push("</div>");
+  }
+
   private async appendSymbolContainerAsync(
     html: string[],
     symbolContainer: HmiSymbolContainer,
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
-    screenStack: Set<string>,
+    screenStack: Set<HmiScreenBase>,
     key: string,
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
@@ -587,7 +630,7 @@ export class HmiScreenToHtmlConverter {
     items: readonly HmiScreenItemBase[],
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
-    screenStack: Set<string>,
+    screenStack: Set<HmiScreenBase>,
     key: string,
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
@@ -662,7 +705,7 @@ export class HmiScreenToHtmlConverter {
     ocxControl: HmiOcxControl,
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
-    screenStack: Set<string>,
+    screenStack: Set<HmiScreenBase>,
     key: string,
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
@@ -710,7 +753,7 @@ export class HmiScreenToHtmlConverter {
     dotNetControl: HmiDotNetControlContainer,
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
-    screenStack: Set<string>,
+    screenStack: Set<HmiScreenBase>,
     key: string,
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
@@ -747,7 +790,7 @@ export class HmiScreenToHtmlConverter {
     screenWindow: HmiScreenWindow,
     project: IHmiProject | undefined,
     context: HmiHtmlConvertContext,
-    screenStack: Set<string>,
+    screenStack: Set<HmiScreenBase>,
     key: string,
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
@@ -775,7 +818,7 @@ export class HmiScreenToHtmlConverter {
       html.push(">");
       html.push(escapeHtml(screenName ?? screenId ?? "Missing screen"));
       html.push("</div>");
-    } else if (getScreenReferenceKeys(resolved).some(candidate => screenStack.has(candidate))) {
+    } else if (isScreenInStack(resolved, screenStack)) {
       html.push("<div");
       appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);
       html.push(">Recursive screen reference</div>");
@@ -923,7 +966,7 @@ function appendScreenWindowScrollInitializer(html: string[], screenWindow: HmiSc
 async function resolveTemplateAsync(
   screen: HmiScreenBase,
   project: IHmiProject | undefined,
-  screenStack: Set<string>,
+  screenStack: Set<HmiScreenBase>,
   signal?: AbortSignal,
 ): Promise<HmiScreenBase | undefined> {
   if (project === undefined) {
@@ -942,23 +985,32 @@ async function resolveTemplateAsync(
     template = await project.getScreen(templateName, signal);
   }
 
-  if (template === undefined || getScreenReferenceKeys(template).some((key) => screenStack.has(key))) {
+  if (template === undefined || isScreenInStack(template, screenStack)) {
     return undefined;
   }
 
   return template;
 }
 
-function getScreenReferenceKeys(screen: HmiScreenBase): string[] {
-  const keys: string[] = [];
-  if (screen.id?.trim()) {
-    keys.push(`id:${screen.id}`);
-  }
-  if (screen.name?.trim()) {
-    keys.push(`name:${screen.name}`);
-  }
-  return keys;
+function ordinalIgnoreCaseKey(value: string): string {
+  // Ordinal matching preserves characters whose uppercase mapping expands or crosses into ASCII.
+  return Array.from(value, character => {
+    const upper = character.toUpperCase();
+    return upper.length !== character.length || (character.charCodeAt(0) > 127 && upper.charCodeAt(0) <= 127)
+      ? character : upper;
+  }).join("");
 }
+
+function isScreenInStack(screen: HmiScreenBase, screenStack: Set<HmiScreenBase>): boolean {
+  for (const active of screenStack) {
+    if (active === screen) return true;
+    if (screen.id?.trim() && active.id !== undefined && ordinalIgnoreCaseKey(active.id) === ordinalIgnoreCaseKey(screen.id)) return true;
+    if (!screen.id?.trim() && !active.id?.trim() && screen.name?.trim() && active.kind === screen.kind
+      && active.name !== undefined && ordinalIgnoreCaseKey(active.name) === ordinalIgnoreCaseKey(screen.name)) return true;
+  }
+  return false;
+}
+
 
 function appendLine(html: string[], line: HmiLine, context: HmiHtmlConvertContext): void {
   const width = getStaticValueOrDefault(line.width, 0);
@@ -1593,8 +1645,8 @@ async function appendButton(
     ?? button.states[0];
   const mode = getStaticValue(button.mode);
   const down = isButtonDownVisual(button);
-  const caption = state?.text ?? (down ? getStaticValue(button.alternateText) : undefined)
-    ?? getStaticValue(button.text);
+  const caption = state?.text ?? (down ? resolveStaticValue(button.alternateText, context, tryConvertFaceplateTextValue) : undefined)
+    ?? resolveStaticValue(button.text, context, tryConvertFaceplateTextValue);
   html.push("<button");
   appendCommonAttributes(html, button, context, true, createButtonStyle(button, state));
   appendAttribute(html, "aria-label", caption?.getDisplayText(context.options.cultureLcid));
@@ -1787,7 +1839,7 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
   html.push("<input");
   appendCommonAttributes(html, ioField, context, undefined, createFontWritingModeStyle(ioField.font));
   if (getStaticValue(ioField.enabled) === false) appendAttribute(html, "disabled", "disabled");
-  let text = getStaticValue(ioField.text)?.getDisplayText(context.options.cultureLcid);
+  let text = resolveStaticValue(ioField.text, context, tryConvertFaceplateTextValue)?.getDisplayText(context.options.cultureLcid);
   if (!text?.trim() && ioField.text?.kind === HmiPropertyKind.Expression)
     text = (ioField.text as HmiExpressionProperty<HmiMultilingualText>).expression;
   appendAttribute(html, "value", text);
@@ -2374,7 +2426,7 @@ function appendScale(html: string[], scale: HmiScale, context: HmiHtmlConvertCon
 }
 
 function appendDateTimeField(html: string[], field: HmiDateTimeField, context: HmiHtmlConvertContext): void {
-  const value = getStaticValue(field.text);
+  const value = resolveStaticValue(field.text, context, tryConvertFaceplateTextValue);
   html.push("<div");
   appendCommonAttributes(html, field, context, true, "display: flex; overflow: hidden;");
   appendAttribute(html, "data-show-date", resolvePropertyPreview(field.showDate));
@@ -4528,8 +4580,8 @@ async function appendToggleSwitch(
   const offState = toggleSwitch.states[0];
   const onState = toggleSwitch.states[1] ?? offState;
   const selectedState = toggleSwitch.states.find(candidate => candidate.value === stateValue) ?? offState;
-  const text = getStaticValue(toggleSwitch.text) ?? offState?.text;
-  const alternateText = getStaticValue(toggleSwitch.alternateText) ?? onState?.text;
+  const text = resolveStaticValue(toggleSwitch.text, context, tryConvertFaceplateTextValue) ?? offState?.text;
+  const alternateText = resolveStaticValue(toggleSwitch.alternateText, context, tryConvertFaceplateTextValue) ?? onState?.text;
   const image = getStaticValue(toggleSwitch.image) ?? offState?.image;
   const alternateImage = getStaticValue(toggleSwitch.alternateImage) ?? onState?.image;
 
@@ -4694,7 +4746,7 @@ function appendTextBox(html: string[], item: HmiTextBox, context: HmiHtmlConvert
   const length = getStaticValue(item.fieldLength);
   if (length !== undefined && length > 0) appendAttribute(html, "maxlength", String(length));
   html.push(">");
-  const text = getStaticValue(item.text)?.getText(context.options.cultureLcid) ?? "";
+  const text = resolveStaticValue(item.text, context, tryConvertFaceplateTextValue)?.getText(context.options.cultureLcid) ?? "";
   if (text.startsWith("\n") || text.startsWith("\r")) html.push("\n");
   html.push(escapeHtml(text), "</textarea>");
 }
@@ -4708,7 +4760,7 @@ function appendTextBlock(
   html.push("<div");
   appendCommonAttributes(html, item, context, undefined, "overflow: hidden;" + (createTextOrientationStyle(item, context) ?? ""));
   html.push(">");
-  appendFormattedText(html, item, getStaticValue(text), context);
+  appendFormattedText(html, item, resolveStaticValue(text, context, tryConvertFaceplateTextValue), context);
   html.push("</div>");
 }
 
@@ -6080,6 +6132,27 @@ function appendStaticAttribute<T>(html: string[], name: string, property: HmiPro
   appendAttribute(html, name, formatAttributeValue(value));
 }
 
+function resolveStaticValue<T>(
+  property: HmiProperty<T> | undefined,
+  context: HmiHtmlConvertContext,
+  convert: (value: unknown) => T | undefined,
+): T | undefined {
+  if (property?.kind === HmiPropertyKind.FaceplateInterface) {
+    const name = (property as HmiFaceplateInterfaceProperty<T>).interfaceName;
+    const value = context.tryGetFaceplateInterfaceValue(name);
+    if (value !== undefined && value !== null) {
+      const converted = convert(value);
+      if (converted !== undefined) return converted;
+    }
+  }
+  return property?.staticValue;
+}
+
+function tryConvertFaceplateTextValue(value: unknown): HmiMultilingualText | undefined {
+  if (value instanceof HmiMultilingualText) return value;
+  return typeof value === "string" ? HmiMultilingualText.fromText(value) : undefined;
+}
+
 function formatAttributeValue(value: unknown): string | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -7023,6 +7096,7 @@ class HmiHtmlConvertContext {
     readonly positionOffsetX = 0,
     readonly positionOffsetY = 0,
     readonly nodeKey?: string,
+    readonly faceplateInterfaceValues: ReadonlyMap<string, HmiFaceplateInterfaceValue> = new Map(),
   ) {}
 
   withPositionOffset(offsetX: number, offsetY: number): HmiHtmlConvertContext {
@@ -7032,6 +7106,7 @@ class HmiHtmlConvertContext {
       this.positionOffsetX + offsetX,
       this.positionOffsetY + offsetY,
       this.nodeKey,
+      this.faceplateInterfaceValues,
     );
   }
 
@@ -7042,6 +7117,24 @@ class HmiHtmlConvertContext {
       this.positionOffsetX,
       this.positionOffsetY,
       nodeKey,
+      this.faceplateInterfaceValues,
     );
   }
+
+  withFaceplateInterfaceValues(values: readonly HmiFaceplateInterfaceValue[]): HmiHtmlConvertContext {
+    const dictionary = new Map<string, HmiFaceplateInterfaceValue>();
+    for (const value of values) {
+      if (!value.name?.trim() || value.tagName?.trim() || value.tagId?.trim()) continue;
+      const key = ordinalIgnoreCaseKey(value.name);
+      if (!dictionary.has(key)) dictionary.set(key, value);
+    }
+    return new HmiHtmlConvertContext(this.options, this.effectiveProperties,
+      this.positionOffsetX, this.positionOffsetY, this.nodeKey, dictionary);
+  }
+
+  tryGetFaceplateInterfaceValue(name: string | undefined): unknown {
+    if (!name?.trim()) return undefined;
+    return this.faceplateInterfaceValues.get(ordinalIgnoreCaseKey(name))?.value;
+  }
+
 }
