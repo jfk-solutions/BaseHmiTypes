@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { HmiRecipe, HmiRecipeParameter, HmiRecipeDataSet, HmiRecipeReference, HmiRecipeBinaryValue, HmiRecipeToHtmlConverter, HmiMultilingualText, HmiScreen, HmiLayer, HmiDetailedParameterControl, HmiOverviewParameterControl, HmiScreenToHtmlConverter, HmiHtmlConvertOptions, staticProperty } from "../dist/index.js";
+import { HmiRecipeStructuredValue, HmiRecipeStructuredEntry, HmiRecipeValueKind, HmiRecipe, HmiRecipeParameter, HmiRecipeDataSet, HmiRecipeReference, HmiRecipeBinaryValue, HmiRecipeToHtmlConverter, HmiMultilingualText, HmiScreen, HmiLayer, HmiDetailedParameterControl, HmiOverviewParameterControl, HmiScreenToHtmlConverter, HmiHtmlConvertOptions, staticProperty } from "../dist/index.js";
 function recipe() {
   const result = Object.assign(new HmiRecipe(), { name: "Definition <A>", comment: "Comment & note" });
   result.displayName = HmiMultilingualText.fromText("Default title"); result.displayName.texts.set(1031, "Localized <title>");
   const field = Object.assign(new HmiRecipeParameter(), { name: "Field <A>", dataType: "Real", defaultValue: "01.500", unit: "<unit>", minimumValue: "-4", maximumValue: "17", maximumLength: 23, required: false });
   field.references.set("Tag", Object.assign(new HmiRecipeReference(), { sourceId: "17-23", name: "Tag <A>" })); result.parameters.push(field);
   const record = Object.assign(new HmiRecipeDataSet(), { name: "Stored <record>" }); record.values["Field <A>"] = "001.00";
+  const structured = Object.assign(new HmiRecipeStructuredValue(), { kind: HmiRecipeValueKind.Map });
+  structured.entries.push(Object.assign(new HmiRecipeStructuredEntry(), { key: "__proto__", value: Object.assign(new HmiRecipeStructuredValue(), { kind: HmiRecipeValueKind.Scalar, value: "nested, <value>" }) }));
+  record.sourceStructuredValues.set("Map", structured);
   record.sourceValues.set("Extra", undefined); record.sourceArrayValues.set("Array", ["01", undefined, ""]);
   record.sourceBinaryValues.set("Blob", Object.assign(new HmiRecipeBinaryValue(), { sourceType: "CoreBlob", payloadBase64: "AA==", decodedByteLength: 1 })); result.dataSets.push(record); return result;
 }
@@ -15,7 +18,7 @@ for (const culture of [1031, 1033]) test(`Recipe fragment reuses the entire stan
   const body = document.match(/<body>([\s\S]*)<\/body>/)[1];
   assert.equal(fragment.replace(/^<section[^>]*><style>[\s\S]*?<\/style>/, "").replace(/<\/section>$/, ""), body);
   assert.ok(!/<(?:html|head|body|meta|script)\b/i.test(fragment));
-  for (const text of ["Maximum length", "&lt;unit&gt;", "Tag &lt;A&gt;", "Stored records", "001.00", "Stored array values", "AA=="])
+  for (const text of ["Maximum length", "&lt;unit&gt;", "Tag &lt;A&gt;", "Stored records", "001.00", "Stored array values", "AA==", "Stored structured values", "nested, &lt;value&gt;"])
     assert.ok(fragment.includes(text), text);
   assert.ok(fragment.includes(".hmi-recipe-definition th,.hmi-recipe-definition td"));
   assert.equal(model.dataSets.length, 1); assert.equal(model.parameters[0].name, "Field <A>");

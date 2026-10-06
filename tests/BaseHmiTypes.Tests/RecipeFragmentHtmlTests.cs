@@ -18,6 +18,9 @@ public class RecipeFragmentHtmlTests
         var field = new HmiRecipeParameter { Name = "Field <A>", DataType = "Real", DefaultValue = "01.500", Unit = "<unit>", MinimumValue = "-4", MaximumValue = "17", MaximumLength = 23, Required = false };
         field.References["Tag"] = new() { SourceId = "17-23", Name = "Tag <A>" }; result.Parameters.Add(field);
         var record = new HmiRecipeDataSet { Name = "Stored <record>" }; record.Values["Field <A>"] = "001.00";
+        var structured = new HmiRecipeStructuredValue { Kind = HmiRecipeValueKind.Map };
+        structured.Entries.Add(new HmiRecipeStructuredEntry { Key = "__proto__", Value = new HmiRecipeStructuredValue { Kind = HmiRecipeValueKind.Scalar, Value = "nested, <value>" } });
+        record.SourceStructuredValues["Map"] = structured;
         record.SourceValues["Extra"] = null; record.SourceArrayValues["Array"] = new List<string?> { "01", null, "" };
         record.SourceBinaryValues["Blob"] = new() { SourceType = "CoreBlob", PayloadBase64 = "AA==", DecodedByteLength = 1 }; result.DataSets.Add(record); return result;
     }
@@ -28,7 +31,7 @@ public class RecipeFragmentHtmlTests
         var body = Regex.Match(document, @"<body>([\s\S]*)</body>").Groups[1].Value;
         var content = Regex.Replace(fragment, @"^<section[^>]*><style>[\s\S]*?</style>", ""); content = Regex.Replace(content, @"</section>$", ""); Assert.AreEqual(body, content);
         Assert.IsFalse(Regex.IsMatch(fragment, @"<(?:html|head|body|meta|script)\b", RegexOptions.IgnoreCase));
-        foreach (var text in new[] { "Maximum length", "&lt;unit&gt;", "Tag &lt;A&gt;", "Stored records", "001.00", "Stored array values", "AA==" }) StringAssert.Contains(fragment, text);
+        foreach (var text in new[] { "Maximum length", "&lt;unit&gt;", "Tag &lt;A&gt;", "Stored records", "001.00", "Stored array values", "AA==", "Stored structured values", "nested, &lt;value&gt;" }) StringAssert.Contains(fragment, text);
         StringAssert.Contains(fragment, ".hmi-recipe-definition th,.hmi-recipe-definition td"); Assert.AreEqual(1, model.DataSets.Count); Assert.AreEqual("Field <A>", model.Parameters[0].Name);
     }
     [TestMethod] [DataRow(false)] [DataRow(true)]

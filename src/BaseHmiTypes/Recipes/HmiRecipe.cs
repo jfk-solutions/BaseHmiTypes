@@ -195,6 +195,8 @@ public sealed class HmiRecipeDataSet : IHmiObject
 
     public IDictionary<string, string?> Values { get; } = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
+    public IDictionary<string, HmiRecipeStructuredValue> SourceStructuredValues { get; } = new Dictionary<string, HmiRecipeStructuredValue>(StringComparer.Ordinal);
+
     public IDictionary<string, string?> SourceValues { get; } = new Dictionary<string, string?>(StringComparer.Ordinal);
 
     /// <summary>Flat stored array members in storage order, keyed by the exact source key; no PLC bounds are inferred.</summary>
