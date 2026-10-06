@@ -6581,14 +6581,14 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     html.push(`--hmi-foreground-color-on: ${colorToCss(foregroundBlink.blinkValue)};`);
     animations.push(`hmi-foreground-color-flash ${getBlinkDuration(foregroundBlink.rate)}s steps(1, end) infinite`);
   } else {
-    appendColorStyle(html, "color", foregroundColor);
+    appendColorStyle(html, "color", foregroundColor, context);
   }
   if (useDisabledForegroundColor) {
-    const shadow = getStaticValue(context.effectiveProperties.resolve(
+    const shadow = resolveStaticValue(context.effectiveProperties.resolve(
       item,
       "DisabledForegroundShadowColor",
       item.disabledForegroundShadowColor,
-    ));
+    ), context, tryConvertFaceplateColorValue);
     if (shadow !== undefined) html.push(`text-shadow: 1px 1px ${colorToCss(shadow)};`);
   }
   if (!(item instanceof HmiGauge)) {
@@ -6601,9 +6601,9 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
       html.push(`--hmi-background-color-on: ${colorToCss(backgroundBlink.blinkValue)};`);
       animations.push(`hmi-background-color-flash ${getBlinkDuration(backgroundBlink.rate)}s steps(1, end) infinite`);
     } else {
-      appendColorStyle(html, "background-color", backgroundColor);
+      appendColorStyle(html, "background-color", backgroundColor, context);
     }
-    const barTrackColor = getStaticValue(backgroundColor);
+    const barTrackColor = resolveStaticValue(backgroundColor, context, tryConvertFaceplateColorValue);
     if (item instanceof HmiBar && barTrackColor !== undefined)
       html.push(`--hmi-bar-track-background: ${colorToCss(barTrackColor)};`);
   }
@@ -6632,18 +6632,18 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     html.push(`--hmi-border-color-on: ${colorToCss(borderBlink.blinkValue)};`);
     animations.push(`${centeredBorder ? "hmi-outline-color-flash" : "hmi-border-color-flash"} ${getBlinkDuration(borderBlink.rate)}s steps(1, end) infinite`);
   } else {
-    appendColorStyle(html, "border-color", borderColor);
+    appendColorStyle(html, "border-color", borderColor, context);
   }
   if (animations.length > 0)
     html.push(`animation: ${animations.join(", ")};`);
   appendWidthStyle(html, borderWidth, borderStyle, !suppressBorderStyle);
   if (centeredBorder && resolvedBorderWidth !== undefined) {
-    const color = getStaticValue(borderColor);
+    const color = resolveStaticValue(borderColor, context, tryConvertFaceplateColorValue);
     html.push(`border-width: 0px;outline-style: ${borderStyle};outline-width: ${toCss(resolvedBorderWidth)}px;`);
     html.push(`outline-offset: ${toCss(-resolvedBorderWidth / 2)}px;outline-color: ${color === undefined ? "currentColor" : colorToCss(color)};`);
   }
   if (item instanceof HmiShapeBase && !framedShapeBorder) {
-    appendColorStyle(html, "border-color", item.lineColor);
+    appendColorStyle(html, "border-color", item.lineColor, context);
     appendWidthStyle(html, item.lineWidth, borderStyle);
   }
   appendFillPatternStyle(html, item, context);
@@ -6652,7 +6652,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   if (item instanceof HmiBar)
     appendColorGradientStyle(html, colorGradient, "--hmi-bar-track-background");
   if (item instanceof HmiBar) {
-    const explicitTrackColor = getStaticValue(context.effectiveProperties.resolve(item, "TrackColor", item.trackColor));
+    const explicitTrackColor = resolveStaticValue(context.effectiveProperties.resolve(item, "TrackColor", item.trackColor), context, tryConvertFaceplateColorValue);
     if (explicitTrackColor !== undefined)
       html.push(`--hmi-bar-track-background: ${colorToCss(explicitTrackColor)} !important;`);
   }
@@ -6794,8 +6794,8 @@ function appendFont(html: string[], font: HmiFont, encodeName = true): void {
   if (decorations.length > 0) html.push(`text-decoration: ${decorations.join(" ")};`);
 }
 
-function appendColorStyle(html: string[], name: string, property: HmiProperty<HmiColor> | undefined): void {
-  const value = getStaticValue(property);
+function appendColorStyle(html: string[], name: string, property: HmiProperty<HmiColor> | undefined, context?: HmiHtmlConvertContext): void {
+  const value = context === undefined ? getStaticValue(property) : resolveStaticValue(property, context, tryConvertFaceplateColorValue);
   if (value !== undefined) {
     html.push(`${name}: ${colorToCss(value)};`);
   }
