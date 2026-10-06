@@ -1619,7 +1619,7 @@ async function appendButton(
   context: HmiHtmlConvertContext,
   signal?: AbortSignal,
 ): Promise<void> {
-  const stateValue = getStaticValue(button.state);
+  const stateValue = resolveStaticValue(button.state, context, tryConvertFaceplateDoubleValue);
   const state = button.states.find(candidate => candidate.value === stateValue)
     ?? button.states[0];
   const mode = getStaticValue(button.mode);
@@ -1691,7 +1691,7 @@ function isButtonDownVisual(button: HmiButton, context: HmiHtmlConvertContext): 
 }
 
 function getButtonPressedContentOffset(button: HmiButton, context: HmiHtmlConvertContext): number {
-  const offset = getStaticValue(button.pressedContentOffset) ?? 0;
+  const offset = resolveStaticValue(button.pressedContentOffset, context, tryConvertFaceplateDoubleValue) ?? 0;
   return isButtonDownVisual(button, context) && Number.isFinite(offset) && offset > 0 ? offset : 0;
 }
 
@@ -1778,7 +1778,7 @@ function createButtonStyle(button: HmiButton, state: HmiState | undefined, conte
       break;
   }
   style += createStateStyle(state) ?? "";
-  const borderWidth = getStaticValue(button.threeDBorderWidth) ?? 0;
+  const borderWidth = resolveStaticValue(button.threeDBorderWidth, context, tryConvertFaceplateDoubleValue) ?? 0;
   if (borderWidth <= 0)
     return style || null;
 
@@ -1794,10 +1794,10 @@ function createButtonStyle(button: HmiButton, state: HmiState | undefined, conte
   style += `box-shadow: inset ${width}px 0 0 ${top}, inset 0 ${width}px 0 ${top}, ` +
     `inset -${width}px 0 0 ${bottom}, inset 0 -${width}px 0 ${bottom};`;
   const padding = hasThicknessEdges(button.padding) ? button.padding : undefined;
-  style += `padding: ${toCss(borderWidth + (padding ? getStaticValueOrDefault(padding.top, 0) : 2))}px ` +
-    `${toCss(borderWidth + (padding ? getStaticValueOrDefault(padding.right, 0) : 6))}px ` +
-    `${toCss(borderWidth + (padding ? getStaticValueOrDefault(padding.bottom, 0) : 2))}px ` +
-    `${toCss(borderWidth + (padding ? getStaticValueOrDefault(padding.left, 0) : 6))}px;`;
+  style += `padding: ${toCss(borderWidth + (padding ? (resolveStaticValue(padding.top, context, tryConvertFaceplateDoubleValue) ?? 0) : 2))}px ` +
+    `${toCss(borderWidth + (padding ? (resolveStaticValue(padding.right, context, tryConvertFaceplateDoubleValue) ?? 0) : 6))}px ` +
+    `${toCss(borderWidth + (padding ? (resolveStaticValue(padding.bottom, context, tryConvertFaceplateDoubleValue) ?? 0) : 2))}px ` +
+    `${toCss(borderWidth + (padding ? (resolveStaticValue(padding.left, context, tryConvertFaceplateDoubleValue) ?? 0) : 6))}px;`;
   return style;
 }
 
@@ -6156,6 +6156,24 @@ function tryConvertFaceplateInt32Value(value: unknown): number | undefined {
   const floor = Math.floor(value), fraction = value - floor;
   const rounded = fraction < 0.5 ? floor : fraction > 0.5 ? floor + 1 : floor % 2 === 0 ? floor : floor + 1;
   return rounded >= -2147483648 && rounded <= 2147483647 ? rounded : undefined;
+}
+
+function tryConvertFaceplateDoubleValue(value: unknown): number | undefined {
+  if (typeof value === "number") return value;
+  if (typeof value === "boolean") return value ? 1 : 0;
+  if (typeof value === "bigint")
+    return value >= -9223372036854775808n && value <= 18446744073709551615n ? Number(value) : undefined;
+  if (typeof value !== "string") return undefined;
+  // Invariant Double parsing accepts grouping only before the decimal point,
+  // exponents, ASCII numeric whitespace and trailing NULs. It does not accept JS hex.
+  if (/^[\t\n\v\f\r ]*[+-]?(?:\d[\d,]*(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?[\t\n\v\f\r ]*\0*$/.test(value))
+    return Number(value.replace(/,/g, "").replace(/\0+$/, ""));
+  // CLR special-value parsing uses Unicode whitespace and case-insensitive symbols.
+  const symbol = value.replace(/^[\u0009-\u000d \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/g, "").toLowerCase();
+  if (/^[+-]?nan$/.test(symbol)) return NaN;
+  if (/^[+]?infinity$/.test(symbol)) return Infinity;
+  if (symbol === "-infinity") return -Infinity;
+  return undefined;
 }
 
 function formatAttributeValue(value: unknown): string | undefined {
