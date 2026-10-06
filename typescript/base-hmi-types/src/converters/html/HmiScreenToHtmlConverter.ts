@@ -15,6 +15,8 @@ import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js
 import { HmiColor, hmiColorFromArgb } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
 import { HmiFaceplateContainer } from "../../screens/base/HmiFaceplateContainer.js";
+import { HmiFaceplateType } from "../../screens/base/HmiFaceplateType.js";
+import type { HmiFaceplateInterfaceMember } from "../../screens/base/HmiFaceplateInterfaceMember.js";
 import { HmiHtmlReferenceResolver, isScreenInStack, ordinalIgnoreCaseKey } from "./HmiHtmlReferences.js";
 import { HmiFaceplateInterfaceValue } from "../../screens/base/HmiFaceplateInterfaceValue.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
@@ -195,6 +197,9 @@ export class HmiScreenToHtmlConverter {
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<string> {
+    if (includeRuntime && screen instanceof HmiFaceplateType)
+      context = context.withFaceplateInterfaceValues([], screen.interfaceProperties);
+
     if (screen instanceof HmiCharacterScreen) {
       const html = [context.options.includeMetaCharset ? '<meta charset="utf-8">' : '',
         `<section class="hmi-character-screen" aria-label="${escapeHtml(screen.name ?? "")}">`];
@@ -565,7 +570,7 @@ export class HmiScreenToHtmlConverter {
       appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);
       html.push(">", escapeHtml(faceplateContainer.faceplateName ?? faceplateContainer.faceplateId ?? "Missing faceplate"), "</div>");
     } else {
-      const childContext = context.withFaceplateInterfaceValues(faceplateContainer.interfaceValues);
+      const childContext = context.withFaceplateInterfaceValues(faceplateContainer.interfaceValues, resolved.interfaceProperties);
       html.push(await this.convertCoreAsync(resolved, project, childContext, false, screenStack,
         `${key}/faceplate`, includeInspectionAttributes, signal));
     }
@@ -7164,12 +7169,19 @@ class HmiHtmlConvertContext {
     );
   }
 
-  withFaceplateInterfaceValues(values: readonly HmiFaceplateInterfaceValue[]): HmiHtmlConvertContext {
+  withFaceplateInterfaceValues(values: readonly HmiFaceplateInterfaceValue[], defaults: readonly HmiFaceplateInterfaceMember[]): HmiHtmlConvertContext {
     const dictionary = new Map<string, HmiFaceplateInterfaceValue>();
+    const suppliedNames = new Set<string>();
     for (const value of values) {
-      if (!value.name?.trim() || value.tagName?.trim() || value.tagId?.trim()) continue;
-      const key = ordinalIgnoreCaseKey(value.name);
-      if (!dictionary.has(key)) dictionary.set(key, value);
+      if (!value.name?.trim()) continue;
+      const key = ordinalIgnoreCaseKey(value.name); suppliedNames.add(key);
+      if (!value.tagName?.trim() && !value.tagId?.trim() && !dictionary.has(key)) dictionary.set(key, value);
+    }
+    for (const member of defaults) {
+      if (member.isTag || !member.name?.trim()) continue;
+      const key = ordinalIgnoreCaseKey(member.name);
+      if (suppliedNames.has(key) || dictionary.has(key)) continue;
+      dictionary.set(key, { name: member.name, value: member.defaultValue });
     }
     return new HmiHtmlConvertContext(this.options, this.effectiveProperties,
       this.positionOffsetX, this.positionOffsetY, this.nodeKey, dictionary, this.references);
