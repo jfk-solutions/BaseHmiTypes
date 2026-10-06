@@ -1805,7 +1805,7 @@ public partial class HmiScreenToHtmlConverter
             AppendAttribute(html, "disabled", "disabled");
         var alternateImage = down ? ResolveStaticValue(button.AlternateImage, context) : null;
         var image = state?.Image ?? alternateImage
-            ?? button.Image.GetStaticValue();
+            ?? ResolveStaticValue(button.Image, context);
         HmiColor? imageKey = state?.Image is not null
             ? (state.ImageBackgroundTransparent ?? ResolveStaticValue(button.ImageBackgroundTransparent, context))
                 ? state.ImageBackgroundColor ?? (button.ImageBackgroundColor is null ? null : ResolveStaticValue(button.ImageBackgroundColor, context)) : null
