@@ -14,7 +14,7 @@ import { HmiProjectSoftwareType } from "../../projects/HmiProjectSoftwareType.js
 import { HmiColor, hmiColorFromArgb } from "../../screens/base/HmiColor.js";
 import { HmiChildCoordinateSpace } from "../../screens/base/HmiChildCoordinateSpace.js";
 import { HmiFaceplateContainer } from "../../screens/base/HmiFaceplateContainer.js";
-import { HmiFaceplateType } from "../../screens/base/HmiFaceplateType.js";
+import { HmiHtmlReferenceResolver, isScreenInStack, ordinalIgnoreCaseKey } from "./HmiHtmlReferences.js";
 import { HmiFaceplateInterfaceValue } from "../../screens/base/HmiFaceplateInterfaceValue.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
 import { HmiCustomWidgetContainer } from "../../screens/base/HmiCustomWidgetContainer.js";
@@ -167,7 +167,7 @@ export class HmiScreenToHtmlConverter {
     options: HmiHtmlConvertOptions = new HmiHtmlConvertOptions(),
     signal?: AbortSignal,
   ): Promise<string> {
-    const context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(resolveDefaultProfile(project)));
+    const context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(resolveDefaultProfile(project)), 0, 0, undefined, undefined, new HmiHtmlReferenceResolver(project));
     return this.convertCoreAsync(screen, project, context, true, new Set<HmiScreenBase>(), "screen", false, signal);
   }
 
@@ -177,8 +177,9 @@ export class HmiScreenToHtmlConverter {
     options: HmiHtmlConvertOptions = new HmiHtmlConvertOptions(),
     signal?: AbortSignal,
   ): Promise<HmiInspectableScreenHtml> {
-    const inspection = await inspectHmiScreenAsync(screen, project, signal);
-    const context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(resolveDefaultProfile(project)));
+    const references = new HmiHtmlReferenceResolver(project);
+    const inspection = await inspectHmiScreenAsync(screen, project, signal, references);
+    const context = new HmiHtmlConvertContext(options, new HmiEffectivePropertyResolver(resolveDefaultProfile(project)), 0, 0, undefined, undefined, references);
     const html = await this.convertCoreAsync(screen, project, context, true, new Set<HmiScreenBase>(), "screen", true, signal);
     return { html, inspection };
   }
@@ -553,11 +554,7 @@ export class HmiScreenToHtmlConverter {
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<void> {
-    let resolved: HmiFaceplateType | undefined;
-    if (project && faceplateContainer.faceplateId?.trim())
-      resolved = await project.getFaceplate(faceplateContainer.faceplateId, signal);
-    if (!resolved && project && faceplateContainer.faceplateName?.trim() && faceplateContainer.faceplateVersion?.trim())
-      resolved = await project.getFaceplateByNameAndVersion(faceplateContainer.faceplateName, faceplateContainer.faceplateVersion, signal);
+    const resolved = await context.references.resolveFaceplateAsync(faceplateContainer, signal);
 
     html.push("<div");
     appendCommonAttributes(html, faceplateContainer, context);
@@ -990,25 +987,6 @@ async function resolveTemplateAsync(
   }
 
   return template;
-}
-
-function ordinalIgnoreCaseKey(value: string): string {
-  // Ordinal matching preserves characters whose uppercase mapping expands or crosses into ASCII.
-  return Array.from(value, character => {
-    const upper = character.toUpperCase();
-    return upper.length !== character.length || (character.charCodeAt(0) > 127 && upper.charCodeAt(0) <= 127)
-      ? character : upper;
-  }).join("");
-}
-
-function isScreenInStack(screen: HmiScreenBase, screenStack: Set<HmiScreenBase>): boolean {
-  for (const active of screenStack) {
-    if (active === screen) return true;
-    if (screen.id?.trim() && active.id !== undefined && ordinalIgnoreCaseKey(active.id) === ordinalIgnoreCaseKey(screen.id)) return true;
-    if (!screen.id?.trim() && !active.id?.trim() && screen.name?.trim() && active.kind === screen.kind
-      && active.name !== undefined && ordinalIgnoreCaseKey(active.name) === ordinalIgnoreCaseKey(screen.name)) return true;
-  }
-  return false;
 }
 
 
@@ -1652,7 +1630,7 @@ async function appendButton(
   appendAttribute(html, "aria-label", caption?.getDisplayText(context.options.cultureLcid));
   if (getStaticValue(button.toggle) === true)
     appendAttribute(html, "aria-pressed", getStaticValue(button.pressed) === true ? "true" : "false");
-  const enabled = button.enabled === undefined || getStaticValue(button.enabled) === true;
+  const enabled = button.enabled === undefined || resolveStaticValue(button.enabled, context, tryConvertFaceplateBooleanValue) === true;
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
   }
@@ -1838,16 +1816,16 @@ function createStateStyle(state: HmiState | undefined): string | null {
 function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConvertContext): void {
   html.push("<input");
   appendCommonAttributes(html, ioField, context, undefined, createFontWritingModeStyle(ioField.font));
-  if (getStaticValue(ioField.enabled) === false) appendAttribute(html, "disabled", "disabled");
+  if (resolveStaticValue(ioField.enabled, context, tryConvertFaceplateBooleanValue) === false) appendAttribute(html, "disabled", "disabled");
   let text = resolveStaticValue(ioField.text, context, tryConvertFaceplateTextValue)?.getDisplayText(context.options.cultureLcid);
   if (!text?.trim() && ioField.text?.kind === HmiPropertyKind.Expression)
     text = (ioField.text as HmiExpressionProperty<HmiMultilingualText>).expression;
   appendAttribute(html, "value", text);
-  if (getStaticValue(ioField.readOnly) === true)
+  if (resolveStaticValue(ioField.readOnly, context, tryConvertFaceplateBooleanValue) === true)
     appendAttribute(html, "readonly", "readonly");
-  if (getStaticValue(ioField.maskInput) === true)
+  if (resolveStaticValue(ioField.maskInput, context, tryConvertFaceplateBooleanValue) === true)
     appendAttribute(html, "type", "password");
-  const fieldLength = getStaticValue(ioField.fieldLength);
+  const fieldLength = resolveStaticValue(ioField.fieldLength, context, tryConvertFaceplateInt32Value);
   if (fieldLength !== undefined)
     appendAttribute(html, "maxlength", fieldLength.toString());
   html.push(">");
@@ -4736,14 +4714,14 @@ function reportItemDiagnostic(item: HmiScreenItemBase, context: HmiHtmlConvertCo
 
 function appendTextBox(html: string[], item: HmiTextBox, context: HmiHtmlConvertContext): void {
   html.push("<textarea");
-  const resize = getStaticValue(item.resizable) === true ? "both" : "none";
+  const resize = resolveStaticValue(item.resizable, context, tryConvertFaceplateBooleanValue) === true ? "both" : "none";
   appendCommonAttributes(html, item, context, undefined,
     `overflow: auto;resize: ${resize};` + (createTextOrientationStyle(item, context) ?? "") + createTextWrappingStyle(getTextLayoutProperties(item, context).wrapping));
   const wrapping = getStaticValue(getTextLayoutProperties(item, context).wrapping);
   if (wrapping === 0 || wrapping === 1) appendAttribute(html, "wrap", wrapping === 0 ? "off" : "soft");
-  if (getStaticValueOrDefault(item.enabled, true) === false) appendAttribute(html, "disabled", "disabled");
-  if (getStaticValue(item.readOnly) === true) appendAttribute(html, "readonly", "readonly");
-  const length = getStaticValue(item.fieldLength);
+  if ((resolveStaticValue(item.enabled, context, tryConvertFaceplateBooleanValue) ?? true) === false) appendAttribute(html, "disabled", "disabled");
+  if (resolveStaticValue(item.readOnly, context, tryConvertFaceplateBooleanValue) === true) appendAttribute(html, "readonly", "readonly");
+  const length = resolveStaticValue(item.fieldLength, context, tryConvertFaceplateInt32Value);
   if (length !== undefined && length > 0) appendAttribute(html, "maxlength", String(length));
   html.push(">");
   const text = resolveStaticValue(item.text, context, tryConvertFaceplateTextValue)?.getText(context.options.cultureLcid) ?? "";
@@ -4809,11 +4787,11 @@ function appendRectangle(html: string[], rectangle: HmiRectangle, context: HmiHt
   appendTextAttribute(html, "title", rectangle.toolTipText, context);
   appendStaticAttribute(html, "tabindex", rectangle.tabIndex);
   appendAttribute(html, "data-hmi-security-code", rectangle.securityCode);
-  appendDisabledAttribute(html, rectangle);
+  appendDisabledAttribute(html, rectangle, context);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, rectangle, context);
-  appendDisabledStyle(html, rectangle);
+  appendDisabledStyle(html, rectangle, context);
   appendOpacity(html, rectangle, context);
   appendDesignShadow(html, rectangle, context);
   appendStyle(html, rectangle, context);
@@ -5299,7 +5277,7 @@ function appendSymbolLibraryAttributes(
   appendTextAttribute(html, "title", symbolLibraryControl.toolTipText, context);
   appendStaticAttribute(html, "tabindex", symbolLibraryControl.tabIndex);
   appendAttribute(html, "data-hmi-security-code", symbolLibraryControl.securityCode);
-  appendDisabledAttribute(html, symbolLibraryControl);
+  appendDisabledAttribute(html, symbolLibraryControl, context);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   appendAttribute(html, "data-hmi-symbol-id", symbolLibraryControl.symbolId);
   appendAttribute(html, "data-hmi-symbol-appearance", formatAttributeValue(getStaticValue(symbolLibraryControl.symbolAppearance)));
@@ -5307,7 +5285,7 @@ function appendSymbolLibraryAttributes(
   appendAttribute(html, "data-hmi-blink-mode", formatAttributeValue(getStaticValue(symbolLibraryControl.blinkMode)));
   html.push(" style=\"position: absolute; overflow: hidden;");
   appendPosition(html, symbolLibraryControl, context);
-  appendDisabledStyle(html, symbolLibraryControl);
+  appendDisabledStyle(html, symbolLibraryControl, context);
   appendOpacity(html, symbolLibraryControl, context);
   appendDesignShadow(html, symbolLibraryControl, context);
   if (
@@ -6153,6 +6131,33 @@ function tryConvertFaceplateTextValue(value: unknown): HmiMultilingualText | und
   return typeof value === "string" ? HmiMultilingualText.fromText(value) : undefined;
 }
 
+function tryConvertFaceplateBooleanValue(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "bigint") return value !== 0n;
+  if (typeof value === "string") {
+    const text = value.trim().toLowerCase();
+    if (text === "true") return true;
+    if (text === "false") return false;
+  }
+  return undefined;
+}
+
+function tryConvertFaceplateInt32Value(value: unknown): number | undefined {
+  if (typeof value === "boolean") return value ? 1 : 0;
+  if (typeof value === "bigint")
+    return value >= -2147483648n && value <= 2147483647n ? Number(value) : undefined;
+  if (typeof value === "string") {
+    if (!/^[\t\n\v\f\r ]*[+-]?\d+[\t\n\v\f\r ]*$/.test(value)) return undefined;
+    value = Number(value);
+  }
+  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+  // Convert.ChangeType(Double, Int32) rounds half to even, not toward positive infinity.
+  const floor = Math.floor(value), fraction = value - floor;
+  const rounded = fraction < 0.5 ? floor : fraction > 0.5 ? floor + 1 : floor % 2 === 0 ? floor : floor + 1;
+  return rounded >= -2147483648 && rounded <= 2147483647 ? rounded : undefined;
+}
+
 function formatAttributeValue(value: unknown): string | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -6307,13 +6312,13 @@ function appendCommonAttributes(
     appendAttribute(html, "data-text-wrapping", resolvePropertyPreview(textLayout.wrapping));
     appendAttribute(html, "data-text-trimming", resolvePropertyPreview(textLayout.trimming));
   }
-  appendDisabledAttribute(html, item);
+  appendDisabledAttribute(html, item, context);
   appendHotKeyAttributes(html, item);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);
   appendAdaptBorderToContentStyle(html, item);
-  appendDisabledStyle(html, item);
+  appendDisabledStyle(html, item, context);
   appendOpacity(html, item, context);
   appendDesignShadow(html, item, context);
   if (includePaintedStyle && item instanceof HmiPaintedScreenItemBase) {
@@ -6347,13 +6352,13 @@ function appendSymbolAttributes(html: string[], symbolContainer: HmiSymbolContai
   appendTextAttribute(html, "title", symbolContainer.toolTipText, context);
   appendStaticAttribute(html, "tabindex", symbolContainer.tabIndex);
   appendAttribute(html, "data-hmi-security-code", symbolContainer.securityCode);
-  appendDisabledAttribute(html, symbolContainer);
+  appendDisabledAttribute(html, symbolContainer, context);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   appendAttribute(html, "data-hmi-fill-color-mode", getStaticValue(symbolContainer.fillColorMode));
   appendAttribute(html, "data-hmi-flip", getStaticValue(symbolContainer.flip));
   html.push(" style=\"position: absolute; overflow: hidden;");
   appendPosition(html, symbolContainer, context);
-  appendDisabledStyle(html, symbolContainer);
+  appendDisabledStyle(html, symbolContainer, context);
   appendOpacity(html, symbolContainer, context);
   appendDesignShadow(html, symbolContainer, context);
   appendStyle(html, symbolContainer, context);
@@ -6404,8 +6409,8 @@ function appendAdaptBorderToContentStyle(html: string[], item: HmiScreenItemBase
   }
 }
 
-function appendDisabledAttribute(html: string[], item: HmiScreenItemBase): void {
-  if (!getStaticValueOrDefault(item.enabled, true)) {
+function appendDisabledAttribute(html: string[], item: HmiScreenItemBase, context: HmiHtmlConvertContext): void {
+  if (!(resolveStaticValue(item.enabled, context, tryConvertFaceplateBooleanValue) ?? true)) {
     appendAttribute(html, "aria-disabled", "true");
   }
   if (item instanceof HmiPaintedScreenItemBase) {
@@ -6415,8 +6420,8 @@ function appendDisabledAttribute(html: string[], item: HmiScreenItemBase): void 
   }
 }
 
-function appendDisabledStyle(html: string[], item: HmiScreenItemBase): void {
-  if (!getStaticValueOrDefault(item.enabled, true)) {
+function appendDisabledStyle(html: string[], item: HmiScreenItemBase, context: HmiHtmlConvertContext): void {
+  if (!(resolveStaticValue(item.enabled, context, tryConvertFaceplateBooleanValue) ?? true)) {
     html.push("pointer-events: none;");
   }
 }
@@ -6524,8 +6529,8 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
   const suppressBorderStyle = item instanceof HmiCheckBoxGroup || item instanceof HmiRadioButtonGroup;
   const borderStyle = getBorderStyleCss(item, context);
   const animations: string[] = [];
-  const useDisabledForegroundColor = !getStaticValueOrDefault(item.enabled, true) &&
-    getStaticValueOrDefault(item.useDisabledForegroundColor, false);
+  const useDisabledForegroundColor = !(resolveStaticValue(item.enabled, context, tryConvertFaceplateBooleanValue) ?? true) &&
+    (resolveStaticValue(item.useDisabledForegroundColor, context, tryConvertFaceplateBooleanValue) ?? false);
   let foregroundColor = context.effectiveProperties.resolve(item, "ForegroundColor", item.foregroundColor);
   if (item instanceof HmiBar && getStaticValue(item.showScale) !== true)
     foregroundColor = getBarThresholdFillColor(item) ?? foregroundColor;
@@ -7097,6 +7102,7 @@ class HmiHtmlConvertContext {
     readonly positionOffsetY = 0,
     readonly nodeKey?: string,
     readonly faceplateInterfaceValues: ReadonlyMap<string, HmiFaceplateInterfaceValue> = new Map(),
+    readonly references = new HmiHtmlReferenceResolver(),
   ) {}
 
   withPositionOffset(offsetX: number, offsetY: number): HmiHtmlConvertContext {
@@ -7107,6 +7113,7 @@ class HmiHtmlConvertContext {
       this.positionOffsetY + offsetY,
       this.nodeKey,
       this.faceplateInterfaceValues,
+      this.references,
     );
   }
 
@@ -7118,6 +7125,7 @@ class HmiHtmlConvertContext {
       this.positionOffsetY,
       nodeKey,
       this.faceplateInterfaceValues,
+      this.references,
     );
   }
 
@@ -7129,7 +7137,7 @@ class HmiHtmlConvertContext {
       if (!dictionary.has(key)) dictionary.set(key, value);
     }
     return new HmiHtmlConvertContext(this.options, this.effectiveProperties,
-      this.positionOffsetX, this.positionOffsetY, this.nodeKey, dictionary);
+      this.positionOffsetX, this.positionOffsetY, this.nodeKey, dictionary, this.references);
   }
 
   tryGetFaceplateInterfaceValue(name: string | undefined): unknown {
