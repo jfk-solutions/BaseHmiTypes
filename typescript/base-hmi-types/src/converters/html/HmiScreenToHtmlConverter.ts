@@ -29,7 +29,7 @@ import { HmiFillPatternAlignment } from "../../screens/base/HmiFillPatternAlignm
 import { HmiGradientDirection } from "../../screens/base/HmiGradientDirection.js";
 import { HmiGroup } from "../../screens/base/HmiGroup.js";
 import { HmiHorizontalAlignment } from "../../screens/base/HmiHorizontalAlignment.js";
-import { HmiImageSource } from "../../screens/base/HmiImageSource.js";
+import { HmiImageSource, HmiImageSourceKind } from "../../screens/base/HmiImageSource.js";
 import { HmiBackgroundImageLayout } from "../../screens/base/HmiBackgroundImageLayout.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
 import { HmiLineStyle } from "../../screens/base/HmiLineStyle.js";
@@ -1635,15 +1635,15 @@ async function appendButton(
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
   }
-  const alternateImage = down ? getStaticValue(button.alternateImage) : undefined;
+  const alternateImage = down ? resolveStaticValue(button.alternateImage, context, tryConvertFaceplateImageValue) : undefined;
   let image = state?.image ?? alternateImage
-    ?? getStaticValue(button.image);
+    ?? resolveStaticValue(button.image, context, tryConvertFaceplateImageValue);
   let imageKey = state?.image !== undefined
-    ? (state.imageBackgroundTransparent ?? getStaticValue(button.imageBackgroundTransparent)) === true
-      ? state.imageBackgroundColor ?? getStaticValue(button.imageBackgroundColor) : undefined
+    ? (state.imageBackgroundTransparent ?? resolveStaticValue(button.imageBackgroundTransparent, context, tryConvertFaceplateBooleanValue)) === true
+      ? state.imageBackgroundColor ?? resolveStaticValue(button.imageBackgroundColor, context, tryConvertFaceplateColorValue) : undefined
     : alternateImage !== undefined
-      ? getImageColorKey(button.alternateImageBackgroundTransparent, button.alternateImageBackgroundColor)
-      : getImageColorKey(button.imageBackgroundTransparent, button.imageBackgroundColor);
+      ? getImageColorKey(button.alternateImageBackgroundTransparent, button.alternateImageBackgroundColor, context)
+      : getImageColorKey(button.imageBackgroundTransparent, button.imageBackgroundColor, context);
   const disabledImageMode = getStaticValue(button.disabledImageMode);
   const showDisabledAppearance = !enabled && resolveStaticValue(button.showDisabledState, context, tryConvertFaceplateBooleanValue) === true;
   if (
@@ -1651,11 +1651,11 @@ async function appendButton(
     (disabledImageMode === HmiDisabledImageMode.Reference ||
       disabledImageMode === HmiDisabledImageMode.Imported)
   ) {
-    const disabledImage = getStaticValue(button.disabledImage);
+    const disabledImage = resolveStaticValue(button.disabledImage, context, tryConvertFaceplateImageValue);
     image = disabledImage ??
       (resolveStaticValue(button.disabledImageFallbackToNormal, context, tryConvertFaceplateBooleanValue) !== false ? image : undefined);
     if (disabledImage !== undefined)
-      imageKey = getImageColorKey(button.disabledImageBackgroundTransparent, button.disabledImageBackgroundColor);
+      imageKey = getImageColorKey(button.disabledImageBackgroundTransparent, button.disabledImageBackgroundColor, context);
   }
   const imageUri = mode === HmiButtonType.Text ? undefined : await resolveImageUri(image, project, signal);
   const hasImage = imageUri !== undefined && imageUri.trim() !== "";
@@ -1698,7 +1698,7 @@ function getButtonPressedContentOffset(button: HmiButton, context: HmiHtmlConver
 function appendButtonCaption(html: string[], button: HmiButton, state: HmiState | undefined,
   caption: HmiMultilingualText | undefined, boundedLayout: boolean, hidden: boolean, overlay: boolean, context: HmiHtmlConvertContext): void {
   const captionBlink = getButtonCaptionBlink(button, state);
-  const captionColor = state?.captionColor ?? state?.foregroundColor ?? getStaticValue(button.captionColor);
+  const captionColor = state?.captionColor ?? state?.foregroundColor ?? resolveStaticValue(button.captionColor, context, tryConvertFaceplateColorValue);
   const wrapped = boundedLayout || captionBlink !== undefined || captionColor !== undefined;
   if (wrapped) {
     html.push("<span data-hmi-button-caption");
@@ -1728,8 +1728,8 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
   if (wrapped) html.push("</span>");
 }
 
-function getImageColorKey(enabled: HmiProperty<boolean> | undefined, color: HmiProperty<HmiColor> | undefined): HmiColor | undefined {
-  return getStaticValue(enabled) === true ? getStaticValue(color) : undefined;
+function getImageColorKey(enabled: HmiProperty<boolean> | undefined, color: HmiProperty<HmiColor> | undefined, context: HmiHtmlConvertContext): HmiColor | undefined {
+  return resolveStaticValue(enabled, context, tryConvertFaceplateBooleanValue) === true ? resolveStaticValue(color, context, tryConvertFaceplateColorValue) : undefined;
 }
 
 function appendButtonImage(html: string[], button: HmiButton, imageUri: string, grayscale: boolean, imageKey: HmiColor | undefined, context: HmiHtmlConvertContext): void {
@@ -1758,7 +1758,7 @@ function getButtonCaptionBlink(button: HmiButton, state: HmiState | undefined): 
 }
 
 function createButtonStyle(button: HmiButton, state: HmiState | undefined, context: HmiHtmlConvertContext): string | null {
-  const captionColor = getStaticValue(button.captionColor);
+  const captionColor = resolveStaticValue(button.captionColor, context, tryConvertFaceplateColorValue);
   const stateHasCaptionColor = (state?.captionColor ?? state?.foregroundColor) !== undefined;
   const captionBlink = getButtonCaptionBlink(button, state);
   let style = "";
@@ -1782,8 +1782,8 @@ function createButtonStyle(button: HmiButton, state: HmiState | undefined, conte
   if (borderWidth <= 0)
     return style || null;
 
-  let topColor = getStaticValue(button.threeDBorderTopColor);
-  let bottomColor = getStaticValue(button.threeDBorderBottomColor);
+  let topColor = resolveStaticValue(button.threeDBorderTopColor, context, tryConvertFaceplateColorValue);
+  let bottomColor = resolveStaticValue(button.threeDBorderBottomColor, context, tryConvertFaceplateColorValue);
   topColor ??= bottomColor;
   bottomColor ??= topColor;
   if (isButtonDownVisual(button, context)) [topColor, bottomColor] = [bottomColor, topColor];
@@ -6174,6 +6174,20 @@ function tryConvertFaceplateDoubleValue(value: unknown): number | undefined {
   if (/^[+]?infinity$/.test(symbol)) return Infinity;
   if (symbol === "-infinity") return -Infinity;
   return undefined;
+}
+
+function tryConvertFaceplateColorValue(value: unknown): HmiColor | undefined {
+  if (!isHmiColor(value)) return undefined;
+  return [value.alpha, value.red, value.green, value.blue].every(channel =>
+    typeof channel === "number" && Number.isInteger(channel) && channel >= 0 && channel <= 255) ? value : undefined;
+}
+
+function tryConvertFaceplateImageValue(value: unknown): HmiImageSource | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const image = value as Partial<HmiImageSource>;
+  if (image.kind !== HmiImageSourceKind.Uri && image.kind !== HmiImageSourceKind.DataUri) return undefined;
+  return [image.uri, image.imageId, image.imageName].every(part => part === undefined || typeof part === "string")
+    ? image as HmiImageSource : undefined;
 }
 
 function formatAttributeValue(value: unknown): string | undefined {
