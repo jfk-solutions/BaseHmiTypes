@@ -263,6 +263,7 @@ public sealed class HmiRecipeToHtmlConverter
             html.Append("</tbody></table></div>");
         }
         AppendStoredArrayValues(html, recipe);
+        AppendStoredBinaryValues(html, recipe);
         if (recipe.DataSets.Any(record => record.LastModification != null || record.LastUser != null))
         {
             html.Append("<h2>Stored record metadata</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th><th scope=\"col\">Last modification (stored)</th><th scope=\"col\">Last user</th></tr></thead><tbody>");
@@ -302,6 +303,36 @@ public sealed class HmiRecipeToHtmlConverter
                 html.Append("</td></tr>");
             }
         html.Append("</tbody></table></div>");
+    }
+
+    private static void AppendStoredBinaryValues(StringBuilder html, HmiRecipe recipe)
+    {
+        if (!recipe.DataSets.Any(record => record.SourceBinaryValues.Count > 0 || record.SourceBinaryArrayValues.Count > 0)) return;
+        html.Append("<h2>Stored binary values</h2><div class=\"table-scroll\"><table><thead><tr><th>Record</th><th>Number</th><th>Source key</th><th>Array count</th><th>Storage position</th><th>Source type</th><th>Blob mode</th><th>Declared bytes</th><th>Decoded bytes</th><th>Payload</th></tr></thead><tbody>");
+        foreach (var record in recipe.DataSets)
+        {
+            foreach (var pair in record.SourceBinaryValues) AppendBinaryValueRow(html, record, pair.Key, null, null, pair.Value);
+            foreach (var pair in record.SourceBinaryArrayValues)
+            {
+                if (pair.Value.Values.Count == 0) AppendBinaryValueRow(html, record, pair.Key, 0, null, new HmiRecipeBinaryValue { SourceType = pair.Value.SourceElementType }, true);
+                else for (var index = 0; index < pair.Value.Values.Count; index++) AppendBinaryValueRow(html, record, pair.Key, pair.Value.Values.Count, index, pair.Value.Values[index]);
+            }
+        }
+        html.Append("</tbody></table></div>");
+    }
+
+    private static void AppendBinaryValueRow(StringBuilder html, HmiRecipeDataSet record, string key, int? count, int? position, HmiRecipeBinaryValue? value, bool emptyArray = false)
+    {
+        html.Append("<tr data-binary-value-state=\"").Append(emptyArray ? "empty-array" : value == null ? "null" : value.PayloadBase64 == null ? "unavailable" : "present").Append("\">");
+        foreach (var cell in new[] { record.Name, record.SourceNumber?.ToString(CultureInfo.InvariantCulture), key, count?.ToString(CultureInfo.InvariantCulture), position?.ToString(CultureInfo.InvariantCulture), value?.SourceType, value?.SourceBlobType?.ToString(CultureInfo.InvariantCulture), value?.SourceDeclaredLength, value?.DecodedByteLength?.ToString(CultureInfo.InvariantCulture) })
+            html.Append("<td>").Append(Encode(cell)).Append("</td>");
+        html.Append("<td>");
+        if (emptyArray) html.Append("Empty array");
+        else if (value == null) html.Append("Null");
+        else if (value.PayloadBase64 == null) html.Append("Payload unavailable");
+        else if (value.PayloadBase64.Length == 0) html.Append("Empty payload");
+        else html.Append("<details><summary>Payload (Base64)</summary><code style=\"overflow-wrap: anywhere;\">").Append(Encode(value.PayloadBase64)).Append("</code></details>");
+        html.Append("</td></tr>");
     }
 
     private static void AppendFieldTextLists(StringBuilder html, HmiRecipe recipe, CultureInfo? culture)
