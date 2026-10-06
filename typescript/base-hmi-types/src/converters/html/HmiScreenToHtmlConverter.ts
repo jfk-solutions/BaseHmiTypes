@@ -2710,6 +2710,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(control.showToolbar));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(control.showStatusBar));
   html.push(">");
+  appendGridColumnTextTrimmingMetadata(html, control.columnDefinitions.map(column => [column.name ?? column.key, column.headerTextTrimming, column.contentTextTrimming]));
   if (getStaticValue(control.showToolbar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
     appendParameterBarStyle(style, control.toolbarPaddingLeft, control.toolbarPaddingTop, control.toolbarPaddingRight, control.toolbarPaddingBottom);
@@ -2765,6 +2766,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(control.showToolbar));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(control.showStatusBar));
   html.push(">");
+  appendGridColumnTextTrimmingMetadata(html, control.columnDefinitions.map(column => [column.name ?? column.key, column.headerTextTrimming, column.contentTextTrimming]));
   if (getStaticValue(control.showToolbar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
     appendParameterBarStyle(style, control.toolbarPaddingLeft, control.toolbarPaddingTop, control.toolbarPaddingRight, control.toolbarPaddingBottom);
@@ -2928,7 +2930,7 @@ function appendParameterColumns(html: string[], control: HmiParameterControlBase
         separator.push(`border-right-style: solid;border-right-width: ${toCss(Number.isFinite(width) && width >= 0 ? width : 1)}px;`);
         appendColorStyle(separator, "border-right-color", control.headerBorderColor);
       }
-      html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), separator.join(""), '\"');
+      html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), separator.join(""), createGridHeaderTextTrimmingStyle(column.headerTextTrimming), '\"');
       appendAttribute(html, "data-column-name", column.name);
       appendAttribute(html, "data-column-key", column.key);
       appendAttribute(html, "data-enabled", resolvePropertyPreview(column.enabled));
@@ -2936,6 +2938,9 @@ function appendParameterColumns(html: string[], control: HmiParameterControlBase
       appendAttribute(html, "data-content-foreground-color", resolvePropertyPreview(column.foregroundColor));
       appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
       appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
+
+      appendAttribute(html, "data-header-text-trimming", resolvePropertyPreview(column.headerTextTrimming));
+      appendAttribute(html, "data-content-text-trimming", resolvePropertyPreview(column.contentTextTrimming));
       appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
       appendAttribute(html, "data-minimum-width", resolvePropertyPreview(column.minimumWidth));
       appendAttribute(html, "data-maximum-width", resolvePropertyPreview(column.maximumWidth));
@@ -2944,7 +2949,7 @@ function appendParameterColumns(html: string[], control: HmiParameterControlBase
       appendAttribute(html, "data-sort-direction", resolvePropertyPreview(column.sortDirection));
       appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat));
       const headingText = columnHeaderType === 1 ? String(index + 1) : column.headerText?.getText(context.options.cultureLcid) ?? column.name ?? column.key ?? "Column";
-      html.push(">", escapeHtml(headingText), "</th>");
+      html.push(">"); appendGridHeaderText(html, headingText, column.headerTextTrimming); html.push("</th>");
     }
     html.push("</tr></thead>");
   }
@@ -2965,6 +2970,35 @@ function createParameterCellLayoutStyle(control: HmiParameterControlBase, contex
   appendDimension("padding-right", control.cellPaddingRight);
   appendDimension("padding-bottom", control.cellPaddingBottom);
   return style.join("");
+}
+
+function appendGridColumnTextTrimmingMetadata(html: string[], columns: Array<[string | undefined, HmiProperty<number> | undefined, HmiProperty<number> | undefined]>, columnSetName?: string): void {
+  if (!columns.some(([, header, content]) => header !== undefined || content !== undefined)) return;
+  html.push('<template class="hmi-grid-column-text-trimming"');
+  appendAttribute(html, "data-column-set-name", columnSetName, true);
+  html.push(">");
+  columns.forEach(([name, header, content], index) => {
+    html.push('<div');
+    appendAttribute(html, "data-column-index", String(index));
+    appendAttribute(html, "data-column-source-name", name, true);
+    appendAttribute(html, "data-header-text-trimming", resolvePropertyPreview(header));
+    appendAttribute(html, "data-content-text-trimming", resolvePropertyPreview(content));
+    html.push('></div>');
+  });
+  html.push('</template>');
+}
+
+function createGridHeaderTextTrimmingStyle(trimming: HmiProperty<number> | undefined): string {
+  const value = getStaticValue(trimming);
+  return value === 0 ? "overflow: visible;text-overflow: clip;white-space: normal;"
+    : value === 1 ? "overflow: hidden;text-overflow: ellipsis;white-space: nowrap;" : "";
+}
+
+function appendGridHeaderText(html: string[], text: string, trimming: HmiProperty<number> | undefined): void {
+  const ellipsis = getStaticValue(trimming) === 1;
+  if (ellipsis) html.push('<span style="display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">');
+  html.push(escapeHtml(text));
+  if (ellipsis) html.push('</span>');
 }
 
 function createParameterHeaderAlignmentStyle(column: HmiParameterColumn): string {
@@ -3428,6 +3462,10 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (alarmControl.messageBlocks.length > 0) appendAttribute(html, "data-message-block-count", String(alarmControl.messageBlocks.length));
   html.push(">");
   appendAlarmMessageBlocks(html, alarmControl, context);
+  if (alarmControl.columnSets.length > 0)
+    for (const set of alarmControl.columnSets)
+      appendGridColumnTextTrimmingMetadata(html, set.columns.map(column => [column.sourceType, column.headerTextTrimming, column.contentTextTrimming]), set.name);
+  else appendGridColumnTextTrimmingMetadata(html, alarmControl.columnDefinitions.map(column => [column.sourceType, column.headerTextTrimming, column.contentTextTrimming]));
   const configuredViews = alarmControl.columnSets.filter(set => set.allowSort !== undefined || set.allowFilter !== undefined || set.allowColumnReorder !== undefined || set.allowColumnResize !== undefined ||
     set.backgroundColor !== undefined || set.foregroundColor !== undefined || set.headerBackgroundColor !== undefined ||
     set.headerForegroundColor !== undefined || set.headerBorderColor !== undefined || set.contentFont !== undefined || set.headerFont !== undefined ||
@@ -3468,7 +3506,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (visibleColumns.length > 0) {
     html.push("<colgroup>");
     for (const column of visibleColumns) {
-      html.push("<col");
+      html.push(createGridHeaderTextTrimmingStyle(column.headerTextTrimming), "<col");
       appendAttribute(html, "data-column-type", column.type);
       appendAttribute(html, "data-column-source-type", column.sourceType);
       appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
@@ -3479,6 +3517,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat), true);
       appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
       appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
+
+      appendAttribute(html, "data-header-text-trimming", resolvePropertyPreview(column.headerTextTrimming));
+      appendAttribute(html, "data-content-text-trimming", resolvePropertyPreview(column.contentTextTrimming));
       appendAttribute(html, "data-content-horizontal-alignment", resolvePropertyPreview(column.contentHorizontalAlignment));
       appendAttribute(html, "data-content-vertical-alignment", resolvePropertyPreview(column.contentVerticalAlignment));
       appendAttribute(html, "data-width", resolvePropertyPreview(column.width));
@@ -3510,7 +3551,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       const vertical = getStaticValue(column.headerVerticalAlignment);
       if (vertical !== undefined && vertical !== HmiVerticalAlignment.Stretch)
         html.push(`vertical-align: ${vertical === HmiVerticalAlignment.Top ? "top" : vertical === HmiVerticalAlignment.Bottom ? "bottom" : "middle"};`);
-      html.push('"');
+      html.push(createGridHeaderTextTrimmingStyle(column.headerTextTrimming), '"');
       appendAttribute(html, "data-column-type", column.type);
       appendAttribute(html, "data-column-source-type", column.sourceType);
       appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
@@ -3521,6 +3562,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat), true);
       appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
       appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
+
+      appendAttribute(html, "data-header-text-trimming", resolvePropertyPreview(column.headerTextTrimming));
+      appendAttribute(html, "data-content-text-trimming", resolvePropertyPreview(column.contentTextTrimming));
       appendAttribute(html, "data-content-horizontal-alignment", resolvePropertyPreview(column.contentHorizontalAlignment));
       appendAttribute(html, "data-content-vertical-alignment", resolvePropertyPreview(column.contentVerticalAlignment));
       appendAttribute(html, "data-sort-mode", resolvePropertyPreview(column.sortMode));
@@ -3534,7 +3578,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       appendAttribute(html, "data-time-format-pattern", column.timeFormat, true);
       appendAttribute(html, "data-show-date", resolvePropertyPreview(column.showDate));
       appendAttribute(html, "data-symbol", column.symbol);
-      html.push(">", escapeHtml(columnHeaderType === 1 ? headingIndex.toString() : column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.sourceType ?? column.type), "</th>");
+      html.push(">");
+      appendGridHeaderText(html, columnHeaderType === 1 ? headingIndex.toString() : column.headerText?.getDisplayText(context.options.cultureLcid) ?? column.sourceType ?? column.type, column.headerTextTrimming);
+      html.push("</th>");
     }
     html.push("</tr></thead>");
   }
@@ -4095,6 +4141,7 @@ function appendSystemDiagnosisControl(
       html.push("<col"); const columnWidth = getStaticValue(column.width);
       if (columnWidth !== undefined && Number.isFinite(columnWidth) && columnWidth >= 0) appendAttribute(html, "style", `width: ${toCss(columnWidth)}px;`);
       html.push(">");
+  appendGridColumnTextTrimmingMetadata(html, systemDiagnosisControl.columnDefinitions.map(column => [column.sourceType, column.headerTextTrimming, column.contentTextTrimming]));
     }
     html.push("</colgroup>");
     const columnHeaderType = getStaticValue(systemDiagnosisControl.columnHeaderType);
@@ -4109,15 +4156,18 @@ function appendSystemDiagnosisControl(
         const vertical = getStaticValue(column.headerVerticalAlignment);
         if (vertical !== undefined && vertical !== HmiVerticalAlignment.Stretch)
           columnStyle.push(`vertical-align: ${vertical === HmiVerticalAlignment.Top ? "top" : vertical === HmiVerticalAlignment.Bottom ? "bottom" : "middle"};`);
-        html.push('<th style="', columnStyle.join(""), 'overflow: hidden; text-overflow: ellipsis;"');
+        html.push('<th style="', columnStyle.join(""), 'overflow: hidden; text-overflow: ellipsis;', createGridHeaderTextTrimmingStyle(column.headerTextTrimming), '"');
         appendAttribute(html, "data-header-horizontal-alignment", resolvePropertyPreview(column.headerHorizontalAlignment));
         appendAttribute(html, "data-header-vertical-alignment", resolvePropertyPreview(column.headerVerticalAlignment));
+
+        appendAttribute(html, "data-header-text-trimming", resolvePropertyPreview(column.headerTextTrimming));
+        appendAttribute(html, "data-content-text-trimming", resolvePropertyPreview(column.contentTextTrimming));
         appendAttribute(html, "data-column-source-type", column.sourceType); appendAttribute(html, "data-output-format", column.format);
         appendAttribute(html, "data-allow-sort", resolvePropertyPreview(column.allowSort));
         appendAttribute(html, "data-sort-order", resolvePropertyPreview(column.sortOrder));
         appendAttribute(html, "data-sort-direction", resolvePropertyPreview(column.sortDirection));
         const headingText = columnHeaderType === 1 ? String(columnIndex) : column.headerText?.getText(context.options.cultureLcid) ?? column.sourceType ?? HmiSystemDiagnosisColumnType[column.type];
-        html.push(">", escapeHtml(headingText), "</th>");
+        html.push(">"); appendGridHeaderText(html, headingText, column.headerTextTrimming); html.push("</th>");
       }
       html.push("</tr></thead>");
     }
