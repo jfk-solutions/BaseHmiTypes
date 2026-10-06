@@ -5171,7 +5171,7 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "x-axis-color", trendControl.XAxisColor);
         AppendStaticBooleanValueAttribute(html, "x-axis-in-trend-color", trendControl.XAxisInTrendColor);
         AppendStaticAttribute(html, "x-axis-alignment", trendControl.XAxisAlignment);
-        AppendAttribute(html, "x-axis-label", trendControl.XAxisLabel);
+        AppendAttribute(html, "x-axis-label", trendControl.XAxisLabelText?.GetText(context.CultureInfo) ?? trendControl.XAxisLabel);
         AppendStaticBooleanValueAttribute(html, "x-axis-date-visible", trendControl.XAxisDateVisible);
         AppendStaticAttribute(html, "x-axis-date-format", trendControl.XAxisDateFormat);
         AppendStaticBooleanValueAttribute(html, "x-axis-flipped", trendControl.XAxisFlipped);
@@ -5191,7 +5191,7 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "y-axis-color", trendControl.YAxisColor);
         AppendStaticBooleanValueAttribute(html, "y-axis-in-trend-color", trendControl.YAxisInTrendColor);
         AppendStaticAttribute(html, "y-axis-alignment", trendControl.YAxisAlignment);
-        AppendAttribute(html, "y-axis-label", trendControl.YAxisLabel);
+        AppendAttribute(html, "y-axis-label", trendControl.YAxisLabelText?.GetText(context.CultureInfo) ?? trendControl.YAxisLabel);
         AppendStaticBooleanValueAttribute(html, "y-axis-grid-visible", trendControl.YAxisGridVisible);
         AppendStaticBooleanValueAttribute(html, "show-percentage-axis", trendControl.ShowPercentageAxis);
         AppendStaticAttribute(html, "percentage-axis-color", trendControl.PercentageAxisColor);
@@ -5736,7 +5736,7 @@ public partial class HmiScreenToHtmlConverter
             AddTrendJsonString(properties, "valueAxisColor", pen.ValueAxisColor?.StaticValue is HmiColor valueAxisColor ? ToCss(valueAxisColor) : null);
             AddTrendJsonBoolean(properties, "valueAxisInTrendColor", pen.ValueAxisInTrendColor?.StaticValue);
             AddTrendJsonString(properties, "valueAxisAlignment", pen.ValueAxisAlignment?.StaticValue.ToString());
-            AddTrendJsonString(properties, "valueAxisLabel", pen.ValueAxisLabel);
+            AddTrendJsonString(properties, "valueAxisLabel", pen.ValueAxisLabelText?.GetText(cultureInfo) ?? pen.ValueAxisLabel);
             AddTrendJsonString(properties, "unit", pen.EngineeringUnitText?.GetText(cultureInfo) ?? pen.EngineeringUnit);
             return "{" + string.Join(",", properties) + "}";
         }).ToArray();

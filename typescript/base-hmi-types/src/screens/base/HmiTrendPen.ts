@@ -68,6 +68,7 @@ export class HmiTrendPen {
   valueAxisInTrendColor?: HmiProperty<boolean>;
   valueAxisAlignment?: HmiProperty<HmiHorizontalAlignment>;
   valueAxisLabel?: string;
+  valueAxisLabelText?: HmiMultilingualText;
   /** Current minimum value used to scale this pen. */
   currentScaleMinimumValue?: HmiProperty<number>;
   /** Current maximum value used to scale this pen. */
