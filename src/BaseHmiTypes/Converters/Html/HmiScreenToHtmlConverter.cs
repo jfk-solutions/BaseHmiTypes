@@ -162,11 +162,15 @@ public partial class HmiScreenToHtmlConverter
         CancellationToken cancellationToken)
     {
         if (!item.Visible.GetStaticValueOrDefault(true))
+        {
+            ReportItemDiagnostic(item, context, "Hidden");
             return;
+        }
 
         var materializedReference = item.ReferenceObject?.MaterializedObject;
         if (materializedReference is not null && !ReferenceEquals(materializedReference, item))
         {
+            ReportItemDiagnostic(item, context, "ReferenceObject");
             html.Append("<div");
             AppendCommonAttributes(html, item, context, additionalStyle: "overflow: hidden;");
             AppendAttribute(html, "class", "hmi-reference-object");
@@ -184,108 +188,143 @@ public partial class HmiScreenToHtmlConverter
         switch (item)
         {
             case HmiToggleSwitch toggleSwitch:
+                ReportItemDiagnostic(item, context, "HmiToggleSwitch", false);
                 await AppendToggleSwitchAsync(html, toggleSwitch, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiCheckBoxGroup checkBoxGroup:
+                ReportItemDiagnostic(item, context, "HmiCheckBoxGroup", false);
                 await AppendSelectionGroupAsync(html, "hmi-checkbox-group", checkBoxGroup, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiRadioButtonGroup radioButtonGroup:
+                ReportItemDiagnostic(item, context, "HmiRadioButtonGroup", false);
                 await AppendSelectionGroupAsync(html, "hmi-radio-button-group", radioButtonGroup, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiComboBox comboBox:
+                ReportItemDiagnostic(item, context, "HmiComboBox", false);
                 AppendComboBox(html, comboBox, context);
                 break;
             case HmiListBox listBox:
+                ReportItemDiagnostic(item, context, "HmiListBox", false);
                 AppendListBox(html, listBox, context);
                 break;
             case HmiButton button:
+                ReportItemDiagnostic(item, context, "HmiButton", false);
                 await AppendButtonAsync(html, button, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiIOField ioField:
+                ReportItemDiagnostic(item, context, "HmiIOField", false);
                 AppendInput(html, ioField, context);
                 break;
             case HmiSymbolicIOField symbolicIoField:
+                ReportItemDiagnostic(item, context, "HmiSymbolicIOField", false);
                 await AppendSymbolicInputAsync(html, symbolicIoField, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiTextBox textBox:
+                ReportItemDiagnostic(item, context, "HmiTextBox", false);
                 AppendTextBox(html, textBox, context);
                 break;
             case HmiLabel label:
+                ReportItemDiagnostic(item, context, "HmiLabel", false);
                 AppendTextBlock(html, label, label.Text, context);
                 break;
             case HmiText text:
+                ReportItemDiagnostic(item, context, "HmiText", false);
                 AppendTextBlock(html, text, text.Text, context);
                 break;
             case HmiGraphicView graphicView:
+                ReportItemDiagnostic(item, context, "HmiGraphicView", false);
                 await AppendGraphicViewAsync(html, graphicView, project, context, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiRectangle rectangle:
+                ReportItemDiagnostic(item, context, "HmiRectangle", false);
                 AppendRectangle(html, rectangle, context);
                 break;
             case HmiLine line:
+                ReportItemDiagnostic(item, context, "HmiLine", false);
                 AppendLine(html, line, context);
                 break;
             case HmiPolyline polyline:
+                ReportItemDiagnostic(item, context, "HmiPolyline", false);
                 AppendPointShape(html, polyline, "polyline", false, context);
                 break;
             case HmiPolygon polygon:
+                ReportItemDiagnostic(item, context, "HmiPolygon", false);
                 AppendPointShape(html, polygon, "polygon", true, context);
                 break;
             case HmiCircleSegment circleSegment:
+                ReportItemDiagnostic(item, context, "HmiCircleSegment", false);
                 AppendCircularSegment(html, circleSegment, context);
                 break;
             case HmiEllipseSegment ellipseSegment:
+                ReportItemDiagnostic(item, context, "HmiEllipseSegment", false);
                 AppendEllipticalSegment(html, ellipseSegment, context);
                 break;
             case HmiCircularArc circularArc:
+                ReportItemDiagnostic(item, context, "HmiCircularArc", false);
                 AppendCircularArc(html, circularArc, context);
                 break;
             case HmiEllipticalArc ellipticalArc:
+                ReportItemDiagnostic(item, context, "HmiEllipticalArc", false);
                 AppendEllipticalArc(html, ellipticalArc, context);
                 break;
             case HmiCircle circle:
+                ReportItemDiagnostic(item, context, "HmiCircle", false);
                 AppendCircle(html, circle, context);
                 break;
             case HmiEllipse ellipse:
+                ReportItemDiagnostic(item, context, "HmiEllipse", false);
                 AppendEllipse(html, ellipse, context);
                 break;
             case HmiDynamicSvg dynamicSvg:
+                ReportItemDiagnostic(item, context, "HmiDynamicSvg", false);
                 AppendDynamicSvg(html, dynamicSvg, context);
                 break;
             case HmiSlider slider:
+                ReportItemDiagnostic(item, context, "HmiSlider", false);
                 AppendSlider(html, slider, context);
                 break;
             case HmiBar bar:
+                ReportItemDiagnostic(item, context, "HmiBar", false);
                 AppendBar(html, bar, context);
                 break;
             case HmiScale scale:
+                ReportItemDiagnostic(item, context, "HmiScale", false);
                 AppendScale(html, scale, context);
                 break;
             case HmiDateTimeField dateTimeField:
+                ReportItemDiagnostic(item, context, "HmiDateTimeField", false);
                 AppendDateTimeField(html, dateTimeField, context);
                 break;
             case HmiClock clock:
+                ReportItemDiagnostic(item, context, "HmiClock", false);
                 AppendClock(html, clock, context);
                 break;
             case HmiArrowIndicator arrowIndicator:
+                ReportItemDiagnostic(item, context, "HmiArrowIndicator", false);
                 AppendArrowIndicator(html, arrowIndicator, context);
                 break;
             case HmiAlarmIndicator alarmIndicator:
+                ReportItemDiagnostic(item, context, "HmiAlarmIndicator", false);
                 AppendAlarmIndicator(html, alarmIndicator, context);
                 break;
             case HmiGauge gauge:
+                ReportItemDiagnostic(item, context, "HmiGauge", false);
                 AppendGauge(html, gauge, context);
                 break;
             case HmiTrendControlBase trendControl:
+                ReportItemDiagnostic(item, context, "HmiTrendControlBase", false);
                 AppendTrendControl(html, trendControl, context);
                 break;
             case HmiSymbolContainer symbolContainer:
+                ReportItemDiagnostic(item, context, "HmiSymbolContainer", false);
                 await AppendSymbolContainerAsync(html, symbolContainer, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiSymbolLibraryControl symbolLibraryControl:
+                ReportItemDiagnostic(item, context, "HmiSymbolLibraryControl", false);
                 AppendSymbolLibraryControl(html, symbolLibraryControl, context);
                 break;
             case HmiGroup group:
+                ReportItemDiagnostic(item, context, "HmiGroup", false);
                 if (group.IsLogicGrouping)
                 {
                     foreach (var child in group.Items)
@@ -297,87 +336,140 @@ public partial class HmiScreenToHtmlConverter
                 }
                 break;
             case HmiOcxControl ocxControl:
+                ReportItemDiagnostic(item, context, "HmiOcxControl", false);
                 await AppendOcxControlAsync(html, ocxControl, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiDotNetControlContainer dotNetControl:
+                ReportItemDiagnostic(item, context, "HmiDotNetControlContainer", false);
                 await AppendDotNetControlAsync(html, dotNetControl, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiUserViewControl userView:
+                ReportItemDiagnostic(item, context, "HmiUserViewControl", false);
                 await AppendUserViewControlAsync(html, userView, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiLayoutContainerBase layoutContainer:
+                ReportItemDiagnostic(item, context, "HmiLayoutContainerBase", false);
                 await AppendContainerAsync(html, layoutContainer, layoutContainer.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiFaceplateContainer faceplateContainer:
+                ReportItemDiagnostic(item, context, "HmiFaceplateContainer", false);
                 await AppendFaceplateContainerAsync(html, faceplateContainer, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiContainerBase container:
+                ReportItemDiagnostic(item, context, "HmiContainerBase", false);
                 await AppendContainerAsync(html, container, container.Items, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiScreenWindow screenWindow:
+                ReportItemDiagnostic(item, context, "HmiScreenWindow", false);
                 await AppendScreenWindowAsync(html, screenWindow, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiDataGridControl dataGridControl:
+                ReportItemDiagnostic(item, context, "HmiDataGridControl", false);
                 AppendDataGridControl(html, dataGridControl, context);
                 break;
             case HmiOverviewParameterControl overviewControl:
+                ReportItemDiagnostic(item, context, "HmiOverviewParameterControl", false);
                 AppendOverviewParameterControl(html, overviewControl, context);
                 break;
             case HmiDetailedParameterControl parameterControl:
+                ReportItemDiagnostic(item, context, "HmiDetailedParameterControl", false);
                 AppendDetailedParameterControl(html, parameterControl, context);
                 break;
             case HmiStatusForceControl statusForce:
+                ReportItemDiagnostic(item, context, "HmiStatusForceControl", false);
                 AppendStatusForceControl(html, statusForce, context);
                 break;
             case HmiRecipeControl recipeControl:
+                ReportItemDiagnostic(item, context, "HmiRecipeControl", false);
                 AppendRecipeControl(html, recipeControl, context);
                 break;
             case HmiAuditTrailControl auditTrailControl:
+                ReportItemDiagnostic(item, context, "HmiAuditTrailControl", false);
                 AppendAuditTrailControl(html, auditTrailControl, context);
                 break;
             case HmiRadarChartControl radarChartControl:
+                ReportItemDiagnostic(item, context, "HmiRadarChartControl", false);
                 AppendRadarChartControl(html, radarChartControl, context);
                 break;
             case HmiProcessDiagnosisOverviewControl overview:
+                ReportItemDiagnostic(item, context, "HmiProcessDiagnosisOverviewControl", false);
                 AppendProcessDiagnosisControl(html, overview, "Overview", "Process diagnosis overview", context);
                 break;
             case HmiProcessDiagnosisPlcCodeViewerControl codeViewer:
+                ReportItemDiagnostic(item, context, "HmiProcessDiagnosisPlcCodeViewerControl", false);
                 AppendProcessDiagnosisControl(html, codeViewer, "PlcCodeViewer", "PLC code viewer", context);
                 break;
             case HmiProcessDiagnosisCriteriaAnalysisControl criteria:
+                ReportItemDiagnostic(item, context, "HmiProcessDiagnosisCriteriaAnalysisControl", false);
                 AppendProcessDiagnosisControl(html, criteria, "CriteriaAnalysis", "Criteria analysis", context);
                 break;
             case HmiProcessDiagnosisGraphOverviewControl graphOverview:
+                ReportItemDiagnostic(item, context, "HmiProcessDiagnosisGraphOverviewControl", false);
                 AppendGraphOverviewControl(html, graphOverview, context);
                 break;
             case HmiSystemDiagnosisControl systemDiagnosisControl:
+                ReportItemDiagnostic(item, context, "HmiSystemDiagnosisControl", false);
                 AppendSystemDiagnosisControl(html, systemDiagnosisControl, context);
                 break;
             case HmiMediaControl mediaControl:
+                ReportItemDiagnostic(item, context, "HmiMediaControl", false);
                 AppendMediaControl(html, mediaControl, context);
                 break;
             case HmiNcPartProgramControl ncProgram:
+                ReportItemDiagnostic(item, context, "HmiNcPartProgramControl", false);
                 AppendNcPartProgramControl(html, ncProgram, context);
                 break;
             case HmiNcKeyboardControl ncKeyboard:
+                ReportItemDiagnostic(item, context, "HmiNcKeyboardControl", false);
                 AppendNcKeyboardControl(html, ncKeyboard, context);
                 break;
             case HmiWebControl webControl:
+                ReportItemDiagnostic(item, context, "HmiWebControl", false);
                 AppendWebControl(html, webControl, context);
                 break;
             case HmiAlarmLineControl alarmLineControl:
+                ReportItemDiagnostic(item, context, "HmiAlarmLineControl", false);
                 AppendAlarmLineControl(html, alarmLineControl, context);
                 break;
             case HmiAlarmControl alarmControl:
+                ReportItemDiagnostic(item, context, "HmiAlarmControl", false);
                 AppendAlarmControl(html, alarmControl, context);
                 break;
             case HmiUnkown unkown:
+                ReportItemDiagnostic(item, context, "UnknownPlaceholder", true);
                 AppendDiv(html, unkown, null, "Unkown:" + (unkown.Type ?? ""), context);
                 break;
             default:
+                ReportItemDiagnostic(item, context, "UnsupportedPlaceholder", true);
                 AppendDiv(html, item, context.Options.UnsupportedItemPlaceholderCssClass, item.GetType().Name, context);
                 break;
         }
+    }
+
+    private static void ReportItemDiagnostic(HmiScreenItemBase item, HmiHtmlConvertContext context, string route, bool placeholder = false)
+    {
+        var observer = context.Options.ItemDiagnostic;
+        if (observer == null) return;
+        item.SourceProperties.TryGetValue("TiaTypeName", out var type);
+        item.SourceProperties.TryGetValue("Subtype", out var subtype);
+        item.SourceProperties.TryGetValue("WinCC.Object.ClassName", out var className);
+        item.SourceProperties.TryGetValue("WinCC.Object.ClassId", out var classId);
+        observer(new HmiHtmlItemDiagnostic
+        {
+            ItemId = item.Id,
+            ItemName = item.Name,
+            ModelType = item.GetType().Name,
+            HmiObjectType = item.HmiObjectType,
+            SourceFormat = item.SourceFormat,
+            NativeTypeName = type,
+            NativeSubtype = subtype,
+            NativeClassName = className,
+            NativeClassId = classId,
+            RendererRoute = route,
+            IsPlaceholder = placeholder,
+            ChildCount = item is HmiContainerBase container ? container.Items.Count : item is HmiLayoutContainerBase layout ? layout.Items.Count : 0,
+            SourcePropertyNames = item.SourceProperties.Keys.OrderBy(key => key, StringComparer.Ordinal).ToArray()
+        });
     }
 
     private async ValueTask AppendContainerAsync(
