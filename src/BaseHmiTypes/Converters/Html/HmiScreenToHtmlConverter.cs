@@ -1803,7 +1803,7 @@ public partial class HmiScreenToHtmlConverter
         if (offset > 0)
             html.Append("<span data-hmi-button-pressed-caption style=\"display: inline-block;transform: translate(")
                 .Append(ToCss(offset)).Append("px, ").Append(ToCss(offset)).Append("px);\">");
-        AppendMultilingualText(html, caption, context);
+        AppendFormattedText(html, button, caption, context);
         if (offset > 0) html.Append("</span>");
         if (overlay) html.Append("</span>");
         if (wrapped)
@@ -4119,7 +4119,10 @@ public partial class HmiScreenToHtmlConverter
         html.Append("<textarea");
         var resize = ResolveStaticValue(item.Resizable, context) ? "both" : "none";
         AppendCommonAttributes(html, item, context,
-            additionalStyle: $"overflow: auto;resize: {resize};" + CreateTextOrientationStyle(item, context));
+            additionalStyle: $"overflow: auto;resize: {resize};" + CreateTextOrientationStyle(item, context) + CreateTextWrappingStyle(GetTextLayoutProperties(item, context).Wrapping));
+        var wrapping = GetTextLayoutProperties(item, context).Wrapping;
+        if (TryGetStaticValue(wrapping, out var wrappingMode) && wrappingMode is 0 or 1)
+            AppendAttribute(html, "wrap", wrappingMode == 0 ? "off" : "soft");
         if (!ResolveStaticValue(item.Enabled, context))
             AppendAttribute(html, "disabled", "disabled");
         if (ResolveStaticValue(item.ReadOnly, context))
@@ -4140,8 +4143,39 @@ public partial class HmiScreenToHtmlConverter
         html.Append("<div");
         AppendCommonAttributes(html, item, context, additionalStyle: "overflow: hidden;" + CreateTextOrientationStyle(item, context));
         html.Append(">");
-        AppendMultilingualText(html, ResolveStaticValue(text, context), context);
+        AppendFormattedText(html, item, ResolveStaticValue(text, context), context);
         html.Append("</div>");
+    }
+
+    private static (HmiProperty<int>? Wrapping, HmiProperty<int>? Trimming) GetTextLayoutProperties(HmiScreenItemBase item, HmiHtmlConvertContext context)
+    {
+        var wrapping = item is HmiText text ? text.TextWrapping : (item as HmiWidgetBase)?.TextWrapping;
+        var trimming = item is HmiText shape ? shape.TextTrimming : (item as HmiWidgetBase)?.TextTrimming;
+        return (context.EffectiveProperties.Resolve(item, "TextWrapping", wrapping), context.EffectiveProperties.Resolve(item, "TextTrimming", trimming));
+    }
+
+    private static string CreateTextWrappingStyle(HmiProperty<int>? wrapping)
+    {
+        if (!TryGetStaticValue(wrapping, out var mode)) return string.Empty;
+        return mode == 0 ? "white-space: pre;overflow-wrap: normal;word-break: normal;"
+            : mode == 1 ? "white-space: pre-wrap;overflow-wrap: normal;word-break: normal;" : string.Empty;
+    }
+
+    private static void AppendFormattedText(StringBuilder html, HmiScreenItemBase item, HmiMultilingualText? text, HmiHtmlConvertContext context)
+    {
+        var properties = GetTextLayoutProperties(item, context);
+        var style = CreateTextWrappingStyle(properties.Wrapping);
+        if (TryGetStaticValue(properties.Trimming, out var trimming))
+        {
+            if (trimming == 0) style += "text-overflow: clip;";
+            // CSS ellipsis is reliable for a configured non-wrapping line. Wrapped ellipsis needs separate layout handling.
+            else if (trimming == 1 && TryGetStaticValue(properties.Wrapping, out var wrapping) && wrapping == 0)
+                style += "text-overflow: ellipsis;";
+        }
+        if (style.Length > 0)
+            html.Append("<span data-hmi-text-content style=\"display: block;min-inline-size: 0;max-inline-size: 100%;overflow: hidden;").Append(style).Append("\">");
+        AppendMultilingualText(html, text, context);
+        if (style.Length > 0) html.Append("</span>");
     }
 
     private static string? CreateTextOrientationStyle(HmiScreenItemBase item, HmiHtmlConvertContext context)
@@ -5954,6 +5988,12 @@ public partial class HmiScreenToHtmlConverter
         if (hasFocusColor || hasFocusWidth) AppendAttribute(html, "data-hmi-focus-appearance", "true");
         AppendAttribute(html, "data-hmi-security-code", item.SecurityCode);
         AppendStaticAttribute(html, "data-adapt-border-to-content", item.AdaptBorderToContent, context);
+        if (item is HmiText or HmiWidgetBase)
+        {
+            var textLayout = GetTextLayoutProperties(item, context);
+            AppendAttribute(html, "data-text-wrapping", ResolvePropertyPreview(textLayout.Wrapping, context));
+            AppendAttribute(html, "data-text-trimming", ResolvePropertyPreview(textLayout.Trimming, context));
+        }
         AppendDisabledAttribute(html, item, context);
         AppendHotKeyAttributes(html, item, context);
         html.Append(" style=\"position: absolute;");
