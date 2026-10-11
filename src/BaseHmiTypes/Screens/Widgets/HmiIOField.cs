@@ -10,6 +10,9 @@ public class HmiIOField : HmiTextWidgetBase
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiIOField;
     }
 
+    /// <summary>Engineering unit caption, independent of the displayed value and its format.</summary>
+    public HmiProperty<HmiMultilingualText>? EngineeringUnitText { get; set; }
+
     public HmiProperty<string>? HotKey { get; set; }
 
     public HmiProperty<bool>? MaskInput { get; set; }

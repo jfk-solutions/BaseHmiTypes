@@ -47,7 +47,7 @@ import { HmiTrendChartStyle } from "../../screens/base/HmiTrendChartStyle.js";
 import { HmiFunctionTrendControl } from "../../screens/controls/HmiFunctionTrendControl.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
-import { staticProperty, getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiFaceplateInterfaceProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
+import { staticProperty, getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiFaceplateInterfaceProperty, HmiTagProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
 import { HmiScreenBase } from "../../screens/base/HmiScreenBase.js";
 import { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
 import { HmiSymbolContainer } from "../../screens/base/HmiSymbolContainer.js";
@@ -1824,8 +1824,28 @@ function createStateStyle(state: HmiState | undefined): string | null {
 }
 
 function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConvertContext): void {
+  const unitProperty = context.effectiveProperties.resolve(ioField, "engineeringUnitText", ioField.engineeringUnitText);
+  const unit = resolveStaticValue(unitProperty, context, tryConvertFaceplateTextValue)?.getText(context.options.cultureLcid);
+  const hasUnit = unit !== undefined && unit !== "";
+  if (hasUnit) {
+    html.push("<div data-hmi-io-field-unit-container");
+    appendCommonAttributes(html, ioField, context, true,
+      "display: flex;align-items: center;gap: .25em;box-sizing: border-box;overflow: hidden;" + createFontWritingModeStyle(ioField.font), false);
+    html.push('>');
+  }
   html.push("<input");
-  appendCommonAttributes(html, ioField, context, undefined, createFontWritingModeStyle(ioField.font));
+  if (hasUnit) {
+    appendAttribute(html, "id", ioField.name);
+    appendStaticAttribute(html, "tabindex", ioField.tabIndex);
+    appendHotKeyAttributes(html, ioField);
+    const focusWidth = getStaticValue(ioField.focusWidth);
+    const hasFocusWidth = focusWidth !== undefined && Number.isFinite(focusWidth) && focusWidth >= 0;
+    if (getStaticValue(ioField.focusColor) !== undefined || hasFocusWidth) appendAttribute(html, "data-hmi-focus-appearance", "true");
+    appendAttribute(html, "style", "flex: 1;min-width: 0;width: 0;height: 100%;box-sizing: border-box;border: 0;background: transparent;color: inherit;font: inherit;text-align: inherit;");
+    appendAttribute(html, "aria-description", unit);
+  } else appendCommonAttributes(html, ioField, context, undefined, createFontWritingModeStyle(ioField.font));
+  if (unitProperty !== undefined) html.push(' data-engineering-unit="', escapeHtml(unit ?? ""), '"');
+  if (unitProperty?.kind === HmiPropertyKind.Tag) appendAttribute(html, "data-engineering-unit-tag", (unitProperty as HmiTagProperty<HmiMultilingualText>).tagName);
   if (resolveStaticValue(ioField.enabled, context, tryConvertFaceplateBooleanValue) === false) appendAttribute(html, "disabled", "disabled");
   let text = resolveStaticValue(ioField.text, context, tryConvertFaceplateTextValue)?.getDisplayText(context.options.cultureLcid);
   if (!text?.trim() && ioField.text?.kind === HmiPropertyKind.Expression)
@@ -1839,6 +1859,7 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
   if (fieldLength !== undefined)
     appendAttribute(html, "maxlength", fieldLength.toString());
   html.push(">");
+  if (hasUnit) html.push('<span data-hmi-engineering-unit style="flex: 0 0 auto;max-width: 100%;overflow: hidden;white-space: pre;">', escapeHtml(unit), '</span></div>');
 }
 
 function appendBar(html: string[], bar: HmiBar, context: HmiHtmlConvertContext): void {
@@ -6359,11 +6380,12 @@ function appendCommonAttributes(
   item: HmiScreenItemBase,
   context: HmiHtmlConvertContext,
   includePaintedStyle = true,
-  additionalStyle: string | null = null
+  additionalStyle: string | null = null,
+  includeInteractionAttributes = true
 ): void {
-  appendAttribute(html, "id", item.name);
+  if (includeInteractionAttributes) appendAttribute(html, "id", item.name);
   appendTextAttribute(html, "title", item.toolTipText, context);
-  appendStaticAttribute(html, "tabindex", item.tabIndex);
+  if (includeInteractionAttributes) appendStaticAttribute(html, "tabindex", item.tabIndex);
   const focusItem = item instanceof HmiWidgetBase || item instanceof HmiWindowBase ? item : undefined;
   const focusColor = getStaticValue(focusItem?.focusColor);
   const focusWidth = getStaticValue(focusItem?.focusWidth);
@@ -6379,7 +6401,7 @@ function appendCommonAttributes(
     appendAttribute(html, "data-text-trimming", resolvePropertyPreview(textLayout.trimming));
   }
   appendDisabledAttribute(html, item, context);
-  appendHotKeyAttributes(html, item);
+  if (includeInteractionAttributes) appendHotKeyAttributes(html, item);
   appendAttribute(html, "data-hmi-node-key", context.nodeKey);
   html.push(" style=\"position: absolute;");
   appendPosition(html, item, context);

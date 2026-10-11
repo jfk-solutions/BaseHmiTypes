@@ -2017,8 +2017,31 @@ public partial class HmiScreenToHtmlConverter
 
     private static void AppendInput(StringBuilder html, HmiIOField ioField, HmiHtmlConvertContext context)
     {
+        var unitProperty = context.EffectiveProperties.Resolve(ioField, nameof(HmiIOField.EngineeringUnitText), ioField.EngineeringUnitText);
+        var unit = ResolveStaticValue(unitProperty, context)?.GetText(context.CultureInfo);
+        var hasUnit = !string.IsNullOrEmpty(unit);
+        if (hasUnit)
+        {
+            html.Append("<div data-hmi-io-field-unit-container");
+            AppendCommonAttributes(html, ioField, context,
+                additionalStyle: "display: flex;align-items: center;gap: .25em;box-sizing: border-box;overflow: hidden;" + CreateFontWritingModeStyle(ioField.Font, context),
+                includeInteractionAttributes: false);
+            html.Append('>');
+        }
         html.Append("<input");
-        AppendCommonAttributes(html, ioField, context, additionalStyle: CreateFontWritingModeStyle(ioField.Font, context));
+        if (hasUnit)
+        {
+            AppendAttribute(html, "id", ioField.Name);
+            AppendStaticAttribute(html, "tabindex", ioField.TabIndex, context);
+            AppendHotKeyAttributes(html, ioField, context);
+            var hasFocusWidth = TryGetStaticValue(ioField.FocusWidth, out var focusWidth) && IsFinite(focusWidth) && focusWidth >= 0;
+            if (TryGetStaticValue(ioField.FocusColor, out _) || hasFocusWidth) AppendAttribute(html, "data-hmi-focus-appearance", "true");
+            AppendAttribute(html, "style", "flex: 1;min-width: 0;width: 0;height: 100%;box-sizing: border-box;border: 0;background: transparent;color: inherit;font: inherit;text-align: inherit;");
+            AppendAttribute(html, "aria-description", unit);
+        }
+        else AppendCommonAttributes(html, ioField, context, additionalStyle: CreateFontWritingModeStyle(ioField.Font, context));
+        if (unitProperty is not null) html.Append(" data-engineering-unit=\"").Append(WebUtility.HtmlEncode(unit ?? string.Empty)).Append('"');
+        if (unitProperty is HmiTagProperty<HmiMultilingualText> unitTag) AppendAttribute(html, "data-engineering-unit-tag", unitTag.TagName);
         if (!ResolveStaticValue(ioField.Enabled, context))
             AppendAttribute(html, "disabled", "disabled");
         var text = ResolveStaticValue(ioField.Text, context)?.GetDisplayText(context.CultureInfo);
@@ -2032,6 +2055,11 @@ public partial class HmiScreenToHtmlConverter
         if (ioField.FieldLength is not null)
             AppendAttribute(html, "maxlength", ResolveStaticValue(ioField.FieldLength, context).ToString(CultureInfo.InvariantCulture));
         html.Append(">");
+        if (hasUnit)
+        {
+            html.Append("<span data-hmi-engineering-unit style=\"flex: 0 0 auto;max-width: 100%;overflow: hidden;white-space: pre;\">")
+                .Append(WebUtility.HtmlEncode(unit)).Append("</span></div>");
+        }
     }
 
     private static void AppendBar(StringBuilder html, HmiBar bar, HmiHtmlConvertContext context)
@@ -6078,11 +6106,12 @@ public partial class HmiScreenToHtmlConverter
         HmiScreenItemBase item,
         HmiHtmlConvertContext context,
         bool includePaintedStyle = true,
-        string? additionalStyle = null)
+        string? additionalStyle = null,
+        bool includeInteractionAttributes = true)
     {
-        AppendAttribute(html, "id", item.Name);
+        if (includeInteractionAttributes) AppendAttribute(html, "id", item.Name);
         AppendTextAttribute(html, "title", item.ToolTipText, context);
-        AppendStaticAttribute(html, "tabindex", item.TabIndex, context);
+        if (includeInteractionAttributes) AppendStaticAttribute(html, "tabindex", item.TabIndex, context);
         var focusColor = item is HmiWidgetBase focusWidget ? focusWidget.FocusColor : (item as HmiWindowBase)?.FocusColor;
         var focusWidth = item is HmiWidgetBase widthWidget ? widthWidget.FocusWidth : (item as HmiWindowBase)?.FocusWidth;
         var hasFocusColor = TryGetStaticValue(focusColor, out var configuredFocusColor);
@@ -6099,7 +6128,7 @@ public partial class HmiScreenToHtmlConverter
             AppendAttribute(html, "data-text-trimming", ResolvePropertyPreview(textLayout.Trimming, context));
         }
         AppendDisabledAttribute(html, item, context);
-        AppendHotKeyAttributes(html, item, context);
+        if (includeInteractionAttributes) AppendHotKeyAttributes(html, item, context);
         html.Append(" style=\"position: absolute;");
         AppendPosition(html, item, context);
         AppendAdaptBorderToContentStyle(html, item, context);
