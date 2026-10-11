@@ -2463,8 +2463,28 @@ function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertCon
   appendAttribute(html, "data-format", getStaticValue(clock.format));
   appendAttribute(html, "data-time-zone", getStaticValue(clock.timeZone));
   appendBooleanAttribute(html, "data-analog", getStaticValue(clock.analog) === true);
+  appendNativeClockAppearance(html, clock, context);
   if(clock.backgroundStyle!==undefined)appendAttribute(html,"data-clock-background-style",String(getStaticValue(clock.backgroundStyle)??0));
   html.push(`>${parts.length === 0 ? "Clock" : parts.join(" ")}</time>`);
+}
+
+function appendNativeClockAppearance(html: string[], clock: HmiClock, context: HmiHtmlConvertContext): void {
+  if (clock.dialColor !== undefined) appendAttribute(html, "data-clock-dial-color", colorToCss(getStaticValue(clock.dialColor) ?? hmiColorFromArgb(0,0,0,0)));
+  if (clock.needleColor !== undefined) appendAttribute(html, "data-clock-needle-color", colorToCss(getStaticValue(clock.needleColor) ?? hmiColorFromArgb(0,0,0,0)));
+  if (clock.needleBorderColor !== undefined) appendAttribute(html, "data-clock-needle-border-color", colorToCss(getStaticValue(clock.needleBorderColor) ?? hmiColorFromArgb(0,0,0,0)));
+  if (clock.hourNeedleHeight !== undefined) appendAttribute(html, "data-clock-hour-needle-height", String(getStaticValue(clock.hourNeedleHeight)));
+  if (clock.hourNeedleWidth !== undefined) appendAttribute(html, "data-clock-hour-needle-width", String(getStaticValue(clock.hourNeedleWidth)));
+  if (clock.minuteNeedleHeight !== undefined) appendAttribute(html, "data-clock-minute-needle-height", String(getStaticValue(clock.minuteNeedleHeight)));
+  if (clock.minuteNeedleWidth !== undefined) appendAttribute(html, "data-clock-minute-needle-width", String(getStaticValue(clock.minuteNeedleWidth)));
+  if (clock.secondNeedleHeight !== undefined) appendAttribute(html, "data-clock-second-needle-height", String(getStaticValue(clock.secondNeedleHeight)));
+  if (clock.secondNeedleWidth !== undefined) appendAttribute(html, "data-clock-second-needle-width", String(getStaticValue(clock.secondNeedleWidth)));
+  if (clock.tickDistance !== undefined) appendAttribute(html, "data-clock-tick-distance", String(getStaticValue(clock.tickDistance)));
+  if (clock.needleFillStyle !== undefined) appendAttribute(html, "data-clock-needle-fill-style", String(getStaticValue(clock.needleFillStyle)));
+  if (clock.tickStyle !== undefined) appendAttribute(html, "data-clock-tick-style", String(getStaticValue(clock.tickStyle)));
+  if (clock.nativeBackFillStyle !== undefined) appendAttribute(html, "data-clock-native-back-fill-style", String(getStaticValue(clock.nativeBackFillStyle)));
+  if (clock.nativeCornerRadius !== undefined) appendAttribute(html, "data-clock-native-corner-radius", String(getStaticValue(clock.nativeCornerRadius)));
+  if (clock.nativeEdgeStyle !== undefined) appendAttribute(html, "data-clock-native-edge-style", String(getStaticValue(clock.nativeEdgeStyle)));
+  if (clock.fontReferenceDeviceSize !== undefined) appendAttribute(html, "data-clock-font-reference-device-size", String(getStaticValue(clock.fontReferenceDeviceSize)));
 }
 
 // Fixed sample matches the digital renderer: not a live clock.
@@ -2480,6 +2500,7 @@ function appendAnalogClockPreview(html: string[], clock: HmiClock, context: HmiH
   appendAttribute(html,"data-time-zone",getStaticValue(clock.timeZone));
   appendBooleanAttribute(html,"data-analog",true);
   appendAttribute(html,"data-clock-preview","static");
+  appendNativeClockAppearance(html, clock, context);
   if(clock.backgroundStyle!==undefined)appendAttribute(html,"data-clock-background-style",String(getStaticValue(clock.backgroundStyle)??0));
   html.push('><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Analog clock preview: 12:34:56" style="width: 100%; height: 100%; min-height: 0; flex: 1;">');
   if(clock.backgroundStyle===undefined||getStaticValue(clock.backgroundStyle)===1){
