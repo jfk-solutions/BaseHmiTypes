@@ -372,11 +372,11 @@ public partial class HmiScreenToHtmlConverter
                 break;
             case HmiOverviewParameterControl overviewControl:
                 ReportItemDiagnostic(item, context, "HmiOverviewParameterControl", false);
-                AppendOverviewParameterControl(html, overviewControl, context);
+                await AppendOverviewParameterControl(html, overviewControl, context, project, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiDetailedParameterControl parameterControl:
                 ReportItemDiagnostic(item, context, "HmiDetailedParameterControl", false);
-                AppendDetailedParameterControl(html, parameterControl, context);
+                await AppendDetailedParameterControl(html, parameterControl, context, project, cancellationToken).ConfigureAwait(false);
                 break;
             case HmiStatusForceControl statusForce:
                 ReportItemDiagnostic(item, context, "HmiStatusForceControl", false);

@@ -493,10 +493,10 @@ export class HmiScreenToHtmlConverter {
       appendDataGridControl(html, item, context);
     } else if (item instanceof HmiOverviewParameterControl) {
       reportItemDiagnostic(item, context, "HmiOverviewParameterControl", false);
-      appendOverviewParameterControl(html, item, context);
+      await appendOverviewParameterControl(html, item, context, project, signal);
     } else if (item instanceof HmiDetailedParameterControl) {
       reportItemDiagnostic(item, context, "HmiDetailedParameterControl", false);
-      appendDetailedParameterControl(html, item, context);
+      await appendDetailedParameterControl(html, item, context, project, signal);
     } else if (item instanceof HmiStatusForceControl) {
       reportItemDiagnostic(item, context, "HmiStatusForceControl", false);
       appendStatusForceControl(html, item, context);
@@ -2861,7 +2861,7 @@ function appendDataGridControl(html: string[], dataGridControl: HmiDataGridContr
   html.push("</div>");
 }
 
-function appendDetailedParameterControl(html: string[], control: HmiDetailedParameterControl, context: HmiHtmlConvertContext): void {
+async function appendDetailedParameterControl(html: string[], control: HmiDetailedParameterControl, context: HmiHtmlConvertContext, project: IHmiProject | undefined, signal?: AbortSignal): Promise<void> {
   html.push("<div");
   appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
   appendAttribute(html, "data-parameter-set-type-fixed", resolvePropertyPreview(control.parameterSetTypeFixed));
@@ -2882,6 +2882,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(control.showToolbar));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(control.showStatusBar));
   html.push(">");
+  appendParameterHeaderContentMetadata(html, control);
   appendGridColumnTextTrimmingMetadata(html, control.columnDefinitions.map(column => [column.name ?? column.key, column.headerTextTrimming, column.contentTextTrimming]));
   if (getStaticValue(control.showToolbar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
@@ -2905,7 +2906,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   if (control.currentParameterSetId === undefined || control.currentParameterSetTypeId === undefined)
     html.push("<div>Parameter set selection not decoded</div>");
   html.push("</div>");
-  if (!getStaticValue(control.hideDetails)) appendParameterView(html, control, context);
+  if (!getStaticValue(control.hideDetails)) await appendParameterView(html, control, context, project, signal);
   if (getStaticValue(control.showStatusBar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
     appendParameterBarStyle(style, control.statusBarPaddingLeft, control.statusBarPaddingTop, control.statusBarPaddingRight, control.statusBarPaddingBottom);
@@ -2919,7 +2920,7 @@ function appendDetailedParameterControl(html: string[], control: HmiDetailedPara
   html.push("</div>");
 }
 
-function appendOverviewParameterControl(html: string[], control: HmiOverviewParameterControl, context: HmiHtmlConvertContext): void {
+async function appendOverviewParameterControl(html: string[], control: HmiOverviewParameterControl, context: HmiHtmlConvertContext, project: IHmiProject | undefined, signal?: AbortSignal): Promise<void> {
   html.push("<div");
   appendCommonAttributes(html, control, context, true, "display: flex; flex-direction: column; overflow: hidden;");
   appendAttribute(html, "data-parameter-control-view", "overview");
@@ -2938,6 +2939,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(control.showToolbar));
   appendAttribute(html, "data-show-status-bar", resolvePropertyPreview(control.showStatusBar));
   html.push(">");
+  appendParameterHeaderContentMetadata(html, control);
   appendGridColumnTextTrimmingMetadata(html, control.columnDefinitions.map(column => [column.name ?? column.key, column.headerTextTrimming, column.contentTextTrimming]));
   if (getStaticValue(control.showToolbar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-bottom: 1px solid currentColor;"];
@@ -2950,7 +2952,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
     html.push('>Toolbar</div>');
   }
   if (control.filter !== undefined) html.push('<div class="hmi-parameter-filter">Filter: ', escapeHtml(getStaticValue(control.filter) ?? ""), "</div>");
-  appendParameterView(html, control, context);
+  await appendParameterView(html, control, context, project, signal);
   if (getStaticValue(control.showStatusBar)) {
     const style = ["flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;"];
     appendParameterBarStyle(style, control.statusBarPaddingLeft, control.statusBarPaddingTop, control.statusBarPaddingRight, control.statusBarPaddingBottom);
@@ -2964,7 +2966,7 @@ function appendOverviewParameterControl(html: string[], control: HmiOverviewPara
   html.push("</div>");
 }
 
-function appendParameterView(html: string[], control: HmiParameterControlBase, context: HmiHtmlConvertContext): void {
+async function appendParameterView(html: string[], control: HmiParameterControlBase, context: HmiHtmlConvertContext, project: IHmiProject | undefined, signal?: AbortSignal): Promise<void> {
   appendParameterDefinitionPreview(html, control, context);
   const columns = control.columnDefinitions.filter(column => column.visible === undefined || getStaticValue(column.visible) === true);
   const style = ["flex: 1 1 auto; display: grid; place-items: center; overflow: hidden; border-top-style: solid; border-top-color: currentColor;"];
@@ -2979,7 +2981,7 @@ function appendParameterView(html: string[], control: HmiParameterControlBase, c
   appendColorStyle(style, "color", control.contentForegroundColor);
   appendColorStyle(style, "border-top-color", control.gridLineColor);
   html.push('<div class="hmi-parameter-details" style="', style.join(""), '\">');
-  if (columns.length > 0) appendParameterColumns(html, control, columns, context);
+  if (columns.length > 0) await appendParameterColumns(html, control, columns, context, project, signal);
   else html.push("Parameter data not loaded");
   appendParameterHeaderSelectionPreview(html, control, context);
   appendParameterSelectionPreview(html, control, context);
@@ -3082,7 +3084,7 @@ function appendParameterSelectionPreview(html: string[], control: HmiParameterCo
   html.push("</div>");
 }
 
-function appendParameterColumns(html: string[], control: HmiParameterControlBase, columns: HmiParameterColumn[], context: HmiHtmlConvertContext): void {
+async function appendParameterColumns(html: string[], control: HmiParameterControlBase, columns: HmiParameterColumn[], context: HmiHtmlConvertContext, project: IHmiProject | undefined, signal?: AbortSignal): Promise<void> {
   html.push('<table class="hmi-parameter-table" style="width: 100%; table-layout: fixed; border-collapse: collapse;"><colgroup>');
   for (const column of columns) html.push('<col style="', createParameterColumnWidthStyle(column), '\">');
   const headerStyle = ["padding: 2px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"];
@@ -3101,6 +3103,8 @@ function appendParameterColumns(html: string[], control: HmiParameterControlBase
         appendColorStyle(separator, "border-right-color", control.headerBorderColor);
       }
       html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), separator.join(""), createGridHeaderTextTrimmingStyle(column.headerTextTrimming), '\"');
+      appendAttribute(html, "data-header-content-mode", resolvePropertyPreview(column.headerContentMode));
+      appendAttribute(html, "data-header-graphic-key", column.headerGraphicKey, true);
       appendAttribute(html, "data-column-name", column.name);
       appendAttribute(html, "data-column-key", column.key);
       appendAttribute(html, "data-enabled", resolvePropertyPreview(column.enabled));
@@ -3119,11 +3123,40 @@ function appendParameterColumns(html: string[], control: HmiParameterControlBase
       appendAttribute(html, "data-sort-direction", resolvePropertyPreview(column.sortDirection));
       appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat));
       const headingText = columnHeaderType === 1 ? String(index + 1) : column.headerText?.getText(context.options.cultureLcid) ?? column.name ?? column.key ?? "Column";
-      html.push(">"); appendGridHeaderText(html, headingText, column.headerTextTrimming); html.push("</th>");
+      html.push(">"); const mode = column.headerContentMode === undefined ? undefined : getStaticValue(column.headerContentMode) ?? 0;
+      const graphicUri = columnHeaderType !== 1 && (mode === 0 || mode === 1 || mode === 3) ? await resolveImageUri(column.headerGraphic, project, signal) : undefined;
+      const useGraphic = columnHeaderType !== 1 && !!graphicUri?.trim() && (mode === 0 || mode === 1 || mode === 3);
+      if (useGraphic) {
+        html.push('<img data-parameter-header-graphic="true"'); appendAttribute(html, "src", graphicUri);
+        html.push(' alt="" style="max-width: 100%; max-height: 1.5em; vertical-align: middle;">');
+      }
+      const useText = columnHeaderType === 1 || (mode !== 3 && (mode !== 0 || !useGraphic));
+      if (useText) appendGridHeaderText(html, headingText, column.headerTextTrimming);
+      else if (!useGraphic && (column.headerGraphic !== undefined || column.headerGraphicKey !== undefined))
+        html.push('<span data-parameter-header-graphic-unloaded="true">Graphic not loaded</span>'); html.push("</th>");
     }
     html.push("</tr></thead>");
   }
   html.push('<tbody><tr><td colspan="', String(columns.length), '\" style="text-align: center; padding: 2px 4px;', createParameterCellLayoutStyle(control, context), '">Parameter data not loaded</td></tr></tbody></table>');
+}
+
+function appendParameterHeaderContentMetadata(html: string[], control: HmiParameterControlBase): void {
+  for (let index = 0; index < control.columnDefinitions.length; index++) {
+    const column = control.columnDefinitions[index]!;
+    if (column.headerContentMode === undefined && column.headerGraphicKey === undefined && column.headerGraphic === undefined) continue;
+    html.push("<div hidden data-parameter-column-header-definition");
+    appendAttribute(html, "data-column-index", String(index));
+    appendAttribute(html, "data-column-name", column.name, true); appendAttribute(html, "data-column-key", column.key, true);
+    appendAttribute(html, "data-header-content-mode", resolvePropertyPreview(column.headerContentMode));
+    appendAttribute(html, "data-header-graphic-key", column.headerGraphicKey, true);
+    if (column.headerGraphic !== undefined) {
+      appendAttribute(html, "data-header-graphic-id", column.headerGraphic.imageId, true);
+      appendAttribute(html, "data-header-graphic-name", column.headerGraphic.imageName, true);
+      appendAttribute(html, "data-header-graphic-uri", column.headerGraphic.uri, true);
+      appendAttribute(html, "data-header-graphic-kind", HmiImageSourceKind[column.headerGraphic.kind]);
+    }
+    html.push("></div>");
+  }
 }
 
 function createParameterCellLayoutStyle(control: HmiParameterControlBase, context: HmiHtmlConvertContext): string {

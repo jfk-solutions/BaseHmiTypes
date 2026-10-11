@@ -1,4 +1,5 @@
 using System.Text;
+using BaseHmiTypes.Projects;
 using System.Net;
 using System.Globalization;
 using BaseHmiTypes.Screens.Controls;
@@ -8,7 +9,7 @@ namespace BaseHmiTypes.Converters.Html;
 
 public partial class HmiScreenToHtmlConverter
 {
-    private static void AppendDetailedParameterControl(StringBuilder html, HmiDetailedParameterControl control, HmiHtmlConvertContext context)
+    private static async ValueTask AppendDetailedParameterControl(StringBuilder html, HmiDetailedParameterControl control, HmiHtmlConvertContext context, IHmiProject? project, CancellationToken cancellationToken)
     {
         html.Append("<div");
         AppendCommonAttributes(html, control, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
@@ -30,6 +31,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(control.ShowToolbar, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(control.ShowStatusBar, context));
         html.Append('>');
+        AppendParameterHeaderContentMetadata(html, control, context);
         AppendGridColumnTextTrimmingMetadata(html, control.ColumnDefinitions.Select(column => (column.Name ?? column.Key, column.HeaderTextTrimming, column.ContentTextTrimming)), context);
         if (ResolveStaticValue(control.ShowToolbar, context))
         {
@@ -57,7 +59,7 @@ public partial class HmiScreenToHtmlConverter
         if (control.CurrentParameterSetId is null || control.CurrentParameterSetTypeId is null)
             html.Append("<div>Parameter set selection not decoded</div>");
         html.Append("</div>");
-        if (!ResolveStaticValue(control.HideDetails, context)) AppendParameterView(html, control, context);
+        if (!ResolveStaticValue(control.HideDetails, context)) await AppendParameterView(html, control, context, project, cancellationToken).ConfigureAwait(false);
         if (ResolveStaticValue(control.ShowStatusBar, context))
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;");
@@ -72,7 +74,7 @@ public partial class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendOverviewParameterControl(StringBuilder html, HmiOverviewParameterControl control, HmiHtmlConvertContext context)
+    private static async ValueTask AppendOverviewParameterControl(StringBuilder html, HmiOverviewParameterControl control, HmiHtmlConvertContext context, IHmiProject? project, CancellationToken cancellationToken)
     {
         html.Append("<div");
         AppendCommonAttributes(html, control, context, additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
@@ -92,6 +94,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(control.ShowToolbar, context));
         AppendAttribute(html, "data-show-status-bar", ResolvePropertyPreview(control.ShowStatusBar, context));
         html.Append('>');
+        AppendParameterHeaderContentMetadata(html, control, context);
         AppendGridColumnTextTrimmingMetadata(html, control.ColumnDefinitions.Select(column => (column.Name ?? column.Key, column.HeaderTextTrimming, column.ContentTextTrimming)), context);
         if (ResolveStaticValue(control.ShowToolbar, context))
         {
@@ -106,7 +109,7 @@ public partial class HmiScreenToHtmlConverter
         }
         if (control.Filter is not null)
             html.Append("<div class=\"hmi-parameter-filter\">Filter: ").Append(WebUtility.HtmlEncode(ResolveStaticValue(control.Filter, context))).Append("</div>");
-        AppendParameterView(html, control, context);
+        await AppendParameterView(html, control, context, project, cancellationToken).ConfigureAwait(false);
         if (ResolveStaticValue(control.ShowStatusBar, context))
         {
             var style = new StringBuilder("flex: 0 0 auto; padding: 2px 4px; border-top: 1px solid currentColor;");
@@ -121,7 +124,7 @@ public partial class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendParameterView(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    private static async ValueTask AppendParameterView(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context, IHmiProject? project, CancellationToken cancellationToken)
     {
         AppendParameterDefinitionPreview(html, control, context);
         var columns = control.ColumnDefinitions.Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context)).ToArray();
@@ -137,7 +140,7 @@ public partial class HmiScreenToHtmlConverter
         AppendColorStyle(style, "color", control.ContentForegroundColor);
         AppendColorStyle(style, "border-top-color", control.GridLineColor);
         html.Append("<div class=\"hmi-parameter-details\" style=\"").Append(style).Append("\">");
-        if (columns.Length > 0) AppendParameterColumns(html, control, columns, context);
+        if (columns.Length > 0) await AppendParameterColumns(html, control, columns, context, project, cancellationToken).ConfigureAwait(false);
         else html.Append("Parameter data not loaded");
         AppendParameterHeaderSelectionPreview(html, control, context);
         AppendParameterSelectionPreview(html, control, context);
@@ -257,8 +260,8 @@ public partial class HmiScreenToHtmlConverter
         html.Append("</div>");
     }
 
-    private static void AppendParameterColumns(StringBuilder html, HmiParameterControlBase control,
-        HmiParameterColumn[] columns, HmiHtmlConvertContext context)
+    private static async ValueTask AppendParameterColumns(StringBuilder html, HmiParameterControlBase control,
+        HmiParameterColumn[] columns, HmiHtmlConvertContext context, IHmiProject? project, CancellationToken cancellationToken)
     {
         html.Append("<table class=\"hmi-parameter-table\" style=\"width: 100%; table-layout: fixed; border-collapse: collapse;\"><colgroup>");
         foreach (var column in columns)
@@ -283,6 +286,8 @@ public partial class HmiScreenToHtmlConverter
                     AppendColorStyle(separator, "border-right-color", control.HeaderBorderColor);
                 }
                 html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append(separator).Append(CreateGridHeaderTextTrimmingStyle(column.HeaderTextTrimming)).Append('"');
+                AppendAttribute(html, "data-header-content-mode", ResolvePropertyPreview(column.HeaderContentMode, context));
+                AppendAttribute(html, "data-header-graphic-key", column.HeaderGraphicKey, preserveEmpty: true);
                 AppendAttribute(html, "data-column-name", column.Name);
                 AppendAttribute(html, "data-column-key", column.Key);
                 AppendAttribute(html, "data-enabled", ResolvePropertyPreview(column.Enabled, context));
@@ -301,7 +306,8 @@ public partial class HmiScreenToHtmlConverter
                 AppendAttribute(html, "data-output-format", ResolvePropertyPreview(column.OutputFormat, context));
                 var headingText = columnHeaderType == 1 ? (index + 1).ToString(CultureInfo.InvariantCulture) : column.HeaderText?.GetText(context.CultureInfo) ?? column.Name ?? column.Key ?? "Column";
                 html.Append('>');
-                AppendGridHeaderText(html, headingText, column.HeaderTextTrimming);
+                int? mode = column.HeaderContentMode is null ? null : ResolveStaticValue(column.HeaderContentMode, context);
+                AppendParameterHeaderContent(html, column, headingText, mode, columnHeaderType, context, columnHeaderType != 1 && mode is 0 or 1 or 3 ? await ResolveImageUriAsync(column.HeaderGraphic, project, cancellationToken).ConfigureAwait(false) : null);
                 html.Append("</th>");
             }
             html.Append("</tr></thead>");
@@ -309,6 +315,46 @@ public partial class HmiScreenToHtmlConverter
         html.Append("<tbody><tr><td colspan=\"").Append(columns.Length.ToString(CultureInfo.InvariantCulture))
             .Append("\" style=\"text-align: center; padding: 2px 4px;").Append(CreateParameterCellLayoutStyle(control, context))
             .Append("\">Parameter data not loaded</td></tr></tbody></table>");
+    }
+
+    private static void AppendParameterHeaderContentMetadata(StringBuilder html, HmiParameterControlBase control, HmiHtmlConvertContext context)
+    {
+        for (var index = 0; index < control.ColumnDefinitions.Count; index++)
+        {
+            var column = control.ColumnDefinitions[index];
+            if (column.HeaderContentMode is null && column.HeaderGraphicKey is null && column.HeaderGraphic is null) continue;
+            html.Append("<div hidden data-parameter-column-header-definition");
+            AppendAttribute(html, "data-column-index", index.ToString(CultureInfo.InvariantCulture));
+            AppendAttribute(html, "data-column-name", column.Name, preserveEmpty: true);
+            AppendAttribute(html, "data-column-key", column.Key, preserveEmpty: true);
+            AppendAttribute(html, "data-header-content-mode", ResolvePropertyPreview(column.HeaderContentMode, context));
+            AppendAttribute(html, "data-header-graphic-key", column.HeaderGraphicKey, preserveEmpty: true);
+            if (column.HeaderGraphic is not null)
+            {
+                AppendAttribute(html, "data-header-graphic-id", column.HeaderGraphic.ImageId, preserveEmpty: true);
+                AppendAttribute(html, "data-header-graphic-name", column.HeaderGraphic.ImageName, preserveEmpty: true);
+                AppendAttribute(html, "data-header-graphic-uri", column.HeaderGraphic.Uri, preserveEmpty: true);
+                AppendAttribute(html, "data-header-graphic-kind", column.HeaderGraphic.Kind.ToString());
+            }
+            html.Append("></div>");
+        }
+    }
+
+    private static void AppendParameterHeaderContent(StringBuilder html, HmiParameterColumn column,
+        string headingText, int? mode, int? columnHeaderType, HmiHtmlConvertContext context, string? graphicUri)
+    {
+        // Index headings override configured caption/graphic content; unknown modes retain the text preview.
+        var useGraphic = columnHeaderType != 1 && !string.IsNullOrWhiteSpace(graphicUri) && mode is 0 or 1 or 3;
+        if (useGraphic)
+        {
+            html.Append("<img data-parameter-header-graphic=\"true\"");
+            AppendAttribute(html, "src", graphicUri);
+            html.Append(" alt=\"\" style=\"max-width: 100%; max-height: 1.5em; vertical-align: middle;\">");
+        }
+        var useText = columnHeaderType == 1 || (mode != 3 && (mode != 0 || !useGraphic));
+        if (useText) AppendGridHeaderText(html, headingText, column.HeaderTextTrimming);
+        else if (!useGraphic && (column.HeaderGraphic is not null || column.HeaderGraphicKey is not null))
+            html.Append("<span data-parameter-header-graphic-unloaded=\"true\">Graphic not loaded</span>");
     }
 
     private static string CreateParameterCellLayoutStyle(HmiParameterControlBase control, HmiHtmlConvertContext context)
