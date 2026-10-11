@@ -8,6 +8,8 @@ import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiConfirmationMode } from "./HmiConfirmationMode.js";
 
 export class HmiIOField extends HmiTextWidgetBase {
+  /** Engineering unit caption, independent of displayed value and format. */
+  engineeringUnitText?: HmiProperty<HmiMultilingualText>;
   hotKey?: HmiProperty<string>;
   maskInput?: HmiProperty<boolean>;
   fillCharacters?: HmiProperty<string>;
