@@ -4643,8 +4643,25 @@ async function appendToggleSwitch(
   const image = getStaticValue(toggleSwitch.image) ?? offState?.image;
   const alternateImage = getStaticValue(toggleSwitch.alternateImage) ?? onState?.image;
 
+  let toggleStyle = createStateStyle(selectedState) ?? "";
+  for (const [name, variable, property] of [
+    ["HeaderForegroundColor", "--hmi-toggle-header-foreground", toggleSwitch.headerForegroundColor],
+    ["OffBackgroundColor", "--hmi-toggle-off-background", toggleSwitch.offBackgroundColor],
+    ["OnBackgroundColor", "--hmi-toggle-on-background", toggleSwitch.onBackgroundColor],
+  ] as const) {
+    const color = context.effectiveProperties.tryGetStaticValue<HmiColor>(toggleSwitch, name, property).value;
+    if (color !== undefined) toggleStyle += `${variable}:${colorToCss(color)};`;
+  }
   html.push("<hmi-toggle-switch");
-  appendCommonAttributes(html, toggleSwitch, context, true, createStateStyle(selectedState));
+  appendCommonAttributes(html, toggleSwitch, context, true, toggleStyle);
+  for (const [name, property] of [
+    ["data-header-foreground-color", toggleSwitch.headerForegroundColor],
+    ["data-off-background-color", toggleSwitch.offBackgroundColor],
+    ["data-on-background-color", toggleSwitch.onBackgroundColor],
+  ] as const) {
+    const color = resolveStaticValue(property, context, tryConvertFaceplateColorValue);
+    if (color !== undefined) appendAttribute(html, name, colorToCss(color));
+  }
   appendStaticAttribute(
     html,
     "mode",
