@@ -3067,6 +3067,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(recipeControl.SelectionForegroundColor, context));
         AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(recipeControl.AlternatingRowBackgroundColor, context));
         html.Append('>');
+        AppendRecipeColumnMetadata(html, recipeControl, context);
 
         if (recipeControl.ViewKind == HmiRecipeViewKind.Selector)
         {
@@ -3126,6 +3127,26 @@ public partial class HmiScreenToHtmlConverter
         if (showFooter)
             html.Append("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
         html.Append("</div>");
+    }
+
+    private static void AppendRecipeColumnMetadata(StringBuilder html, HmiRecipeControl control, HmiHtmlConvertContext context)
+    {
+        for (var index = 0; index < control.ColumnDefinitions.Count; index++)
+        {
+            var column = control.ColumnDefinitions[index];
+            html.Append("<div hidden data-recipe-column-definition");
+            AppendAttribute(html, "data-column-index", index.ToString(CultureInfo.InvariantCulture));
+            AppendAttribute(html, "data-column-type", column.Type.ToString());
+            AppendAttribute(html, "data-source-type", column.SourceType, preserveEmpty: true);
+            AppendAttribute(html, "data-column-visible", ResolvePropertyPreview(column.Visible, context));
+            var widthPreview = ResolvePropertyPreview(column.Width, context);
+            if ((column.Width is not HmiExpressionProperty<double> expression || string.IsNullOrWhiteSpace(expression.Expression)) &&
+                TryGetStaticValue(column.Width, out var width) && !IsFinite(width))
+                widthPreview = width.ToString(CultureInfo.InvariantCulture);
+            AppendAttribute(html, "data-column-width", widthPreview);
+            AppendAttribute(html, "data-header-text", column.HeaderText?.GetText(context.CultureInfo), preserveEmpty: true);
+            html.Append("></div>");
+        }
     }
 
     private static void AppendRecipeSelectionPreview(StringBuilder html, HmiRecipeControl control, HmiHtmlConvertContext context)

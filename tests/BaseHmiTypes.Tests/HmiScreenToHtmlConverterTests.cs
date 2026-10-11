@@ -2705,7 +2705,7 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-view-only=\"true\"");
         StringAssert.Contains(html, "data-column-type=\"IngredientName\">Ingredient</th>");
         StringAssert.Contains(html, "data-column-type=\"RecipeValue\">Setpoint</th>");
-        Assert.IsFalse(html.Contains("data-column-type=\"TagName\"", StringComparison.Ordinal));
+        Assert.IsFalse(html.Split("<table")[1].Split("</table>")[0].Contains("data-column-type=\"TagName\"", StringComparison.Ordinal));
         StringAssert.Contains(html, "colspan=\"2\" style=\"text-align: center;\">Recipe data not loaded</td>");
         StringAssert.Contains(html, ">Recipe control</div>");
     }
