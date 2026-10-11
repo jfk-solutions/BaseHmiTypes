@@ -117,6 +117,7 @@ import { HmiSlider } from "../../screens/widgets/HmiSlider.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiToggleSwitch } from "../../screens/widgets/HmiToggleSwitch.js";
 import { HmiWidgetBase } from "../../screens/widgets/HmiWidgetBase.js";
+import { HmiTextWidgetBase } from "../../screens/widgets/HmiTextWidgetBase.js";
 import { HmiDefaultProfiles } from "../../screens/defaults/HmiDefaultProfiles.js";
 import { HmiEffectivePropertyResolver } from "../../screens/defaults/HmiEffectivePropertyResolver.js";
 import { HmiDefaultProfile } from "../../screens/defaults/HmiDefaultProfile.js";
@@ -6399,6 +6400,12 @@ function appendCommonAttributes(
     const textLayout = getTextLayoutProperties(item, context);
     appendAttribute(html, "data-text-wrapping", resolvePropertyPreview(textLayout.wrapping));
     appendAttribute(html, "data-text-trimming", resolvePropertyPreview(textLayout.trimming));
+  }
+  if (item instanceof HmiTextWidgetBase) {
+    const upperLimitColor = getStaticValue(item.aboveUpperLimitColor);
+    const lowerLimitColor = getStaticValue(item.belowLowerLimitColor);
+    if (upperLimitColor !== undefined) appendAttribute(html, "data-above-upper-limit-color", colorToCss(upperLimitColor));
+    if (lowerLimitColor !== undefined) appendAttribute(html, "data-below-lower-limit-color", colorToCss(lowerLimitColor));
   }
   appendDisabledAttribute(html, item, context);
   if (includeInteractionAttributes) appendHotKeyAttributes(html, item);

@@ -6127,6 +6127,11 @@ public partial class HmiScreenToHtmlConverter
             AppendAttribute(html, "data-text-wrapping", ResolvePropertyPreview(textLayout.Wrapping, context));
             AppendAttribute(html, "data-text-trimming", ResolvePropertyPreview(textLayout.Trimming, context));
         }
+        if (item is HmiTextWidgetBase textWidget)
+        {
+            if (TryGetStaticValue(textWidget.AboveUpperLimitColor, out var upperLimitColor)) AppendAttribute(html, "data-above-upper-limit-color", ToCss(upperLimitColor));
+            if (TryGetStaticValue(textWidget.BelowLowerLimitColor, out var lowerLimitColor)) AppendAttribute(html, "data-below-lower-limit-color", ToCss(lowerLimitColor));
+        }
         AppendDisabledAttribute(html, item, context);
         if (includeInteractionAttributes) AppendHotKeyAttributes(html, item, context);
         html.Append(" style=\"position: absolute;");
