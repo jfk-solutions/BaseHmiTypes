@@ -4132,8 +4132,18 @@ public partial class HmiScreenToHtmlConverter
         var image = ResolveStaticValue(toggleSwitch.Image, context) ?? offState?.Image;
         var alternateImage = ResolveStaticValue(toggleSwitch.AlternateImage, context) ?? onState?.Image;
 
+        var toggleStyle = new StringBuilder(CreateStateStyle(selectedState));
+        foreach (var role in new[] {
+            (nameof(HmiToggleSwitch.HeaderForegroundColor), "--hmi-toggle-header-foreground", toggleSwitch.HeaderForegroundColor),
+            (nameof(HmiToggleSwitch.OffBackgroundColor), "--hmi-toggle-off-background", toggleSwitch.OffBackgroundColor),
+            (nameof(HmiToggleSwitch.OnBackgroundColor), "--hmi-toggle-on-background", toggleSwitch.OnBackgroundColor) })
+            if (context.EffectiveProperties.TryGetStaticValue(toggleSwitch, role.Item1, role.Item3, out var color))
+                toggleStyle.Append(role.Item2).Append(':').Append(ToCss(color)).Append(';');
         html.Append("<hmi-toggle-switch");
-        AppendCommonAttributes(html, toggleSwitch, context, additionalStyle: CreateStateStyle(selectedState));
+        AppendCommonAttributes(html, toggleSwitch, context, additionalStyle: toggleStyle.ToString());
+        AppendStaticAttribute(html, "data-header-foreground-color", toggleSwitch.HeaderForegroundColor, context);
+        AppendStaticAttribute(html, "data-off-background-color", toggleSwitch.OffBackgroundColor, context);
+        AppendStaticAttribute(html, "data-on-background-color", toggleSwitch.OnBackgroundColor, context);
         AppendStaticAttribute(html, "mode", context.EffectiveProperties.Resolve(toggleSwitch, nameof(HmiToggleSwitch.Mode), toggleSwitch.Mode));
         AppendAttribute(html, "text", text?.GetDisplayText(context.CultureInfo));
         AppendAttribute(html, "alternate-text", alternateText?.GetDisplayText(context.CultureInfo));

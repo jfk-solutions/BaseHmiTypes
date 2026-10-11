@@ -16,6 +16,12 @@ public class HmiToggleSwitch : HmiButtonBase
 
     public HmiProperty<HmiMultilingualText>? HeaderText { get; set; }
 
+    public HmiProperty<HmiColor>? HeaderForegroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? OffBackgroundColor { get; set; }
+
+    public HmiProperty<HmiColor>? OnBackgroundColor { get; set; }
+
     public HmiProperty<HmiMultilingualText>? Remark { get; set; }
 
     public HmiProperty<HmiToggleSwitchShapeType>? ShapeType { get; set; }

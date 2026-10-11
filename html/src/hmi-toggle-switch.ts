@@ -157,7 +157,7 @@ export class HmiToggleSwitch extends HTMLElement {
           flex: 0 0 auto;
           min-height: 0;
           text-align: center;
-          color: inherit;
+          color: var(--hmi-toggle-header-foreground, inherit);
           line-height: 1;
           font-size: clamp(10px, 18%, 24px);
           white-space: nowrap;
@@ -177,7 +177,7 @@ export class HmiToggleSwitch extends HTMLElement {
           min-height: 0;
           border: 2px solid #47515f;
           border-radius: 4px;
-          background: linear-gradient(#ffffff, #e9e9ed);
+          background: var(${this._checked ? "--hmi-toggle-on-background" : "--hmi-toggle-off-background"}, linear-gradient(#ffffff, #e9e9ed));
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 0 0 1px rgba(0, 0, 0, 0.08);
           overflow: hidden;
         }
