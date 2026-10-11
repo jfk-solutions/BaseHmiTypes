@@ -4637,7 +4637,10 @@ async function appendToggleSwitch(
   const stateValue = getStaticValue(toggleSwitch.state);
   const offState = toggleSwitch.states[0];
   const onState = toggleSwitch.states[1] ?? offState;
-  const selectedState = toggleSwitch.states.find(candidate => candidate.value === stateValue) ?? offState;
+  const alternateProperty = context.effectiveProperties.resolve<boolean>(toggleSwitch, "IsAlternateState", toggleSwitch.isAlternateState);
+  const alternateState = resolveStaticValue(alternateProperty, context, tryConvertFaceplateBooleanValue);
+  const selectedState = alternateState !== undefined ? (alternateState ? onState : offState)
+    : toggleSwitch.states.find(candidate => candidate.value === stateValue) ?? offState;
   const text = resolveStaticValue(toggleSwitch.text, context, tryConvertFaceplateTextValue) ?? offState?.text;
   const alternateText = resolveStaticValue(toggleSwitch.alternateText, context, tryConvertFaceplateTextValue) ?? onState?.text;
   const image = getStaticValue(toggleSwitch.image) ?? offState?.image;
@@ -4671,7 +4674,8 @@ async function appendToggleSwitch(
   appendAttribute(html, "alternate-text", alternateText?.getDisplayText(context.options.cultureLcid));
   appendAttribute(html, "image", await resolveImageUri(image, project, signal));
   appendAttribute(html, "alternate-image", await resolveImageUri(alternateImage, project, signal));
-  appendBooleanAttribute(html, "checked", onState !== undefined && onState !== offState && selectedState === onState);
+  appendBooleanAttribute(html, "checked", alternateState ?? (onState !== undefined && onState !== offState && selectedState === onState));
+  appendAttribute(html, "data-is-alternate-state", alternateState === undefined ? undefined : alternateState ? "true" : "false");
   appendStaticAttribute(html, "header", toggleSwitch.header);
   appendTextAttribute(html, "header-text", toggleSwitch.headerText, context);
   html.push("></hmi-toggle-switch>");

@@ -12,6 +12,7 @@ export class HmiToggleSwitch extends HmiButtonBase {
   }
 
   mode?: HmiProperty<HmiSwitchType>;
+  isAlternateState?: HmiProperty<boolean>;
   header?: HmiProperty<boolean>;
   headerText?: HmiProperty<HmiMultilingualText>;
   headerForegroundColor?: HmiProperty<HmiColor>;

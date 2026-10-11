@@ -4126,7 +4126,10 @@ public partial class HmiScreenToHtmlConverter
         var stateValue = ResolveStaticValue(toggleSwitch.State, context);
         var offState = toggleSwitch.States.FirstOrDefault();
         var onState = toggleSwitch.States.Skip(1).FirstOrDefault() ?? offState;
-        var selectedState = toggleSwitch.States.FirstOrDefault(candidate => candidate.Value == stateValue) ?? offState;
+        var alternateProperty = context.EffectiveProperties.Resolve(toggleSwitch, nameof(HmiToggleSwitch.IsAlternateState), toggleSwitch.IsAlternateState);
+        bool? alternateState = alternateProperty is null ? null : ResolveStaticValue(alternateProperty, context);
+        var selectedState = alternateState.HasValue ? (alternateState.Value ? onState : offState)
+            : toggleSwitch.States.FirstOrDefault(candidate => candidate.Value == stateValue) ?? offState;
         var text = ResolveStaticValue(toggleSwitch.Text, context) ?? offState?.Text;
         var alternateText = ResolveStaticValue(toggleSwitch.AlternateText, context) ?? onState?.Text;
         var image = ResolveStaticValue(toggleSwitch.Image, context) ?? offState?.Image;
@@ -4149,7 +4152,8 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "alternate-text", alternateText?.GetDisplayText(context.CultureInfo));
         AppendAttribute(html, "image", await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false));
         AppendAttribute(html, "alternate-image", await ResolveImageUriAsync(alternateImage, project, cancellationToken).ConfigureAwait(false));
-        AppendBooleanAttribute(html, "checked", onState is not null && !ReferenceEquals(onState, offState) && ReferenceEquals(selectedState, onState));
+        AppendBooleanAttribute(html, "checked", alternateState ?? (onState is not null && !ReferenceEquals(onState, offState) && ReferenceEquals(selectedState, onState)));
+        AppendAttribute(html, "data-is-alternate-state", alternateState.HasValue ? (alternateState.Value ? "true" : "false") : null);
         AppendStaticAttribute(html, "header", toggleSwitch.Header);
         AppendTextAttribute(html, "header-text", toggleSwitch.HeaderText, context);
         html.Append("></hmi-toggle-switch>");
