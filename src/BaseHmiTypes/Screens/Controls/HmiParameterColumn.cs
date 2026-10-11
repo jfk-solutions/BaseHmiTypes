@@ -8,6 +8,10 @@ public sealed class HmiParameterColumn
     public string? Name { get; set; }
     public string? Key { get; set; }
     public HmiMultilingualText? HeaderText { get; set; }
+    public HmiImageSource? HeaderGraphic { get; set; }
+    public string? HeaderGraphicKey { get; set; }
+    /// <summary>Unified: 0 graphic or text, 1 graphic and text, 2 text, 3 graphic.</summary>
+    public HmiProperty<int>? HeaderContentMode { get; set; }
     public HmiProperty<int>? HeaderTextTrimming { get; set; }
     public HmiProperty<int>? ContentTextTrimming { get; set; }
     public HmiProperty<HmiHorizontalAlignment>? HeaderHorizontalAlignment { get; set; }

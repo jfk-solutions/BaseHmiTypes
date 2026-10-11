@@ -9,6 +9,10 @@ export class HmiParameterColumn {
   name?: string;
   key?: string;
   headerText?: HmiMultilingualText;
+  headerGraphic?: import("../base/HmiImageSource.js").HmiImageSource;
+  headerGraphicKey?: string;
+  /** Unified: 0 graphic or text, 1 graphic and text, 2 text, 3 graphic. */
+  headerContentMode?: HmiProperty<number>;
   headerTextTrimming?: HmiProperty<number>;
   contentTextTrimming?: HmiProperty<number>;
   headerHorizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
