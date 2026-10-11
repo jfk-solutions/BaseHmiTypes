@@ -320,7 +320,10 @@ public sealed class HmiRecipeToHtmlConverter
             if (path.Contains(value)) kind = HmiRecipeValueKind.Recursive;
             else if (depth >= 128) kind = HmiRecipeValueKind.DepthLimit;
         }
-        html.Append("<div data-structured-kind=\"").Append(kind).Append("\" data-source-type=\"").Append(Encode(value.SourceType)).Append("\">");
+        html.Append("<div data-structured-kind=\"").Append(kind).Append("\" data-source-type=\"").Append(Encode(value.SourceType)).Append('"');
+        if (kind == HmiRecipeValueKind.Text && value.Text?.SourceDefaultLanguageId is int languageId)
+            html.Append(" data-source-default-language-id=\"").Append(languageId.ToString(CultureInfo.InvariantCulture)).Append('"');
+        html.Append('>');
         var added = path.Add(value);
         switch (kind)
         {

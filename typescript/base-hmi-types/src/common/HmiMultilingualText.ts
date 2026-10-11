@@ -4,6 +4,8 @@ export class HmiMultilingualText {
   readonly texts = new Map<number, string>();
   readonly formattedTexts = new Map<number, string>();
   readonly parts = new Map<number, readonly HmiTextPart[]>();
+  /** Raw native default-language header; not interpreted by culture selection. */
+  sourceDefaultLanguageId?: number;
   categoryTypeId = 0;
   categorySubtype?: string;
 

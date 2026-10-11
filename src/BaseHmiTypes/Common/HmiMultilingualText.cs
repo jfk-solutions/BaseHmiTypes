@@ -12,6 +12,9 @@ public sealed class HmiMultilingualText
 
     public IDictionary<int, IList<HmiTextPart>> Parts { get; } = new Dictionary<int, IList<HmiTextPart>>();
 
+    /// <summary>Raw native default-language header. Culture selection does not interpret this value.</summary>
+    public int? SourceDefaultLanguageId { get; set; }
+
     public int CategoryTypeId { get; set; }
 
     public string? CategorySubtype { get; set; }
