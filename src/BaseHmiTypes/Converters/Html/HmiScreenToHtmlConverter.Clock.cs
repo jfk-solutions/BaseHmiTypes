@@ -8,6 +8,13 @@ public partial class HmiScreenToHtmlConverter
 {
     private static void AppendNativeClockAppearance(StringBuilder html, HmiClock clock, HmiHtmlConvertContext context)
     {
+        if (clock.DialMode is not null) AppendAttribute(html, "data-clock-dial-mode", ResolveStaticValue(clock.DialMode, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.DialLabelColor is not null) AppendAttribute(html, "data-clock-dial-label-color", ToCss(ResolveStaticValue(clock.DialLabelColor, context)));
+        if (clock.DialLabelFont is not null)
+        {
+            var fontStyle = new StringBuilder(); AppendFontStyle(fontStyle, clock.DialLabelFont, encodeName: false);
+            AppendAttribute(html, "data-clock-dial-label-font", fontStyle.ToString());
+        }
         if (clock.DialColor is not null) AppendAttribute(html, "data-clock-dial-color", ToCss(ResolveStaticValue(clock.DialColor, context)));
         if (clock.NeedleColor is not null) AppendAttribute(html, "data-clock-needle-color", ToCss(ResolveStaticValue(clock.NeedleColor, context)));
         if (clock.NeedleBorderColor is not null) AppendAttribute(html, "data-clock-needle-border-color", ToCss(ResolveStaticValue(clock.NeedleBorderColor, context)));
@@ -43,13 +50,33 @@ public partial class HmiScreenToHtmlConverter
         AppendNativeClockAppearance(html, clock, context);
         if (clock.BackgroundStyle is not null) AppendAttribute(html,"data-clock-background-style",ResolveStaticValue(clock.BackgroundStyle,context).ToString());
         html.Append("><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"Analog clock preview: 12:34:56\" style=\"width: 100%; height: 100%; min-height: 0; flex: 1;\">");
-        if (clock.BackgroundStyle is null || ResolveStaticValue(clock.BackgroundStyle,context) == 1)
+        if (clock.BackgroundStyle is null || ResolveStaticValue(clock.BackgroundStyle,context) == 1 ||
+            (clock.DialColor is not null && ResolveStaticValue(clock.BackgroundStyle,context) != 2))
         {
             html.Append("<circle data-clock-dial=\"true\" cx=\"50\" cy=\"50\" r=\"48\"");
-            AppendAttribute(html,"fill",clock.BackgroundStyle is null ? "none" : clock.BackgroundColor is null ? "#FFFFFF" : ToCss(ResolveStaticValue(clock.BackgroundColor,context)));
+            AppendAttribute(html,"fill",clock.DialColor is not null ? ToCss(ResolveStaticValue(clock.DialColor,context)) : clock.BackgroundStyle is null ? "none" : clock.BackgroundColor is null ? "#FFFFFF" : ToCss(ResolveStaticValue(clock.BackgroundColor,context)));
             AppendAttribute(html, "stroke", clock.BackgroundStyle is null ? foreground : "#808080"); html.Append(" stroke-width=\"1\"/>");
         }
-        if (clock.ShowTicks is null || ResolveStaticValue(clock.ShowTicks, context))
+        int? dialMode = clock.DialMode is null ? null : ResolveStaticValue(clock.DialMode, context);
+        if (dialMode == 1)
+        {
+            var labelStyle = new StringBuilder("font-size: 10px;");
+            AppendFontStyle(labelStyle, clock.DialLabelFont, encodeName: false);
+            html.Append("<g data-clock-labels=\"true\"");
+            AppendAttribute(html, "style", labelStyle.ToString());
+            AppendAttribute(html, "fill", clock.DialLabelColor is null ? foreground : ToCss(ResolveStaticValue(clock.DialLabelColor, context)));
+            html.Append('>');
+            for (var label = 1; label <= 12; label++)
+            {
+                var angle = label * Math.PI / 6;
+                html.Append("<text"); AppendAttribute(html, "data-clock-label", label.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                AppendSvgAttribute(html, "x", 50 + 38 * Math.Sin(angle));
+                AppendSvgAttribute(html, "y", 50 - 38 * Math.Cos(angle));
+                html.Append(" text-anchor=\"middle\" dominant-baseline=\"middle\">").Append(label).Append("</text>");
+            }
+            html.Append("</g>");
+        }
+        if (dialMode != 0 && dialMode != 1 && (clock.ShowTicks is null || ResolveStaticValue(clock.ShowTicks, context)))
         {
             var tickRadius = ClockPercent(clock.SecondHandLengthPercent, 80, context) * 48 / 100;
             for (var i = 0; i < 60; i++)

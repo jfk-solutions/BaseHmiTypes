@@ -2495,6 +2495,12 @@ function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertCon
 }
 
 function appendNativeClockAppearance(html: string[], clock: HmiClock, context: HmiHtmlConvertContext): void {
+  if (clock.dialMode !== undefined) appendAttribute(html, "data-clock-dial-mode", String(getStaticValue(clock.dialMode) ?? 0));
+  if (clock.dialLabelColor !== undefined) appendAttribute(html, "data-clock-dial-label-color", colorToCss(getStaticValue(clock.dialLabelColor) ?? hmiColorFromArgb(0,0,0,0)));
+  if (clock.dialLabelFont !== undefined) {
+    const fontStyle: string[] = []; appendFont(fontStyle, clock.dialLabelFont, false);
+    appendAttribute(html, "data-clock-dial-label-font", fontStyle.join(""));
+  }
   if (clock.dialColor !== undefined) appendAttribute(html, "data-clock-dial-color", colorToCss(getStaticValue(clock.dialColor) ?? hmiColorFromArgb(0,0,0,0)));
   if (clock.needleColor !== undefined) appendAttribute(html, "data-clock-needle-color", colorToCss(getStaticValue(clock.needleColor) ?? hmiColorFromArgb(0,0,0,0)));
   if (clock.needleBorderColor !== undefined) appendAttribute(html, "data-clock-needle-border-color", colorToCss(getStaticValue(clock.needleBorderColor) ?? hmiColorFromArgb(0,0,0,0)));
@@ -2529,12 +2535,30 @@ function appendAnalogClockPreview(html: string[], clock: HmiClock, context: HmiH
   appendNativeClockAppearance(html, clock, context);
   if(clock.backgroundStyle!==undefined)appendAttribute(html,"data-clock-background-style",String(getStaticValue(clock.backgroundStyle)??0));
   html.push('><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Analog clock preview: 12:34:56" style="width: 100%; height: 100%; min-height: 0; flex: 1;">');
-  if(clock.backgroundStyle===undefined||getStaticValue(clock.backgroundStyle)===1){
+  if(clock.backgroundStyle===undefined||getStaticValue(clock.backgroundStyle)===1||
+    (clock.dialColor!==undefined&&getStaticValue(clock.backgroundStyle)!==2)){
     html.push('<circle data-clock-dial="true" cx="50" cy="50" r="48"');
-    appendAttribute(html,"fill",clock.backgroundStyle===undefined?"none":clock.backgroundColor===undefined?"#FFFFFF":colorToCss(getStaticValue(clock.backgroundColor)??hmiColorFromArgb(0,0,0,0)));
+    appendAttribute(html,"fill",clock.dialColor!==undefined?colorToCss(getStaticValue(clock.dialColor)??hmiColorFromArgb(0,0,0,0)):clock.backgroundStyle===undefined?"none":clock.backgroundColor===undefined?"#FFFFFF":colorToCss(getStaticValue(clock.backgroundColor)??hmiColorFromArgb(0,0,0,0)));
     appendAttribute(html,"stroke",clock.backgroundStyle===undefined?foreground:"#808080");html.push(' stroke-width="1"/>');
   }
-  if (clock.showTicks === undefined || getStaticValue(clock.showTicks) === true) {
+  const dialMode = clock.dialMode === undefined ? undefined : getStaticValue(clock.dialMode) ?? 0;
+  if (dialMode === 1) {
+    const labelStyle = ["font-size: 10px;"];
+    if (clock.dialLabelFont !== undefined) appendFont(labelStyle, clock.dialLabelFont, false);
+    html.push('<g data-clock-labels="true"');
+    appendAttribute(html, "style", labelStyle.join(""));
+    appendAttribute(html, "fill", clock.dialLabelColor === undefined ? foreground : colorToCss(getStaticValue(clock.dialLabelColor) ?? hmiColorFromArgb(0,0,0,0)));
+    html.push(">");
+    for (let label = 1; label <= 12; label++) {
+      const angle = label * Math.PI / 6;
+      html.push("<text"); appendAttribute(html, "data-clock-label", String(label));
+      appendSvgAttribute(html, "x", 50 + 38 * Math.sin(angle));
+      appendSvgAttribute(html, "y", 50 - 38 * Math.cos(angle));
+      html.push(' text-anchor="middle" dominant-baseline="middle">', String(label), "</text>");
+    }
+    html.push("</g>");
+  }
+  if (dialMode !== 0 && dialMode !== 1 && (clock.showTicks === undefined || getStaticValue(clock.showTicks) === true)) {
     const tickRadius=clockPercent(clock.secondHandLengthPercent,80)*48/100;
     for(let i=0;i<60;i++) {
       html.push(`<circle data-clock-tick="${i}"`);

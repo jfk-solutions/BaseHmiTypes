@@ -1,6 +1,7 @@
 import { HmiProperty } from "../base.js";
 import { HmiWidgetBase } from "./HmiWidgetBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
+import type { HmiFont } from "../base/HmiFont.js";
 import type { HmiColor } from "../base/HmiColor.js";
 
 export class HmiClock extends HmiWidgetBase {
@@ -26,6 +27,11 @@ export class HmiClock extends HmiWidgetBase {
   nativeCornerRadius?: HmiProperty<number>;
   nativeEdgeStyle?: HmiProperty<number>;
   fontReferenceDeviceSize?: HmiProperty<number>;
+
+  /** Unified dial details: 0 none, 1 labels, 2 ticks. Unknown values remain available. */
+  dialMode?: HmiProperty<number>;
+  dialLabelColor?: HmiProperty<HmiColor>;
+  dialLabelFont?: HmiFont;
 
   analog?: HmiProperty<boolean>;
   /** 0 solid, 1 transparent frame around a filled analog dial, 2 transparent. */
