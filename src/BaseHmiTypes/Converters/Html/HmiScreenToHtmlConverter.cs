@@ -3968,6 +3968,26 @@ public partial class HmiScreenToHtmlConverter
         return style;
     }
 
+    private static string? CreateSymbolicOptionStyle(HmiSymbolicIOField field, HmiState state, bool selected, HmiHtmlConvertContext context)
+    {
+        var style = new StringBuilder(CreateStateStyle(state));
+        if ((selected && context.EffectiveProperties.TryGetStaticValue(field, nameof(HmiSymbolicIOField.SelectionForegroundColor), field.SelectionForegroundColor, out var foreground))
+            || context.EffectiveProperties.TryGetStaticValue(field, nameof(HmiSymbolicIOField.ListForegroundColor), field.ListForegroundColor, out foreground))
+            style.Append("color: ").Append(ToCss(foreground)).Append(';');
+        if ((selected && context.EffectiveProperties.TryGetStaticValue(field, nameof(HmiSymbolicIOField.SelectionBackgroundColor), field.SelectionBackgroundColor, out var background))
+            || context.EffectiveProperties.TryGetStaticValue(field, nameof(HmiSymbolicIOField.ListBackgroundColor), field.ListBackgroundColor, out background))
+            style.Append("background-color: ").Append(ToCss(background)).Append(';');
+        return style.Length == 0 ? null : style.ToString();
+    }
+
+    private static void AppendSymbolicPaletteAttributes(StringBuilder html, HmiSymbolicIOField field, HmiHtmlConvertContext context)
+    {
+        AppendStaticAttribute(html, "data-selection-foreground-color", field.SelectionForegroundColor, context);
+        AppendStaticAttribute(html, "data-selection-background-color", field.SelectionBackgroundColor, context);
+        AppendStaticAttribute(html, "data-list-foreground-color", field.ListForegroundColor, context);
+        AppendStaticAttribute(html, "data-list-background-color", field.ListBackgroundColor, context);
+    }
+
     private static async ValueTask AppendSymbolicInputAsync(
         StringBuilder html,
         HmiSymbolicIOField symbolicIoField,
@@ -3998,6 +4018,7 @@ public partial class HmiScreenToHtmlConverter
 
             html.Append("<div");
             AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: stateStyle);
+            AppendSymbolicPaletteAttributes(html, symbolicIoField, context);
             AppendAttribute(html, "class", "hmi-symbolic-image-state");
             AppendAttribute(html, "role", "status");
             AppendAttribute(html, "data-state-value", selectedState.Value is double stateValue ? ToCss(stateValue) : null);
@@ -4045,6 +4066,7 @@ public partial class HmiScreenToHtmlConverter
         {
             html.Append("<input");
             AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: textStateStyle);
+            AppendSymbolicPaletteAttributes(html, symbolicIoField, context);
             AppendAttribute(html, "type", "text");
             AppendAttribute(html, "readonly", "readonly");
             AppendAttribute(html, "value", selectedState?.Text?.GetDisplayText(context.CultureInfo) ?? string.Empty);
@@ -4056,6 +4078,7 @@ public partial class HmiScreenToHtmlConverter
         }
         html.Append("<select");
         AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: textStateStyle);
+        AppendSymbolicPaletteAttributes(html, symbolicIoField, context);
         if (!ResolveStaticValue(symbolicIoField.Enabled, context))
             AppendAttribute(html, "disabled", "disabled");
         html.Append('>');
@@ -4064,7 +4087,7 @@ public partial class HmiScreenToHtmlConverter
             html.Append("<option");
             if (state.Value is double value)
                 AppendAttribute(html, "value", ToCss(value));
-            AppendAttribute(html, "style", CreateStateStyle(state));
+            AppendAttribute(html, "style", CreateSymbolicOptionStyle(symbolicIoField, state, ReferenceEquals(state, selectedState), context));
             if (ReferenceEquals(state, selectedState))
                 AppendAttribute(html, "selected", "selected");
             html.Append('>');

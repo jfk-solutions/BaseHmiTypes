@@ -1,4 +1,4 @@
-import { HmiProperty } from "../base.js";
+import { HmiProperty, HmiColor } from "../base.js";
 import { HmiTextWidgetBase } from "./HmiTextWidgetBase.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
 import { HmiState } from "./HmiState.js";
@@ -22,6 +22,10 @@ export class HmiSymbolicIOField extends HmiTextWidgetBase {
   mode?: HmiProperty<number>;
   showDropDownButton?: HmiProperty<boolean>;
   showDropDownList?: HmiProperty<boolean>;
+  selectionForegroundColor?: HmiProperty<HmiColor>;
+  selectionBackgroundColor?: HmiProperty<HmiColor>;
+  listForegroundColor?: HmiProperty<HmiColor>;
+  listBackgroundColor?: HmiProperty<HmiColor>;
   /** Draws borders wider than one pixel inside the frame when true, or centered on it when false. */
   drawStrokeInsideFrame?: HmiProperty<boolean>;
 }
