@@ -3363,6 +3363,7 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(recipeControl.selectionForegroundColor));
   appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(recipeControl.alternatingRowBackgroundColor));
   html.push(">");
+  appendRecipeColumnMetadata(html, recipeControl, context);
 
   if (recipeControl.viewKind === HmiRecipeViewKind.Selector) {
     if (showHeader)
@@ -3411,6 +3412,25 @@ function appendRecipeControl(html: string[], recipeControl: HmiRecipeControl, co
   if (showFooter)
     html.push("<div style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;\">Recipe control</div>");
   html.push("</div>");
+}
+
+function appendRecipeColumnMetadata(html: string[], control: HmiRecipeControl, context: HmiHtmlConvertContext): void {
+  for (let index = 0; index < control.columnDefinitions.length; index++) {
+    const column = control.columnDefinitions[index]!;
+    html.push("<div hidden data-recipe-column-definition");
+    appendAttribute(html, "data-column-index", index.toString());
+    appendAttribute(html, "data-column-type", column.type);
+    appendAttribute(html, "data-source-type", column.sourceType, true);
+    appendAttribute(html, "data-column-visible", resolvePropertyPreview(column.visible));
+    let widthPreview = resolvePropertyPreview(column.width);
+    const width = getStaticValue(column.width);
+    if ((column.width?.kind !== HmiPropertyKind.Expression || !(column.width as HmiExpressionProperty<number>).expression?.trim()) &&
+        width !== undefined && !Number.isFinite(width))
+      widthPreview = width.toString();
+    appendAttribute(html, "data-column-width", widthPreview);
+    appendAttribute(html, "data-header-text", column.headerText?.getText(context.options.cultureLcid), true);
+    html.push("></div>");
+  }
 }
 
 function appendRecipeSelectionPreview(html: string[], control: HmiRecipeControl, context: HmiHtmlConvertContext): void {

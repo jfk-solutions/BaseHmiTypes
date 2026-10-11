@@ -2540,7 +2540,7 @@ test("HTML converter renders an inert recipe table preview", async () => {
   assert.match(html, /data-view-only="true"/);
   assert.match(html, /data-column-type="IngredientName">Ingredient<\/th>/);
   assert.match(html, /data-column-type="RecipeValue">Setpoint<\/th>/);
-  assert.doesNotMatch(html, /data-column-type="TagName"/);
+  assert.doesNotMatch(html.split("<table")[1].split("</table>")[0], /data-column-type="TagName"/);
   assert.match(html, /colspan="2" style="text-align: center;">Recipe data not loaded<\/td>/);
   assert.match(html, />Recipe control<\/div>/);
 });

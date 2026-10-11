@@ -37,7 +37,7 @@ for (const kind of [HmiRecipeViewKind.Selector, HmiRecipeViewKind.Table]) {
       assert.ok(html.includes(css), css);
     if (kind === HmiRecipeViewKind.Table) {
       assert.ok(html.includes('<col style="width: 120px;">'));
-      assert.equal(html.includes("Hidden column"), false);
+      assert.equal(html.split("<table")[1].split("</table>")[0].includes("Hidden column"), false);
       assert.equal(html.includes("width: 999px;"), false);
     } else assert.ok(html.includes("&lt;Configured recipe&gt;"));
   });

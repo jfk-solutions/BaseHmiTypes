@@ -49,7 +49,7 @@ public class RecipeControlStyleHtmlTests
         if (kind == HmiRecipeViewKind.Table)
         {
             StringAssert.Contains(html, "<col style=\"width: 120px;\">");
-            Assert.IsFalse(html.Contains("Hidden column"));
+            Assert.IsFalse(html.Split("<table")[1].Split("</table>")[0].Contains("Hidden column"));
             Assert.IsFalse(html.Contains("width: 999px;"));
         }
         else StringAssert.Contains(html, "&lt;Configured recipe&gt;");
