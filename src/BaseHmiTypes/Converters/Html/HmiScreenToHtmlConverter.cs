@@ -2667,6 +2667,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-format", ResolveStaticValue(clock.Format, context));
         AppendAttribute(html, "data-time-zone", ResolveStaticValue(clock.TimeZone, context));
         AppendBooleanAttribute(html, "data-analog", clock.Analog is not null && ResolveStaticValue(clock.Analog, context));
+        AppendNativeClockAppearance(html, clock, context);
         if (clock.BackgroundStyle is not null) AppendAttribute(html,"data-clock-background-style",ResolveStaticValue(clock.BackgroundStyle,context).ToString());
         html.Append('>').Append(WebUtility.HtmlEncode(parts.Count == 0 ? "Clock" : string.Join(" ", parts))).Append("</time>");
     }

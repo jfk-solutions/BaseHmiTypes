@@ -6,6 +6,26 @@ namespace BaseHmiTypes.Converters.Html;
 
 public partial class HmiScreenToHtmlConverter
 {
+    private static void AppendNativeClockAppearance(StringBuilder html, HmiClock clock, HmiHtmlConvertContext context)
+    {
+        if (clock.DialColor is not null) AppendAttribute(html, "data-clock-dial-color", ToCss(ResolveStaticValue(clock.DialColor, context)));
+        if (clock.NeedleColor is not null) AppendAttribute(html, "data-clock-needle-color", ToCss(ResolveStaticValue(clock.NeedleColor, context)));
+        if (clock.NeedleBorderColor is not null) AppendAttribute(html, "data-clock-needle-border-color", ToCss(ResolveStaticValue(clock.NeedleBorderColor, context)));
+        if (clock.HourNeedleHeight is not null) AppendAttribute(html, "data-clock-hour-needle-height", ResolveStaticValue(clock.HourNeedleHeight, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.HourNeedleWidth is not null) AppendAttribute(html, "data-clock-hour-needle-width", ResolveStaticValue(clock.HourNeedleWidth, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.MinuteNeedleHeight is not null) AppendAttribute(html, "data-clock-minute-needle-height", ResolveStaticValue(clock.MinuteNeedleHeight, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.MinuteNeedleWidth is not null) AppendAttribute(html, "data-clock-minute-needle-width", ResolveStaticValue(clock.MinuteNeedleWidth, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.SecondNeedleHeight is not null) AppendAttribute(html, "data-clock-second-needle-height", ResolveStaticValue(clock.SecondNeedleHeight, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.SecondNeedleWidth is not null) AppendAttribute(html, "data-clock-second-needle-width", ResolveStaticValue(clock.SecondNeedleWidth, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.TickDistance is not null) AppendAttribute(html, "data-clock-tick-distance", ResolveStaticValue(clock.TickDistance, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.NeedleFillStyle is not null) AppendAttribute(html, "data-clock-needle-fill-style", ResolveStaticValue(clock.NeedleFillStyle, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.TickStyle is not null) AppendAttribute(html, "data-clock-tick-style", ResolveStaticValue(clock.TickStyle, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.NativeBackFillStyle is not null) AppendAttribute(html, "data-clock-native-back-fill-style", ResolveStaticValue(clock.NativeBackFillStyle, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.NativeCornerRadius is not null) AppendAttribute(html, "data-clock-native-corner-radius", ResolveStaticValue(clock.NativeCornerRadius, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.NativeEdgeStyle is not null) AppendAttribute(html, "data-clock-native-edge-style", ResolveStaticValue(clock.NativeEdgeStyle, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (clock.FontReferenceDeviceSize is not null) AppendAttribute(html, "data-clock-font-reference-device-size", ResolveStaticValue(clock.FontReferenceDeviceSize, context).ToString(System.Globalization.CultureInfo.InvariantCulture));
+    }
+
     // Fixed sample matches the existing digital renderer; this is not a live clock.
     private static void AppendAnalogClockPreview(StringBuilder html, HmiClock clock, HmiHtmlConvertContext context)
     {
@@ -20,6 +40,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-time-zone", ResolveStaticValue(clock.TimeZone, context));
         AppendBooleanAttribute(html, "data-analog", true);
         AppendAttribute(html, "data-clock-preview", "static");
+        AppendNativeClockAppearance(html, clock, context);
         if (clock.BackgroundStyle is not null) AppendAttribute(html,"data-clock-background-style",ResolveStaticValue(clock.BackgroundStyle,context).ToString());
         html.Append("><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"Analog clock preview: 12:34:56\" style=\"width: 100%; height: 100%; min-height: 0; flex: 1;\">");
         if (clock.BackgroundStyle is null || ResolveStaticValue(clock.BackgroundStyle,context) == 1)

@@ -9,6 +9,24 @@ export class HmiClock extends HmiWidgetBase {
     this.hmiObjectType = HmiObjectType.HmiClock;
   }
 
+  /** Native Advanced dimensions/style codes retain source units, independently of Professional preview percentages. */
+  dialColor?: HmiProperty<HmiColor>;
+  needleColor?: HmiProperty<HmiColor>;
+  needleBorderColor?: HmiProperty<HmiColor>;
+  hourNeedleHeight?: HmiProperty<number>;
+  hourNeedleWidth?: HmiProperty<number>;
+  minuteNeedleHeight?: HmiProperty<number>;
+  minuteNeedleWidth?: HmiProperty<number>;
+  secondNeedleHeight?: HmiProperty<number>;
+  secondNeedleWidth?: HmiProperty<number>;
+  tickDistance?: HmiProperty<number>;
+  needleFillStyle?: HmiProperty<number>;
+  tickStyle?: HmiProperty<number>;
+  nativeBackFillStyle?: HmiProperty<number>;
+  nativeCornerRadius?: HmiProperty<number>;
+  nativeEdgeStyle?: HmiProperty<number>;
+  fontReferenceDeviceSize?: HmiProperty<number>;
+
   analog?: HmiProperty<boolean>;
   /** 0 solid, 1 transparent frame around a filled analog dial, 2 transparent. */
   backgroundStyle?: HmiProperty<number>;
