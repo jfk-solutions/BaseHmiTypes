@@ -67,6 +67,8 @@ export class HmiRecipeReference {
 }
 
 export class HmiRecipeParameter {
+  /** Persisted object identity, independent of element IDs and record numbers. */
+  sourceObjectId?: string;
   textList?: HmiTextList;
   sourcePlcArray?: HmiRecipePlcArray;
   readonly sourceTagLimits: HmiRecipeTagLimit[] = [];
@@ -154,6 +156,8 @@ export class HmiRecipePlcDeclaration {
 }
 
 export class HmiRecipeDataSet {
+  /** Persisted object identity, independent of element IDs and record numbers. */
+  sourceObjectId?: string;
   lastModification?: Date;
   lastUser?: string;
   displayName?: HmiMultilingualText;
