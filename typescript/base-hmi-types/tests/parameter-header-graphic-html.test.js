@@ -32,3 +32,20 @@ for(const headerType of [0,1,2])test(`Header type overrides graphic choice ${hea
   const screen=new HmiScreen(),layer=new HmiLayer();screen.layers.push(layer);layer.items.push(control);const project=new Project(true),html=await new HmiScreenToHtmlConverter().convertAsync(screen,project);
   assert.ok(html.includes('data-parameter-column-header-definition'));assert.equal(project.calls,headerType===2?1:0);assert.equal(html.includes('<th scope="col"'),headerType!==0);if(headerType===1)assert.ok(html.includes('>1<'));
 });
+
+for(const overview of [false,true])for(const stretch of [undefined,0,1,2,3,4,-1,99])test(`Header graphic layout preserves spacing/stretch ${overview} ${stretch}`,async()=>{
+  for(const mode of [0,1,2,3])for(const spacing of [undefined,0,7]){
+    const control=overview?new HmiOverviewParameterControl():new HmiDetailedParameterControl();control.columnHeaderType=staticProperty(2);
+    const column=Object.assign(new HmiParameterColumn(),{headerText:HmiMultilingualText.fromText('Caption'),headerGraphic:{kind:HmiImageSourceKind.Uri,uri},headerContentMode:staticProperty(mode)});
+    if(stretch!==undefined)column.headerGraphicStretchMode=staticProperty(stretch);if(spacing!==undefined)column.headerContentSpacing=staticProperty(spacing);
+    control.columnDefinitions.push(column,Object.assign(new HmiParameterColumn(),{visible:staticProperty(false),headerContentSpacing:staticProperty(7),headerGraphicStretchMode:staticProperty(4)}));
+    const screen=new HmiScreen(),layer=new HmiLayer();screen.layers.push(layer);layer.items.push(control);
+    const html=await new HmiScreenToHtmlConverter().convertAsync(screen),heading=html.match(/<th scope="col"[\s\S]*?<\/th>/u)[0];
+    assert.equal(heading.includes('margin-inline-end:'),mode===1&&spacing!==undefined);if(mode===1&&spacing!==undefined)assert.ok(heading.includes(`margin-inline-end: ${spacing}px;`));
+    if(mode!==2&&stretch>=0&&stretch<=3)assert.ok(heading.includes(`object-fit: ${['none','fill','contain','cover'][stretch]};`));
+    assert.equal(heading.includes('background-repeat: repeat;'),mode!==2&&stretch===4);if(mode!==2&&stretch===4)assert.ok(!heading.includes('<img'));
+    assert.equal(heading.includes('Caption'),mode===1||mode===2);
+    const definitions=html.match(/<div hidden data-parameter-column-header-definition[^>]*>/gu);assert.equal(definitions.length,2);assert.ok(definitions[1].includes('data-header-content-spacing="7"'));assert.ok(definitions[1].includes('data-header-graphic-stretch-mode="4"'));
+    assert.equal(getStaticValue(column.headerGraphicStretchMode),stretch);assert.equal(getStaticValue(column.headerContentSpacing),spacing);
+  }
+});

@@ -72,4 +72,30 @@ public class ParameterHeaderGraphicHtmlTests
         Assert.AreEqual(headerType != 0,html.Contains("<th scope=\"col\""));
         if (headerType == 1) StringAssert.Contains(html,">1<");
     }
+    [TestMethod]
+    [DataRow(false,null)] [DataRow(false,0)] [DataRow(false,1)] [DataRow(false,2)] [DataRow(false,3)] [DataRow(false,4)] [DataRow(false,-1)] [DataRow(false,99)]
+    [DataRow(true,null)] [DataRow(true,0)] [DataRow(true,1)] [DataRow(true,2)] [DataRow(true,3)] [DataRow(true,4)] [DataRow(true,-1)] [DataRow(true,99)]
+    public async Task HeaderGraphicLayoutPreservesSpacingAndStretch(bool overview, int? stretch)
+    {
+        foreach(var mode in new[]{0,1,2,3}) foreach(var spacing in new uint?[]{null,0,7})
+        {
+            HmiParameterControlBase control = overview ? new HmiOverviewParameterControl() : new HmiDetailedParameterControl(); control.ColumnHeaderType=2;
+            var column=new HmiParameterColumn { HeaderText=HmiMultilingualText.FromText("Caption"), HeaderGraphic=new HmiImageSource { Uri=Uri }, HeaderContentMode=mode };
+            if(stretch.HasValue) column.HeaderGraphicStretchMode=stretch.Value;
+            if(spacing.HasValue) column.HeaderContentSpacing=spacing.Value;
+            control.ColumnDefinitions.Add(column);
+            control.ColumnDefinitions.Add(new HmiParameterColumn { Visible=false,HeaderContentSpacing=7u,HeaderGraphicStretchMode=4 });
+            var screen=new HmiScreen(); var layer=new HmiLayer();screen.Layers.Add(layer);layer.Items.Add(control);
+            var html=await new HmiScreenToHtmlConverter().ConvertAsync(screen);var heading=Regex.Match(html,"<th scope=\"col\"[\\s\\S]*?</th>").Value;
+            Assert.AreEqual(mode==1&&spacing.HasValue,heading.Contains("margin-inline-end:"));
+            if(mode==1&&spacing.HasValue) StringAssert.Contains(heading,$"margin-inline-end: {spacing}px;");
+            if(mode!=2 && stretch is >=0 and <=3) StringAssert.Contains(heading,"object-fit: "+new[]{"none","fill","contain","cover"}[stretch.Value]+";");
+            Assert.AreEqual(mode!=2&&stretch==4,heading.Contains("background-repeat: repeat;"));
+            if(mode!=2&&stretch==4) Assert.IsFalse(heading.Contains("<img"));
+            Assert.AreEqual(mode is 1 or 2,heading.Contains("Caption"));
+            var definitions=Regex.Matches(html,"<div hidden data-parameter-column-header-definition[^>]*>");Assert.AreEqual(2,definitions.Count);
+            StringAssert.Contains(definitions[1].Value,"data-header-content-spacing=\"7\"");StringAssert.Contains(definitions[1].Value,"data-header-graphic-stretch-mode=\"4\"");
+            Assert.AreEqual(stretch,column.HeaderGraphicStretchMode?.StaticValue);Assert.AreEqual(spacing,column.HeaderContentSpacing?.StaticValue);
+        }
+    }
 }
