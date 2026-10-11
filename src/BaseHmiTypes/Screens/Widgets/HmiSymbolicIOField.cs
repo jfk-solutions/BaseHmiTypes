@@ -34,6 +34,11 @@ public class HmiSymbolicIOField : HmiTextWidgetBase
 
     public HmiProperty<bool>? ShowDropDownList { get; set; }
 
+    public HmiProperty<HmiColor>? SelectionForegroundColor { get; set; }
+    public HmiProperty<HmiColor>? SelectionBackgroundColor { get; set; }
+    public HmiProperty<HmiColor>? ListForegroundColor { get; set; }
+    public HmiProperty<HmiColor>? ListBackgroundColor { get; set; }
+
     /// <summary>Draws borders wider than one pixel inside the frame when true, or centered on it when false.</summary>
     public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
 }

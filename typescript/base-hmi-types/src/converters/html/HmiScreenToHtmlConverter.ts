@@ -4483,6 +4483,28 @@ function createSymbolicStateStyle(field: HmiSymbolicIOField, state: HmiState | u
   return style;
 }
 
+function createSymbolicOptionStyle(field: HmiSymbolicIOField, state: HmiState, selected: boolean, context: HmiHtmlConvertContext): string | undefined {
+  let style = createStateStyle(state) ?? "";
+  const foreground = (selected ? context.effectiveProperties.tryGetStaticValue<HmiColor>(field, "SelectionForegroundColor", field.selectionForegroundColor).value : undefined)
+    ?? context.effectiveProperties.tryGetStaticValue<HmiColor>(field, "ListForegroundColor", field.listForegroundColor).value;
+  const background = (selected ? context.effectiveProperties.tryGetStaticValue<HmiColor>(field, "SelectionBackgroundColor", field.selectionBackgroundColor).value : undefined)
+    ?? context.effectiveProperties.tryGetStaticValue<HmiColor>(field, "ListBackgroundColor", field.listBackgroundColor).value;
+  if (foreground !== undefined) style += `color: ${colorToCss(foreground)};`;
+  if (background !== undefined) style += `background-color: ${colorToCss(background)};`;
+  return style.length === 0 ? undefined : style;
+}
+
+function appendSymbolicPaletteAttributes(html: string[], field: HmiSymbolicIOField, context: HmiHtmlConvertContext): void {
+  const selectionForeground = resolveStaticValue(field.selectionForegroundColor, context, tryConvertFaceplateColorValue);
+  if (selectionForeground !== undefined) appendAttribute(html, "data-selection-foreground-color", colorToCss(selectionForeground));
+  const selectionBackground = resolveStaticValue(field.selectionBackgroundColor, context, tryConvertFaceplateColorValue);
+  if (selectionBackground !== undefined) appendAttribute(html, "data-selection-background-color", colorToCss(selectionBackground));
+  const listForeground = resolveStaticValue(field.listForegroundColor, context, tryConvertFaceplateColorValue);
+  if (listForeground !== undefined) appendAttribute(html, "data-list-foreground-color", colorToCss(listForeground));
+  const listBackground = resolveStaticValue(field.listBackgroundColor, context, tryConvertFaceplateColorValue);
+  if (listBackground !== undefined) appendAttribute(html, "data-list-background-color", colorToCss(listBackground));
+}
+
 async function appendSymbolicInput(
   html: string[],
   symbolicIoField: HmiSymbolicIOField,
@@ -4512,6 +4534,7 @@ async function appendSymbolicInput(
 
     html.push("<div");
     appendCommonAttributes(html, symbolicIoField, context, true, stateStyle);
+    appendSymbolicPaletteAttributes(html, symbolicIoField, context);
     appendAttribute(html, "class", "hmi-symbolic-image-state");
     appendAttribute(html, "role", "status");
     appendAttribute(html, "data-state-value", selectedState.value === undefined ? undefined : toCss(selectedState.value));
@@ -4559,6 +4582,7 @@ async function appendSymbolicInput(
   if (getStaticValue(symbolicIoField.readOnly) === true) {
     html.push("<input");
     appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle);
+    appendSymbolicPaletteAttributes(html, symbolicIoField, context);
     appendAttribute(html, "type", "text");
     appendAttribute(html, "readonly", "readonly");
     appendAttribute(html, "value", selectedState?.text?.getDisplayText(context.options.cultureLcid) ?? "");
@@ -4569,13 +4593,14 @@ async function appendSymbolicInput(
   }
   html.push("<select");
   appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle);
+  appendSymbolicPaletteAttributes(html, symbolicIoField, context);
   if (getStaticValue(symbolicIoField.enabled) === false) appendAttribute(html, "disabled", "disabled");
   html.push(">");
   for (const state of symbolicIoField.states) {
     html.push("<option");
     if (state.value !== undefined)
       appendAttribute(html, "value", toCss(state.value));
-    appendAttribute(html, "style", createStateStyle(state) ?? undefined);
+    appendAttribute(html, "style", createSymbolicOptionStyle(symbolicIoField, state, state === selectedState, context));
     if (state === selectedState)
       appendAttribute(html, "selected", "selected");
     html.push(">");
