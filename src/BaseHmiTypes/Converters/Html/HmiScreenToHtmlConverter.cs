@@ -1714,10 +1714,12 @@ public partial class HmiScreenToHtmlConverter
 
     private static double GetStrokeWidth(HmiShapeBase item, HmiHtmlConvertContext context)
     {
-        if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineWidth), item.LineWidth, out var lineWidth))
+        if (context.EffectiveProperties.TryGetStaticValue(item, nameof(HmiShapeBase.LineWidth), item.LineWidth, out var lineWidth)
+            && IsFinite(lineWidth) && lineWidth >= 0)
             return lineWidth;
         if (item is HmiPaintedScreenItemBase paintedItem
-            && context.EffectiveProperties.TryGetStaticValue(paintedItem, nameof(HmiPaintedScreenItemBase.BorderWidth), paintedItem.BorderWidth, out var borderWidth))
+            && context.EffectiveProperties.TryGetStaticValue(paintedItem, nameof(HmiPaintedScreenItemBase.BorderWidth), paintedItem.BorderWidth, out var borderWidth)
+            && IsFinite(borderWidth) && borderWidth >= 0)
             return borderWidth;
 
         return 1d;

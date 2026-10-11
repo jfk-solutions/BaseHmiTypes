@@ -1608,13 +1608,13 @@ function getFillColorProperty(item: HmiShapeBase, context: HmiHtmlConvertContext
 }
 
 function getStrokeWidth(item: HmiShapeBase, context: HmiHtmlConvertContext): number {
-  return (
-    context.effectiveProperties.tryGetStaticValue<number>(item, "LineWidth", item.lineWidth).value ??
-    (item instanceof HmiPaintedScreenItemBase
-      ? context.effectiveProperties.tryGetStaticValue<number>(item, "BorderWidth", item.borderWidth).value
-      : undefined) ??
-    1
-  );
+  const lineWidth = context.effectiveProperties.tryGetStaticValue<number>(item, "LineWidth", item.lineWidth).value;
+  if (lineWidth !== undefined && Number.isFinite(lineWidth) && lineWidth >= 0) return lineWidth;
+  if (item instanceof HmiPaintedScreenItemBase) {
+    const borderWidth = context.effectiveProperties.tryGetStaticValue<number>(item, "BorderWidth", item.borderWidth).value;
+    if (borderWidth !== undefined && Number.isFinite(borderWidth) && borderWidth >= 0) return borderWidth;
+  }
+  return 1;
 }
 
 function getLineStyle(item: HmiShapeBase, context: HmiHtmlConvertContext): HmiLineStyle {
