@@ -3103,7 +3103,9 @@ async function appendParameterColumns(html: string[], control: HmiParameterContr
         appendColorStyle(separator, "border-right-color", control.headerBorderColor);
       }
       html.push('<th scope="col" style="', headerStyle.join(""), createParameterColumnWidthStyle(column), createParameterHeaderAlignmentStyle(column), separator.join(""), createGridHeaderTextTrimmingStyle(column.headerTextTrimming), '\"');
-      appendAttribute(html, "data-header-content-mode", resolvePropertyPreview(column.headerContentMode));
+      appendAttribute(html, "data-header-content-spacing", resolvePropertyPreview(column.headerContentSpacing));
+    appendAttribute(html, "data-header-graphic-stretch-mode", resolvePropertyPreview(column.headerGraphicStretchMode));
+    appendAttribute(html, "data-header-content-mode", resolvePropertyPreview(column.headerContentMode));
       appendAttribute(html, "data-header-graphic-key", column.headerGraphicKey, true);
       appendAttribute(html, "data-column-name", column.name);
       appendAttribute(html, "data-column-key", column.key);
@@ -3127,8 +3129,19 @@ async function appendParameterColumns(html: string[], control: HmiParameterContr
       const graphicUri = columnHeaderType !== 1 && (mode === 0 || mode === 1 || mode === 3) ? await resolveImageUri(column.headerGraphic, project, signal) : undefined;
       const useGraphic = columnHeaderType !== 1 && !!graphicUri?.trim() && (mode === 0 || mode === 1 || mode === 3);
       if (useGraphic) {
-        html.push('<img data-parameter-header-graphic="true"'); appendAttribute(html, "src", graphicUri);
-        html.push(' alt="" style="max-width: 100%; max-height: 1.5em; vertical-align: middle;">');
+        const stretch = column.headerGraphicStretchMode === undefined ? undefined : getStaticValue(column.headerGraphicStretchMode) ?? 0;
+        let style = "vertical-align: middle;";
+        if (mode === 1 && column.headerContentSpacing !== undefined) style += `margin-inline-end: ${getStaticValue(column.headerContentSpacing) ?? 0}px;`;
+        const width = mode === 1 ? "1.5em" : "100%";
+        if (stretch === 4) {
+          const cssUri = graphicUri!.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\r", "\\d ").replaceAll("\n", "\\a ");
+          style += `display: inline-block; width: ${width}; height: 1.5em; background-repeat: repeat; background-size: auto; background-image: url("${cssUri}");`;
+          html.push('<span data-parameter-header-graphic="true"'); appendAttribute(html, "style", style); html.push("></span>");
+        } else {
+          const fit = stretch === 0 ? "none" : stretch === 1 ? "fill" : stretch === 2 ? "contain" : stretch === 3 ? "cover" : undefined;
+          style += fit === undefined ? "max-width: 100%; max-height: 1.5em;" : `width: ${width}; height: 1.5em; object-fit: ${fit};${stretch === 0 ? " object-position: center;" : ""}`;
+          html.push('<img data-parameter-header-graphic="true"'); appendAttribute(html, "src", graphicUri); appendAttribute(html, "style", style); html.push(' alt="">');
+        }
       }
       const useText = columnHeaderType === 1 || (mode !== 3 && (mode !== 0 || !useGraphic));
       if (useText) appendGridHeaderText(html, headingText, column.headerTextTrimming);
@@ -3143,10 +3156,12 @@ async function appendParameterColumns(html: string[], control: HmiParameterContr
 function appendParameterHeaderContentMetadata(html: string[], control: HmiParameterControlBase): void {
   for (let index = 0; index < control.columnDefinitions.length; index++) {
     const column = control.columnDefinitions[index]!;
-    if (column.headerContentMode === undefined && column.headerGraphicKey === undefined && column.headerGraphic === undefined) continue;
+    if (column.headerContentMode === undefined && column.headerGraphicKey === undefined && column.headerGraphic === undefined && column.headerContentSpacing === undefined && column.headerGraphicStretchMode === undefined) continue;
     html.push("<div hidden data-parameter-column-header-definition");
     appendAttribute(html, "data-column-index", String(index));
     appendAttribute(html, "data-column-name", column.name, true); appendAttribute(html, "data-column-key", column.key, true);
+    appendAttribute(html, "data-header-content-spacing", resolvePropertyPreview(column.headerContentSpacing));
+    appendAttribute(html, "data-header-graphic-stretch-mode", resolvePropertyPreview(column.headerGraphicStretchMode));
     appendAttribute(html, "data-header-content-mode", resolvePropertyPreview(column.headerContentMode));
     appendAttribute(html, "data-header-graphic-key", column.headerGraphicKey, true);
     if (column.headerGraphic !== undefined) {

@@ -286,7 +286,9 @@ public partial class HmiScreenToHtmlConverter
                     AppendColorStyle(separator, "border-right-color", control.HeaderBorderColor);
                 }
                 html.Append("<th scope=\"col\" style=\"").Append(headerStyle).Append(CreateParameterColumnWidthStyle(column, context)).Append(CreateParameterHeaderAlignmentStyle(column, context)).Append(separator).Append(CreateGridHeaderTextTrimmingStyle(column.HeaderTextTrimming)).Append('"');
-                AppendAttribute(html, "data-header-content-mode", ResolvePropertyPreview(column.HeaderContentMode, context));
+                AppendAttribute(html, "data-header-content-spacing", ResolvePropertyPreview(column.HeaderContentSpacing, context));
+            AppendAttribute(html, "data-header-graphic-stretch-mode", ResolvePropertyPreview(column.HeaderGraphicStretchMode, context));
+            AppendAttribute(html, "data-header-content-mode", ResolvePropertyPreview(column.HeaderContentMode, context));
                 AppendAttribute(html, "data-header-graphic-key", column.HeaderGraphicKey, preserveEmpty: true);
                 AppendAttribute(html, "data-column-name", column.Name);
                 AppendAttribute(html, "data-column-key", column.Key);
@@ -322,11 +324,13 @@ public partial class HmiScreenToHtmlConverter
         for (var index = 0; index < control.ColumnDefinitions.Count; index++)
         {
             var column = control.ColumnDefinitions[index];
-            if (column.HeaderContentMode is null && column.HeaderGraphicKey is null && column.HeaderGraphic is null) continue;
+            if (column.HeaderContentMode is null && column.HeaderGraphicKey is null && column.HeaderGraphic is null && column.HeaderContentSpacing is null && column.HeaderGraphicStretchMode is null) continue;
             html.Append("<div hidden data-parameter-column-header-definition");
             AppendAttribute(html, "data-column-index", index.ToString(CultureInfo.InvariantCulture));
             AppendAttribute(html, "data-column-name", column.Name, preserveEmpty: true);
             AppendAttribute(html, "data-column-key", column.Key, preserveEmpty: true);
+            AppendAttribute(html, "data-header-content-spacing", ResolvePropertyPreview(column.HeaderContentSpacing, context));
+            AppendAttribute(html, "data-header-graphic-stretch-mode", ResolvePropertyPreview(column.HeaderGraphicStretchMode, context));
             AppendAttribute(html, "data-header-content-mode", ResolvePropertyPreview(column.HeaderContentMode, context));
             AppendAttribute(html, "data-header-graphic-key", column.HeaderGraphicKey, preserveEmpty: true);
             if (column.HeaderGraphic is not null)
@@ -347,9 +351,31 @@ public partial class HmiScreenToHtmlConverter
         var useGraphic = columnHeaderType != 1 && !string.IsNullOrWhiteSpace(graphicUri) && mode is 0 or 1 or 3;
         if (useGraphic)
         {
-            html.Append("<img data-parameter-header-graphic=\"true\"");
-            AppendAttribute(html, "src", graphicUri);
-            html.Append(" alt=\"\" style=\"max-width: 100%; max-height: 1.5em; vertical-align: middle;\">");
+            var stretch = column.HeaderGraphicStretchMode is null ? (int?)null : ResolveStaticValue(column.HeaderGraphicStretchMode, context);
+            var style = new StringBuilder("vertical-align: middle;");
+            if (mode == 1 && column.HeaderContentSpacing is not null)
+                style.Append("margin-inline-end: ").Append(ResolveStaticValue(column.HeaderContentSpacing, context).ToString(CultureInfo.InvariantCulture)).Append("px;");
+            var width = mode == 1 ? "1.5em" : "100%";
+            if (stretch == 4)
+            {
+                var cssUri = graphicUri!.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\d ").Replace("\n", "\\a ");
+                style.Append($"display: inline-block; width: {width}; height: 1.5em; background-repeat: repeat; background-size: auto; background-image: url(\"").Append(cssUri).Append("\");");
+                html.Append("<span data-parameter-header-graphic=\"true\"");
+                AppendAttribute(html, "style", style.ToString()); html.Append("></span>");
+            }
+            else
+            {
+                style.Append(stretch switch
+                {
+                    0 => $"width: {width}; height: 1.5em; object-fit: none; object-position: center;",
+                    1 => $"width: {width}; height: 1.5em; object-fit: fill;",
+                    2 => $"width: {width}; height: 1.5em; object-fit: contain;",
+                    3 => $"width: {width}; height: 1.5em; object-fit: cover;",
+                    _ => "max-width: 100%; max-height: 1.5em;"
+                });
+                html.Append("<img data-parameter-header-graphic=\"true\"");
+                AppendAttribute(html, "src", graphicUri); AppendAttribute(html, "style", style.ToString()); html.Append(" alt=\"\">");
+            }
         }
         var useText = columnHeaderType == 1 || (mode != 3 && (mode != 0 || !useGraphic));
         if (useText) AppendGridHeaderText(html, headingText, column.HeaderTextTrimming);
