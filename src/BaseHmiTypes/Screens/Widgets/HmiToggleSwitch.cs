@@ -12,6 +12,9 @@ public class HmiToggleSwitch : HmiButtonBase
 
     public HmiProperty<HmiSwitchType>? Mode { get; set; }
 
+    /// <summary>Configured Boolean switch state, independent of numbered state-list values.</summary>
+    public HmiProperty<bool>? IsAlternateState { get; set; }
+
     public HmiProperty<bool>? Header { get; set; }
 
     public HmiProperty<HmiMultilingualText>? HeaderText { get; set; }
