@@ -293,6 +293,7 @@ public sealed class HmiRecipeToHtmlConverter
             }
             html.Append("</tbody></table></div>");
         }
+        AppendSourceObjectIdentities(html, recipe);
         AppendRecipeViews(html, recipe, culture);
         return html.Append(standalone ? "</body></html>" : "</section>").ToString();
     }
@@ -493,6 +494,21 @@ public sealed class HmiRecipeToHtmlConverter
         html.Append("</tbody></table></div>");
     }
 
+    private static void AppendSourceObjectIdentities(StringBuilder html, HmiRecipe recipe)
+    {
+        if (!recipe.Parameters.Any(field => field.SourceObjectId != null) && !recipe.DataSets.Any(record => record.SourceObjectId != null)) return;
+        html.Append("<h2>Source object identities</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Kind</th><th scope=\"col\">Name</th><th scope=\"col\">Source object ID</th></tr></thead><tbody>");
+        foreach (var field in recipe.Parameters.Where(field => field.SourceObjectId != null))
+        {
+            html.Append("<tr>"); AppendViewValue(html, "Field"); AppendViewValue(html, field.Name); AppendViewValue(html, field.SourceObjectId); html.Append("</tr>");
+        }
+        foreach (var record in recipe.DataSets.Where(record => record.SourceObjectId != null))
+        {
+            html.Append("<tr>"); AppendViewValue(html, "Record"); AppendViewValue(html, record.Name); AppendViewValue(html, record.SourceObjectId); html.Append("</tr>");
+        }
+        html.Append("</tbody></table></div>");
+    }
+
     private static void AppendRecipeViews(StringBuilder html, HmiRecipe recipe, CultureInfo? culture)
     {
         if (recipe.Views.Count == 0) return;
@@ -508,7 +524,7 @@ public sealed class HmiRecipeToHtmlConverter
         }
         html.Append("</tbody></table></div>");
         if (!recipe.Views.Any(v => v.Elements.Count > 0)) return;
-        html.Append("<h2>Recipe view elements</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">View</th><th scope=\"col\">View source ID</th><th scope=\"col\">Name</th><th scope=\"col\">Source ID</th><th scope=\"col\">Number</th><th scope=\"col\">Display name</th><th scope=\"col\">Target source ID</th><th scope=\"col\">Target name</th><th scope=\"col\">Display name source ID</th><th scope=\"col\">Display name reference</th></tr></thead><tbody>");
+        html.Append("<h2>Recipe view elements</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">View</th><th scope=\"col\">View source ID</th><th scope=\"col\">Name</th><th scope=\"col\">Source ID</th><th scope=\"col\">Number</th><th scope=\"col\">Display name</th><th scope=\"col\">Target source ID</th><th scope=\"col\">Target name</th><th scope=\"col\">Display name source ID</th><th scope=\"col\">Display name reference</th><th scope=\"col\">Recipe field</th><th scope=\"col\">Field index</th></tr></thead><tbody>");
         foreach (var view in recipe.Views) foreach (var element in view.Elements)
         {
             html.Append("<tr>");
@@ -518,6 +534,10 @@ public sealed class HmiRecipeToHtmlConverter
             AppendViewValue(html, element.DisplayName?.GetText(culture));
             AppendViewValue(html, element.TargetElement?.SourceId); AppendViewValue(html, element.TargetElement?.Name);
             AppendViewValue(html, element.DisplayNameReference?.SourceId); AppendViewValue(html, element.DisplayNameReference?.Name);
+            var targetId = element.TargetElement?.SourceId;
+            var matches = string.IsNullOrEmpty(targetId) ? Array.Empty<HmiRecipeParameter>() : recipe.Parameters.Where(field => field.SourceObjectId == targetId).Take(2).ToArray();
+            var targetField = matches.Length == 1 ? matches[0] : null;
+            AppendViewValue(html, targetField?.Name); AppendViewValue(html, targetField?.SourceIndex?.ToString(CultureInfo.InvariantCulture));
             html.Append("</tr>");
         }
         html.Append("</tbody></table></div>");

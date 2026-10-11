@@ -80,6 +80,8 @@ public sealed class HmiRecipeReference
 
 public sealed class HmiRecipeParameter : IHmiObject
 {
+    /// <summary>Persisted object identity, independent of element IDs and record numbers.</summary>
+    public string? SourceObjectId { get; set; }
     public HmiTextList? TextList { get; set; }
     public HmiRecipePlcArray? SourcePlcArray { get; set; }
     public IDictionary<string, HmiRecipeReference> References { get; } = new Dictionary<string, HmiRecipeReference>();
@@ -186,6 +188,8 @@ public sealed class HmiRecipePlcDeclaration
 
 public sealed class HmiRecipeDataSet : IHmiObject
 {
+    /// <summary>Persisted object identity, independent of element IDs and record numbers.</summary>
+    public string? SourceObjectId { get; set; }
     public DateTime? LastModification { get; set; }
     public string? LastUser { get; set; }
 

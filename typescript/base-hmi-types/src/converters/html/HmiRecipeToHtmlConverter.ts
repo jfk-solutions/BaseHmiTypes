@@ -245,6 +245,7 @@ export class HmiRecipeToHtmlConverter {
       }
       html.push('</tbody></table></div>');
     }
+    appendSourceObjectIdentities(html, recipe);
     appendRecipeViews(html, recipe, cultureLcid);
     return html.concat(standalone ? "</body></html>" : "</section>").join("");
   }
@@ -409,6 +410,18 @@ function appendPlcArrays(html: string[], recipe: HmiRecipe): void {
   html.push('</tbody></table></div>');
 }
 
+function appendSourceObjectIdentities(html: string[], recipe: HmiRecipe): void {
+  if (!recipe.parameters.some(field => field.sourceObjectId !== undefined) && !recipe.dataSets.some(record => record.sourceObjectId !== undefined)) return;
+  html.push('<h2>Source object identities</h2><div class="table-scroll"><table><thead><tr><th scope="col">Kind</th><th scope="col">Name</th><th scope="col">Source object ID</th></tr></thead><tbody>');
+  for (const field of recipe.parameters.filter(field => field.sourceObjectId !== undefined)) {
+    html.push("<tr>"); appendViewValue(html, "Field"); appendViewValue(html, field.name); appendViewValue(html, field.sourceObjectId); html.push("</tr>");
+  }
+  for (const record of recipe.dataSets.filter(record => record.sourceObjectId !== undefined)) {
+    html.push("<tr>"); appendViewValue(html, "Record"); appendViewValue(html, record.name); appendViewValue(html, record.sourceObjectId); html.push("</tr>");
+  }
+  html.push("</tbody></table></div>");
+}
+
 function appendRecipeViews(html: string[], recipe: HmiRecipe, cultureLcid?: number): void {
   if (recipe.views.length === 0) return;
   html.push('<h2>Recipe views</h2><div class="table-scroll"><table><thead><tr><th scope="col">Name</th><th scope="col">Source ID</th><th scope="col">Number</th><th scope="col">Display name</th><th scope="col">Statement (stored)</th><th scope="col">Display name source ID</th><th scope="col">Display name reference</th></tr></thead><tbody>');
@@ -419,10 +432,14 @@ function appendRecipeViews(html: string[], recipe: HmiRecipe, cultureLcid?: numb
   }
   html.push("</tbody></table></div>");
   if (!recipe.views.some(v=>v.elements.length>0)) return;
-  html.push('<h2>Recipe view elements</h2><div class="table-scroll"><table><thead><tr><th scope="col">View</th><th scope="col">View source ID</th><th scope="col">Name</th><th scope="col">Source ID</th><th scope="col">Number</th><th scope="col">Display name</th><th scope="col">Target source ID</th><th scope="col">Target name</th><th scope="col">Display name source ID</th><th scope="col">Display name reference</th></tr></thead><tbody>');
+  html.push('<h2>Recipe view elements</h2><div class="table-scroll"><table><thead><tr><th scope="col">View</th><th scope="col">View source ID</th><th scope="col">Name</th><th scope="col">Source ID</th><th scope="col">Number</th><th scope="col">Display name</th><th scope="col">Target source ID</th><th scope="col">Target name</th><th scope="col">Display name source ID</th><th scope="col">Display name reference</th><th scope="col">Recipe field</th><th scope="col">Field index</th></tr></thead><tbody>');
   for (const view of recipe.views) for (const element of view.elements) {
     html.push("<tr>");
     for (const value of [view.name,view.sourceId,element.name,element.sourceId,element.sourceNumber,element.displayName?.getText(cultureLcid),element.targetElement?.sourceId,element.targetElement?.name,element.displayNameReference?.sourceId,element.displayNameReference?.name]) appendViewValue(html,value);
+    const targetId = element.targetElement?.sourceId;
+    const matches = !targetId ? [] : recipe.parameters.filter(field => field.sourceObjectId === targetId).slice(0, 2);
+    const targetField = matches.length === 1 ? matches[0] : undefined;
+    appendViewValue(html, targetField?.name); appendViewValue(html, targetField?.sourceIndex);
     html.push("</tr>");
   }
   html.push("</tbody></table></div>");
