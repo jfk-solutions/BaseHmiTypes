@@ -2574,7 +2574,11 @@ public partial class HmiScreenToHtmlConverter
         html.Append("<input");
         AppendCommonAttributes(html, slider, context, additionalStyle: sliderStyle);
         AppendAttribute(html, "data-hmi-slider", "true");
-        if (slider.ThumbBackgroundColor is not null || slider.ThumbForegroundColor is not null)
+        var thumbProperty = context.EffectiveProperties.Resolve(slider, nameof(HmiSlider.ShowThumb), slider.ShowThumb);
+        var showThumb = thumbProperty is null ? (bool?)null : ResolveStaticValue(thumbProperty, context);
+        if (showThumb.HasValue)
+            AppendAttribute(html, "data-show-thumb", showThumb.Value ? "true" : "false");
+        if (showThumb == false || slider.ThumbBackgroundColor is not null || slider.ThumbForegroundColor is not null)
             AppendAttribute(html, "data-hmi-slider-custom-thumb", "true");
         AppendAttribute(html, "data-orientation", direction.ToString());
         if (slider.StepSize is not null)

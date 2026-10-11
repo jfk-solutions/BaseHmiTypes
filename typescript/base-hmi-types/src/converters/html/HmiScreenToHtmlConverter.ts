@@ -2369,7 +2369,11 @@ function appendSlider(html: string[], slider: HmiSlider, context: HmiHtmlConvert
   html.push("<input");
   appendCommonAttributes(html, slider, context, true, sliderStyle);
   appendAttribute(html, "data-hmi-slider", "true");
-  if (slider.thumbBackgroundColor !== undefined || slider.thumbForegroundColor !== undefined)
+  const thumbProperty = context.effectiveProperties.resolve<boolean>(slider, "ShowThumb", slider.showThumb);
+  const showThumb = resolveStaticValue(thumbProperty, context, tryConvertFaceplateBooleanValue);
+  if (showThumb !== undefined)
+    appendAttribute(html, "data-show-thumb", showThumb ? "true" : "false");
+  if (showThumb === false || slider.thumbBackgroundColor !== undefined || slider.thumbForegroundColor !== undefined)
     appendAttribute(html, "data-hmi-slider-custom-thumb", "true");
   appendAttribute(html, "data-orientation", HmiFillDirection[direction]);
   const stepSize = getStaticValue(slider.stepSize);

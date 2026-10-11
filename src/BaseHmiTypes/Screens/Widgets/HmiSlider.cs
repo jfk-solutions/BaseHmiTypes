@@ -9,6 +9,9 @@ public class HmiSlider : HmiBar
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiSlider;
     }
 
+    /// <summary>Configured thumb visibility; absence retains the preview default.</summary>
+    public HmiProperty<bool>? ShowThumb { get; set; }
+
     public HmiProperty<HmiColor>? ThumbBackgroundColor { get; set; }
 
     /// <summary>Foreground of the thumb. The HTML preview uses it for the thumb outline.</summary>
