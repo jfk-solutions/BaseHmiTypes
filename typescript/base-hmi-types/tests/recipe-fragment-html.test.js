@@ -9,6 +9,8 @@ function recipe() {
   const record = Object.assign(new HmiRecipeDataSet(), { name: "Stored <record>" }); record.values["Field <A>"] = "001.00";
   const structured = Object.assign(new HmiRecipeStructuredValue(), { kind: HmiRecipeValueKind.Map });
   structured.entries.push(Object.assign(new HmiRecipeStructuredEntry(), { key: "__proto__", value: Object.assign(new HmiRecipeStructuredValue(), { kind: HmiRecipeValueKind.Scalar, value: "nested, <value>" }) }));
+  const localized = HmiMultilingualText.fromText("Neutral stored <text>"); localized.texts.set(1031, "Localized stored <text>");
+  structured.entries.push(Object.assign(new HmiRecipeStructuredEntry(), { key: "Localized", value: Object.assign(new HmiRecipeStructuredValue(), { kind: HmiRecipeValueKind.Text, text: localized }) }));
   record.sourceStructuredValues.set("Map", structured);
   record.sourceValues.set("Extra", undefined); record.sourceArrayValues.set("Array", ["01", undefined, ""]);
   record.sourceBinaryValues.set("Blob", Object.assign(new HmiRecipeBinaryValue(), { sourceType: "CoreBlob", payloadBase64: "AA==", decodedByteLength: 1 })); result.dataSets.push(record); return result;
@@ -20,6 +22,7 @@ for (const culture of [1031, 1033]) test(`Recipe fragment reuses the entire stan
   assert.ok(!/<(?:html|head|body|meta|script)\b/i.test(fragment));
   for (const text of ["Maximum length", "&lt;unit&gt;", "Tag &lt;A&gt;", "Stored records", "001.00", "Stored array values", "AA==", "Stored structured values", "nested, &lt;value&gt;"])
     assert.ok(fragment.includes(text), text);
+  assert.ok(fragment.includes(culture === 1031 ? "Localized stored &lt;text&gt;" : "Neutral stored &lt;text&gt;"));
   assert.ok(fragment.includes(".hmi-recipe-definition th,.hmi-recipe-definition td"));
   assert.equal(model.dataSets.length, 1); assert.equal(model.parameters[0].name, "Field <A>");
 });
@@ -29,9 +32,11 @@ for (const Type of [HmiDetailedParameterControl, HmiOverviewParameterControl]) t
   const renderer = new HmiScreenToHtmlConverter(), html = await renderer.convertAsync(screen, undefined, options);
   assert.ok(html.includes('Configured parameter set type: Localized &lt;title&gt;'));
   assert.ok(html.includes(new HmiRecipeToHtmlConverter().convertFragment(control.defaultParameterSetType, 1031)));
+  assert.ok(html.includes("Localized stored &lt;text&gt;"));
   assert.equal((html.match(/<meta charset=/g) ?? []).length, 1); assert.ok(html.includes("Parameter data not loaded"));
   const invalidOptions = new HmiHtmlConvertOptions(); invalidOptions.cultureLcid = -2147483648;
   assert.ok((await renderer.convertAsync(screen, undefined, invalidOptions)).includes("Configured parameter set type: Default title"));
+  assert.ok((await renderer.convertAsync(screen, undefined, invalidOptions)).includes("Neutral stored &lt;text&gt;"));
   if (control instanceof HmiDetailedParameterControl) { control.hideDetails = staticProperty(true); const hidden = await renderer.convertAsync(screen); assert.ok(!hidden.includes('class="hmi-recipe-definition"')); assert.ok(hidden.includes('data-default-parameter-set-type-field-count="1"')); }
 });
 test("An empty fragment reports unavailable stored records without creating them", () => {

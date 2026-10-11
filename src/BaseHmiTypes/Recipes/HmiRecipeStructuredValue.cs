@@ -1,6 +1,8 @@
+using BaseHmiTypes.Common;
+
 namespace BaseHmiTypes.Recipes;
 
-public enum HmiRecipeValueKind { Null, Scalar, Map, Array, Binary, Reference, Unsupported, Recursive, DepthLimit }
+public enum HmiRecipeValueKind { Null, Scalar, Map, Array, Binary, Reference, Unsupported, Recursive, DepthLimit, Text }
 
 /// <summary>Detached stored value tree; array positions do not imply PLC bounds.</summary>
 public sealed class HmiRecipeStructuredValue
@@ -8,6 +10,8 @@ public sealed class HmiRecipeStructuredValue
     public HmiRecipeValueKind Kind { get; set; }
     public string? SourceType { get; set; }
     public string? Value { get; set; }
+    public HmiMultilingualText? Text { get; set; }
+    public int? SourceTextFlags { get; set; }
     public HmiRecipeBinaryValue? Binary { get; set; }
     public HmiRecipeReference? Reference { get; set; }
     public IList<HmiRecipeStructuredEntry> Entries { get; } = new List<HmiRecipeStructuredEntry>();

@@ -232,7 +232,7 @@ export class HmiRecipeToHtmlConverter {
     }
     appendStoredArrayValues(html, recipe);
     appendStoredBinaryValues(html, recipe);
-    appendStoredStructuredValues(html, recipe);
+    appendStoredStructuredValues(html, recipe, cultureLcid);
     if (recipe.dataSets.some(record=>record.lastModification!==undefined || record.lastUser!==undefined)) {
       html.push('<h2>Stored record metadata</h2><div class="table-scroll"><table><thead><tr><th scope="col">Record</th><th scope="col">Number</th><th scope="col">Last modification (stored)</th><th scope="col">Last user</th></tr></thead><tbody>');
       for(const record of recipe.dataSets) {
@@ -250,17 +250,17 @@ export class HmiRecipeToHtmlConverter {
   }
 }
 
-function appendStoredStructuredValues(html: string[], recipe: HmiRecipe): void {
+function appendStoredStructuredValues(html: string[], recipe: HmiRecipe, cultureLcid: number | undefined): void {
   if (!recipe.dataSets.some(record => record.sourceStructuredValues.size > 0)) return;
   html.push('<h2>Stored structured values</h2><div class="table-scroll"><table><thead><tr><th>Record</th><th>Number</th><th>Source key</th><th>Value</th></tr></thead><tbody>');
   for (const record of recipe.dataSets) for (const [key, value] of record.sourceStructuredValues) {
     html.push('<tr><th scope="row">', encode(record.name), '</th><td>', encode(record.sourceNumber?.toString()), '</td><td>', encode(key), '</td><td>');
-    appendStructuredValue(html, value, new Set(), 0); html.push('</td></tr>');
+    appendStructuredValue(html, value, new Set(), 0, cultureLcid); html.push('</td></tr>');
   }
   html.push('</tbody></table></div>');
 }
 
-function appendStructuredValue(html: string[], value: HmiRecipeStructuredValue, path: Set<HmiRecipeStructuredValue>, depth: number): void {
+function appendStructuredValue(html: string[], value: HmiRecipeStructuredValue, path: Set<HmiRecipeStructuredValue>, depth: number, cultureLcid: number | undefined): void {
   let kind = value.kind;
   if (kind === HmiRecipeValueKind.Map || kind === HmiRecipeValueKind.Array) {
     if (path.has(value)) kind = HmiRecipeValueKind.Recursive;
@@ -270,13 +270,14 @@ function appendStructuredValue(html: string[], value: HmiRecipeStructuredValue, 
   const added = !path.has(value); path.add(value);
   switch (kind) {
     case HmiRecipeValueKind.Null: html.push('Null'); break;
+    case HmiRecipeValueKind.Text: html.push(encode(value.text?.getText(cultureLcid))); break;
     case HmiRecipeValueKind.Scalar: html.push(encode(value.value)); break;
     case HmiRecipeValueKind.Map:
       html.push('<details open><summary>Map (', String(value.entries.length), ' entries)</summary>');
       if (!value.entries.length) html.push('Empty map');
       else {
         html.push('<dl>');
-        for (const entry of value.entries) { html.push('<dt>', encode(entry.key), '</dt><dd>'); appendStructuredValue(html, entry.value, path, depth + 1); html.push('</dd>'); }
+        for (const entry of value.entries) { html.push('<dt>', encode(entry.key), '</dt><dd>'); appendStructuredValue(html, entry.value, path, depth + 1, cultureLcid); html.push('</dd>'); }
         html.push('</dl>');
       }
       html.push('</details>'); break;
@@ -285,7 +286,7 @@ function appendStructuredValue(html: string[], value: HmiRecipeStructuredValue, 
       if (!value.items.length) html.push('Empty array');
       else {
         html.push('<ol start="0">');
-        for (const member of value.items) { html.push('<li>'); appendStructuredValue(html, member, path, depth + 1); html.push('</li>'); }
+        for (const member of value.items) { html.push('<li>'); appendStructuredValue(html, member, path, depth + 1, cultureLcid); html.push('</li>'); }
         html.push('</ol>');
       }
       html.push('</details>'); break;
