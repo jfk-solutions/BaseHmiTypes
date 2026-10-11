@@ -28,6 +28,11 @@ public class HmiClock : HmiWidgetBase
     public HmiProperty<int>? NativeEdgeStyle { get; set; }
     public HmiProperty<double>? FontReferenceDeviceSize { get; set; }
 
+    /// <summary>Unified dial details: 0 none, 1 labels, 2 ticks. Unknown values remain available.</summary>
+    public HmiProperty<int>? DialMode { get; set; }
+    public HmiProperty<HmiColor>? DialLabelColor { get; set; }
+    public HmiFont? DialLabelFont { get; set; }
+
     public HmiProperty<bool>? Analog { get; set; }
     /// <summary>Preview background: 0 solid, 1 transparent frame around a filled analog dial,
     /// 2 transparent. Unset retains the default neutral dial outline.</summary>
