@@ -8,6 +8,8 @@ export class HmiSlider extends HmiBar {
     this.hmiObjectType = HmiObjectType.HmiSlider;
   }
 
+  /** Configured thumb visibility; absence retains the preview default. */
+  showThumb?: HmiProperty<boolean>;
   thumbBackgroundColor?: HmiProperty<HmiColor>;
   /** Foreground of the thumb. The HTML preview uses it for the thumb outline. */
   thumbForegroundColor?: HmiProperty<HmiColor>;

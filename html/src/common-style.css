@@ -47,6 +47,14 @@ input[data-hmi-slider-custom-thumb]::-moz-range-thumb {
   background: var(--hmi-slider-thumb-background, #808080);
 }
 
+/* Hide only the configured thumb; retain track geometry and the inert value. */
+input[data-hmi-slider][data-show-thumb="false"]::-webkit-slider-thumb {
+  visibility: hidden;
+}
+input[data-hmi-slider][data-show-thumb="false"]::-moz-range-thumb {
+  visibility: hidden;
+}
+
 meter[data-hmi-bar-fill] {
   color: inherit;
 }
