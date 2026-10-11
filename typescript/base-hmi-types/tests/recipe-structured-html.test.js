@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { HmiRecipe, HmiRecipeDataSet, HmiRecipeStructuredValue, HmiRecipeStructuredEntry, HmiRecipeValueKind as Kind, HmiRecipeToHtmlConverter } from "../dist/index.js";
+import { HmiMultilingualText, HmiRecipe, HmiRecipeDataSet, HmiRecipeStructuredValue, HmiRecipeStructuredEntry, HmiRecipeValueKind as Kind, HmiRecipeToHtmlConverter } from "../dist/index.js";
 
 const node = (kind = Kind.Null, values = {}) => Object.assign(new HmiRecipeStructuredValue(), { kind }, values);
 const entry = (key, value) => Object.assign(new HmiRecipeStructuredEntry(), { key, value });
@@ -34,4 +34,17 @@ test("Renderer guards model cycles and depth and preserves repeated aliases", ()
 
 test("Recipes without structured values keep the section absent", () => {
   assert.ok(!new HmiRecipeToHtmlConverter().convert(new HmiRecipe()).includes("Stored structured values"));
+});
+
+for (const culture of [undefined, 1031, 1036]) for (const empty of [false, true]) test(`Multilingual tree text uses document and fragment culture: ${culture}/${empty}`, () => {
+  const text = new HmiMultilingualText(); text.texts.set(-1, "Neutral <&>"); text.texts.set(1031, empty ? "" : "Deutsch <&>");
+  text.formattedTexts.set(1031, "<script>formatted payload</script>");
+  const root = node(Kind.Array); root.items.push(node(Kind.Text, { sourceType: "CoreTextAttribute", text, sourceTextFlags: 37 }), node(Kind.Text), node());
+  const converter = new HmiRecipeToHtmlConverter(), expected = culture === 1031 ? empty ? "" : "Deutsch &lt;&amp;&gt;" : "Neutral &lt;&amp;&gt;";
+  for (const html of [converter.convert(recipe(root), culture), converter.convertFragment(recipe(root), culture)]) {
+    assert.ok(html.includes(`<div data-structured-kind="Text" data-source-type="CoreTextAttribute">${expected}</div>`));
+    assert.ok(html.includes('<div data-structured-kind="Text" data-source-type=""></div>'));
+    assert.ok(html.includes('data-structured-kind="Null"')); assert.ok(!html.includes("<script>"));
+  }
+  assert.equal(text.texts.get(1031), empty ? "" : "Deutsch <&>"); assert.equal(root.items[0].sourceTextFlags, 37);
 });

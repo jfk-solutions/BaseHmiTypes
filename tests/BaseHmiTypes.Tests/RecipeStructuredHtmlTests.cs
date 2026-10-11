@@ -1,3 +1,4 @@
+using BaseHmiTypes.Common;
 using BaseHmiTypes.Converters.Html;
 using BaseHmiTypes.Recipes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -56,5 +57,25 @@ public class RecipeStructuredHtmlTests
     public void RecipesWithoutStructuredValuesKeepTheSectionAbsent()
     {
         Assert.IsFalse(new HmiRecipeToHtmlConverter().Convert(new HmiRecipe()).Contains("Stored structured values"));
+    }
+
+    [TestMethod]
+    [DataRow(null, false)] [DataRow(1031, false)] [DataRow(1036, false)]
+    [DataRow(null, true)] [DataRow(1031, true)] [DataRow(1036, true)]
+    public void MultilingualTreeTextUsesDocumentAndFragmentCultureWithoutExecutingFormattedPayloads(int? culture, bool empty)
+    {
+        var text = new HmiMultilingualText(); text.Texts[-1] = "Neutral <&>"; text.Texts[1031] = empty ? "" : "Deutsch <&>";
+        text.FormattedTexts[1031] = "<script>formatted payload</script>";
+        var root = new HmiRecipeStructuredValue { Kind = HmiRecipeValueKind.Array };
+        root.Items.Add(new() { Kind = HmiRecipeValueKind.Text, SourceType = "CoreTextAttribute", Text = text, SourceTextFlags = 37 });
+        root.Items.Add(new() { Kind = HmiRecipeValueKind.Text }); root.Items.Add(new());
+        var converter = new HmiRecipeToHtmlConverter(); var expected = culture == 1031 ? empty ? "" : "Deutsch &lt;&amp;&gt;" : "Neutral &lt;&amp;&gt;";
+        foreach (var html in new[] { converter.Convert(Recipe(root), culture), converter.ConvertFragment(Recipe(root), culture) })
+        {
+            StringAssert.Contains(html, "<div data-structured-kind=\"Text\" data-source-type=\"CoreTextAttribute\">" + expected + "</div>");
+            StringAssert.Contains(html, "<div data-structured-kind=\"Text\" data-source-type=\"\"></div>");
+            StringAssert.Contains(html, "data-structured-kind=\"Null\""); Assert.IsFalse(html.Contains("<script>"));
+        }
+        Assert.AreEqual(empty ? "" : "Deutsch <&>", text.Texts[1031]); Assert.AreEqual(37, root.Items[0].SourceTextFlags);
     }
 }

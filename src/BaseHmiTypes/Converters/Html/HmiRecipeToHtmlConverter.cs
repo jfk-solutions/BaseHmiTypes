@@ -279,7 +279,7 @@ public sealed class HmiRecipeToHtmlConverter
         }
         AppendStoredArrayValues(html, recipe);
         AppendStoredBinaryValues(html, recipe);
-        AppendStoredStructuredValues(html, recipe);
+        AppendStoredStructuredValues(html, recipe, culture);
         if (recipe.DataSets.Any(record => record.LastModification != null || record.LastUser != null))
         {
             html.Append("<h2>Stored record metadata</h2><div class=\"table-scroll\"><table><thead><tr><th scope=\"col\">Record</th><th scope=\"col\">Number</th><th scope=\"col\">Last modification (stored)</th><th scope=\"col\">Last user</th></tr></thead><tbody>");
@@ -297,7 +297,7 @@ public sealed class HmiRecipeToHtmlConverter
         return html.Append(standalone ? "</body></html>" : "</section>").ToString();
     }
 
-    private static void AppendStoredStructuredValues(StringBuilder html, HmiRecipe recipe)
+    private static void AppendStoredStructuredValues(StringBuilder html, HmiRecipe recipe, CultureInfo? culture)
     {
         if (!recipe.DataSets.Any(record => record.SourceStructuredValues.Count > 0)) return;
         html.Append("<h2>Stored structured values</h2><div class=\"table-scroll\"><table><thead><tr><th>Record</th><th>Number</th><th>Source key</th><th>Value</th></tr></thead><tbody>");
@@ -306,13 +306,13 @@ public sealed class HmiRecipeToHtmlConverter
             {
                 html.Append("<tr><th scope=\"row\">").Append(Encode(record.Name)).Append("</th><td>")
                     .Append(record.SourceNumber?.ToString(CultureInfo.InvariantCulture)).Append("</td><td>").Append(Encode(pair.Key)).Append("</td><td>");
-                AppendStructuredValue(html, pair.Value, new HashSet<HmiRecipeStructuredValue>(), 0);
+                AppendStructuredValue(html, pair.Value, new HashSet<HmiRecipeStructuredValue>(), 0, culture);
                 html.Append("</td></tr>");
             }
         html.Append("</tbody></table></div>");
     }
 
-    private static void AppendStructuredValue(StringBuilder html, HmiRecipeStructuredValue value, HashSet<HmiRecipeStructuredValue> path, int depth)
+    private static void AppendStructuredValue(StringBuilder html, HmiRecipeStructuredValue value, HashSet<HmiRecipeStructuredValue> path, int depth, CultureInfo? culture)
     {
         var kind = value.Kind;
         if (kind == HmiRecipeValueKind.Map || kind == HmiRecipeValueKind.Array)
@@ -325,6 +325,7 @@ public sealed class HmiRecipeToHtmlConverter
         switch (kind)
         {
             case HmiRecipeValueKind.Null: html.Append("Null"); break;
+            case HmiRecipeValueKind.Text: html.Append(Encode(value.Text?.GetText(culture))); break;
             case HmiRecipeValueKind.Scalar: html.Append(Encode(value.Value)); break;
             case HmiRecipeValueKind.Map:
                 html.Append("<details open><summary>Map (").Append(value.Entries.Count).Append(" entries)</summary>");
@@ -335,7 +336,7 @@ public sealed class HmiRecipeToHtmlConverter
                     foreach (var entry in value.Entries)
                     {
                         html.Append("<dt>").Append(Encode(entry.Key)).Append("</dt><dd>");
-                        AppendStructuredValue(html, entry.Value, path, depth + 1); html.Append("</dd>");
+                        AppendStructuredValue(html, entry.Value, path, depth + 1, culture); html.Append("</dd>");
                     }
                     html.Append("</dl>");
                 }
@@ -346,7 +347,7 @@ public sealed class HmiRecipeToHtmlConverter
                 else
                 {
                     html.Append("<ol start=\"0\">");
-                    foreach (var item in value.Items) { html.Append("<li>"); AppendStructuredValue(html, item, path, depth + 1); html.Append("</li>"); }
+                    foreach (var item in value.Items) { html.Append("<li>"); AppendStructuredValue(html, item, path, depth + 1, culture); html.Append("</li>"); }
                     html.Append("</ol>");
                 }
                 html.Append("</details>"); break;
