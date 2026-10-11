@@ -266,7 +266,10 @@ function appendStructuredValue(html: string[], value: HmiRecipeStructuredValue, 
     if (path.has(value)) kind = HmiRecipeValueKind.Recursive;
     else if (depth >= 128) kind = HmiRecipeValueKind.DepthLimit;
   }
-  html.push('<div data-structured-kind="', encode(kind), '" data-source-type="', encode(value.sourceType), '">');
+  html.push('<div data-structured-kind="', encode(kind), '" data-source-type="', encode(value.sourceType), '"');
+  if (kind === HmiRecipeValueKind.Text && value.text?.sourceDefaultLanguageId !== undefined)
+    html.push(' data-source-default-language-id="', encode(String(value.text.sourceDefaultLanguageId)), '"');
+  html.push('>');
   const added = !path.has(value); path.add(value);
   switch (kind) {
     case HmiRecipeValueKind.Null: html.push('Null'); break;

@@ -24,4 +24,15 @@ public sealed class HmiMultilingualTextTests
         Assert.AreEqual("MotorSpeed", text.GetParts(CultureInfo.GetCultureInfo(1031)).Single().Expression);
         Assert.AreEqual("Speed ", text.GetParts(CultureInfo.GetCultureInfo(1033)).Single().Text);
     }
+    [TestMethod]
+    public void RawDefaultLanguageHeaderDoesNotChangeCultureSelection()
+    {
+        var text = new HmiMultilingualText { SourceDefaultLanguageId = 1031 };
+        text.Texts[1033] = "English"; text.Texts[1031] = "Deutsch";
+        text.FormattedTexts[1033] = "<body>English</body>"; text.FormattedTexts[1031] = "<body>Deutsch</body>";
+        Assert.AreEqual("English", text.GetDefaultText());
+        Assert.AreEqual("English", text.GetText(CultureInfo.GetCultureInfo(1036)));
+        Assert.AreEqual("Deutsch", text.GetText(CultureInfo.GetCultureInfo(1031)));
+        Assert.AreEqual("<body>English</body>", text.GetFormattedText(CultureInfo.GetCultureInfo(1036)));
+    }
 }
