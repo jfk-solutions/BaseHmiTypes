@@ -4,6 +4,13 @@
   box-sizing: border-box;
 }
 
+/* Layers cover the screen for layout, but only their items should receive input.
+   Inline disabled-item styles still override this rule, and disabled containers
+   pass their pointer behavior to nested items. */
+[data-hmi-layer] > * {
+  pointer-events: auto;
+}
+
 input[data-hmi-slider] {
   accent-color: var(--hmi-slider-thumb-background, auto);
   background: var(--hmi-slider-track-background, initial);

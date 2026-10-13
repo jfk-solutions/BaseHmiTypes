@@ -271,14 +271,11 @@ export class HmiScreenToHtmlConverter {
 
         html.push("<div");
         appendAttribute(html, "id", layer.name);
+        appendAttribute(html, "data-hmi-layer", "true");
         if (includeInspectionAttributes) {
           appendAttribute(html, "data-hmi-node-key", `${key}/layer:${layerIndex}`);
         }
-        html.push(" style=\"position: absolute; inset: 0;");
-        if (layer.items.length === 0) {
-          html.push(" pointer-events: none;");
-        }
-        html.push("\">");
+        html.push(" style=\"position: absolute; inset: 0; pointer-events: none;\">");
         for (let itemIndex = 0; itemIndex < layer.items.length; itemIndex++) {
           await this.appendItemAsync(
             html,

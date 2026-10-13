@@ -120,10 +120,8 @@ public partial class HmiScreenToHtmlConverter
 
                 html.Append("<div");
                 AppendAttribute(html, "id", layer.Name);
-                html.Append(" style=\"position: absolute; inset: 0;");
-                if (layer.Items.Count == 0)
-                    html.Append(" pointer-events: none;");
-                html.Append("\">");
+                AppendAttribute(html, "data-hmi-layer", "true");
+                html.Append(" style=\"position: absolute; inset: 0; pointer-events: none;\">");
                 foreach (var item in layer.Items)
                     await AppendItemAsync(html, item, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 html.Append("</div>");
