@@ -15,5 +15,6 @@ public enum HmiProjectFolderType
     Faceplates,
     Recipes,
     DataLogs,
-    Device
+    Device,
+    ScheduledTasks
 }

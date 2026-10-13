@@ -38,7 +38,9 @@ public enum HmiTriggerKind
 {
     Tag,
     Cycle,
-    Event
+    Event,
+    Calendar,
+    Alarm
 }
 
 public enum HmiTagTriggerMode

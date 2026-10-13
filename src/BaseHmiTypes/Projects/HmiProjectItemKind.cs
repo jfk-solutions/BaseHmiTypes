@@ -15,5 +15,6 @@ public enum HmiProjectItemKind
     ConnectionList,
     Faceplate,
     Recipe,
-    DataLog
+    DataLog,
+    ScheduledTask
 }

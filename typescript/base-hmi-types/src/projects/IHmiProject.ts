@@ -7,6 +7,7 @@ import { HmiImage } from "../images/HmiImage.js";
 import { HmiRecipe } from "../recipes/HmiRecipe.js";
 import { HmiFaceplateType } from "../screens/base/HmiFaceplateType.js";
 import { HmiScreenBase } from "../screens/base/HmiScreenBase.js";
+import { HmiScheduledTask } from "../scheduling/HmiScheduledTask.js";
 import { HmiScript } from "../scripts/HmiScript.js";
 import { HmiTagTable } from "../tags/HmiTagTable.js";
 import { HmiGraphicList } from "../text-graphic-lists/HmiGraphicList.js";
@@ -28,6 +29,7 @@ export interface IHmiProject
     IHmiAlarmProvider,
     IHmiConnectionProvider,
     IHmiRecipeProvider,
+    IHmiScheduledTaskProvider,
     IHmiDataLogProvider {
   readonly info: HmiProjectInfo;
   readonly devices: readonly HmiProjectDevice[];
@@ -91,4 +93,8 @@ export interface IHmiRecipeProvider {
 
 export interface IHmiDataLogProvider {
   getDataLog(id: string, signal?: AbortSignal): Promise<HmiDataLog | undefined>;
+}
+
+export interface IHmiScheduledTaskProvider {
+  getScheduledTask(id: string, signal?: AbortSignal): Promise<HmiScheduledTask | undefined>;
 }

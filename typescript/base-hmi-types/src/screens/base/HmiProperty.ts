@@ -32,6 +32,8 @@ export enum HmiTriggerKind {
   Tag = "Tag",
   Cycle = "Cycle",
   Event = "Event",
+  Calendar = "Calendar",
+  Alarm = "Alarm",
 }
 
 export enum HmiTagTriggerMode {

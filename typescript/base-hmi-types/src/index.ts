@@ -17,6 +17,7 @@ export * from "./screens/screen-management.js";
 export * from "./screens/screens.js";
 export * from "./screens/shapes.js";
 export * from "./screens/widgets.js";
+export * from "./scheduling/HmiScheduledTask.js";
 export * from "./scripts.js";
 export * from "./tags.js";
 export * from "./text-graphic-lists.js";

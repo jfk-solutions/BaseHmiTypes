@@ -7,6 +7,7 @@ import { HmiImage } from "../images/HmiImage.js";
 import { HmiRecipe } from "../recipes/HmiRecipe.js";
 import { HmiFaceplateType } from "../screens/base/HmiFaceplateType.js";
 import { HmiScreenBase } from "../screens/base/HmiScreenBase.js";
+import { HmiScheduledTask } from "../scheduling/HmiScheduledTask.js";
 import { HmiScript } from "../scripts/HmiScript.js";
 import { HmiTagTable } from "../tags/HmiTagTable.js";
 import { HmiGraphicList } from "../text-graphic-lists/HmiGraphicList.js";
@@ -92,6 +93,10 @@ export abstract class HmiProjectBase implements IHmiProject {
   get recipes(): IHmiProjectFolder | undefined {
     return this.getFolder(HmiProjectFolderType.Recipes);
   }
+
+  getScheduledTask(_id: string, _signal?: AbortSignal): Promise<HmiScheduledTask | undefined> { return Promise.resolve(undefined); }
+
+  get scheduledTasks(): IHmiProjectFolder | undefined { return this.getFolder(HmiProjectFolderType.ScheduledTasks); }
 
   get dataLogs(): IHmiProjectFolder | undefined {
     return this.getFolder(HmiProjectFolderType.DataLogs);
