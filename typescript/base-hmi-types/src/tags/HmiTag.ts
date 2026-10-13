@@ -32,8 +32,12 @@ export class HmiTag implements IHmiObject {
   elementCount?: number;
   refreshType?: string;
   refreshTime?: string;
+  /** Neutral acquisition policy: OnDemand, CyclicOnUse or CyclicContinuous. */
+  acquisitionMode?: string;
   /** Name of the configured acquisition cycle. */
   acquisitionCycle?: string;
+  /** PLC refresh group consumed by UpdateTag. */
+  updateId?: number;
   multiplexing = false;
   indexTag?: string;
   upper2?: string;

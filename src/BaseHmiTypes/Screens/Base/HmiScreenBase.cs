@@ -1,7 +1,13 @@
 namespace BaseHmiTypes.Screens.Base;
 
+using BaseHmiTypes.Scripts;
+using BaseHmiTypes.Common;
+
 public abstract class HmiScreenBase : HmiScreenModelBase
 {
+    /// <summary>Screen-level lifecycle and operator event actions.</summary>
+    public List<HmiEventBinding> Events { get; } = [];
+
     public HmiScreenKind Kind { get; set; } = HmiScreenKind.Screen;
 
     public string? SourceFormat { get; set; }
@@ -11,6 +17,8 @@ public abstract class HmiScreenBase : HmiScreenModelBase
     public Dictionary<string, string> SourceProperties { get; } = [];
 
     public int? Number { get; set; }
+
+    public HmiProperty<HmiMultilingualText>? ToolTipText { get; set; }
 
     public HmiProperty<double> Width { get; set; } = 0;
 

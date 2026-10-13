@@ -64,8 +64,13 @@ public sealed class HmiTag : IHmiObject
 
     public string? RefreshTime { get; set; }
 
+    /// <summary>Neutral acquisition policy: OnDemand, CyclicOnUse or CyclicContinuous.</summary>
+    public string? AcquisitionMode { get; set; }
     /// <summary>Name of the configured acquisition cycle.</summary>
     public string? AcquisitionCycle { get; set; }
+
+    /// <summary>PLC refresh group consumed by UpdateTag.</summary>
+    public uint? UpdateId { get; set; }
 
     public bool Multiplexing { get; set; }
 
