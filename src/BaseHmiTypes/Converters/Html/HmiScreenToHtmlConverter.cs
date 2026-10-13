@@ -3313,7 +3313,7 @@ public partial class HmiScreenToHtmlConverter
             .OrderBy(column => column.Order is null ? int.MaxValue : ResolveStaticValue(column.Order, context))
             .ToArray();
 
-        html.Append("<div");
+        html.Append("<hmi-alarm-control");
         AppendCommonAttributes(
             html,
             alarmControl,
@@ -3378,7 +3378,12 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-status-bar-foreground-color", ResolvePropertyPreview(alarmControl.StatusBarForegroundColor, context));
         if (alarmControl.MessageBlocks.Count > 0) AppendAttribute(html, "data-message-block-count", alarmControl.MessageBlocks.Count.ToString(CultureInfo.InvariantCulture));
         html.Append('>');
-        AppendAlarmMessageBlocks(html, alarmControl, context);
+        if (alarmControl.MessageBlocks.Count > 0)
+        {
+            html.Append("<template data-hmi-alarm-message-blocks>");
+            AppendAlarmMessageBlocks(html, alarmControl, context);
+            html.Append("</template>");
+        }
         if (alarmControl.ColumnSets.Count > 0)
             foreach (var set in alarmControl.ColumnSets)
                 AppendGridColumnTextTrimmingMetadata(html, set.Columns.Select(column => (column.SourceType, column.HeaderTextTrimming, column.ContentTextTrimming)), context, set.Name);
@@ -3528,6 +3533,17 @@ public partial class HmiScreenToHtmlConverter
         if (TryGetStaticValue(selectedSet?.RowHeight, out var rowHeight) && IsFinite(rowHeight) && rowHeight >= 0)
             html.Append(rowHeight == 0 ? "height: auto;" : "height: " + ToCss(rowHeight) + "px;");
         html.Append("\">Alarm data not loaded</td></tr></tbody></table>");
+        html.Append("<template data-hmi-alarm-row><tr>");
+        var rowColumns = visibleColumns.Length > 0 ? visibleColumns : columns.Count > 0 ? Array.Empty<HmiAlarmColumn>() : new[] { new HmiAlarmColumn { Type = HmiAlarmColumnType.Message } };
+        foreach (var column in rowColumns)
+        {
+            html.Append("<td"); AppendAttribute(html, "data-column-type", column.Type.ToString()); AppendAttribute(html, "data-column-source-type", column.SourceType);
+            html.Append(" style=\"").Append(gridCellStyle).Append(CreateAlarmShorteningStyle(alarmControl.ShortenCellContents, context)).Append("white-space:").Append(alarmControl.WordWrap is not null && ResolveStaticValue(alarmControl.WordWrap, context) ? "normal;" : "nowrap;");
+            if (TryGetStaticValue(column.ContentHorizontalAlignment ?? column.Alignment, out var alignment)) html.Append("text-align:").Append(ToCss(alignment)).Append(';');
+            html.Append("\"></td>");
+        }
+        html.Append("</tr></template>");
+
 
         var showAcknowledgeButton = alarmControl.ShowAcknowledgeButton is not null && ResolveStaticValue(alarmControl.ShowAcknowledgeButton, context);
         var showHelpButton = alarmControl.ShowHelpButton is not null && ResolveStaticValue(alarmControl.ShowHelpButton, context);
@@ -3546,7 +3562,8 @@ public partial class HmiScreenToHtmlConverter
                     .OrderBy(button => button.Order is null ? int.MaxValue : ResolveStaticValue(button.Order, context)))
                 {
                     html.Append("<button type=\"button\" disabled");
-                    AppendAttribute(html, "data-button-type", button.SourceType ?? button.Type.ToString());
+                    AppendAttribute(html, "data-button-type", button.Type.ToString());
+                    if (button.Type == HmiAlarmToolbarButtonType.AcknowledgeSelected) AppendAttribute(html, "data-alarm-action", "acknowledge");
                     AppendAttribute(html, "data-enabled", ResolvePropertyPreview(button.Enabled, context));
                     AppendAttribute(html, "title", button.Tooltip?.GetDisplayText(context.CultureInfo));
                     html.Append('>').Append(WebUtility.HtmlEncode(button.Caption?.GetDisplayText(context.CultureInfo) ?? button.SourceType ?? button.Type.ToString())).Append("</button>");
@@ -3555,7 +3572,7 @@ public partial class HmiScreenToHtmlConverter
             else
             {
                 if (showAcknowledgeButton)
-                    html.Append("Acknowledge");
+                    html.Append("<button type=\"button\" data-alarm-action=\"acknowledge\" disabled>Acknowledge</button>");
                 if (showAcknowledgeButton && showHelpButton)
                     html.Append(" · ");
                 if (showHelpButton)
@@ -3590,7 +3607,7 @@ public partial class HmiScreenToHtmlConverter
             }
             html.Append("</div>");
         }
-        html.Append("</div>");
+        html.Append("</hmi-alarm-control>");
     }
 
     private static void AppendRadarChartControl(StringBuilder html, HmiRadarChartControl radarChartControl, HmiHtmlConvertContext context)
@@ -3855,8 +3872,12 @@ public partial class HmiScreenToHtmlConverter
 
     private static void AppendAlarmLineControl(StringBuilder html, HmiAlarmLineControl alarmLineControl, HmiHtmlConvertContext context)
     {
-        html.Append("<div");
-        AppendCommonAttributes(html, alarmLineControl, context, additionalStyle: "display: flex; align-items: center; overflow: hidden;");
+        html.Append("<hmi-alarm-line-control");
+        var style = new StringBuilder("display: flex; align-items: center; overflow: hidden;");
+        AppendFontStyle(style, alarmLineControl.Font?.GetForCulture(context.CultureInfo?.LCID));
+        if (TryGetStaticValue(alarmLineControl.HorizontalAlignment, out var alignment)) style.Append("text-align:").Append(ToCss(alignment)).Append(';');
+        style.Append(alarmLineControl.WordWrap is not null && ResolveStaticValue(alarmLineControl.WordWrap, context) ? "white-space:normal;" : "white-space:nowrap;");
+        AppendCommonAttributes(html, alarmLineControl, context, additionalStyle: style.ToString());
         AppendAttribute(html, "data-view-kind", alarmLineControl.ViewKind.ToString());
         AppendAttribute(html, "data-number-of-rows", ResolvePropertyPreview(alarmLineControl.NumberOfRows, context));
         AppendAttribute(html, "data-word-wrap", ResolvePropertyPreview(alarmLineControl.WordWrap, context));
@@ -3868,7 +3889,8 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-show-alarm-time", ResolvePropertyPreview(alarmLineControl.ShowAlarmTime, context));
         AppendAttribute(html, "data-time-format", alarmLineControl.AlarmTimeFormat);
         AppendAttribute(html, "data-filtered-triggers", alarmLineControl.FilteredTriggers.Count == 0 ? null : string.Join(",", alarmLineControl.FilteredTriggers));
-        html.Append(">Alarm data not loaded</div>");
+        AppendAttribute(html, "data-alarm-line-columns", "[" + string.Join(",", alarmLineControl.ColumnDefinitions.Where(column => column.Visible is null || ResolveStaticValue(column.Visible, context)).Select(column => "\"" + column.Type + "\"")) + "]");
+        html.Append(">Alarm data not loaded</hmi-alarm-line-control>");
     }
 
     private static string ResolveAlarmTitle(HmiAlarmControl alarmControl, HmiAlarmListMode listMode, HmiHtmlConvertContext context)

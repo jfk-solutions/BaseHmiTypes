@@ -12,6 +12,9 @@ public abstract class HmiAlarm : IHmiObject
 
 public sealed class HmiAlarmClass
 {
+    public int? Id { get; set; }
+    public int? GlobalId { get; set; }
+
     public string? Name { get; set; }
 
     public int Priority { get; set; }

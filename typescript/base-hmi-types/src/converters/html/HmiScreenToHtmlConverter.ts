@@ -1,3 +1,4 @@
+import { HmiAlarmColumn, HmiAlarmColumnType, HmiAlarmToolbarButtonType } from "../../screens/controls.js";
 import { HmiRecipeToHtmlConverter } from "./HmiRecipeToHtmlConverter.js";
 import { HmiCharacterScreen } from "../../screens/screen/HmiCharacterScreen.js";
 import { formatScaleLabel } from "./format-scale-label.js";
@@ -3649,7 +3650,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     (column) => column.visible === undefined || getStaticValue(column.visible) === true,
   ).sort((left, right) => (getStaticValue(left.order) ?? 2147483647) - (getStaticValue(right.order) ?? 2147483647));
 
-  html.push("<div");
+  html.push("<hmi-alarm-control");
   appendCommonAttributes(
     html,
     alarmControl,
@@ -3716,7 +3717,11 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-status-bar-foreground-color", resolvePropertyPreview(alarmControl.statusBarForegroundColor));
   if (alarmControl.messageBlocks.length > 0) appendAttribute(html, "data-message-block-count", String(alarmControl.messageBlocks.length));
   html.push(">");
-  appendAlarmMessageBlocks(html, alarmControl, context);
+  if (alarmControl.messageBlocks.length) {
+    html.push("<template data-hmi-alarm-message-blocks>");
+    appendAlarmMessageBlocks(html, alarmControl, context);
+    html.push("</template>");
+  }
   if (alarmControl.columnSets.length > 0)
     for (const set of alarmControl.columnSets)
       appendGridColumnTextTrimmingMetadata(html, set.columns.map(column => [column.sourceType, column.headerTextTrimming, column.contentTextTrimming]), set.name);
@@ -3851,6 +3856,16 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   if (rowHeight !== undefined && Number.isFinite(rowHeight) && rowHeight >= 0)
     html.push(rowHeight === 0 ? "height: auto;" : `height: ${toCss(rowHeight)}px;`);
   html.push("\">Alarm data not loaded</td></tr></tbody></table>");
+  html.push('<template data-hmi-alarm-row><tr>');
+  const rowColumns = visibleColumns.length ? visibleColumns : columns.length ? [] : [Object.assign(new HmiAlarmColumn(), {type: HmiAlarmColumnType.Message})];
+  for (const column of rowColumns) {
+    html.push('<td'); appendAttribute(html, "data-column-type", column.type); appendAttribute(html, "data-column-source-type", column.sourceType);
+    html.push(' style="', gridCellStyle, createAlarmShorteningStyle(alarmControl.shortenCellContents), 'white-space:', getStaticValue(alarmControl.wordWrap) ? 'normal;' : 'nowrap;');
+    const alignment=getStaticValue(column.contentHorizontalAlignment ?? column.alignment);if(alignment!==undefined)html.push(`text-align:${horizontalAlignmentToCss(alignment)};`);
+    html.push('"></td>');
+  }
+  html.push('</tr></template>');
+
 
   const showAcknowledgeButton = getStaticValue(alarmControl.showAcknowledgeButton) === true;
   const showHelpButton = getStaticValue(alarmControl.showHelpButton) === true;
@@ -3866,14 +3881,15 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
       for (const button of alarmControl.toolbarButtons.filter(button => getStaticValue(button.visible) !== false)
         .sort((left, right) => (getStaticValue(left.order) ?? 2147483647) - (getStaticValue(right.order) ?? 2147483647))) {
         html.push('<button type="button" disabled');
-        appendAttribute(html, "data-button-type", button.sourceType ?? button.type);
+        appendAttribute(html, "data-button-type", button.type);
+        if (button.type === HmiAlarmToolbarButtonType.AcknowledgeSelected) appendAttribute(html, "data-alarm-action", "acknowledge");
         appendAttribute(html, "data-enabled", resolvePropertyPreview(button.enabled));
         appendAttribute(html, "title", button.tooltip?.getDisplayText(context.options.cultureLcid));
         html.push(">", escapeHtml(button.caption?.getDisplayText(context.options.cultureLcid) ?? button.sourceType ?? button.type), "</button>");
       }
     } else {
       if (showAcknowledgeButton)
-        html.push("Acknowledge");
+        html.push('<button type="button" data-alarm-action="acknowledge" disabled>Acknowledge</button>');
       if (showAcknowledgeButton && showHelpButton)
         html.push(" · ");
       if (showHelpButton)
@@ -3907,7 +3923,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
     }
     html.push("</div>");
   }
-  html.push("</div>");
+  html.push("</hmi-alarm-control>");
 }
 
 function appendRadarChartControl(html: string[], radarChartControl: HmiRadarChartControl, context: HmiHtmlConvertContext): void {
@@ -4445,13 +4461,17 @@ function appendSystemDiagnosisControl(
 }
 
 function appendAlarmLineControl(html: string[], alarmLineControl: HmiAlarmLineControl, context: HmiHtmlConvertContext): void {
-  html.push("<div");
+  const style = ["display: flex; align-items: center; overflow: hidden;"];
+  if(alarmLineControl.font) appendFont(style, alarmLineControl.font.getForCulture(context.options.cultureLcid));
+  const alignment=getStaticValue(alarmLineControl.horizontalAlignment);if(alignment!==undefined)style.push(`text-align:${horizontalAlignmentToCss(alignment)};`);
+  style.push(getStaticValue(alarmLineControl.wordWrap) ? "white-space:normal;" : "white-space:nowrap;");
+  html.push("<hmi-alarm-line-control");
   appendCommonAttributes(
     html,
     alarmLineControl,
     context,
     true,
-    "display: flex; align-items: center; overflow: hidden;",
+    style.join(""),
   );
   appendAttribute(html, "data-view-kind", alarmLineControl.viewKind);
   appendAttribute(html, "data-number-of-rows", resolvePropertyPreview(alarmLineControl.numberOfRows));
@@ -4464,7 +4484,8 @@ function appendAlarmLineControl(html: string[], alarmLineControl: HmiAlarmLineCo
   appendAttribute(html, "data-show-alarm-time", resolvePropertyPreview(alarmLineControl.showAlarmTime));
   appendAttribute(html, "data-time-format", alarmLineControl.alarmTimeFormat);
   appendAttribute(html, "data-filtered-triggers", alarmLineControl.filteredTriggers.length === 0 ? undefined : alarmLineControl.filteredTriggers.join(","));
-  html.push(">Alarm data not loaded</div>");
+  appendAttribute(html, "data-alarm-line-columns", JSON.stringify(alarmLineControl.columnDefinitions.filter(column => getStaticValue(column.visible) !== false).map(column => column.type)));
+  html.push(">Alarm data not loaded</hmi-alarm-line-control>");
 }
 
 function resolveAlarmTitle(alarmControl: HmiAlarmControl, listMode: HmiAlarmListMode, context: HmiHtmlConvertContext): string {

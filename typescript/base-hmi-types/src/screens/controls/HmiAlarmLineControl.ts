@@ -19,6 +19,8 @@ export class HmiAlarmLineControl extends HmiSimpleScreenItemBase {
     this.hmiObjectType = HmiObjectType.HmiAlarmLineControl;
   }
 
+  /** Runtime display is limited to these classes when configured. */
+  readonly filteredClassNames: string[] = [];
   suppressFlashing?: HmiProperty<boolean>;
   readonly alarmConnections = new HmiAlarmConnectionBindings();
   viewKind = HmiAlarmLineViewKind.Unknown;

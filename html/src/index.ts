@@ -12,3 +12,5 @@ import "./hmi-toggle-switch.js";
 import "./hmi-trend-control.js";
 import "./bar-bitmap-pattern.js";
 import "./bar-gradient.js";
+
+import "./hmi-alarm-control.js";
