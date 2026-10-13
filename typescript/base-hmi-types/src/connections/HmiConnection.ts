@@ -12,6 +12,7 @@ export class HmiConnection implements IHmiObject {
   physicId?: string;
   plcId?: string;
   protocolId?: string;
+  address?: string;
   receiveNcAlarms?: string;
   receiveNcMessages = false;
   readonly protocolValues: HmiProtocolValue[] = [];

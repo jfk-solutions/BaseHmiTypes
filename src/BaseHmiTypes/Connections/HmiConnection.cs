@@ -24,6 +24,8 @@ public sealed class HmiConnection : IHmiObject
 
     public string? ProtocolId { get; set; }
 
+    public string? Address { get; set; }
+
     public string? ReceiveNcAlarms { get; set; }
 
     public bool ReceiveNcMessages { get; set; }
