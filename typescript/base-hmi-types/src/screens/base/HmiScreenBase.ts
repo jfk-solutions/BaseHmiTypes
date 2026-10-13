@@ -12,6 +12,8 @@ import { HmiScreenParameter } from "./HmiScreenParameter.js";
 import { HmiScreenRuntimeSettings } from "./HmiScreenRuntimeSettings.js";
 import { HmiImageSource } from "./HmiImageSource.js";
 import { HmiBackgroundImageLayout } from "./HmiBackgroundImageLayout.js";
+import { HmiEventBinding } from "../../scripts/HmiEventBinding.js";
+import type { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 
 export abstract class HmiScreenBase extends HmiScreenModelBase {
   kind: HmiScreenKind = HmiScreenKind.Screen;
@@ -19,6 +21,7 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   sourceData?: Uint8Array;
   readonly sourceProperties: Record<string, string> = {};
   number?: number;
+  toolTipText?: HmiProperty<HmiMultilingualText>;
   width: HmiProperty<number> = staticProperty(0);
   height: HmiProperty<number> = staticProperty(0);
   backgroundColor?: HmiProperty<HmiColor>;
@@ -43,4 +46,6 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   runtimeSettings?: HmiScreenRuntimeSettings;
   readonly parameters: HmiScreenParameter[] = [];
   readonly layers: HmiLayer[] = [];
+  /** Screen-level lifecycle and operator event actions. */
+  readonly events: HmiEventBinding[] = [];
 }

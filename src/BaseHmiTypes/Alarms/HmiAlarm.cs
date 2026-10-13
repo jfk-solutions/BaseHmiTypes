@@ -57,6 +57,7 @@ public abstract class HmiBaseAlarm : HmiAlarm
     public string? Command { get; set; }
 
     public int? GroupId { get; set; }
+    public bool? SingleAcknowledgement { get; set; }
 
     public bool? Latched { get; set; }
 
