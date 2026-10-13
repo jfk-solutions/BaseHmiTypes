@@ -6,6 +6,7 @@ using BaseHmiTypes.Images;
 using BaseHmiTypes.Recipes;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
+using BaseHmiTypes.Scheduling;
 using BaseHmiTypes.Scripts;
 using BaseHmiTypes.Tags;
 using BaseHmiTypes.TextGraphicLists;
@@ -25,6 +26,7 @@ public interface IHmiProject :
     IHmiAlarmProvider,
     IHmiConnectionProvider,
     IHmiRecipeProvider,
+    IHmiScheduledTaskProvider,
     IHmiDataLogProvider
 {
     HmiProjectInfo Info { get; }
@@ -128,4 +130,9 @@ public interface IHmiRecipeProvider
 public interface IHmiDataLogProvider
 {
     ValueTask<HmiDataLog?> GetDataLogAsync(string id, CancellationToken cancellationToken = default);
+}
+
+public interface IHmiScheduledTaskProvider
+{
+    ValueTask<HmiScheduledTask?> GetScheduledTaskAsync(string id, CancellationToken cancellationToken = default);
 }

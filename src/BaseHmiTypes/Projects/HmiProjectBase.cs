@@ -6,6 +6,7 @@ using BaseHmiTypes.Images;
 using BaseHmiTypes.Recipes;
 using BaseHmiTypes.Screens;
 using BaseHmiTypes.Screens.Base;
+using BaseHmiTypes.Scheduling;
 using BaseHmiTypes.Scripts;
 using BaseHmiTypes.Tags;
 using BaseHmiTypes.TextGraphicLists;
@@ -51,6 +52,10 @@ public abstract class HmiProjectBase : IHmiProject
     public virtual IHmiProjectFolder? Connections => GetFolder(HmiProjectFolderType.Connections);
 
     public virtual IHmiProjectFolder? Recipes => GetFolder(HmiProjectFolderType.Recipes);
+
+    public virtual IHmiProjectFolder? ScheduledTasks => GetFolder(HmiProjectFolderType.ScheduledTasks);
+
+    public virtual ValueTask<HmiScheduledTask?> GetScheduledTaskAsync(string id, CancellationToken cancellationToken = default) => new((HmiScheduledTask?)null);
 
     public virtual IHmiProjectFolder? DataLogs => GetFolder(HmiProjectFolderType.DataLogs);
 
