@@ -3201,7 +3201,7 @@ public class HmiScreenToHtmlConverterTests
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
-        StringAssert.Contains(html, "id=\"EmptyLayer\" style=\"position: absolute; inset: 0; pointer-events: none;\"");
+        StringAssert.Contains(html, "id=\"EmptyLayer\" data-hmi-layer=\"true\" style=\"position: absolute; inset: 0; pointer-events: none;\"");
     }
 
     [TestMethod]
