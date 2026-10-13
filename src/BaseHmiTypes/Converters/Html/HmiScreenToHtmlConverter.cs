@@ -6440,7 +6440,8 @@ public partial class HmiScreenToHtmlConverter
                 nameof(HmiPaintedScreenItemBase.DisabledForegroundColor),
                 item.DisabledForegroundColor) ?? foregroundColor;
         }
-        var backgroundColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
+        var backgroundColor = item is HmiGraphicView graphic && graphic.BackFillPattern?.StaticValue == 65536
+            ? null : context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
         var borderColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderColor), item.BorderColor);
         var borderWidth = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderWidth), item.BorderWidth);
         var framedShapeBorder = item is HmiRectangle { DrawStrokeInsideFrame: not null } or HmiText { DrawStrokeInsideFrame: not null }
