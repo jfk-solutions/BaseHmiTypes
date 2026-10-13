@@ -77,3 +77,5 @@ export * from "./controls/HmiProcessDiagnosisCriteriaAnalysisControl.js";
 export * from "./controls/HmiTrendCompanion.js";
 export * from "./controls/HmiFunctionTrendControl.js";
 export * from "./controls/HmiTrendControl.js";
+
+export * from "./controls/HmiAlarmDisplayData.js";

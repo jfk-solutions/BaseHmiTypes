@@ -14,6 +14,8 @@ public class HmiAlarmControl : HmiControlWindowBase
 
     public HmiAlarmConnectionBindings AlarmConnections { get; } = new();
 
+    public IList<string> FilteredClassNames { get; } = new List<string>();
+
     public HmiProperty<bool>? SuppressFlashing { get; set; }
 
     public HmiAlarmViewKind ViewKind { get; set; }

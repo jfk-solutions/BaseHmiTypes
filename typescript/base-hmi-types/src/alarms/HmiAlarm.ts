@@ -8,6 +8,8 @@ export abstract class HmiAlarm implements IHmiObject {
 }
 
 export class HmiAlarmClass {
+  id?: number;
+  globalId?: number;
   name?: string;
   priority = 0;
   acknowledgement = false;

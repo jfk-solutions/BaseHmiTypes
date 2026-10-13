@@ -28,6 +28,8 @@ export class HmiAlarmControl extends HmiControlWindowBase {
     this.hmiObjectType = HmiObjectType.HmiAlarmControl;
   }
 
+  /** Runtime display is limited to these classes when configured. */
+  readonly filteredClassNames: string[] = [];
   suppressFlashing?: HmiProperty<boolean>;
   readonly messageBlocks: HmiAlarmMessageBlock[] = [];
 

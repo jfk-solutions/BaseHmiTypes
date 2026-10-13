@@ -2869,7 +2869,7 @@ public class HmiScreenToHtmlConverterTests
 
         var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
 
-        StringAssert.Contains(html, "<div id=\"ActiveAlarms\"");
+        StringAssert.Contains(html, "<hmi-alarm-control id=\"ActiveAlarms\"");
         StringAssert.Contains(html, "data-view-kind=\"AlarmAndEventSummary\"");
         StringAssert.Contains(html, "data-list-mode=\"Active\"");
         StringAssert.Contains(html, "data-window-resizable=\"true\"");
@@ -2927,14 +2927,14 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-column-type=\"Message\">Message</th>");
         Assert.IsFalse(html.Contains("data-column-type=\"AlarmState\"", StringComparison.Ordinal));
         StringAssert.Contains(html, ">Alarm data not loaded</td>");
-        StringAssert.Contains(html, "class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #443322;color: #FAFBFC;\">Acknowledge · Help</div>");
+        StringAssert.Contains(html, "class=\"hmi-alarm-toolbar\" role=\"toolbar\" style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #443322;color: #FAFBFC;\"><button type=\"button\" data-alarm-action=\"acknowledge\" disabled>Acknowledge</button> · Help</div>");
         StringAssert.Contains(html, "class=\"hmi-alarm-status-bar\" role=\"status\" style=\"flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #213243;color: #FEDCBA;font-family: Tahoma;font-size: 8px;font-weight: 600;font-style: italic;\">Status</div>");
-        StringAssert.Contains(html, "<div id=\"AlarmBanner\"");
+        StringAssert.Contains(html, "<hmi-alarm-line-control id=\"AlarmBanner\"");
         StringAssert.Contains(html, "data-view-kind=\"AlarmBanner\"");
         StringAssert.Contains(html, "data-queue-new-alarms=\"true\"");
         StringAssert.Contains(html, "data-show-alarm-state=\"true\"");
         StringAssert.Contains(html, "data-show-alarm-time=\"true\" data-time-format=\"HH:mm\"");
-        StringAssert.Contains(html, ">Alarm data not loaded</div>");
+        StringAssert.Contains(html, ">Alarm data not loaded</hmi-alarm-line-control>");
     }
 
     [TestMethod]
