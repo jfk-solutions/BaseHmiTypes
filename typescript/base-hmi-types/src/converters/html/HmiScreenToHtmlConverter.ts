@@ -6805,7 +6805,8 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     if (shadow !== undefined) html.push(`text-shadow: 1px 1px ${colorToCss(shadow)};`);
   }
   if (!(item instanceof HmiGauge)) {
-    const backgroundColor = context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor);
+    const backgroundColor = item instanceof HmiGraphicView && getStaticValue(item.backFillPattern) === 65536
+      ? undefined : context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor);
     const backgroundBlink = backgroundColor?.kind === HmiPropertyKind.Blink
       ? backgroundColor as HmiBlinkProperty<HmiColor>
       : undefined;
