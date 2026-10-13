@@ -32,6 +32,8 @@ export class HmiTag implements IHmiObject {
   elementCount?: number;
   refreshType?: string;
   refreshTime?: string;
+  /** Name of the configured acquisition cycle. */
+  acquisitionCycle?: string;
   multiplexing = false;
   indexTag?: string;
   upper2?: string;
