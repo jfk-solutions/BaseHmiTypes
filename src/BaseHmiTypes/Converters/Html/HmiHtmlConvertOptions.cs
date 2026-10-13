@@ -11,6 +11,7 @@ public class HmiHtmlConvertOptions
     /// <summary>Optional instance-aware resolution. A null result suppresses project fallback.</summary>
     public Func<BaseHmiTypes.Screens.Base.HmiScreenBase, CancellationToken, ValueTask<BaseHmiTypes.Screens.Base.HmiScreenBase?>>? TemplateResolver { get; set; }
     public Func<BaseHmiTypes.Screens.HmiScreenWindow, CancellationToken, ValueTask<BaseHmiTypes.Screens.Base.HmiScreenBase?>>? ScreenWindowResolver { get; set; }
+    public Func<BaseHmiTypes.Screens.Base.HmiFaceplateContainer, CancellationToken, ValueTask<BaseHmiTypes.Screens.Base.HmiFaceplateType?>>? FaceplateResolver { get; set; }
 
     public string MissingScreenPlaceholderCssClass { get; set; } = "hmi-missing-screen";
 

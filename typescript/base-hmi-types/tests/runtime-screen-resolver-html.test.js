@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { HmiScreen, HmiLayer, HmiScreenWindow, HmiHtmlConvertOptions, HmiScreenToHtmlConverter, staticProperty } from '../dist/index.js';
+import { HmiScreen, HmiLayer, HmiScreenWindow, HmiFaceplateContainer, HmiFaceplateType, HmiHtmlConvertOptions, HmiScreenToHtmlConverter, staticProperty } from '../dist/index.js';
 
 test('resolvers render each window instance and template without a project', async () => {
   const root = Object.assign(new HmiScreen(), { name:'Root', templateId:staticProperty('template') });
@@ -14,4 +14,14 @@ test('resolvers render each window instance and template without a project', asy
   options.screenWindowResolver = async () => undefined;
   const empty = await new HmiScreenToHtmlConverter().convertAsync(root, undefined, options);
   assert.ok(!empty.includes('LeftInstance')); assert.ok(empty.includes('hmi-missing-screen'));
+});
+
+test('faceplate resolver renders detached instances and suppresses static fallback',async()=>{
+  const root=Object.assign(new HmiScreen(),{name:'Root'}),layer=new HmiLayer();root.layers.push(layer);
+  for(const name of ['Left','Right'])layer.items.push(Object.assign(new HmiFaceplateContainer(),{name,faceplateId:'type'}));
+  const options=new HmiHtmlConvertOptions();options.faceplateResolver=async container=>Object.assign(new HmiFaceplateType(),{name:container.name+'Instance'});
+  const html=await new HmiScreenToHtmlConverter().convertAsync(root,undefined,options);assert.ok(html.includes('LeftInstance')&&html.includes('RightInstance'));
+  options.faceplateResolver=async()=>undefined;
+  const project={info:{},getFaceplate:async()=>{throw new Error('Unexpected static fallback');}};
+  assert.ok((await new HmiScreenToHtmlConverter().convertAsync(root,project,options)).includes('hmi-missing-screen'));
 });

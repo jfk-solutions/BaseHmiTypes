@@ -628,10 +628,12 @@ public partial class HmiScreenToHtmlConverter
         CancellationToken cancellationToken)
     {
         HmiFaceplateType? resolved = null;
-        if (project != null && !string.IsNullOrWhiteSpace(faceplateContainer.FaceplateId))
+        if (context.Options.FaceplateResolver != null)
+            resolved = await context.Options.FaceplateResolver(faceplateContainer, cancellationToken).ConfigureAwait(false);
+        else if (project != null && !string.IsNullOrWhiteSpace(faceplateContainer.FaceplateId))
             resolved = await project.GetFaceplateAsync(faceplateContainer.FaceplateId!, cancellationToken).ConfigureAwait(false);
 
-        if (resolved == null &&
+        if (context.Options.FaceplateResolver == null && resolved == null &&
             project != null &&
             !string.IsNullOrWhiteSpace(faceplateContainer.FaceplateName) &&
             !string.IsNullOrWhiteSpace(faceplateContainer.FaceplateVersion))
