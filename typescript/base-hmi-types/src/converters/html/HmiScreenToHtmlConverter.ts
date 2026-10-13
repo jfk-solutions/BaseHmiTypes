@@ -2442,14 +2442,20 @@ function appendScale(html: string[], scale: HmiScale, context: HmiHtmlConvertCon
 function appendDateTimeField(html: string[], field: HmiDateTimeField, context: HmiHtmlConvertContext): void {
   const value = resolveStaticValue(field.text, context, tryConvertFaceplateTextValue);
   html.push("<div");
-  appendCommonAttributes(html, field, context, true, "display: flex; overflow: hidden;");
+  appendCommonAttributes(html, field, context, true,
+    "display: flex; overflow: hidden;white-space: nowrap;justify-content: " +
+    horizontalAlignmentToFlexCss(getStaticValue(field.horizontalAlignment) ?? HmiHorizontalAlignment.Left) +
+    ";align-items: " + verticalAlignmentToCss(getStaticValue(field.verticalAlignment) ?? HmiVerticalAlignment.Center) + ";");
   appendAttribute(html, "data-show-date", resolvePropertyPreview(field.showDate));
   appendAttribute(html, "data-show-time", resolvePropertyPreview(field.showTime));
   appendAttribute(html, "data-output-format", resolvePropertyPreview(field.outputFormat));
   appendAttribute(html, "data-format-pattern", resolvePropertyPreview(field.formatPattern));
   appendAttribute(html, "data-date-time-value-state", value === undefined ? "missing" : "present");
   const hidden = getStaticValue(field.showDate) === false && getStaticValue(field.showTime) === false;
-  html.push(">", hidden ? "" : escapeHtml(value?.getText(context.options.cultureLcid) ?? "Date/time value not loaded"), "</div>");
+  if (!hidden && value === undefined) appendAttribute(html, "aria-label", "Date/time value not loaded");
+  const placeholder = [getStaticValue(field.showDate) !== false ? "--.--.----" : "",
+    getStaticValue(field.showTime) !== false ? "--:--:--" : ""].filter(Boolean).join(" ");
+  html.push(">", hidden ? "" : escapeHtml(value?.getText(context.options.cultureLcid) ?? placeholder), "</div>");
 }
 
 function appendClock(html: string[], clock: HmiClock, context: HmiHtmlConvertContext): void {

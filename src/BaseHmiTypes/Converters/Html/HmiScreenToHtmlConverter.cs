@@ -2656,7 +2656,10 @@ public partial class HmiScreenToHtmlConverter
     {
         var value = field.Text is null ? null : ResolveStaticValue(field.Text, context);
         html.Append("<div");
-        AppendCommonAttributes(html, field, context, additionalStyle: "display: flex; overflow: hidden;");
+        AppendCommonAttributes(html, field, context, additionalStyle:
+            "display: flex; overflow: hidden;white-space: nowrap;justify-content: " +
+            ToFlexCss(field.HorizontalAlignment is null ? HmiHorizontalAlignment.Left : ResolveStaticValue(field.HorizontalAlignment, context)) +
+            ";align-items: " + ToCss(field.VerticalAlignment is null ? HmiVerticalAlignment.Center : ResolveStaticValue(field.VerticalAlignment, context)) + ";");
         AppendAttribute(html, "data-show-date", ResolvePropertyPreview(field.ShowDate, context));
         AppendAttribute(html, "data-show-time", ResolvePropertyPreview(field.ShowTime, context));
         AppendAttribute(html, "data-output-format", ResolvePropertyPreview(field.OutputFormat, context));
@@ -2664,7 +2667,12 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-date-time-value-state", value is null ? "missing" : "present");
         var hidden = field.ShowDate is not null && !ResolveStaticValue(field.ShowDate, context)
             && field.ShowTime is not null && !ResolveStaticValue(field.ShowTime, context);
-        html.Append('>').Append(hidden ? "" : WebUtility.HtmlEncode(value?.GetText(context.CultureInfo) ?? "Date/time value not loaded")).Append("</div>");
+        if (!hidden && value is null) AppendAttribute(html, "aria-label", "Date/time value not loaded");
+        var placeholder = string.Join(" ", new[] {
+            field.ShowDate is null || ResolveStaticValue(field.ShowDate, context) ? "--.--.----" : "",
+            field.ShowTime is null || ResolveStaticValue(field.ShowTime, context) ? "--:--:--" : ""
+        }.Where(part => part.Length > 0));
+        html.Append('>').Append(hidden ? "" : WebUtility.HtmlEncode(value?.GetText(context.CultureInfo) ?? placeholder)).Append("</div>");
     }
 
     private static void AppendClock(StringBuilder html, HmiClock clock, HmiHtmlConvertContext context)
