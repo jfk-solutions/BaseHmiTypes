@@ -249,7 +249,7 @@ export class HmiScreenToHtmlConverter {
       appendAttribute(html, "data-hmi-screen", "true");
       html.push(">");
 
-      const template = await resolveTemplateAsync(screen, project, screenStack, signal);
+      const template = await resolveTemplateAsync(screen, project, screenStack, signal, context.options);
       if (template !== undefined) {
         html.push(await this.convertCoreAsync(
           template,
@@ -798,8 +798,10 @@ export class HmiScreenToHtmlConverter {
   ): Promise<void> {
     const screenId = getStaticValue(screenWindow.screenId);
     const screenName = getStaticValue(screenWindow.screenName);
-    let resolved = project && screenId ? await project.getScreen(screenId, signal) : undefined;
-    if (resolved === undefined && project && screenName) {
+    let resolved = context.options.screenWindowResolver
+      ? await context.options.screenWindowResolver(screenWindow, signal)
+      : project && screenId ? await project.getScreen(screenId, signal) : undefined;
+    if (!context.options.screenWindowResolver && resolved === undefined && project && screenName) {
       resolved = await project.getScreen(screenName, signal);
     }
     html.push("<div");
@@ -969,8 +971,9 @@ async function resolveTemplateAsync(
   project: IHmiProject | undefined,
   screenStack: Set<HmiScreenBase>,
   signal?: AbortSignal,
+  options?: HmiHtmlConvertOptions,
 ): Promise<HmiScreenBase | undefined> {
-  if (project === undefined) {
+  if (project === undefined && !options?.templateResolver) {
     return undefined;
   }
 
@@ -978,12 +981,14 @@ async function resolveTemplateAsync(
   const templateName = getStaticValue(screen.templateName);
   let template: HmiScreenBase | undefined;
 
-  if (templateId?.trim()) {
-    template = await project.getScreen(templateId, signal);
+  if (options?.templateResolver) {
+    template = await options.templateResolver(screen, signal);
+  } else if (templateId?.trim()) {
+    template = await project!.getScreen(templateId, signal);
   }
 
-  if (template === undefined && templateName?.trim()) {
-    template = await project.getScreen(templateName, signal);
+  if (!options?.templateResolver && template === undefined && templateName?.trim()) {
+    template = await project!.getScreen(templateName, signal);
   }
 
   if (template === undefined || isScreenInStack(template, screenStack)) {

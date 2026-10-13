@@ -109,7 +109,7 @@ public partial class HmiScreenToHtmlConverter
             AppendAttribute(html, "data-hmi-screen", "true");
             html.Append('>');
 
-            var template = await ResolveTemplateAsync(screen, project, screenStack, cancellationToken).ConfigureAwait(false);
+            var template = await ResolveTemplateAsync(screen, project, screenStack, cancellationToken, context.Options).ConfigureAwait(false);
             if (template != null)
                 html.Append(await ConvertCoreAsync(template, project, context, false, screenStack, cancellationToken).ConfigureAwait(false));
 
@@ -843,8 +843,12 @@ public partial class HmiScreenToHtmlConverter
         CancellationToken cancellationToken)
     {
         HmiScreenBase? resolved = null;
-        if (project != null && !string.IsNullOrWhiteSpace(screenWindow.ScreenId?.StaticValue))
+        if (context.Options.ScreenWindowResolver is { } resolver)
+            resolved = await resolver(screenWindow, cancellationToken).ConfigureAwait(false);
+        else if (project != null && !string.IsNullOrWhiteSpace(screenWindow.ScreenId?.StaticValue))
             resolved = await project.GetScreenAsync(screenWindow.ScreenId!.StaticValue!, cancellationToken).ConfigureAwait(false);
+        if (context.Options.ScreenWindowResolver is null && resolved is null && project != null && !string.IsNullOrWhiteSpace(screenWindow.ScreenName?.StaticValue))
+            resolved = await project.GetScreenAsync(screenWindow.ScreenName!.StaticValue!, cancellationToken).ConfigureAwait(false);
 
         html.Append("<div");
         AppendStaticAttribute(html, "data-fit-screen-to-window", screenWindow.FitScreenToWindow, context);
@@ -1002,20 +1006,23 @@ public partial class HmiScreenToHtmlConverter
         HmiScreenBase screen,
         IHmiProject? project,
         IList<HmiScreenBase> screenStack,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        HmiHtmlConvertOptions options)
     {
-        if (project == null)
+        if (project == null && options.TemplateResolver is null)
             return null;
 
         var templateId = screen.TemplateId.GetStaticValue();
         var templateName = screen.TemplateName.GetStaticValue();
         HmiScreenBase? template = null;
 
-        if (!string.IsNullOrWhiteSpace(templateId))
-            template = await project.GetScreenAsync(templateId!, cancellationToken).ConfigureAwait(false);
+        if (options.TemplateResolver is { } resolver)
+            template = await resolver(screen, cancellationToken).ConfigureAwait(false);
+        else if (!string.IsNullOrWhiteSpace(templateId))
+            template = await project!.GetScreenAsync(templateId!, cancellationToken).ConfigureAwait(false);
 
-        if (template == null && !string.IsNullOrWhiteSpace(templateName))
-            template = await project.GetScreenAsync(templateName!, cancellationToken).ConfigureAwait(false);
+        if (options.TemplateResolver is null && template == null && !string.IsNullOrWhiteSpace(templateName))
+            template = await project!.GetScreenAsync(templateName!, cancellationToken).ConfigureAwait(false);
 
         if (template == null || IsScreenInStack(template, screenStack))
             return null;
