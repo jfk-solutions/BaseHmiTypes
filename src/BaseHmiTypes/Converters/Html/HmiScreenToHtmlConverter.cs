@@ -2054,6 +2054,10 @@ public partial class HmiScreenToHtmlConverter
         var text = ResolveStaticValue(ioField.Text, context)?.GetDisplayText(context.CultureInfo);
         if (string.IsNullOrWhiteSpace(text) && ioField.Text is HmiExpressionProperty<HmiMultilingualText> expression)
             text = expression.Expression;
+        var integerFormat = System.Text.RegularExpressions.Regex.Match(ResolveStaticValue(ioField.OutputFormat, context) ?? "", @"^\{I(\d+)\}$");
+        if (integerFormat.Success && int.TryParse(integerFormat.Groups[1].Value, out var digits) && digits is > 0 and <= 32 &&
+            System.Text.RegularExpressions.Regex.IsMatch(text ?? "", @"^-?\d+$"))
+            text = text!.StartsWith("-", StringComparison.Ordinal) ? "-" + text.Substring(1).PadLeft(digits, '0') : text.PadLeft(digits, '0');
         AppendAttribute(html, "value", text);
         if (ioField.ReadOnly is not null && ResolveStaticValue(ioField.ReadOnly, context))
             AppendAttribute(html, "readonly", "readonly");
@@ -4033,8 +4037,9 @@ public partial class HmiScreenToHtmlConverter
         HmiHtmlConvertContext context,
         CancellationToken cancellationToken)
     {
-        var selectedValue = ResolveStaticValue(symbolicIoField.Value, context);
-        var selectedState = symbolicIoField.States.FirstOrDefault(candidate => candidate.Value == selectedValue)
+        double? selectedValue = symbolicIoField.Value is null ? null : ResolveStaticValue(symbolicIoField.Value, context);
+        var selectedState = symbolicIoField.States.FirstOrDefault(candidate => candidate.Value is double from && selectedValue >= from && selectedValue <= (candidate.MaximumValue ?? from))
+            ?? symbolicIoField.States.FirstOrDefault(candidate => candidate.IsDefault)
             ?? symbolicIoField.States.FirstOrDefault();
         if (selectedState?.Image is not null)
         {
@@ -4100,6 +4105,18 @@ public partial class HmiScreenToHtmlConverter
         }
 
         var textStateStyle = CreateSymbolicStateStyle(symbolicIoField, selectedState, context) + CreateFontWritingModeStyle(symbolicIoField.Font, context);
+        if (ResolveStaticValue(symbolicIoField.ReadOnly, context) && symbolicIoField.ShowDropDownButton?.GetStaticValue() == false)
+        {
+            html.Append("<div");
+            AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: textStateStyle + "display: flex; align-items: center; justify-content: center; white-space: pre-wrap; overflow: hidden;");
+            AppendSymbolicPaletteAttributes(html, symbolicIoField, context);
+            AppendAttribute(html, "role", "status");
+            AppendAttribute(html, "data-state-value", selectedState?.Value is double readOnlyValue ? ToCss(readOnlyValue) : null);
+            html.Append('>');
+            AppendMultilingualText(html, selectedState?.Text, context);
+            html.Append("</div>");
+            return;
+        }
         if (ResolveStaticValue(symbolicIoField.ReadOnly, context))
         {
             html.Append("<input");
@@ -4109,8 +4126,7 @@ public partial class HmiScreenToHtmlConverter
             AppendAttribute(html, "readonly", "readonly");
             AppendAttribute(html, "value", selectedState?.Text?.GetDisplayText(context.CultureInfo) ?? string.Empty);
             AppendAttribute(html, "data-state-value", selectedState?.Value is double readOnlyValue ? ToCss(readOnlyValue) : null);
-            if (!ResolveStaticValue(symbolicIoField.Enabled, context))
-                AppendAttribute(html, "disabled", "disabled");
+            if (!ResolveStaticValue(symbolicIoField.Enabled, context)) AppendAttribute(html, "disabled", "disabled");
             html.Append('>');
             return;
         }

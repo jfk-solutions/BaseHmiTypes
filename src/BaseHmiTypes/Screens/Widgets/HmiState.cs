@@ -18,6 +18,12 @@ public sealed class HmiState
 
     public double? Value { get; set; }
 
+    /// <summary>Inclusive upper bound for a range state; omitted for an exact value.</summary>
+    public double? MaximumValue { get; set; }
+
+    /// <summary>Used when no configured value or range matches.</summary>
+    public bool IsDefault { get; set; }
+
     public HmiStateAccess? Access { get; set; }
 
     public HmiMultilingualText? Text { get; set; }

@@ -12,6 +12,10 @@ export class HmiState {
   readonly sourceProperties: Record<string, string> = {};
   name?: string;
   value?: number;
+  /** Inclusive upper bound for a range state; omitted for an exact value. */
+  maximumValue?: number;
+  /** Used when no configured value or range matches. */
+  isDefault = false;
   access?: HmiStateAccess;
   text?: HmiMultilingualText;
   font?: HmiFont;

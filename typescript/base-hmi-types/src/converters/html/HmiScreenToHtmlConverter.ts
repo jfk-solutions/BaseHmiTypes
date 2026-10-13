@@ -1853,6 +1853,10 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
   let text = resolveStaticValue(ioField.text, context, tryConvertFaceplateTextValue)?.getDisplayText(context.options.cultureLcid);
   if (!text?.trim() && ioField.text?.kind === HmiPropertyKind.Expression)
     text = (ioField.text as HmiExpressionProperty<HmiMultilingualText>).expression;
+  const integerFormat = /^\{I(\d+)\}$/.exec(getStaticValue(ioField.outputFormat) ?? "");
+  const digits = integerFormat ? Number(integerFormat[1]) : 0;
+  if (digits > 0 && digits <= 32 && /^-?\d+$/.test(text ?? ""))
+    text = text!.startsWith("-") ? "-" + text!.slice(1).padStart(digits, "0") : text!.padStart(digits, "0");
   appendAttribute(html, "value", text);
   if (resolveStaticValue(ioField.readOnly, context, tryConvertFaceplateBooleanValue) === true)
     appendAttribute(html, "readonly", "readonly");
@@ -4617,7 +4621,8 @@ async function appendSymbolicInput(
   signal?: AbortSignal,
 ): Promise<void> {
   const selectedValue = getStaticValue(symbolicIoField.value);
-  const selectedState = symbolicIoField.states.find(candidate => candidate.value === selectedValue)
+  const selectedState = symbolicIoField.states.find(candidate => candidate.value !== undefined && selectedValue !== undefined && selectedValue >= candidate.value && selectedValue <= (candidate.maximumValue ?? candidate.value))
+    ?? symbolicIoField.states.find(candidate => candidate.isDefault)
     ?? symbolicIoField.states[0];
   if (selectedState?.image !== undefined) {
     const imageUri = await resolveImageUri(selectedState.image, project, signal);
@@ -4683,6 +4688,17 @@ async function appendSymbolicInput(
   }
 
   const textStateStyle = (createSymbolicStateStyle(symbolicIoField, selectedState, context) ?? "") + (createFontWritingModeStyle(symbolicIoField.font) ?? "");
+  if (getStaticValue(symbolicIoField.readOnly) === true && getStaticValue(symbolicIoField.showDropDownButton) === false) {
+    html.push("<div");
+    appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle + "display: flex; align-items: center; justify-content: center; white-space: pre-wrap; overflow: hidden;");
+    appendSymbolicPaletteAttributes(html, symbolicIoField, context);
+    appendAttribute(html, "role", "status");
+    appendAttribute(html, "data-state-value", selectedState?.value !== undefined ? toCss(selectedState.value) : undefined);
+    html.push(">");
+    appendMultilingualText(html, selectedState?.text, context);
+    html.push("</div>");
+    return;
+  }
   if (getStaticValue(symbolicIoField.readOnly) === true) {
     html.push("<input");
     appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle);
