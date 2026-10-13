@@ -9,6 +9,19 @@ namespace BaseHmiTypes.Tests;
 public class RuntimeScreenResolverHtmlTests
 {
     [TestMethod]
+    public async Task FaceplateResolverRendersDetachedInstancesWithoutAProject()
+    {
+        var root = new HmiScreen { Name = "Root" };
+        var layer = new HmiLayer(); root.Layers.Add(layer);
+        layer.Items.Add(new HmiFaceplateContainer { Name = "Left", FaceplateId = "type" });
+        layer.Items.Add(new HmiFaceplateContainer { Name = "Right", FaceplateId = "type" });
+        var options = new HmiHtmlConvertOptions { FaceplateResolver = (container, _) => new ValueTask<HmiFaceplateType?>(new HmiFaceplateType { Name = container.Name + "Instance" }) };
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(root, options: options);
+        StringAssert.Contains(html, "LeftInstance"); StringAssert.Contains(html, "RightInstance");
+        options.FaceplateResolver = (_, _) => new ValueTask<HmiFaceplateType?>((HmiFaceplateType?)null);
+        StringAssert.Contains(await new HmiScreenToHtmlConverter().ConvertAsync(root, options: options), "hmi-missing-screen");
+    }
+    [TestMethod]
     public async Task ResolversRenderEachWindowInstanceAndTemplateWithoutAProject()
     {
         var root = new HmiScreen { Name = "Root", TemplateId = "template" };

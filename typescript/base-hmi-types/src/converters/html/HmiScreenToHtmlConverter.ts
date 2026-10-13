@@ -558,7 +558,8 @@ export class HmiScreenToHtmlConverter {
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<void> {
-    const resolved = await context.references.resolveFaceplateAsync(faceplateContainer, signal);
+    const resolved = context.options.faceplateResolver ? await context.options.faceplateResolver(faceplateContainer,signal)
+      : await context.references.resolveFaceplateAsync(faceplateContainer, signal);
 
     html.push("<div");
     appendCommonAttributes(html, faceplateContainer, context);
