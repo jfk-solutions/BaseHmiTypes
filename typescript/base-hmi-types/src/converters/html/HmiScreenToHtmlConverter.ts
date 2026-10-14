@@ -91,6 +91,7 @@ import { HmiShapeBase } from "../../screens/shapes/HmiShapeBase.js";
 import { HmiCentricShapeBase } from "../../screens/shapes/HmiCentricShapeBase.js";
 import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiUnkown } from "../../screens/shapes/HmiUnkown.js";
+import { HmiTouchArea } from "../../screens/widgets/HmiTouchArea.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
 import { HmiButtonBase } from "../../screens/widgets/HmiButtonBase.js";
 import { HmiBar, HmiBarFillStyle, HmiBarValueMapping } from "../../screens/widgets/HmiBar.js";
@@ -540,6 +541,9 @@ export class HmiScreenToHtmlConverter {
     } else if (item instanceof HmiAlarmControl) {
       reportItemDiagnostic(item, context, "HmiAlarmControl", false);
       appendAlarmControl(html, item, context);
+    } else if (item instanceof HmiTouchArea) {
+      reportItemDiagnostic(item, context, "HmiTouchArea", false);
+      appendDiv(html, item, undefined, undefined, context);
     } else if (item instanceof HmiUnkown) {
       reportItemDiagnostic(item, context, "UnknownPlaceholder", true);
       appendDiv(html, item, undefined, `Unkown:${item.type ?? ""}`, context);
@@ -818,11 +822,13 @@ export class HmiScreenToHtmlConverter {
     appendCommonAttributes(html, screenWindow, context, true, createScreenWindowStyle(screenWindow, resolved));
     html.push(">");
     if (resolved === undefined) {
-      html.push("<div");
-      appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);
-      html.push(">");
-      html.push(escapeHtml(screenName ?? screenId ?? "Missing screen"));
-      html.push("</div>");
+      if (screenName || screenId) {
+        html.push("<div");
+        appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);
+        html.push(">");
+        html.push(escapeHtml(screenName ?? screenId ?? ""));
+        html.push("</div>");
+      }
     } else if (isScreenInStack(resolved, screenStack)) {
       html.push("<div");
       appendAttribute(html, "class", context.options.missingScreenPlaceholderCssClass);

@@ -25,3 +25,9 @@ test('faceplate resolver renders detached instances and suppresses static fallba
   const project={info:{},getFaceplate:async()=>{throw new Error('Unexpected static fallback');}};
   assert.ok((await new HmiScreenToHtmlConverter().convertAsync(root,project,options)).includes('hmi-missing-screen'));
 });
+
+test('unconfigured screen windows stay blank while unresolved configured targets remain visible',async()=>{
+ const root=new HmiScreen(),layer=new HmiLayer();root.layers.push(layer);const window=Object.assign(new HmiScreenWindow(),{name:'Empty'});layer.items.push(window);
+ const converter=new HmiScreenToHtmlConverter();assert.ok(!(await converter.convertAsync(root)).includes('Missing screen'));
+ window.screenName=staticProperty('UnavailableChild');assert.ok((await converter.convertAsync(root)).includes('UnavailableChild'));
+});

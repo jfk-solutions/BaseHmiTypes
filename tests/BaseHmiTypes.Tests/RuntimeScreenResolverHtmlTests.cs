@@ -9,6 +9,13 @@ namespace BaseHmiTypes.Tests;
 public class RuntimeScreenResolverHtmlTests
 {
     [TestMethod]
+    public async Task UnconfiguredWindowsStayBlankWhileUnresolvedConfiguredTargetsRemainVisible()
+    {
+        var root=new HmiScreen();var layer=new HmiLayer();root.Layers.Add(layer);var window=new HmiScreenWindow { Name="Empty" };layer.Items.Add(window);
+        var converter=new HmiScreenToHtmlConverter();Assert.IsFalse((await converter.ConvertAsync(root)).Contains("Missing screen"));
+        window.ScreenName="UnavailableChild";StringAssert.Contains(await converter.ConvertAsync(root),"UnavailableChild");
+    }
+    [TestMethod]
     public async Task FaceplateResolverRendersDetachedInstancesWithoutAProject()
     {
         var root = new HmiScreen { Name = "Root" };
