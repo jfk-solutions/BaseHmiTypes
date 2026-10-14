@@ -6,5 +6,6 @@ public enum HmiScreenKind
     Faceplate,
     Template,
     Popup,
-    Slidein
+    Slidein,
+    Global
 }

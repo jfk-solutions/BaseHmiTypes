@@ -16,6 +16,8 @@ public sealed class HmiScript : IHmiObject
 
     public string? Name { get; set; }
 
+    public string? ModuleName { get; set; }
+
     public HmiMultilingualText? Comment { get; set; }
 
     public HmiScriptLanguage Language { get; set; } = HmiScriptLanguage.Unknown;

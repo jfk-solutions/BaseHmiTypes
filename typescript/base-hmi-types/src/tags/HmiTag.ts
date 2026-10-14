@@ -40,6 +40,8 @@ export class HmiTag implements IHmiObject {
   updateId?: number;
   multiplexing = false;
   indexTag?: string;
+  /** Selector values mapped to concrete tag names for native multiplexing. */
+  multiplexTargets?: Record<string, string>;
   upper2?: string;
   upper1?: string;
   lower1?: string;

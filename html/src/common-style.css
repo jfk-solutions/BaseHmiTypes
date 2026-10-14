@@ -11,6 +11,11 @@
   pointer-events: auto;
 }
 
+/* HMI captions use paragraph breaks without browser document margins. */
+[data-hmi-screen] button p {
+  margin: 0;
+}
+
 input[data-hmi-slider] {
   accent-color: var(--hmi-slider-thumb-background, auto);
   background: var(--hmi-slider-track-background, initial);

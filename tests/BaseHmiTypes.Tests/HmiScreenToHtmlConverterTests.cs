@@ -2590,7 +2590,7 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
-    public async Task ConvertAsync_RendersInertWebControlPreview()
+    public async Task ConvertAsync_RendersWebControlIframe()
     {
         var screen = new HmiScreen { Id = "main", Name = "MainScreen", Width = 320, Height = 240 };
         var layer = new HmiLayer { Id = "layer-1", Name = "Layer 1" };
@@ -2615,8 +2615,11 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(html, "data-navigate-back=\"{[PLC]Back}\"");
         StringAssert.Contains(html, "data-refresh=\"{[PLC]Refresh}\"");
         StringAssert.Contains(html, ">https://example.test/manual?a=1&amp;b=2</div>");
-        StringAssert.Contains(html, ">Web browser</div>");
-        Assert.IsFalse(html.Contains("<iframe", StringComparison.Ordinal));
+        StringAssert.Contains(html, "<iframe title=\"Web browser\"");
+        StringAssert.Contains(html, "src=\"https://example.test/manual?a=1&amp;b=2\"");
+        StringAssert.Contains(html, "sandbox=\"allow-scripts allow-forms allow-same-origin\"");
+        ((HmiWebControl)layer.Items[0]).Url = "javascript:alert(1)";
+        StringAssert.Contains(await new HmiScreenToHtmlConverter().ConvertAsync(screen), "src=\"about:blank\"");
     }
 
     [TestMethod]
@@ -5163,7 +5166,9 @@ public class HmiScreenToHtmlConverterTests
         StringAssert.Contains(disabledMarkup, "disabled=\"disabled\"");
         StringAssert.Contains(disabledMarkup, "<img src=\"data:image/png;base64,Ag==\"");
         StringAssert.Contains(html, "<button id=\"Grayscale\"");
-        StringAssert.Contains(html, "src=\"data:image/png;base64,AQ==\" style=\"width: 100%; height: 100%; filter: grayscale(1);\"");
+        var grayscaleImage = System.Text.RegularExpressions.Regex.Match(html, "<img src=\"data:image/png;base64,AQ==\"[^>]*>").Value;
+        StringAssert.Contains(grayscaleImage, "filter: grayscale(1);");
+        StringAssert.Contains(grayscaleImage, "object-fit: fill;");
     }
 
     [TestMethod]
