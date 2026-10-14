@@ -17,10 +17,10 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
 
-    <AssemblyVersion>2026.10.14.1</AssemblyVersion>
-            <Version>2026.10.14.1</Version>
-        <FileVersion>2026.10.14.1</FileVersion>
-     <ProductVersion>2026.10.14.1</ProductVersion>
+    <AssemblyVersion>2026.10.14.2</AssemblyVersion>
+            <Version>2026.10.14.2</Version>
+        <FileVersion>2026.10.14.2</FileVersion>
+     <ProductVersion>2026.10.14.2</ProductVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
