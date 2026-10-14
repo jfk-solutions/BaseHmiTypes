@@ -137,6 +137,56 @@ V21 source semantic mapping, including all required fields, scripts and bindings
 no live TIA import has been verified. The destination must have the matching
 immutable catalog (`89ce7b2e…a76bdd1a`) and any referenced graphics or other dependencies.
 
+## WinCC Unified XML screen reader
+
+`HmiUnifiedXmlToScreenConverter` reads XML v2 screen archives using the bundled
+V21 catalog and returns `Screen`, `SourceComplete` and `Diagnostics` (camel case
+in TypeScript). It accepts complete archives and incomplete inspection exports.
+`SourceComplete` reports the input flag; it does not certify that every source
+field maps to the neutral model. Review diagnostics independently.
+
+```csharp
+using BaseHmiTypes.Converters.UnifiedXml;
+
+var result = new HmiUnifiedXmlToScreenConverter().Convert(File.ReadAllText("Main.screen.xml"));
+var screen = result.Screen;
+```
+
+```typescript
+import { HmiUnifiedXmlCatalog, HmiUnifiedXmlToScreenConverter } from "@jfk-solutions/base-hmi-types";
+
+// Pass the exact bundled catalog XML when the asset is hosted at a custom URL.
+const catalogXml = await HmiUnifiedXmlCatalog.loadV21(catalogUrl);
+const result = await new HmiUnifiedXmlToScreenConverter(catalogXml).convert(screenXml);
+const screen = result.screen;
+```
+
+The browser reader uses native `DOMParser` and `XMLSerializer`; it has no
+third-party runtime dependency. Without the optional constructor argument, it
+loads the packaged catalog through `HmiUnifiedXmlCatalog.loadV21()`.
+The DOM library used by automated Node.js tests is a development dependency only.
+
+The reader restores screens, buttons, text boxes and graphic views, including
+catalog defaults, promoted or explicit font/padding parts, localized text,
+colors and static appearance. Flattened screen items become one neutral layer.
+Direct items and `screen-items` wrappers retain order; forward object references
+reuse the same item instance. Explicit empty text overrides catalog templates.
+JavaScript event bodies become inert text-script actions. Script dynamizations
+on mapped properties retain their static values and explicit tag triggers.
+Scripts are never executed. Other trigger modes, script settings and globals
+remain in the original source XML with diagnostics.
+
+The exact input XML is retained as UTF-8 `Screen.SourceData` / `screen.sourceData`;
+each mapped item's source XML and effective scalar `SourceProperties` are also
+retained. Unsupported controls, members, attributes and fields are diagnosed;
+their original representations remain in source data. This reader does not
+make those fields writable by the screen exporter or apply changes to TIA.
+Unknown catalogs, unsupported archive profiles, malformed XML, DTDs, duplicate
+IDs, dangling references, incompatible selectors and invalid mapped scalar
+values fail explicitly. This is a model reader, not a full engineering archive
+validator. XML input is limited to 16,777,216 characters; unusually deep or
+oversized documents should be handled by hosts.
+
 ## Recipe HTML export
 
 `HmiRecipeToHtmlConverter` renders an `HmiRecipe` as a standalone HTML document.
