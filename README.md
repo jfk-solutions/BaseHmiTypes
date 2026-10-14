@@ -88,6 +88,55 @@ Toolbar buttons are disabled preview elements; their configured enabled state is
 retained as metadata. Native source names remain available when semantic action
 or icon mappings are unknown.
 
+## WinCC Unified XML screen writer
+
+`HmiScreenToUnifiedXmlConverter` writes an XML v2 inspection archive using the
+fixed V21 catalog extracted via TIA Portal Openness.
+The contract mapping targets specification revision 2.1; later catalog changes
+require a deliberate mapping review.
+The full [catalog and extraction details](catalogs/README.md) are checked in,
+embedded in the C# assembly and included in the npm package.
+It is stored as `.xml.gz`; `HmiUnifiedXmlCatalog.OpenV21()` in C# and
+`await HmiUnifiedXmlCatalog.loadV21(url)` in the browser decompress it using
+built-in runtime APIs, without an additional compression dependency.
+The C# and TypeScript APIs return XML plus a separate diagnostics list.
+
+```csharp
+using BaseHmiTypes.Converters.UnifiedXml;
+
+var result = new HmiScreenToUnifiedXmlConverter().Convert(screen, "Panel", defaultCultureLcid: 1031);
+File.WriteAllText("Main.screen.xml", result.Xml, new System.Text.UTF8Encoding(false));
+// Inspect result.Diagnostics for unsupported source data.
+```
+
+```typescript
+import { HmiScreenToUnifiedXmlConverter } from "@jfk-solutions/base-hmi-types";
+const result = new HmiScreenToUnifiedXmlConverter().convert(screen, "Panel", 1031);
+// result.xml, result.complete, result.diagnostics
+```
+
+This first writer maps ordinary screens, buttons, text boxes and graphic views;
+it writes static geometry, visibility/enabled state, supported colors, numeric
+appearance properties, font/padding parts and localized text. Formatted text takes
+precedence for the same language and is preserved as an escaped string. Default
+language text requires the explicit LCID argument; TypeScript diagnoses LCIDs
+outside its supported mapping. Layers flatten in collection order with a diagnostic;
+shared item instances use object references. Unsupported screen kinds fail.
+Unsupported controls, events, bindings, source payloads and other populated fields
+produce diagnostics. Dynamic properties never export their static fallback as a
+replacement for a missing dynamization contract. Fractional/out-of-range integers,
+lossy Single conversions and XML-illegal inline strings are diagnosed and omitted.
+Font-family mappings currently cover Arial and SiemensSans.
+
+**Every result has `Complete == false` / `complete === false` and XML
+`complete="false"`.** The neutral model lacks the version-specific engineering
+coverage needed to certify a complete archive. The writer never uses catalog
+defaults to invent unread source fields. Output is for inspection and is rejected
+for full engineering restoration. A restorable writer still needs a full
+V21 source semantic mapping, including all required fields, scripts and bindings;
+no live TIA import has been verified. The destination must have the matching
+immutable catalog (`89ce7b2e…a76bdd1a`) and any referenced graphics or other dependencies.
+
 ## Recipe HTML export
 
 `HmiRecipeToHtmlConverter` renders an `HmiRecipe` as a standalone HTML document.
