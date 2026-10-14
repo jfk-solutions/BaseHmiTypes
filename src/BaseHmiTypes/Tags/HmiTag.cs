@@ -76,6 +76,9 @@ public sealed class HmiTag : IHmiObject
 
     public string? IndexTag { get; set; }
 
+    /// <summary>Selector values mapped to concrete tag names for native multiplexing.</summary>
+    public Dictionary<string, string>? MultiplexTargets { get; set; }
+
     public string? Upper2 { get; set; }
 
     public string? Upper1 { get; set; }

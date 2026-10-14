@@ -16,12 +16,13 @@ for (const Type of [HmiText, HmiLabel, HmiButton, HmiTextBox]) test(`Wrapping an
     if (trim !== undefined) assert.ok(html.includes(`data-text-trimming="${trim}"`));
     assert.equal(html.includes("white-space: pre;"), wrap === 0);
     assert.equal(html.includes("white-space: pre-wrap;"), wrap === 1);
+    assert.equal(html.includes("white-space: pre-line;"), Type === HmiButton && wrap !== 0 && wrap !== 1);
     assert.equal(html.includes("text-overflow: ellipsis;"), Type !== HmiTextBox && wrap === 0 && trim === 1);
     if (Type === HmiTextBox) {
       assert.equal(html.includes('wrap="off"'), wrap === 0); assert.equal(html.includes('wrap="soft"'), wrap === 1);
       assert.ok(!html.includes("data-hmi-text-content"));
     } else {
-      assert.equal(html.includes("data-hmi-text-content"), wrap === 0 || wrap === 1 || trim === 0);
+      assert.equal(html.includes("data-hmi-text-content"), wrap === 0 || wrap === 1 || trim === 0 || Type === HmiButton);
       assert.ok(html.includes("text-align: right;"));
       if (wrap === 0 || wrap === 1) assert.ok(html.includes("min-inline-size: 0;max-inline-size: 100%;overflow: hidden;"));
     }

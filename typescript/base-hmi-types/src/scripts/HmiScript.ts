@@ -11,6 +11,7 @@ export enum HmiScriptType {
 export class HmiScript implements IHmiObject {
   lastModified?: Date;
   name?: string;
+  moduleName?: string;
   comment?: HmiMultilingualText;
   language: HmiScriptLanguage = HmiScriptLanguage.Unknown;
   sourceCode?: string;

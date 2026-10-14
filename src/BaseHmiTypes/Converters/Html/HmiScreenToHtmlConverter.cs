@@ -1812,13 +1812,18 @@ public partial class HmiScreenToHtmlConverter
         var caption = state?.Text ?? (down ? ResolveStaticValue(button.AlternateText, context) : null)
             ?? ResolveStaticValue(button.Text, context);
         html.Append("<button");
-        AppendCommonAttributes(html, button, context, additionalStyle: CreateButtonStyle(button, state, context));
+        AppendCommonAttributes(html, button, context, additionalStyle: CreateButtonStyle(button, state, context) + (mode == HmiButtonType.Invisible ? "background: transparent !important; border: 0 !important; box-shadow: none !important;" : ""));
         AppendAttribute(html, "aria-label", caption?.GetDisplayText(context.CultureInfo));
         if (button.Toggle is not null && ResolveStaticValue(button.Toggle, context))
             AppendAttribute(html, "aria-pressed", ResolveStaticValue(button.Pressed, context) ? "true" : "false");
         var enabled = button.Enabled is null || ResolveStaticValue(button.Enabled, context);
         if (!enabled)
             AppendAttribute(html, "disabled", "disabled");
+        if (mode == HmiButtonType.Invisible)
+        {
+            html.Append("></button>");
+            return;
+        }
         var alternateImage = down ? ResolveStaticValue(button.AlternateImage, context) : null;
         var image = state?.Image ?? alternateImage
             ?? ResolveStaticValue(button.Image, context);
@@ -1939,7 +1944,7 @@ public partial class HmiScreenToHtmlConverter
         var offset = button.ImageHorizontalAlignment is not null &&
             ResolveStaticValue(button.ImageHorizontalAlignment, context) != HmiHorizontalAlignment.Stretch
             ? GetButtonPressedContentOffset(button, context) : 0;
-        AppendInnerImage(html, imageUri, grayscale, offset, imageKey);
+        AppendInnerImage(html, imageUri, grayscale, offset, imageKey, button.GraphicStretchMode is null ? null : ResolveStaticValue(button.GraphicStretchMode, context));
         if (aligned) html.Append("</span>");
     }
 
@@ -1952,7 +1957,11 @@ public partial class HmiScreenToHtmlConverter
         HmiState? state,
         HmiHtmlConvertContext context)
     {
-        var style = new StringBuilder();
+        var hasPadding = button.Padding is { } padding && (padding.Top is not null || padding.Right is not null || padding.Bottom is not null || padding.Left is not null);
+        var style = new StringBuilder(hasPadding ? "" : "padding: 0;");
+        style.Append("display: flex;");
+        if (context.EffectiveProperties.Resolve(button, "HorizontalAlignment", button.HorizontalAlignment) is null) style.Append("justify-content: center;text-align: center;");
+        if (context.EffectiveProperties.Resolve(button, "VerticalAlignment", button.VerticalAlignment) is null) style.Append("align-items: center;");
         var stateHasCaptionColor = (state?.CaptionColor ?? state?.ForegroundColor) is not null;
         if (button.Shape is not null)
         {
@@ -2789,8 +2798,6 @@ public partial class HmiScreenToHtmlConverter
     private static void AppendWebControl(StringBuilder html, HmiWebControl webControl, HmiHtmlConvertContext context)
     {
         var url = ResolveStaticValue(webControl.Url, context);
-        if (string.IsNullOrWhiteSpace(url) && webControl.Url is HmiExpressionProperty<string> urlExpression)
-            url = urlExpression.Expression;
         if (string.IsNullOrWhiteSpace(url))
             url = ResolveStaticValue(webControl.HomeUrl, context);
         var showAddressBar = webControl.ShowAddressBar is null || ResolveStaticValue(webControl.ShowAddressBar, context);
@@ -2813,7 +2820,12 @@ public partial class HmiScreenToHtmlConverter
             html.Append("<div style=\"flex: 0 0 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 1px solid currentColor; padding: 2px 4px;\">");
             html.Append(WebUtility.HtmlEncode(url ?? string.Empty)).Append("</div>");
         }
-        html.Append("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Web browser</div></div>");
+        var frameUrl = Uri.TryCreate(url, UriKind.Absolute, out var address)
+            && (address.Scheme == Uri.UriSchemeHttp || address.Scheme == Uri.UriSchemeHttps)
+            ? url : "about:blank";
+        html.Append("<iframe title=\"Web browser\" sandbox=\"allow-scripts allow-forms allow-same-origin\" referrerpolicy=\"no-referrer\" style=\"flex: 1 1 auto; width: 100%; min-height: 0; border: 0;\"");
+        AppendAttribute(html, "src", frameUrl);
+        html.Append("></iframe></div>");
     }
 
     private static void AppendDataGridControl(StringBuilder html, HmiDataGridControl dataGridControl, HmiHtmlConvertContext context)
@@ -4132,7 +4144,9 @@ public partial class HmiScreenToHtmlConverter
         if (ResolveStaticValue(symbolicIoField.ReadOnly, context) && symbolicIoField.ShowDropDownButton?.GetStaticValue() == false)
         {
             html.Append("<div");
-            AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: textStateStyle + "display: flex; align-items: center; justify-content: center; white-space: pre-wrap; overflow: hidden;");
+            AppendCommonAttributes(html, symbolicIoField, context, additionalStyle: textStateStyle + "display: flex; align-items: " +
+                ToCss(symbolicIoField.VerticalAlignment is null ? HmiVerticalAlignment.Center : ResolveStaticValue(symbolicIoField.VerticalAlignment, context)) + "; justify-content: " +
+                ToFlexCss(symbolicIoField.HorizontalAlignment is null ? HmiHorizontalAlignment.Center : ResolveStaticValue(symbolicIoField.HorizontalAlignment, context)) + "; white-space: pre-wrap; overflow: hidden;");
             AppendSymbolicPaletteAttributes(html, symbolicIoField, context);
             AppendAttribute(html, "role", "status");
             AppendAttribute(html, "data-state-value", selectedState?.Value is double readOnlyValue ? ToCss(readOnlyValue) : null);
@@ -4414,6 +4428,7 @@ public partial class HmiScreenToHtmlConverter
     {
         var properties = GetTextLayoutProperties(item, context);
         var style = CreateTextWrappingStyle(properties.Wrapping);
+        if (style.Length == 0 && item is HmiButton && text?.GetText(context.CultureInfo)?.IndexOfAny(['\r', '\n']) >= 0) style = "white-space: pre-line;";
         if (TryGetStaticValue(properties.Trimming, out var trimming))
         {
             if (trimming == 0) style += "text-overflow: clip;";
@@ -5009,7 +5024,7 @@ public partial class HmiScreenToHtmlConverter
             html.Append("transform: ").Append(string.Join(" ", transforms)).Append(";transform-origin: center;");
     }
 
-    private static void AppendInnerImage(StringBuilder html, string? uri, bool grayscale = false, double pressedOffset = 0, HmiColor? imageKey = null)
+    private static void AppendInnerImage(StringBuilder html, string? uri, bool grayscale = false, double pressedOffset = 0, HmiColor? imageKey = null, int? stretchMode = null)
     {
         if (string.IsNullOrWhiteSpace(uri))
             return;
@@ -5018,7 +5033,9 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "src", uri);
         if (imageKey is { } key)
             AppendAttribute(html, "data-hmi-image-color-key", $"{key.Red},{key.Green},{key.Blue}");
-        html.Append(" style=\"width: 100%; height: 100%;");
+        html.Append(" style=\"width: 100%; height: 100%; display: block;");
+        var fit = stretchMode switch { 0 => "none", 2 => "contain", 3 => "cover", _ => "fill" };
+        html.Append(" object-fit: ").Append(fit).Append("; object-position: center;");
         if (grayscale)
             html.Append(" filter: grayscale(1);");
         if (pressedOffset > 0)

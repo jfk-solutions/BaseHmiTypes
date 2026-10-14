@@ -34,6 +34,7 @@ public class TextLayoutHtmlTests
             if (trim is not null) StringAssert.Contains(html, "data-text-trimming=\"" + trim.Value + "\"");
             Assert.AreEqual(wrap == 0, html.Contains("white-space: pre;"));
             Assert.AreEqual(wrap == 1, html.Contains("white-space: pre-wrap;"));
+            Assert.AreEqual(kind == "Button" && wrap is not (0 or 1), html.Contains("white-space: pre-line;"));
             Assert.AreEqual(kind != "TextBox" && wrap == 0 && trim == 1, html.Contains("text-overflow: ellipsis;"));
             if (kind == "TextBox")
             {
@@ -43,7 +44,7 @@ public class TextLayoutHtmlTests
             }
             else
             {
-                Assert.AreEqual(wrap is 0 or 1 || trim == 0, html.Contains("data-hmi-text-content"));
+                Assert.AreEqual(wrap is 0 or 1 || trim == 0 || kind == "Button", html.Contains("data-hmi-text-content"));
                 StringAssert.Contains(html, "text-align: right;");
                 if (wrap is 0 or 1) StringAssert.Contains(html, "min-inline-size: 0;max-inline-size: 100%;overflow: hidden;");
             }

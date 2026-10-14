@@ -1640,13 +1640,18 @@ async function appendButton(
   const caption = state?.text ?? (down ? resolveStaticValue(button.alternateText, context, tryConvertFaceplateTextValue) : undefined)
     ?? resolveStaticValue(button.text, context, tryConvertFaceplateTextValue);
   html.push("<button");
-  appendCommonAttributes(html, button, context, true, createButtonStyle(button, state, context));
+  appendCommonAttributes(html, button, context, true, (createButtonStyle(button, state, context) ?? "")
+    + (mode === HmiButtonType.Invisible ? "background: transparent !important; border: 0 !important; box-shadow: none !important;" : ""));
   appendAttribute(html, "aria-label", caption?.getDisplayText(context.options.cultureLcid));
   if (resolveStaticValue(button.toggle, context, tryConvertFaceplateBooleanValue) === true)
     appendAttribute(html, "aria-pressed", resolveStaticValue(button.pressed, context, tryConvertFaceplateBooleanValue) === true ? "true" : "false");
   const enabled = button.enabled === undefined || resolveStaticValue(button.enabled, context, tryConvertFaceplateBooleanValue) === true;
   if (!enabled) {
     appendAttribute(html, "disabled", "disabled");
+  }
+  if (mode === HmiButtonType.Invisible) {
+    html.push("></button>");
+    return;
   }
   const alternateImage = down ? resolveStaticValue(button.alternateImage, context, tryConvertFaceplateImageValue) : undefined;
   let image = state?.image ?? alternateImage
@@ -1759,7 +1764,7 @@ function appendButtonImage(html: string[], button: HmiButton, imageUri: string, 
   }
   const horizontal = getStaticValue(button.imageHorizontalAlignment);
   const offset = horizontal !== undefined && horizontal !== HmiHorizontalAlignment.Stretch ? getButtonPressedContentOffset(button, context) : 0;
-  appendInnerImage(html, imageUri, grayscale, offset, imageKey);
+  appendInnerImage(html, imageUri, grayscale, offset, imageKey, getStaticValue(button.graphicStretchMode));
   if (aligned) html.push("</span>");
 }
 
@@ -1774,13 +1779,16 @@ function createButtonStyle(button: HmiButton, state: HmiState | undefined, conte
   const captionColor = resolveStaticValue(button.captionColor, context, tryConvertFaceplateColorValue);
   const stateHasCaptionColor = (state?.captionColor ?? state?.foregroundColor) !== undefined;
   const captionBlink = getButtonCaptionBlink(button, state);
-  let style = "";
+  let style = hasThicknessEdges(button.padding) ? "" : "padding: 0;";
+  style += "display: flex;";
+  if (context.effectiveProperties.resolve(button, "HorizontalAlignment", button.horizontalAlignment) === undefined) style += "justify-content: center;text-align: center;";
+  if (context.effectiveProperties.resolve(button, "VerticalAlignment", button.verticalAlignment) === undefined) style += "align-items: center;";
   if (!stateHasCaptionColor && captionColor !== undefined && captionBlink?.blinkValue !== undefined) {
     style += `--hmi-caption-color-off: ${colorToCss(captionColor)};`;
     style += `--hmi-caption-color-on: ${colorToCss(captionBlink.blinkValue)};`;
     style += `color: ${colorToCss(captionColor)};`;
   } else if (!stateHasCaptionColor && captionColor !== undefined) {
-    style = `color: ${colorToCss(captionColor)};`;
+    style += `color: ${colorToCss(captionColor)};`;
   }
   switch (getStaticValue(button.shape)) {
     case HmiButtonShape.Rectangle:
@@ -2769,8 +2777,6 @@ function appendNcKeyboardControl(html: string[], control: HmiNcKeyboardControl, 
 
 function appendWebControl(html: string[], webControl: HmiWebControl, context: HmiHtmlConvertContext): void {
   let url = getStaticValue(webControl.url);
-  if (!url?.trim() && webControl.url?.kind === HmiPropertyKind.Expression)
-    url = (webControl.url as HmiExpressionProperty<string>).expression;
   if (!url?.trim())
     url = getStaticValue(webControl.homeUrl);
   const showAddressBar = webControl.showAddressBar === undefined
@@ -2799,7 +2805,14 @@ function appendWebControl(html: string[], webControl: HmiWebControl, context: Hm
     html.push("<div style=\"flex: 0 0 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 1px solid currentColor; padding: 2px 4px;\">");
     html.push(escapeHtml(url ?? ""), "</div>");
   }
-  html.push("<div style=\"flex: 1 1 auto; display: grid; place-items: center; overflow: hidden;\">Web browser</div></div>");
+  let frameUrl = "about:blank";
+  try {
+    const address = new URL(url ?? "");
+    if (address.protocol === "http:" || address.protocol === "https:") frameUrl = url!;
+  } catch { /* Unresolved URLs keep an empty browser until a binding supplies a URL. */ }
+  html.push("<iframe title=\"Web browser\" sandbox=\"allow-scripts allow-forms allow-same-origin\" referrerpolicy=\"no-referrer\" style=\"flex: 1 1 auto; width: 100%; min-height: 0; border: 0;\"");
+  appendAttribute(html, "src", frameUrl);
+  html.push("></iframe></div>");
 }
 
 function appendDataGridControl(html: string[], dataGridControl: HmiDataGridControl, context: HmiHtmlConvertContext): void {
@@ -4712,7 +4725,9 @@ async function appendSymbolicInput(
   const textStateStyle = (createSymbolicStateStyle(symbolicIoField, selectedState, context) ?? "") + (createFontWritingModeStyle(symbolicIoField.font) ?? "");
   if (getStaticValue(symbolicIoField.readOnly) === true && getStaticValue(symbolicIoField.showDropDownButton) === false) {
     html.push("<div");
-    appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle + "display: flex; align-items: center; justify-content: center; white-space: pre-wrap; overflow: hidden;");
+    appendCommonAttributes(html, symbolicIoField, context, true, textStateStyle + "display: flex; align-items: " +
+      verticalAlignmentToCss(getStaticValue(symbolicIoField.verticalAlignment) ?? HmiVerticalAlignment.Center) + "; justify-content: " +
+      horizontalAlignmentToFlexCss(getStaticValue(symbolicIoField.horizontalAlignment) ?? HmiHorizontalAlignment.Center) + "; white-space: pre-wrap; overflow: hidden;");
     appendSymbolicPaletteAttributes(html, symbolicIoField, context);
     appendAttribute(html, "role", "status");
     appendAttribute(html, "data-state-value", selectedState?.value !== undefined ? toCss(selectedState.value) : undefined);
@@ -4999,6 +5014,7 @@ function createTextWrappingStyle(wrapping: HmiProperty<number> | undefined): str
 function appendFormattedText(html: string[], item: HmiScreenItemBase, text: HmiMultilingualText | undefined, context: HmiHtmlConvertContext): void {
   const properties = getTextLayoutProperties(item, context);
   let style = createTextWrappingStyle(properties.wrapping);
+  if (style.length === 0 && item instanceof HmiButton && /[\r\n]/.test(text?.getText(context.options.cultureLcid) ?? "")) style = "white-space: pre-line;";
   const trimming = getStaticValue(properties.trimming);
   if (trimming === 0) style += "text-overflow: clip;";
   // CSS ellipsis is reliable for a configured non-wrapping line. Wrapped ellipsis needs separate layout handling.
@@ -5573,7 +5589,7 @@ function appendSymbolLibraryTransform(html: string[], symbolLibraryControl: HmiS
   }
 }
 
-function appendInnerImage(html: string[], uri: string, grayscale = false, pressedOffset = 0, imageKey?: HmiColor): void {
+function appendInnerImage(html: string[], uri: string, grayscale = false, pressedOffset = 0, imageKey?: HmiColor, stretchMode?: number): void {
   if (!uri.trim()) {
     return;
   }
@@ -5582,7 +5598,9 @@ function appendInnerImage(html: string[], uri: string, grayscale = false, presse
   appendAttribute(html, "src", uri);
   if (imageKey !== undefined)
     appendAttribute(html, "data-hmi-image-color-key", `${imageKey.red},${imageKey.green},${imageKey.blue}`);
-  html.push(" style=\"width: 100%; height: 100%;");
+  html.push(" style=\"width: 100%; height: 100%; display: block;");
+  const fit = stretchMode === 0 ? "none" : stretchMode === 2 ? "contain" : stretchMode === 3 ? "cover" : "fill";
+  html.push(` object-fit: ${fit}; object-position: center;`);
   if (grayscale) {
     html.push(" filter: grayscale(1);");
   }

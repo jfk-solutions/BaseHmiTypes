@@ -4,4 +4,5 @@ export enum HmiScreenKind {
   Template = "Template",
   Popup = "Popup",
   Slidein = "Slidein",
+  Global = "Global",
 }

@@ -210,6 +210,8 @@ import {
   HmiAuditTrailViewKind,
   HmiBar,
   HmiButton,
+  HmiButtonType,
+  HmiThickness,
   HmiCircularArc,
   HmiCircle,
   HmiEllipse,
@@ -2419,7 +2421,7 @@ test("HTML converter renders an arrow indicator preview", async () => {
   assert.match(html, /bottom: 25%; transform: translate\(-50%, 50%\);">▲<\/span>/);
 });
 
-test("HTML converter renders an inert web control preview", async () => {
+test("HTML converter renders a web control iframe", async () => {
   const screen = new HmiScreen();
   screen.id = "main";
   screen.name = "MainScreen";
@@ -2448,8 +2450,11 @@ test("HTML converter renders an inert web control preview", async () => {
   assert.match(html, /data-navigate-back="{\[PLC\]Back}"/);
   assert.match(html, /data-refresh="{\[PLC\]Refresh}"/);
   assert.match(html, />https:\/\/example.test\/manual\?a=1&amp;b=2<\/div>/);
-  assert.match(html, />Web browser<\/div>/);
-  assert.doesNotMatch(html, /<iframe/);
+  assert.match(html, /<iframe title="Web browser"/);
+  assert.match(html, /src="https:\/\/example.test\/manual\?a=1&amp;b=2"/);
+  assert.match(html, /sandbox="allow-scripts allow-forms allow-same-origin"/);
+  browser.url = staticProperty("javascript:alert(1)");
+  assert.match(await new HmiScreenToHtmlConverter().convertAsync(screen), /src="about:blank"/);
 });
 
 test("HTML converter renders an inert data grid preview", async () => {
@@ -2695,7 +2700,7 @@ test("HTML converter renders inert alarm previews", async () => {
 
   const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
 
-  assert.match(html, /<div id="ActiveAlarms"/);
+  assert.match(html, /<hmi-alarm-control id="ActiveAlarms"/);
   assert.match(html, /data-view-kind="AlarmAndEventSummary"/);
   assert.match(html, /data-list-mode="Active"/);
   assert.match(html, /data-window-resizable="true"/);
@@ -2753,14 +2758,14 @@ test("HTML converter renders inert alarm previews", async () => {
   assert.match(html, /data-column-type="Message">Message<\/th>/);
   assert.doesNotMatch(html, /data-column-type="AlarmState"/);
   assert.match(html, />Alarm data not loaded<\/td>/);
-  assert.match(html, /class="hmi-alarm-toolbar" role="toolbar" style="flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #443322;color: #FAFBFC;">Acknowledge · Help<\/div>/);
+  assert.match(html, /class="hmi-alarm-toolbar" role="toolbar" style="flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #443322;color: #FAFBFC;"><button type="button" data-alarm-action="acknowledge" disabled>Acknowledge<\/button> · Help<\/div>/);
   assert.match(html, /class="hmi-alarm-status-bar" role="status" style="flex: 0 0 auto; border-top: 1px solid currentColor; padding: 2px 4px;background-color: #213243;color: #FEDCBA;font-family: Tahoma;font-size: 8px;font-weight: 600;font-style: italic;">Status<\/div>/);
-  assert.match(html, /<div id="AlarmBanner"/);
+  assert.match(html, /<hmi-alarm-line-control id="AlarmBanner"/);
   assert.match(html, /data-view-kind="AlarmBanner"/);
   assert.match(html, /data-queue-new-alarms="true"/);
   assert.match(html, /data-show-alarm-state="true"/);
   assert.match(html, /data-show-alarm-time="true" data-time-format="HH:mm"/);
-  assert.match(html, />Alarm data not loaded<\/div>/);
+  assert.match(html, />Alarm data not loaded<\/hmi-alarm-line-control>/);
 });
 
 test("HTML converter does not render disabled alternating alarm rows", async () => {
@@ -3306,4 +3311,38 @@ test("HTML converter renders inert system diagnosis previews", async () => {
   assert.match(html, />Automatic diagnostic event summary<\/div>/);
   assert.equal((html.match(/>Diagnostic data not loaded<\/div>/g) ?? []).length, 3);
   assert.doesNotMatch(withoutRuntimeScripts(html), /<button/);
+});
+
+test("HTML converter renders invisible buttons as transparent hit targets", async () => {
+  const screen = new HmiScreen(), layer = new HmiLayer(), button = new HmiButton();
+  button.name = "Overlay"; button.mode = staticProperty(HmiButtonType.Invisible);
+  button.text = staticProperty(Object.assign(new HmiMultilingualText(), { texts: new Map([[1031,"Hidden caption"]]) }));
+  layer.items.push(button); screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  assert.match(html, /background: transparent !important; border: 0 !important/);
+  assert.doesNotMatch(html, /nullbackground/);
+  assert.match(html, /<button[^>]*id="Overlay"[^>]*><\/button>/);
+});
+
+for (const [stretch,fit] of [[0,"none"],[1,"fill"],[2,"contain"],[3,"cover"]])
+test(`Button images honor stretch ${fit} and explicit padding`, async () => {
+  const screen=new HmiScreen(),layer=new HmiLayer(),button=new HmiButton();screen.layers.push(layer);layer.items.push(button);
+  button.name="Icon";button.mode=staticProperty(HmiButtonType.Graphic);
+  button.image=staticProperty({uri:"data:image/png;base64,AA=="});button.graphicStretchMode=staticProperty(stretch);
+  const converter=new HmiScreenToHtmlConverter();let html=await converter.convertAsync(screen);
+  assert.match(html,/padding: 0;/);assert.ok(html.includes(`object-fit: ${fit};`));
+  button.padding=Object.assign(new HmiThickness(),{left:staticProperty(5),right:staticProperty(5),top:staticProperty(2),bottom:staticProperty(2)});
+  html=await converter.convertAsync(screen);assert.doesNotMatch(html,/padding: 0;/);
+});
+
+
+test("Read-only symbolic output honors configured alignment", async () => {
+  const {HmiHorizontalAlignment,HmiVerticalAlignment}=await import("../dist/index.js");
+  const field=Object.assign(new HmiSymbolicIOField(),{name:"Status",readOnly:staticProperty(true),showDropDownButton:staticProperty(false),
+    value:staticProperty(0),horizontalAlignment:staticProperty(HmiHorizontalAlignment.Right),verticalAlignment:staticProperty(HmiVerticalAlignment.Bottom)});
+  field.states.push(Object.assign(new HmiState(),{value:0,text:HmiMultilingualText.fromText("Idle")}));
+  const screen=new HmiScreen(),layer=new HmiLayer();screen.layers.push(layer);layer.items.push(field);
+  const html=await new HmiScreenToHtmlConverter().convertAsync(screen);
+  assert.ok(html.includes("align-items: flex-end; justify-content: flex-end;"));
+  assert.ok(html.includes('role="status"'));assert.ok(html.includes("Idle"));
 });
