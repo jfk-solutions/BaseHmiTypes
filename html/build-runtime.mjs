@@ -28,6 +28,17 @@ const typescriptPath = resolve(
 );
 
 await build({
+  plugins: [{ name: "restricted-svg-expressions", setup(builder) {
+    // Pass original binding templates to the evaluator; upstream strips closing
+    // characters even when a source binding has no closing braces.
+    builder.onLoad({ filter: /svghmi\.webcomponent[\\/]dist[\\/]SvgHmi\.js$/ }, async args => {
+      const source = await readFile(args.path, "utf8");
+      return { contents: source.replace(/if \(val\.startsWith\("\{\{"\)\)\s*val = val\.substring\(2, val\.length - 2\);/,
+        'if (val.startsWith("{{") && !val.endsWith("}}")) val = val.substring(2);'), loader: "js" };
+    });
+    builder.onResolve({ filter: /EvalWithContext\.js$/ }, args => args.importer.includes("svghmi.webcomponent")
+      ? { path: resolve(htmlRoot, "src", "svg-expression.ts") } : undefined);
+  } }],
   bundle: true,
   entryPoints: [resolve(htmlRoot, "src", "index.ts")],
   format: "esm",

@@ -436,6 +436,10 @@ public partial class HmiScreenToHtmlConverter
                 ReportItemDiagnostic(item, context, "HmiAlarmControl", false);
                 AppendAlarmControl(html, alarmControl, context);
                 break;
+            case HmiTouchArea touchArea:
+                ReportItemDiagnostic(item, context, "HmiTouchArea", false);
+                AppendDiv(html, touchArea, null, null, context);
+                break;
             case HmiUnkown unkown:
                 ReportItemDiagnostic(item, context, "UnknownPlaceholder", true);
                 AppendDiv(html, unkown, null, "Unkown:" + (unkown.Type ?? ""), context);
@@ -866,11 +870,14 @@ public partial class HmiScreenToHtmlConverter
 
         if (resolved == null)
         {
-            html.Append("<div");
-            AppendAttribute(html, "class", context.Options.MissingScreenPlaceholderCssClass);
-            html.Append(">");
-            html.Append(WebUtility.HtmlEncode(screenWindow.ScreenName?.StaticValue ?? screenWindow.ScreenId?.StaticValue ?? "Missing screen"));
-            html.Append("</div>");
+            if (!string.IsNullOrEmpty(screenWindow.ScreenName?.StaticValue) || !string.IsNullOrEmpty(screenWindow.ScreenId?.StaticValue))
+            {
+                html.Append("<div");
+                AppendAttribute(html, "class", context.Options.MissingScreenPlaceholderCssClass);
+                html.Append(">");
+                html.Append(WebUtility.HtmlEncode(screenWindow.ScreenName?.StaticValue ?? screenWindow.ScreenId?.StaticValue ?? string.Empty));
+                html.Append("</div>");
+            }
         }
         else
         {
