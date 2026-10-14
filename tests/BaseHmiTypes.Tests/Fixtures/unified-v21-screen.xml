@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" device="99_Touch_Standard" apiVersion="21.0.0.0" coverage="exposed-openness-graph" complete="false" scope="screen" screen="501 StartScreen" version="2" catalog="89ce7b2e33155ea0da70a8cfd76f09798b9a9f9d68c08155a7afb646a76bdd1a" xmlns="urn:s7mcp:wincc-unified:2">
+  <screen alternate-back-color="#FFFFFF" back-color="#96AEC2" back-fill-pattern="GradientVertical" back-graphic-stretch-mode="UniformToFill" background-fill-mode="Window" enabled="True" height="480" horizontal-alignment="Left" name="501 StartScreen" screen-number="501" vertical-alignment="Top" width="800">
+    <event-handlers>
+      <screen-event-handler event-type="Loaded">
+        <script u:type="t5">
+          <script-code xml:space="preserve">&#xD;
+HMIRuntime.Tags.SysFct.SetBitInTag("LockHeaderLeft", 0);&#xD;
+HMIRuntime.Tags.SysFct.SetBitInTag("LockReleaseButton", 0);&#xD;
+HMIRuntime.Tags.SysFct.ResetBitInTag("ActivateStartScreen", 0);&#xD;
+Tags("PictureNumber").Write(Screen.ScreenNumber);</script-code>
+        </script>
+      </screen-event-handler>
+      <screen-event-handler event-type="Unloaded">
+        <script u:type="t5">
+          <script-code xml:space="preserve">&#xD;
+HMIRuntime.Tags.SysFct.ResetBitInTag("ActivateStartScreen", 0);&#xD;
+Tags('PreviousScreenName').Write(Screen.Name);</script-code>
+        </script>
+      </screen-event-handler>
+    </event-handlers>
+    <graphic-view alternate-back-color="#00FF00" authorization="Keine" back-color="#00000000" back-fill-pattern="Transparent" current-quality="None" enabled="True" fill-direction="BottomToTop" fill-level="0" graphic="Unified_Logo" graphic-stretch-mode="Fill" height="88" left="141" name="Grafikanzeige_3" opacity="1" require-explicit-unlock="False" rotation-angle="0" rotation-center-placement="AbsoluteFromCenter" rotation-center-x="0" rotation-center-y="0" show-fill-level="False" show-focus-visual="True" tab-index="0" top="196" visible="True" width="517" padding-bottom="0" padding-left="0" padding-right="0" padding-top="0" />
+    <button authorization="Keine" left="670" name="Schaltfläche_12" content-mode="GraphicAndText" font-family="SiemensSans" font-size="14" />
+    <text-box authorization="Keine" height="66" name="Textfeld_16" top="414" width="670" font-family="Arial">
+      <text>
+        <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+        <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+      </text>
+    </text-box>
+    <text-box authorization="Keine" height="96" name="Textfeld_1" top="0" width="800" font-family="Arial">
+      <text>
+        <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+        <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+      </text>
+    </text-box>
+    <button alternate-back-color="#507295" alternate-graphic="light_neg_new" authorization="Keine" border-color="#979796" border-width="2" fore-color="#2C2A29" graphic="light_new" height="64" left="721" name="Schaltfläche_2" top="340" width="64" font-family="SiemensSans" font-size="14">
+      <event-handlers>
+        <button-event-handler event-type="Down">
+          <script u:type="t5" async="True">
+            <global-definition-area-script-code xml:space="preserve">// [FunctionListModule]&#xD;
+</global-definition-area-script-code>
+            <script-code xml:space="preserve">&#xD;
+HMIRuntime.Tags.SysFct.SetBitInTag("LampTest", 0);&#xD;
+</script-code>
+          </script>
+        </button-event-handler>
+        <button-event-handler event-type="Up">
+          <script u:type="t5" async="True">
+            <global-definition-area-script-code xml:space="preserve">// [FunctionListModule]&#xD;
+</global-definition-area-script-code>
+            <script-code xml:space="preserve">&#xD;
+HMIRuntime.Tags.SysFct.ResetBitInTag("LampTest", 0);&#xD;
+</script-code>
+          </script>
+        </button-event-handler>
+      </event-handlers>
+      <text>
+        <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p/&gt;&lt;/body&gt;" />
+        <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Text&lt;/p&gt;&lt;/body&gt;" />
+      </text>
+    </button>
+    <text-box alternate-back-color="#FFFFFF" alternate-border-color="#2C2A29" authorization="Keine" back-color="#FFFFFF00" border-color="#2C2A29" enabled="True" fore-color="#2C2A29" left="150" name="Logout" show-focus-visual="False" top="300" visible="True" font-family="Arial">
+      <dynamizations>
+        <script-dynamization property-name="Text">
+          <script-code xml:space="preserve">&#xD;
+    var value;&#xD;
+    return value = HMIRuntime.Resources.TextLists("@Default.Location").Item(0).Item(HMIRuntime.Language) + " " + HMIRuntime.Resources.TextLists("@Default.SlotList").Item(Tags("SlotNumber").Read()).Item(HMIRuntime.Language);</script-code>
+          <trigger type="AutomaticTags">
+            <tag name="" />
+          </trigger>
+        </script-dynamization>
+      </dynamizations>
+      <text>
+        <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Standort: xxxxxx&lt;/p&gt;&lt;/body&gt;" />
+        <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Standort: xxxxxx&lt;/p&gt;&lt;/body&gt;" />
+      </text>
+    </text-box>
+    <text-box alternate-back-color="#FFFFFF" alternate-border-color="#2C2A29" authorization="Keine" back-color="#FFFFFF00" border-color="#2C2A29" enabled="True" fore-color="#2C2A29" left="150" name="Logout_1" show-focus-visual="False" top="350" visible="True" font-family="Arial">
+      <dynamizations>
+        <script-dynamization property-name="Text">
+          <script-code xml:space="preserve">&#xD;
+    var value;&#xD;
+    return value = HMIRuntime.Resources.TextLists("@Default.PlantReferenceNumber").Item(0).Item(HMIRuntime.Language) + " " + Tags("PlantReferenceNumber").Read();</script-code>
+          <trigger type="Tags">
+            <tag name="PlantReferenceNumber" />
+          </trigger>
+        </script-dynamization>
+      </dynamizations>
+      <text>
+        <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Anlagenreferenznummer: xxxxx&lt;/p&gt;&lt;/body&gt;" />
+        <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Anlagenreferenznummer: xxxxx&lt;/p&gt;&lt;/body&gt;" />
+      </text>
+    </text-box>
+    <button alternate-graphic="Unified_SeiteVor_Aktiv" authorization="Keine" graphic="Unified_SeiteVor_Inaktiv" left="735" name="Schaltfläche_1" content-graphic-stretch-mode="Fill" font-family="SiemensSans" font-size="14">
+      <event-handlers>
+        <button-event-handler event-type="Down">
+          <script u:type="t5" async="True">
+            <global-definition-area-script-code xml:space="preserve">// [FunctionListModule]&#xD;
+</global-definition-area-script-code>
+            <script-code xml:space="preserve">&#xD;
+HMIRuntime.UI.SysFct.ChangeScreen("502 Functions", ".");&#xD;
+</script-code>
+          </script>
+        </button-event-handler>
+      </event-handlers>
+      <text>
+        <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;502 Funktions&lt;/p&gt;&lt;/body&gt;" />
+        <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;502 Funktions&lt;/p&gt;&lt;/body&gt;" />
+      </text>
+    </button>
+  </screen>
+</unified-export>
