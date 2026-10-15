@@ -163,12 +163,24 @@ const screen = result.screen;
 
 The browser reader uses native `DOMParser` and `XMLSerializer`; it has no
 third-party runtime dependency. Without the optional constructor argument, it
-loads the packaged catalog through `HmiUnifiedXmlCatalog.loadV21()`.
+loads the packaged catalog selected by the document through `HmiUnifiedXmlCatalog.load(id)`.
 The DOM library used by automated Node.js tests is a development dependency only.
+
+Both readers also provide `convertScreens(xml)` / `ConvertScreens(xml)`, returning one result for
+an individual screen export or each screen in a device-scope software authoring
+document. It accepts V19, V20 and V21 metadata with the bundled original and
+authoring catalogs. Authoring previews also map rectangles, faceplate containers
+and screen windows; missing external definitions remain placeholders. Partial
+updates use catalog defaults for visualization and report that the existing
+target values are unavailable. They do not reconstruct the existing TIA project.
+The C# and TypeScript readers share this authoring-document behavior.
 
 The reader restores screens, buttons, text boxes and graphic views, including
 catalog defaults, promoted or explicit font/padding parts, localized text,
 colors and static appearance. Flattened screen items become one neutral layer.
+Unified `text-box` controls map to static `HmiText`, matching the native TIA reader;
+their formatted captions render as HTML rather than editable textareas. The XML
+writer accepts `HmiText` for re-export as `text-box`.
 Direct items and `screen-items` wrappers retain order; forward object references
 reuse the same item instance. Explicit empty text overrides catalog templates.
 JavaScript event bodies become inert text-script actions. Script dynamizations

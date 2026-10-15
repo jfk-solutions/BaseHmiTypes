@@ -5,8 +5,11 @@ import { HmiLayer } from "../../screens/base/HmiLayer.js";
 import { HmiFont } from "../../screens/base/HmiFont.js";
 import { HmiThickness } from "../../screens/base/HmiThickness.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
-import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
+import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiGraphicView } from "../../screens/shapes/HmiGraphicView.js";
+import { HmiRectangle } from "../../screens/shapes/HmiRectangle.js";
+import { HmiFaceplateContainer } from "../../screens/base/HmiFaceplateContainer.js";
+import { HmiScreenWindow } from "../../screens/screen/HmiScreenWindow.js";
 import type { HmiScreenItemBase } from "../../screens/base/HmiScreenItemBase.js";
 import { staticProperty } from "../../screens/base/HmiProperty.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
@@ -33,7 +36,7 @@ const names: Record<string, string> = {
   BackColor: "backgroundColor", AlternateBackColor: "alternateBackgroundColor", ForeColor: "foregroundColor", BorderColor: "borderColor",
   AlternateBorderColor: "alternateBorderColor", BorderWidth: "borderWidth", Opacity: "opacity", RotationAngle: "rotationAngle",
   RotationCenterX: "rotationCenterX", RotationCenterY: "rotationCenterY", TabIndex: "tabIndex", ReadOnly: "readOnly", Graphic: "source",
-  HorizontalTextAlignment: "horizontalAlignment", VerticalTextAlignment: "verticalAlignment", BackFillPattern: "fillPattern",
+  HorizontalTextAlignment: "horizontalAlignment", VerticalTextAlignment: "verticalAlignment", BackFillPattern: "fillPattern", Screen: "screenName",
 };
 const scalarFields = new Set(["name", "number"]);
 function parse(xml: string): Element {
@@ -46,14 +49,41 @@ function parse(xml: string): Element {
 
 /** Reads XML v2 screen archives with native browser XML and compression APIs. */
 export class HmiUnifiedXmlToScreenConverter {
+  private catalog?: { id: string; root: Element };
   /** Supply catalog XML to avoid fetching the packaged gzip asset. */
   constructor(private readonly catalogXml?: string) {}
+
+  /** Read individual exports or all screens in a software authoring document. Scripts stay inert. */
+  async convertScreens(xml: string): Promise<readonly HmiUnifiedXmlImportResult[]> {
+    const root = parse(xml);
+    if (attr(root, "scope") === "screen") return [await this.convert(xml)];
+    if (root.namespaceURI !== n || root.localName !== "unified-export" || attr(root, "version") !== "2" || attr(root, "scope") !== "device"
+      || children(root).length !== 1 || children(root)[0].localName !== "software" || children(root)[0].namespaceURI !== n)
+      throw new Error("Expected a Unified XML v2 screen or software document.");
+    const screens = Array.from(root.getElementsByTagNameNS(n, "screen"));
+    if (!screens.length) throw new Error("The Unified XML document contains no screens.");
+    const results: HmiUnifiedXmlImportResult[] = [];
+    for (const screen of screens) {
+      const envelope = root.cloneNode(false) as Element;
+      envelope.setAttribute("scope", "screen"); envelope.setAttribute("screen", attr(screen, "name") ?? "");
+      const selected = screen.cloneNode(true) as Element;
+      let ancestor: Element | null = screen;
+      while (ancestor && !key(ancestor, "operation")) ancestor = ancestor.parentNode?.nodeType === 1 ? ancestor.parentNode as Element : null;
+      const operation = ancestor ? key(ancestor, "operation") : undefined;
+      if (operation) selected.setAttributeNS(u, "u:operation", operation);
+      envelope.appendChild(selected);
+      const result = await this.convert(new XMLSerializer().serializeToString(envelope));
+      result.screen.sourceData = new TextEncoder().encode(xml);
+      results.push(result);
+    }
+    return results;
+  }
 
   async convert(xml: string): Promise<HmiUnifiedXmlImportResult> {
     const root = parse(xml);
     if (root.namespaceURI !== n || root.localName !== "unified-export" || attr(root, "version") !== "2" || attr(root, "scope") !== "screen" ||
-      attr(root, "catalog") !== HmiScreenToUnifiedXmlConverter.catalogId || attr(root, "apiVersion") !== "21.0.0.0")
-      throw new Error("Expected a screen-scope XML v2 archive using the fixed V21 catalog.");
+      !/^(19|20|21)\.0\.0\.0$/.test(attr(root, "apiVersion") ?? ""))
+      throw new Error("Expected a screen-scope Unified XML v2 archive for TIA V19, V20 or V21.");
     const complete = attr(root, "complete");
     if (complete !== "true" && complete !== "false") throw new Error("Invalid archive complete flag.");
     const roots = children(root);
@@ -68,19 +98,25 @@ export class HmiUnifiedXmlToScreenConverter {
     }
     for (const ref of all.filter(e => e.namespaceURI === u && e.localName === "ref"))
       if (!ids.has(attr(ref, "ref") ?? "")) throw new Error("Dangling object reference.");
-    const catalog = parse(this.catalogXml ?? await HmiUnifiedXmlCatalog.loadV21());
-    if (catalog.namespaceURI !== u || catalog.localName !== "catalog" || attr(catalog, "id") !== HmiScreenToUnifiedXmlConverter.catalogId)
+    const catalogId = attr(root, "catalog") ?? "";
+    const catalog = this.catalog?.id === catalogId ? this.catalog.root : parse(this.catalogXml ?? await HmiUnifiedXmlCatalog.load(catalogId));
+    if (catalog.namespaceURI !== u || catalog.localName !== "catalog" || attr(catalog, "id") !== catalogId)
       throw new Error("Catalog ID mismatch.");
+    this.catalog = { id: catalogId, root: catalog };
     const context = new Context(catalog);
     const screen = new HmiScreen(); screen.sourceFormat = "WinCCUnifiedXmlV2"; screen.sourceData = new TextEncoder().encode(xml);
     context.map(source, screen, "screen");
     const layer = new HmiLayer(); layer.name = "Unified screen items"; screen.layers.push(layer);
     const nodes = children(source).flatMap(e => e.namespaceURI === n && e.localName === "screen-items" ? children(e) : [e])
       .filter(e => e.namespaceURI === u && e.localName === "ref" || e.namespaceURI === n && ["button", "text-box", "graphic-view"].includes(e.localName)
-        || e.parentNode !== source);
+            || e.namespaceURI === n && ["rectangle", "faceplate-container", "screen-window"].includes(e.localName) || e.parentNode !== source);
     const items = new Map<Element, HmiScreenItemBase>();
     for (const node of nodes.filter(e => !(e.namespaceURI === u && e.localName === "ref"))) {
-      const item = node.namespaceURI !== n ? undefined : node.localName === "button" ? new HmiButton() : node.localName === "text-box" ? new HmiTextBox() : node.localName === "graphic-view" ? new HmiGraphicView() : undefined;
+      if (["rectangle", "faceplate-container", "screen-window"].includes(node.localName) && !context.hasContract(node)) {
+        context.report("screen." + node.localName, "Unsupported control retained in screen sourceData."); continue;
+      }
+      const item = node.namespaceURI !== n ? undefined : node.localName === "button" ? new HmiButton() : node.localName === "text-box" ? new HmiText() : node.localName === "graphic-view" ? new HmiGraphicView()
+        : node.localName === "rectangle" ? new HmiRectangle() : node.localName === "faceplate-container" ? new HmiFaceplateContainer() : node.localName === "screen-window" ? new HmiScreenWindow() : undefined;
       if (!item) { context.report("screen." + node.localName, "Unsupported control retained in screen sourceData."); continue; }
       items.set(node, item); item.sourceFormat = "WinCCUnifiedXmlV2";
       item.sourceData = new TextEncoder().encode(new XMLSerializer().serializeToString(node));
@@ -92,6 +128,7 @@ export class HmiUnifiedXmlToScreenConverter {
       if (item) layer.items.push(item); else context.report("screen.screen-items", "Reference or control cannot be represented; retained in screen sourceData.");
     }
     if (complete === "false") context.report("screen", "The source archive is marked incomplete.");
+    if (attr(root, "coverage") === "authored-objects") context.report("screen", "Authoring preview uses catalog defaults; existing target values and external project resources are unavailable.");
     return { screen, sourceComplete: complete === "true", diagnostics: context.diagnostics };
   }
 }
@@ -105,6 +142,9 @@ class Context {
     this.contracts = new Map(children(types[0]).map(e => [attr(e, "id")!, e]));
   }
   report(path: string, message: string): void { this.diagnostics.push({ path, message }); }
+  hasContract(node: Element): boolean {
+    return key(node, "type") !== undefined || [...this.contracts.values()].filter(e => attr(e, "tag") === node.localName).length === 1;
+  }
   private contract(node: Element): Element {
     if (node.namespaceURI !== n) throw new Error("Invalid object namespace.");
     const marker = key(node, "type");
@@ -119,6 +159,9 @@ class Context {
   }
   map(node: Element, model: HmiScreen | HmiScreenItemBase, path: string): void {
     const contract = this.contract(node); model.id = key(node, "id");
+    const operation = key(node, "operation");
+    if (operation && !["create", "update", "upsert"].includes(operation)) throw new Error("Invalid authoring operation.");
+    if (operation === "update" || operation === "upsert") this.report(path, "Partial authoring object: omitted values use preview defaults; the existing target is unavailable.");
     const allowed = new Set<string>();
     for (const property of elements(contract, u, "property")) {
       const name = attr(property, "name")!, alias = attr(property, "xml")!; allowed.add(alias);
@@ -129,6 +172,12 @@ class Context {
       }
       model.sourceProperties[name] = lexical;
       const value = decode(lexical, elements(property, u, "value")[0]);
+      if (name === "ContainedType" && model instanceof HmiFaceplateContainer) {
+        const match = /^V([^\\]+)\\(.+)$/.exec(lexical);
+        model.faceplateName = match?.[2] ?? lexical; model.faceplateVersion = match?.[1];
+        this.report(path, "Faceplate library definition is external; preview uses a placeholder.");
+        continue;
+      }
       if (!names[name] || !assign(model, names[name], value)) this.report(`${path}.${name}`, "Field retained in sourceProperties; no neutral-model mapping.");
     }
     for (const member of elements(contract, u, "member")) {
@@ -144,6 +193,8 @@ class Context {
           if (value !== undefined) { if (explicit.length) throw new Error("Conflicting promoted and explicit part."); part.setAttribute(child, value); }
         }
         this.part(part, childContract, model, name, path);
+      } else if (["Font", "Padding"].includes(name) && elements(node, n, alias).length) {
+        const part = elements(node, n, alias)[0]; this.part(part, this.contract(part), model, name, path);
       } else if (["Text", "AlternateText", "ToolTipText"].includes(name)) {
         const explicit = elements(node, n, alias);
         if (explicit.length > 1) throw new Error("Duplicate text singleton.");
@@ -154,7 +205,7 @@ class Context {
       }
     }
     for (const attribute of Array.from(node.attributes))
-      if (attribute.namespaceURI !== "http://www.w3.org/2000/xmlns/" && !(attribute.namespaceURI === u && ["id", "type"].includes(attribute.localName)) &&
+      if (attribute.namespaceURI !== "http://www.w3.org/2000/xmlns/" && !(attribute.namespaceURI === u && ["id", "type", "operation"].includes(attribute.localName)) &&
         (attribute.namespaceURI || !allowed.has(attribute.localName))) this.report(`${path}.@${attribute.name}`, "Unknown attribute retained in sourceData.");
     for (const wrapper of elements(node, n, "event-handlers")) for (const handler of children(wrapper)) {
       if (handler.namespaceURI !== n || !["button-event-handler", "screen-event-handler"].includes(handler.localName)) { this.report(`${path}.events`, "Unsupported event retained in sourceData."); continue; }
@@ -189,7 +240,7 @@ class Context {
       this.report(`${path}.dynamizations.${name}`, "Script and tag triggers mapped; other engineering settings remain in sourceData.");
     }
     const handled = new Set(["font", "padding", "text", "alternate-text", "tool-tip-text", "event-handlers", "dynamizations"]);
-    if (model instanceof HmiScreen) for (const name of ["button", "text-box", "graphic-view", "screen-items"]) handled.add(name);
+    if (model instanceof HmiScreen) for (const name of ["button", "text-box", "graphic-view", "rectangle", "faceplate-container", "screen-window", "screen-items"]) handled.add(name);
     for (const child of children(node))
       if (!(child.namespaceURI === u && child.localName === "ref") && (child.namespaceURI !== n || !handled.has(child.localName)))
         this.report(`${path}.${child.localName}`, "Unsupported member retained in sourceData.");
@@ -210,7 +261,7 @@ class Context {
     const target = role[0].toLowerCase() + role.slice(1);
     if (part && target in owner) record(owner)[target] = part;
     for (const attribute of Array.from(node.attributes))
-      if (attribute.namespaceURI !== "http://www.w3.org/2000/xmlns/" && !(attribute.namespaceURI === u && ["id", "type"].includes(attribute.localName)) &&
+      if (attribute.namespaceURI !== "http://www.w3.org/2000/xmlns/" && !(attribute.namespaceURI === u && ["id", "type", "operation"].includes(attribute.localName)) &&
         (attribute.namespaceURI || !allowed.has(attribute.localName))) this.report(`${path}.${role}.@${attribute.name}`, "Unknown part attribute retained in sourceData.");
     for (const child of children(node)) this.report(`${path}.${role}.${child.localName}`, "Part member retained in sourceData.");
   }
@@ -221,7 +272,7 @@ class Context {
       if (child.namespaceURI !== n || child.localName !== "multilingual-text-item") { this.report(path, "Unsupported text member retained in sourceData."); continue; }
       this.contract(child);
       for (const attribute of Array.from(child.attributes))
-        if (attribute.namespaceURI !== "http://www.w3.org/2000/xmlns/" && !(attribute.namespaceURI === u && ["id", "type"].includes(attribute.localName)) &&
+        if (attribute.namespaceURI !== "http://www.w3.org/2000/xmlns/" && !(attribute.namespaceURI === u && ["id", "type", "operation"].includes(attribute.localName)) &&
           (attribute.namespaceURI || !["lang", "text"].includes(attribute.localName))) this.report(`${path}.@${attribute.name}`, "Unknown localized-text attribute retained in sourceData.");
       const language = attr(child, "lang"), value = attr(child, "text");
       if (language === undefined || value === undefined) throw new Error("Missing text language or payload.");

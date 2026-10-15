@@ -7,11 +7,14 @@ namespace BaseHmiTypes.Converters.UnifiedXml;
 public static class HmiUnifiedXmlCatalog
 {
     /// <summary>Opens a fresh, non-seekable XML stream. The caller must dispose it.</summary>
-    public static Stream OpenV21()
+    public static Stream OpenV21() => Open(HmiScreenToUnifiedXmlConverter.CatalogId);
+
+    public static Stream Open(string id)
     {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(id ?? "", "^[a-f0-9]{64}$")) throw new FormatException("Invalid Unified catalog identifier.");
         var stream = typeof(HmiUnifiedXmlCatalog).Assembly.GetManifestResourceStream(
-            "BaseHmiTypes.Converters.UnifiedXml.Catalogs." + HmiScreenToUnifiedXmlConverter.CatalogId + ".xml.gz")
-            ?? throw new InvalidOperationException("The released V21 catalog is missing from the assembly.");
+            "BaseHmiTypes.Converters.UnifiedXml.Catalogs." + id + ".xml.gz")
+            ?? throw new NotSupportedException("The requested Unified catalog is not bundled: " + id);
         try { return new GZipStream(stream, CompressionMode.Decompress); }
         catch { stream.Dispose(); throw; }
     }

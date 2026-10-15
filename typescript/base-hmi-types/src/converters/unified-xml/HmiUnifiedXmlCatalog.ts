@@ -2,6 +2,10 @@ import { HmiScreenToUnifiedXmlConverter } from "./HmiScreenToUnifiedXmlConverter
 
 /** Loads the catalog with browser APIs; no Node.js or third-party runtime dependencies. */
 export class HmiUnifiedXmlCatalog {
+  static async load(id: string): Promise<string> {
+    if (!/^[a-f0-9]{64}$/.test(id)) throw new Error("Invalid Unified catalog identifier.");
+    return this.loadV21(new URL(`../../catalogs/unified-v21/${id}.xml.gz`, import.meta.url));
+  }
   /** Hosts may serve this asset from another location and pass its URL to loadV21. */
   static readonly v21Url = new URL(
     `../../catalogs/unified-v21/${HmiScreenToUnifiedXmlConverter.catalogId}.xml.gz`, import.meta.url);

@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BaseHmiTypes\BaseHmiTypes.csproj" />
     <EmbeddedResource Include="Fixtures\unified-v21-screen.xml" />
+    <EmbeddedResource Include="Fixtures\unified-authoring-panel.xml" />
   </ItemGroup>
 
 </Project>
