@@ -21,12 +21,12 @@ public sealed class HmiUnifiedXmlImportResult
     { Screen = screen; SourceComplete = sourceComplete; Diagnostics = diagnostics.AsReadOnly(); }
 }
 
-/// <summary>Reads fixed V21 XML v2 screen archives, including incomplete inspection exports.</summary>
+/// <summary>Reads XML v2 screen archives and software authoring documents with bundled catalogs.</summary>
 public sealed class HmiUnifiedXmlToScreenConverter
 {
     private static readonly XNamespace N = HmiScreenToUnifiedXmlConverter.Namespace;
     private static readonly XNamespace U = HmiScreenToUnifiedXmlConverter.ContractNamespace;
-    private static readonly Lazy<XElement> Catalog = new(() => { using var stream = HmiUnifiedXmlCatalog.OpenV21(); return XDocument.Load(stream).Root!; });
+    private readonly Dictionary<string, XElement> catalogs = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, string> Names = new(StringComparer.Ordinal)
     {
         ["Name"] = "Name", ["Width"] = "Width", ["Height"] = "Height", ["ScreenNumber"] = "Number",
@@ -36,27 +36,62 @@ public sealed class HmiUnifiedXmlToScreenConverter
         ["BorderWidth"] = "BorderWidth", ["Opacity"] = "Opacity", ["RotationAngle"] = "RotationAngle",
         ["RotationCenterX"] = "RotationCenterX", ["RotationCenterY"] = "RotationCenterY", ["TabIndex"] = "TabIndex",
         ["ReadOnly"] = "ReadOnly", ["Graphic"] = "Source", ["HorizontalTextAlignment"] = "HorizontalAlignment",
-        ["VerticalTextAlignment"] = "VerticalAlignment", ["BackFillPattern"] = "FillPattern"
+        ["VerticalTextAlignment"] = "VerticalAlignment", ["BackFillPattern"] = "FillPattern", ["Screen"] = "ScreenName"
     };
 
-    public HmiUnifiedXmlImportResult Convert(string xml)
+    private static XElement Parse(string xml)
     {
         if (xml == null) throw new ArgumentNullException(nameof(xml));
         using var reader = XmlReader.Create(new StringReader(xml), new XmlReaderSettings
         { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null, MaxCharactersInDocument = 16 * 1024 * 1024 });
-        var document = XDocument.Load(reader, LoadOptions.PreserveWhitespace);
-        var root = document.Root!;
+        return XDocument.Load(reader, LoadOptions.PreserveWhitespace).Root!;
+    }
+
+    public IReadOnlyList<HmiUnifiedXmlImportResult> ConvertScreens(string xml)
+    {
+        var root = Parse(xml);
+        if ((string?)root.Attribute("scope") == "screen") return new[] { Convert(xml) };
+        if (root.Name != N + "unified-export" || (string?)root.Attribute("version") != "2" || (string?)root.Attribute("scope") != "device"
+            || root.Elements().Count() != 1 || root.Elements().Single().Name != N + "software")
+            throw new NotSupportedException("Expected a Unified XML v2 screen or software document.");
+        var screens = root.Descendants(N + "screen").ToArray();
+        if (screens.Length == 0) throw new FormatException("The Unified XML document contains no screens.");
+        var results = new List<HmiUnifiedXmlImportResult>();
+        foreach (var screen in screens)
+        {
+            var envelope = new XElement(root.Name, root.Attributes());
+            envelope.SetAttributeValue("scope", "screen"); envelope.SetAttributeValue("screen", (string?)screen.Attribute("name") ?? "");
+            var selected = new XElement(screen);
+            var operation = screen.AncestorsAndSelf().Select(e => (string?)e.Attribute(U + "operation")).FirstOrDefault(value => value != null);
+            if (operation != null) selected.SetAttributeValue(U + "operation", operation);
+            envelope.Add(selected);
+            var result = Convert(envelope.ToString(SaveOptions.DisableFormatting));
+            result.Screen.SourceData = Encoding.UTF8.GetBytes(xml); results.Add(result);
+        }
+        return results.AsReadOnly();
+    }
+
+    public HmiUnifiedXmlImportResult Convert(string xml)
+    {
+        var root = Parse(xml);
         if (root.Name != N + "unified-export" || (string?)root.Attribute("version") != "2" ||
-            (string?)root.Attribute("scope") != "screen" || (string?)root.Attribute("catalog") != HmiScreenToUnifiedXmlConverter.CatalogId ||
-            (string?)root.Attribute("apiVersion") != "21.0.0.0")
-            throw new NotSupportedException("Expected a screen-scope XML v2 archive using the fixed V21 catalog.");
+            (string?)root.Attribute("scope") != "screen" ||
+            !Regex.IsMatch((string?)root.Attribute("apiVersion") ?? "", @"^(19|20|21)\.0\.0\.0$"))
+            throw new NotSupportedException("Expected a screen-scope Unified XML v2 archive for TIA V19, V20 or V21.");
         var complete = (string?)root.Attribute("complete");
         if (complete != "true" && complete != "false") throw new FormatException("Invalid archive complete flag.");
         if (root.Elements().Count() != 1 || root.Elements().Single().Name != N + "screen") throw new FormatException("Exactly one screen root is required.");
         var source = root.Elements().Single();
         if (string.IsNullOrWhiteSpace((string?)source.Attribute("name")) || (string?)source.Attribute("name") != (string?)root.Attribute("screen"))
             throw new FormatException("Archive and screen names must agree.");
-        var context = new Context();
+        var catalogId = (string?)root.Attribute("catalog") ?? "";
+        if (!catalogs.TryGetValue(catalogId, out var catalog))
+        {
+            using var stream = HmiUnifiedXmlCatalog.Open(catalogId); catalog = XDocument.Load(stream).Root!;
+            if (catalog.Name != U + "catalog" || (string?)catalog.Attribute("id") != catalogId) throw new FormatException("Catalog ID mismatch.");
+            catalogs.Add(catalogId, catalog);
+        }
+        var context = new Context(catalog);
         var ids = new Dictionary<string, XElement>(StringComparer.Ordinal);
         foreach (var node in root.Descendants())
         {
@@ -73,12 +108,14 @@ public sealed class HmiUnifiedXmlToScreenConverter
         var layer = new HmiLayer { Name = "Unified screen items" };
         screen.Layers.Add(layer);
         var nodes = source.Elements().SelectMany(e => e.Name == N + "screen-items" ? e.Elements() : new[] { e })
-            .Where(e => e.Name == N + "button" || e.Name == N + "text-box" || e.Name == N + "graphic-view" || e.Name == U + "ref" || e.Parent != source).ToArray();
+            .Where(e => e.Name == N + "button" || e.Name == N + "text-box" || e.Name == N + "graphic-view" || e.Name == N + "rectangle" || e.Name == N + "faceplate-container" || e.Name == N + "screen-window" || e.Name == U + "ref" || e.Parent != source).ToArray();
         // Pre-create definitions so forward references reuse the same model instance.
         var items = new Dictionary<XElement, HmiScreenItemBase>();
         foreach (var node in nodes.Where(e => e.Name != U + "ref"))
         {
-            HmiScreenItemBase? item = node.Name == N + "button" ? new HmiButton() : node.Name == N + "text-box" ? new HmiTextBox() : node.Name == N + "graphic-view" ? new HmiGraphicView() : null;
+            if ((node.Name == N + "rectangle" || node.Name == N + "faceplate-container" || node.Name == N + "screen-window") && !context.HasContract(node))
+            { context.Report("screen." + node.Name.LocalName, "Unsupported control retained in screen SourceData."); continue; }
+            HmiScreenItemBase? item = node.Name == N + "button" ? new HmiButton() : node.Name == N + "text-box" ? new HmiText() : node.Name == N + "graphic-view" ? new HmiGraphicView() : node.Name == N + "rectangle" ? new HmiRectangle() : node.Name == N + "faceplate-container" ? new HmiFaceplateContainer() : node.Name == N + "screen-window" ? new HmiScreenWindow() : null;
             if (item == null) { context.Report("screen." + node.Name.LocalName, "Unsupported control retained in screen SourceData."); continue; }
             items.Add(node, item);
             item.SourceFormat = "WinCCUnifiedXmlV2";
@@ -92,13 +129,16 @@ public sealed class HmiUnifiedXmlToScreenConverter
             else context.Report("screen.screen-items", "Reference or control cannot be represented; retained in screen SourceData.");
         }
         if (complete == "false") context.Report("screen", "The source archive is marked incomplete.");
+        if ((string?)root.Attribute("coverage") == "authored-objects") context.Report("screen", "Authoring preview uses catalog defaults; existing target values and external project resources are unavailable.");
         return new(screen, complete == "true", context.Diagnostics);
     }
 
     private sealed class Context
     {
         public readonly List<HmiUnifiedXmlDiagnostic> Diagnostics = [];
-        private readonly Dictionary<string, XElement> contracts = Catalog.Value.Element(U + "types")!.Elements().ToDictionary(e => (string)e.Attribute("id")!, StringComparer.Ordinal);
+        private readonly Dictionary<string, XElement> contracts;
+        public Context(XElement catalog) => contracts = catalog.Element(U + "types")!.Elements().ToDictionary(e => (string)e.Attribute("id")!, StringComparer.Ordinal);
+        public bool HasContract(XElement node) => node.Attribute(U + "type") != null || contracts.Values.Count(e => (string?)e.Attribute("tag") == node.Name.LocalName) == 1;
         public void Report(string path, string message) => Diagnostics.Add(new(path, message));
 
         private XElement Contract(XElement node)
@@ -119,6 +159,9 @@ public sealed class HmiUnifiedXmlToScreenConverter
         {
             var contract = Contract(node);
             model.Id = (string?)node.Attribute(U + "id");
+            var operation = (string?)node.Attribute(U + "operation");
+            if (operation != null && operation != "create" && operation != "update" && operation != "upsert") throw new FormatException("Invalid authoring operation.");
+            if (operation == "update" || operation == "upsert") Report(path, "Partial authoring object: omitted values use preview defaults; the existing target is unavailable.");
             var source = model is HmiScreenBase s ? s.SourceProperties : ((HmiScreenItemBase)model).SourceProperties;
             var allowed = new HashSet<string>(StringComparer.Ordinal);
             foreach (var property in contract.Elements(U + "property"))
@@ -134,6 +177,13 @@ public sealed class HmiUnifiedXmlToScreenConverter
                 }
                 source[name] = lexical;
                 var value = Decode(lexical, property.Element(U + "value")!);
+                if (name == "ContainedType" && model is HmiFaceplateContainer faceplate)
+                {
+                    var match = Regex.Match(lexical, @"^V([^\\]+)\\(.+)$");
+                    faceplate.FaceplateName = match.Success ? match.Groups[2].Value : lexical;
+                    faceplate.FaceplateVersion = match.Success ? match.Groups[1].Value : null;
+                    Report(path, "Faceplate library definition is external; preview uses a placeholder."); continue;
+                }
                 if (!Names.TryGetValue(name, out var target) || !Assign(model, target, value))
                     Report(path + "." + name, "Field retained in SourceProperties; no neutral-model mapping.");
             }
@@ -158,6 +208,10 @@ public sealed class HmiUnifiedXmlToScreenConverter
                         }
                     }
                     MapPart(part, childContract, model, name, source, path);
+                }
+                else if ((name == "Font" || name == "Padding") && node.Elements(N + alias).Any())
+                {
+                    var part = node.Elements(N + alias).First(); MapPart(part, Contract(part), model, name, source, path);
                 }
                 else if (name is "Text" or "AlternateText" or "ToolTipText")
                 {
@@ -210,10 +264,10 @@ public sealed class HmiUnifiedXmlToScreenConverter
                 property.SetValue(model, wrapper);
                 Report(path + ".Dynamizations." + name, "Script and tag triggers mapped; other engineering settings remain in SourceData.");
             }
-            foreach (var attribute in node.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != U + "id" && a.Name != U + "type"))
+            foreach (var attribute in node.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != U + "id" && a.Name != U + "type" && a.Name != U + "operation"))
                 if (attribute.Name.Namespace != XNamespace.None || !allowed.Contains(attribute.Name.LocalName)) Report(path + ".@" + attribute.Name, "Unknown attribute retained in SourceData.");
             var handled = new HashSet<string> { "font", "padding", "text", "alternate-text", "tool-tip-text", "event-handlers", "dynamizations" };
-            if (model is HmiScreenBase) handled.UnionWith(new[] { "button", "text-box", "graphic-view", "screen-items" });
+            if (model is HmiScreenBase) handled.UnionWith(new[] { "button", "text-box", "graphic-view", "rectangle", "faceplate-container", "screen-window", "screen-items" });
             foreach (var child in node.Elements())
                 if (child.Name != U + "ref" && (child.Name.Namespace != N || !handled.Contains(child.Name.LocalName)))
                     Report(path + "." + child.Name.LocalName, "Unsupported member retained in SourceData.");
@@ -237,7 +291,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
                 if (part == null || !Assign(part, target, value)) Report(path + "." + role + "." + name, "Part field retained in SourceProperties.");
             }
             if (part != null) owner.GetType().GetProperty(role)?.SetValue(owner, part);
-            foreach (var attribute in node.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != U + "id" && a.Name != U + "type"))
+            foreach (var attribute in node.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != U + "id" && a.Name != U + "type" && a.Name != U + "operation"))
                 if (attribute.Name.Namespace != XNamespace.None || !allowed.Contains(attribute.Name.LocalName)) Report(path + "." + role + ".@" + attribute.Name, "Unknown part attribute retained in SourceData.");
             foreach (var child in node.Elements()) Report(path + "." + role + "." + child.Name.LocalName, "Part member retained in SourceData.");
         }
@@ -250,7 +304,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
             {
                 if (child.Name != N + "multilingual-text-item") { Report(path, "Unsupported text member retained in SourceData."); continue; }
                 Contract(child);
-                foreach (var attribute in child.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != U + "id" && a.Name != U + "type"))
+                foreach (var attribute in child.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != U + "id" && a.Name != U + "type" && a.Name != U + "operation"))
                     if (attribute.Name != "lang" && attribute.Name != "text") Report(path + ".@" + attribute.Name, "Unknown localized-text attribute retained in SourceData.");
                 var lang = (string?)child.Attribute("lang") ?? throw new FormatException("Missing text language.");
                 CultureInfo culture;

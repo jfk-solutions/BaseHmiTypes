@@ -115,7 +115,7 @@ public sealed class HmiScreenToUnifiedXmlConverter
             if (identities.TryGetValue(item, out var id))
             { parent.Add(new XElement(Contract + "ref", new XAttribute("ref", id))); return; }
             var type = item.GetType();
-            var tag = type == typeof(HmiButton) ? "button" : type == typeof(HmiTextBox) ? "text-box" : type == typeof(HmiGraphicView) ? "graphic-view" : null;
+            var tag = type == typeof(HmiButton) ? "button" : (type == typeof(HmiText) || type == typeof(HmiTextBox)) ? "text-box" : type == typeof(HmiGraphicView) ? "graphic-view" : null;
             if (tag == null) { Report(path, "Unsupported control type: " + type.Name); return; }
             var element = Object(item, tag, tag == "button" ? "t9" : tag == "text-box" ? "t14" : "t6");
             parent.Add(element);

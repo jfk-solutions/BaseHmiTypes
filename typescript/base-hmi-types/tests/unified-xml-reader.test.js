@@ -4,7 +4,7 @@ import test from "node:test";
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import {
   HmiUnifiedXmlToScreenConverter, HmiScreenToUnifiedXmlConverter, HmiUnifiedXmlCatalog,
-  HmiScreen, HmiButton, HmiGraphicView, HmiLayer, HmiFont, HmiThickness, HmiMultilingualText, staticProperty,
+  HmiScreen, HmiButton, HmiGraphicView, HmiText, HmiScreenToHtmlConverter, HmiLayer, HmiFont, HmiThickness, HmiMultilingualText, staticProperty,
 } from "../dist/index.js";
 
 // Test-only DOM implementation. Production browser modules use the native globals.
@@ -123,4 +123,36 @@ test("reader rejects invalid identities, selectors, values and duplicate languag
 test("unknown language remains in original XML and produces a diagnostic", async () => {
   const result = await reader.convert(archive('<button><text><multilingual-text-item lang="unknown" text="Keep"/></text></button>'));
   assert.ok(result.diagnostics.some(d => d.message.includes("Unsupported language")));
+});
+
+test("browser reader previews all authoring screens with catalog defaults and external placeholders", async () => {
+  const id = "55f590b8a6b10661b5d5bab2b6451aa77112078f77326349ef0068b520b8b61d";
+  const data = new Uint8Array(await readFile(new URL(`../dist/catalogs/unified-v21/${id}.xml.gz`, import.meta.url)));
+  const converter = new HmiUnifiedXmlToScreenConverter(await HmiUnifiedXmlCatalog.readV21(data));
+  const xml = await readFile(new URL("../../../tests/BaseHmiTypes.Tests/Fixtures/unified-authoring-panel.xml", import.meta.url), "utf8");
+  for (const version of [19, 20, 21]) {
+    const source = xml.replace('apiVersion="21.0.0.0"', `apiVersion="${version}.0.0.0"`);
+    const results = await converter.convertScreens(source);
+    assert.equal(results.length, 7);
+    assert.equal(results[0].screen.width.staticValue, 800);
+    assert.equal(results[0].screen.height.staticValue, 480);
+    assert.ok(results[0].screen.layers[0].items.some(item => item.constructor.name === "HmiRectangle"));
+    assert.ok(results.flatMap(result => result.diagnostics).some(diagnostic => diagnostic.message.includes("Faceplate library")));
+    assert.equal(new TextDecoder().decode(results[0].screen.sourceData), source);
+  }
+});
+
+
+test("Unified text boxes are static formatted text, including after re-export", async () => {
+  const source = archive('<text-box name="TxtRBG1" visible="True" left="360" top="142" width="60" height="32"><text><multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;RBG1&lt;/p&gt;&lt;/body&gt;"/></text><font weight="Bold"/></text-box>');
+  const result = await reader.convert(source);
+  const item = result.screen.layers[0].items[0];
+  assert.ok(item instanceof HmiText);
+  assert.equal(item.text.staticValue.formattedTexts.get(1031), "<body><p>RBG1</p></body>");
+  const html = await new HmiScreenToHtmlConverter().convertAsync(result.screen);
+  assert.match(html, /<p>RBG1<\/p>/);
+  assert.doesNotMatch(html, /<textarea|&lt;\/?(?:body|p)&gt;/);
+  const exported = new HmiScreenToUnifiedXmlConverter().convert(result.screen, "Panel");
+  assert.match(exported.xml, /<text-box/);
+  assert.ok((await reader.convert(exported.xml)).screen.layers[0].items[0] instanceof HmiText);
 });

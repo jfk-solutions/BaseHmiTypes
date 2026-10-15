@@ -12,7 +12,7 @@
 }
 
 /* HMI captions use paragraph breaks without browser document margins. */
-[data-hmi-screen] button p {
+[data-hmi-screen] p {
   margin: 0;
 }
 

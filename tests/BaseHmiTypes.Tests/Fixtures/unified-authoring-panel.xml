@@ -1,0 +1,972 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unified-export xmlns="urn:s7mcp:wincc-unified:2" xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2" catalog="55f590b8a6b10661b5d5bab2b6451aa77112078f77326349ef0068b520b8b61d" device="Panel &quot;3&quot; &amp; &lt;North&gt;" apiVersion="21.0.0.0" scope="device" coverage="authored-objects" complete="true">
+  <software u:operation="upsert">
+    <screen-groups>
+      <screen-group name="Plant screens">
+        <screens>
+          <screen name="003 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="3">
+            <event-handlers>
+              <screen-event-handler event-type="Loaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                </script>
+              </screen-event-handler>
+              <screen-event-handler event-type="Unloaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                </script>
+              </screen-event-handler>
+            </event-handlers>
+            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <rectangle name="Rectangle0" left="0" top="0" width="60" height="32" back-color="#83A6CC" border-width="1" dash-type="Solid" back-fill-pattern="Solid" />
+            <rectangle name="Rectangle1" left="0" top="0" width="60" height="32" back-color="#CB7CF0" border-width="1" dash-type="Solid" back-fill-pattern="Solid" />
+            <rectangle name="Rectangle2" left="0" top="0" width="60" height="32" back-color="#7E7E7E" border-width="1" dash-type="Solid" back-fill-pattern="Solid" />
+            <rectangle name="Rectangle3" left="0" top="0" width="60" height="32" back-color="#FFEB00" border-width="2" dash-type="Dash" back-fill-pattern="Solid" />
+            <rectangle name="RecRectangle4" left="0" top="0" width="60" height="32" back-color="#FFEB00" border-width="2" dash-type="Dash" back-fill-pattern="Transparent" />
+            <text-box name="TxtRectangle4" left="0" top="0" width="60" height="32">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Rectangle4&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Rectangle4&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font weight="Bold" />
+            </text-box>
+            <faceplate-container name="Place &quot;A&quot; &amp; &lt;B&gt;" left="80" top="106" width="56" height="38" contained-type="V1.0.0\Place">
+              <interface>
+                <faceplate-interface u:type="interface-string" property-name="PlaceSelected" value="123" />
+                <faceplate-interface u:type="interface-string" property-name="PlaceOccupied" value="PlaceOccupied123" />
+                <faceplate-interface u:type="interface-string" property-name="DataPresent" value="DataPresent123" />
+                <faceplate-interface u:type="interface-string" property-name="OperationMode" value="OP123" />
+                <faceplate-interface u:type="interface-string" property-name="PlaceNumber" value="PlaceNumber" />
+                <faceplate-interface u:type="interface-string" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
+                <faceplate-interface u:type="interface-integer" property-name="DbNumber" value="123" />
+              </interface>
+            </faceplate-container>
+            <faceplate-container name="GroupStatusA" left="10" top="106" width="45" height="45" contained-type="V1.0.0\GroupStatus">
+              <interface>
+                <faceplate-interface u:type="interface-string" property-name="GroupOperationMode" value="OperationModeGroupA" />
+                <faceplate-interface u:type="interface-string" property-name="GroupName" value="A" />
+              </interface>
+            </faceplate-container>
+            <button name="Button_0" left="650" top="106" width="140" height="42">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Scale Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Scale Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <content content-mode="Text" />
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">HMIRuntime.UI.SysFct.ChangeScreen(&quot;551 ScaleParameter&quot;, Screen.Parent.Path);&#xA;Tags(&quot;ControlScaleScaleNumber&quot;).Write(4);&#xA;Tags(&quot;LockHeaderLeft&quot;).SetBit(0);&#xA;Tags(&quot;LockReleaseButton&quot;).SetBit(0);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <faceplate-container name="1" left="650" top="148" width="140" height="42" contained-type="V1.0.0\SafetyLightGrid">
+              <interface>
+                <faceplate-interface u:type="interface-string" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
+                <faceplate-interface u:type="interface-string" property-name="BypassActive" value="Muting1BypassActive" />
+                <faceplate-interface u:type="interface-string" property-name="Triggered" value="Muting1Triggered" />
+                <faceplate-interface u:type="interface-string" property-name="Reset" value="Muting1Reset" />
+              </interface>
+            </faceplate-container>
+            <button name="Button_2" left="650" top="190" width="140" height="42">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;CC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;CC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <content content-mode="Text" />
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">HMIRuntime.UI.SysFct.ChangeScreen(&quot;520 ContourLengthwise&quot;, Screen.Parent.Path);&#xA;Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;Tags(&quot;NumberWorkPlaceContourError&quot;).Write(123);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="Button_3" left="650" top="232" width="140" height="42">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;VL Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;VL Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <content content-mode="Text" />
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;LockHeaderLeft&quot;).SetBit(0);&#xA;Tags(&quot;ResetPlacesExceptOfPlaceNumber&quot;).Write(123);&#xA;Tags(&quot;123&quot;).SetBit(0);&#xA;Tags(&quot;PlaceNumber&quot;).Write(123);&#xA;Tags(&quot;PictureCallSelectionType&quot;).Write(1);&#xA;Tags(&quot;PictureCallSelectionPlace&quot;).Write(8);&#xA;Tags(&quot;Plus1&quot;).ResetBit(0);&#xA;Tags(&quot;Minus1&quot;).ResetBit(0);&#xA;Tags(&quot;Plus2&quot;).ResetBit(0);&#xA;Tags(&quot;Minus2&quot;).ResetBit(0);&#xA;Tags(&quot;Plus3&quot;).ResetBit(0);&#xA;Tags(&quot;Minus3&quot;).ResetBit(0);&#xA;Tags(&quot;Plus4&quot;).ResetBit(0);&#xA;Tags(&quot;Minus4&quot;).ResetBit(0);&#xA;Tags(&quot;Plus5&quot;).ResetBit(0);&#xA;Tags(&quot;Minus5&quot;).ResetBit(0);&#xA;Tags(&quot;Plus6&quot;).ResetBit(0);&#xA;Tags(&quot;Minus6&quot;).ResetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;599 Reference Carrier&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="Button_4" left="650" top="274" width="140" height="42">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;TC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;TC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <content content-mode="Text" />
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;LockHeaderLeft&quot;).SetBit(0);&#xA;Tags(&quot;ResetPlacesExceptOfPlaceNumber&quot;).Write(123);&#xA;Tags(&quot;123&quot;).SetBit(0);&#xA;Tags(&quot;PlaceNumber&quot;).Write(123);&#xA;Tags(&quot;PictureCallSelectionType&quot;).Write(2);&#xA;Tags(&quot;PictureCallSelectionPlace&quot;).Write(8);&#xA;Tags(&quot;Plus1&quot;).ResetBit(0);&#xA;Tags(&quot;Minus1&quot;).ResetBit(0);&#xA;Tags(&quot;Plus2&quot;).ResetBit(0);&#xA;Tags(&quot;Minus2&quot;).ResetBit(0);&#xA;Tags(&quot;Plus3&quot;).ResetBit(0);&#xA;Tags(&quot;Minus3&quot;).ResetBit(0);&#xA;Tags(&quot;Plus4&quot;).ResetBit(0);&#xA;Tags(&quot;Minus4&quot;).ResetBit(0);&#xA;Tags(&quot;Plus5&quot;).ResetBit(0);&#xA;Tags(&quot;Minus5&quot;).ResetBit(0);&#xA;Tags(&quot;Plus6&quot;).ResetBit(0);&#xA;Tags(&quot;Minus6&quot;).ResetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;599 Reference Carrier&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="Button_5" left="650" top="316" width="140" height="42">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;TT Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;TT Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <content content-mode="Text" />
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;LockHeaderLeft&quot;).SetBit(0);&#xA;Tags(&quot;ResetPlacesExceptOfPlaceNumber&quot;).Write(123);&#xA;Tags(&quot;SelectTurntablePlace&quot;).Write(&quot;Place \&quot;A\&quot; &amp; &lt;B&gt;....&quot;);&#xA;Tags(&quot;123&quot;).SetBit(0);&#xA;Tags(&quot;Plus1&quot;).ResetBit(0);&#xA;Tags(&quot;Minus1&quot;).ResetBit(0);&#xA;Tags(&quot;Plus2&quot;).ResetBit(0);&#xA;Tags(&quot;Minus2&quot;).ResetBit(0);&#xA;Tags(&quot;Plus3&quot;).ResetBit(0);&#xA;Tags(&quot;Minus3&quot;).ResetBit(0);&#xA;Tags(&quot;Plus4&quot;).ResetBit(0);&#xA;Tags(&quot;Minus4&quot;).ResetBit(0);&#xA;Tags(&quot;Plus5&quot;).ResetBit(0);&#xA;Tags(&quot;Minus5&quot;).ResetBit(0);&#xA;Tags(&quot;Plus6&quot;).ResetBit(0);&#xA;Tags(&quot;Minus6&quot;).ResetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;598 Reference Turntable&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnPanel_3" left="0" top="0" width="69" height="47" graphic="UnifiedPanel" alternate-graphic="UnifiedPanel" border-width="0" back-color="#CCFFFF00">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;3&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;3&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <content content-mode="GraphicAndText" text-position="InFront" graphic-stretch-mode="Fill" />
+              <font size="14" weight="Bold" />
+              <padding />
+            </button>
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;502 Functions&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;103 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+          </screen>
+          <screen name="103 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="103">
+            <event-handlers>
+              <screen-event-handler event-type="Loaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                </script>
+              </screen-event-handler>
+              <screen-event-handler event-type="Unloaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                </script>
+              </screen-event-handler>
+            </event-handlers>
+            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;003 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;203 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+          </screen>
+          <screen name="203 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="203">
+            <event-handlers>
+              <screen-event-handler event-type="Loaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                </script>
+              </screen-event-handler>
+              <screen-event-handler event-type="Unloaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                </script>
+              </screen-event-handler>
+            </event-handlers>
+            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;103 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;303 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+          </screen>
+          <screen name="303 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="303">
+            <event-handlers>
+              <screen-event-handler event-type="Loaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                </script>
+              </screen-event-handler>
+              <screen-event-handler event-type="Unloaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                </script>
+              </screen-event-handler>
+            </event-handlers>
+            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;203 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;403 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+          </screen>
+          <screen name="403 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="403">
+            <event-handlers>
+              <screen-event-handler event-type="Loaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                </script>
+              </screen-event-handler>
+              <screen-event-handler event-type="Unloaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                </script>
+              </screen-event-handler>
+            </event-handlers>
+            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;303 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;1503 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+          </screen>
+          <screen name="1503 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="1503">
+            <event-handlers>
+              <screen-event-handler event-type="Loaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                </script>
+              </screen-event-handler>
+              <screen-event-handler event-type="Unloaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                </script>
+              </screen-event-handler>
+            </event-handlers>
+            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;403 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;1603 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+          </screen>
+          <screen name="1603 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="1603">
+            <event-handlers>
+              <screen-event-handler event-type="Loaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                </script>
+              </screen-event-handler>
+              <screen-event-handler event-type="Unloaded">
+                <script>
+                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                </script>
+              </screen-event-handler>
+            </event-handlers>
+            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <font size="21" weight="Bold" />
+            </text-box>
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;1503 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="" alternate-graphic="" border-width="1" border-color="#507295" alternate-border-color="#507295">
+              <content content-mode="Graphic" />
+              <text>
+                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+              </text>
+            </button>
+          </screen>
+        </screens>
+      </screen-group>
+    </screen-groups>
+    <tag-tables>
+      <tag-table name="TouchGeneral">
+        <tags>
+          <tag name="Acknowledge" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Acknowledge" acquisition-cycle="T100ms" />
+          <tag name="ActivateIbnPicture" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ActivateIbnPicture" acquisition-cycle="T100ms" />
+          <tag name="ActivateMoveLockCpu" connection="HMI_Connection_1" plc-tag="TouchInterface.ActivateMoveLockCpu" acquisition-cycle="T100ms" />
+          <tag name="ActivateStartScreen" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ActivateStartScreen" acquisition-cycle="T100ms" />
+          <tag name="ActivateTransferModus" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ActivateTransferModus" acquisition-cycle="T100ms" />
+          <tag name="AnyAlarmActive" connection="HMI_Connection_1" plc-tag="TouchInterface.AnyAlarmActive" acquisition-cycle="T100ms" />
+          <tag name="AnyInformationActive" connection="HMI_Connection_1" plc-tag="TouchInterface.AnyInformationActive" acquisition-cycle="T100ms" />
+          <tag name="AnyWarningActive" connection="HMI_Connection_1" plc-tag="TouchInterface.AnyWarningActive" acquisition-cycle="T100ms" />
+          <tag name="ASiVersion" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.Version" acquisition-cycle="T100ms" />
+          <tag name="ButtonPreselectionAutomaticMode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ButtonPreselectionAutomaticMode" acquisition-cycle="T100ms" />
+          <tag name="ButtonPreselectionManualMode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ButtonPreselectionManualMode" acquisition-cycle="T100ms" />
+          <tag name="DataPresent" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.DataPresent" acquisition-cycle="T100ms" />
+          <tag name="DisplayTurtleAndRabbitButton" connection="HMI_Connection_1" plc-tag="TouchInterface.DisplayTurtleAndRabbitButton" acquisition-cycle="T100ms" />
+          <tag name="LampTest" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.LampTest" acquisition-cycle="T100ms" />
+          <tag name="LifeCounter" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.LifeCounter" acquisition-cycle="T100ms" />
+          <tag name="LifeSignal" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].LifeSignal" acquisition-cycle="T100ms" />
+          <tag name="MaintananceMode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.MaintenanceMode" acquisition-cycle="T100ms" />
+          <tag name="Minus1" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Minus1" acquisition-cycle="T100ms" />
+          <tag name="Minus2" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Minus2" acquisition-cycle="T100ms" />
+          <tag name="Minus3" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Minus3" acquisition-cycle="T100ms" />
+          <tag name="Minus4" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Minus4" acquisition-cycle="T100ms" />
+          <tag name="Minus5" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Minus5" acquisition-cycle="T100ms" />
+          <tag name="Minus6" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Minus6" acquisition-cycle="T100ms" />
+          <tag name="MoveActive" connection="HMI_Connection_1" plc-tag="TouchInterface.MoveActive" acquisition-cycle="T100ms" />
+          <tag name="MoveLockCpu" connection="HMI_Connection_1" plc-tag="TouchInterface.MoveLockCpu" acquisition-cycle="T100ms" />
+          <tag name="PanelSlotNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.PanelSlotNumber" acquisition-cycle="T100ms" />
+          <tag name="PictureNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.PictureNumber[2]" acquisition-cycle="T100ms" />
+          <tag name="PlantReferenceNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.PlantReferenceNumber" acquisition-cycle="T100ms" />
+          <tag name="Plus1" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Plus1" acquisition-cycle="T100ms" />
+          <tag name="Plus2" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Plus2" acquisition-cycle="T100ms" />
+          <tag name="Plus3" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Plus3" acquisition-cycle="T100ms" />
+          <tag name="Plus4" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Plus4" acquisition-cycle="T100ms" />
+          <tag name="Plus5" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Plus5" acquisition-cycle="T100ms" />
+          <tag name="Plus6" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Plus6" acquisition-cycle="T100ms" />
+          <tag name="PreselectionAutomaticMode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.PreselectionAutomaticMode" acquisition-cycle="T100ms" />
+          <tag name="PreselectionManualMode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.PreselectionManualMode" acquisition-cycle="T100ms" />
+          <tag name="Release" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Release" acquisition-cycle="T100ms" />
+          <tag name="ResetPlaceSelection" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ResetPlaceSelection" acquisition-cycle="T100ms" />
+          <tag name="ResetPlacesExceptOfPlaceNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ResetPlacesExceptOfPlaceNumber" acquisition-cycle="T100ms" />
+          <tag name="ServiceMode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ServiceMode" acquisition-cycle="T100ms" />
+          <tag name="Shift" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Shift" acquisition-cycle="T100ms" />
+          <tag name="SlotName" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.SlotName" acquisition-cycle="T100ms" />
+          <tag name="StartOperationMode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.StartOperationMode" acquisition-cycle="T100ms" />
+          <tag name="SwitchAutomaticOff" connection="HMI_Connection_1" plc-tag="TouchInterface.SwitchAutomaticOff" acquisition-cycle="T100ms" />
+          <tag name="SwitchToSummerTime" connection="HMI_Connection_1" plc-tag="TouchInterface.SwitchToSummerTime" acquisition-cycle="T100ms" />
+          <tag name="V2" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.V2" acquisition-cycle="T100ms" />
+        </tags>
+      </tag-table>
+      <tag-table name="Carrier">
+        <tags>
+          <tag name="ActualPositionSwitchOff" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.ActualPositionSwitchOff" acquisition-cycle="T100ms" />
+          <tag name="ActualValue" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.ActualValue" acquisition-cycle="T100ms" />
+          <tag name="ButtonArrowDown" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.ButtonArrowDown" acquisition-cycle="T100ms" />
+          <tag name="ButtonArrowLeft" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.ButtonArrowLeft" acquisition-cycle="T100ms" />
+          <tag name="ButtonArrowRight" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.ButtonArrowRight" acquisition-cycle="T100ms" />
+          <tag name="ButtonArrowUp" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.ButtonArrowUp" acquisition-cycle="T100ms" />
+          <tag name="ButtonSelectionPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.ButtonSelectionPlace" acquisition-cycle="T100ms" />
+          <tag name="ButtonSelectionType" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.ButtonSelectionType" acquisition-cycle="T100ms" />
+          <tag u:type="internal-tag" name="ButtonTeachenPressed" data-type="Bool" />
+          <tag name="ControllerType" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.ControllerType" acquisition-cycle="T100ms" />
+          <tag name="InverterFaultState" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.InverterFaultState" acquisition-cycle="T100ms" />
+          <tag name="InverterState" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.InverterState" acquisition-cycle="T100ms" />
+          <tag name="InverterSubState" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.InverterSubState" acquisition-cycle="T100ms" />
+          <tag name="LimitSwitchOff" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.LimitSwitchOff" acquisition-cycle="T100ms" />
+          <tag name="MonitoringActualPosition" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.MonitoringActualPosition" acquisition-cycle="T100ms" />
+          <tag name="MonitoringLimitSwitch" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.MonitoringLimitSwitch" acquisition-cycle="T100ms" />
+          <tag u:type="internal-tag" name="NoPlaceSelectionReset" data-type="Bool" />
+          <tag name="OperationModeGroup" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.OperationModeGroup" acquisition-cycle="T100ms" />
+          <tag name="OperationModePlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.OperationModePlace" acquisition-cycle="T100ms" />
+          <tag name="PictureCallSelectionPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.PictureCallSelectionPlace" acquisition-cycle="T100ms" />
+          <tag name="PictureCallSelectionType" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.PictureCallSelectionTyp" acquisition-cycle="T100ms" />
+          <tag name="PlaceSelected" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.PlaceSelected" acquisition-cycle="T100ms" />
+          <tag name="Reference" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.Reference" acquisition-cycle="T100ms" />
+          <tag name="Referenced" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.Referenced" acquisition-cycle="T100ms" />
+          <tag name="ReferenceSensor" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.ReferenceSensor" acquisition-cycle="T100ms" />
+          <tag name="ReferenzPosition" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.ReferencePlace" acquisition-cycle="T100ms" />
+          <tag name="SelectedPlaceNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.SelectedPlaceNumber" acquisition-cycle="T100ms" />
+          <tag name="SelectionPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.SelectionPlace" acquisition-cycle="T100ms" />
+          <tag name="SelectionType" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.SelectionType" acquisition-cycle="T100ms" />
+          <tag name="ShowButtonReference" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.ShowReferenceButton" acquisition-cycle="T100ms" />
+          <tag name="Teachen_ActualPosition" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.Teachen.ActualPosition" acquisition-cycle="T100ms" />
+          <tag name="Teachen_CountPlaceDown" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.Teachen.CountPlaceDown" acquisition-cycle="T100ms" />
+          <tag name="Teachen_CountPlaceUp" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.Teachen.CountPlaceUp" acquisition-cycle="T100ms" />
+          <tag name="Teachen_SelectedPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.Teachen.SelectedPlace" acquisition-cycle="T100ms" />
+          <tag name="Teachen_SingleDouble" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.Teachen.SingleDouble" acquisition-cycle="T100ms" />
+          <tag name="Teachen_TeachenStart" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.Teachen.TeachenStart" acquisition-cycle="T100ms" />
+          <tag name="TypeCarriage" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.TypeCarriage" acquisition-cycle="T100ms" />
+          <tag name="TypeCarriageAxis1" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.TypeCarriageAxis1" acquisition-cycle="T100ms" />
+          <tag name="TypeCarriageAxis3" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.TypeCarriageAxis3" acquisition-cycle="T100ms" />
+          <tag name="TypeTelescopicFork" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.TypeTelescopicFork" acquisition-cycle="T100ms" />
+          <tag name="TypeTurnTable" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.TypeTurnTable" acquisition-cycle="T100ms" />
+          <tag name="TypeVerticalLifter" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.TypeVerticalLifter" acquisition-cycle="T100ms" />
+          <tag name="ViewingDirection" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.ViewingDirection" acquisition-cycle="T100ms" />
+        </tags>
+      </tag-table>
+      <tag-table name="Turntable">
+        <tags>
+          <tag name="ActualPositionTurntable" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Turntable.ActualPosition" acquisition-cycle="T100ms" />
+          <tag name="MonitoringTurntablePosition" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Turntable.MonitoringActualPosition" acquisition-cycle="T100ms" />
+          <tag name="MonitoringTurntablePositionSwitchOff" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Turntable.ActualPositionSwitchOff" acquisition-cycle="T100ms" />
+          <tag name="OperationModeTurntablePlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Turntable.OperationmodePlaceTurntable" acquisition-cycle="T100ms" />
+          <tag name="ReferencedTurntable" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Turntable.Referenced" acquisition-cycle="T100ms" />
+          <tag name="ReferencePlaceTurntable" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Turntable.ReferencePlace" acquisition-cycle="T100ms" />
+          <tag name="ReferenceSensorTurntable" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Turntable.ReferenceSensor" acquisition-cycle="T100ms" />
+          <tag name="ReferenceTurntable" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Turntable.Reference" acquisition-cycle="T100ms" />
+          <tag name="SelectedTurntablePlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Turntable.SelectedPlace" acquisition-cycle="T100ms" />
+          <tag name="SelectTurntablePlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Turntable.SelectPlace" acquisition-cycle="T100ms" />
+          <tag name="ShowTurntableReferenceButton" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Turntable.ShowTurntableReferenceButton" acquisition-cycle="T100ms" />
+        </tags>
+      </tag-table>
+      <tag-table name="ASi3">
+        <tags>
+          <tag name="ASiMasterNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ASiMasterNumber" acquisition-cycle="T100ms" />
+          <tag name="AutoAddresAssign" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.AutoAddresAssign" acquisition-cycle="T100ms" />
+          <tag name="AutoAddresAvailable" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.AutoAddresAvailable" acquisition-cycle="T100ms" />
+          <tag name="ConfigurationError" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.ConfigurationError" acquisition-cycle="T100ms" />
+          <tag name="DuplicateAddres" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.DuplicateAddres" acquisition-cycle="T100ms" />
+          <tag name="EarthFault" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.EarthFault" acquisition-cycle="T100ms" />
+          <tag name="MasterIsOffline" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.MasterIsOffline" acquisition-cycle="T100ms" />
+          <tag name="NoiseVoltage" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.NoiseVoltage" acquisition-cycle="T100ms" />
+          <tag name="NotInNormalOperationMode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.NotInNormalOperationMode" acquisition-cycle="T100ms" />
+          <tag name="Overvoltage" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.Overvoltage" acquisition-cycle="T100ms" />
+          <tag name="PeripheryFault" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.PeripheryFault" acquisition-cycle="T100ms" />
+          <tag name="PowerFail" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.PowerFail" acquisition-cycle="T100ms" />
+          <tag name="ProjectionModeActive" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.ProjectionModeActive" acquisition-cycle="T100ms" />
+          <tag name="SlaveA1" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[1]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA10" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[10]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA11" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[11]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA12" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[12]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA13" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[13]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA14" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[14]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA15" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[15]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA16" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[16]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA17" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[17]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA18" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[18]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA19" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[19]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA2" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[2]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA20" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[20]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA21" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[21]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA22" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[22]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA23" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[23]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA24" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[24]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA25" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[25]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA26" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[26]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA27" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[27]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA28" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[28]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA29" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[29]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA3" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[3]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA30" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[30]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA31" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[31]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA4" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[4]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA5" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[5]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA6" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[6]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA7" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[7]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA8" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[8]" acquisition-cycle="T100ms" />
+          <tag name="SlaveA9" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveA[9]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB1" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[1]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB10" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[10]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB11" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[11]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB12" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[12]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB13" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[13]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB14" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[14]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB15" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[15]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB16" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[16]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB17" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[17]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB18" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[18]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB19" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[19]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB2" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[2]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB20" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[20]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB21" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[21]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB22" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[22]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB23" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[23]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB24" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[24]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB25" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[25]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB26" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[26]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB27" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[27]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB28" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[28]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB29" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[29]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB3" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[3]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB30" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[30]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB31" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[31]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB4" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[4]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB5" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[5]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB6" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[6]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB7" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[7]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB8" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[8]" acquisition-cycle="T100ms" />
+          <tag name="SlaveB9" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveB[9]" acquisition-cycle="T100ms" />
+          <tag name="SlaveWithAddres0" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SlaveWithAddres0" acquisition-cycle="T100ms" />
+        </tags>
+      </tag-table>
+      <tag-table name="ContourError">
+        <tags>
+          <tag name="BottomPanelError" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.BottomPanelError" acquisition-cycle="T100ms" />
+          <tag name="ButtonLhmIO" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ContourControl.ButtonLhmIO" acquisition-cycle="T100ms" />
+          <tag name="ButtonLhmNio" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ContourControl.ButtonLhmNio" acquisition-cycle="T100ms" />
+          <tag name="ButtonLockContourPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ContourControl.ButtonLockContourPlace" acquisition-cycle="T100ms" />
+          <tag name="ButtonReleaseContourPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ContourControl.ButtonReleaseContourPlace" acquisition-cycle="T100ms" />
+          <tag name="ContourAlreadyOpen" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ContourControl.ContourAlreadyOpen" acquisition-cycle="T100ms" />
+          <tag name="ContourPlaceLocked" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.ContourPlaceLocked" acquisition-cycle="T100ms" />
+          <tag name="ContourPlaceReleased" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.ContourPlaceReleased" acquisition-cycle="T100ms" />
+          <tag name="ForkFreespaceError" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.ForkFreespaceError" acquisition-cycle="T100ms" />
+          <tag name="HeightError" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.HeightError" acquisition-cycle="T100ms" />
+          <tag name="LengthErrorNegative" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.LengthErrorNegative" acquisition-cycle="T100ms" />
+          <tag name="LengthErrorPositive" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.LengthErrorPositive" acquisition-cycle="T100ms" />
+          <tag name="LhmIOSelected" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.LhmIOSelected" acquisition-cycle="T100ms" />
+          <tag name="LhmNioSelected" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.LhmNioSelected" acquisition-cycle="T100ms" />
+          <tag name="LhmReadyForHandling" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.LhmReadyForHandling" acquisition-cycle="T100ms" />
+          <tag name="LvrError" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.LvrError" acquisition-cycle="T100ms" />
+          <tag name="NameContourWorkPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.NameContourWorkPlace" acquisition-cycle="T100ms" />
+          <tag name="NumberWorkPlaceContourError" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ContourControl.NumberWorkPlaceContourError" acquisition-cycle="T100ms" />
+          <tag name="NumberWorkPlaceContourErrorToOpen" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.NumberWorkPlaceContourErrorToOpen" acquisition-cycle="T100ms" />
+          <tag name="OpenPictureContourCrosswise" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.OpenPictureContourCrosswise" acquisition-cycle="T100ms" />
+          <tag name="OpenPictureContourLengthwise" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.OpenPictureContourLengthwise" acquisition-cycle="T100ms" />
+          <tag name="PlaceIsContourWorkPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.PlaceIsContourWorkPlace" acquisition-cycle="T100ms" />
+          <tag name="PlaceIsReadyToGetLocked" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.PlaceIsReadyToGetLocked" acquisition-cycle="T100ms" />
+          <tag name="ScannerError" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.ScannerError" acquisition-cycle="T100ms" />
+          <tag name="WeightError" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.WeightError" acquisition-cycle="T100ms" />
+          <tag name="WidthErrorNegative" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.WidthErrorNegative" acquisition-cycle="T100ms" />
+          <tag name="WidthErrorPositive" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ContourControl.WidthErrorPositive" acquisition-cycle="T100ms" />
+        </tags>
+      </tag-table>
+      <tag-table name="InternalVariables">
+        <tags>
+          <tag u:type="internal-tag" name="Brightness" data-type="Int" />
+          <tag u:type="internal-tag" name="CountLifeSignal" data-type="Int" />
+          <tag u:type="internal-tag" name="HideHeader" data-type="Bool" />
+          <tag u:type="internal-tag" name="Infotext" data-type="Bool" />
+          <tag u:type="internal-tag" name="LifeSignalInternal" data-type="Bool" />
+          <tag u:type="internal-tag" name="LifeSignalInternalToggle" data-type="Int" />
+          <tag u:type="internal-tag" name="LockHeaderLeft" data-type="Bool" />
+          <tag u:type="internal-tag" name="LockReleaseButton" data-type="Bool" />
+          <tag u:type="internal-tag" name="OpenContourCrosswiseAutomatic" data-type="Bool" />
+          <tag u:type="internal-tag" name="OpenContourLengthwiseAutomatic" data-type="Bool" />
+          <tag u:type="internal-tag" name="PreviousScreenName" data-type="WString" />
+          <tag u:type="internal-tag" name="PreviousScreenNameErrorPlaceData" data-type="WString" />
+          <tag u:type="slot-number" name="SlotNumber" data-type="Int" initial-value="3" />
+        </tags>
+      </tag-table>
+      <tag-table name="Scale">
+        <tags>
+          <tag name="ControlScaleCalibrationWeight" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.CalibrationWeight" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleCalibrationWeightAdjustment" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.CalibrationWeightAdjustment" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleEmptyAdjustment" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.EmptyAdjustment" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleGeneralOverload" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.GeneralOverload" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleGeneralUnderload" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.GeneralUnderload" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleInitialParameter" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.InitialParameter" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleLimit1Off" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.Limit1Off" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleLimit1On" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.Limit1On" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleLimit2Off" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.Limit2Off" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleLimit2On" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.Limit2On" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleLimitReference" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.LimitReference" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleMaximumWeight" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.MaximumWeight" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleOverloadMovement" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.OverloadMovement" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleOverloadPickUp" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.OverloadPickUp" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleReadValue" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.ReadValue" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleScaleNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.ScaleNumber" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleSelectScale" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.SelectScale" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleSlackRope" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.SlackRope" acquisition-cycle="T100ms" />
+          <tag name="ControlScaleWriteValue" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Scale.WriteValue" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleActualWeight" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.ActualWeight" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleCalibrationWeight" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.CalibrationWeight" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleEnableOperation" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.EnableOperation" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleGeneralOverload" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.GeneralOverload" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleGeneralUnderload" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.GeneralUnderload" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleOptionVerticalLifter" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.OptionVerticalLifter" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleOverloadMovement" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.OverloadMovement" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleOverloadPickUp" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.OverloadPickUp" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleScaleNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.ScaleNumber" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleSlackRope" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.SlackRope" acquisition-cycle="T100ms" />
+          <tag name="DisplayScaleStatus" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.Status" acquisition-cycle="T100ms" />
+          <tag u:type="internal-tag" name="PushButton1" data-type="Int" />
+          <tag u:type="internal-tag" name="PushButton2" data-type="Int" />
+          <tag u:type="internal-tag" name="PushButton3" data-type="Int" />
+          <tag u:type="internal-tag" name="PushButton4" data-type="Int" />
+          <tag u:type="internal-tag" name="PushButton5" data-type="Int" />
+        </tags>
+      </tag-table>
+      <tag-table name="OperationModeGroups">
+        <tags>
+          <tag name="OperationModeGroupSPS" connection="HMI_Connection_1" plc-tag="TouchInterface.OperationModeGroupCpu" acquisition-cycle="T100ms" />
+          <tag name="OperationModeGroupA" connection="HMI_Connection_1" plc-tag="TouchInterface.OperationModeGroupA" />
+        </tags>
+      </tag-table>
+      <tag-table name="PlaceData">
+        <tags>
+          <tag name="PlaceDataCommand" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Command" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataDestination" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Destination" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataEndSign" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.EndSign" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataID" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.ID" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataLabeling" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Labeling" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataLenght" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Length" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataLEType" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.LEType" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataMessageCode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.MessageCode" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataPlaceConfig" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.PlaceConfig" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataReserve" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Reserve" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataResource" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Resource" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataSource" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Source" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataStatus" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Status" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataTransportNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.TransportNumber" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataTV" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.TV" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataWeight" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Weight" acquisition-cycle="T100ms" />
+          <tag name="PlaceDataWrapper" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Data.Wrapper" acquisition-cycle="T100ms" />
+          <tag name="PlaceName" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.PlaceName" acquisition-cycle="T100ms" />
+          <tag name="PlaceNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.PlaceNumber" acquisition-cycle="T100ms" />
+          <tag name="PlaceOccupied" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.PlaceOccupied" acquisition-cycle="T100ms" />
+        </tags>
+      </tag-table>
+      <tag-table name="ASi3Siemens">
+        <tags>
+          <tag name="SiemensASiMasterNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.ASiMasterNumber" acquisition-cycle="T100ms" />
+          <tag name="SiemensAutoAddrDisabled" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.AutoAddrDisabled" acquisition-cycle="T100ms" />
+          <tag name="SiemensAutoAddresAssign" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.AutoAddresAssign" acquisition-cycle="T100ms" />
+          <tag name="SiemensAutoAddresAvailable" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.AutoAddresAvailable" acquisition-cycle="T100ms" />
+          <tag name="SiemensConfigurationError" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.ConfigurationError" acquisition-cycle="T100ms" />
+          <tag name="SiemensDataExchangeNotActive" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.DataExchangeNotActive" acquisition-cycle="T100ms" />
+          <tag name="SiemensDuplicateAddres" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.DuplicateAddress" acquisition-cycle="T100ms" />
+          <tag name="SiemensEarthFault" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.EarthFault" acquisition-cycle="T100ms" />
+          <tag name="SiemensEarthFaultDetectDisabled" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.EarthFaultDetectDisabled" acquisition-cycle="T100ms" />
+          <tag name="SiemensEepromNotOK" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.EepromNotOK" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster1" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[1]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster10" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[10]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster11" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[11]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster12" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[12]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster13" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[13]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster14" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[14]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster15" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[15]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster16" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[16]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster17" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[17]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster18" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[18]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster19" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[19]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster2" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[2]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster20" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[20]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster21" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[21]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster22" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[22]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster23" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[23]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster24" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[24]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster25" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[25]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster26" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[26]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster27" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[27]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster28" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[28]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster29" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[29]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster3" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[3]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster30" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[30]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster4" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[4]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster5" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[5]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster6" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[6]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster7" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[7]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster8" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[8]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMaster9" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionMaster[9]" acquisition-cycle="T100ms" />
+          <tag name="SiemensMasterAvailableAndOK" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.AvailableAndOK" acquisition-cycle="T100ms" />
+          <tag name="SiemensMasterCondition" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.Condition" acquisition-cycle="T100ms" />
+          <tag name="SiemensMasterIsOffline" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.MasterIsOffline" acquisition-cycle="T100ms" />
+          <tag name="SiemensMasterNotAvailable" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.NotAvailable" acquisition-cycle="T100ms" />
+          <tag name="SiemensMasterNotConfigured" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.NotConfigured" acquisition-cycle="T100ms" />
+          <tag name="SiemensMultipleAdressingDisabled" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.MultipleAdressingDisabled" acquisition-cycle="T100ms" />
+          <tag name="SiemensNotInNormalOperationMode" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.NotInNormalOperationMode" acquisition-cycle="T100ms" />
+          <tag name="SiemensOfflineReady" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.OfflineReady" acquisition-cycle="T100ms" />
+          <tag name="SiemensPeripheryFault" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.PeripheryFault" acquisition-cycle="T100ms" />
+          <tag name="SiemensPowerFail" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.PowerFail" acquisition-cycle="T100ms" />
+          <tag name="SiemensProjectionModeActive" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.ProjectionModeActive" acquisition-cycle="T100ms" />
+          <tag name="SiemensProjectPlanningProgress" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ProjectPlanningProgress" acquisition-cycle="T100ms" />
+          <tag name="SiemensShowBarChart" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ShowBarChart" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA1" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[1]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA10" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[10]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA11" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[11]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA12" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[12]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA13" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[13]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA14" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[14]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA15" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[15]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA16" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[16]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA17" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[17]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA18" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[18]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA19" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[19]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA2" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[2]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA20" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[20]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA21" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[21]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA22" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[22]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA23" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[23]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA24" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[24]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA25" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[25]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA26" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[26]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA27" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[27]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA28" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[28]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA29" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[29]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA3" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[3]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA30" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[30]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA31" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[31]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA4" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[4]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA5" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[5]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA6" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[6]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA7" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[7]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA8" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[8]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveA9" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveA[9]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB1" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[1]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB10" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[10]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB11" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[11]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB12" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[12]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB13" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[13]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB14" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[14]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB15" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[15]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB16" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[16]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB17" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[17]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB18" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[18]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB19" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[19]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB2" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[2]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB20" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[20]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB21" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[21]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB22" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[22]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB23" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[23]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB24" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[24]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB25" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[25]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB26" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[26]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB27" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[27]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB28" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[28]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB29" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[29]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB3" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[3]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB30" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[30]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB31" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[31]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB4" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[4]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB5" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[5]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB6" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[6]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB7" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[7]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB8" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[8]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveB9" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.ConditionSlaveB[9]" acquisition-cycle="T100ms" />
+          <tag name="SiemensSlaveWithAddres0" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.ASi.SiemensError.Master.SlaveWithAddres0" acquisition-cycle="T100ms" />
+          <tag name="SiemensStartProjectAsiSlaves" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.StartProjectAsiSlaves" acquisition-cycle="T100ms" />
+          <tag name="SiemensStartWriteCompleteConfiguration" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.StartWriteCompleteConfigurationOfAsiMaster" acquisition-cycle="T100ms" />
+        </tags>
+      </tag-table>
+      <tag-table name="DataPresent">
+        <tags>
+          <tag name="DataPresent123" connection="HMI_Connection_1" plc-tag="TouchInterface.DataPresent[123]" />
+        </tags>
+      </tag-table>
+      <tag-table name="OperationModePlaces">
+        <tags>
+          <tag name="OP123" connection="HMI_Connection_1" plc-tag="TouchInterface.OperationMode[123]" />
+        </tags>
+      </tag-table>
+      <tag-table name="PlaceOccupied">
+        <tags>
+          <tag name="PlaceOccupied123" connection="HMI_Connection_1" plc-tag="TouchInterface.PlaceOccupied[123]" />
+        </tags>
+      </tag-table>
+      <tag-table name="PlacesSelected">
+        <tags>
+          <tag name="123" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Place[123]" />
+        </tags>
+      </tag-table>
+      <tag-table name="Muting">
+        <tags>
+          <tag name="Muting1BypassActive" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Muting.1BypassActive" />
+          <tag name="Muting1Triggered" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Muting.1Triggered" />
+          <tag name="Muting1Reset" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Muting.1Reset" />
+        </tags>
+      </tag-table>
+    </tag-tables>
+  </software>
+</unified-export>

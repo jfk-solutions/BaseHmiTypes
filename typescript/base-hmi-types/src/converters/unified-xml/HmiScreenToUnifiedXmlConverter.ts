@@ -6,6 +6,7 @@ import { HmiPropertyKind } from "../../screens/base/HmiProperty.js";
 import type { HmiColor } from "../../screens/base/HmiColor.js";
 import type { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 import { HmiButton } from "../../screens/widgets/HmiButton.js";
+import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiGraphicView } from "../../screens/shapes/HmiGraphicView.js";
 
@@ -99,7 +100,7 @@ class Context {
     const id = this.identities.get(item);
     if (id) { const ref = new Element("u:ref"); ref.attributes.set("ref", id); parent.children.push(ref); return; }
     const type = item.constructor;
-    const tag = type === HmiButton ? "button" : type === HmiTextBox ? "text-box" : type === HmiGraphicView ? "graphic-view" : undefined;
+    const tag = type === HmiButton ? "button" : (type === HmiText || type === HmiTextBox) ? "text-box" : type === HmiGraphicView ? "graphic-view" : undefined;
     if (!tag) { this.report(path, "Unsupported control type: " + type.name); return; }
     const element = this.object(item, tag, tag === "button" ? "t9" : tag === "text-box" ? "t14" : "t6"); parent.children.push(element);
     const mapped = this.common(item, element, path, true);

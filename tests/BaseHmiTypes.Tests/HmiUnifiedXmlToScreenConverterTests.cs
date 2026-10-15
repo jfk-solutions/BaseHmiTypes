@@ -22,6 +22,24 @@ public class HmiUnifiedXmlToScreenConverterTests
         "<screen name=\"Main\" width=\"800\" height=\"480\" " + screenAttributes + ">" + items + "</screen></unified-export>";
 
     [TestMethod]
+    public void ReadsAllAuthoringScreensAcrossSupportedVersions()
+    {
+        using var stream = typeof(HmiUnifiedXmlToScreenConverterTests).Assembly.GetManifestResourceStream("BaseHmiTypes.Tests.Fixtures.unified-authoring-panel.xml")!;
+        using var source = new StreamReader(stream); var xml = source.ReadToEnd();
+        foreach (var version in new[] { 19, 20, 21 })
+        {
+            var document = xml.Replace("apiVersion=\"21.0.0.0\"", $"apiVersion=\"{version}.0.0.0\"");
+            var results = reader.ConvertScreens(document);
+            Assert.AreEqual(7, results.Count); Assert.AreEqual(800d, results[0].Screen.Width.StaticValue);
+            Assert.AreEqual(480d, results[0].Screen.Height.StaticValue);
+            Assert.IsTrue(results[0].Screen.Layers[0].Items.Any(item => item is HmiRectangle));
+            Assert.IsTrue(results.SelectMany(result => result.Diagnostics).Any(d => d.Message.Contains("Faceplate library")));
+            Assert.IsTrue(results.SelectMany(result => result.Diagnostics).Any(d => d.Message.Contains("Partial authoring object")));
+            Assert.AreEqual(document, Encoding.UTF8.GetString(results[0].Screen.SourceData!));
+        }
+    }
+
+    [TestMethod]
     public void LoadsCapturedV21ScreenWithUnmarkedControlsAndCatalogDefaults()
     {
         using var stream = typeof(HmiUnifiedXmlToScreenConverterTests).Assembly.GetManifestResourceStream("BaseHmiTypes.Tests.Fixtures.unified-v21-screen.xml")!;
@@ -33,13 +51,24 @@ public class HmiUnifiedXmlToScreenConverterTests
         Assert.IsFalse(result.SourceComplete);
         Assert.AreEqual(2, result.Screen.Events.Count);
         Assert.IsTrue(result.Screen.Layers[0].Items.OfType<HmiButton>().Any());
-        Assert.IsTrue(result.Screen.Layers[0].Items.OfType<HmiTextBox>().Any());
+        Assert.IsTrue(result.Screen.Layers[0].Items.OfType<HmiText>().Any());
         Assert.AreEqual("Unified_Logo", result.Screen.Layers[0].Items.OfType<HmiGraphicView>().Single().Source!.StaticValue);
-        var dynamicText = result.Screen.Layers[0].Items.OfType<HmiTextBox>().Single(i => i.Name == "Logout_1");
+        var dynamicText = result.Screen.Layers[0].Items.OfType<HmiText>().Single(i => i.Name == "Logout_1");
         var script = (HmiScriptProperty<HmiMultilingualText>)dynamicText.Text!;
         StringAssert.Contains(script.Script!, "PlantReferenceNumber");
         Assert.AreEqual("PlantReferenceNumber", ((HmiTagTrigger)script.Triggers.Single()).TagNames.Single());
         Assert.IsNotNull(script.StaticValue);
+    }
+
+    [TestMethod]
+    public void UnifiedTextBoxMapsToStaticTextAndCanBeExportedAgain()
+    {
+        var result = reader.Convert(Archive("<text-box name=\"TxtRBG1\" left=\"360\" top=\"142\" width=\"60\" height=\"32\"><text><multilingual-text-item lang=\"de-DE\" text=\"&lt;body&gt;&lt;p&gt;RBG1&lt;/p&gt;&lt;/body&gt;\"/></text></text-box>"));
+        var text = (HmiText)result.Screen.Layers[0].Items[0];
+        Assert.AreEqual("<body><p>RBG1</p></body>", text.Text!.StaticValue!.FormattedTexts[1031]);
+        var xml = new HmiScreenToUnifiedXmlConverter().Convert(result.Screen, "Panel").Xml;
+        StringAssert.Contains(xml, "<text-box");
+        Assert.IsInstanceOfType<HmiText>(reader.Convert(xml).Screen.Layers[0].Items[0]);
     }
 
     [TestMethod]
@@ -77,7 +106,7 @@ public class HmiUnifiedXmlToScreenConverterTests
         Assert.IsTrue(button.Enabled.StaticValue); Assert.IsTrue(button.Visible.StaticValue);
         Assert.AreEqual(22d, button.Font!.Size!.StaticValue); Assert.IsFalse(button.Font.Bold!.StaticValue);
         Assert.AreEqual(2, button.ToolTipText!.StaticValue!.Texts.Count);
-        var box = (HmiTextBox)result.Screen.Layers[0].Items[1];
+        var box = (HmiText)result.Screen.Layers[0].Items[1];
         Assert.AreEqual(500d, box.Width.StaticValue); Assert.IsFalse(box.Enabled.StaticValue);
         Assert.AreEqual((byte)255, box.BackgroundColor!.StaticValue.Red); Assert.AreEqual((byte)0, box.BackgroundColor.StaticValue.Green);
     }
