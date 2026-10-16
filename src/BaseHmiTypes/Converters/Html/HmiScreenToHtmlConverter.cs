@@ -96,7 +96,7 @@ public partial class HmiScreenToHtmlConverter
             if (includeRuntime)
                 AppendRuntimeModule(html);
 
-            var backgroundImageUri = await ResolveImageUriAsync(screen.BackgroundImage, project, cancellationToken).ConfigureAwait(false);
+            var backgroundImageUri = await ResolveImageUriAsync(screen.BackgroundImage, project, cancellationToken, context.Options.CultureLcid).ConfigureAwait(false);
             html.Append("<div");
             AppendAttribute(html, "id", screen.Name);
             AppendAttribute(html, "data-background-image", screen.BackgroundImage?.ImageName ?? screen.BackgroundImage?.ImageId);
@@ -678,7 +678,7 @@ public partial class HmiScreenToHtmlConverter
         CancellationToken cancellationToken)
     {
         var image = symbolContainer.Image.GetStaticValue();
-        var imageUri = await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
+        var imageUri = await ResolveImageUriAsync(image, project, cancellationToken, context.Options.CultureLcid).ConfigureAwait(false);
 
         html.Append("<div");
         AppendSymbolAttributes(html, symbolContainer, context);
@@ -696,13 +696,15 @@ public partial class HmiScreenToHtmlConverter
     private static async ValueTask<string?> ResolveImageUriAsync(
         HmiImageSource? image,
         IHmiProject? project,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int? cultureLcid = null)
     {
         if (image == null)
             return null;
 
-        if (!string.IsNullOrWhiteSpace(image.Uri))
-            return ResolveMetafileDataUri(image.Uri!) ?? image.Uri;
+        var uri = cultureLcid is int locale && image.LocalizedUris.TryGetValue(locale, out var localized) ? localized : image.Uri;
+        if (!string.IsNullOrWhiteSpace(uri))
+            return ResolveMetafileDataUri(uri!) ?? uri;
 
         if (project == null || string.IsNullOrWhiteSpace(image.ImageId))
             return null;
@@ -1850,7 +1852,7 @@ public partial class HmiScreenToHtmlConverter
                 imageKey = GetImageColorKey(button.DisabledImageBackgroundTransparent, button.DisabledImageBackgroundColor, context);
         }
         var imageUri = mode == HmiButtonType.Text ? null
-            : await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
+            : await ResolveImageUriAsync(image, project, cancellationToken, context.Options.CultureLcid).ConfigureAwait(false);
         var hasImage = !string.IsNullOrWhiteSpace(imageUri);
         var imageFallback = mode == HmiButtonType.GraphicOrText && hasImage;
         var overlay = hasImage && ResolveStaticValue(button.OverlayContent, context);
@@ -4086,10 +4088,10 @@ public partial class HmiScreenToHtmlConverter
             ?? symbolicIoField.States.FirstOrDefault();
         if (selectedState?.Image is not null)
         {
-            var imageUri = await ResolveImageUriAsync(selectedState.Image, project, cancellationToken).ConfigureAwait(false);
+            var imageUri = await ResolveImageUriAsync(selectedState.Image, project, cancellationToken, context.Options.CultureLcid).ConfigureAwait(false);
             var alternateImageUri = selectedState.AlternateImage is null
                 ? null
-                : await ResolveImageUriAsync(selectedState.AlternateImage, project, cancellationToken).ConfigureAwait(false);
+                : await ResolveImageUriAsync(selectedState.AlternateImage, project, cancellationToken, context.Options.CultureLcid).ConfigureAwait(false);
             var blinkAlternateImage = selectedState.ImageBlink && !string.IsNullOrWhiteSpace(alternateImageUri);
             var imageLayoutStyle = selectedState.ImageScaled == false
                 ? "width: auto; height: auto; max-width: 100%; max-height: 100%; display: block;"
@@ -4249,8 +4251,8 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "mode", context.EffectiveProperties.Resolve(toggleSwitch, nameof(HmiToggleSwitch.Mode), toggleSwitch.Mode));
         AppendAttribute(html, "text", text?.GetDisplayText(context.CultureInfo));
         AppendAttribute(html, "alternate-text", alternateText?.GetDisplayText(context.CultureInfo));
-        AppendAttribute(html, "image", await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false));
-        AppendAttribute(html, "alternate-image", await ResolveImageUriAsync(alternateImage, project, cancellationToken).ConfigureAwait(false));
+        AppendAttribute(html, "image", await ResolveImageUriAsync(image, project, cancellationToken, context.Options.CultureLcid).ConfigureAwait(false));
+        AppendAttribute(html, "alternate-image", await ResolveImageUriAsync(alternateImage, project, cancellationToken, context.Options.CultureLcid).ConfigureAwait(false));
         AppendBooleanAttribute(html, "checked", alternateState ?? (onState is not null && !ReferenceEquals(onState, offState) && ReferenceEquals(selectedState, onState)));
         AppendAttribute(html, "data-is-alternate-state", alternateState.HasValue ? (alternateState.Value ? "true" : "false") : null);
         AppendStaticAttribute(html, "header", toggleSwitch.Header);
@@ -4316,7 +4318,7 @@ public partial class HmiScreenToHtmlConverter
         html.Append('>');
 
         foreach (var item in selectionGroup.Items)
-            await AppendSelectionGroupItemAsync(html, item, project, cancellationToken).ConfigureAwait(false);
+            await AppendSelectionGroupItemAsync(html, item, project, context, cancellationToken).ConfigureAwait(false);
 
         html.Append("</").Append(elementName).Append('>');
     }
@@ -4375,11 +4377,12 @@ public partial class HmiScreenToHtmlConverter
         StringBuilder html,
         HmiSelectionGroupItem item,
         IHmiProject? project,
+        HmiHtmlConvertContext context,
         CancellationToken cancellationToken)
     {
         html.Append("<span slot=\"item\"");
         AppendAttribute(html, "text", item.Text);
-        AppendAttribute(html, "image", await ResolveImageUriAsync(item.Image, project, cancellationToken).ConfigureAwait(false));
+        AppendAttribute(html, "image", await ResolveImageUriAsync(item.Image, project, cancellationToken, context.Options.CultureLcid).ConfigureAwait(false));
         AppendAttribute(html, "image-name", item.ImageName ?? item.Image?.ImageName);
         html.Append("></span>");
     }
@@ -4701,7 +4704,7 @@ public partial class HmiScreenToHtmlConverter
         CancellationToken cancellationToken)
     {
         var image = graphicView.Image.GetStaticValue();
-        var imageUri = await ResolveImageUriAsync(image, project, cancellationToken).ConfigureAwait(false);
+        var imageUri = await ResolveImageUriAsync(image, project, cancellationToken, context.Options.CultureLcid).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(imageUri))
             imageUri = ResolveMetafileDataUri(graphicView.Source.GetStaticValue() ?? string.Empty) ?? graphicView.Source.GetStaticValue();
 

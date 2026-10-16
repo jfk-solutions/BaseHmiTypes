@@ -235,7 +235,7 @@ export class HmiScreenToHtmlConverter {
         appendRuntimeModule(html);
       }
 
-      const backgroundImageUri = await resolveImageUri(screen.backgroundImage, project, signal);
+      const backgroundImageUri = await resolveImageUri(screen.backgroundImage, project, signal, context.options.cultureLcid);
       html.push("<div");
       appendAttribute(html, "id", screen.name);
       appendAttribute(html, "data-background-image", screen.backgroundImage?.imageName ?? screen.backgroundImage?.imageId);
@@ -592,7 +592,7 @@ export class HmiScreenToHtmlConverter {
     signal?: AbortSignal,
   ): Promise<void> {
     const image = getStaticValue(symbolContainer.image);
-    const imageUri = await resolveImageUri(image, project, signal);
+    const imageUri = await resolveImageUri(image, project, signal, context.options.cultureLcid);
     html.push("<div");
     appendSymbolAttributes(html, symbolContainer, context);
     html.push(">");
@@ -622,7 +622,7 @@ export class HmiScreenToHtmlConverter {
     signal?: AbortSignal,
   ): Promise<void> {
     const image = getStaticValue(graphicView.image);
-    let imageUri = await resolveImageUri(image, project, signal);
+    let imageUri = await resolveImageUri(image, project, signal, context.options.cultureLcid);
     if (!imageUri?.trim()) {
       const source = getStaticValue(graphicView.source);
       imageUri = resolveMetafileDataUri(source ?? "") ?? source;
@@ -1681,7 +1681,7 @@ async function appendButton(
     if (disabledImage !== undefined)
       imageKey = getImageColorKey(button.disabledImageBackgroundTransparent, button.disabledImageBackgroundColor, context);
   }
-  const imageUri = mode === HmiButtonType.Text ? undefined : await resolveImageUri(image, project, signal);
+  const imageUri = mode === HmiButtonType.Text ? undefined : await resolveImageUri(image, project, signal, context.options.cultureLcid);
   const hasImage = imageUri !== undefined && imageUri.trim() !== "";
   const imageFallback = mode === HmiButtonType.GraphicOrText && hasImage;
   const overlay = hasImage && resolveStaticValue(button.overlayContent, context, tryConvertFaceplateBooleanValue) === true;
@@ -3159,7 +3159,7 @@ async function appendParameterColumns(html: string[], control: HmiParameterContr
       appendAttribute(html, "data-output-format", resolvePropertyPreview(column.outputFormat));
       const headingText = columnHeaderType === 1 ? String(index + 1) : column.headerText?.getText(context.options.cultureLcid) ?? column.name ?? column.key ?? "Column";
       html.push(">"); const mode = column.headerContentMode === undefined ? undefined : getStaticValue(column.headerContentMode) ?? 0;
-      const graphicUri = columnHeaderType !== 1 && (mode === 0 || mode === 1 || mode === 3) ? await resolveImageUri(column.headerGraphic, project, signal) : undefined;
+      const graphicUri = columnHeaderType !== 1 && (mode === 0 || mode === 1 || mode === 3) ? await resolveImageUri(column.headerGraphic, project, signal, context.options.cultureLcid) : undefined;
       const useGraphic = columnHeaderType !== 1 && !!graphicUri?.trim() && (mode === 0 || mode === 1 || mode === 3);
       if (useGraphic) {
         const stretch = column.headerGraphicStretchMode === undefined ? undefined : getStaticValue(column.headerGraphicStretchMode) ?? 0;
@@ -4666,10 +4666,10 @@ async function appendSymbolicInput(
     ?? symbolicIoField.states.find(candidate => candidate.isDefault)
     ?? symbolicIoField.states[0];
   if (selectedState?.image !== undefined) {
-    const imageUri = await resolveImageUri(selectedState.image, project, signal);
+    const imageUri = await resolveImageUri(selectedState.image, project, signal, context.options.cultureLcid);
     const alternateImageUri = selectedState.alternateImage === undefined
       ? undefined
-      : await resolveImageUri(selectedState.alternateImage, project, signal);
+      : await resolveImageUri(selectedState.alternateImage, project, signal, context.options.cultureLcid);
     const blinkAlternateImage = selectedState.imageBlink && Boolean(alternateImageUri?.trim());
     const imageLayoutStyle = selectedState.imageScaled === false
       ? "width: auto; height: auto; max-width: 100%; max-height: 100%; display: block;"
@@ -4835,8 +4835,8 @@ async function appendToggleSwitch(
   );
   appendAttribute(html, "text", text?.getDisplayText(context.options.cultureLcid));
   appendAttribute(html, "alternate-text", alternateText?.getDisplayText(context.options.cultureLcid));
-  appendAttribute(html, "image", await resolveImageUri(image, project, signal));
-  appendAttribute(html, "alternate-image", await resolveImageUri(alternateImage, project, signal));
+  appendAttribute(html, "image", await resolveImageUri(image, project, signal, context.options.cultureLcid));
+  appendAttribute(html, "alternate-image", await resolveImageUri(alternateImage, project, signal, context.options.cultureLcid));
   appendBooleanAttribute(html, "checked", alternateState ?? (onState !== undefined && onState !== offState && selectedState === onState));
   appendAttribute(html, "data-is-alternate-state", alternateState === undefined ? undefined : alternateState ? "true" : "false");
   appendStaticAttribute(html, "header", toggleSwitch.header);
@@ -4890,7 +4890,7 @@ async function appendSelectionGroup(
   appendStaticAttribute(html, "selection-border-width", selectionGroup.selectionBorderWidth);
   html.push(">");
   for (const item of selectionGroup.items) {
-    await appendSelectionGroupItem(html, item, project, signal);
+    await appendSelectionGroupItem(html, item, project, context, signal);
   }
   html.push(`</${elementName}>`);
 }
@@ -4947,11 +4947,12 @@ async function appendSelectionGroupItem(
   html: string[],
   item: HmiSelectionGroupItem,
   project: IHmiProject | undefined,
+  context: HmiHtmlConvertContext,
   signal?: AbortSignal,
 ): Promise<void> {
   html.push("<span slot=\"item\"");
   appendAttribute(html, "text", item.text);
-  appendAttribute(html, "image", await resolveImageUri(item.image, project, signal));
+  appendAttribute(html, "image", await resolveImageUri(item.image, project, signal, context.options.cultureLcid));
   appendAttribute(html, "image-name", item.imageName ?? item.image?.imageName);
   html.push("></span>");
 }
@@ -7216,12 +7217,14 @@ async function resolveImageUri(
   image: HmiImageSource | undefined,
   project: IHmiProject | undefined,
   signal?: AbortSignal,
+  cultureLcid?: number,
 ): Promise<string | undefined> {
   if (image === undefined) {
     return undefined;
   }
-  if (image.uri?.trim()) {
-    return resolveMetafileDataUri(image.uri) ?? image.uri;
+  const uri = (cultureLcid === undefined ? undefined : image.localizedUris?.get(cultureLcid)) ?? image.uri;
+  if (uri?.trim()) {
+    return resolveMetafileDataUri(uri) ?? uri;
   }
   if (project === undefined || !image.imageId?.trim()) {
     return undefined;

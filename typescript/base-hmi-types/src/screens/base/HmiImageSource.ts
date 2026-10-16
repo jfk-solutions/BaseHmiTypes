@@ -7,5 +7,6 @@ export interface HmiImageSource {
   imageId?: string;
   imageName?: string;
   uri?: string;
+  localizedUris?: Map<number, string>;
   kind: HmiImageSourceKind;
 }
