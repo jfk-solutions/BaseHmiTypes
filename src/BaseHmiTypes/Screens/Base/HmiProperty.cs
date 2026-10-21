@@ -132,6 +132,8 @@ public sealed class HmiStaticProperty<T> : HmiProperty<T>
 
 public sealed class HmiDefaultProperty<T> : HmiProperty<T>
 {
+    /// <summary>Native style alternatives; explicit and dynamic properties have no style values.</summary>
+    public Dictionary<string, T> StyleValues { get; set; } = new();
     public override HmiPropertyKind Kind => HmiPropertyKind.Default;
 
     public string? ProfileName { get; set; }

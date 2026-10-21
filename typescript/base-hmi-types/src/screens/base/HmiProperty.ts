@@ -99,6 +99,8 @@ export interface HmiDefaultProperty<T> extends HmiProperty<T> {
   readonly kind: HmiPropertyKind.Default;
   profileName?: string;
   propertyName?: string;
+  /** Native style alternatives; explicit and dynamic properties have no style values. */
+  styleValues?: Record<string, T>;
 }
 
 export interface HmiTagProperty<T> extends HmiDynamicProperty<T> {
