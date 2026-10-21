@@ -706,7 +706,10 @@ test("HTML conversion renders static disabled button appearance", async () => {
 
   assert.match(html, /<button id="Disabled"[^>]* disabled="disabled">.*?<img src="data:image\/png;base64,Ag=="/);
   assert.match(html, /<button id="Grayscale"/);
-  assert.match(html, /src="data:image\/png;base64,AQ==" style="width: 100%; height: 100%; filter: grayscale\(1\);"/);
+  const grayscaleImage = /<button id="Grayscale"[^>]*>[\s\S]*?(<img [^>]*>)/.exec(html)?.[1];
+  assert.ok(grayscaleImage);
+  for (const expected of ['src="data:image/png;base64,AQ=="', 'width: 100%;', 'height: 100%;', 'filter: grayscale(1);', 'display: block;', 'object-fit: fill;'])
+    assert.ok(grayscaleImage.includes(expected), expected);
 });
 
 test("HTML conversion renders materialized reference objects", async () => {
