@@ -12,6 +12,14 @@ no preview samples are generated. The source-control ID and name identify the
 associated trend within that screen instance. Live acquisition and evaluation
 belong to the runtime data service rather than the HTML converter.
 
+Runtime trend charts receive a `runtime-data` attribute containing measured
+`series` (pen `number` and timestamped `points`), view bounds `from`/`to`, and
+optional ruler/selection/statistics state. Its presence suppresses generated
+preview curves, including for invalid or empty data. Bad-quality null points break
+curves. Named trend windows inherit the same measured data without sharing mutable
+state. The control emits composed `hmi-trend-action` (explicit native button ID)
+and `hmi-trend-select` (normalized start/end fractions) events for the owning host.
+
 The bundle replaces the SVG component's JavaScript evaluator with
 `src/svg-expression.ts`. It parses bounded expressions with Acorn and permits
 only arithmetic, comparisons, conditional expressions, parameter/local members

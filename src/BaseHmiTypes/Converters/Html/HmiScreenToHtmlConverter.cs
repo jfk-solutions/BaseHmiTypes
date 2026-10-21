@@ -5963,6 +5963,7 @@ public partial class HmiScreenToHtmlConverter
         var entries = buttons.Select(button =>
         {
             var properties = new List<string>();
+            AddTrendJsonNumber(properties, "controlId", button.ControlId);
             AddTrendJsonString(properties, "sourceType", button.SourceType);
             AddTrendJsonBoolean(properties, "visible", button.Visible?.StaticValue);
             AddTrendJsonBoolean(properties, "enabled", button.Enabled?.StaticValue);

@@ -6,6 +6,8 @@ namespace BaseHmiTypes.Screens.Controls;
 /// <summary>Stored toolbar configuration; commands are not inferred from source identities.</summary>
 public sealed class HmiTrendToolbarButton
 {
+    /// <summary>Native toolbar command ID, distinct from an opaque source type.</summary>
+    public int? ControlId { get; set; }
     public string? SourceType { get; set; }
     public HmiProperty<bool>? Visible { get; set; }
     public HmiProperty<bool>? Enabled { get; set; }

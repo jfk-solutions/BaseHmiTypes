@@ -1,4 +1,5 @@
 const trendControlProperties = {
+  runtimeData: String,
   controlName: String,
   typeName: String,
   chartTitle: String,
@@ -125,6 +126,13 @@ interface NumericXAxis {
   alignment?: string;
 }
 
+interface RuntimeTrendData {
+  series: {number: number; points: {time: number; value: number | null; quality?: string}[]}[];
+  from: number; to: number; ruler?: number; rulerEnabled?: boolean;
+  selectionMode?: string; statisticsArea?: number[]; running?: boolean;
+}
+const toolbarIds: Record<string, number> = {Ruler:6,ZoomArea:7,OriginalView:13,StartStop:19,DefineStatisticsArea:20,CalculateStatistics:21};
+
 export class HmiTrendControl extends HTMLElement {
   static get observedAttributes(): string[] {
     return Object.keys(trendControlProperties).map(toKebabCase);
@@ -133,6 +141,28 @@ export class HmiTrendControl extends HTMLElement {
   private _controlName = "";
   private _typeName = "Trend control";
   private readonly root = this.attachShadow({ mode: "open" });
+  private selectionStart?: number;
+  constructor() {
+    super();
+    this.root.addEventListener?.('click', event => {
+      const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-trend-action]') : null;
+      if (button && !button.disabled) this.dispatchEvent(new CustomEvent('hmi-trend-action',{bubbles:true,composed:true,detail:{id:Number(button.dataset.trendAction)}}));
+    });
+    const fraction = (event: PointerEvent): number | undefined => {
+      const plot = event.target instanceof Element ? event.target.closest('.plot') : null;
+      if (!plot) return undefined; const rect = plot.getBoundingClientRect();
+      if (rect.width <= 0) return undefined;
+      const value = Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
+      return this.getAttribute('x-axis-flipped') === 'true' ? 1-value : value;
+    };
+    this.root.addEventListener?.('pointerdown', event => { this.selectionStart = fraction(event as PointerEvent); });
+    this.root.addEventListener?.('pointerup', event => {
+      const end = fraction(event as PointerEvent), start = this.selectionStart; this.selectionStart = undefined;
+      if (start === undefined || end === undefined || !this.hasAttribute('runtime-data')) return;
+      this.dispatchEvent(new CustomEvent('hmi-trend-select',{bubbles:true,composed:true,detail:{start,end}}));
+    });
+    this.root.addEventListener?.('pointercancel', () => { this.selectionStart = undefined; });
+  }
 
   get controlName(): string {
     return this._controlName;
@@ -175,6 +205,7 @@ export class HmiTrendControl extends HTMLElement {
   }
 
   private render(): void {
+    const runtime = parseRuntimeData(this);
     const computed = getComputedStyle(this);
     const backgroundColor = normalizeTransparent(computed.backgroundColor, "#ffffff");
     const windowBackgroundColor = normalizeCssColor(this.getAttribute("window-background-color"), backgroundColor, true);
@@ -270,7 +301,7 @@ export class HmiTrendControl extends HTMLElement {
     const xAxisDateFormat = timeSource.getAttribute("x-axis-date-format");
     const locale = this.getAttribute("lang") || (typeof document === "undefined" ? undefined : document.documentElement.lang) || undefined;
     const timeZone = resolveTimeZone(this);
-    const labels = createTimeLabels(new Date(Date.now() - xAxisTimeSpan), xAxisDateVisible, xAxisTimeSpan, timeFormat, displayMilliseconds, xAxisDateFormat, locale, timeZone ?? undefined);
+    const labels = createTimeLabels(new Date(runtime?.from ?? Date.now() - xAxisTimeSpan), xAxisDateVisible, runtime ? runtime.to-runtime.from : xAxisTimeSpan, timeFormat, displayMilliseconds, xAxisDateFormat, locale, timeZone ?? undefined);
     if (xAxisFlipped) labels.reverse();
     const plotTop = displayChartTitle ? (showToolbar && !toolbarAtBottom ? 29 : 15) : (showToolbar && !toolbarAtBottom ? 23 : 7);
     const plotBottom = (displayScrollMechanism ? 22 : 16) + (showStatusBar ? 10 : 0) + (showToolbar && toolbarAtBottom ? 12 : 0);
@@ -573,14 +604,15 @@ export class HmiTrendControl extends HTMLElement {
             )}
             ${xAxisVisible && !timeAxes.length && !xValueAxes.length ? `<line x1="0" y1="${xAxisAlignment === "top" ? 0 : 100}" x2="100" y2="${xAxisAlignment === "top" ? 0 : 100}" stroke="var(--hmi-trend-x-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
             ${yAxisVisible && !namedValueAxes.length ? `<line x1="${yAxisAlignment === "right" ? 100 : 0}" y1="0" x2="${yAxisAlignment === "right" ? 100 : 0}" y2="100" stroke="var(--hmi-trend-y-axis-color, #444850)" stroke-width="0.55"></line>` : ""}
-            ${xyPlot ? "" : renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, configuredDecimalPlaces)}
+            ${xyPlot ? "" : renderPens(visiblePens, minimumValue, maximumValue, xAxisFlipped, configuredDecimalPlaces, runtime)}
           </svg>
           ${namedValueAxes.length ? renderValueAxes(namedValueAxes, pens, minimumValue, maximumValue, configuredDecimalPlaces, foregroundColor) : yAxisVisible ? renderYLabels(minimumValue, maximumValue, decimalPlaces, axisScaleType, exponentialFormat) : ""}
           ${showPercentageAxis ? `<div class="percentage-axis-line" aria-hidden="true"></div>${renderPercentageLabels()}` : ""}
-          ${displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
-          ${displayStatisticRulers ? `<div class="statistic-ruler start" title="Statistics range start"></div><div class="statistic-ruler end" title="Statistics range end"></div>` : ""}
-          ${xyPlot ? xValueAxes.length ? renderXValueAxes(xValueAxes, xAxisFlipped, foregroundColor) : `<span class="axis-label x-label" style="left:50%">X-axis range unavailable</span>` : timeAxes.length ? renderTimeAxes(timeAxes, pens, xAxisFlipped, locale, timeZone, unavailableTimeZoneText(this)) : xAxisVisible ? timeZone === null ? `<span class="axis-label x-label" style="left:50%">${escapeHtml(unavailableTimeZoneText(this))}</span>` : renderXLabels(labels) : ""}
+          ${runtime ? runtime.rulerEnabled ? `<div class="value-bar" style="left:${runtimePosition(runtime,runtime.ruler ?? runtime.to,xAxisFlipped)}%" aria-hidden="true"></div>` : '' : displayValueBar ? `<div class="value-bar" aria-hidden="true"></div>` : ""}
+          ${runtime ? runtime.statisticsArea ? `<div class="statistic-ruler" style="left:${runtimePosition(runtime,runtime.statisticsArea[0]!,xAxisFlipped)}%" title="Statistics range start"></div><div class="statistic-ruler" style="left:${runtimePosition(runtime,runtime.statisticsArea[1]!,xAxisFlipped)}%" title="Statistics range end"></div>` : '' : displayStatisticRulers ? `<div class="statistic-ruler start" title="Statistics range start"></div><div class="statistic-ruler end" title="Statistics range end"></div>` : ""}
+          ${xyPlot ? xValueAxes.length ? renderXValueAxes(xValueAxes, xAxisFlipped, foregroundColor) : `<span class="axis-label x-label" style="left:50%">X-axis range unavailable</span>` : timeAxes.length ? renderTimeAxes(timeAxes, pens, xAxisFlipped, locale, timeZone, unavailableTimeZoneText(this), runtime) : xAxisVisible ? timeZone === null ? `<span class="axis-label x-label" style="left:50%">${escapeHtml(unavailableTimeZoneText(this))}</span>` : renderXLabels(labels) : ""}
           ${xyPlot ? `<span class="axis-label" style="left:50%;top:50%">Function trend data not loaded</span>` : ""}
+          ${runtime && !runtime.series.some(series => series.points.some(point => point.quality !== 'bad' && point.value !== null)) ? '<span class="axis-label" style="left:50%;top:50%">No trend data</span>' : ''}
           ${!timeAxes.length && xAxisVisible && xAxisLabel ? `<span class="axis-label x-axis-title">${escapeHtml(xAxisLabel)}</span>` : ""}
           ${yAxisVisible && yAxisLabel && !namedValueAxes.length ? `<span class="axis-label y-axis-title">${escapeHtml(yAxisLabel)}</span>` : ""}
         </div>`}
@@ -720,12 +752,17 @@ function renderToolbarButtons(source: HTMLElement): string {
     if (Array.isArray(parsed)) buttons = parsed.filter((value): value is Record<string, unknown> =>
       typeof value === "object" && value !== null && !Array.isArray(value));
   } catch { return ""; }
+  if (!source.hasAttribute('toolbar-buttons') && source.hasAttribute('runtime-data'))
+    buttons = Object.entries(toolbarIds).map(([name,id]) => ({sourceType:name,controlId:id}));
   const order = (button: Record<string, unknown>) => typeof button.order === "number" && Number.isFinite(button.order) ? button.order : 0;
   return buttons.filter(button=>button.visible!==false).sort((a,b)=>order(a)-order(b)).map(button=>{
     const identity = typeof button.sourceType === "string" ? button.sourceType : undefined;
     const title = typeof button.tooltip === "string" ? ` title="${escapeHtml(button.tooltip)}"` : "";
     const nativeEnabled = typeof button.enabled === "boolean" ? ` data-configured-enabled="${button.enabled}"` : "";
     const name = identity !== undefined ? ` data-button-source-type="${escapeHtml(identity)}"` : "";
+    const id = typeof button.controlId === 'number' && Number.isInteger(button.controlId) ? button.controlId : undefined;
+    if (source.hasAttribute('runtime-data') && id !== undefined && Object.values(toolbarIds).includes(id))
+      return `<button class="configured-toolbar-button" type="button" data-trend-action="${id}"${button.enabled === false ? ' disabled' : ''}${name}${nativeEnabled}${title}>${escapeHtml(Object.keys(toolbarIds).find(key => toolbarIds[key] === id) ?? identity ?? String(id))}</button>`;
     return `<button class="configured-toolbar-button" type="button" disabled data-preview="configuration"${name}${nativeEnabled}${title}>${escapeHtml(identity ?? "Configured toolbar button")}</button>`;
   }).join("");
 }
@@ -926,7 +963,7 @@ function unavailableTimeZoneText(control: Pick<Element, "getAttribute">): string
   return control.getAttribute("time-base")?.toLowerCase() === "server" ? "Server time zone unavailable" : "Project time zone unavailable";
 }
 
-function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], flipped: boolean, locale: string | undefined, timeZone: string | undefined | null, unavailableText: string): string {
+function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], flipped: boolean, locale: string | undefined, timeZone: string | undefined | null, unavailableText: string, runtime?: RuntimeTrendData): string {
   const visibleAxes = axes.filter(axis => axis.attributes["x-axis-scale-visible"] !== "false");
   const columns = {
     top: visibleAxes.filter(axis => axis.attributes["x-axis-alignment"]?.toLowerCase() === "top").length,
@@ -941,8 +978,8 @@ function renderTimeAxes(axes: readonly TimeAxis[], pens: readonly TrendPen[], fl
     const startTime = parseAxisTimestamp(source.getAttribute("startTime"));
     const endTime = parseAxisTimestamp(source.getAttribute("endTime"));
     const fixedRange = source.getAttribute("rangeType") === "StartEnd" && startTime !== undefined && endTime !== undefined && endTime >= startTime;
-    const start = fixedRange ? startTime : source.getAttribute("refreshEnabled") === "false" && startTime !== undefined ? startTime : now - duration;
-    const span = fixedRange ? endTime - startTime : duration;
+    const start = runtime?.from ?? (fixedRange ? startTime : source.getAttribute("refreshEnabled") === "false" && startTime !== undefined ? startTime : now - duration);
+    const span = runtime ? runtime.to-runtime.from : fixedRange ? endTime - startTime : duration;
     const labels = createTimeLabels(new Date(start), readBooleanAttribute(source, "x-axis-date-visible", true), span,
       source.getAttribute("time-format")?.toLowerCase() === "twentyfourhour" ? "twenty-four-hour" : "twelve-hour",
       readBooleanAttribute(source, "display-milliseconds", false), source.getAttribute("x-axis-date-format"), locale, timeZone ?? undefined);
@@ -1068,6 +1105,7 @@ function renderPens(
   maximumValue: number,
   xAxisFlipped: boolean,
   decimalPlaces: number,
+  runtime?: RuntimeTrendData,
 ): string {
   return pens.map((pen, index) => {
     const color = normalizePenColor(pen.color, index);
@@ -1082,7 +1120,14 @@ function renderPens(
       : clamp(Math.trunc(pen.decimalPlaces ?? decimalPlaces), 0, 12);
     const amplitude = Math.max(6, 24 - (index % 8) * 2);
     const points: Array<{ x: number; y: number; value: number; uncertain: boolean }> = [];
-    for (let point = 0; point <= 20; point++) {
+    const breaks: number[] = [0];
+    if (runtime) for (const point of runtime.series.find(series => series.number === pen.number)?.points ?? []) {
+      if (point.time < runtime.from || point.time > runtime.to) continue;
+      if (point.quality === 'bad' || point.value === null || penScaleType === 1 && (point.value <= 0 || penMinimum <= 0 || penMaximum <= 0)) { if (breaks.at(-1) !== points.length) breaks.push(points.length); continue; }
+      const ratio = penScaleType === 1 ? (Math.log(point.value)-Math.log(penMinimum))/(Math.log(penMaximum)-Math.log(penMinimum)) : (point.value-penMinimum)/(penMaximum-penMinimum);
+      points.push({x:runtimePosition(runtime,point.time,xAxisFlipped),y:clamp(100-ratio*100,0,100),value:point.value,uncertain:point.quality === 'uncertain'});
+    }
+    else for (let point = 0; point <= 20; point++) {
       const x = xAxisFlipped ? 100 - point * 5 : point * 5;
       const y = 50 - Math.sin((point + index * 3) * 0.55) * amplitude + (index % 8) * 3;
       const clippedY = clamp(y, 3, 97);
@@ -1093,9 +1138,11 @@ function renderPens(
         uncertain: pen.uncertainColoring === true && point >= 8 && point <= 11,
       });
     }
+    if (!points.length) return '';
     const pointText = trendPointText(points, pen.lineType);
     const markerColor = pen.markerColor ?? color;
-    const area = pen.fill === true
+    const segments = breaks.map((start,index) => points.slice(start,breaks[index+1])).filter(segment => segment.length);
+    const area = runtime && pen.fill === true ? segments.map(segment => `<polygon points="${toCss(segment[0]!.x)},100 ${trendPointText(segment,pen.lineType)} ${toCss(segment.at(-1)!.x)},100" fill="${escapeHtml(pen.fillColor ?? color)}" fill-opacity="0.3"></polygon>`).join('') : pen.fill === true
       ? `<polygon points="0,100 ${pointText} 100,100" fill="${escapeHtml(pen.fillColor ?? color)}" fill-opacity="0.3"></polygon>`
       : "";
     const markers = pen.marker === undefined || pen.marker === "0"
@@ -1109,10 +1156,28 @@ function renderPens(
           markerRadius(pen, clamp(width + 1, 2, 5)),
         ))
         .join("");
-    const line = renderTrendLine(pen, points, pointText, color, width, penExponentialFormat, penDecimalPlaces);
+    const line = segments.map(segment => runtime && segment.length === 1
+      ? `<circle cx="${toCss(segment[0]!.x)}" cy="${toCss(segment[0]!.y)}" r="${toCss(width)}" fill="${escapeHtml(color)}"></circle>`
+      : renderTrendLine(pen, segment, trendPointText(segment,pen.lineType), color, width, penExponentialFormat, penDecimalPlaces)).join('');
     const alarms = renderAlarmSymbols(pen, points);
     return `<g data-pen-number="${pen.number}"${pen.trendWindowName ? ` data-trend-window="${escapeHtml(pen.trendWindowName)}"` : ""}${pen.timeAxisName ? ` data-time-axis="${escapeHtml(pen.timeAxisName)}"` : ""}>${area}${line}${markers}${alarms}</g>`;
   }).join("");
+}
+
+function parseRuntimeData(source: HTMLElement): RuntimeTrendData | undefined {
+  if (!source.hasAttribute('runtime-data')) return undefined;
+  try {
+    const value = JSON.parse(source.getAttribute('runtime-data') ?? 'null') as RuntimeTrendData;
+    if (value && Number.isFinite(value.from) && Number.isFinite(value.to) && value.to > value.from && Array.isArray(value.series))
+      return {...value,series:value.series.filter(series => series && typeof series.number === 'number' && Array.isArray(series.points)).map(series => ({
+        ...series,
+        points:series.points.filter(point => point && Number.isFinite(point.time) && (typeof point.value === 'number' && Number.isFinite(point.value) || point.value === null && point.quality === 'bad')),
+      }))};
+  } catch {}
+  return {series:[],from:0,to:1};
+}
+function runtimePosition(data: RuntimeTrendData, time: number, flipped: boolean): number {
+  const position = clamp((time-data.from)/(data.to-data.from)*100,0,100); return flipped ? 100-position : position;
 }
 
 function renderAlarmSymbols(

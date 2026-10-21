@@ -5872,6 +5872,7 @@ function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, c
   appendStaticAttribute(html, "toolbar-background-color", trendControl.toolbarBackgroundColor);
   appendStaticAttribute(html, "toolbar-button-size", trendControl.toolbarButtonSize);
   if (trendControl.toolbarButtons.length > 0) appendAttribute(html, "toolbar-buttons", JSON.stringify(trendControl.toolbarButtons.map(button=>({
+    controlId: button.controlId,
     sourceType:button.sourceType, visible:getStaticValue(button.visible), enabled:getStaticValue(button.enabled),
     order:getStaticValue(button.order), tooltip:button.tooltip?.getText(context.options.cultureLcid),
   }))));
