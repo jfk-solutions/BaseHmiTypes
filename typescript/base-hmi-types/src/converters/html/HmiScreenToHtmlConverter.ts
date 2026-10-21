@@ -1,4 +1,4 @@
-import { HmiAlarmColumn, HmiAlarmColumnType, HmiAlarmToolbarButtonType } from "../../screens/controls.js";
+import { HmiAlarmColumn, HmiAlarmColumnType, HmiAlarmToolbarButtonType, HmiAlarmSourceType, HmiSystemDiagnosisViewType } from "../../screens/controls.js";
 import { HmiRecipeToHtmlConverter } from "./HmiRecipeToHtmlConverter.js";
 import { HmiCharacterScreen } from "../../screens/screen/HmiCharacterScreen.js";
 import { formatScaleLabel } from "./format-scale-label.js";
@@ -815,6 +815,7 @@ export class HmiScreenToHtmlConverter {
     appendStaticAttribute(html, "data-fit-window-to-screen", screenWindow.fitWindowToScreen);
     appendStaticAttribute(html, "data-show-scrollbars", screenWindow.showScrollBars);
     appendStaticAttribute(html, "data-zoom-percent", screenWindow.zoomPercent);
+    appendStaticAttribute(html, "data-interactive-zooming", screenWindow.interactiveZooming);
     appendStaticAttribute(html, "data-picture-offset-x", screenWindow.offsetLeft);
     appendStaticAttribute(html, "data-picture-offset-y", screenWindow.offsetTop);
     appendStaticAttribute(html, "data-scroll-position-x", screenWindow.scrollPositionLeft);
@@ -904,6 +905,7 @@ function createScreenWindowStyle(screenWindow: HmiScreenWindow, resolved: HmiScr
     style += `height: ${toCss(contentHeight * zoom)}px;`;
   }
   style += showScrollBars && !fitScreen && !fitWindow ? "overflow: auto;" : "overflow: hidden;";
+  if (screenWindow.interactiveZooming !== undefined) style += getStaticValue(screenWindow.interactiveZooming) ? "touch-action: pan-x pan-y pinch-zoom;" : "touch-action: pan-x pan-y;";
   return style;
 }
 
@@ -3662,7 +3664,9 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   const showHeader = alarmControl.showHeader === undefined || getStaticValue(alarmControl.showHeader) === true;
   const showTitle = getStaticValue(alarmControl.showTitle) === true;
   const listMode = getStaticValue(alarmControl.listMode) ?? HmiAlarmListMode.All;
-  const setName = alarmControl.activeColumnSet ?? alarmControl.defaultColumnSet;
+  const alarmSource = getStaticValue(alarmControl.alarmSourceType);
+  const sourceSet = alarmSource === HmiAlarmSourceType.AlarmStatistics && alarmControl.columnSets.some(set => set.name === 'AlarmStatisticsView') ? 'AlarmStatisticsView' : undefined;
+  const setName = alarmControl.activeColumnSet ?? sourceSet ?? alarmControl.defaultColumnSet;
   const selectedSet = setName === undefined ? undefined : alarmControl.columnSets.find(set => set.name === setName);
   const columns = selectedSet?.columns ?? alarmControl.columnDefinitions;
   const visibleColumns = columns.filter(
@@ -3690,6 +3694,7 @@ function appendAlarmControl(html: string[], alarmControl: HmiAlarmControl, conte
   appendAttribute(html, "data-view-kind", alarmControl.viewKind);
   appendAttribute(html, "data-active-column-set", alarmControl.activeColumnSet);
   appendAttribute(html, "data-default-column-set", alarmControl.defaultColumnSet);
+  appendAttribute(html, "data-alarm-source-type", alarmSource === undefined ? undefined : HmiAlarmSourceType[alarmSource] ?? String(alarmSource));
   appendAttribute(html, "data-list-mode", listMode);
   appendAttribute(html, "data-time-base", resolvePropertyPreview(alarmControl.timeBase));
   appendAttribute(html, "data-shorten-cell-contents", resolvePropertyPreview(alarmControl.shortenCellContents));
@@ -4366,13 +4371,15 @@ function appendSystemDiagnosisControl(
   systemDiagnosisControl: HmiSystemDiagnosisControl,
   context: HmiHtmlConvertContext,
 ): void {
-  const title = systemDiagnosisControl.viewKind === HmiSystemDiagnosisViewKind.DiagnosticsList
+    const viewType = getStaticValue(systemDiagnosisControl.viewType);
+    const nativeTitle = viewType === undefined ? undefined : ['System diagnostics', 'Diagnostics matrix', 'Distributed I/O diagnostics', 'Script diagnostics'][viewType];
+    const title = nativeTitle ?? (systemDiagnosisControl.viewKind === HmiSystemDiagnosisViewKind.DiagnosticsList
     ? "Diagnostics list"
     : systemDiagnosisControl.viewKind === HmiSystemDiagnosisViewKind.DiagnosticsViewer
       ? "Diagnostics viewer"
       : systemDiagnosisControl.viewKind === HmiSystemDiagnosisViewKind.AutomaticEventSummary
         ? "Automatic diagnostic event summary"
-        : "System diagnostics";
+          : "System diagnostics");
 
   html.push("<div");
   appendCommonAttributes(
@@ -4383,6 +4390,7 @@ function appendSystemDiagnosisControl(
     "display: flex; flex-direction: column; overflow: hidden;",
   );
   appendAttribute(html, "data-view-kind", systemDiagnosisControl.viewKind);
+  appendAttribute(html, "data-diagnosis-view-type", viewType === undefined ? undefined : HmiSystemDiagnosisViewType[viewType] ?? String(viewType));
   appendAttribute(html, "data-column-header-type", resolvePropertyPreview(systemDiagnosisControl.columnHeaderType));
   appendAttribute(html, "data-row-header-type", resolvePropertyPreview(systemDiagnosisControl.rowHeaderType));
   appendAttribute(html, "data-show-toolbar", resolvePropertyPreview(systemDiagnosisControl.showToolbar));

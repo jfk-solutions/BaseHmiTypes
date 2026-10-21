@@ -44,6 +44,7 @@ public class HmiScreenWindow : HmiWindowBase
     /// Gets or sets the referenced screen zoom as a percentage.
     /// </summary>
     public HmiProperty<double>? ZoomPercent { get; set; }
+    public HmiProperty<bool>? InteractiveZooming { get; set; }
 
     /// <summary>
     /// Gets or sets the initial horizontal scroll position in pixels.

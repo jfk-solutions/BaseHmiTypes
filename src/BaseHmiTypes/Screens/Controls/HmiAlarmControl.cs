@@ -5,6 +5,7 @@ namespace BaseHmiTypes.Screens.Controls;
 
 public class HmiAlarmControl : HmiControlWindowBase
 {
+    public HmiProperty<HmiAlarmSourceType>? AlarmSourceType { get; set; }
     public HmiAlarmControl()
     {
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiAlarmControl;

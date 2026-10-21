@@ -863,6 +863,7 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "data-fit-window-to-screen", screenWindow.FitWindowToScreen, context);
         AppendStaticAttribute(html, "data-show-scrollbars", screenWindow.ShowScrollBars, context);
         AppendStaticAttribute(html, "data-zoom-percent", screenWindow.ZoomPercent, context);
+        AppendStaticAttribute(html, "data-interactive-zooming", screenWindow.InteractiveZooming, context);
         AppendStaticAttribute(html, "data-picture-offset-x", screenWindow.OffsetLeft, context);
         AppendStaticAttribute(html, "data-picture-offset-y", screenWindow.OffsetTop, context);
         AppendStaticAttribute(html, "data-scroll-position-x", screenWindow.ScrollPositionLeft, context);
@@ -924,6 +925,7 @@ public partial class HmiScreenToHtmlConverter
         }
 
         style.Append(showScrollBars && !fitScreen && !fitWindow ? "overflow: auto;" : "overflow: hidden;");
+        if (screenWindow.InteractiveZooming != null) style.Append(ResolveStaticValue(screenWindow.InteractiveZooming, context) ? "touch-action: pan-x pan-y pinch-zoom;" : "touch-action: pan-x pan-y;");
         return style.ToString();
     }
 
@@ -3325,7 +3327,9 @@ public partial class HmiScreenToHtmlConverter
         var showHeader = alarmControl.ShowHeader is null || ResolveStaticValue(alarmControl.ShowHeader, context);
         var showTitle = alarmControl.ShowTitle is not null && ResolveStaticValue(alarmControl.ShowTitle, context);
         var listMode = ResolveStaticValue(alarmControl.ListMode, context);
-        var setName = alarmControl.ActiveColumnSet ?? alarmControl.DefaultColumnSet;
+        var alarmSource = alarmControl.AlarmSourceType is null ? (HmiAlarmSourceType?)null : ResolveStaticValue(alarmControl.AlarmSourceType, context);
+        var sourceSet = alarmSource == HmiAlarmSourceType.AlarmStatistics && alarmControl.ColumnSets.Any(set => set.Name == "AlarmStatisticsView") ? "AlarmStatisticsView" : null;
+        var setName = alarmControl.ActiveColumnSet ?? sourceSet ?? alarmControl.DefaultColumnSet;
         var selectedSet = setName is null ? null : alarmControl.ColumnSets.FirstOrDefault(set => set.Name == setName);
         var columns = selectedSet?.Columns
             ?? alarmControl.ColumnDefinitions;
@@ -3353,6 +3357,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-view-kind", alarmControl.ViewKind.ToString());
         AppendAttribute(html, "data-active-column-set", alarmControl.ActiveColumnSet);
         AppendAttribute(html, "data-default-column-set", alarmControl.DefaultColumnSet);
+        AppendAttribute(html, "data-alarm-source-type", alarmSource?.ToString());
         AppendAttribute(html, "data-list-mode", listMode.ToString());
         AppendAttribute(html, "data-time-base", ResolvePropertyPreview(alarmControl.TimeBase, context));
         AppendAttribute(html, "data-shorten-cell-contents", ResolvePropertyPreview(alarmControl.ShortenCellContents, context));
@@ -3759,13 +3764,21 @@ public partial class HmiScreenToHtmlConverter
 
     private static void AppendSystemDiagnosisControl(StringBuilder html, HmiSystemDiagnosisControl systemDiagnosisControl, HmiHtmlConvertContext context)
     {
-        var title = systemDiagnosisControl.ViewKind switch
+        var nativeTitle = systemDiagnosisControl.ViewType is null ? null : ResolveStaticValue(systemDiagnosisControl.ViewType, context) switch
+        {
+            HmiSystemDiagnosisViewType.Diagnosis => "System diagnostics",
+            HmiSystemDiagnosisViewType.Matrix => "Diagnostics matrix",
+            HmiSystemDiagnosisViewType.DistributedIO => "Distributed I/O diagnostics",
+            HmiSystemDiagnosisViewType.ScriptDiagnosis => "Script diagnostics",
+            _ => (string?)null
+        };
+        var title = nativeTitle ?? (systemDiagnosisControl.ViewKind switch
         {
             HmiSystemDiagnosisViewKind.DiagnosticsList => "Diagnostics list",
             HmiSystemDiagnosisViewKind.DiagnosticsViewer => "Diagnostics viewer",
             HmiSystemDiagnosisViewKind.AutomaticEventSummary => "Automatic diagnostic event summary",
             _ => "System diagnostics"
-        };
+        });
 
         html.Append("<div");
         AppendCommonAttributes(
@@ -3774,6 +3787,7 @@ public partial class HmiScreenToHtmlConverter
             context,
             additionalStyle: "display: flex; flex-direction: column; overflow: hidden;");
         AppendAttribute(html, "data-view-kind", systemDiagnosisControl.ViewKind.ToString());
+        AppendAttribute(html, "data-diagnosis-view-type", systemDiagnosisControl.ViewType is null ? null : ResolveStaticValue(systemDiagnosisControl.ViewType, context).ToString());
         AppendAttribute(html, "data-column-header-type", ResolvePropertyPreview(systemDiagnosisControl.ColumnHeaderType, context));
         AppendAttribute(html, "data-row-header-type", ResolvePropertyPreview(systemDiagnosisControl.RowHeaderType, context));
         AppendAttribute(html, "data-show-toolbar", ResolvePropertyPreview(systemDiagnosisControl.ShowToolbar, context));

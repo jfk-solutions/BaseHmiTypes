@@ -5,6 +5,7 @@ import { HmiColor } from "../base/HmiColor.js";
 import { HmiFont } from "../base/HmiFont.js";
 import { HmiProperty } from "../base/HmiProperty.js";
 import { HmiSystemDiagnosisViewKind } from "./HmiSystemDiagnosisViewKind.js";
+import { HmiSystemDiagnosisViewType } from "./HmiSystemDiagnosisViewType.js";
 import { HmiAlarmRowDoubleClickAction } from "./HmiAlarmRowDoubleClickAction.js";
 import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
 import { HmiSystemDiagnosisColumn } from "./HmiSystemDiagnosisColumn.js";
@@ -24,6 +25,7 @@ export class HmiSystemDiagnosisControl extends HmiControlWindowBase {
   }
 
   viewKind = HmiSystemDiagnosisViewKind.Unknown;
+  viewType?: HmiProperty<HmiSystemDiagnosisViewType>;
   wrapAround?: HmiProperty<boolean>;
   selectionBackgroundColor?: HmiProperty<HmiColor>;
   selectionForegroundColor?: HmiProperty<HmiColor>;

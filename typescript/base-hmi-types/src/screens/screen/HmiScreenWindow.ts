@@ -20,6 +20,7 @@ export class HmiScreenWindow extends HmiWindowBase {
   fitWindowToScreen?: HmiProperty<boolean>;
   showScrollBars?: HmiProperty<boolean>;
   zoomPercent?: HmiProperty<number>;
+  interactiveZooming?: HmiProperty<boolean>;
   scrollPositionLeft?: HmiProperty<number>;
   scrollPositionTop?: HmiProperty<number>;
 }

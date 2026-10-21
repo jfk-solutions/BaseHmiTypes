@@ -12,6 +12,7 @@ public class HmiSystemDiagnosisControl : HmiControlWindowBase
     }
 
     public HmiSystemDiagnosisViewKind ViewKind { get; set; }
+    public HmiProperty<HmiSystemDiagnosisViewType>? ViewType { get; set; }
 
     public HmiProperty<bool>? WrapAround { get; set; }
 

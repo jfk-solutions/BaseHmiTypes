@@ -8,6 +8,7 @@ import { HmiAlarmColumnSet } from "./HmiAlarmColumnSet.js";
 import { HmiAlarmConditionPresentation } from "./HmiAlarmConditionPresentation.js";
 import { HmiAlarmSelectedIndicator } from "./HmiAlarmSelectedIndicator.js";
 import { HmiAlarmListMode } from "./HmiAlarmListMode.js";
+import { HmiAlarmSourceType } from "./HmiAlarmSourceType.js";
 import { HmiBorderStyle } from "./HmiBorderStyle.js";
 import { HmiAlarmViewKind } from "./HmiAlarmViewKind.js";
 import { HmiAlarmTimePrecision } from "./HmiAlarmTimePrecision.js";
@@ -56,6 +57,7 @@ export class HmiAlarmControl extends HmiControlWindowBase {
   showHeader?: HmiProperty<boolean>;
   showTitle?: HmiProperty<boolean>;
   listMode?: HmiProperty<HmiAlarmListMode>;
+  alarmSourceType?: HmiProperty<HmiAlarmSourceType>;
   title?: HmiMultilingualText;
   allAlarmsTitle?: HmiMultilingualText;
   activeAlarmsTitle?: HmiMultilingualText;

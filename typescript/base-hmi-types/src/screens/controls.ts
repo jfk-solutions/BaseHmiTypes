@@ -79,3 +79,5 @@ export * from "./controls/HmiFunctionTrendControl.js";
 export * from "./controls/HmiTrendControl.js";
 
 export * from "./controls/HmiAlarmDisplayData.js";
+export * from "./controls/HmiAlarmSourceType.js";
+export * from "./controls/HmiSystemDiagnosisViewType.js";
