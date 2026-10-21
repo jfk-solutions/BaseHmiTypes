@@ -1585,6 +1585,9 @@ public partial class HmiScreenToHtmlConverter
 
     private static HmiFillPattern? GetFillPattern(HmiPaintedScreenItemBase item, HmiHtmlConvertContext context)
     {
+        if (item is HmiShapeBase { FillPattern: null, BackFillPattern.StaticValue: 65536 }
+            or HmiWidgetBase { FillPattern: null, BackFillPattern.StaticValue: 65536 }
+            or HmiWindowBase { FillPattern: null, BackFillPattern.StaticValue: 65536 }) return HmiFillPattern.Transparent;
         return item switch
         {
             HmiShapeBase shape when context.EffectiveProperties.TryGetStaticValue(shape, nameof(HmiShapeBase.FillPattern), shape.FillPattern, out var pattern) => pattern,
@@ -6521,7 +6524,7 @@ public partial class HmiScreenToHtmlConverter
                 nameof(HmiPaintedScreenItemBase.DisabledForegroundColor),
                 item.DisabledForegroundColor) ?? foregroundColor;
         }
-        var backgroundColor = item is HmiGraphicView graphic && graphic.BackFillPattern?.StaticValue == 65536
+        var backgroundColor = GetFillPattern(item, context) == HmiFillPattern.Transparent
             ? null : context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BackgroundColor), item.BackgroundColor);
         var borderColor = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderColor), item.BorderColor);
         var borderWidth = context.EffectiveProperties.Resolve(item, nameof(HmiPaintedScreenItemBase.BorderWidth), item.BorderWidth);

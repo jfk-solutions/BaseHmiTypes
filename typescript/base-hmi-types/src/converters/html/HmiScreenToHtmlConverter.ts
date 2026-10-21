@@ -1567,6 +1567,8 @@ function getLineMarkerId(item: HmiShapeBase, start: boolean): string {
 }
 
 function getFillPattern(item: HmiPaintedScreenItemBase, context: HmiHtmlConvertContext): HmiFillPattern | undefined {
+  if ((item instanceof HmiShapeBase || item instanceof HmiWidgetBase || item instanceof HmiWindowBase) && item.fillPattern === undefined && getStaticValue(item.backFillPattern) === 65536)
+    return HmiFillPattern.Transparent;
   if (item instanceof HmiShapeBase || item instanceof HmiWidgetBase || item instanceof HmiWindowBase || item instanceof HmiAlarmIndicator)
     return context.effectiveProperties.tryGetStaticValue<HmiFillPattern>(item, "FillPattern", item.fillPattern).value;
   return undefined;
@@ -6876,7 +6878,7 @@ function appendStyle(html: string[], item: HmiPaintedScreenItemBase, context: Hm
     if (shadow !== undefined) html.push(`text-shadow: 1px 1px ${colorToCss(shadow)};`);
   }
   if (!(item instanceof HmiGauge)) {
-    const backgroundColor = item instanceof HmiGraphicView && getStaticValue(item.backFillPattern) === 65536
+    const backgroundColor = getFillPattern(item, context) === HmiFillPattern.Transparent
       ? undefined : context.effectiveProperties.resolve(item, "BackgroundColor", item.backgroundColor);
     const backgroundBlink = backgroundColor?.kind === HmiPropertyKind.Blink
       ? backgroundColor as HmiBlinkProperty<HmiColor>
