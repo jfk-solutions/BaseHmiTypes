@@ -32,9 +32,29 @@ public class IncludeInvisibleItemsHtmlTests
         var options = new HmiHtmlConvertOptions(); Assert.IsFalse(options.IncludeInvisibleItems); options.IncludeInvisibleItems = true;
         var included = HtmlTestMarkup.WithoutScripts(await renderer.ConvertAsync(screen, null, options));
         foreach (var caption in new[] { "Dummy Header", "Dummy Footer", "Nested text" }) StringAssert.Contains(included,caption);
-        Assert.AreEqual(HtmlTestMarkup.WithoutScripts(await renderer.ConvertAsync(Fixture(true).Screen)),included);
+        Assert.AreEqual(5, System.Text.RegularExpressions.Regex.Matches(included, "opacity: 0.5;").Count);
+        Assert.AreEqual(HtmlTestMarkup.WithoutScripts(await renderer.ConvertAsync(Fixture(true).Screen)),included.Replace("opacity: 0.5;", ""));
         for (var index = 0; index < items.Length; index++) { Assert.AreSame(properties[index],items[index].Visible); Assert.IsFalse(items[index].Visible.StaticValue); }
         Assert.AreSame(layerProperty,layer.Visible); Assert.IsFalse(layer.Visible.StaticValue);
         Assert.AreEqual(original,HtmlTestMarkup.WithoutScripts(await renderer.ConvertAsync(screen)));
+    }
+
+    [TestMethod]
+    public async Task NativeUnifiedTextUsesCenteredDefaultsAndComposesEngineeringOpacity()
+    {
+        var (screen, items, _) = Fixture(false);
+        var header = (HmiText)items[0];
+        header.SourceFormat = "TIA WinCC Unified"; header.Opacity = 0.4;
+        var renderer = new HmiScreenToHtmlConverter();
+        var options = new HmiHtmlConvertOptions { IncludeInvisibleItems = true };
+        async Task<string> HeaderStyle() => System.Text.RegularExpressions.Regex.Match(
+            HtmlTestMarkup.WithoutScripts(await renderer.ConvertAsync(screen, null, options)), "<div id=\"Header\"[^>]*>").Value;
+        var style = await HeaderStyle();
+        StringAssert.Contains(style, "opacity: 0.2;");
+        StringAssert.Contains(style, "text-align: center;justify-content: center;display: flex;align-items: center;");
+        header.HorizontalAlignment = HmiHorizontalAlignment.Right; header.VerticalAlignment = HmiVerticalAlignment.Bottom;
+        StringAssert.Contains(await HeaderStyle(), "text-align: right;justify-content: flex-end;display: flex;align-items: flex-end;");
+        Assert.AreEqual(0.4, header.Opacity.StaticValue); Assert.IsFalse(header.Visible.StaticValue);
+        header.Visible = true; StringAssert.Contains(await HeaderStyle(), "opacity: 0.4;");
     }
 }

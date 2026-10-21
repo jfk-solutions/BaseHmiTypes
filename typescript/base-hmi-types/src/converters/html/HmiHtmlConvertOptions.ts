@@ -11,7 +11,7 @@ export class HmiHtmlConvertOptions {
     /** Observes actual renderer dispatch, not per-property support. */
     itemDiagnostic?: (diagnostic: HmiHtmlItemDiagnostic) => void;
     includeMetaCharset = true;
-    /** Render invisible items and layers for engineering previews without changing model visibility. */
+    /** Render invisible items and layers at half opacity for engineering previews without changing model visibility or opacity. */
     includeInvisibleItems = false;
     cultureLcid?: number;
     missingScreenPlaceholderCssClass = "hmi-missing-screen";

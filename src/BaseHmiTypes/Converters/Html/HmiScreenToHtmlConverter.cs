@@ -121,7 +121,10 @@ public partial class HmiScreenToHtmlConverter
                 html.Append("<div");
                 AppendAttribute(html, "id", layer.Name);
                 AppendAttribute(html, "data-hmi-layer", "true");
-                html.Append(" style=\"position: absolute; inset: 0; pointer-events: none;\">");
+                html.Append(" style=\"position: absolute; inset: 0; pointer-events: none;");
+                if (context.Options.IncludeInvisibleItems && !layer.Visible.GetStaticValueOrDefault(true))
+                    html.Append("opacity: 0.5;");
+                html.Append("\">");
                 foreach (var item in layer.Items)
                     await AppendItemAsync(html, item, project, context, screenStack, cancellationToken).ConfigureAwait(false);
                 html.Append("</div>");
@@ -168,6 +171,7 @@ public partial class HmiScreenToHtmlConverter
             return;
         }
 
+        context = context.WithSourceFormat(item.SourceFormat);
         var materializedReference = item.ReferenceObject?.MaterializedObject;
         if (materializedReference is not null && !ReferenceEquals(materializedReference, item))
         {
@@ -6410,8 +6414,9 @@ public partial class HmiScreenToHtmlConverter
     private static void AppendOpacity(StringBuilder html, HmiScreenItemBase item, HmiHtmlConvertContext context)
     {
         var opacity = context.EffectiveProperties.Resolve(item, nameof(HmiScreenItemBase.Opacity), item.Opacity);
-        if (opacity?.StaticValue is double value)
-            html.Append("opacity: ").Append(ToCss(Clamp(value, 0d, 1d))).Append(';');
+        var engineeringOpacity = context.Options.IncludeInvisibleItems && !item.Visible.GetStaticValueOrDefault(true) ? 0.5d : 1d;
+        if (opacity is not null || engineeringOpacity != 1d)
+            html.Append("opacity: ").Append(ToCss(Clamp(opacity?.StaticValue ?? 1d, 0d, 1d) * engineeringOpacity)).Append(';');
     }
 
     private static void AppendAdaptBorderToContentStyle(
@@ -6898,6 +6903,20 @@ public partial class HmiScreenToHtmlConverter
         public double PositionOffsetY { get; }
 
         public IReadOnlyDictionary<string, HmiFaceplateInterfaceValue> FaceplateInterfaceValues { get; }
+
+        public HmiHtmlConvertContext WithSourceFormat(string? sourceFormat)
+        {
+            // Mixed projects can contain Advanced and Unified objects with different omitted defaults.
+            var profile = sourceFormat switch
+            {
+                "TIA WinCC Unified" => HmiDefaultProfiles.WinCcUnifiedV21,
+                "TIA WinCC Advanced/Professional" => HmiDefaultProfiles.WinCcAdvancedV21,
+                _ => null
+            };
+            return profile is null || ReferenceEquals(profile, EffectiveProperties.DefaultProfile) ? this
+                : new HmiHtmlConvertContext(Options, new HmiEffectivePropertyResolver(profile),
+                    PositionOffsetX, PositionOffsetY, FaceplateInterfaceValues);
+        }
 
         public HmiHtmlConvertContext WithPositionOffset(double offsetX, double offsetY)
         {

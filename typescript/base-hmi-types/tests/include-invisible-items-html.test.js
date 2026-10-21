@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {HmiScreen,HmiLayer,HmiGroup,HmiText,HmiMultilingualText,HmiHtmlConvertOptions,HmiScreenToHtmlConverter,staticProperty,getStaticValue} from '../dist/index.js';
+import {HmiScreen,HmiLayer,HmiGroup,HmiText,HmiMultilingualText,HmiHorizontalAlignment,HmiVerticalAlignment,HmiHtmlConvertOptions,HmiScreenToHtmlConverter,staticProperty,getStaticValue} from '../dist/index.js';
 const withoutScripts=html=>html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 function fixture(visible){
  const screen=new HmiScreen(),layer=new HmiLayer(),hiddenLayer=new HmiLayer(),group=new HmiGroup();
@@ -17,7 +17,22 @@ test('engineering visibility renders full items and hidden containers without ch
  const options=new HmiHtmlConvertOptions();assert.equal(options.includeInvisibleItems,false);options.includeInvisibleItems=true;
  const included=withoutScripts(await renderer.convertAsync(screen,undefined,options));
  for(const caption of ['Dummy Header','Dummy Footer','Nested text'])assert.ok(included.includes(caption));
- assert.equal(included,withoutScripts(await renderer.convertAsync(fixture(true).screen)));
+ assert.equal((included.match(/opacity: 0.5;/g)??[]).length,5);
+ assert.equal(included.replaceAll('opacity: 0.5;',''),withoutScripts(await renderer.convertAsync(fixture(true).screen)));
  hidden.forEach((item,index)=>{assert.equal(item.visible,properties[index]);assert.equal(getStaticValue(item.visible),false);});
  assert.equal(withoutScripts(await renderer.convertAsync(screen)),original);
+});
+
+test('native Unified text defaults center both axes and engineering opacity composes with configured opacity',async()=>{
+ const {screen,hidden}=fixture(false),header=hidden[0];
+ header.sourceFormat='TIA WinCC Unified';header.opacity=staticProperty(0.4);
+ const options=new HmiHtmlConvertOptions();options.includeInvisibleItems=true;
+ const renderer=new HmiScreenToHtmlConverter();
+ const markup=()=>renderer.convertAsync(screen,undefined,options).then(withoutScripts);
+ let html=await markup();
+ assert.match(html,/<div id="Header"[^>]*opacity: 0.2;[^>]*text-align: center;justify-content: center;display: flex;align-items: center;/);
+ header.horizontalAlignment=staticProperty(HmiHorizontalAlignment.Right);header.verticalAlignment=staticProperty(HmiVerticalAlignment.Bottom);
+ html=await markup();assert.match(html,/<div id="Header"[^>]*text-align: right;justify-content: flex-end;display: flex;align-items: flex-end;/);
+ assert.equal(getStaticValue(header.opacity),0.4);assert.equal(getStaticValue(header.visible),false);
+ header.visible=staticProperty(true);assert.match(await markup(),/<div id="Header"[^>]*opacity: 0.4;/);
 });

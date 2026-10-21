@@ -6,7 +6,7 @@ public class HmiHtmlConvertOptions
     public Action<HmiHtmlItemDiagnostic>? ItemDiagnostic { get; set; }
 
     public bool IncludeMetaCharset { get; set; } = true;
-    /// <summary>Render invisible items and layers for engineering previews without changing model visibility.</summary>
+    /// <summary>Render invisible items and layers at half opacity for engineering previews without changing model visibility or opacity.</summary>
     public bool IncludeInvisibleItems { get; set; }
 
     public int? CultureLcid { get; set; }

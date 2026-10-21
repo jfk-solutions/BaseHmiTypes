@@ -278,7 +278,8 @@ export class HmiScreenToHtmlConverter {
         if (includeInspectionAttributes) {
           appendAttribute(html, "data-hmi-node-key", `${key}/layer:${layerIndex}`);
         }
-        html.push(" style=\"position: absolute; inset: 0; pointer-events: none;\">");
+        html.push(' style="position: absolute; inset: 0; pointer-events: none;' +
+          (context.options.includeInvisibleItems && !getStaticValueOrDefault(layer.visible, true) ? 'opacity: 0.5;' : '') + '">');
         for (let itemIndex = 0; itemIndex < layer.items.length; itemIndex++) {
           await this.appendItemAsync(
             html,
@@ -315,7 +316,7 @@ export class HmiScreenToHtmlConverter {
       reportItemDiagnostic(item, context, "Hidden");
       return;
     }
-    context = context.withNodeKey(includeInspectionAttributes ? key : undefined);
+    context = context.withSourceFormat(item.sourceFormat).withNodeKey(includeInspectionAttributes ? key : undefined);
 
     const materializedReference = item.referenceObject?.materializedObject;
     if (materializedReference !== undefined && materializedReference !== item) {
@@ -6734,8 +6735,9 @@ function appendPosition(html: string[], item: HmiScreenItemBase, context: HmiHtm
 
 function appendOpacity(html: string[], item: HmiScreenItemBase, context: HmiHtmlConvertContext): void {
   const opacity = getStaticValue(context.effectiveProperties.resolve(item, "Opacity", item.opacity));
-  if (opacity !== undefined) {
-    html.push(`opacity: ${toCss(Math.min(Math.max(opacity, 0), 1))};`);
+  const engineeringOpacity = context.options.includeInvisibleItems && !getStaticValueOrDefault(item.visible, true) ? 0.5 : 1;
+  if (opacity !== undefined || engineeringOpacity !== 1) {
+    html.push(`opacity: ${toCss(Math.min(Math.max(opacity ?? 1, 0), 1) * engineeringOpacity)};`);
   }
 }
 
@@ -7443,6 +7445,15 @@ class HmiHtmlConvertContext {
     readonly faceplateInterfaceValues: ReadonlyMap<string, HmiFaceplateInterfaceValue> = new Map(),
     readonly references = new HmiHtmlReferenceResolver(),
   ) {}
+
+  withSourceFormat(sourceFormat: string | undefined): HmiHtmlConvertContext {
+    // Mixed projects can contain Advanced and Unified objects with different omitted defaults.
+    const profile = sourceFormat === "TIA WinCC Unified" ? HmiDefaultProfiles.winCcUnifiedV21
+      : sourceFormat === "TIA WinCC Advanced/Professional" ? HmiDefaultProfiles.winCcAdvancedV21 : undefined;
+    if (profile === undefined || profile === this.effectiveProperties.defaultProfile) return this;
+    return new HmiHtmlConvertContext(this.options, new HmiEffectivePropertyResolver(profile),
+      this.positionOffsetX, this.positionOffsetY, this.nodeKey, this.faceplateInterfaceValues, this.references);
+  }
 
   withPositionOffset(offsetX: number, offsetY: number): HmiHtmlConvertContext {
     return new HmiHtmlConvertContext(

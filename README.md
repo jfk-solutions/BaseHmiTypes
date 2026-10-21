@@ -92,8 +92,12 @@ or icon mappings are unknown.
 
 `HmiHtmlConvertOptions.IncludeInvisibleItems` (C#) / `includeInvisibleItems`
 (TypeScript) defaults to `false`. Enable it for engineering previews to render
-invisible controls and layers with their normal text, colors and geometry,
-including nested controls. Conversion preserves the original visibility properties.
+invisible controls and layers with their configured text, colors and geometry,
+including nested controls. Each hidden item or layer multiplies the configured
+opacity by 0.5 to distinguish it in the engineering view. Conversion preserves
+the original visibility and opacity properties. Native object source formats
+select their own default profile, so omitted Unified text alignment stays centered
+even in mixed projects whose project-wide profile is Advanced.
 Leave it disabled for runtime rendering; internal control settings such as hidden
 table columns are unaffected.
 
