@@ -46,6 +46,7 @@ import { HmiTrendTimeAxis } from "../../screens/base/HmiTrendTimeAxis.js";
 import { HmiTrendControlBase } from "../../screens/base/HmiTrendControlBase.js";
 import { HmiTrendChartStyle } from "../../screens/base/HmiTrendChartStyle.js";
 import { HmiFunctionTrendControl } from "../../screens/controls/HmiFunctionTrendControl.js";
+import { HmiTrendCompanion } from "../../screens/controls/HmiTrendCompanion.js";
 import { HmiPaintedScreenItemBase } from "../../screens/base/HmiPaintedScreenItemBase.js";
 import { HmiOcxControl } from "../../screens/base/HmiOcxControl.js";
 import { staticProperty, getStaticValue, getStaticValueOrDefault, HmiBlinkProperty, HmiBlinkRate, HmiExpressionProperty, HmiFaceplateInterfaceProperty, HmiTagProperty, HmiProperty, HmiPropertyKind } from "../../screens/base/HmiProperty.js";
@@ -432,6 +433,9 @@ export class HmiScreenToHtmlConverter {
     } else if (item instanceof HmiGauge) {
       reportItemDiagnostic(item, context, "HmiGauge", false);
       appendGauge(html, item, context);
+    } else if (item instanceof HmiTrendCompanion) {
+      reportItemDiagnostic(item, context, "HmiTrendCompanion", false);
+      appendTrendCompanion(html, item, context);
     } else if (item instanceof HmiTrendControlBase) {
       reportItemDiagnostic(item, context, "HmiTrendControlBase", false);
       appendTrendControl(html, item, context);
@@ -5834,6 +5838,19 @@ function appendIntegerListAttribute(
 ): void {
   const value = getStaticValue(property);
   if (value !== undefined) appendAttribute(html, name, value.join(","));
+}
+
+function appendTrendCompanion(html: string[], companion: HmiTrendCompanion, context: HmiHtmlConvertContext): void {
+  html.push("<hmi-trend-companion");
+  appendCommonAttributes(html, companion, context);
+  appendAttribute(html, "source-control-id", companion.sourceControlId);
+  appendAttribute(html, "source-control-name", getStaticValue(companion.sourceControlName));
+  appendAttribute(html, "mode", String(getStaticValue(companion.mode) ?? 0));
+  appendAttribute(html, "columns", JSON.stringify(companion.columns.map(column => ({
+    mode: column.mode, infoBlock: column.infoBlock, name: column.name,
+    header: column.headerText?.getText(context.options.cultureLcid), visible: getStaticValue(column.visible), width: getStaticValue(column.width),
+  }))));
+  html.push("></hmi-trend-companion>");
 }
 
 function appendTrendControl(html: string[], trendControl: HmiTrendControlBase, context: HmiHtmlConvertContext): void {

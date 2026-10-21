@@ -312,6 +312,10 @@ public partial class HmiScreenToHtmlConverter
                 ReportItemDiagnostic(item, context, "HmiGauge", false);
                 AppendGauge(html, gauge, context);
                 break;
+            case HmiTrendCompanion companion:
+                ReportItemDiagnostic(item, context, "HmiTrendCompanion", false);
+                AppendTrendCompanion(html, companion, context);
+                break;
             case HmiTrendControlBase trendControl:
                 ReportItemDiagnostic(item, context, "HmiTrendControlBase", false);
                 AppendTrendControl(html, trendControl, context);
@@ -5316,6 +5320,27 @@ public partial class HmiScreenToHtmlConverter
     {
         if (property is not null)
             AppendAttribute(html, name, string.Join(",", ResolveStaticValue(property, context) ?? Array.Empty<int>()));
+    }
+
+    private static void AppendTrendCompanion(StringBuilder html, HmiTrendCompanion companion, HmiHtmlConvertContext context)
+    {
+        html.Append("<hmi-trend-companion");
+        AppendCommonAttributes(html, companion, context);
+        AppendAttribute(html, "source-control-id", companion.SourceControlId);
+        AppendAttribute(html, "source-control-name", companion.SourceControlName.GetStaticValue());
+        AppendAttribute(html, "mode", companion.Mode.GetStaticValue().ToString(CultureInfo.InvariantCulture));
+        var columns = companion.Columns.Select(column => {
+            var properties = new List<string>();
+            AddTrendJsonNumber(properties, "mode", column.Mode);
+            AddTrendJsonNumber(properties, "infoBlock", column.InfoBlock);
+            AddTrendJsonString(properties, "name", column.Name);
+            AddTrendJsonString(properties, "header", column.HeaderText?.GetText(context.CultureInfo));
+            AddTrendJsonBoolean(properties, "visible", column.Visible?.StaticValue);
+            AddTrendJsonNumber(properties, "width", column.Width?.StaticValue);
+            return "{" + string.Join(",", properties) + "}";
+        });
+        AppendAttribute(html, "columns", "[" + string.Join(",", columns) + "]");
+        html.Append("></hmi-trend-companion>");
     }
 
     private static void AppendTrendControl(StringBuilder html, HmiTrendControlBase trendControl, HmiHtmlConvertContext context)
