@@ -88,6 +88,15 @@ Toolbar buttons are disabled preview elements; their configured enabled state is
 retained as metadata. Native source names remain available when semantic action
 or icon mappings are unknown.
 
+## Engineering HTML visibility
+
+`HmiHtmlConvertOptions.IncludeInvisibleItems` (C#) / `includeInvisibleItems`
+(TypeScript) defaults to `false`. Enable it for engineering previews to render
+invisible controls and layers with their normal text, colors and geometry,
+including nested controls. Conversion preserves the original visibility properties.
+Leave it disabled for runtime rendering; internal control settings such as hidden
+table columns are unaffected.
+
 ## WinCC Unified XML screen writer
 
 `HmiScreenToUnifiedXmlConverter` writes an XML v2 inspection archive using the

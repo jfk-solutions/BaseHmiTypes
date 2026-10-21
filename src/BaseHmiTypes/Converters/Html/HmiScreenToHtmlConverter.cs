@@ -115,7 +115,7 @@ public partial class HmiScreenToHtmlConverter
 
             foreach (var layer in screen.Layers)
             {
-                if (!layer.Visible.GetStaticValueOrDefault(true))
+                if (!context.Options.IncludeInvisibleItems && !layer.Visible.GetStaticValueOrDefault(true))
                     continue;
 
                 html.Append("<div");
@@ -162,7 +162,7 @@ public partial class HmiScreenToHtmlConverter
         IList<HmiScreenBase> screenStack,
         CancellationToken cancellationToken)
     {
-        if (!item.Visible.GetStaticValueOrDefault(true))
+        if (!context.Options.IncludeInvisibleItems && !item.Visible.GetStaticValueOrDefault(true))
         {
             ReportItemDiagnostic(item, context, "Hidden");
             return;

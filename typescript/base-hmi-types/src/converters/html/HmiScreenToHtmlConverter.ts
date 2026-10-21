@@ -268,7 +268,7 @@ export class HmiScreenToHtmlConverter {
 
       for (let layerIndex = 0; layerIndex < screen.layers.length; layerIndex++) {
         const layer = screen.layers[layerIndex];
-        if (!getStaticValueOrDefault(layer.visible, true)) {
+        if (!context.options.includeInvisibleItems && !getStaticValueOrDefault(layer.visible, true)) {
           continue;
         }
 
@@ -311,7 +311,7 @@ export class HmiScreenToHtmlConverter {
     includeInspectionAttributes: boolean,
     signal?: AbortSignal,
   ): Promise<void> {
-    if (!getStaticValueOrDefault(item.visible, true)) {
+    if (!context.options.includeInvisibleItems && !getStaticValueOrDefault(item.visible, true)) {
       reportItemDiagnostic(item, context, "Hidden");
       return;
     }
