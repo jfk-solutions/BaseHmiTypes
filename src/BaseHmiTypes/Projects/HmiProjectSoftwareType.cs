@@ -11,6 +11,7 @@
         WinCCUnified,
         FactoryTalkViewMachineEdition,
         FactoryTalkViewSiteEdition,
-        TwinCatHmi
+        TwinCatHmi,
+        TwinCatPlcHmi
     }
 }
