@@ -16,7 +16,8 @@ public enum HmiScriptLanguage
     Unknown,
     C,
     VBScript,
-    JavaScript
+    JavaScript,
+    StructuredText
 }
 
 public enum HmiBlinkCondition
