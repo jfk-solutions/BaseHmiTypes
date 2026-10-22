@@ -8,4 +8,5 @@ export enum HmiProjectSoftwareType {
   WinCCUnified = "WinCCUnified",
   FactoryTalkViewMachineEdition = "FactoryTalkViewMachineEdition",
   FactoryTalkViewSiteEdition = "FactoryTalkViewSiteEdition",
+  TwinCatHmi = "TwinCatHmi",
 }
