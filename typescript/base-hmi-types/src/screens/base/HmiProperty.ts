@@ -13,6 +13,7 @@ export enum HmiScriptLanguage {
   C = "C",
   VBScript = "VBScript",
   JavaScript = "JavaScript",
+  StructuredText = "StructuredText",
 }
 
 export enum HmiBlinkCondition {
