@@ -16,6 +16,8 @@ import { HmiEventBinding } from "../../scripts/HmiEventBinding.js";
 import type { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 
 export abstract class HmiScreenBase extends HmiScreenModelBase {
+  /** Configured edge for a native slide-in resource; absent on ordinary screens. */
+  slideInEdge?: HmiSlideInEdge;
   kind: HmiScreenKind = HmiScreenKind.Screen;
   sourceFormat?: string;
   sourceData?: Uint8Array;
@@ -49,3 +51,5 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   /** Screen-level lifecycle and operator event actions. */
   readonly events: HmiEventBinding[] = [];
 }
+
+export enum HmiSlideInEdge { Top = "Top", Left = "Left", Bottom = "Bottom", Right = "Right" }

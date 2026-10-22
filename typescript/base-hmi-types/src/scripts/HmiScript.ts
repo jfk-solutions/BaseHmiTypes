@@ -9,6 +9,7 @@ export enum HmiScriptType {
 }
 
 export class HmiScript implements IHmiObject {
+  readonly parameters: HmiScriptParameter[] = [];
   lastModified?: Date;
   name?: string;
   moduleName?: string;
@@ -17,4 +18,9 @@ export class HmiScript implements IHmiObject {
   sourceCode?: string;
   preCode?: string;
   scriptType: HmiScriptType = HmiScriptType.None;
+}
+
+export class HmiScriptParameter {
+  name = "";
+  byReference = true;
 }

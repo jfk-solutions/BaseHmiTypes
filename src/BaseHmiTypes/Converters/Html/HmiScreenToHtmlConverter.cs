@@ -1935,11 +1935,20 @@ public partial class HmiScreenToHtmlConverter
                 .Append(ToFlexCss(horizontal)).Append(";align-items: ").Append(ToCss(vertical)).Append(";\">");
         }
         var offset = GetButtonPressedContentOffset(button, context);
+        if (button.CaptionPadding is { } captionPadding)
+        {
+            html.Append("<span data-hmi-button-caption-padding style=\"display: inline-block;box-sizing: border-box;max-width: 100%;padding: ")
+                .Append(ToCss(ResolveStaticValue(captionPadding.Top, context))).Append("px ")
+                .Append(ToCss(ResolveStaticValue(captionPadding.Right, context))).Append("px ")
+                .Append(ToCss(ResolveStaticValue(captionPadding.Bottom, context))).Append("px ")
+                .Append(ToCss(ResolveStaticValue(captionPadding.Left, context))).Append("px;\">");
+        }
         if (offset > 0)
             html.Append("<span data-hmi-button-pressed-caption style=\"display: inline-block;transform: translate(")
                 .Append(ToCss(offset)).Append("px, ").Append(ToCss(offset)).Append("px);\">");
         AppendFormattedText(html, button, caption, context);
         if (offset > 0) html.Append("</span>");
+        if (button.CaptionPadding is not null) html.Append("</span>");
         if (overlay) html.Append("</span>");
         if (wrapped)
             html.Append("</span>");
@@ -3942,7 +3951,7 @@ public partial class HmiScreenToHtmlConverter
     private static string ResolveAlarmTitle(HmiAlarmControl alarmControl, HmiAlarmListMode listMode, HmiHtmlConvertContext context)
     {
         var title = alarmControl.Title?.GetDisplayText(context.CultureInfo);
-        if (!string.IsNullOrWhiteSpace(title))
+        if (title != null)
             return title!;
         var modeTitle = listMode switch
         {
@@ -4809,9 +4818,13 @@ public partial class HmiScreenToHtmlConverter
              (symbolImage.MimeType?.IndexOf("wmf", StringComparison.OrdinalIgnoreCase) ?? -1) >= 0);
         if (symbolImage != null && wmf && (appearance != HmiSymbolLibraryFillColorMode.Original || flip != HmiSymbolLibraryFlip.None || rotation != HmiSymbolLibraryRotation.Angle0))
         {
-            var colorProperty = symbolLibraryControl.ForeColor ?? symbolLibraryControl.FillColor;
+            var colorProperty = symbolLibraryControl.ForeColor ?? symbolLibraryControl.FillColor ?? symbolLibraryControl.ForegroundColor;
             HmiColor? color = colorProperty == null ? null : ResolveStaticValue(colorProperty, context);
-            var colored = SymbolLibraryMetafileColorizer.TryRecolor(symbolImage.Data, appearance, color);
+            // Keep the embedded graphic visible until its dynamic color has a process value.
+            var pendingColor = colorProperty is HmiDynamicProperty<HmiColor>;
+            var mode = pendingColor && appearance is HmiSymbolLibraryFillColorMode.Solid or HmiSymbolLibraryFillColorMode.Shaded
+                ? HmiSymbolLibraryFillColorMode.Original : appearance;
+            var colored = SymbolLibraryMetafileColorizer.TryRecolor(symbolImage.Data, mode, color);
             if (colored != null && (flip != HmiSymbolLibraryFlip.None || rotation != HmiSymbolLibraryRotation.Angle0))
                 colored = SymbolLibraryMetafileTransformer.TryTransform(colored, flip, rotation);
             if (colored == null)
@@ -5540,7 +5553,7 @@ public partial class HmiScreenToHtmlConverter
 
     private static string CreateAlarmHeaderStyle(HmiAlarmControl alarmControl, HmiHtmlConvertContext context)
     {
-        var style = new StringBuilder("flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;");
+        var style = new StringBuilder("min-height: 2em; flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;");
         AppendColorStyle(style, "background-color", alarmControl.HeaderBackgroundColor);
         AppendColorStyle(style, "color", alarmControl.HeaderForegroundColor);
         if (alarmControl.HeaderBorderColor is not null)

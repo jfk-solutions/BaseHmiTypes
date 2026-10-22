@@ -38,3 +38,13 @@ test('Appearance and fore color take precedence over aliases',async()=>{
  const html=await render({symbol:Object.assign(new HmiImage(),{imageType:HmiImageType.Wmf,data:wmf()}),symbolAppearance:p(Mode.Shaded),fillColorMode:p(Mode.Solid),foreColor:p(target),fillColor:p(hmiColorFromArgb(255,1,2,3))});
  assert.ok(html.includes('fill="#c76331"'));
 });
+
+
+test('native common foreground color recolors symbols after dynamic evaluation',async()=>{
+ const html=await render({symbol:Object.assign(new HmiImage(),{imageType:HmiImageType.Wmf,data:wmf()}),symbolAppearance:p(Mode.Solid),foregroundColor:p(target)});
+ assert.ok(html.includes('fill="#c86432"'));assert.ok(!html.includes('Symbol library control'));
+});
+test('a pending native foreground expression retains the embedded graphic',async()=>{
+ const html=await render({symbol:Object.assign(new HmiImage(),{imageType:HmiImageType.Wmf,data:wmf()}),symbolAppearance:p(Mode.Solid),foregroundColor:{kind:'Expression',expression:'Tags("HeightError").Read()'}});
+ assert.ok(html.includes('<svg'));assert.ok(!html.includes('Symbol library control'));
+});

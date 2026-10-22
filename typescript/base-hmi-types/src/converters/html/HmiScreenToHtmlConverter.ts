@@ -1754,9 +1754,15 @@ function appendButtonCaption(html: string[], button: HmiButton, state: HmiState 
     html.push(' style="display: flex;box-sizing: border-box;width: 100%;height: 100%;min-width: 0;min-height: 0;justify-content: ' + horizontalAlignmentToFlexCss(x) + ';align-items: ' + verticalAlignmentToCss(y) + ';">');
   }
   const offset = getButtonPressedContentOffset(button, context);
+  if (button.captionPadding) {
+    const padding = button.captionPadding;
+    html.push('<span data-hmi-button-caption-padding style="display: inline-block;box-sizing: border-box;max-width: 100%;padding: ' +
+      [padding.top, padding.right, padding.bottom, padding.left].map(edge => toCss(resolveStaticValue(edge, context, tryConvertFaceplateDoubleValue) ?? 0) + 'px').join(' ') + ';">');
+  }
   if (offset > 0) html.push('<span data-hmi-button-pressed-caption style="display: inline-block;transform: translate(' + toCss(offset) + 'px, ' + toCss(offset) + 'px);">');
   appendFormattedText(html, button, caption, context);
   if (offset > 0) html.push("</span>");
+  if (button.captionPadding) html.push("</span>");
   if (overlay) html.push("</span>");
   if (wrapped) html.push("</span>");
 }
@@ -4524,7 +4530,7 @@ function appendAlarmLineControl(html: string[], alarmLineControl: HmiAlarmLineCo
 
 function resolveAlarmTitle(alarmControl: HmiAlarmControl, listMode: HmiAlarmListMode, context: HmiHtmlConvertContext): string {
   let title = alarmControl.title?.getDisplayText(context.options.cultureLcid);
-  if (title?.trim())
+  if (title !== undefined)
     return title;
   const modeTitle = listMode === HmiAlarmListMode.Active
     ? alarmControl.activeAlarmsTitle
@@ -5367,8 +5373,12 @@ function appendSymbolLibraryControl(
   const rotation = getStaticValue(symbolLibraryControl.rotation) ?? HmiSymbolLibraryRotation.Angle0;
   const wmf = !!symbolImage && (symbolImage.imageType === HmiImageType.Wmf || getImageExtension(symbolImage)?.toLowerCase() === '.wmf' || !!symbolImage.mimeType?.toLowerCase().includes('wmf'));
   if (symbolImage && wmf && (appearance !== HmiSymbolLibraryFillColorMode.Original || flip !== HmiSymbolLibraryFlip.None || rotation !== HmiSymbolLibraryRotation.Angle0)) {
-    const color = getStaticValue(symbolLibraryControl.foreColor ?? symbolLibraryControl.fillColor);
-    let colored = SymbolLibraryMetafileColorizer.tryRecolor(symbolImage.data, appearance, color);
+    const colorProperty = symbolLibraryControl.foreColor ?? symbolLibraryControl.fillColor ?? symbolLibraryControl.foregroundColor;
+    const color = getStaticValue(colorProperty);
+    // Keep the embedded graphic visible until its dynamic color has a process value.
+    const pendingColor = color === undefined && colorProperty !== undefined && colorProperty.kind !== HmiPropertyKind.Static;
+    let colored = SymbolLibraryMetafileColorizer.tryRecolor(symbolImage.data,
+      pendingColor && (appearance === HmiSymbolLibraryFillColorMode.Solid || appearance === HmiSymbolLibraryFillColorMode.Shaded) ? HmiSymbolLibraryFillColorMode.Original : appearance, color);
     if (colored && (flip !== HmiSymbolLibraryFlip.None || rotation !== HmiSymbolLibraryRotation.Angle0))
       colored = SymbolLibraryMetafileTransformer.tryTransform(colored, flip, rotation);
     if (!colored) {
@@ -6035,7 +6045,7 @@ function appendAlarmMessageBlocks(html: string[], control: HmiAlarmControl, cont
 }
 
 function createAlarmHeaderStyle(alarmControl: HmiAlarmControl, context: HmiHtmlConvertContext): string {
-  const parts = ["flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;"];
+  const parts = ["min-height: 2em; flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid currentColor; padding: 2px 4px; font-weight: bold;"];
   appendColorStyle(parts, "background-color", alarmControl.headerBackgroundColor);
   appendColorStyle(parts, "color", alarmControl.headerForegroundColor);
   appendColorStyle(parts, "border-bottom-color", alarmControl.headerBorderColor);

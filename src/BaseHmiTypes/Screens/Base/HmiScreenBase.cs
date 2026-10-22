@@ -5,6 +5,8 @@ using BaseHmiTypes.Common;
 
 public abstract class HmiScreenBase : HmiScreenModelBase
 {
+    /// <summary>Configured edge for a native slide-in resource; absent on ordinary screens.</summary>
+    public HmiSlideInEdge? SlideInEdge { get; set; }
     /// <summary>Screen-level lifecycle and operator event actions.</summary>
     public List<HmiEventBinding> Events { get; } = [];
 

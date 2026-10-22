@@ -11,6 +11,9 @@ public class HmiButton : HmiButtonBase
 
     public HmiProperty<HmiButtonType>? Mode { get; set; }
 
+    /// <summary>Caption-only insets, independent of the button's graphic and frame padding.</summary>
+    public HmiThickness? CaptionPadding { get; set; }
+
     /// <summary>Ellipse gives a circular outline when width and height are equal.</summary>
     public HmiProperty<HmiButtonShape>? Shape { get; set; }
 

@@ -73,4 +73,18 @@ namespace BaseHmiTypes.Tests;
             SymbolAppearance=HmiSymbolLibraryFillColorMode.Shaded,FillColorMode=HmiSymbolLibraryFillColorMode.Solid,ForeColor=Target,FillColor=HmiColor.FromArgb(255,1,2,3)});
         StringAssert.Contains(await new HmiScreenToHtmlConverter().ConvertAsync(screen),"fill=\"#c76331\"");
     }
+
+    [TestMethod] public async Task NativeCommonForegroundColorRecolorsSymbols()
+    {
+        var screen=new HmiScreen();var layer=new HmiLayer();screen.Layers.Add(layer);
+        layer.Items.Add(new HmiSymbolLibraryControl {Symbol=new HmiImage {ImageType=HmiImageType.Wmf,Data=Wmf()},SymbolAppearance=HmiSymbolLibraryFillColorMode.Solid,ForegroundColor=Target});
+        StringAssert.Contains(await new HmiScreenToHtmlConverter().ConvertAsync(screen),"fill=\"#C86432\"",StringComparison.OrdinalIgnoreCase);
+    }
+    [TestMethod] public async Task PendingNativeForegroundExpressionRetainsEmbeddedGraphic()
+    {
+        var screen=new HmiScreen();var layer=new HmiLayer();screen.Layers.Add(layer);
+        layer.Items.Add(new HmiSymbolLibraryControl {Symbol=new HmiImage {ImageType=HmiImageType.Wmf,Data=Wmf()},SymbolAppearance=HmiSymbolLibraryFillColorMode.Solid,ForegroundColor=new HmiExpressionProperty<HmiColor> {Expression="HeightError"}});
+        var html=await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        StringAssert.Contains(html,"<svg");Assert.IsFalse(html.Contains("Symbol library control"));
+    }
 }

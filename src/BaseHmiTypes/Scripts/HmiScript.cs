@@ -12,6 +12,7 @@ public enum HmiScriptType
 
 public sealed class HmiScript : IHmiObject
 {
+    public List<HmiScriptParameter> Parameters { get; } = [];
     public DateTime? LastModified { get; set; }
 
     public string? Name { get; set; }
@@ -27,4 +28,10 @@ public sealed class HmiScript : IHmiObject
     public string? PreCode { get; set; }
 
     public HmiScriptType ScriptType { get; set; } = HmiScriptType.None;
+}
+
+public sealed class HmiScriptParameter
+{
+    public string Name { get; set; } = "";
+    public bool ByReference { get; set; } = true;
 }

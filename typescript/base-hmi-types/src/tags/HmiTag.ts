@@ -1,6 +1,9 @@
 import { IHmiObject } from "../IHmiObject.js";
+import { HmiEventBinding } from "../scripts/HmiEventBinding.js";
 
 export class HmiTag implements IHmiObject {
+  /** Native tag events, independent of displayed screens. */
+  readonly events: HmiEventBinding[] = [];
   lastModified?: Date;
   name?: string;
   dataType?: string;

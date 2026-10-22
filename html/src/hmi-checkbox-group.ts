@@ -234,7 +234,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
     const centeredBorder = !this._drawStrokeInsideFrame && borderWidth > 1;
     const itemHeight = Number.isFinite(this._selectionItemHeight) && this._selectionItemHeight > 0
       ? `${this._selectionItemHeight}px`
-      : "1fr";
+      : "auto";
     const selectionBackgroundColor = this._selectionBackgroundColor || "transparent";
     const selectionForegroundColor = this._selectionForegroundColor || "inherit";
     const selectionBorderColor = this._selectionBorderColor || "#6d98c8";
@@ -289,6 +289,7 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
           ${centeredBorder ? `outline: ${toCss(borderWidth)}px ${this._frameBorderStyle} ${escapeCss(borderColor)}; outline-offset: ${toCss(-borderWidth / 2)}px;` : ""}
           border-radius: 8px;
           display: grid;
+          grid-auto-rows: ${itemHeight === "auto" ? "minmax(0, 1fr)" : itemHeight};
           align-content: start;
           gap: 6px;
           ${animations.length > 0 ? `animation: ${animations.join(", ")};` : ""}

@@ -3,6 +3,7 @@ import { HmiButtonBase } from "./HmiButtonBase.js";
 import { HmiButtonType } from "./HmiButtonType.js";
 import { HmiButtonShape } from "./HmiButtonShape.js";
 import { HmiObjectType } from "../base/HmiObjectType.js";
+import { HmiThickness } from "../base/HmiThickness.js";
 
 export class HmiButton extends HmiButtonBase {
   constructor() {
@@ -11,6 +12,8 @@ export class HmiButton extends HmiButtonBase {
   }
 
   mode?: HmiProperty<HmiButtonType>;
+  /** Caption-only insets, independent of the button's graphic and frame padding. */
+  captionPadding?: HmiThickness;
   /** True paints image and caption over the same content area with independent alignment. False/omitted retains the stacked preview. */
   overlayContent?: HmiProperty<boolean>;
   /** Positive pixel offset on both axes for pressed caption and non-stretched image snapshots. Omitted/zero disables it; downStateSameAsUp suppresses it. */

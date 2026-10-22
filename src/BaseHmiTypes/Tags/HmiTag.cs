@@ -2,6 +2,8 @@ namespace BaseHmiTypes.Tags;
 
 public sealed class HmiTag : IHmiObject
 {
+    /// <summary>Native tag events, independent of displayed screens.</summary>
+    public List<BaseHmiTypes.Scripts.HmiEventBinding> Events { get; } = [];
     public DateTime? LastModified { get; set; }
 
     public string? Name { get; set; }
