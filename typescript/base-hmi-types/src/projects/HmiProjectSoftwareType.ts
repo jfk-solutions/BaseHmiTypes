@@ -9,4 +9,5 @@ export enum HmiProjectSoftwareType {
   FactoryTalkViewMachineEdition = "FactoryTalkViewMachineEdition",
   FactoryTalkViewSiteEdition = "FactoryTalkViewSiteEdition",
   TwinCatHmi = "TwinCatHmi",
+  TwinCatPlcHmi = "TwinCatPlcHmi",
 }
