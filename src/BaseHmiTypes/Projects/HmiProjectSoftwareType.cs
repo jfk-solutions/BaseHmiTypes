@@ -10,6 +10,7 @@
         WinCCProfessional,
         WinCCUnified,
         FactoryTalkViewMachineEdition,
-        FactoryTalkViewSiteEdition
+        FactoryTalkViewSiteEdition,
+        TwinCatHmi
     }
 }
