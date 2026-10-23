@@ -1,4 +1,9 @@
 export abstract class HmiScriptCommand {
+  /** Optional native format and payload retained by a parser during command conversion. */
+  sourceFormat?: string;
+  sourceData?: Uint8Array;
+  readonly sourceProperties: Record<string, string> = {};
+
   private readonly argumentsCore: HmiScriptCommandArgument[] = [];
 
   abstract get commandName(): string;

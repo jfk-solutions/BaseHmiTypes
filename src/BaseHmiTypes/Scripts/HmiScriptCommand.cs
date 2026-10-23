@@ -2,6 +2,11 @@ namespace BaseHmiTypes.Scripts;
 
 public abstract class HmiScriptCommand
 {
+    /// <summary>Optional native format and payload retained by a parser during command conversion.</summary>
+    public string? SourceFormat { get; set; }
+    public byte[]? SourceData { get; set; }
+    public IDictionary<string, string> SourceProperties { get; } = new Dictionary<string, string>();
+
     private readonly List<HmiScriptCommandArgument> _arguments = new List<HmiScriptCommandArgument>();
 
     public abstract string CommandName { get; }
