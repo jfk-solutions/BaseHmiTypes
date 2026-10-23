@@ -49,6 +49,8 @@ export enum HmiValueConverterKind {
   Range = "Range",
   Expression = "Expression",
   Script = "Script",
+  TextList = "TextList",
+  GraphicList = "GraphicList",
 }
 
 export interface HmiProperty<T> {
@@ -92,7 +94,8 @@ export interface HmiValueConverter {
   language: HmiScriptLanguage;
   script?: string;
   /** Linear: inputMinimum/inputMaximum/outputMinimum/outputMaximum, optional clamp.
-   * Range: bitPosition or bitSelection (single, lowest, highest), optional defaultValue. */
+   * Range: bitPosition or bitSelection (single, lowest, highest), optional defaultValue.
+   * TextList/GraphicList: listName; uses the list's own range and bit policy. */
   parameters: Record<string, unknown>;
 }
 

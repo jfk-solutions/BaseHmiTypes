@@ -12,6 +12,9 @@ public class HmiGraphicView : HmiSurfaceShapeBase
     //TODO: we have here Source and Image. Source used in Unified, Image in Adavnced and WinnCC (as blob uri atm)
     public HmiProperty<string>? Source { get; set; }
 
+    /// <summary>Process value used to select a configured graphic-list entry.</summary>
+    public HmiProperty<double>? Value { get; set; }
+
     public HmiProperty<HmiImageSource>? Image { get; set; }
 
     public HmiProperty<HmiImageSource>? AlternateImage { get; set; }

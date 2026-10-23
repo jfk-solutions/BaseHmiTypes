@@ -10,6 +10,8 @@ export class HmiGraphicView extends HmiSurfaceShapeBase {
   }
 
   source?: HmiProperty<string>;
+  /** Process value used to select a configured graphic-list entry. */
+  value?: HmiProperty<number>;
   image?: HmiProperty<HmiImageSource>;
   alternateImage?: HmiProperty<HmiImageSource>;
   imageScaled?: HmiProperty<boolean>;

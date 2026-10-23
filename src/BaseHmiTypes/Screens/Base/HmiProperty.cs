@@ -57,7 +57,11 @@ public enum HmiValueConverterKind
     Linear,
     Range,
     Expression,
-    Script
+    Script,
+    /// <summary>Resolve an index through the named text list, returning multilingual text.</summary>
+    TextList,
+    /// <summary>Resolve an index through the named graphic list, returning an image source.</summary>
+    GraphicList
 }
 
 public abstract class HmiProperty<T>
@@ -126,7 +130,8 @@ public sealed class HmiValueConverter
     public string? Script { get; set; }
 
     /// <summary>Linear uses inputMinimum/inputMaximum/outputMinimum/outputMaximum and optional clamp.
-    /// Range supports bitPosition or bitSelection (single, lowest, highest), and defaultValue.</summary>
+    /// Range supports bitPosition or bitSelection (single, lowest, highest), and defaultValue.
+    /// TextList and GraphicList use listName and the list's own range/bit policy.</summary>
     public IDictionary<string, object?> Parameters { get; } = new Dictionary<string, object?>();
 }
 
