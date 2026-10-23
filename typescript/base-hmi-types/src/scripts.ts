@@ -7,3 +7,5 @@ export * from "./scripts/HmiScriptCommandCatalog.js";
 export * from "./scripts/commands/HmiScriptCallCommand.js";
 export * from "./scripts/commands/HmiAdvancedScriptCommands.generated.js";
 export * from "./scripts/commands/HmiAdvancedScriptCommandCatalog.generated.js";
+
+export * from "./scripts/commands/RefreshScreenCommand.js";

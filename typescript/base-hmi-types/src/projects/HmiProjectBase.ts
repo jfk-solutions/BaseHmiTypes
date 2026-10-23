@@ -8,6 +8,7 @@ import { HmiRecipe } from "../recipes/HmiRecipe.js";
 import { HmiFaceplateType } from "../screens/base/HmiFaceplateType.js";
 import { HmiScreenBase } from "../screens/base/HmiScreenBase.js";
 import { HmiScheduledTask } from "../scheduling/HmiScheduledTask.js";
+import { HmiEventBinding } from "../scripts/HmiEventBinding.js";
 import { HmiScript } from "../scripts/HmiScript.js";
 import { HmiTagTable } from "../tags/HmiTagTable.js";
 import { HmiGraphicList } from "../text-graphic-lists/HmiGraphicList.js";
@@ -21,6 +22,8 @@ import { HmiScreenDescriptor } from "./HmiScreenDescriptor.js";
 
 export abstract class HmiProjectBase implements IHmiProject {
   readonly info = new HmiProjectInfo();
+  /** Project-wide event actions retain source-specific phases for host dispatch. */
+  get globalEvents(): readonly HmiEventBinding[] { return []; }
   async getSecurity(_signal?: AbortSignal): Promise<import("./HmiSecurityConfiguration.js").HmiSecurityConfiguration | undefined> { return undefined; }
   async verifySecurityPassword(_userId: string, _password: string, _signal?: AbortSignal): Promise<boolean> { return false; }
 

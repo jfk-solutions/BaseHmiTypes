@@ -16,6 +16,9 @@ namespace BaseHmiTypes.Projects;
 public abstract class HmiProjectBase : IHmiProject, IHmiSecurityProvider
 {
     public HmiProjectInfo Info { get; } = new();
+
+    /// <summary>Project-wide event actions, with source-specific phases retained for host dispatch.</summary>
+    public virtual IReadOnlyList<HmiEventBinding> GlobalEvents => Array.Empty<HmiEventBinding>();
     public virtual ValueTask<HmiSecurityConfiguration?> GetSecurityAsync(CancellationToken cancellationToken = default) => new((HmiSecurityConfiguration?)null);
     public virtual ValueTask<bool> VerifySecurityPasswordAsync(string userId, string password, CancellationToken cancellationToken = default) => new(false);
 
