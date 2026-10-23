@@ -3342,7 +3342,7 @@ function appendUserViewControl(html: string[], control: HmiUserViewControl, cont
   appendAttribute(html, "data-alternating-row-background-color", resolvePropertyPreview(control.alternatingRowBackgroundColor));
   appendAttribute(html, "data-selection-background-color", resolvePropertyPreview(control.selectionBackgroundColor));
   appendAttribute(html, "data-selection-foreground-color", resolvePropertyPreview(control.selectionForegroundColor));
-  html.push(' role="region" aria-label="User view"><table style="width: 100%; border-collapse: collapse;', content.join(""),
+  html.push(' data-hmi-user-view="true" role="region" aria-label="User view"><table style="width: 100%; border-collapse: collapse;', content.join(""),
     '"><thead><tr><th style="', header.join(""), '">User view</th></tr></thead><tbody><tr><td style="', grid.join(""),
     'text-align: center;">User view data not loaded</td></tr></tbody></table>');
 }
@@ -4897,6 +4897,7 @@ async function appendSelectionGroup(
     if (blink.staticValue !== undefined && blink.blinkValue !== undefined)
       appendAttribute(html, "frame-border-flash-duration", getBlinkDuration(blink.rate));
   }
+  appendStaticAttribute(html, "flat-indicators", selectionGroup.flatIndicators);
   appendStaticAttribute(html, "selected-index", selectionGroup.selectedIndex);
   if ((selectionGroup instanceof HmiCheckBoxGroup || selectionGroup instanceof HmiRadioButtonGroup) && selectionGroup.indicatorOnRight !== undefined)
     appendAttribute(html, "indicator-on-right", getStaticValue(selectionGroup.indicatorOnRight) ? "true" : "false");
@@ -6120,8 +6121,14 @@ function createAlarmTableHeaderCellStyle(alarmControl: HmiAlarmControl, gridCell
   appendColorStyle(parts, "border-color", set?.headerBorderColor ?? alarmControl.tableHeaderBorderColor);
   const borderWidth = getStaticValue(alarmControl.tableHeaderBorderWidth);
   if (borderWidth !== undefined) parts.push(`border-width: ${toCss(Math.max(0, borderWidth))}px;`);
+  const height = getStaticValue(set?.rowHeight);
+  if (height !== undefined && height > 0) parts.push(`height: ${toCss(height)}px;`);
   const font = set?.headerFont ?? alarmControl.headerFont;
-  if (font !== undefined) appendFont(parts, font.getForCulture(context.options.cultureLcid));
+  if (font !== undefined) {
+    const localized = font.getForCulture(context.options.cultureLcid);
+    appendFont(parts, localized);
+    if (getStaticValue(localized.bold) === false && !(getStaticValue(localized.weight)! > 0)) parts.push('font-weight: normal;');
+  }
   return parts.join("");
 }
 

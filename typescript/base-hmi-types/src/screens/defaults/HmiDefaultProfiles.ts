@@ -94,6 +94,8 @@ function createWinCcUnifiedV21(): HmiDefaultProfile {
 
   setCenteredTextAlignment(profile, "HmiText");
   setCenteredTextAlignment(profile, "HmiWidgetBase");
+  profile.set("HmiCheckBoxGroup", "HorizontalAlignment", HmiHorizontalAlignment.Left);
+  profile.set("HmiRadioButtonGroup", "HorizontalAlignment", HmiHorizontalAlignment.Left);
 
   return profile;
 }

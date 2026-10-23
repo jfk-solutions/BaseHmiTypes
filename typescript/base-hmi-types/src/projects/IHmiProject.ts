@@ -31,6 +31,8 @@ export interface IHmiProject
     IHmiRecipeProvider,
     IHmiScheduledTaskProvider,
     IHmiDataLogProvider {
+  getSecurity?(signal?: AbortSignal): Promise<import("./HmiSecurityConfiguration.js").HmiSecurityConfiguration | undefined>;
+  verifySecurityPassword?(userId: string, password: string, signal?: AbortSignal): Promise<boolean>;
   readonly info: HmiProjectInfo;
   readonly devices: readonly HmiProjectDevice[];
 }
@@ -97,4 +99,9 @@ export interface IHmiDataLogProvider {
 
 export interface IHmiScheduledTaskProvider {
   getScheduledTask(id: string, signal?: AbortSignal): Promise<HmiScheduledTask | undefined>;
+}
+
+export interface IHmiSecurityProvider {
+  getSecurity(signal?: AbortSignal): Promise<import("./HmiSecurityConfiguration.js").HmiSecurityConfiguration | undefined>;
+  verifySecurityPassword(userId: string, password: string, signal?: AbortSignal): Promise<boolean>;
 }

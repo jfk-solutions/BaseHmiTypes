@@ -13,9 +13,11 @@ using BaseHmiTypes.TextGraphicLists;
 
 namespace BaseHmiTypes.Projects;
 
-public abstract class HmiProjectBase : IHmiProject
+public abstract class HmiProjectBase : IHmiProject, IHmiSecurityProvider
 {
     public HmiProjectInfo Info { get; } = new();
+    public virtual ValueTask<HmiSecurityConfiguration?> GetSecurityAsync(CancellationToken cancellationToken = default) => new((HmiSecurityConfiguration?)null);
+    public virtual ValueTask<bool> VerifySecurityPasswordAsync(string userId, string password, CancellationToken cancellationToken = default) => new(false);
 
     public virtual IReadOnlyList<HmiProjectDevice> Devices => Folders.OfType<HmiProjectDevice>().ToArray();
 

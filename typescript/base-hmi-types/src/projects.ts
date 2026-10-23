@@ -9,3 +9,4 @@ export * from "./projects/HmiProjectItemKind.js";
 export * from "./projects/HmiProjectSoftwareType.js";
 export * from "./projects/HmiDeviceInfo.js";
 export * from "./projects/HmiProjectDevice.js";
+export * from "./projects/HmiSecurityConfiguration.js";

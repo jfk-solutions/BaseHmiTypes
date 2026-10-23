@@ -2978,7 +2978,7 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "data-alternating-row-background-color", ResolvePropertyPreview(control.AlternatingRowBackgroundColor, context));
         AppendAttribute(html, "data-selection-background-color", ResolvePropertyPreview(control.SelectionBackgroundColor, context));
         AppendAttribute(html, "data-selection-foreground-color", ResolvePropertyPreview(control.SelectionForegroundColor, context));
-        html.Append(" role=\"region\" aria-label=\"User view\"><table style=\"width: 100%; border-collapse: collapse;").Append(content)
+        html.Append(" data-hmi-user-view=\"true\" role=\"region\" aria-label=\"User view\"><table style=\"width: 100%; border-collapse: collapse;").Append(content)
             .Append("\"><thead><tr><th style=\"").Append(header).Append("\">User view</th></tr></thead><tbody><tr><td style=\"")
             .Append(grid).Append("text-align: center;\">User view data not loaded</td></tr></tbody></table>");
         var childContext = control.ChildCoordinateSpace == HmiChildCoordinateSpace.ScreenAbsolute
@@ -4320,6 +4320,7 @@ public partial class HmiScreenToHtmlConverter
         if (context.EffectiveProperties.Resolve(selectionGroup, nameof(HmiPaintedScreenItemBase.BackgroundColor), selectionGroup.BackgroundColor)
             is HmiBlinkProperty<HmiColor> { StaticValue: HmiColor, BlinkValue: HmiColor } backgroundBlink)
             AppendAttribute(html, "background-flash-duration", GetBlinkDuration(backgroundBlink.Rate));
+        AppendStaticAttribute(html, "flat-indicators", selectionGroup.FlatIndicators);
         AppendStaticAttribute(html, "selected-index", selectionGroup.SelectedIndex);
         var selectedFields = selectionGroup switch
         {
@@ -5694,7 +5695,11 @@ public partial class HmiScreenToHtmlConverter
             style.Append("border-width: ")
                 .Append(ToCss(Math.Max(0d, ResolveStaticValue(alarmControl.TableHeaderBorderWidth, context))))
                 .Append("px;");
-        AppendFontStyle(style, (set?.HeaderFont ?? alarmControl.HeaderFont)?.GetForCulture(context.CultureInfo?.LCID));
+        if (set?.RowHeight is not null && ResolveStaticValue(set.RowHeight, context) > 0)
+            style.Append($"height: {ToCss(ResolveStaticValue(set.RowHeight, context))}px;");
+        var headerFont = (set?.HeaderFont ?? alarmControl.HeaderFont)?.GetForCulture(context.CultureInfo?.LCID);
+        AppendFontStyle(style, headerFont);
+        if (headerFont?.Bold.GetStaticValue() is false && headerFont.Weight.GetStaticValue() is not > 0) style.Append("font-weight: normal;");
         return style.ToString();
     }
 

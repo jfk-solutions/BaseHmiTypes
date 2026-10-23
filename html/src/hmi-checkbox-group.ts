@@ -1,4 +1,5 @@
 const selectionGroupProperties = {
+  flatIndicators: Boolean,
   selectedIndex: Number,
   selectedFields: Number,
   indicatorOnRight: Boolean,
@@ -30,6 +31,13 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
   }
 
   protected abstract readonly indicator: SelectionIndicator;
+  private _flatIndicators = false;
+  get flatIndicators(): boolean { return this._flatIndicators; }
+  set flatIndicators(value: boolean | string | null | undefined) {
+    const next = value === true || value === "" || String(value).toLowerCase() === "true";
+    if (next === this._flatIndicators) return;
+    this._flatIndicators = next; this.queueRender();
+  }
   private _selectedIndex = -1;
   private _selectedFields: number | undefined;
   private _indicatorOnRight = false;
@@ -235,6 +243,10 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
     const itemHeight = Number.isFinite(this._selectionItemHeight) && this._selectionItemHeight > 0
       ? `${this._selectionItemHeight}px`
       : "auto";
+    // Unified flat templates use font-based rows and a centered two-pixel selector stroke.
+    const flatRowHeight = itemHeight === "auto" ? (parseCssPixels(computed.fontSize) ?? 16) * 3 : this._selectionItemHeight;
+    const flatInset = Math.floor(flatRowHeight * 0.2);
+    const flatSelectorSize = flatRowHeight - 2 * flatInset;
     const selectionBackgroundColor = this._selectionBackgroundColor || "transparent";
     const selectionForegroundColor = this._selectionForegroundColor || "inherit";
     const selectionBorderColor = this._selectionBorderColor || "#6d98c8";
@@ -397,6 +409,14 @@ abstract class HmiSelectionGroupElement extends HTMLElement {
           text-overflow: ellipsis;
         }
 
+        ${this._flatIndicators ? `
+        .panel { padding: 8px; border-radius: 0; grid-auto-rows: ${toCss(flatRowHeight)}px; }
+        .item { height: ${toCss(flatRowHeight)}px; grid-template-rows: minmax(0, 1fr); padding: ${toCss(flatInset)}px; column-gap: ${toCss(flatInset)}px; grid-template-columns: ${this._indicatorOnRight ? `minmax(0, 1fr) ${toCss(flatSelectorSize)}px` : `${toCss(flatSelectorSize)}px minmax(0, 1fr)`}; }
+        .indicator { grid-column: ${this._indicatorOnRight ? '2' : '1'}; grid-row: 1; width: ${toCss(flatSelectorSize + 2)}px; height: ${toCss(flatSelectorSize + 2)}px; justify-self: center; border: 2px solid black; background: white; box-shadow: none; }
+        .indicator.checkbox { border-radius: 0; }
+        .label { grid-column: ${this._indicatorOnRight ? '1' : '2'}; grid-row: 1; }
+        .image { grid-row: 1; }
+        ` : ''}
       </style>
       <slot class="source" name="item"></slot>
       <div class="panel" role="group">

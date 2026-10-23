@@ -21,6 +21,9 @@ import { HmiScreenDescriptor } from "./HmiScreenDescriptor.js";
 
 export abstract class HmiProjectBase implements IHmiProject {
   readonly info = new HmiProjectInfo();
+  async getSecurity(_signal?: AbortSignal): Promise<import("./HmiSecurityConfiguration.js").HmiSecurityConfiguration | undefined> { return undefined; }
+  async verifySecurityPassword(_userId: string, _password: string, _signal?: AbortSignal): Promise<boolean> { return false; }
+
 
   get devices(): readonly HmiProjectDevice[] {
     return this.folders.filter((folder): folder is HmiProjectDevice => folder instanceof HmiProjectDevice);

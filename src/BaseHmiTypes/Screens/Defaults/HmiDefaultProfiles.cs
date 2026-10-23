@@ -104,6 +104,8 @@ public static class HmiDefaultProfiles
 
         SetCenteredTextAlignment<HmiText>(profile);
         SetCenteredTextAlignment<HmiWidgetBase>(profile);
+        profile.Set<HmiCheckBoxGroup, HmiHorizontalAlignment>(nameof(HmiWidgetBase.HorizontalAlignment), HmiHorizontalAlignment.Left);
+        profile.Set<HmiRadioButtonGroup, HmiHorizontalAlignment>(nameof(HmiWidgetBase.HorizontalAlignment), HmiHorizontalAlignment.Left);
 
         return profile;
     }

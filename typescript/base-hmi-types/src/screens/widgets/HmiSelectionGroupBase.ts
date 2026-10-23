@@ -29,6 +29,7 @@ export abstract class HmiSelectionGroupBase extends HmiWidgetBase {
   /** Array write target receiving all visible state values when the list scrolls. */
   visibleStates?: HmiProperty<readonly number[]>;
   enterHandshake?: HmiEnterHandshakeSettings;
+  flatIndicators?: HmiProperty<boolean>;
   selectionItemHeight?: HmiProperty<number>;
   selectionBackgroundColor?: HmiProperty<HmiColor>;
   selectionForegroundColor?: HmiProperty<HmiColor>;

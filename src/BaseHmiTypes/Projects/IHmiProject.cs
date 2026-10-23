@@ -136,3 +136,9 @@ public interface IHmiScheduledTaskProvider
 {
     ValueTask<HmiScheduledTask?> GetScheduledTaskAsync(string id, CancellationToken cancellationToken = default);
 }
+
+public interface IHmiSecurityProvider
+{
+    ValueTask<HmiSecurityConfiguration?> GetSecurityAsync(CancellationToken cancellationToken = default);
+    ValueTask<bool> VerifySecurityPasswordAsync(string userId, string password, CancellationToken cancellationToken = default);
+}

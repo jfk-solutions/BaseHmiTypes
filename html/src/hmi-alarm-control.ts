@@ -24,14 +24,15 @@ export class HmiAlarmControlElement extends HTMLElement {
     this.snapshot = data && structuredClone(data); this.refresh();
   }
   setAlarmData(data: HmiAlarmDisplayData): void { this.alarmData = data; }
-  connectedCallback(): void { this.refresh(); }
+  connectedCallback(): void { queueMicrotask(() => this.refresh()); }
   /** Reapply the process image after a host updates static layout or binding properties. */
   refresh(): void {
-    if (!this.snapshot) return;
     const table = this.querySelector<HTMLTableElement>("table.hmi-alarm-table");
     const template = this.querySelector<HTMLTemplateElement>("template[data-hmi-alarm-row]");
     const body = table?.tBodies[0]; if (!body || !template) return;
-    const nodes = this.snapshot.rows.map(alarm => {
+    const height = Number(table!.dataset.viewRowHeight);
+    if (!this.snapshot && !(height > 0)) return;
+    const nodes = (this.snapshot?.rows ?? []).map(alarm => {
       const fragment = template.content.cloneNode(true) as DocumentFragment;
       const row = fragment.querySelector<HTMLTableRowElement>("tr")!;
       row.dataset.alarmKey = alarm.key; row.dataset.alarmActive = String(alarm.active); row.dataset.alarmAcknowledged = String(alarm.acknowledged);
@@ -48,9 +49,21 @@ export class HmiAlarmControlElement extends HTMLElement {
       }
       return fragment;
     });
+    // Blank presentation rows preserve the configured grid without inventing alarm records.
+    if (Number.isFinite(height) && height > 0) {
+      const available = Math.max(0, this.clientHeight - (table!.tHead?.offsetHeight ?? 0)
+        - [...this.children].filter(child => child !== table && child instanceof HTMLElement).reduce((sum, child) => sum + (child as HTMLElement).offsetHeight, 0));
+      const count = Math.min(1000, Math.ceil(available / height));
+      for (let index = nodes.length; index < count; index++) {
+        const fragment = template.content.cloneNode(true) as DocumentFragment;
+        const row = fragment.querySelector<HTMLTableRowElement>('tr')!;
+        row.setAttribute('aria-hidden', 'true'); row.dataset.alarmPlaceholder = 'true'; row.style.height = `${height}px`;
+        nodes.push(fragment);
+      }
+    }
     body.replaceChildren(...nodes);
     for (const button of this.querySelectorAll<HTMLButtonElement>('button[data-alarm-action="acknowledge"]'))
-      button.disabled = button.dataset.enabled === "false" || this.dataset.readOnlyMode === "true" || !this.snapshot.rows.some(row => this.snapshot!.selectedKeys?.includes(row.key) && row.canAcknowledge);
+      button.disabled = button.dataset.enabled === "false" || this.dataset.readOnlyMode === "true" || !(this.snapshot?.rows ?? []).some(row => this.snapshot!.selectedKeys?.includes(row.key) && row.canAcknowledge);
   }
 }
 
