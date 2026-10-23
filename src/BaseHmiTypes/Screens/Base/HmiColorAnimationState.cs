@@ -4,6 +4,12 @@ public class HmiColorAnimationState
 {
     public double? Value { get; set; }
 
+    /// <summary>Inclusive lower bound for a range state; null retains exact Value matching.</summary>
+    public double? MinimumValue { get; set; }
+
+    /// <summary>Inclusive upper bound for a range state.</summary>
+    public double? MaximumValue { get; set; }
+
     public HmiColorBehavior? ForegroundBehavior { get; set; }
 
     public HmiColor? ForegroundColor1 { get; set; }

@@ -6,6 +6,13 @@ public sealed class HmiEventBinding
 {
     public string EventName { get; set; } = string.Empty;
 
+    /// <summary>Original event representation, including native dispatch and reference IDs.</summary>
+    public string? SourceFormat { get; set; }
+
+    public byte[]? SourceData { get; set; }
+
+    public Dictionary<string, string> SourceProperties { get; } = new();
+
     public HmiAction? Action { get; set; }
 
     /// <summary>

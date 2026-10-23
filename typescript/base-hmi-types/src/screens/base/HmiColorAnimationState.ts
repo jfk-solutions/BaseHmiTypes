@@ -4,6 +4,9 @@ import { HmiGradientDirection } from "./HmiGradientDirection.js";
 
 export class HmiColorAnimationState {
   value?: number;
+  /** Inclusive range bounds; omitted bounds retain exact value matching. */
+  minimumValue?: number;
+  maximumValue?: number;
   foregroundBehavior?: HmiColorBehavior;
   foregroundColor1?: HmiColor;
   foregroundColor2?: HmiColor;
