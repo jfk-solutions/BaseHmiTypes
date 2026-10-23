@@ -16,6 +16,8 @@ export class HmiScheduledTask implements IHmiObject {
 export interface HmiCalendarTrigger extends HmiTrigger {
   readonly kind: HmiTriggerKind.Calendar;
   schedule: 'Minutely' | 'Hourly' | 'Once' | 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
+  /** Optional DateTime tag supplying Daily time, Yearly date/time or Once date/time; ISO 8601 instants. */
+  timeTag?: string;
   hour: number; minute: number; second: number;
   day?: number; month?: number; year?: number;
   /** Sunday = 0, Saturday = 6. */

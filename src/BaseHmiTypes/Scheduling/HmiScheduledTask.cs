@@ -20,6 +20,8 @@ public sealed class HmiCalendarTrigger : HmiTrigger
     public override HmiTriggerKind Kind => HmiTriggerKind.Calendar;
     /// <summary>Minutely, Hourly, Daily, Weekly, Monthly, Yearly or Once, in local wall-clock time.</summary>
     public string Schedule { get; set; } = "Daily";
+    /// <summary>Optional DateTime tag supplying Daily time, Yearly date/time or Once date/time. Values are ISO 8601 instants.</summary>
+    public string? TimeTag { get; set; }
     public int Hour { get; set; }
     public int Minute { get; set; }
     public int Second { get; set; }
