@@ -84,12 +84,25 @@ export interface HmiEventTrigger extends HmiTrigger {
 }
 
 export interface HmiValueConverter {
+  /** Ordered inclusive ranges for a Range converter. First match wins. */
+  ranges?: HmiValueRange[];
   kind: HmiValueConverterKind;
   name?: string;
   expression?: string;
   language: HmiScriptLanguage;
   script?: string;
+  /** Linear: inputMinimum/inputMaximum/outputMinimum/outputMaximum, optional clamp.
+   * Range: bitPosition or bitSelection (single, lowest, highest), optional defaultValue. */
   parameters: Record<string, unknown>;
+}
+
+export interface HmiValueRange {
+  minimum: number;
+  maximum: number;
+  value: unknown;
+  alternateValue?: unknown;
+  /** Half-period of a flashing state; absent means solid. */
+  blinkIntervalMilliseconds?: number;
 }
 
 export interface HmiStaticProperty<T> extends HmiProperty<T> {

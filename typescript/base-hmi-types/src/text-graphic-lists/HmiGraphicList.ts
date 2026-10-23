@@ -4,6 +4,8 @@ import { HmiImageSource } from "../screens/base/HmiImageSource.js";
 import { HmiListRangeType, HmiTextGraphicListKind } from "./HmiTextList.js";
 
 export class HmiGraphicList implements IHmiObject {
+  /** Optional per-list policy, overriding the runtime default. */
+  bitSelection?: 'singleConfigured' | 'singleSet' | 'leastSignificant' | 'mostSignificant';
   lastModified?: Date;
   name?: string;
   mode: HmiGraphicListMode = HmiGraphicListMode.Simple;

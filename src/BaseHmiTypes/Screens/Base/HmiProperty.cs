@@ -113,6 +113,8 @@ public sealed class HmiEventTrigger : HmiTrigger
 
 public sealed class HmiValueConverter
 {
+    /// <summary>Ordered inclusive ranges for a Range converter. First match wins.</summary>
+    public IList<HmiValueRange> Ranges { get; } = new List<HmiValueRange>();
     public HmiValueConverterKind Kind { get; set; } = HmiValueConverterKind.Unknown;
 
     public string? Name { get; set; }
@@ -123,7 +125,19 @@ public sealed class HmiValueConverter
 
     public string? Script { get; set; }
 
+    /// <summary>Linear uses inputMinimum/inputMaximum/outputMinimum/outputMaximum and optional clamp.
+    /// Range supports bitPosition or bitSelection (single, lowest, highest), and defaultValue.</summary>
     public IDictionary<string, object?> Parameters { get; } = new Dictionary<string, object?>();
+}
+
+public sealed class HmiValueRange
+{
+    public double Minimum { get; set; }
+    public double Maximum { get; set; }
+    public object? Value { get; set; }
+    public object? AlternateValue { get; set; }
+    /// <summary>Half-period of a flashing state; null means solid.</summary>
+    public double? BlinkIntervalMilliseconds { get; set; }
 }
 
 public sealed class HmiStaticProperty<T> : HmiProperty<T>

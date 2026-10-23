@@ -2,6 +2,8 @@ import { IHmiObject } from "../IHmiObject.js";
 import { HmiMultilingualText } from "../common/HmiMultilingualText.js";
 
 export class HmiTextList implements IHmiObject {
+  /** Optional per-list policy, overriding the runtime default. */
+  bitSelection?: 'singleConfigured' | 'singleSet' | 'leastSignificant' | 'mostSignificant';
   defaultEntryReference?: HmiTextListEntryReference;
   lastModified?: Date;
   name?: string;

@@ -5,6 +5,8 @@ namespace BaseHmiTypes.TextGraphicLists;
 
 public sealed class HmiGraphicList : IHmiObject
 {
+    /// <summary>Optional per-list policy: singleConfigured, singleSet, leastSignificant or mostSignificant.</summary>
+    public string? BitSelection { get; set; }
     public DateTime? LastModified { get; set; }
 
     public string? Name { get; set; }
