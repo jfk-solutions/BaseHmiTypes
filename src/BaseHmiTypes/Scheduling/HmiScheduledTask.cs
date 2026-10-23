@@ -10,6 +10,7 @@ public sealed class HmiScheduledTask : IHmiObject
     public HmiMultilingualText? Comment { get; set; }
     public bool Enabled { get; set; } = true;
     public List<HmiTrigger> Triggers { get; } = [];
+    /// <summary>Task actions use Update, or TimeExpired for native timer actions.</summary>
     public List<HmiEventBinding> Events { get; } = [];
     public List<string> UnsupportedTriggers { get; } = [];
 }
@@ -17,6 +18,7 @@ public sealed class HmiScheduledTask : IHmiObject
 public sealed class HmiCalendarTrigger : HmiTrigger
 {
     public override HmiTriggerKind Kind => HmiTriggerKind.Calendar;
+    /// <summary>Minutely, Hourly, Daily, Weekly, Monthly, Yearly or Once, in local wall-clock time.</summary>
     public string Schedule { get; set; } = "Daily";
     public int Hour { get; set; }
     public int Minute { get; set; }

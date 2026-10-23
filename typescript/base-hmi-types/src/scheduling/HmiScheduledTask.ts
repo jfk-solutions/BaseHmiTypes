@@ -9,12 +9,13 @@ export class HmiScheduledTask implements IHmiObject {
   comment?: HmiMultilingualText;
   enabled = true;
   readonly triggers: HmiTrigger[] = [];
+  /** Task actions use Update, or TimeExpired for native timer actions. */
   readonly events: HmiEventBinding[] = [];
   readonly unsupportedTriggers: string[] = [];
 }
 export interface HmiCalendarTrigger extends HmiTrigger {
   readonly kind: HmiTriggerKind.Calendar;
-  schedule: 'Once' | 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
+  schedule: 'Minutely' | 'Hourly' | 'Once' | 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
   hour: number; minute: number; second: number;
   day?: number; month?: number; year?: number;
   /** Sunday = 0, Saturday = 6. */
