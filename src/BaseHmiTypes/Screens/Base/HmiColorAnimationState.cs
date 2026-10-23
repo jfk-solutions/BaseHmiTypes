@@ -10,6 +10,12 @@ public class HmiColorAnimationState
     /// <summary>Inclusive upper bound for a range state.</summary>
     public double? MaximumValue { get; set; }
 
+    /// <summary>Optional bit selector; when present, bit matching replaces numeric range matching.</summary>
+    public int? BitIndex { get; set; }
+
+    /// <summary>Expected selected bit value; defaults to true when BitIndex is present.</summary>
+    public bool? BitValue { get; set; }
+
     public HmiColorBehavior? ForegroundBehavior { get; set; }
 
     public HmiColor? ForegroundColor1 { get; set; }

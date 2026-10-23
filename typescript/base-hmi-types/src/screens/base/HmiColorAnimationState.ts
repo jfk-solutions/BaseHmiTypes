@@ -7,6 +7,10 @@ export class HmiColorAnimationState {
   /** Inclusive range bounds; omitted bounds retain exact value matching. */
   minimumValue?: number;
   maximumValue?: number;
+  /** Bit matching replaces numeric range matching when a selector is present. */
+  bitIndex?: number;
+  /** Expected selected bit value; omitted means true. */
+  bitValue?: boolean;
   foregroundBehavior?: HmiColorBehavior;
   foregroundColor1?: HmiColor;
   foregroundColor2?: HmiColor;
