@@ -9,3 +9,5 @@ export * from "./scripts/commands/HmiAdvancedScriptCommands.generated.js";
 export * from "./scripts/commands/HmiAdvancedScriptCommandCatalog.generated.js";
 
 export * from "./scripts/commands/RefreshScreenCommand.js";
+
+export * from "./scripts/commands/ClearMessageBufferCommand.js";
