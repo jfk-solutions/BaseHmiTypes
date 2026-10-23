@@ -1,10 +1,16 @@
 using BaseHmiTypes.Common;
+using BaseHmiTypes.Scripts;
 using BaseHmiTypes.Screens.Base;
 
 namespace BaseHmiTypes.Alarms;
 
 public abstract class HmiAlarm : IHmiObject
 {
+    /// <summary>Imported alarm actions; hosts own event observation and dispatch.</summary>
+    public IList<HmiEventBinding> Events { get; } = new List<HmiEventBinding>();
+
+    public IDictionary<string, string> SourceProperties { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
     public DateTime? LastModified { get; set; }
 
     public string? Name { get; set; }

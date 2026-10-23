@@ -1,8 +1,13 @@
+import { HmiEventBinding } from "../scripts/HmiEventBinding.js";
 import { IHmiObject } from "../IHmiObject.js";
 import { HmiMultilingualText } from "../common/HmiMultilingualText.js";
 import { HmiColor } from "../screens/base/HmiColor.js";
 
 export abstract class HmiAlarm implements IHmiObject {
+  /** Imported actions; hosts own event observation and dispatch. */
+  readonly events: HmiEventBinding[] = [];
+  readonly sourceProperties: Record<string, string> = {};
+
   lastModified?: Date;
   name?: string;
 }
