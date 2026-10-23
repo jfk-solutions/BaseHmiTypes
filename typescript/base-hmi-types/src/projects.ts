@@ -8,5 +8,6 @@ export * from "./projects/HmiProjectItemDescriptor.js";
 export * from "./projects/HmiProjectItemKind.js";
 export * from "./projects/HmiProjectSoftwareType.js";
 export * from "./projects/HmiDeviceInfo.js";
+export * from "./projects/HmiDeviceFrame.js";
 export * from "./projects/HmiProjectDevice.js";
 export * from "./projects/HmiSecurityConfiguration.js";

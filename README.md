@@ -1,5 +1,12 @@
 # BaseHmiTypes
 
+Device metadata can include a neutral `HmiDeviceFrame`: passive SVG enclosure
+artwork, display bounds/resolution, physical controls with native input identities,
+and LEDs with optional output identities. `HmiDeviceInputKind` separates runtime
+keys from adapter-owned hardware signals. Readers own device catalogs; simulator
+state and transport stay outside the model. Both C# and TypeScript expose this
+contract through `HmiDeviceInfo.Frame` / `frame`.
+
 BaseHmiTypes is a neutral HMI model assembly for Siemens visualization project readers and converters.
 It intentionally does not use Siemens namespaces and contains only shared container types with minimal behavior.
 

@@ -6,6 +6,7 @@ public class HmiDeviceInfo
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? DeviceType { get; set; }
+    public HmiDeviceFrame? Frame { get; set; }
     public string? StartScreenId { get; set; }
     public string? Author { get; set; }
     public string? Comment { get; set; }
