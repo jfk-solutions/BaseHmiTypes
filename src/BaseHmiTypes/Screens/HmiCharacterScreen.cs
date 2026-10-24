@@ -1,4 +1,5 @@
 using BaseHmiTypes.Common;
+using BaseHmiTypes.Scripts;
 
 namespace BaseHmiTypes.Screens;
 
@@ -9,6 +10,8 @@ public class HmiCharacterScreen : HmiScreen
     public int? Columns { get; set; }
     public int? Rows { get; set; }
     public IList<HmiCharacterScreenEntry> Entries { get; } = new List<HmiCharacterScreenEntry>();
+    /// <summary>Imported field actions with source owner metadata. Hosts own field observation and dispatch.</summary>
+    public IList<HmiEventBinding> FieldEvents { get; } = new List<HmiEventBinding>();
 }
 
 public class HmiCharacterScreenEntry
