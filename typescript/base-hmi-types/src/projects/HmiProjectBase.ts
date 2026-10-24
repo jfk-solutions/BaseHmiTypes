@@ -24,6 +24,8 @@ export abstract class HmiProjectBase implements IHmiProject {
   readonly info = new HmiProjectInfo();
   /** Project-wide event actions retain source-specific phases for host dispatch. */
   get globalEvents(): readonly HmiEventBinding[] { return []; }
+  /** Counter actions retain source owner metadata; hosts own observation and dispatch. */
+  get counterEvents(): readonly HmiEventBinding[] { return []; }
   async getSecurity(_signal?: AbortSignal): Promise<import("./HmiSecurityConfiguration.js").HmiSecurityConfiguration | undefined> { return undefined; }
   async verifySecurityPassword(_userId: string, _password: string, _signal?: AbortSignal): Promise<boolean> { return false; }
 
