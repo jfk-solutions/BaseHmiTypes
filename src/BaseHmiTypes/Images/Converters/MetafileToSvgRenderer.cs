@@ -50,6 +50,7 @@ public sealed class MetafileToSvgRenderer
         var objects = new Dictionary<uint, MetafileObject>();
         var elements = new List<string>();
         var defs = new List<string>();
+        var hatchPatterns = new Dictionary<string, string>();
         var clipSequence = 0;
         var clipExpansion = new ClipExpansion();
 
@@ -62,9 +63,22 @@ public sealed class MetafileToSvgRenderer
             var dataEnd = record.Offset + record.Size;
             if (dataEnd > bytes.Length)
                 break;
+            if (UsesEmfBrush(record.Type) && state.CurrentPath is null
+                && (record.Type is not (EMR.FillPath or EMR.StrokeAndFillPath) || state.SelectedPath is { Count: > 0 }))
+                state.ResolvedBrushFill = ResolveBrushFill(state.Brush, state, defs, hatchPatterns);
 
             switch (record.Type)
             {
+                case EMR.SetBrushOrgEx:
+                    if (record.Size >= 16) { state.BrushOrgX = I32(bytes, dataOffset); state.BrushOrgY = I32(bytes, dataOffset + 4); }
+                    break;
+                case EMR.SetBkMode:
+                    if (record.Size >= 12 && U32(bytes, dataOffset) is var backgroundMode && (backgroundMode == 1 || backgroundMode == 2))
+                        state.BackgroundMode = (int)backgroundMode;
+                    break;
+                case EMR.SetBkColor:
+                    if (record.Size >= 12) state.BackgroundColor = ColorRef(bytes, dataOffset);
+                    break;
                 case EMR.SetMapMode:
                     if (record.Size >= 12) SetEmfMapMode(state, I32(bytes, dataOffset), mappingDevice);
                     break;
@@ -129,10 +143,12 @@ public sealed class MetafileToSvgRenderer
                     };
                     break;
                 case EMR.CreateBrushIndirect:
+                    if (record.Size < 24) break;
                     objects[U32(bytes, dataOffset)] = new BrushObject
                     {
                         Color = ColorRef(bytes, dataOffset + 8),
                         None = U32(bytes, dataOffset + 4) == 1,
+                        Hatch = U32(bytes, dataOffset + 4) == 2 && U32(bytes, dataOffset + 12) <= 5 ? (int)U32(bytes, dataOffset + 12) : (int?)null,
                     };
                     break;
                 case EMR.ExtCreateFontIndirectW:
@@ -286,7 +302,7 @@ public sealed class MetafileToSvgRenderer
                         if (rectangles is null || rectangles.Count == 0) break;
                         PrepareEmfMapping(state);
                         var geometry = EmfRegionGeometry(rectangles, state);
-                        if (geometry is not null) elements.Add($"<path {geometry} stroke=\"none\" fill=\"{brush.Color}\"{ClipAttr(state)} />");
+                        if (geometry is not null) elements.Add($"<path {geometry} stroke=\"none\" fill=\"{ResolveBrushFill(brush, state, defs, hatchPatterns)}\"{ClipAttr(state)} />");
                     }
                     break;
                 case EMR.SetMetaRgn:
@@ -795,6 +811,11 @@ public sealed class MetafileToSvgRenderer
         {
             Pen = state.Pen,
             Brush = state.Brush,
+            ResolvedBrushFill = state.ResolvedBrushFill,
+            BackgroundMode = state.BackgroundMode,
+            BackgroundColor = state.BackgroundColor,
+            BrushOrgX = state.BrushOrgX,
+            BrushOrgY = state.BrushOrgY,
             Font = state.Font,
             TextColor = state.TextColor,
             CurrentX = state.CurrentX,
@@ -846,6 +867,11 @@ public sealed class MetafileToSvgRenderer
         var restored = CloneState(source);
         target.Pen = restored.Pen;
         target.Brush = restored.Brush;
+        target.ResolvedBrushFill = restored.ResolvedBrushFill;
+        target.BackgroundMode = restored.BackgroundMode;
+        target.BackgroundColor = restored.BackgroundColor;
+        target.BrushOrgX = restored.BrushOrgX;
+        target.BrushOrgY = restored.BrushOrgY;
         target.Font = restored.Font;
         target.TextColor = restored.TextColor;
         target.CurrentX = restored.CurrentX;
@@ -1767,7 +1793,38 @@ public sealed class MetafileToSvgRenderer
 
     private static string FillAttrs(DrawState state)
     {
-        return state.Brush.None ? "fill=\"none\"" : $"fill=\"{state.Brush.Color}\"";
+        return state.Brush.None ? "fill=\"none\"" : $"fill=\"{state.ResolvedBrushFill ?? state.Brush.Color}\"";
+    }
+
+    private static bool UsesEmfBrush(uint type) => type is EMR.Rectangle or EMR.Ellipse or EMR.RoundRect
+        or EMR.Chord or EMR.Pie or EMR.Polygon or EMR.Polygon16 or EMR.PolyPolygon or EMR.PolyPolygon16
+        or EMR.FillPath or EMR.StrokeAndFillPath;
+
+    private static string ResolveBrushFill(BrushObject brush, DrawState state, List<string> defs, Dictionary<string, string> patterns)
+    {
+        if (brush.None) return "none";
+        if (brush.Hatch is not { } hatch) return brush.Color;
+        // GDI's six standard hatches are 8x8 device-pixel masks. Geometry is
+        // already mapped to device space; neither mapping nor world transforms
+        // should scale or rotate the tile. Preserve the native pixel phase.
+        var x = (state.BrushOrgX % 8 + 8) % 8; var y = (state.BrushOrgY % 8 + 8) % 8;
+        var background = state.BackgroundMode == 2 ? state.BackgroundColor : "transparent";
+        var key = $"{hatch}:{brush.Color}:{background}:{x}:{y}";
+        if (!patterns.TryGetValue(key, out var id))
+        {
+            id = $"hatch{patterns.Count + 1}";
+            var pixels = new StringBuilder();
+            for (var row = 0; row < 8; row++)
+                for (var column = 0; column < 8; column++)
+                {
+                    var painted = hatch switch { 0 => row == 3, 1 => column == 4, 2 => row == column, 3 => row + column == 7, 4 => row == 3 || column == 4, _ => row == column || row + column == 7 };
+                    if (painted) pixels.Append($"M {column} {row}h1v1h-1Z ");
+                }
+            var backdrop = state.BackgroundMode == 2 ? $"<rect width=\"8\" height=\"8\" fill=\"{state.BackgroundColor}\" />" : string.Empty;
+            defs.Add($"<pattern id=\"{id}\" patternUnits=\"userSpaceOnUse\" x=\"{x}\" y=\"{y}\" width=\"8\" height=\"8\">{backdrop}<path d=\"{pixels.ToString().TrimEnd()}\" fill=\"{brush.Color}\" /></pattern>");
+            patterns.Add(key, id);
+        }
+        return $"url(#{id})";
     }
 
     private static string FillRuleAttr(DrawState state)
@@ -1910,6 +1967,7 @@ internal sealed class PenObject : MetafileObject
 
 internal sealed class BrushObject : MetafileObject
 {
+    public int? Hatch { get; set; }
     public string Color { get; set; } = "#ffffff";
 
     public bool None { get; set; }
@@ -1928,6 +1986,11 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class DrawState
 {
+    public string? ResolvedBrushFill { get; set; }
+    public int BackgroundMode { get; set; } = 2;
+    public string BackgroundColor { get; set; } = "#ffffff";
+    public int BrushOrgX { get; set; }
+    public int BrushOrgY { get; set; }
     public int MapMode { get; set; } = 1;
     public bool IsotropicDirty { get; set; }
     public double LogicalCurrentX { get; set; }
@@ -2102,6 +2165,9 @@ internal static class EMR
     public const uint SetViewportExtEx = 0x000b;
     public const uint SetViewportOrgEx = 0x000c;
     public const uint SetMapMode = 0x0011;
+    public const uint SetBrushOrgEx = 0x000d;
+    public const uint SetBkMode = 0x0012;
+    public const uint SetBkColor = 0x0019;
     public const uint SetPixelV = 0x000f;
     public const uint FillRgn = 0x0047;
     public const uint ScaleViewportExtEx = 0x001f;
