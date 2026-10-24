@@ -17,7 +17,7 @@ namespace BaseHmiTypes.Tests;
     [TestMethod] [DataRow(1,1,"3 1")] [DataRow(1,3,"9 3")] [DataRow(2,1,"1 1")] [DataRow(2,3,"3 3")] [DataRow(3,1,"3 1 1 1")] [DataRow(3,3,"9 3 3 3")] [DataRow(4,1,"3 1 1 1 1 1")] [DataRow(4,3,"9 3 3 3 3 3")]
     public void StandardPatternsUsePenWidth(int style,int width,string expected)=>Assert.AreEqual(expected,Dashes(Line(Pen(0x10200|style,width))));
     [TestMethod] [DataRow(0)] [DataRow(5)] [DataRow(6)] public void SolidNullAndInsideFrameDoNotHaveDashes(int style)=>Assert.IsNull(Dashes(Line(Pen(0x10200|style))));
-    [TestMethod] [DataRow(1)] [DataRow(2)] [DataRow(3)] [DataRow(4)] public void CosmeticPensDoNotUseGeometricPatterns(int style)=>Assert.IsNull(Dashes(Line(Pen(style,1))));
+    [TestMethod] [DataRow(1)] [DataRow(2)] [DataRow(3)] [DataRow(4)] public void CosmeticPensDoNotUseGeometricPatterns(int style){var s=Svg(Pen(style,1),Record(37,1),Record(27,4,20),Record(54,36,20));Assert.IsTrue(s.Descendants().All(e=>e.Attribute("stroke-dasharray") is null));Assert.IsTrue(s.Descendants().Any(e=>e.Name.LocalName=="path"));}
     [TestMethod] [DataRow(1)] [DataRow(9)] public void CustomLengthsAreLogicalUnitsNotWidthMultiples(int width)=>Assert.AreEqual("3 5 2",Dashes(Line(Pen(0x10207,width,new[]{3,5,2}))));
     [TestMethod] public void SingleOddEntryIsRetained()=>Assert.AreEqual("4",Dashes(Line(Pen(0x10207,3,new[]{4}))));
     [TestMethod] [DataRow(0,2)] [DataRow(2,0)] public void ZeroEntriesAreRetainedWhenCycleIsNonzero(int first,int second)=>Assert.AreEqual($"{first} {second}",Dashes(Line(Pen(0x10207,3,new[]{first,second}))));

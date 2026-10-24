@@ -142,6 +142,9 @@ public sealed class MetafileToSvgRenderer
                         Width = Math.Max(1, Math.Abs((double)I32(bytes, dataOffset + 8))),
                         Color = ColorRef(bytes, dataOffset + 16),
                         None = (U32(bytes, dataOffset + 4) & 0xF) == 5,
+                        DashArray = Math.Abs((double)I32(bytes, dataOffset + 8)) <= 1 ? CosmeticPattern(U32(bytes, dataOffset + 4) & 0xf) : null,
+                        CosmeticDashes = Math.Abs((double)I32(bytes, dataOffset + 8)) <= 1 && (U32(bytes, dataOffset + 4) & 0xf) is >= 1 and <= 4,
+                        OpaqueDashGaps = true,
                     };
                     break;
                 case EMR.CreateBrushIndirect:
@@ -163,10 +166,16 @@ public sealed class MetafileToSvgRenderer
                     var extendedPenWidth = ScaledPenWidth(state, I32(bytes, dataOffset + 24));
                     double[]? dashArray = null;
                     if (geometricPen && !TryReadGeometricDashes(bytes, record, extendedPenStyle, extendedPenWidth, state, out dashArray)) break;
+                    if (!geometricPen && (extendedPenStyle & 0xf) is 1 or 2 or 3 or 4 or 7 or 8)
+                    {
+                        if (U32(bytes, dataOffset + 24) != 1 || !TryReadCosmeticDashes(bytes, record, extendedPenStyle, out dashArray)) break;
+                        extendedPenWidth = 1;
+                    }
                     objects[U32(bytes, dataOffset)] = new PenObject
                     {
                         Width = extendedPenWidth,
                         DashArray = dashArray,
+                        CosmeticDashes = !geometricPen && dashArray is not null,
                         Color = ColorRef(bytes, dataOffset + 32),
                         None = (U32(bytes, dataOffset + 20) & 0x0000000f) == 5,
                         LineCap = geometricPen ? (extendedPenStyle & 0xF00) switch
@@ -449,6 +458,7 @@ public sealed class MetafileToSvgRenderer
                         break;
                     }
             }
+            ApplyCosmeticGapBackground(elements, firstElement, state);
             // The metaregion is independent of the selected clip on each drawing.
             if (state.MetaMaskId is not null && elements.Count > firstElement)
             {
@@ -1107,6 +1117,50 @@ public sealed class MetafileToSvgRenderer
             dashes = entries;
         }
         return true;
+    }
+
+    private static double[]? CosmeticPattern(uint style) => style switch
+    {
+        1 => new double[] { 18, 6 }, 2 => new double[] { 3, 3 },
+        3 => new double[] { 9, 6, 3, 6 }, 4 => new double[] { 9, 3, 3, 3, 3, 3 }, _ => null,
+    };
+
+    private static bool TryReadCosmeticDashes(byte[] bytes, EmfRecord record, uint style, out double[]? dashes)
+    {
+        var lineStyle = style & 0xf;
+        var count = U32(bytes, record.Offset + 48);
+        dashes = lineStyle == 8 ? new double[] { 1, 1 } : CosmeticPattern(lineStyle);
+        if (lineStyle != 7) return count == 0;
+        if (count == 0 || count > 16 || count > (record.Size - 52) / 4) return false;
+        dashes = new double[count];
+        ulong total = 0;
+        for (var index = 0; index < count; index++)
+        {
+            var value = U32(bytes, record.Offset + 52 + index * 4);
+            if (value == 0) return false;
+            total += value;
+            dashes[index] = value * 3d; // Cosmetic style units are three device pixels.
+        }
+        return total <= 0x3fff;
+    }
+
+    private static void ApplyCosmeticGapBackground(List<string> elements, int firstElement, DrawState state)
+    {
+        // SetBkMode affects CreatePen gaps, but never ExtCreatePen gaps.
+        if (!state.Pen.CosmeticDashes || !state.Pen.OpaqueDashGaps || state.BackgroundMode != 2) return;
+        var stroke = StrokeAttrs(state);
+        for (var index = firstElement; index < elements.Count; index++)
+        {
+            var element = elements[index];
+            if (!element.Contains(stroke)) continue;
+            var fillAt = element.IndexOf(" fill=\"", StringComparison.Ordinal);
+            var outline = fillAt < 0 ? element : element.Substring(0, fillAt + 7) + "none" + element.Substring(element.IndexOf('"', fillAt + 7));
+            // Fill once, then opaque outline, then foreground dashes. Filling
+            // after the gap stroke would erase the inner half on closed shapes.
+            var fill = element.Replace(stroke, "stroke=\"none\"");
+            var background = outline.Replace(stroke, $"stroke=\"{state.BackgroundColor}\" stroke-width=\"1\" shape-rendering=\"crispEdges\"");
+            elements[index] = $"<g>{fill}{background}{outline}</g>";
+        }
     }
 
     private static (double X, double Y) TransformPoint(DrawState state, double x, double y)
@@ -1788,7 +1842,42 @@ public sealed class MetafileToSvgRenderer
 
     private static string LineElement(double x1, double y1, double x2, double y2, DrawState state)
     {
-        return $"<line x1=\"{Number(x1)}\" y1=\"{Number(y1)}\" x2=\"{Number(x2)}\" y2=\"{Number(y2)}\" {StrokeAttrs(state)} fill=\"none\"{ClipAttr(state)} />";
+        if (state.Pen.CosmeticDashes && TryCosmeticPixelLine(x1, y1, x2, y2, state, out var pixels)) return pixels;
+        // GDI cosmetic patterns count major-axis device pixels, not Euclidean
+        // SVG path length. This also retains the pattern for 45-degree lines.
+        var major = Math.Max(Math.Abs(x2 - x1), Math.Abs(y2 - y1));
+        var pathLength = state.Pen.CosmeticDashes && major > 0 ? $" pathLength=\"{Number(major)}\"" : string.Empty;
+        return $"<line x1=\"{Number(x1)}\" y1=\"{Number(y1)}\" x2=\"{Number(x2)}\" y2=\"{Number(y2)}\"{pathLength} {StrokeAttrs(state)} fill=\"none\"{ClipAttr(state)} />";
+    }
+
+    private static bool TryCosmeticPixelLine(double x1, double y1, double x2, double y2, DrawState state, out string element)
+    {
+        element = string.Empty;
+        if (new[] { x1, y1, x2, y2 }.Any(value => double.IsNaN(value) || double.IsInfinity(value))) return false;
+        var x = Math.Floor(x1 + .5); var y = Math.Floor(y1 + .5);
+        var endX = Math.Floor(x2 + .5); var endY = Math.Floor(y2 + .5);
+        var dx = Math.Abs(endX - x); var dy = Math.Abs(endY - y);
+        // Keep hostile coordinates from allocating an unbounded pixel path.
+        // Longer lines retain the bounded SVG outline approximation below.
+        var count = Math.Max(dx, dy);
+        if (count > 262144) return false;
+        var foreground = new StringBuilder(); var background = new StringBuilder();
+        var dash = 0; var ink = true; var remaining = state.Pen.DashArray![0];
+        var error = dx - dy; var sx = x < endX ? 1 : -1; var sy = y < endY ? 1 : -1;
+        for (var step = 0; step < count; step++)
+        {
+            if (ink || state.Pen.OpaqueDashGaps && state.BackgroundMode == 2)
+                (ink ? foreground : background).Append($"M {Number(x)} {Number(y)}h1v1h-1Z ");
+            if (--remaining == 0) { dash = (dash + 1) % state.Pen.DashArray.Length; remaining = state.Pen.DashArray[dash]; ink = !ink; }
+            var twice = error * 2;
+            // Native half-way ties favor the upper/left device pixel even
+            // when the line is traversed in the reverse direction.
+            if (twice > -dy || twice == -dy && sx < 0) { error -= dy; x += sx; }
+            if (twice < dx || twice == dx && sy < 0) { error += dx; y += sy; }
+        }
+        string Paint(StringBuilder path, string color) => path.Length == 0 ? string.Empty : $"<path d=\"{path.ToString().TrimEnd()}\" stroke=\"none\" fill=\"{color}\"{ClipAttr(state)} />";
+        element = $"<g>{Paint(background, state.BackgroundColor)}{Paint(foreground, state.Pen.Color)}</g>";
+        return true;
     }
 
     private static string RectElement(double left, double top, double right, double bottom, DrawState state)
@@ -1833,6 +1922,7 @@ public sealed class MetafileToSvgRenderer
         if (state.Pen.LineJoin is not null) attributes += $" stroke-linejoin=\"{state.Pen.LineJoin}\"";
         if (state.Pen.LineJoin == "miter") attributes += $" stroke-miterlimit=\"{Number(state.MiterLimit)}\"";
         if (state.Pen.DashArray is { Length: > 0 } dashes) attributes += $" stroke-dasharray=\"{string.Join(" ", dashes.Select(Number))}\"";
+        if (state.Pen.CosmeticDashes) attributes += " shape-rendering=\"crispEdges\"";
         return attributes;
     }
 
@@ -1999,6 +2089,8 @@ internal abstract class MetafileObject
 
 internal sealed class PenObject : MetafileObject
 {
+    public bool CosmeticDashes { get; set; }
+    public bool OpaqueDashGaps { get; set; }
     public double[]? DashArray { get; set; }
     public string? LineCap { get; set; }
 
