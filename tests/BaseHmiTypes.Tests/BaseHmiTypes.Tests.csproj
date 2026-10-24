@@ -20,6 +20,8 @@
     <EmbeddedResource Include="Fixtures\unified-authoring-panel.xml" />
     <EmbeddedResource Include="Fixtures\cosmetic-curves.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-ellipses.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-roundrects.json" />
+    <EmbeddedResource Include="Fixtures\classic-pen-widths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-paths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-curves.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-wide-curves.json" />

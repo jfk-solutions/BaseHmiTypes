@@ -27,7 +27,7 @@ namespace BaseHmiTypes.Tests;
     [TestMethod] public void LargestCustomCycleIsAccepted()=>Assert.AreEqual(32,Pixels(Draw(Ext(7,entries:new[]{16382,1})),"#123456").Count);
     [TestMethod] public void OddCustomCycleReversesInkAndGap(){var s=Svg(Ext(7,entries:new[]{1}),Record(37,1),Record(27,0,20),Record(54,20,20));var p=Pixels(s,"#123456");for(var x=0;x<20;x++)Assert.AreEqual(x%6<3,p.Contains((x,20)));}
     [TestMethod] public void SaveRestoreRestoresGapBackground(){var s=Draw(Pen(),Record(25,255),Record(33),Record(25,0),Record(18,1),Record(34,-1));Assert.AreEqual(6,Pixels(s,"#ff0000").Count);}
-    [TestMethod] public void DevicePixelsDoNotScaleWithMapping(){var s=Svg(Record(17,8),Record(9,10,10),Record(11,20,20),Pen(),Record(37,1),Record(27,2,10),Record(54,18,10));Assert.AreEqual(26,Pixels(s,"#123456").Count);}
+    [TestMethod] public void ZeroWidthDevicePixelsDoNotScaleWithMapping(){var s=Svg(Record(17,8),Record(9,10,10),Record(11,20,20),Pen(width:0),Record(37,1),Record(27,2,10),Record(54,18,10));Assert.AreEqual(26,Pixels(s,"#123456").Count);}
     [TestMethod] [DataRow(4,4,36,20,5,4)] [DataRow(4,4,20,36,4,5)] [DataRow(36,36,4,20,35,35)] [DataRow(36,36,20,4,35,35)]
     public void HalfwayRasterTiesFavorUpperLeft(int x1,int y1,int x2,int y2,int x,int y){var s=Svg(Pen(),Record(37,1),Record(27,x1,y1),Record(54,x2,y2));Assert.IsTrue(Pixels(s,"#123456").Contains((x,y)));}
     [TestMethod] public void EndpointIsExcluded(){var s=Svg(Pen(),Record(37,1),Record(27,4,4),Record(54,7,7));var p=Pixels(s,"#123456");Assert.AreEqual(3,p.Count);Assert.IsFalse(p.Contains((7,7)));}

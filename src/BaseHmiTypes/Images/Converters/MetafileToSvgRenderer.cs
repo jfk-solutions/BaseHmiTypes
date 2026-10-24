@@ -145,6 +145,7 @@ public sealed class MetafileToSvgRenderer
                         // LogPen.Width.x supplies the width; Width.y is ignored.
                         // The complete 16-byte LogPen ends inside this record.
                         Width = Math.Max(1, Math.Abs((double)I32(bytes, dataOffset + 8))),
+                        LogicalWidth = Math.Abs((double)I32(bytes, dataOffset + 8)),
                         Color = ColorRef(bytes, dataOffset + 16),
                         None = (U32(bytes, dataOffset + 4) & 0xF) == 5,
                         DashArray = Math.Abs((double)I32(bytes, dataOffset + 8)) <= 1 ? CosmeticPattern(U32(bytes, dataOffset + 4) & 0xf) : null,
@@ -464,7 +465,7 @@ public sealed class MetafileToSvgRenderer
                         break;
                     }
             }
-            if (!state.Pen.CosmeticDashes && !state.Pen.None && elements.Skip(firstElement).Any(element=>element.Contains(StrokeAttrs(state))))
+            if (!UsesNativeCosmeticDashes(state) && !state.Pen.None && elements.Skip(firstElement).Any(element=>element.Contains(StrokeAttrs(state))))
             { state.StyledPen=state.Pen; state.CosmeticPhase=0; }
             ApplyCosmeticGapBackground(elements, firstElement, state);
             // The metaregion is independent of the selected clip on each drawing.
@@ -1161,7 +1162,7 @@ public sealed class MetafileToSvgRenderer
     private static void ApplyCosmeticGapBackground(List<string> elements, int firstElement, DrawState state)
     {
         // SetBkMode affects CreatePen gaps, but never ExtCreatePen gaps.
-        if (!state.Pen.CosmeticDashes || !state.Pen.OpaqueDashGaps || state.BackgroundMode != 2) return;
+        if (!UsesNativeCosmeticDashes(state) || !state.Pen.OpaqueDashGaps || state.BackgroundMode != 2) return;
         var stroke = StrokeAttrs(state);
         for (var index = firstElement; index < elements.Count; index++)
         {
@@ -1285,6 +1286,25 @@ public sealed class MetafileToSvgRenderer
             return transformPoints ? TransformPoint(state, x, y) : (x, y);
         }
         string Point(double x, double y) { var point = Map(x, y);return $"{Number(point.X)} {Number(point.Y)}"; }
+        if(transformPoints&&state.Pen.CosmeticDashes&&right>left&&bottom>top&&NativeRoundRectBuilder.TryBuild(new[]{
+            NativeDevicePoint(Map(left,top),state,true),NativeDevicePoint(Map(right,top),state,true),NativeDevicePoint(Map(left,bottom),state,true)},
+            Math.Min(Math.Abs(cornerWidth)/(right-left),1),Math.Min(Math.Abs(cornerHeight)/(bottom-top),1),out var nativeControls))
+        {
+            var native=new MetafilePath();var nativeStart=nativeControls[0];
+            void PointAt(int index,string command){var p=nativeControls[index];native.NativePoints[native.Count]=p;native.Add($"{command} {Number(p.X)} {Number(p.Y)}");}
+            PointAt(0,"M");
+            if(nativeControls.Length==4){for(var i=1;i<4;i++)PointAt(i,"L");}
+            else for(var i=1;i<16;)
+            {
+                if(i%4==0){PointAt(i,"L");i++;continue;}
+                var a=nativeControls[i];var b=nativeControls[i+1];var c=nativeControls[i+2];native.NativeCubics[native.Count]=new[]{a.X,a.Y,b.X,b.Y,c.X,c.Y};
+                native.Add($"C {Number(a.X)} {Number(a.Y)} {Number(b.X)} {Number(b.Y)} {Number(c.X)} {Number(c.Y)}");i+=3;
+            }
+            native.Add("Z");
+            if(state.CurrentPath is null)elements.Add(PathElement(native,state,PathPaintMode.Paint));
+            else {state.CurrentPath.AddRange(native);state.PathFigureClosed=true;state.PathStartX=state.PathEndX=nativeStart.X;state.PathStartY=state.PathEndY=nativeStart.Y;}
+            return;
+        }
         var start = Map(right, top + ry);
         var path = new MetafilePath { $"M {Number(start.X)} {Number(start.Y)}" };
         if (rx == 0)
@@ -1872,7 +1892,7 @@ public sealed class MetafileToSvgRenderer
 
     private static string LineElement(double x1, double y1, double x2, double y2, DrawState state)
     {
-        if(state.Pen.CosmeticDashes)
+        if(UsesNativeCosmeticDashes(state))
         {
             if(state.AdvancedCoordinates)
             {
@@ -1885,7 +1905,7 @@ public sealed class MetafileToSvgRenderer
         // GDI cosmetic patterns count major-axis device pixels, not Euclidean
         // SVG path length. This also retains the pattern for 45-degree lines.
         var major = Math.Max(Math.Abs(x2 - x1), Math.Abs(y2 - y1));
-        var pathLength = state.Pen.CosmeticDashes && major > 0 ? $" pathLength=\"{Number(major)}\"" : string.Empty;
+        var pathLength = UsesNativeCosmeticDashes(state) && major > 0 ? $" pathLength=\"{Number(major)}\"" : string.Empty;
         return $"<line x1=\"{Number(x1)}\" y1=\"{Number(y1)}\" x2=\"{Number(x2)}\" y2=\"{Number(y2)}\"{pathLength} {StrokeAttrs(state)} fill=\"none\"{ClipAttr(state)} />";
     }
 
@@ -1964,6 +1984,11 @@ public sealed class MetafileToSvgRenderer
         var vertex=(X:Math.Ceiling(start.X-.5),Y:Math.Ceiling(start.Y-.5));
         var vx=Math.Abs(vertex.X-start.X);var vy=Math.Abs(vertex.Y-start.Y);
         var inside=vx+vy<.5||(vx+vy==.5&&(vx==0||vy==0));
+        // Merely touching an axis corner does not enter its diamond when the
+        // segment immediately heads outwards. Tiny rounded-rectangle cusps can
+        // otherwise consume a phantom style step before re-entering that pixel.
+        if(first==stop&&vx+vy==.5&&(vx==0||vy==0)&&
+           (vx==0?Math.Sign(start.Y-vertex.Y)*(end.Y-start.Y)+Math.Abs(end.X-start.X):Math.Sign(start.X-vertex.X)*(end.X-start.X)+Math.Abs(end.Y-start.Y))>0)inside=false;
         var last=previous;
         var cycle=(long)state.Pen.DashArray!.Sum()*(state.Pen.DashArray.Length%2==0?1:2);
         var phase=state.CosmeticPhase%cycle;var dash=0;var ink=true;
@@ -2088,7 +2113,7 @@ public sealed class MetafileToSvgRenderer
     {
         if (points.Count == 0)
             return string.Empty;
-        if (state.Pen.CosmeticDashes)
+        if (UsesNativeCosmeticDashes(state))
         {
             var path = new MetafilePath();AppendNativePoint(path,"M",points[0],state);
             foreach(var point in points.Skip(1))AppendNativePoint(path,"L",point,state);if (closed) path.Add("Z");
@@ -2101,7 +2126,7 @@ public sealed class MetafileToSvgRenderer
 
     private static string PathElement(MetafilePath path, DrawState state, PathPaintMode mode, bool continueCosmeticStyle = false)
     {
-        if (mode != PathPaintMode.Fill && state.Pen.CosmeticDashes && TryCosmeticPixelPath(path,state,mode,continueCosmeticStyle,out var pixels)) return pixels;
+        if (mode != PathPaintMode.Fill && UsesNativeCosmeticDashes(state) && TryCosmeticPixelPath(path,state,mode,continueCosmeticStyle,out var pixels)) return pixels;
         if (mode != PathPaintMode.Fill && !state.Pen.None && !ReferenceEquals(state.StyledPen,state.Pen)) { state.StyledPen=state.Pen; state.CosmeticPhase=0; }
         var stroke = mode == PathPaintMode.Fill ? "stroke=\"none\"" : StrokeAttrs(state);
         var fill = mode == PathPaintMode.Stroke ? "fill=\"none\"" : FillAttrs(state);
@@ -2114,15 +2139,27 @@ public sealed class MetafileToSvgRenderer
         return $"{StrokeAttrs(state)} {FillAttrs(state)}";
     }
 
+    private static double StrokeDeviceWidth(DrawState state)
+    {
+        if(state.Pen.LogicalWidth is not {} logical)return state.Pen.Width;
+        if(logical==0)return 1;
+        var t=state.WorldTransform;var sx=state.ViewportExtX/(state.WindowExtX==0?1:state.WindowExtX);var sy=state.ViewportExtY/(state.WindowExtY==0?1:state.WindowExtY);
+        var x=Math.Sqrt(t.M11*t.M11*sx*sx+t.M12*t.M12*sy*sy);var y=Math.Sqrt(t.M21*t.M21*sx*sx+t.M22*t.M22*sy*sy);
+        return Math.Max(1,Math.Round(logical*Math.Max(x,y),MidpointRounding.AwayFromZero));
+    }
+    private static bool UsesNativeCosmeticDashes(DrawState state)=>state.Pen.CosmeticDashes&&StrokeDeviceWidth(state)<=1;
+
     private static string StrokeAttrs(DrawState state)
     {
         if (state.Pen.None) return "stroke=\"none\"";
-        var attributes = $"stroke=\"{state.Pen.Color}\" stroke-width=\"{Number(state.Pen.Width)}\"";
-        if (state.Pen.LineCap is not null) attributes += $" stroke-linecap=\"{state.Pen.LineCap}\"";
-        if (state.Pen.LineJoin is not null) attributes += $" stroke-linejoin=\"{state.Pen.LineJoin}\"";
+        var width=StrokeDeviceWidth(state);var attributes = $"stroke=\"{state.Pen.Color}\" stroke-width=\"{Number(width)}\"";
+        var cap=state.Pen.LineCap??(state.Pen.LogicalWidth is not null&&width>1?"round":null);
+        var join=state.Pen.LineJoin??(state.Pen.LogicalWidth is not null&&width>1?"round":null);
+        if (cap is not null) attributes += $" stroke-linecap=\"{cap}\"";
+        if (join is not null) attributes += $" stroke-linejoin=\"{join}\"";
         if (state.Pen.LineJoin == "miter") attributes += $" stroke-miterlimit=\"{Number(state.MiterLimit)}\"";
-        if (state.Pen.DashArray is { Length: > 0 } dashes) attributes += $" stroke-dasharray=\"{string.Join(" ", dashes.Select(Number))}\"";
-        if (state.Pen.CosmeticDashes) attributes += " shape-rendering=\"crispEdges\"";
+        if ((state.Pen.LogicalWidth is null||width<=1)&&state.Pen.DashArray is { Length: > 0 } dashes) attributes += $" stroke-dasharray=\"{string.Join(" ", dashes.Select(Number))}\"";
+        if (UsesNativeCosmeticDashes(state)) attributes += " shape-rendering=\"crispEdges\"";
         return attributes;
     }
 
@@ -2289,6 +2326,7 @@ internal abstract class MetafileObject
 
 internal sealed class PenObject : MetafileObject
 {
+    public double? LogicalWidth { get; set; }
     public bool CosmeticDashes { get; set; }
     public bool OpaqueDashGaps { get; set; }
     public double[]? DashArray { get; set; }
