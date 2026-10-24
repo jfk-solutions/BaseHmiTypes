@@ -142,6 +142,8 @@ export class MetafileToSvgRenderer {
       height: i32(bytes, 20) - i32(bytes, 12) + 1,
     });
     const state = createInitialState();
+    // EMF playback starts with WHITE_BRUSH, not NULL_BRUSH.
+    state.brush = { kind: 'brush', color: '#ffffff', none: false };
     const mappingDevice = emfMappingDevice(bytes);
     const stateStack: DrawState[] = [];
     const objects = new Map<number, MetafileObject>();
@@ -370,11 +372,13 @@ export class MetafileToSvgRenderer {
           if (geometry !== undefined) combineClipGeometry(state, geometry, mode, viewBox, defs, ++clipSequence);
           break;
         }
-        case EMR.FILLRGN: {
-          if (record.size < 64) break;
-          const index = u32(bytes, dataOffset + 20), brush = emfStockObject(index) ?? objects.get(index);
+        case EMR.FILLRGN:
+        case EMR.PAINTRGN: {
+          const selectedBrush = record.type === EMR.PAINTRGN;
+          if (record.size < (selectedBrush ? 60 : 64)) break;
+          const index = selectedBrush ? 0 : u32(bytes, dataOffset + 20), brush = selectedBrush ? state.brush : emfStockObject(index) ?? objects.get(index);
           if (!brush || brush.kind !== 'brush' || brush.none) break;
-          const rectangles = readEmfRegionRectangles(bytes, record, u32(bytes, dataOffset + 16), 32);
+          const rectangles = readEmfRegionRectangles(bytes, record, u32(bytes, dataOffset + 16), selectedBrush ? 28 : 32);
           if (!rectangles?.length) break;
           prepareEmfMapping(state);
           const geometry = emfRegionGeometry(rectangles, state);
@@ -716,6 +720,7 @@ const EMR = {
   SETBKCOLOR: 0x0019,
   SETPIXELV: 0x000f,
   FILLRGN: 0x0047,
+  PAINTRGN: 0x004a,
   SCALEVIEWPORTEXTEX: 0x001f,
   SCALEWINDOWEXTEX: 0x0020,
   SETPOLYFILLMODE: 0x0013,

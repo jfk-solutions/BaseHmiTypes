@@ -16,8 +16,8 @@ for(const [stock,fill] of brushes.entries())test(`Stock brush replaces explicit 
 for(const [stock,fill] of brushes.entries())test(`RestoreDC restores pre-stock brush: ${stock}`,()=>{
  const rects=rectangles(emf(0x80000000+stock,true));assert.equal(rects.length,2);assert.equal(rects[0].fill,fill);assert.equal(rects[1].fill,'#ff0000');
 });
-for(const [stock,stroke] of [[6,'#ffffff'],[7,'#000000'],[8,'none']])test(`Stock pen replaces explicit pen without adding fill: ${stock}`,()=>{
- const rect=rectangles(emf(0x80000000+stock,false,true))[0];assert.equal(rect.stroke,stroke);assert.equal(rect.fill,'none');
+for(const [stock,stroke] of [[6,'#ffffff'],[7,'#000000'],[8,'none']])test(`Stock pen replaces explicit pen without changing default white brush: ${stock}`,()=>{
+ const rect=rectangles(emf(0x80000000+stock,false,true))[0];assert.equal(rect.stroke,stroke);assert.equal(rect.fill,'#ffffff');
 });
 for(const handle of [1,0x80000009])test(`Ordinary/unknown handles do not select unrelated stock brush: ${handle}`,()=>assert.equal(rectangles(emf(handle))[0].fill,'#ff0000'));
 for(const [stock,expected] of [[2,'#808080'],[5,'none']])test(`Stock brush reaches HTML without rewriting source: ${stock}`,async()=>{
