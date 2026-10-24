@@ -239,7 +239,7 @@ public sealed class MetafileToSvgRenderer
                     break;
                 case EMR.BeginPath:
                     state.SelectedPath = null;
-                    state.CurrentPath = new List<string>();
+                    state.CurrentPath = new MetafilePath();
                     state.PathFigureClosed = false;
                     state.PathStartX = null;
                     state.PathStartY = null;
@@ -407,7 +407,7 @@ public sealed class MetafileToSvgRenderer
                     {
                         var closed = record.Type == EMR.PolyPolygon || record.Type == EMR.PolyPolygon16;
                         var shortPoints = record.Type == EMR.PolyPolygon16 || record.Type == EMR.PolyPolyline16;
-                        var path = new List<string>();
+                        var path = new MetafilePath();
                         foreach (var figure in ReadEmfCompoundPoints(bytes, record, shortPoints))
                         {
                             var points = MapPoints(figure, state);
@@ -862,8 +862,8 @@ public sealed class MetafileToSvgRenderer
             ActiveClipId = state.ActiveClipId,
             ActiveMaskId = state.ActiveMaskId,
             MetaMaskId = state.MetaMaskId,
-            CurrentPath = state.CurrentPath is null ? null : new List<string>(state.CurrentPath),
-            SelectedPath = state.SelectedPath is null ? null : new List<string>(state.SelectedPath),
+            CurrentPath = state.CurrentPath is null ? null : new MetafilePath(state.CurrentPath),
+            SelectedPath = state.SelectedPath is null ? null : new MetafilePath(state.SelectedPath),
             PathStartX = state.PathStartX,
             PathFigureClosed = state.PathFigureClosed,
             PathStartY = state.PathStartY,
@@ -1194,7 +1194,7 @@ public sealed class MetafileToSvgRenderer
         (double X, double Y) Map(double a) => TransformPoint(state, cx + radius * Math.Cos(a), cy + radius * Math.Sin(a));
         string Point(double x, double y) { var p = TransformPoint(state, x, y); return $"{Number(p.X)} {Number(p.Y)}"; }
         var start = Map(angle);
-        var path = state.CurrentPath ?? new List<string>();
+        var path = state.CurrentPath ?? new MetafilePath();
         if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
         else EnsurePathPosition(state);
         path.Add($"L {Number(start.X)} {Number(start.Y)}");
@@ -1235,7 +1235,7 @@ public sealed class MetafileToSvgRenderer
         string Point(double x, double y) {var point = Map(x, y);return $"{Number(point.X)} {Number(point.Y)}";}
         var start = Map(cx + rx * Math.Cos(angle), cy + ry * Math.Sin(angle));
         var to = type == EMR.ArcTo;var closed = type == EMR.Chord || type == EMR.Pie;
-        var path = state.CurrentPath ?? new List<string>();
+        var path = state.CurrentPath ?? new MetafilePath();
         if (to)
         {
             if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
@@ -1279,7 +1279,7 @@ public sealed class MetafileToSvgRenderer
         }
         string Point(double x, double y) { var point = Map(x, y);return $"{Number(point.X)} {Number(point.Y)}"; }
         var start = Map(right, top + ry);
-        var path = new List<string> { $"M {Number(start.X)} {Number(start.Y)}" };
+        var path = new MetafilePath { $"M {Number(start.X)} {Number(start.Y)}" };
         if (rx == 0)
             path.AddRange(new[] { $"L {Point(left, top)}", $"L {Point(left, bottom)}", $"L {Point(right, bottom)}" });
         else
@@ -1311,7 +1311,7 @@ public sealed class MetafileToSvgRenderer
         state.PathStartY = state.PathEndY = start.Y;
     }
 
-    private static List<string> EmfShapePath(byte[] bytes, int offset, bool ellipse, DrawState state, out (double X, double Y) start)
+    private static MetafilePath EmfShapePath(byte[] bytes, int offset, bool ellipse, DrawState state, out (double X, double Y) start)
     {
         // EMF records already carry inclusive bounds: GDI's recorder adjusts
         // GM_COMPATIBLE right/bottom edges before writing these records.
@@ -1319,7 +1319,7 @@ public sealed class MetafileToSvgRenderer
         double right = Math.Max(I32(bytes, offset), I32(bytes, offset + 8));
         double top = Math.Min(I32(bytes, offset + 4), I32(bytes, offset + 12));
         double bottom = Math.Max(I32(bytes, offset + 4), I32(bytes, offset + 12));
-        var path = new List<string>();
+        var path = new MetafilePath();
         string Point(double x, double y)
         {
             var point = TransformPoint(state, x, y);
@@ -1438,7 +1438,7 @@ public sealed class MetafileToSvgRenderer
         var logical = ReadEmfPointArray32(bytes, record, shortPoints);
         var points = MapPoints(logical, state);
         if (line ? points.Count < 1 : to ? points.Count < 3 || points.Count % 3 != 0 : points.Count < 4 || (points.Count - 1) % 3 != 0) return;
-        var path = state.CurrentPath ?? new List<string>();
+        var path = state.CurrentPath ?? new MetafilePath();
         if (to)
         {
             if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
@@ -1450,7 +1450,8 @@ public sealed class MetafileToSvgRenderer
             if (state.CurrentPath is not null) { state.PathStartX = points[0].X; state.PathStartY = points[0].Y; state.PathFigureClosed = false; }
         }
         for (var index = to ? 0 : 1; index < points.Count; index += line ? 1 : 3)
-            path.Add(line ? $"L {Number(points[index].X)} {Number(points[index].Y)}" : $"C {Number(points[index].X)} {Number(points[index].Y)} {Number(points[index + 1].X)} {Number(points[index + 1].Y)} {Number(points[index + 2].X)} {Number(points[index + 2].Y)}");
+            if (line) path.Add($"L {Number(points[index].X)} {Number(points[index].Y)}");
+            else AppendNativeCubic(path,points[index],points[index+1],points[index+2]);
         var end = points[points.Count - 1];
         if (to) { state.CurrentX = end.X; state.CurrentY = end.Y; state.LogicalCurrentX = logical[logical.Count - 1].X; state.LogicalCurrentY = logical[logical.Count - 1].Y; }
         if (state.CurrentPath is not null) { state.PathEndX = end.X; state.PathEndY = end.Y; }
@@ -1476,7 +1477,7 @@ public sealed class MetafileToSvgRenderer
         }
         var logical = ReadEmfPointArray32(bytes, record, shortPoints);
         var mapped = MapPoints(logical, state);
-        var path = state.CurrentPath ?? new List<string>();
+        var path = state.CurrentPath ?? new MetafilePath();
         if (bytes[typesOffset] != PolyDrawTypeMoveTo)
         {
             if (state.CurrentPath is not null) EnsurePathPosition(state);
@@ -1503,7 +1504,7 @@ public sealed class MetafileToSvgRenderer
                 path.Add($"L {Number(mapped[index].X)} {Number(mapped[index].Y)}");
             else
             {
-                path.Add($"C {Number(mapped[index].X)} {Number(mapped[index].Y)} {Number(mapped[index + 1].X)} {Number(mapped[index + 1].Y)} {Number(mapped[index + 2].X)} {Number(mapped[index + 2].Y)}");
+                AppendNativeCubic(path,mapped[index],mapped[index+1],mapped[index+2]);
                 index += 2;
             }
             state.PathEndX = state.CurrentX = mapped[index].X;
@@ -1894,35 +1895,124 @@ public sealed class MetafileToSvgRenderer
         return true;
     }
 
-    private static bool TryCosmeticPixelPath(List<string> path, DrawState state, PathPaintMode mode, bool continueStyle, out string element)
+    private static void AppendNativeCubic(MetafilePath path,(double X,double Y) a,(double X,double Y) b,(double X,double Y) c)
+    {
+        path.NativeCubics[path.Count]=new[]{a.X,a.Y,b.X,b.Y,c.X,c.Y};
+        path.Add($"C {Number(a.X)} {Number(a.Y)} {Number(b.X)} {Number(b.Y)} {Number(c.X)} {Number(c.Y)}");
+    }
+
+    private static bool FlattenCosmeticCubic((double X,double Y) a,(double X,double Y) b,(double X,double Y) c,(double X,double Y) d,List<(double X,double Y)> result,int depth)
+    {
+        // Native adaptive subdivision retains 27.4 device endpoints. Rounding
+        // these to whole pixels before styling changes both coverage and phase.
+        var error=new[]{Math.Abs(6*(a.X-2*b.X+c.X)),Math.Abs(6*(b.X-2*c.X+d.X)),Math.Abs(6*(a.Y-2*b.Y+c.Y)),Math.Abs(6*(b.Y-2*c.Y+d.Y))}.Max();
+        if(double.IsNaN(error)||double.IsInfinity(error)||result.Count>=65536)return false;
+        if(error<=4){result.Add((Math.Floor(d.X*16+.5)/16,Math.Floor(d.Y*16+.5)/16));return true;}
+        if(depth>=20)return false;
+        (double X,double Y) Mid((double X,double Y) p,(double X,double Y) q)=>((p.X+q.X)/2,(p.Y+q.Y)/2);
+        var ab=Mid(a,b);var bc=Mid(b,c);var cd=Mid(c,d);var abc=Mid(ab,bc);var bcd=Mid(bc,cd);var mid=Mid(abc,bcd);
+        return FlattenCosmeticCubic(a,ab,abc,mid,result,depth+1)&&FlattenCosmeticCubic(mid,bcd,cd,d,result,depth+1);
+    }
+
+    private static void AppendCosmeticGiqSegment((double X,double Y) start,(double X,double Y) end,DrawState state,StringBuilder foreground,StringBuilder background,ref (double X,double Y)? previous)
+    {
+        // Grid-intersection quantization uses half-pixel diamonds, not SVG's
+        // continuous arc length. Shared vertices consume only one style step.
+        var horizontal=Math.Abs(end.X-start.X)>=Math.Abs(end.Y-start.Y);
+        var a1=horizontal?start.X:start.Y;var a2=horizontal?end.X:end.Y;var b1=horizontal?start.Y:start.X;var b2=horizontal?end.Y:end.X;
+        if(a1==a2)return;
+        var sign=a2>a1?1:-1;var first=sign>0?Math.Ceiling(a1):Math.Floor(a1);var stop=sign>0?Math.Ceiling(a2):Math.Floor(a2);
+        var vertex=(X:Math.Ceiling(start.X-.5),Y:Math.Ceiling(start.Y-.5));
+        var vx=Math.Abs(vertex.X-start.X);var vy=Math.Abs(vertex.Y-start.Y);
+        var inside=vx+vy<.5||(vx+vy==.5&&(vx==0||vy==0));
+        var last=previous;
+        var cycle=(long)state.Pen.DashArray!.Sum()*(state.Pen.DashArray.Length%2==0?1:2);
+        var phase=state.CosmeticPhase%cycle;var dash=0;var ink=true;
+        while(phase>=state.Pen.DashArray[dash]){phase-=(long)state.Pen.DashArray[dash];dash=(dash+1)%state.Pen.DashArray.Length;ink=!ink;}
+        var remaining=state.Pen.DashArray[dash]-phase;
+        void Pixel((double X,double Y) p)
+        {
+            if(last==p&&inside)return;
+            last=p;
+            if(ink||state.Pen.OpaqueDashGaps&&state.BackgroundMode==2)(ink?foreground:background).Append($"M {Number(p.X)} {Number(p.Y)}h1v1h-1Z ");
+            if(--remaining==0){dash=(dash+1)%state.Pen.DashArray.Length;remaining=state.Pen.DashArray[dash];ink=!ink;}
+            state.CosmeticPhase=(state.CosmeticPhase+1)%cycle;
+        }
+        (double X,double Y) At(double major)
+        {
+            var minor=Math.Ceiling(b1+(major-a1)*(b2-b1)/(a2-a1)-.5);
+            return horizontal?(major,minor):(minor,major);
+        }
+        if(inside&&last!=vertex&&(first==stop||At(first)!=vertex))Pixel(vertex);
+        var lastAt=stop-sign;
+        var stepCount=Math.Abs(stop-first);
+        for(var step=0;step<stepCount;step++)
+        {
+            var at=first+step*sign;
+            var p=At(at);
+            // The negative 45-degree boundary convention excludes the final
+            // diamond even when the fixed-point endpoint lies on its edge.
+            if(at==lastAt&&b2-b1==-(a2-a1)&&Math.Abs(p.X-end.X)+Math.Abs(p.Y-end.Y)==.5)continue;
+            Pixel(p);
+        }
+        // A sub-pixel cusp can leave and re-enter the same pixel without any
+        // intervening grid crossing. That is a second style step, not a join.
+        if(last is {} previousPixel)
+        {
+            var ex=Math.Abs(previousPixel.X-end.X);var ey=Math.Abs(previousPixel.Y-end.Y);
+            if(ex+ey>.5||ex+ey==.5&&ex!=0&&ey!=0)last=null;
+        }
+        previous=last;
+    }
+
+    private static bool TryCosmeticPixelPath(MetafilePath path, DrawState state, PathPaintMode mode, bool continueStyle, out string element)
     {
         element = string.Empty;
         var commands = new List<(char Type, double X, double Y)>();
         double x = 0, y = 0, startX = 0, startY = 0, budget = 0;
-        foreach (var command in path)
+        for (var commandIndex=0; commandIndex<path.Count; commandIndex++)
         {
+            var command=path[commandIndex];
             var values = command.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (values[0]=="C")
+            {
+                if (!path.NativeCubics.TryGetValue(commandIndex,out var cubic)) return false;
+                // Fractional transformed controls have additional native path/direct
+                // quantization rules. Retain vector rendering until those are verified.
+                if(cubic.Any(value=>value!=Math.Truncate(value)))return false;
+                (double X,double Y) P(int at)=>(cubic[at],cubic[at+1]);
+                var points=new List<(double X,double Y)>();
+                if (!FlattenCosmeticCubic((x,y),P(0),P(2),P(4),points,0)) return false;
+                foreach(var point in points){budget+=Math.Max(Math.Abs(point.X-x),Math.Abs(point.Y-y))+2;commands.Add(('F',point.X,point.Y));x=point.X;y=point.Y;}
+                continue;
+            }
             if (values.Length == 1 && values[0] == "Z") { commands.Add(('Z', startX, startY)); budget += Math.Max(Math.Abs(startX-x), Math.Abs(startY-y)); x=startX; y=startY; continue; }
             if (values.Length != 3 || values[0] is not ("M" or "L") ||
                 !double.TryParse(values[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var px) ||
                 !double.TryParse(values[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var py) ||
                 double.IsNaN(px) || double.IsInfinity(px) || double.IsNaN(py) || double.IsInfinity(py)) return false;
+            if(path.NativeCubics.Count>0&&(px!=Math.Truncate(px)||py!=Math.Truncate(py)))return false;
             px = Math.Floor(px + .5); py = Math.Floor(py + .5);
             if (values[0] == "M") { startX=px; startY=py; } else budget += Math.Max(Math.Abs(px-x), Math.Abs(py-y));
             commands.Add((values[0][0],px,py)); x=px; y=py;
         }
         if (budget > 262144 || commands.Count == 0 || commands[0].Type != 'M') return false;
         var working = CloneState(state);
-        var pixels = new StringBuilder(); var firstMove = true;
+        // One native stroke paints every opaque gap before foreground ink;
+        // separate LineTo records still paint in their original call order.
+        var foreground = new StringBuilder(); var background = new StringBuilder(); var firstMove = true;
+        (double X,double Y)? previous=null;
+        if (!ReferenceEquals(working.StyledPen,working.Pen)) { working.StyledPen=working.Pen;working.CosmeticPhase=0; }
         foreach (var command in commands)
         {
-            if (command.Type == 'M') { if (!firstMove || !continueStyle) working.CosmeticPhase=0; firstMove=false; }
-            else { if (!TryCosmeticPixelLine(x,y,command.X,command.Y,working,out var segment)) return false; pixels.Append(segment); }
+            if (command.Type == 'M') { if (!firstMove || !continueStyle) working.CosmeticPhase=0; firstMove=false;previous=null; }
+            else AppendCosmeticGiqSegment((x,y),(command.X,command.Y),working,foreground,background,ref previous);
             x=command.X; y=command.Y;
         }
         state.CosmeticPhase=working.CosmeticPhase; state.StyledPen=working.StyledPen;
         var fill = mode == PathPaintMode.Stroke ? string.Empty : $"<path d=\"{string.Join(" ",path)}\" stroke=\"none\" {FillAttrs(state)} {FillRuleAttr(state)}{ClipAttr(state)} />";
-        element=$"<g>{fill}{pixels}</g>";
+        string Paint(StringBuilder pixels,string color)=>pixels.Length==0?string.Empty:$"<path d=\"{pixels.ToString().TrimEnd()}\" stroke=\"none\" fill=\"{color}\"{ClipAttr(state)} />";
+        element=$"<g>{fill}{Paint(background,state.BackgroundColor)}{Paint(foreground,state.Pen.Color)}</g>";
         return true;
     }
 
@@ -1944,7 +2034,7 @@ public sealed class MetafileToSvgRenderer
             return string.Empty;
         if (state.Pen.CosmeticDashes)
         {
-            var path = new List<string> { $"M {Number(points[0].X)} {Number(points[0].Y)}" };
+            var path = new MetafilePath { $"M {Number(points[0].X)} {Number(points[0].Y)}" };
             path.AddRange(points.Skip(1).Select(p=>$"L {Number(p.X)} {Number(p.Y)}")); if (closed) path.Add("Z");
             if (TryCosmeticPixelPath(path,state,closed?PathPaintMode.Paint:PathPaintMode.Stroke,false,out var pixels)) return pixels;
         }
@@ -1953,7 +2043,7 @@ public sealed class MetafileToSvgRenderer
         return $"<{tag} points=\"{string.Join(" ", points.ConvertAll(point => $"{Number(point.X)},{Number(point.Y)}"))}\" {StrokeAttrs(state)} {fill}{ClipAttr(state)} />";
     }
 
-    private static string PathElement(List<string> path, DrawState state, PathPaintMode mode, bool continueCosmeticStyle = false)
+    private static string PathElement(MetafilePath path, DrawState state, PathPaintMode mode, bool continueCosmeticStyle = false)
     {
         if (mode != PathPaintMode.Fill && state.Pen.CosmeticDashes && TryCosmeticPixelPath(path,state,mode,continueCosmeticStyle,out var pixels)) return pixels;
         if (mode != PathPaintMode.Fill && !state.Pen.None && !ReferenceEquals(state.StyledPen,state.Pen)) { state.StyledPen=state.Pen; state.CosmeticPhase=0; }
@@ -2176,6 +2266,18 @@ internal sealed class FontObject : MetafileObject
     public bool Italic { get; set; }
 }
 
+internal sealed class MetafilePath : List<string>
+{
+    public Dictionary<int,double[]> NativeCubics { get; }=new Dictionary<int,double[]>();
+    public MetafilePath() { }
+    public MetafilePath(MetafilePath source):base(source) { foreach(var pair in source.NativeCubics)NativeCubics[pair.Key]=pair.Value; }
+    public new void AddRange(IEnumerable<string> source)
+    {
+        if(source is MetafilePath path)foreach(var pair in path.NativeCubics)NativeCubics[Count+pair.Key]=pair.Value;
+        base.AddRange(source);
+    }
+}
+
 internal sealed class DrawState
 {
     public PenObject? StyledPen { get; set; }
@@ -2191,7 +2293,7 @@ internal sealed class DrawState
     public double LogicalCurrentY { get; set; }
     public bool PathFigureClosed { get; set; }
     public bool ClockwiseShapes { get; set; }
-    public List<string>? SelectedPath { get; set; }
+    public MetafilePath? SelectedPath { get; set; }
     public double MiterLimit { get; set; } = 10;
 
     public PenObject Pen { get; set; } = new();
@@ -2230,7 +2332,7 @@ internal sealed class DrawState
     public string? ActiveMaskId { get; set; }
     public string? MetaMaskId { get; set; }
 
-    public List<string>? CurrentPath { get; set; }
+    public MetafilePath? CurrentPath { get; set; }
 
     public double? PathStartX { get; set; }
 
