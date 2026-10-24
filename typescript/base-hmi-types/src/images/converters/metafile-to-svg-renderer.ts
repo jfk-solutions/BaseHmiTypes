@@ -1,10 +1,12 @@
 // infos at https://github.com/libyal/dtformats/blob/main/documentation/Windows%20(Enhanced)%20Metafile%20Format%20(WMF%20and%20EMF).asciidoc
 import {flattenNativeBezier} from './native-bezier-flattener.js';
 import {buildNativeEllipse} from './native-ellipse-builder.js';
+import {buildNativeRoundRect} from './native-roundrect-builder.js';
 
 type MetafileObject = PenObject | BrushObject | FontObject;
 
 interface PenObject {
+  logicalWidth?: number;
   identity?: object;
   cosmeticDashes?: boolean;
   opaqueDashGaps?: boolean;
@@ -258,6 +260,7 @@ export class MetafileToSvgRenderer {
             kind: 'pen',
             // LogPen.Width.x supplies the width; Width.y is ignored.
             width: Math.max(1, Math.abs(i32(bytes, dataOffset + 8))),
+            logicalWidth: Math.abs(i32(bytes, dataOffset + 8)),
             color: colorRef(bytes, dataOffset + 16),
             none: (u32(bytes, dataOffset + 4) & 0xF) === 5,
             dashArray: Math.abs(i32(bytes, dataOffset + 8)) <= 1 ? cosmeticPattern(u32(bytes, dataOffset + 4) & 0xf) : undefined,
@@ -541,7 +544,7 @@ export class MetafileToSvgRenderer {
           break;
         }
       }
-      if (!state.pen.cosmeticDashes && !state.pen.none && elements.slice(firstElement).some(element=>element.includes(strokeAttrs(state)))) {
+      if (!usesNativeCosmeticDashes(state) && !state.pen.none && elements.slice(firstElement).some(element=>element.includes(strokeAttrs(state)))) {
         state.styledPen=penIdentity(state.pen); state.cosmeticPhase=0;
       }
       applyCosmeticGapBackground(elements, firstElement, state);
@@ -1399,7 +1402,7 @@ function readCosmeticDashes(bytes: Uint8Array, record: EmfRecord, style: number)
 
 function applyCosmeticGapBackground(elements: string[], firstElement: number, state: DrawState): void {
   // SetBkMode affects CreatePen gaps, never ExtCreatePen gaps.
-  if (!state.pen.cosmeticDashes || !state.pen.opaqueDashGaps || state.backgroundMode !== 2) return;
+  if (!usesNativeCosmeticDashes(state) || !state.pen.opaqueDashGaps || state.backgroundMode !== 2) return;
   const stroke = strokeAttrs(state);
   for (let index = firstElement; index < elements.length; index++) {
     const element = elements[index];
@@ -2177,7 +2180,7 @@ function combineClipGeometry(state: DrawState, geometry: string, mode: number, v
 }
 
 function lineElement(x1: number, y1: number, x2: number, y2: number, state: DrawState): string {
-  if (state.pen.cosmeticDashes) {
+  if (usesNativeCosmeticDashes(state)) {
     let pixels:string|undefined;
     if(state.advancedCoordinates){const path:string[]=[];appendNativePoint(path,'M',[x1,y1],state);appendNativePoint(path,'L',[x2,y2],state);pixels=cosmeticPixelPath(path,state,'stroke',true);}
     else pixels = cosmeticPixelLine(x1, y1, x2, y2, state);
@@ -2186,7 +2189,7 @@ function lineElement(x1: number, y1: number, x2: number, y2: number, state: Draw
   if (!state.pen.none && state.styledPen !== penIdentity(state.pen)) { state.styledPen=penIdentity(state.pen); state.cosmeticPhase=0; }
   const n = (value: number) => Number(value.toFixed(3));
   const major = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
-  const pathLength = state.pen.cosmeticDashes && major > 0 ? ` pathLength="${n(major)}"` : '';
+  const pathLength = usesNativeCosmeticDashes(state) && major > 0 ? ` pathLength="${n(major)}"` : '';
   return `<line x1="${n(x1)}" y1="${n(y1)}" x2="${n(x2)}" y2="${n(y2)}"${pathLength} ${strokeAttrs(state)} fill="none"${clipAttr(state)} />`;
 }
 
@@ -2264,7 +2267,10 @@ function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawS
   if(a1===a2)return previous;
   const sign=a2>a1?1:-1,first=sign>0?Math.ceil(a1):Math.floor(a1),stop=sign>0?Math.ceil(a2):Math.floor(a2);
   const vertex:CosmeticPoint=[Math.ceil(start[0]-.5),Math.ceil(start[1]-.5)];
-  const vx=Math.abs(vertex[0]-start[0]),vy=Math.abs(vertex[1]-start[1]),inside=vx+vy<.5||vx+vy===.5&&(vx===0||vy===0);
+  const vx=Math.abs(vertex[0]-start[0]),vy=Math.abs(vertex[1]-start[1]);let inside=vx+vy<.5||vx+vy===.5&&(vx===0||vy===0);
+  // A sub-grid cusp touching an axis corner and immediately leaving its
+  // diamond does not consume a phantom step before re-entering that pixel.
+  if(first===stop&&vx+vy===.5&&(vx===0||vy===0)&&(vx===0?Math.sign(start[1]-vertex[1])*(end[1]-start[1])+Math.abs(end[0]-start[0]):Math.sign(start[0]-vertex[0])*(end[0]-start[0])+Math.abs(end[1]-start[1]))>0)inside=false;
   const same=(a:CosmeticPoint|undefined,b:CosmeticPoint)=>a?.[0]===b[0]&&a[1]===b[1];
   const dashes=state.pen.dashArray!,cycle=dashes.reduce((a,b)=>a+b,0)*(dashes.length%2===0?1:2);
   let phase=state.cosmeticPhase%cycle,dash=0,ink=true;
@@ -2418,6 +2424,20 @@ function drawRoundRect(x1: number, y1: number, x2: number, y2: number, cornerWid
     return transformPoints ? transformPoint(state, x, y) : [x, y];
   };
   const point = (x: number, y: number) => map(x, y).map(value => Number(value.toFixed(3))).join(' ');
+  if(transformPoints&&state.pen.cosmeticDashes&&right>left&&bottom>top){
+    const controls=buildNativeRoundRect([nativeDevicePoint(map(left,top),state,true),nativeDevicePoint(map(right,top),state,true),nativeDevicePoint(map(left,bottom),state,true)],Math.min(Math.abs(cornerWidth)/(right-left),1),Math.min(Math.abs(cornerHeight)/(bottom-top),1));
+    if(controls){
+      const path:string[]=[],start=controls[0],points=new Map<number,CosmeticPoint>(),cubics=new Map<number,number[]>();nativePoints.set(path,points);nativeCubics.set(path,cubics);
+      const at=(index:number,command:string)=>{const p=controls[index];points.set(path.length,p);path.push(`${command} ${p[0]} ${p[1]}`);};
+      at(0,'M');
+      if(controls.length===4){for(let i=1;i<4;i++)at(i,'L');}
+      else for(let i=1;i<16;){if(i%4===0){at(i++,'L');continue;}const a=controls[i],b=controls[i+1],c=controls[i+2];cubics.set(path.length,[...a,...b,...c]);path.push(`C ${a[0]} ${a[1]} ${b[0]} ${b[1]} ${c[0]} ${c[1]}`);i+=3;}
+      path.push('Z');
+      if(state.currentPath===undefined)elements.push(pathElement(path,state,'paint'));
+      else {appendMetafilePath(state.currentPath,path);state.pathFigureClosed=true;state.pathStartX=state.pathEndX=start[0];state.pathStartY=state.pathEndY=start[1];}
+      return;
+    }
+  }
   const start = map(right, top + ry), path = [`M ${point(right, top + ry)}`];
   if (rx === 0) path.push(`L ${point(left, top)}`, `L ${point(left, bottom)}`, `L ${point(right, bottom)}`);
   else {
@@ -2497,7 +2517,7 @@ function ellipseElement(left: number, top: number, right: number, bottom: number
 function polyElement(points: Array<[number, number]>, closed: boolean, state: DrawState): string {
   if (points.length === 0)
     return '';
-  if(state.pen.cosmeticDashes){
+  if(usesNativeCosmeticDashes(state)){
     const path:string[]=[];appendNativePoint(path,'M',points[0],state);for(const point of points.slice(1))appendNativePoint(path,'L',point,state);if(closed)path.push('Z');
     const pixels=cosmeticPixelPath(path,state,closed?'paint':'stroke',false);if(pixels!==undefined)return pixels;
   }
@@ -2518,7 +2538,7 @@ function isTallFallbackDuplicate(points: Array<[number, number]>): boolean {
 }
 
 function pathElement(path: string[], state: DrawState, mode: 'fill' | 'stroke' | 'paint', continueCosmeticStyle = false): string {
-  if(mode!=='fill'&&state.pen.cosmeticDashes){const pixels=cosmeticPixelPath(path,state,mode,continueCosmeticStyle);if(pixels!==undefined)return pixels;}
+  if(mode!=='fill'&&usesNativeCosmeticDashes(state)){const pixels=cosmeticPixelPath(path,state,mode,continueCosmeticStyle);if(pixels!==undefined)return pixels;}
   if(mode!=='fill'&&!state.pen.none&&state.styledPen!==penIdentity(state.pen)){state.styledPen=penIdentity(state.pen);state.cosmeticPhase=0;}
   const stroke = mode === 'fill' ? 'stroke="none"' : strokeAttrs(state);
   const fill = mode === 'stroke' ? 'fill="none"' : fillAttrs(state);
@@ -2530,14 +2550,22 @@ function paintAttrs(state: DrawState): string {
   return `${strokeAttrs(state)} ${fillAttrs(state)}`;
 }
 
+function strokeDeviceWidth(state:DrawState):number {
+  const logical=state.pen.logicalWidth;if(logical===undefined)return state.pen.width;if(logical===0)return 1;
+  const t=state.worldTransform,sx=state.viewportExtX/(state.windowExtX===0?1:state.windowExtX),sy=state.viewportExtY/(state.windowExtY===0?1:state.windowExtY);
+  const x=Math.sqrt(t.m11*t.m11*sx*sx+t.m12*t.m12*sy*sy),y=Math.sqrt(t.m21*t.m21*sx*sx+t.m22*t.m22*sy*sy);
+  return Math.max(1,Math.floor(logical*Math.max(x,y)+.5));
+}
+function usesNativeCosmeticDashes(state:DrawState):boolean {return !!state.pen.cosmeticDashes&&strokeDeviceWidth(state)<=1;}
 function strokeAttrs(state: DrawState): string {
   if (state.pen.none) return 'stroke="none"';
-  let attributes = `stroke="${state.pen.color}" stroke-width="${state.pen.width}"`;
-  if (state.pen.lineCap !== undefined) attributes += ` stroke-linecap="${state.pen.lineCap}"`;
-  if (state.pen.lineJoin !== undefined) attributes += ` stroke-linejoin="${state.pen.lineJoin}"`;
+  const width=strokeDeviceWidth(state);let attributes = `stroke="${state.pen.color}" stroke-width="${width}"`;
+  const cap=state.pen.lineCap??(state.pen.logicalWidth!==undefined&&width>1?'round':undefined),join=state.pen.lineJoin??(state.pen.logicalWidth!==undefined&&width>1?'round':undefined);
+  if (cap !== undefined) attributes += ` stroke-linecap="${cap}"`;
+  if (join !== undefined) attributes += ` stroke-linejoin="${join}"`;
   if (state.pen.lineJoin === 'miter') attributes += ` stroke-miterlimit="${state.miterLimit}"`;
-  if (state.pen.dashArray?.length) attributes += ` stroke-dasharray="${state.pen.dashArray.join(' ')}"`;
-  if (state.pen.cosmeticDashes) attributes += ' shape-rendering="crispEdges"';
+  if ((state.pen.logicalWidth===undefined||width<=1)&&state.pen.dashArray?.length) attributes += ` stroke-dasharray="${state.pen.dashArray.join(' ')}"`;
+  if (usesNativeCosmeticDashes(state)) attributes += ' shape-rendering="crispEdges"';
   return attributes;
 }
 

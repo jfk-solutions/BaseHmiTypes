@@ -15,7 +15,7 @@ for(const kind of [1,2,3,4,5,6,7,8,9])test(`Invalid extended records preserve pr
 test('Largest custom cycle is accepted',()=>assert.equal(pixels(draw(ext(7,1,[16382,1])),'#123456').size,32));
 test('Odd custom cycle reverses ink and gap',()=>{const p=pixels(svg(ext(7,1,[1]),record(37,1),record(27,0,20),record(54,20,20)),'#123456');for(let x=0;x<20;x++)assert.equal(p.has(`${x},20`),x%6<3);});
 test('Save restore restores gap background',()=>assert.equal(pixels(draw(pen(),record(25,255),record(33),record(25,0),record(18,1),record(34,-1)),'#ff0000').size,6));
-test('Device pixels do not scale with mapping',()=>assert.equal(pixels(svg(record(17,8),record(9,10,10),record(11,20,20),pen(),record(37,1),record(27,2,10),record(54,18,10)),'#123456').size,26));
+test('Zero width device pixels do not scale with mapping',()=>assert.equal(pixels(svg(record(17,8),record(9,10,10),record(11,20,20),pen(1,0),record(37,1),record(27,2,10),record(54,18,10)),'#123456').size,26));
 for(const [x1,y1,x2,y2,x,y] of [[4,4,36,20,5,4],[4,4,20,36,4,5],[36,36,4,20,35,35],[36,36,20,4,35,35]])test(`Halfway raster ties favor upper left: ${x1}/${y1}/${x2}/${y2}`,()=>assert.ok(pixels(svg(pen(),record(37,1),record(27,x1,y1),record(54,x2,y2)),'#123456').has(`${x},${y}`)));
 test('Endpoint is excluded',()=>{const p=pixels(svg(pen(),record(37,1),record(27,4,4),record(54,7,7)),'#123456');assert.equal(p.size,3);assert.ok(!p.has('7,7'));});
 test('Very long line keeps bounded outline fallback',()=>{const s=svg(pen(),record(18,1),record(37,1),record(27,0,0),record(54,2147483647,0)),a=attrs(s.match(/<line\b[^>]*>/u)[0]);assert.equal(a.pathLength,'2147483647');assert.ok(a['stroke-dasharray']);});
