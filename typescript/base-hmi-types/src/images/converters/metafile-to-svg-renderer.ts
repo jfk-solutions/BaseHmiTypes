@@ -3,6 +3,8 @@
 type MetafileObject = PenObject | BrushObject | FontObject;
 
 interface PenObject {
+  cosmeticDashes?: boolean;
+  opaqueDashGaps?: boolean;
   dashArray?: number[];
   lineCap?: string;
   lineJoin?: string;
@@ -249,6 +251,9 @@ export class MetafileToSvgRenderer {
             width: Math.max(1, Math.abs(i32(bytes, dataOffset + 8))),
             color: colorRef(bytes, dataOffset + 16),
             none: (u32(bytes, dataOffset + 4) & 0xF) === 5,
+            dashArray: Math.abs(i32(bytes, dataOffset + 8)) <= 1 ? cosmeticPattern(u32(bytes, dataOffset + 4) & 0xf) : undefined,
+            cosmeticDashes: Math.abs(i32(bytes, dataOffset + 8)) <= 1 && (u32(bytes, dataOffset + 4) & 0xf) >= 1 && (u32(bytes, dataOffset + 4) & 0xf) <= 4,
+            opaqueDashGaps: true,
           });
           break;
         case EMR.CREATEBRUSHINDIRECT:
@@ -267,13 +272,19 @@ export class MetafileToSvgRenderer {
           if (record.size < 52) break;
           const style = u32(bytes, dataOffset + 20);
           const geometric = (style & 0xf0000) === 0x10000;
-          const width = scaledPenWidth(state, i32(bytes, dataOffset + 24));
-          const dashArray = geometric ? readGeometricDashes(bytes, record, style, width, state) : undefined;
+          let width = scaledPenWidth(state, i32(bytes, dataOffset + 24));
+          let dashArray = geometric ? readGeometricDashes(bytes, record, style, width, state) : undefined;
+          if (!geometric && [1, 2, 3, 4, 7, 8].includes(style & 0xf)) {
+            if (u32(bytes, dataOffset + 24) !== 1) break;
+            dashArray = readCosmeticDashes(bytes, record, style);
+            width = 1;
+          }
           if (dashArray === null) break;
           objects.set(u32(bytes, dataOffset), {
             kind: 'pen',
             width,
             dashArray,
+            cosmeticDashes: !geometric && dashArray !== undefined,
             color: colorRef(bytes, dataOffset + 32),
             none: (u32(bytes, dataOffset + 20) & 0x0000000f) === 5,
             lineCap: geometric ? ({0: 'round', 256: 'square', 512: 'butt'} as Record<number, string>)[style & 0xf00] : undefined,
@@ -520,6 +531,7 @@ export class MetafileToSvgRenderer {
           break;
         }
       }
+      applyCosmeticGapBackground(elements, firstElement, state);
       // The metaregion is independent of the selected clip on each drawing.
       if (state.metaMaskId && elements.length > firstElement) {
         elements.splice(firstElement, 0, `<g mask="url(#${state.metaMaskId})">`);
@@ -1352,6 +1364,38 @@ function readGeometricDashes(bytes: Uint8Array, record: EmfRecord, style: number
   return entries;
 }
 
+function cosmeticPattern(style: number): number[] | undefined {
+  return style === 1 ? [18, 6] : style === 2 ? [3, 3] : style === 3 ? [9, 6, 3, 6] : style === 4 ? [9, 3, 3, 3, 3, 3] : undefined;
+}
+
+function readCosmeticDashes(bytes: Uint8Array, record: EmfRecord, style: number): number[] | null | undefined {
+  const lineStyle = style & 0xf, count = u32(bytes, record.offset + 48);
+  if (lineStyle !== 7) return count === 0 ? lineStyle === 8 ? [1, 1] : cosmeticPattern(lineStyle) : null;
+  if (count === 0 || count > 16 || count > (record.size - 52) / 4) return null;
+  const dashes: number[] = []; let total = 0;
+  for (let index = 0; index < count; index++) {
+    const value = u32(bytes, record.offset + 52 + index * 4);
+    if (value === 0) return null;
+    total += value;
+    dashes.push(value * 3); // Three device pixels per cosmetic style unit.
+  }
+  return total <= 0x3fff ? dashes : null;
+}
+
+function applyCosmeticGapBackground(elements: string[], firstElement: number, state: DrawState): void {
+  // SetBkMode affects CreatePen gaps, never ExtCreatePen gaps.
+  if (!state.pen.cosmeticDashes || !state.pen.opaqueDashGaps || state.backgroundMode !== 2) return;
+  const stroke = strokeAttrs(state);
+  for (let index = firstElement; index < elements.length; index++) {
+    const element = elements[index];
+    if (!element.includes(stroke)) continue;
+    const outline = element.replace(/ fill="[^"]*"/u, ' fill="none"');
+    const fill = element.replace(stroke, 'stroke="none"');
+    const background = outline.replace(stroke, `stroke="${state.backgroundColor}" stroke-width="1" shape-rendering="crispEdges"`);
+    elements[index] = `<g>${fill}${background}${outline}</g>`;
+  }
+}
+
 function resetPathConstruction(state: DrawState): void {
   state.pathFigureClosed = false;
   state.currentPath = undefined;
@@ -2116,8 +2160,39 @@ function combineClipGeometry(state: DrawState, geometry: string, mode: number, v
 }
 
 function lineElement(x1: number, y1: number, x2: number, y2: number, state: DrawState): string {
+  if (state.pen.cosmeticDashes) {
+    const pixels = cosmeticPixelLine(x1, y1, x2, y2, state);
+    if (pixels !== undefined) return pixels;
+  }
   const n = (value: number) => Number(value.toFixed(3));
-  return `<line x1="${n(x1)}" y1="${n(y1)}" x2="${n(x2)}" y2="${n(y2)}" ${strokeAttrs(state)} fill="none"${clipAttr(state)} />`;
+  const major = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
+  const pathLength = state.pen.cosmeticDashes && major > 0 ? ` pathLength="${n(major)}"` : '';
+  return `<line x1="${n(x1)}" y1="${n(y1)}" x2="${n(x2)}" y2="${n(y2)}"${pathLength} ${strokeAttrs(state)} fill="none"${clipAttr(state)} />`;
+}
+
+function cosmeticPixelLine(x1: number, y1: number, x2: number, y2: number, state: DrawState): string | undefined {
+  if (![x1, y1, x2, y2].every(Number.isFinite)) return undefined;
+  let x = Math.floor(x1 + .5), y = Math.floor(y1 + .5);
+  const endX = Math.floor(x2 + .5), endY = Math.floor(y2 + .5);
+  const dx = Math.abs(endX - x), dy = Math.abs(endY - y), count = Math.max(dx, dy);
+  // Bound pixel-path allocation for hostile coordinates. Longer lines keep
+  // the SVG outline approximation, normalized to major-axis style units.
+  if (count > 262144) return undefined;
+  const foreground: string[] = [], background: string[] = [];
+  const dashes = state.pen.dashArray!;
+  let dash = 0, ink = true, remaining = dashes[0], error = dx - dy;
+  const sx = x < endX ? 1 : -1, sy = y < endY ? 1 : -1;
+  for (let step = 0; step < count; step++) {
+    if (ink || state.pen.opaqueDashGaps && state.backgroundMode === 2)
+      (ink ? foreground : background).push(`M ${x} ${y}h1v1h-1Z`);
+    if (--remaining === 0) { dash = (dash + 1) % dashes.length; remaining = dashes[dash]; ink = !ink; }
+    const twice = error * 2;
+    // GDI ties favor upper/left device pixels, including reverse traversal.
+    if (twice > -dy || twice === -dy && sx < 0) { error -= dy; x += sx; }
+    if (twice < dx || twice === dx && sy < 0) { error += dx; y += sy; }
+  }
+  const paint = (path: string[], color: string) => path.length ? `<path d="${path.join(' ')}" stroke="none" fill="${color}"${clipAttr(state)} />` : '';
+  return `<g>${paint(background, state.backgroundColor)}${paint(foreground, state.pen.color)}</g>`;
 }
 
 function drawAngleArc(cx: number, cy: number, radius: number, startDegrees: number, sweepDegrees: number, state: DrawState, elements: string[]): void {
@@ -2295,6 +2370,7 @@ function strokeAttrs(state: DrawState): string {
   if (state.pen.lineJoin !== undefined) attributes += ` stroke-linejoin="${state.pen.lineJoin}"`;
   if (state.pen.lineJoin === 'miter') attributes += ` stroke-miterlimit="${state.miterLimit}"`;
   if (state.pen.dashArray?.length) attributes += ` stroke-dasharray="${state.pen.dashArray.join(' ')}"`;
+  if (state.pen.cosmeticDashes) attributes += ' shape-rendering="crispEdges"';
   return attributes;
 }
 

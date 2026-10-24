@@ -7,7 +7,7 @@ const pen=(style=0x10201,width=3,entries=[],count=entries.length)=>record(95,1,0
 const attrs=s=>Object.fromEntries([...s.matchAll(/([\w-]+)="([^"]*)"/g)].map(m=>[m[1],m[2]])),line=(...r)=>attrs(svg(...r,record(37,1),record(27,4,20),record(54,36,20)).match(/<line\b[^>]*>/u)[0]),dashes=a=>a['stroke-dasharray'];
 for(const [style,width,expected] of [[1,1,'3 1'],[1,3,'9 3'],[2,1,'1 1'],[2,3,'3 3'],[3,1,'3 1 1 1'],[3,3,'9 3 3 3'],[4,1,'3 1 1 1 1 1'],[4,3,'9 3 3 3 3 3']])test(`Standard patterns use pen width: ${style}/${width}`,()=>assert.equal(dashes(line(pen(0x10200|style,width))),expected));
 for(const style of [0,5,6])test(`Solid null and inside frame do not have dashes: ${style}`,()=>assert.equal(dashes(line(pen(0x10200|style))),undefined));
-for(const style of [1,2,3,4])test(`Cosmetic pens do not use geometric patterns: ${style}`,()=>assert.equal(dashes(line(pen(style,1))),undefined));
+for(const style of [1,2,3,4])test(`Cosmetic pens do not use geometric patterns: ${style}`,()=>{const s=svg(pen(style,1),record(37,1),record(27,4,20),record(54,36,20));assert.ok(!s.includes('stroke-dasharray'));assert.ok(s.includes('<path'));});
 for(const width of [1,9])test(`Custom lengths are logical units not width multiples: ${width}`,()=>assert.equal(dashes(line(pen(0x10207,width,[3,5,2]))),'3 5 2'));
 test('Single odd entry is retained',()=>assert.equal(dashes(line(pen(0x10207,3,[4]))),'4'));
 for(const [first,second] of [[0,2],[2,0]])test(`Zero entries retained when cycle nonzero: ${first}/${second}`,()=>assert.equal(dashes(line(pen(0x10207,3,[first,second]))),`${first} ${second}`));
