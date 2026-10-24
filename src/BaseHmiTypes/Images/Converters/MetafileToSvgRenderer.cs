@@ -1347,9 +1347,9 @@ public sealed class MetafileToSvgRenderer
         double top = Math.Min(I32(bytes, offset + 4), I32(bytes, offset + 12));
         double bottom = Math.Max(I32(bytes, offset + 4), I32(bytes, offset + 12));
         if(ellipse&&state.Pen.CosmeticDashes&&NativeEllipseBuilder.TryBuild(new[]{
-            NativeDevicePoint(TransformPoint(state,left,top),state,true),
-            NativeDevicePoint(TransformPoint(state,right,top),state,true),
-            NativeDevicePoint(TransformPoint(state,left,bottom),state,true)},state.ClockwiseShapes,out var controls))
+            NativeDevicePoint(TransformPoint(state,left,state.ClockwiseShapes?bottom:top),state,true),
+            NativeDevicePoint(TransformPoint(state,right,state.ClockwiseShapes?bottom:top),state,true),
+            NativeDevicePoint(TransformPoint(state,left,state.ClockwiseShapes?top:bottom),state,true)},out var controls))
         {
             var native=new MetafilePath();start=controls[0];
             native.NativePoints[0]=start;native.Add($"M {Number(start.X)} {Number(start.Y)}");

@@ -2,10 +2,11 @@ namespace BaseHmiTypes.Images.Converters;
 
 // Native GDI control construction, derived from captured GetPath tables. Keep
 // this separate from SVG's ideal ellipse: fixed-point half-vector rounding and
-// the reconstructed fourth corner affect subsequent dash phase.
+// the reconstructed fourth corner affect subsequent dash phase. Input corners
+// must be direction-oriented LT, RT, LB before their device quantization.
 internal static class NativeEllipseBuilder
 {
-    internal static bool TryBuild((double X,double Y)[] corners,bool clockwise,out (double X,double Y)[] controls)
+    internal static bool TryBuild((double X,double Y)[] corners,out (double X,double Y)[] controls)
     {
         controls=Array.Empty<(double X,double Y)>();
         if(corners.Length!=3)return false;
@@ -19,7 +20,6 @@ internal static class NativeEllipseBuilder
         (long X,long Y) Add((long X,long Y) a,(long X,long Y) b)=>(a.X+b.X,a.Y+b.Y);
         (long X,long Y) Neg((long X,long Y) a)=>(-a.X,-a.Y);
         var lt=p[0];var rt=p[1];var lb=p[2];var rb=Add(rt,Add(lb,Neg(lt)));
-        if(clockwise){var swap=lt;lt=lb;lb=swap;swap=rt;rt=rb;rb=swap;}
         const double inset=1-0.5522847498307936;
         var u=((long)Math.Floor(Math.Ceiling((rt.X-lt.X)/2d)*inset),(long)Math.Floor(Math.Ceiling((rt.Y-lt.Y)/2d)*inset));
         var v=((long)Math.Ceiling(Math.Floor((rb.X-rt.X)/2d)*inset),(long)Math.Ceiling(Math.Floor((rb.Y-rt.Y)/2d)*inset));

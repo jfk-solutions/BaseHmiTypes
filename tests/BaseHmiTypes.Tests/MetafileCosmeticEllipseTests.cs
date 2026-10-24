@@ -15,7 +15,7 @@ public class MetafileCosmeticEllipseTests
     public static IEnumerable<object[]> Fixtures()
     {
         using var stream=typeof(MetafileCosmeticEllipseTests).Assembly.GetManifestResourceStream("BaseHmiTypes.Tests.Fixtures.cosmetic-ellipses.json")!;using var doc=JsonDocument.Parse(stream);
-        foreach(var f in doc.RootElement.EnumerateArray())yield return new object[]{f.GetProperty("Index").GetInt32(),f.GetProperty("Source").GetString()!,f.GetProperty("Hash").GetString()!,Points(f.GetProperty("Controls")),Points(f.GetProperty("Corners"))};
+        foreach(var f in doc.RootElement.EnumerateArray())yield return new object[]{f.GetProperty("Index").GetInt32(),f.GetProperty("Source").GetString()!,f.GetProperty("Hash").GetString()!,f.GetProperty("PathHash").GetString()!,Points(f.GetProperty("Controls")),Points(f.GetProperty("Corners"))};
         static (double X,double Y)[] Points(JsonElement p)=>p.EnumerateArray().Select(v=>(v[0].GetInt32()/16d,v[1].GetInt32()/16d)).ToArray();
     }
     private static string MaskHash(byte[] bytes)
@@ -29,15 +29,25 @@ public class MetafileCosmeticEllipseTests
         return Convert.ToHexString(SHA256.HashData(mask)).ToLowerInvariant();
     }
     [TestMethod] [DynamicData(nameof(Fixtures))]
-    public void ControlsMatchNativePath(int index,string source,string hash,(double X,double Y)[] expected,(double X,double Y)[] corners)
+    public void ControlsMatchNativePath(int index,string source,string hash,string pathHash,(double X,double Y)[] expected,(double X,double Y)[] corners)
     {
-        var clockwise=index%50%20>=10;var input=clockwise?new[]{corners[2],corners[3],corners[1]}:new[]{corners[1],corners[0],corners[2]};
-        Assert.IsTrue(NativeEllipseBuilder.TryBuild(input,clockwise,out var actual));CollectionAssert.AreEqual(expected,actual,$"Native ellipse {index}");
+        Assert.IsTrue(NativeEllipseBuilder.TryBuild(new[]{corners[1],corners[0],corners[2]},out var actual));CollectionAssert.AreEqual(expected,actual,$"Native ellipse {index}");
     }
     [TestMethod] [DynamicData(nameof(Fixtures))]
-    public void DirectEllipseMatchesNativeDashPhase(int index,string source,string hash,(double X,double Y)[] controls,(double X,double Y)[] corners)=>Assert.AreEqual(hash,MaskHash(Convert.FromBase64String(source.Split(',')[1])),$"Native ellipse {index}");
+    public void DirectEllipseMatchesNativeDashPhase(int index,string source,string hash,string pathHash,(double X,double Y)[] controls,(double X,double Y)[] corners)
+    {
+        var bytes=Convert.FromBase64String(source.Split(',')[1]);var classic=false;double a=1,b=0,c=0,d=1;
+        for(var at=88;at<bytes.Length;at+=BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(at+4)))
+        {
+            var type=BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(at));if(type==38)classic=true;
+            if(type==35){double F(int offset)=>BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(at+offset)));a=F(8);b=F(12);c=F(16);d=F(20);}
+        }
+        var width=classic?Math.Max(1,Math.Round(Math.Max(Math.Sqrt(a*a+b*b),Math.Sqrt(c*c+d*d)),MidpointRounding.AwayFromZero)):1;
+        if(width==1)Assert.AreEqual(hash,MaskHash(bytes),$"Native ellipse {index}");
+        else {var svg=new MetafileToSvgRenderer().Render(bytes,".emf")!;Assert.AreNotEqual(hash,pathHash);Assert.IsFalse(svg.Contains("h1v1h-1Z"));StringAssert.Contains(svg,$"stroke-width=\"{width}\"");Assert.IsFalse(svg.Contains("stroke-dasharray"));}
+    }
     [TestMethod] [DynamicData(nameof(Fixtures))]
-    public void StoredEllipsePreservesFrozenControls(int index,string source,string hash,(double X,double Y)[] controls,(double X,double Y)[] corners)
+    public void StoredEllipsePreservesFrozenControls(int index,string source,string hash,string pathHash,(double X,double Y)[] controls,(double X,double Y)[] corners)
     {
         var bytes=Convert.FromBase64String(source.Split(',')[1]);var records=new List<byte[]>();
         for(var at=88;at<bytes.Length;)
@@ -47,8 +57,8 @@ public class MetafileCosmeticEllipseTests
             if(type==42)records.AddRange(new[]{Record(60),Record(33),Record(35,0x3f800000,0,0,0x3f800000,0,0),Record(34,-1),Record(35,0x3f800000,0,0,0x3f800000,0,0),Record(64,0,0,79,79)});at+=size;
         }
         var emf=Emf(records.ToArray());BinaryPrimitives.WriteInt32LittleEndian(emf.AsSpan(16),79);BinaryPrimitives.WriteInt32LittleEndian(emf.AsSpan(20),79);
-        Assert.AreEqual(hash,MaskHash(emf),$"Stored native ellipse {index}");
+        Assert.AreEqual(pathHash,MaskHash(emf),$"Stored native ellipse {index}");
     }
     [TestMethod] [DataRow(double.NaN)] [DataRow(double.PositiveInfinity)] [DataRow(double.MaxValue)] [DataRow(.1)]
-    public void InvalidCornersFailAtomically(double value){Assert.IsFalse(NativeEllipseBuilder.TryBuild(new[]{(value,0d),(1d,0d),(0d,1d)},false,out var result));Assert.HasCount(0,result);}
+    public void InvalidCornersFailAtomically(double value){Assert.IsFalse(NativeEllipseBuilder.TryBuild(new[]{(value,0d),(1d,0d),(0d,1d)},out var result));Assert.HasCount(0,result);}
 }
