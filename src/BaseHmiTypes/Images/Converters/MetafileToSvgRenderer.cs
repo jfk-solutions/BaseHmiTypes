@@ -352,7 +352,7 @@ public sealed class MetafileToSvgRenderer
                             AppendEmfShapePath(bytes, dataOffset, record.Type == EMR.Ellipse, state);
                             break;
                         }
-                        if (state.WorldTransform.M12 != 0 || state.WorldTransform.M21 != 0)
+                        if (state.WorldTransform.M12 != 0 || state.WorldTransform.M21 != 0 || record.Type==EMR.Ellipse&&state.Pen.CosmeticDashes)
                         {
                             elements.Add(PathElement(EmfShapePath(bytes, dataOffset, record.Type == EMR.Ellipse, state, out _), state, PathPaintMode.Paint));
                             break;
@@ -1326,6 +1326,21 @@ public sealed class MetafileToSvgRenderer
         double right = Math.Max(I32(bytes, offset), I32(bytes, offset + 8));
         double top = Math.Min(I32(bytes, offset + 4), I32(bytes, offset + 12));
         double bottom = Math.Max(I32(bytes, offset + 4), I32(bytes, offset + 12));
+        if(ellipse&&state.Pen.CosmeticDashes&&NativeEllipseBuilder.TryBuild(new[]{
+            NativeDevicePoint(TransformPoint(state,left,top),state,true),
+            NativeDevicePoint(TransformPoint(state,right,top),state,true),
+            NativeDevicePoint(TransformPoint(state,left,bottom),state,true)},state.ClockwiseShapes,out var controls))
+        {
+            var native=new MetafilePath();start=controls[0];
+            native.NativePoints[0]=start;native.Add($"M {Number(start.X)} {Number(start.Y)}");
+            for(var i=1;i<controls.Length;i+=3)
+            {
+                var a=controls[i];var b=controls[i+1];var c=controls[i+2];
+                native.NativeCubics[native.Count]=new[]{a.X,a.Y,b.X,b.Y,c.X,c.Y};
+                native.Add($"C {Number(a.X)} {Number(a.Y)} {Number(b.X)} {Number(b.Y)} {Number(c.X)} {Number(c.Y)}");
+            }
+            native.Add("Z");return native;
+        }
         var path = new MetafilePath();
         string Point(double x, double y)
         {
@@ -1916,10 +1931,10 @@ public sealed class MetafileToSvgRenderer
         path.Add($"{command} {Number(point.X)} {Number(point.Y)}");
     }
 
-    private static (double X,double Y) NativeDevicePoint((double X,double Y) point,DrawState state)
+    private static (double X,double Y) NativeDevicePoint((double X,double Y) point,DrawState state,bool forceFixed=false)
     {
         var t=state.WorldTransform;
-        if(state.AdvancedCoordinates)
+        if(state.AdvancedCoordinates||forceFixed)
         {
             // GDI quantizes the linear component and device translation separately.
             // Keep this metadata independent of SVG's three-decimal formatting.
