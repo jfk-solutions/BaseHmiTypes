@@ -2474,9 +2474,9 @@ function emfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean, state
   const bottom = Math.max(i32(bytes, offset + 4), i32(bytes, offset + 12));
   if(ellipse&&state.pen.cosmeticDashes){
     const controls=buildNativeEllipse([
-      nativeDevicePoint(transformPoint(state,left,top),state,true),
-      nativeDevicePoint(transformPoint(state,right,top),state,true),
-      nativeDevicePoint(transformPoint(state,left,bottom),state,true)],state.clockwiseShapes);
+      nativeDevicePoint(transformPoint(state,left,state.clockwiseShapes?bottom:top),state,true),
+      nativeDevicePoint(transformPoint(state,right,state.clockwiseShapes?bottom:top),state,true),
+      nativeDevicePoint(transformPoint(state,left,state.clockwiseShapes?top:bottom),state,true)]);
     if(controls){
       const start=controls[0],path:string[]=[`M ${start[0]} ${start[1]}`];nativePoints.set(path,new Map([[0,start]]));
       const cubics=new Map<number,number[]>();nativeCubics.set(path,cubics);

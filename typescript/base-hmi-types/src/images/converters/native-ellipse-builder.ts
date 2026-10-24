@@ -2,14 +2,14 @@ type Point=[number,number];
 
 // Derived from native GDI GetPath tables, not SVG's ideal ellipse. Preserve
 // the three quantized corners, reconstructed fourth corner, and half-vector
-// rounding: one fixed-point unit changes later cosmetic dash phase.
-export function buildNativeEllipse(corners:Point[],clockwise:boolean):Point[]|undefined {
+// rounding: one fixed-point unit changes later cosmetic dash phase. Orient
+// LT, RT, LB for the arc direction before quantizing these device corners.
+export function buildNativeEllipse(corners:Point[]):Point[]|undefined {
   if(corners.length!==3)return undefined;
   const p=corners.map(([x,y]):Point=>[x*16,y*16]);
   if(p.some(point=>point.some(v=>!Number.isInteger(v)||Math.abs(v)>0x3fffffff)))return undefined;
   const add=(a:Point,b:Point):Point=>[a[0]+b[0],a[1]+b[1]],neg=(a:Point):Point=>[-a[0],-a[1]];
-  let [lt,rt,lb]=p,rb=add(rt,add(lb,neg(lt)));
-  if(clockwise){[lt,lb]=[lb,lt];[rt,rb]=[rb,rt];}
+  const [lt,rt,lb]=p,rb=add(rt,add(lb,neg(lt)));
   const inset=1-.5522847498307936;
   const u:Point=[Math.floor(Math.ceil((rt[0]-lt[0])/2)*inset),Math.floor(Math.ceil((rt[1]-lt[1])/2)*inset)];
   const v:Point=[Math.ceil(Math.floor((rb[0]-rt[0])/2)*inset),Math.ceil(Math.floor((rb[1]-rt[1])/2)*inset)];
