@@ -55,6 +55,7 @@ public sealed class MetafileToSvgRenderer
 
         foreach (var record in EmfRecords(bytes))
         {
+            if (UsesEmfMapping(record.Type)) PrepareEmfMapping(state);
             (state.CurrentX, state.CurrentY) = TransformPoint(state, state.LogicalCurrentX, state.LogicalCurrentY);
             var firstElement = elements.Count;
             var dataOffset = record.Offset + 8;
@@ -78,6 +79,10 @@ public sealed class MetafileToSvgRenderer
                     break;
                 case EMR.SetViewportExtEx:
                     if (record.Size >= 16) SetEmfExtents(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4), true);
+                    break;
+                case EMR.ScaleWindowExtEx:
+                case EMR.ScaleViewportExtEx:
+                    if (record.Size >= 24) ScaleEmfExtents(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4), I32(bytes, dataOffset + 8), I32(bytes, dataOffset + 12), record.Type == EMR.ScaleViewportExtEx);
                     break;
                 case EMR.SetPolyFillMode:
                     state.FillRule = PolyFillRule(U32(bytes, dataOffset));
@@ -775,6 +780,7 @@ public sealed class MetafileToSvgRenderer
             LogicalCurrentX = state.LogicalCurrentX,
             LogicalCurrentY = state.LogicalCurrentY,
             MapMode = state.MapMode,
+            IsotropicDirty = state.IsotropicDirty,
             WindowOrgX = state.WindowOrgX,
             WindowOrgY = state.WindowOrgY,
             WindowExtX = state.WindowExtX,
@@ -825,6 +831,7 @@ public sealed class MetafileToSvgRenderer
         target.LogicalCurrentX = restored.LogicalCurrentX;
         target.LogicalCurrentY = restored.LogicalCurrentY;
         target.MapMode = restored.MapMode;
+        target.IsotropicDirty = restored.IsotropicDirty;
         target.WindowOrgX = restored.WindowOrgX;
         target.WindowOrgY = restored.WindowOrgY;
         target.WindowExtX = restored.WindowExtX;
@@ -924,8 +931,10 @@ public sealed class MetafileToSvgRenderer
     private static void SetEmfMapMode(DrawState state, int mode, (double X, double Y, double MmX, double MmY) device)
     {
         if (mode < 1 || mode > 8) return;
-        if (mode == 8 || (mode == 7 && state.MapMode == 7)) { state.MapMode = mode; return; }
+        if (mode == 8) { state.MapMode = mode; state.IsotropicDirty = false; return; }
+        if (mode == 7 && state.MapMode == 7) return;
         state.MapMode = mode;
+        state.IsotropicDirty = mode == 7;
         if (mode == 1)
         {
             state.WindowExtX = state.WindowExtY = state.ViewportExtX = state.ViewportExtY = 1;
@@ -935,25 +944,71 @@ public sealed class MetafileToSvgRenderer
         state.WindowExtX = Math.Round(device.MmX * unitsPerMillimeter, MidpointRounding.AwayFromZero);
         state.WindowExtY = Math.Round(device.MmY * unitsPerMillimeter, MidpointRounding.AwayFromZero);
         state.ViewportExtX = device.X; state.ViewportExtY = -device.Y;
-        if (mode == 7) AdjustIsotropicExtents(state);
     }
 
     private static void SetEmfExtents(DrawState state, int x, int y, bool viewport)
     {
         if (state.MapMode < 7 || x == 0 || y == 0) return;
+        if (viewport ? state.ViewportExtX == x && state.ViewportExtY == y : state.WindowExtX == x && state.WindowExtY == y) return;
         if (viewport) { state.ViewportExtX = x; state.ViewportExtY = y; }
         else { state.WindowExtX = x; state.WindowExtY = y; }
-        if (state.MapMode == 7) AdjustIsotropicExtents(state);
+        state.IsotropicDirty = state.MapMode == 7;
+    }
+
+    private static bool UsesEmfMapping(uint type) => type is
+        EMR.LineTo or EMR.PolylineTo or EMR.PolylineTo16 or EMR.PolyBezier or EMR.PolyBezier16
+        or EMR.PolyBezierTo or EMR.PolyBezierTo16 or EMR.PolyDraw or EMR.PolyDraw16
+        or EMR.Rectangle or EMR.Ellipse or EMR.RoundRect or EMR.AngleArc or EMR.Arc or EMR.Chord or EMR.Pie or EMR.ArcTo
+        or EMR.Polygon or EMR.Polygon16 or EMR.Polyline or EMR.Polyline16
+        or EMR.PolyPolygon or EMR.PolyPolygon16 or EMR.PolyPolyline or EMR.PolyPolyline16
+        or EMR.FillPath or EMR.StrokePath or EMR.StrokeAndFillPath or EMR.ExtTextOutW or EMR.StretchDiBits
+        or EMR.IntersectClipRect or EMR.ExcludeClipRect or EMR.OffsetClipRgn;
+
+    private static void PrepareEmfMapping(DrawState state)
+    {
+        // GDI keeps requested isotropic extents until mapping is actually used.
+        // MoveTo, path brackets, Save/Restore and subsequent setters do not resolve it.
+        if (state.MapMode != 7 || !state.IsotropicDirty) return;
+        AdjustIsotropicExtents(state);
+        state.IsotropicDirty = false;
     }
 
     private static void AdjustIsotropicExtents(DrawState state)
     {
-        var xScale = Math.Abs(state.ViewportExtX / state.WindowExtX);
-        var yScale = Math.Abs(state.ViewportExtY / state.WindowExtY);
+        var xScale = NativeAbsoluteExtent(state.ViewportExtX) / NativeAbsoluteExtent(state.WindowExtX);
+        var yScale = NativeAbsoluteExtent(state.ViewportExtY) / NativeAbsoluteExtent(state.WindowExtY);
         if (xScale > yScale)
-            state.ViewportExtX = Math.Sign(state.ViewportExtX) * Math.Round(Math.Abs(state.WindowExtX) * yScale, MidpointRounding.AwayFromZero);
+            state.ViewportExtX = RoundedIsotropicExtent(state.ViewportExtX, NativeAbsoluteExtent(state.WindowExtX) * yScale);
         else if (yScale > xScale)
-            state.ViewportExtY = Math.Sign(state.ViewportExtY) * Math.Round(Math.Abs(state.WindowExtY) * xScale, MidpointRounding.AwayFromZero);
+            state.ViewportExtY = RoundedIsotropicExtent(state.ViewportExtY, NativeAbsoluteExtent(state.WindowExtY) * xScale);
+    }
+
+    // GDI's extent arithmetic is signed 32-bit, including abs(INT_MIN).
+    private static double NativeAbsoluteExtent(double value) => value == int.MinValue ? int.MinValue : Math.Abs(value);
+    private static int RoundedIsotropicExtent(double original, double value)
+        => unchecked(Math.Sign(original) * (int)(long)Math.Round(value, MidpointRounding.AwayFromZero));
+
+    private static void ScaleEmfExtents(DrawState state, int xNum, int xDen, int yNum, int yDen, bool viewport)
+    {
+        if (state.MapMode < 7) return;
+        if (!TryScaleExtent(viewport ? state.ViewportExtX : state.WindowExtX, xNum, xDen, out var x)
+            || !TryScaleExtent(viewport ? state.ViewportExtY : state.WindowExtY, yNum, yDen, out var y)) return;
+        SetEmfExtents(state, x, y, viewport);
+        // Unlike an unchanged setter, a successful scale call invalidates mapping.
+        state.IsotropicDirty = state.MapMode == 7;
+    }
+
+    private static bool TryScaleExtent(double extent, int numerator, int denominator, out int scaled)
+    {
+        scaled = 0;
+        if (denominator == 0) return false;
+        var product = unchecked((int)extent * numerator);
+        // Native GDI wraps the product before division, truncates toward zero,
+        // and rejects zero results and signed division overflow atomically.
+        var quotient = (long)product / denominator;
+        if (quotient == 0 || quotient < int.MinValue || quotient > int.MaxValue) return false;
+        scaled = (int)quotient;
+        return true;
     }
 
     private static int ScaledPenWidth(DrawState state, int width)
@@ -1831,6 +1886,7 @@ internal sealed class FontObject : MetafileObject
 internal sealed class DrawState
 {
     public int MapMode { get; set; } = 1;
+    public bool IsotropicDirty { get; set; }
     public double LogicalCurrentX { get; set; }
     public double LogicalCurrentY { get; set; }
     public bool PathFigureClosed { get; set; }
@@ -2003,6 +2059,8 @@ internal static class EMR
     public const uint SetViewportExtEx = 0x000b;
     public const uint SetViewportOrgEx = 0x000c;
     public const uint SetMapMode = 0x0011;
+    public const uint ScaleViewportExtEx = 0x001f;
+    public const uint ScaleWindowExtEx = 0x0020;
     public const uint SetPolyFillMode = 0x0013;
     public const uint SetTextColor = 0x0018;
     public const uint SaveDc = 0x0021;

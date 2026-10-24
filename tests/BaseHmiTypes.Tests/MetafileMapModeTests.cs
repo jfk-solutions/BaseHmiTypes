@@ -27,10 +27,10 @@ public class MetafileMapModeTests
     [TestMethod] [DataRow(1,1)] [DataRow(-1,1)] [DataRow(1,-1)] [DataRow(-1,-1)]
     public void IsotropicAdjustsLargerAxisAndPreservesSigns(int x,int y)=>Endpoint(Svg(Mapping(7,10,20,x*40,y*30).Append(Record(54,10,20)).ToArray()),(x*15).ToString(),(y*30).ToString());
     [TestMethod] public void IsotropicAdjustsOtherAxis()=>Endpoint(Svg(Mapping(7,20,10,30,40).Append(Record(54,20,10)).ToArray()),"30","15");
-    [TestMethod] public void IsotropicWindowChangeAdjustsCurrentViewport()=>Endpoint(Svg(Mapping(7).Concat(new[]{Record(9,20,20),Record(54,20,20)}).ToArray()),"15","15");
+    [TestMethod] public void IsotropicWindowChangeAdjustsRequestedViewport()=>Endpoint(Svg(Mapping(7).Concat(new[]{Record(9,20,20),Record(54,20,20)}).ToArray()),"30","30");
     [TestMethod] public void RepeatedIsotropicModeDoesNotResetExtents()=>Endpoint(Svg(Mapping(7).Concat(new[]{Record(17,7),Record(54,10,20)}).ToArray()),"15","30");
     [TestMethod] public void IsotropicCanRoundSmallAxisToZero()=>Endpoint(Svg(Mapping(7,1000,1,1,1000).Append(Record(54,1000,1)).ToArray()),"1","0");
-    [TestMethod] public void AnisotropicEntryPreservesExistingIsotropicExtents()=>Endpoint(Svg(Mapping(7).Concat(new[]{Record(17,8),Record(54,10,20)}).ToArray()),"15","30");
+    [TestMethod] public void AnisotropicEntryPreservesRequestedIsotropicExtents()=>Endpoint(Svg(Mapping(7).Concat(new[]{Record(17,8),Record(54,10,20)}).ToArray()),"40","30");
     [TestMethod] public void IsotropicEntryResetsPriorAnisotropicExtents()=>Endpoint(Svg(Mapping().Concat(new[]{Record(17,7),Record(54,3400,2100)}).ToArray()),"1728","-1067");
     [TestMethod] public void TextModeResetsScaleButPreservesOrigins()=>Endpoint(Svg(Mapping().Concat(new[]{Record(10,3,4),Record(12,5,6),Record(17,1),Record(54,20,40)}).ToArray()),"22","42");
     [TestMethod] [DataRow(1)] [DataRow(2)] [DataRow(3)] [DataRow(4)] [DataRow(5)] [DataRow(6)]
