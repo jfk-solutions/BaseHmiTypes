@@ -3,6 +3,7 @@
 type MetafileObject = PenObject | BrushObject | FontObject;
 
 interface PenObject {
+  dashArray?: number[];
   lineCap?: string;
   lineJoin?: string;
   kind: 'pen';
@@ -266,9 +267,13 @@ export class MetafileToSvgRenderer {
           if (record.size < 52) break;
           const style = u32(bytes, dataOffset + 20);
           const geometric = (style & 0xf0000) === 0x10000;
+          const width = scaledPenWidth(state, i32(bytes, dataOffset + 24));
+          const dashArray = geometric ? readGeometricDashes(bytes, record, style, width, state) : undefined;
+          if (dashArray === null) break;
           objects.set(u32(bytes, dataOffset), {
             kind: 'pen',
-            width: scaledPenWidth(state, i32(bytes, dataOffset + 24)),
+            width,
+            dashArray,
             color: colorRef(bytes, dataOffset + 32),
             none: (u32(bytes, dataOffset + 20) & 0x0000000f) === 5,
             lineCap: geometric ? ({0: 'round', 256: 'square', 512: 'butt'} as Record<number, string>)[style & 0xf00] : undefined,
@@ -1321,6 +1326,32 @@ function scaledPenWidth(state: DrawState, width: number): number {
   return Math.max(1, Math.max(Math.hypot(x1 - x0, y1 - y0), Math.hypot(x2 - x0, y2 - y0)));
 }
 
+function readGeometricDashes(bytes: Uint8Array, record: EmfRecord, style: number, width: number, state: DrawState): number[] | null | undefined {
+  const lineStyle = style & 0xf, count = u32(bytes, record.offset + 48);
+  if (lineStyle > 7 || (lineStyle !== 7 && count !== 0)) return null;
+  if (lineStyle >= 1 && lineStyle <= 4) {
+    // Geometric standard patterns use pen widths, unlike cosmetic pens.
+    const units = lineStyle === 1 ? [3, 1] : lineStyle === 2 ? [1, 1] : lineStyle === 3 ? [3, 1, 1, 1] : [3, 1, 1, 1, 1, 1];
+    // GDI includes projecting caps in nominal dash lengths; SVG adds them.
+    const projectingCaps = (style & 0xf00) === 0 || (style & 0xf00) === 0x100;
+    return units.map((unit, index) => (unit + (projectingCaps ? (index % 2 === 0 ? -1 : 1) : 0)) * width);
+  }
+  if (lineStyle !== 7) return undefined;
+  if (count === 0 || count > 16 || count > (record.size - 52) / 4) return null;
+  const entries: number[] = [];
+  let total = 0;
+  const scale = Math.abs(state.viewportExtX / (state.windowExtX || 1));
+  for (let index = 0; index < count; index++) {
+    const entry = u32(bytes, record.offset + 52 + index * 4);
+    total += entry;
+    entries.push(entry * (scale || 1));
+  }
+  // Native signed-32-bit cycle limit; an all-zero cycle is invalid.
+  if (total === 0 || total > 2147483647) return null;
+  // Odd-count arrays reverse ink/gap roles in both SVG and native GDI.
+  return entries;
+}
+
 function resetPathConstruction(state: DrawState): void {
   state.pathFigureClosed = false;
   state.currentPath = undefined;
@@ -2263,6 +2294,7 @@ function strokeAttrs(state: DrawState): string {
   if (state.pen.lineCap !== undefined) attributes += ` stroke-linecap="${state.pen.lineCap}"`;
   if (state.pen.lineJoin !== undefined) attributes += ` stroke-linejoin="${state.pen.lineJoin}"`;
   if (state.pen.lineJoin === 'miter') attributes += ` stroke-miterlimit="${state.miterLimit}"`;
+  if (state.pen.dashArray?.length) attributes += ` stroke-dasharray="${state.pen.dashArray.join(' ')}"`;
   return attributes;
 }
 
