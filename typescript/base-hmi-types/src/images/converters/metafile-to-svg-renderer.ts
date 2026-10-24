@@ -12,6 +12,7 @@ interface PenObject {
 }
 
 interface BrushObject {
+  hatch?: number;
   kind: 'brush';
   color: string;
   none: boolean;
@@ -29,6 +30,11 @@ const CLIP_VIEWPORT_TOKEN = '__METAFILE_CLIP_VIEWPORT__';
 const DEFAULT_CLIP_VIEWPORT_TOKEN = '__METAFILE_DEFAULT_CLIP_VIEWPORT__';
 
 interface DrawState {
+  resolvedBrushFill?: string;
+  backgroundMode: number;
+  backgroundColor: string;
+  brushOrgX: number;
+  brushOrgY: number;
   mapMode: number;
   isotropicDirty: boolean;
   pathFigureClosed: boolean;
@@ -146,6 +152,7 @@ export class MetafileToSvgRenderer {
     };
     const elements: string[] = [];
     const defs: string[] = [];
+    const hatchPatterns = new Map<string, string>();
     let clipSequence = 0;
     const clipExpansion = { x: 0, y: 0 };
     let hasEmfPlusDrawing = false;
@@ -158,8 +165,23 @@ export class MetafileToSvgRenderer {
       const dataEnd = record.offset + record.size;
       if (dataEnd > bytes.length)
         break;
+      if (EMF_BRUSH_RECORDS.has(record.type) && state.currentPath === undefined
+        && (![EMR.FILLPATH, EMR.STROKEANDFILLPATH].includes(record.type) || !!state.selectedPath?.length))
+        state.resolvedBrushFill = resolveBrushFill(state.brush, state, defs, hatchPatterns);
 
       switch (record.type) {
+        case EMR.SETBRUSHORGEX:
+          if (record.size >= 16) { state.brushOrgX = i32(bytes, dataOffset); state.brushOrgY = i32(bytes, dataOffset + 4); }
+          break;
+        case EMR.SETBKMODE:
+          if (record.size >= 12) {
+            const mode = u32(bytes, dataOffset);
+            if (mode === 1 || mode === 2) state.backgroundMode = mode;
+          }
+          break;
+        case EMR.SETBKCOLOR:
+          if (record.size >= 12) state.backgroundColor = colorRef(bytes, dataOffset);
+          break;
         case EMR.GDICOMMENT:
           hasEmfPlusDrawing = processEmfPlusComment(this, bytes, dataOffset, state, emfPlusState, elements) || hasEmfPlusDrawing;
           break;
@@ -227,10 +249,12 @@ export class MetafileToSvgRenderer {
           });
           break;
         case EMR.CREATEBRUSHINDIRECT:
+          if (record.size < 24) break;
           objects.set(u32(bytes, dataOffset), {
             kind: 'brush',
             color: colorRef(bytes, dataOffset + 8),
             none: u32(bytes, dataOffset + 4) === 1,
+            hatch: u32(bytes, dataOffset + 4) === 2 && u32(bytes, dataOffset + 12) <= 5 ? u32(bytes, dataOffset + 12) : undefined,
           });
           break;
         case EMR.EXTCREATEFONTINDIRECTW:
@@ -354,7 +378,7 @@ export class MetafileToSvgRenderer {
           if (!rectangles?.length) break;
           prepareEmfMapping(state);
           const geometry = emfRegionGeometry(rectangles, state);
-          if (geometry !== undefined) elements.push(`<path ${geometry} stroke="none" fill="${brush.color}"${clipAttr(state)} />`);
+          if (geometry !== undefined) elements.push(`<path ${geometry} stroke="none" fill="${resolveBrushFill(brush, state, defs, hatchPatterns)}"${clipAttr(state)} />`);
           break;
         }
         case EMR.OFFSETCLIPRGN:
@@ -687,6 +711,9 @@ const EMR = {
   SETVIEWPORTEXTEX: 0x000b,
   SETVIEWPORTORGEX: 0x000c,
   SETMAPMODE: 0x0011,
+  SETBRUSHORGEX: 0x000d,
+  SETBKMODE: 0x0012,
+  SETBKCOLOR: 0x0019,
   SETPIXELV: 0x000f,
   FILLRGN: 0x0047,
   SCALEVIEWPORTEXTEX: 0x001f,
@@ -922,6 +949,10 @@ function addWmfObject(objects: Array<MetafileObject | null>, object: MetafileObj
 
 function createInitialState(): DrawState {
   return {
+    backgroundMode: 2,
+    backgroundColor: '#ffffff',
+    brushOrgX: 0,
+    brushOrgY: 0,
     mapMode: 1,
     isotropicDirty: false,
     pen: { kind: 'pen', color: '#000000', width: 1, none: false },
@@ -2231,7 +2262,34 @@ function strokeAttrs(state: DrawState): string {
 }
 
 function fillAttrs(state: DrawState): string {
-  return state.brush.none ? 'fill="none"' : `fill="${state.brush.color}"`;
+  return state.brush.none ? 'fill="none"' : `fill="${state.resolvedBrushFill ?? state.brush.color}"`;
+}
+
+const EMF_BRUSH_RECORDS = new Set<number>([EMR.RECTANGLE, EMR.ELLIPSE, EMR.ROUNDRECT, EMR.CHORD, EMR.PIE,
+  EMR.POLYGON, EMR.POLYGON16, EMR.POLYPOLYGON, EMR.POLYPOLYGON16, EMR.FILLPATH, EMR.STROKEANDFILLPATH]);
+
+function resolveBrushFill(brush: BrushObject, state: DrawState, defs: string[], patterns: Map<string, string>): string {
+  if (brush.none) return 'none';
+  if (brush.hatch === undefined) return brush.color;
+  // GDI's standard hatches are 8x8 device-pixel masks. Mapped geometry must
+  // not scale or rotate the tile; preserve the native pixel phase.
+  const x = (state.brushOrgX % 8 + 8) % 8, y = (state.brushOrgY % 8 + 8) % 8;
+  const background = state.backgroundMode === 2 ? state.backgroundColor : 'transparent';
+  const key = `${brush.hatch}:${brush.color}:${background}:${x}:${y}`;
+  let id = patterns.get(key);
+  if (id === undefined) {
+    id = `hatch${patterns.size + 1}`;
+    const pixels: string[] = [];
+    for (let row = 0; row < 8; row++) for (let column = 0; column < 8; column++) {
+      const painted = brush.hatch === 0 ? row === 3 : brush.hatch === 1 ? column === 4 : brush.hatch === 2 ? row === column
+        : brush.hatch === 3 ? row + column === 7 : brush.hatch === 4 ? row === 3 || column === 4 : row === column || row + column === 7;
+      if (painted) pixels.push(`M ${column} ${row}h1v1h-1Z`);
+    }
+    const backdrop = state.backgroundMode === 2 ? `<rect width="8" height="8" fill="${state.backgroundColor}" />` : '';
+    defs.push(`<pattern id="${id}" patternUnits="userSpaceOnUse" x="${x}" y="${y}" width="8" height="8">${backdrop}<path d="${pixels.join(' ')}" fill="${brush.color}" /></pattern>`);
+    patterns.set(key, id);
+  }
+  return `url(#${id})`;
 }
 
 function argbColorAttrs(value: number): string {
