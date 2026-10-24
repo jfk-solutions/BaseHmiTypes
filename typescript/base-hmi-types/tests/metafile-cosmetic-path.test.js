@@ -16,7 +16,8 @@ test('Compound figures reset phase',()=>{const p=pixels(draw(record(7,0,0,39,39,
 test('PolyDraw figures reset phase',()=>assert.equal(pixels(draw(record(56,0,0,39,39,6,4,8,17,8,17,29,21,8,34,8,34,29,0x06020206,0x0202))).get('34,13'),'#ff0000'));
 for(const paint of [64,63])test(`Path painting carries phase: ${paint}`,()=>assert.equal(pixels(draw(record(59),record(27,4,8),record(54,17,8),record(54,17,29),record(60),record(paint,0,0,39,39))).get('17,13'),'#ff0000'));
 test('Closed figure advances closing segment',()=>assert.ok(pixels(draw(record(59),record(27,4,8),record(54,17,8),record(54,17,29),record(61),record(60),record(64,0,0,39,39))).has('10,18')));
-test('Later opaque gap overwrites earlier ink at intersection',()=>assert.equal(pixels(draw(record(4,0,0,39,39,4,4,4,32,32,4,32,32,4))).get('18,18'),'#ff0000'));
+test('Single call paints all gaps before foreground at intersection',()=>assert.equal(pixels(draw(record(4,0,0,39,39,4,4,4,32,32,4,32,32,4))).get('18,18'),'#123456'));
+test('Separate LineTo calls allow later gap to overwrite ink',()=>assert.equal(pixels(draw(record(27,4,4),record(54,32,32),record(54,4,32),record(54,32,4))).get('18,18'),'#ff0000'));
 test('Clipping does not reset or shorten phase',()=>{assert.equal(pixels(draw(record(30,10,4,35,35),record(27,4,8),record(54,17,8),record(54,17,29))).get('17,13'),'#ff0000');assert.ok(draw(record(30,10,4,35,35),poly()).includes('clip-path'));});
 test('Pen selection without drawing does not reset phase',()=>assert.equal(pixels(draw(record(38,2,2,1,0,0x563412),record(27,4,8),record(54,17,8),record(37,2),record(37,1),record(54,17,29))).get('17,13'),'#ff0000'));
 test('Drawing with other pen resets phase when original reused',()=>assert.equal(pixels(draw(record(38,2,2,1,0,0x563412),record(27,4,8),record(54,17,8),record(37,2),record(54,17,11),record(37,1),record(54,17,29))).get('17,28'),'#123456'));

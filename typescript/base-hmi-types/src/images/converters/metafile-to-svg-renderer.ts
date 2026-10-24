@@ -1019,8 +1019,8 @@ function cloneState(state: DrawState): DrawState {
     brush: { ...state.brush },
     font: { ...state.font },
     worldTransform: { ...state.worldTransform },
-    currentPath: state.currentPath ? [...state.currentPath] : undefined,
-    selectedPath: state.selectedPath ? [...state.selectedPath] : undefined,
+    currentPath: state.currentPath ? cloneMetafilePath(state.currentPath) : undefined,
+    selectedPath: state.selectedPath ? cloneMetafilePath(state.selectedPath) : undefined,
   };
 }
 
@@ -1433,8 +1433,10 @@ function drawEmfPointCurve(bytes: Uint8Array, record: EmfRecord, state: DrawStat
     path.push(`M ${points[0][0]} ${points[0][1]}`);
     if (state.currentPath !== undefined) { state.pathStartX = points[0][0]; state.pathStartY = points[0][1]; state.pathFigureClosed = false; }
   }
-  for (let index = to ? 0 : 1; index < points.length; index += line ? 1 : 3)
-    path.push(line ? `L ${points[index][0]} ${points[index][1]}` : `C ${points[index][0]} ${points[index][1]} ${points[index+1][0]} ${points[index+1][1]} ${points[index+2][0]} ${points[index+2][1]}`);
+  for (let index = to ? 0 : 1; index < points.length; index += line ? 1 : 3) {
+    if (line) path.push(`L ${points[index][0]} ${points[index][1]}`);
+    else appendNativeCubic(path,points[index],points[index+1],points[index+2]);
+  }
   const end = points.at(-1)!;
   if (to) { state.currentX = end[0]; state.currentY = end[1]; [state.logicalCurrentX, state.logicalCurrentY] = logical.at(-1)!; }
   if (state.currentPath !== undefined) { state.pathEndX = end[0]; state.pathEndY = end[1]; }
@@ -1512,7 +1514,7 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
       state.pathStartY = mapped[index][1];
     } else if (type === 2) path.push(`L ${mapped[index][0]} ${mapped[index][1]}`);
     else {
-      path.push(`C ${mapped[index][0]} ${mapped[index][1]} ${mapped[index+1][0]} ${mapped[index+1][1]} ${mapped[index+2][0]} ${mapped[index+2][1]}`);
+      appendNativeCubic(path,mapped[index],mapped[index+1],mapped[index+2]);
       index += 2;
     }
     state.currentX = state.pathEndX = mapped[index][0]; state.currentY = state.pathEndY = mapped[index][1];
@@ -2211,29 +2213,100 @@ function cosmeticPixelLine(x1: number, y1: number, x2: number, y2: number, state
 
 function penIdentity(pen: PenObject): object { return pen.identity ??= {}; }
 
+// Keep native Bezier controls separate from generated SVG arc approximations.
+const nativeCubics = new WeakMap<string[],Map<number,number[]>>();
+function cloneMetafilePath(path: string[]): string[] {
+  const copy=[...path], metadata=nativeCubics.get(path);
+  if(metadata)nativeCubics.set(copy,new Map(metadata));
+  return copy;
+}
+function appendNativeCubic(path: string[], a: [number,number], b: [number,number], c: [number,number]): void {
+  let metadata=nativeCubics.get(path);if(!metadata){metadata=new Map();nativeCubics.set(path,metadata);}
+  metadata.set(path.length,[...a,...b,...c]);
+  path.push(`C ${a[0]} ${a[1]} ${b[0]} ${b[1]} ${c[0]} ${c[1]}`);
+}
+type CosmeticPoint = [number,number];
+function flattenCosmeticCubic(a: CosmeticPoint,b: CosmeticPoint,c: CosmeticPoint,d: CosmeticPoint,result: CosmeticPoint[],depth: number): boolean {
+  // Preserve native 27.4 endpoints; whole-pixel flattening changes dash phase.
+  const error=Math.max(Math.abs(6*(a[0]-2*b[0]+c[0])),Math.abs(6*(b[0]-2*c[0]+d[0])),Math.abs(6*(a[1]-2*b[1]+c[1])),Math.abs(6*(b[1]-2*c[1]+d[1])));
+  if(!Number.isFinite(error)||result.length>=65536)return false;
+  if(error<=4){result.push([Math.floor(d[0]*16+.5)/16,Math.floor(d[1]*16+.5)/16]);return true;}
+  if(depth>=20)return false;
+  const mid=(p: CosmeticPoint,q: CosmeticPoint):CosmeticPoint=>[(p[0]+q[0])/2,(p[1]+q[1])/2];
+  const ab=mid(a,b),bc=mid(b,c),cd=mid(c,d),abc=mid(ab,bc),bcd=mid(bc,cd),middle=mid(abc,bcd);
+  return flattenCosmeticCubic(a,ab,abc,middle,result,depth+1)&&flattenCosmeticCubic(middle,bcd,cd,d,result,depth+1);
+}
+function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawState,foreground: string[],background: string[],previous: CosmeticPoint|undefined): CosmeticPoint|undefined {
+  const horizontal=Math.abs(end[0]-start[0])>=Math.abs(end[1]-start[1]);
+  const a1=start[horizontal?0:1],a2=end[horizontal?0:1],b1=start[horizontal?1:0],b2=end[horizontal?1:0];
+  if(a1===a2)return previous;
+  const sign=a2>a1?1:-1,first=sign>0?Math.ceil(a1):Math.floor(a1),stop=sign>0?Math.ceil(a2):Math.floor(a2);
+  const vertex:CosmeticPoint=[Math.ceil(start[0]-.5),Math.ceil(start[1]-.5)];
+  const vx=Math.abs(vertex[0]-start[0]),vy=Math.abs(vertex[1]-start[1]),inside=vx+vy<.5||vx+vy===.5&&(vx===0||vy===0);
+  const same=(a:CosmeticPoint|undefined,b:CosmeticPoint)=>a?.[0]===b[0]&&a[1]===b[1];
+  const dashes=state.pen.dashArray!,cycle=dashes.reduce((a,b)=>a+b,0)*(dashes.length%2===0?1:2);
+  let phase=state.cosmeticPhase%cycle,dash=0,ink=true;
+  while(phase>=dashes[dash]){phase-=dashes[dash];dash=(dash+1)%dashes.length;ink=!ink;}
+  let remaining=dashes[dash]-phase;
+  const pixel=(point:CosmeticPoint)=>{
+    if(inside&&same(previous,point))return;
+    previous=point;
+    if(ink||state.pen.opaqueDashGaps&&state.backgroundMode===2)(ink?foreground:background).push(`M ${point[0]} ${point[1]}h1v1h-1Z`);
+    if(--remaining===0){dash=(dash+1)%dashes.length;remaining=dashes[dash];ink=!ink;}
+    state.cosmeticPhase=(state.cosmeticPhase+1)%cycle;
+  };
+  const at=(major:number):CosmeticPoint=>{const minor=Math.ceil(b1+(major-a1)*(b2-b1)/(a2-a1)-.5);return horizontal?[major,minor]:[minor,major];};
+  if(inside&&!same(previous,vertex)&&(first===stop||!same(at(first),vertex)))pixel(vertex);
+  const lastAt=stop-sign,stepCount=Math.abs(stop-first);
+  for(let step=0;step<stepCount;step++){
+    const major=first+step*sign,point=at(major);
+    // Negative 45-degree endpoints use the native diamond-edge exclusion.
+    if(major===lastAt&&b2-b1===-(a2-a1)&&Math.abs(point[0]-end[0])+Math.abs(point[1]-end[1])===.5)continue;
+    pixel(point);
+  }
+  // Tiny cusps can leave/re-enter a pixel without an intervening grid crossing.
+  if(previous){const ex=Math.abs(previous[0]-end[0]),ey=Math.abs(previous[1]-end[1]);if(ex+ey>.5||ex+ey===.5&&ex!==0&&ey!==0)previous=undefined;}
+  return previous;
+}
+
 function cosmeticPixelPath(path: string[], state: DrawState, mode: 'stroke'|'fill'|'paint', continueStyle: boolean): string | undefined {
   const commands: Array<{type: string; x: number; y: number}> = [];
+  const metadata=nativeCubics.get(path);
   let x=0,y=0,startX=0,startY=0,budget=0;
-  for(const command of path){
+  for(let commandIndex=0;commandIndex<path.length;commandIndex++){
+    const command=path[commandIndex];
     const values=command.split(' ').filter(Boolean);
+    if(values[0]==='C'){
+      const cubic=metadata?.get(commandIndex);
+      // Fractional transformed controls retain atomic vector fallback, as in C#.
+      if(!cubic||!cubic.every(Number.isInteger))return undefined;
+      const points:CosmeticPoint[]=[];
+      if(!flattenCosmeticCubic([x,y],[cubic[0],cubic[1]],[cubic[2],cubic[3]],[cubic[4],cubic[5]],points,0))return undefined;
+      for(const [px,py] of points){budget+=Math.max(Math.abs(px-x),Math.abs(py-y))+2;commands.push({type:'F',x:px,y:py});x=px;y=py;}
+      continue;
+    }
     if(values.length===1&&values[0]==='Z'){commands.push({type:'Z',x:startX,y:startY});budget+=Math.max(Math.abs(startX-x),Math.abs(startY-y));x=startX;y=startY;continue;}
     if(values.length!==3||!['M','L'].includes(values[0]))return undefined;
     let px=Number(values[1]),py=Number(values[2]);if(!Number.isFinite(px)||!Number.isFinite(py))return undefined;
+    if(metadata?.size&&(!Number.isInteger(px)||!Number.isInteger(py)))return undefined;
     px=Math.floor(px+.5);py=Math.floor(py+.5);
     if(values[0]==='M'){startX=px;startY=py;}else budget+=Math.max(Math.abs(px-x),Math.abs(py-y));
     commands.push({type:values[0],x:px,y:py});x=px;y=py;
   }
   if(budget>262144||!commands.length||commands[0].type!=='M')return undefined;
   penIdentity(state.pen);
-  const working=cloneState(state),pixels:string[]=[];let firstMove=true;
+  const working=cloneState(state),foreground:string[]=[],background:string[]=[];let firstMove=true,previous:CosmeticPoint|undefined;
+  if(working.styledPen!==penIdentity(working.pen)){working.styledPen=penIdentity(working.pen);working.cosmeticPhase=0;}
   for(const command of commands){
-    if(command.type==='M'){if(!firstMove||!continueStyle)working.cosmeticPhase=0;firstMove=false;}
-    else{const segment=cosmeticPixelLine(x,y,command.x,command.y,working);if(segment===undefined)return undefined;pixels.push(segment);}
+    if(command.type==='M'){if(!firstMove||!continueStyle)working.cosmeticPhase=0;firstMove=false;previous=undefined;}
+    else previous=cosmeticGiqSegment([x,y],[command.x,command.y],working,foreground,background,previous);
     x=command.x;y=command.y;
   }
   state.cosmeticPhase=working.cosmeticPhase;state.styledPen=working.styledPen;
   const fill=mode==='stroke'?'':`<path d="${path.join(' ')}" stroke="none" ${fillAttrs(state)} ${fillRuleAttr(state)}${clipAttr(state)} />`;
-  return `<g>${fill}${pixels.join('')}</g>`;
+  const paint=(pixels:string[],color:string)=>pixels.length?`<path d="${pixels.join(' ')}" stroke="none" fill="${color}"${clipAttr(state)} />`:'';
+  // Native single-call strokes paint all gaps before foreground intersections.
+  return `<g>${fill}${paint(background,state.backgroundColor)}${paint(foreground,state.pen.color)}</g>`;
 }
 
 function drawAngleArc(cx: number, cy: number, radius: number, startDegrees: number, sweepDegrees: number, state: DrawState, elements: string[]): void {
