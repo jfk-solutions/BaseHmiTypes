@@ -28,10 +28,10 @@ test('HTML preserves native curve and original source',async()=>{
 });
 function record(t,...values){const b=Buffer.alloc(8+values.length*4);b.writeUInt32LE(t);b.writeUInt32LE(b.length,4);values.forEach((v,i)=>b.writeUInt32LE(v>>>0,8+i*4));return b;}
 function emf(...records){const b=Buffer.concat([Buffer.alloc(88),...records,record(14,0,0,20)]);for(const [at,v] of [[0,1],[4,88],[16,39],[20,39],[40,0x464d4520],[44,0x10000],[48,b.length],[52,records.length+2]])b.writeUInt32LE(v,at);b.writeUInt16LE(2,56);return b;}
-test('Fractional transforms retain atomic vector fallback',()=>{
+test('Fractional transforms use native pixel strokes',()=>{
   const float=v=>{const b=Buffer.alloc(4);b.writeFloatLE(v);return b.readUInt32LE();};
   const data=emf(record(38,1,1,1,0,0x563412),record(37,1),record(35,float(1),0,0,float(1),float(.25),0),record(2,0,0,39,39,4,4,30,10,4,30,4,36,30));
-  const svg=new MetafileToSvgRenderer().render(data,'.emf');assert.ok(svg.includes('C '));assert.ok(!svg.includes('h1v1h-1Z'));
+  const svg=new MetafileToSvgRenderer().render(data,'.emf');assert.ok(!svg.includes('C '));assert.ok(svg.includes('h1v1h-1Z'));
 });
 test('Oversized curves retain atomic vector fallback',()=>{
   const data=emf(record(38,1,1,1,0,0x563412),record(37,1),record(2,0,0,39,39,4,4,30,2147483647,4,30,-2147483648,36,30));

@@ -1,4 +1,5 @@
 // infos at https://github.com/libyal/dtformats/blob/main/documentation/Windows%20(Enhanced)%20Metafile%20Format%20(WMF%20and%20EMF).asciidoc
+import {flattenNativeBezier} from './native-bezier-flattener.js';
 
 type MetafileObject = PenObject | BrushObject | FontObject;
 
@@ -63,6 +64,7 @@ interface DrawState {
   viewportExtX: number;
   viewportExtY: number;
   worldTransform: Transform;
+  advancedCoordinates: boolean;
   fillRule: 'evenodd' | 'nonzero';
   activeClipId?: string;
   activeMaskId?: string;
@@ -239,12 +241,15 @@ export class MetafileToSvgRenderer {
         case EMR.SETWORLDTRANSFORM:
           if (record.size >= 32) {
             const value = readTransform(bytes, dataOffset);
-            if (!isSingularTransform(value)) state.worldTransform = value;
+            if (!isSingularTransform(value)) { state.worldTransform = value; state.advancedCoordinates=true; }
           }
           break;
         case EMR.MODIFYWORLDTRANSFORM:
-          if (record.size >= 36)
-            state.worldTransform = modifyWorldTransform(state.worldTransform, readTransform(bytes, dataOffset), u32(bytes, dataOffset + 24));
+          if (record.size >= 36) {
+            const value=readTransform(bytes,dataOffset),mode=u32(bytes,dataOffset+24);
+            state.worldTransform = modifyWorldTransform(state.worldTransform,value,mode);
+            if(mode===1||mode>=2&&mode<=4&&!isSingularTransform(value))state.advancedCoordinates=true;
+          }
           break;
         case EMR.CREATEPEN:
           if (record.size < 28) break;
@@ -1002,6 +1007,7 @@ function createInitialState(): DrawState {
     viewportExtX: 1,
     viewportExtY: 1,
     worldTransform: identityTransform(),
+    advancedCoordinates: false,
     fillRule: 'evenodd',
     clockwiseShapes: false,
     pathFigureClosed: false,
@@ -1435,7 +1441,7 @@ function drawEmfPointCurve(bytes: Uint8Array, record: EmfRecord, state: DrawStat
   }
   for (let index = to ? 0 : 1; index < points.length; index += line ? 1 : 3) {
     if (line) appendNativePoint(path,'L',points[index],state);
-    else appendNativeCubic(path,points[index],points[index+1],points[index+2]);
+    else appendNativeCubic(path,points[index],points[index+1],points[index+2],state);
   }
   const end = points.at(-1)!;
   if (to) { state.currentX = end[0]; state.currentY = end[1]; [state.logicalCurrentX, state.logicalCurrentY] = logical.at(-1)!; }
@@ -1514,7 +1520,7 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
       state.pathStartY = mapped[index][1];
     } else if (type === 2) appendNativePoint(path,'L',mapped[index],state);
     else {
-      appendNativeCubic(path,mapped[index],mapped[index+1],mapped[index+2]);
+      appendNativeCubic(path,mapped[index],mapped[index+1],mapped[index+2],state);
       index += 2;
     }
     state.currentX = state.pathEndX = mapped[index][0]; state.currentY = state.pathEndY = mapped[index][1];
@@ -2171,7 +2177,9 @@ function combineClipGeometry(state: DrawState, geometry: string, mode: number, v
 
 function lineElement(x1: number, y1: number, x2: number, y2: number, state: DrawState): string {
   if (state.pen.cosmeticDashes) {
-    const pixels = cosmeticPixelLine(x1, y1, x2, y2, state);
+    let pixels:string|undefined;
+    if(state.advancedCoordinates){const path:string[]=[];appendNativePoint(path,'M',[x1,y1],state);appendNativePoint(path,'L',[x2,y2],state);pixels=cosmeticPixelPath(path,state,'stroke',true);}
+    else pixels = cosmeticPixelLine(x1, y1, x2, y2, state);
     if (pixels !== undefined) return pixels;
   }
   if (!state.pen.none && state.styledPen !== penIdentity(state.pen)) { state.styledPen=penIdentity(state.pen); state.cosmeticPhase=0; }
@@ -2227,34 +2235,28 @@ function appendMetafilePath(target: string[],path: string[]): void {
   for(const command of path)target.push(command);
 }
 function appendNativePoint(path: string[],command: string,point: CosmeticPoint,state: DrawState): void {
+  let metadata=nativePoints.get(path);if(!metadata){metadata=new Map();nativePoints.set(path,metadata);}
+  metadata.set(path.length,nativeDevicePoint(point,state));
+  path.push(`${command} ${point[0]} ${point[1]}`);
+}
+function nativeDevicePoint(point:CosmeticPoint,state:DrawState):CosmeticPoint {
   const t=state.worldTransform;
-  if(t.m11!==1||t.m12!==0||t.m21!==0||t.m22!==1||t.dx!==0||t.dy!==0){
+  if(state.advancedCoordinates){
     // Match GDI's separately quantized linear component and translation; never
     // recover fixed-point coordinates from rounded SVG display strings.
     const fixed=(value:number)=>Math.sign(value)*Math.floor(Math.abs(value)*16+.5)/16;
     const ox=state.viewportOrgX+(t.dx-state.windowOrgX)*state.viewportExtX/(state.windowExtX===0?1:state.windowExtX);
     const oy=state.viewportOrgY+(t.dy-state.windowOrgY)*state.viewportExtY/(state.windowExtY===0?1:state.windowExtY);
-    let metadata=nativePoints.get(path);if(!metadata){metadata=new Map();nativePoints.set(path,metadata);}
-    metadata.set(path.length,[fixed(point[0]-ox)+fixed(ox),fixed(point[1]-oy)+fixed(oy)]);
+    return [fixed(point[0]-ox)+fixed(ox),fixed(point[1]-oy)+fixed(oy)];
   }
-  path.push(`${command} ${point[0]} ${point[1]}`);
+  return [Math.floor(point[0]+.5),Math.floor(point[1]+.5)];
 }
-function appendNativeCubic(path: string[], a: [number,number], b: [number,number], c: [number,number]): void {
+function appendNativeCubic(path: string[], a: [number,number], b: [number,number], c: [number,number],state:DrawState): void {
   let metadata=nativeCubics.get(path);if(!metadata){metadata=new Map();nativeCubics.set(path,metadata);}
-  metadata.set(path.length,[...a,...b,...c]);
+  metadata.set(path.length,[...nativeDevicePoint(a,state),...nativeDevicePoint(b,state),...nativeDevicePoint(c,state)]);
   path.push(`C ${a[0]} ${a[1]} ${b[0]} ${b[1]} ${c[0]} ${c[1]}`);
 }
 type CosmeticPoint = [number,number];
-function flattenCosmeticCubic(a: CosmeticPoint,b: CosmeticPoint,c: CosmeticPoint,d: CosmeticPoint,result: CosmeticPoint[],depth: number): boolean {
-  // Preserve native 27.4 endpoints; whole-pixel flattening changes dash phase.
-  const error=Math.max(Math.abs(6*(a[0]-2*b[0]+c[0])),Math.abs(6*(b[0]-2*c[0]+d[0])),Math.abs(6*(a[1]-2*b[1]+c[1])),Math.abs(6*(b[1]-2*c[1]+d[1])));
-  if(!Number.isFinite(error)||result.length>=65536)return false;
-  if(error<=4){result.push([Math.floor(d[0]*16+.5)/16,Math.floor(d[1]*16+.5)/16]);return true;}
-  if(depth>=20)return false;
-  const mid=(p: CosmeticPoint,q: CosmeticPoint):CosmeticPoint=>[(p[0]+q[0])/2,(p[1]+q[1])/2];
-  const ab=mid(a,b),bc=mid(b,c),cd=mid(c,d),abc=mid(ab,bc),bcd=mid(bc,cd),middle=mid(abc,bcd);
-  return flattenCosmeticCubic(a,ab,abc,middle,result,depth+1)&&flattenCosmeticCubic(middle,bcd,cd,d,result,depth+1);
-}
 function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawState,foreground: string[],background: string[],finalSegment: boolean,previous: CosmeticPoint|undefined): CosmeticPoint|undefined {
   const horizontal=Math.abs(end[0]-start[0])>=Math.abs(end[1]-start[1]);
   const a1=start[horizontal?0:1],a2=end[horizontal?0:1],b1=start[horizontal?1:0],b2=end[horizontal?1:0];
@@ -2299,26 +2301,28 @@ function cosmeticPixelPath(path: string[], state: DrawState, mode: 'stroke'|'fil
   const commands: Array<{type: string; x: number; y: number}> = [];
   const metadata=nativeCubics.get(path);
   let x=0,y=0,startX=0,startY=0,budget=0;
+  const addBudget=(px:number,py:number)=>{const previous=commands.at(-1);if(previous)budget+=Math.max(Math.abs(px-previous.x),Math.abs(py-previous.y))+2;return budget<=262144;};
   for(let commandIndex=0;commandIndex<path.length;commandIndex++){
     const command=path[commandIndex];
     const values=command.split(' ').filter(Boolean);
     if(values[0]==='C'){
       const cubic=metadata?.get(commandIndex);
-      // Fractional transformed controls retain atomic vector fallback, as in C#.
-      if(!cubic||!cubic.every(Number.isInteger))return undefined;
-      const points:CosmeticPoint[]=[];
-      if(!flattenCosmeticCubic([x,y],[cubic[0],cubic[1]],[cubic[2],cubic[3]],[cubic[4],cubic[5]],points,0))return undefined;
-      for(const [px,py] of points){budget+=Math.max(Math.abs(px-x),Math.abs(py-y))+2;commands.push({type:'F',x:px,y:py});x=px;y=py;}
+      if(!cubic)return undefined;
+      const points=flattenNativeBezier([[x,y],[cubic[0],cubic[1]],[cubic[2],cubic[3]],[cubic[4],cubic[5]]]);
+      if(!points)return undefined;
+      for(const [px,py] of points.slice(1)){if(!addBudget(px,py))return undefined;commands.push({type:'F',x:px,y:py});}
+      // Preserve the true basis for the next cubic even if native flattening
+      // ends short; emitted segments still join the actual flattened vertices.
+      x=cubic[4];y=cubic[5];
       continue;
     }
-    if(values.length===1&&values[0]==='Z'){commands.push({type:'Z',x:startX,y:startY});budget+=Math.max(Math.abs(startX-x),Math.abs(startY-y));x=startX;y=startY;continue;}
+    if(values.length===1&&values[0]==='Z'){if(!addBudget(startX,startY))return undefined;commands.push({type:'Z',x:startX,y:startY});x=startX;y=startY;continue;}
     if(values.length!==3||!['M','L'].includes(values[0]))return undefined;
     let px=Number(values[1]),py=Number(values[2]);if(!Number.isFinite(px)||!Number.isFinite(py))return undefined;
-    if(metadata?.size&&(!Number.isInteger(px)||!Number.isInteger(py)))return undefined;
     const nativePoint=nativePoints.get(path)?.get(commandIndex);
     if(nativePoint){[px,py]=nativePoint;}else{px=Math.floor(px+.5);py=Math.floor(py+.5);}
     if(!Number.isFinite(px)||!Number.isFinite(py))return undefined;
-    if(values[0]==='M'){startX=px;startY=py;}else budget+=Math.max(Math.abs(px-x),Math.abs(py-y))+2;
+    if(values[0]==='M'){startX=px;startY=py;}else if(!addBudget(px,py))return undefined;
     if(budget>262144)return undefined;
     commands.push({type:values[0],x:px,y:py});x=px;y=py;
   }
