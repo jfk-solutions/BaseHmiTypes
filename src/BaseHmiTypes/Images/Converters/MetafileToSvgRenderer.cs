@@ -201,7 +201,7 @@ public sealed class MetafileToSvgRenderer
                     (state.CurrentX, state.CurrentY) = TransformPoint(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4));
                     if (state.CurrentPath is not null)
                     {
-                        state.CurrentPath.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+                        AppendNativePoint(state.CurrentPath,"M",(state.CurrentX,state.CurrentY),state);
                         state.PathStartX = state.CurrentX;
                         state.PathFigureClosed = false;
                         state.PathStartY = state.CurrentY;
@@ -216,7 +216,7 @@ public sealed class MetafileToSvgRenderer
                         if (state.CurrentPath is not null)
                         {
                             EnsurePathPosition(state);
-                            state.CurrentPath.Add($"L {Number(point.X)} {Number(point.Y)}");
+                            AppendNativePoint(state.CurrentPath,"L",point,state);
                             state.PathEndX = point.X;
                             state.PathEndY = point.Y;
                         }
@@ -388,9 +388,9 @@ public sealed class MetafileToSvgRenderer
                         {
                             // These records start independent figures and do not change
                             // the DC's current position, unlike POLYLINETO.
-                            state.CurrentPath.Add($"M {Number(points[0].X)} {Number(points[0].Y)}");
+                            AppendNativePoint(state.CurrentPath,"M",points[0],state);
                             for (var index = 1; index < points.Count; index++)
-                                state.CurrentPath.Add($"L {Number(points[index].X)} {Number(points[index].Y)}");
+                                AppendNativePoint(state.CurrentPath,"L",points[index],state);
                             if (closed) state.CurrentPath.Add("Z");
                             state.PathFigureClosed = closed;
                             state.PathStartX = points[0].X;
@@ -411,9 +411,9 @@ public sealed class MetafileToSvgRenderer
                         foreach (var figure in ReadEmfCompoundPoints(bytes, record, shortPoints))
                         {
                             var points = MapPoints(figure, state);
-                            path.Add($"M {Number(points[0].X)} {Number(points[0].Y)}");
+                            AppendNativePoint(path,"M",points[0],state);
                             for (var index = 1; index < points.Count; index++)
-                                path.Add($"L {Number(points[index].X)} {Number(points[index].Y)}");
+                                AppendNativePoint(path,"L",points[index],state);
                             if (closed) path.Add("Z");
                             if (state.CurrentPath is not null)
                             {
@@ -1423,7 +1423,7 @@ public sealed class MetafileToSvgRenderer
     {
         if (state.CurrentPath is not null && (state.PathFigureClosed || state.PathEndX != state.CurrentX || state.PathEndY != state.CurrentY))
         {
-            state.CurrentPath.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+            AppendNativePoint(state.CurrentPath,"M",(state.CurrentX,state.CurrentY),state);
             state.PathStartX = state.CurrentX;
             state.PathFigureClosed = false;
             state.PathStartY = state.CurrentY;
@@ -1441,16 +1441,16 @@ public sealed class MetafileToSvgRenderer
         var path = state.CurrentPath ?? new MetafilePath();
         if (to)
         {
-            if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+            if (state.CurrentPath is null) AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state);
             else EnsurePathPosition(state);
         }
         else
         {
-            path.Add($"M {Number(points[0].X)} {Number(points[0].Y)}");
+            AppendNativePoint(path,"M",points[0],state);
             if (state.CurrentPath is not null) { state.PathStartX = points[0].X; state.PathStartY = points[0].Y; state.PathFigureClosed = false; }
         }
         for (var index = to ? 0 : 1; index < points.Count; index += line ? 1 : 3)
-            if (line) path.Add($"L {Number(points[index].X)} {Number(points[index].Y)}");
+            if (line) AppendNativePoint(path,"L",points[index],state);
             else AppendNativeCubic(path,points[index],points[index+1],points[index+2]);
         var end = points[points.Count - 1];
         if (to) { state.CurrentX = end.X; state.CurrentY = end.Y; state.LogicalCurrentX = logical[logical.Count - 1].X; state.LogicalCurrentY = logical[logical.Count - 1].Y; }
@@ -1481,14 +1481,14 @@ public sealed class MetafileToSvgRenderer
         if (bytes[typesOffset] != PolyDrawTypeMoveTo)
         {
             if (state.CurrentPath is not null) EnsurePathPosition(state);
-            else { path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}"); state.PathStartX = state.CurrentX; state.PathStartY = state.CurrentY; state.PathFigureClosed = false; }
+            else { AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state); state.PathStartX = state.CurrentX; state.PathStartY = state.CurrentY; state.PathFigureClosed = false; }
         }
         for (var index = 0; index < mapped.Count; index++)
         {
             var type = bytes[typesOffset + index] & ~PolyDrawTypeCloseFigure;
             if (type != PolyDrawTypeMoveTo && state.PathFigureClosed)
             {
-                path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+                AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state);
                 state.PathStartX = state.CurrentX;
                 state.PathStartY = state.CurrentY;
                 state.PathFigureClosed = false;
@@ -1496,12 +1496,12 @@ public sealed class MetafileToSvgRenderer
             if (type == PolyDrawTypeMoveTo)
             {
                 state.PathFigureClosed = false;
-                path.Add($"M {Number(mapped[index].X)} {Number(mapped[index].Y)}");
+                AppendNativePoint(path,"M",mapped[index],state);
                 state.PathStartX = mapped[index].X;
                 state.PathStartY = mapped[index].Y;
             }
             else if (type == PolyDrawTypeLineTo)
-                path.Add($"L {Number(mapped[index].X)} {Number(mapped[index].Y)}");
+                AppendNativePoint(path,"L",mapped[index],state);
             else
             {
                 AppendNativeCubic(path,mapped[index],mapped[index+1],mapped[index+2]);
@@ -1895,6 +1895,21 @@ public sealed class MetafileToSvgRenderer
         return true;
     }
 
+    private static void AppendNativePoint(MetafilePath path,string command,(double X,double Y) point,DrawState state)
+    {
+        var t=state.WorldTransform;
+        if(t.M11!=1||t.M12!=0||t.M21!=0||t.M22!=1||t.Dx!=0||t.Dy!=0)
+        {
+            // GDI quantizes the linear component and device translation separately.
+            // Keep this metadata independent of SVG's three-decimal formatting.
+            double Fixed(double value)=>Math.Round(value*16,MidpointRounding.AwayFromZero)/16;
+            var ox=state.ViewportOrgX+(t.Dx-state.WindowOrgX)*state.ViewportExtX/(state.WindowExtX==0?1:state.WindowExtX);
+            var oy=state.ViewportOrgY+(t.Dy-state.WindowOrgY)*state.ViewportExtY/(state.WindowExtY==0?1:state.WindowExtY);
+            path.NativePoints[path.Count]=(Fixed(point.X-ox)+Fixed(ox),Fixed(point.Y-oy)+Fixed(oy));
+        }
+        path.Add($"{command} {Number(point.X)} {Number(point.Y)}");
+    }
+
     private static void AppendNativeCubic(MetafilePath path,(double X,double Y) a,(double X,double Y) b,(double X,double Y) c)
     {
         path.NativeCubics[path.Count]=new[]{a.X,a.Y,b.X,b.Y,c.X,c.Y};
@@ -1914,7 +1929,7 @@ public sealed class MetafileToSvgRenderer
         return FlattenCosmeticCubic(a,ab,abc,mid,result,depth+1)&&FlattenCosmeticCubic(mid,bcd,cd,d,result,depth+1);
     }
 
-    private static void AppendCosmeticGiqSegment((double X,double Y) start,(double X,double Y) end,DrawState state,StringBuilder foreground,StringBuilder background,ref (double X,double Y)? previous)
+    private static void AppendCosmeticGiqSegment((double X,double Y) start,(double X,double Y) end,DrawState state,StringBuilder foreground,StringBuilder background,bool finalSegment,ref (double X,double Y)? previous)
     {
         // Grid-intersection quantization uses half-pixel diamonds, not SVG's
         // continuous arc length. Shared vertices consume only one style step.
@@ -1932,6 +1947,10 @@ public sealed class MetafileToSvgRenderer
         var remaining=state.Pen.DashArray[dash]-phase;
         void Pixel((double X,double Y) p)
         {
+            var ex=Math.Abs(p.X-end.X);var ey=Math.Abs(p.Y-end.Y);
+            // A final endpoint inside its pixel's diamond is not painted. At
+            // axis corners, upper/left ties remain included in that diamond.
+            if(finalSegment&&(ex+ey<.5||ex+ey==.5&&(ex==0||ey==0)&&end.X>=p.X&&end.Y>=p.Y))return;
             if(last==p&&inside)return;
             last=p;
             if(ink||state.Pen.OpaqueDashGaps&&state.BackgroundMode==2)(ink?foreground:background).Append($"M {Number(p.X)} {Number(p.Y)}h1v1h-1Z ");
@@ -1950,9 +1969,15 @@ public sealed class MetafileToSvgRenderer
         {
             var at=first+step*sign;
             var p=At(at);
-            // The negative 45-degree boundary convention excludes the final
-            // diamond even when the fixed-point endpoint lies on its edge.
-            if(at==lastAt&&b2-b1==-(a2-a1)&&Math.Abs(p.X-end.X)+Math.Abs(p.Y-end.Y)==.5)continue;
+            if(at==lastAt&&Math.Abs(b2-b1)==Math.Abs(a2-a1))
+            {
+                // Rotated diamond bounds are half-open. An endpoint on the
+                // exiting edge counts; one still inside the parallel edge does not.
+                var u=end.X-p.X+end.Y-p.Y;var v=end.X-p.X-end.Y+p.Y;
+                var du=end.X-start.X+end.Y-start.Y;var dv=end.X-start.X-end.Y+start.Y;
+                var exits=Math.Abs(u)==.5&&u*du>0||Math.Abs(v)==.5&&v*dv>0;
+                if(u>-.5&&u<=.5&&v>=-.5&&v<.5&&!exits)continue;
+            }
             Pixel(p);
         }
         // A sub-pixel cusp can leave and re-enter the same pixel without any
@@ -1992,8 +2017,11 @@ public sealed class MetafileToSvgRenderer
                 !double.TryParse(values[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var py) ||
                 double.IsNaN(px) || double.IsInfinity(px) || double.IsNaN(py) || double.IsInfinity(py)) return false;
             if(path.NativeCubics.Count>0&&(px!=Math.Truncate(px)||py!=Math.Truncate(py)))return false;
-            px = Math.Floor(px + .5); py = Math.Floor(py + .5);
-            if (values[0] == "M") { startX=px; startY=py; } else budget += Math.Max(Math.Abs(px-x), Math.Abs(py-y));
+            if(path.NativePoints.TryGetValue(commandIndex,out var nativePoint)){px=nativePoint.X;py=nativePoint.Y;}
+            else {px = Math.Floor(px + .5); py = Math.Floor(py + .5);}
+            if(double.IsNaN(px)||double.IsInfinity(px)||double.IsNaN(py)||double.IsInfinity(py))return false;
+            if (values[0] == "M") { startX=px; startY=py; } else budget += Math.Max(Math.Abs(px-x), Math.Abs(py-y))+2;
+            if(budget>262144)return false;
             commands.Add((values[0][0],px,py)); x=px; y=py;
         }
         if (budget > 262144 || commands.Count == 0 || commands[0].Type != 'M') return false;
@@ -2003,10 +2031,11 @@ public sealed class MetafileToSvgRenderer
         var foreground = new StringBuilder(); var background = new StringBuilder(); var firstMove = true;
         (double X,double Y)? previous=null;
         if (!ReferenceEquals(working.StyledPen,working.Pen)) { working.StyledPen=working.Pen;working.CosmeticPhase=0; }
-        foreach (var command in commands)
+        for(var index=0;index<commands.Count;index++)
         {
+            var command=commands[index];
             if (command.Type == 'M') { if (!firstMove || !continueStyle) working.CosmeticPhase=0; firstMove=false;previous=null; }
-            else AppendCosmeticGiqSegment((x,y),(command.X,command.Y),working,foreground,background,ref previous);
+            else AppendCosmeticGiqSegment((x,y),(command.X,command.Y),working,foreground,background,index+1==commands.Count||commands[index+1].Type=='M',ref previous);
             x=command.X; y=command.Y;
         }
         state.CosmeticPhase=working.CosmeticPhase; state.StyledPen=working.StyledPen;
@@ -2034,8 +2063,8 @@ public sealed class MetafileToSvgRenderer
             return string.Empty;
         if (state.Pen.CosmeticDashes)
         {
-            var path = new MetafilePath { $"M {Number(points[0].X)} {Number(points[0].Y)}" };
-            path.AddRange(points.Skip(1).Select(p=>$"L {Number(p.X)} {Number(p.Y)}")); if (closed) path.Add("Z");
+            var path = new MetafilePath();AppendNativePoint(path,"M",points[0],state);
+            foreach(var point in points.Skip(1))AppendNativePoint(path,"L",point,state);if (closed) path.Add("Z");
             if (TryCosmeticPixelPath(path,state,closed?PathPaintMode.Paint:PathPaintMode.Stroke,false,out var pixels)) return pixels;
         }
         var tag = closed ? "polygon" : "polyline";
@@ -2269,11 +2298,12 @@ internal sealed class FontObject : MetafileObject
 internal sealed class MetafilePath : List<string>
 {
     public Dictionary<int,double[]> NativeCubics { get; }=new Dictionary<int,double[]>();
+    public Dictionary<int,(double X,double Y)> NativePoints { get; }=new Dictionary<int,(double X,double Y)>();
     public MetafilePath() { }
-    public MetafilePath(MetafilePath source):base(source) { foreach(var pair in source.NativeCubics)NativeCubics[pair.Key]=pair.Value; }
+    public MetafilePath(MetafilePath source):base(source) { foreach(var pair in source.NativeCubics)NativeCubics[pair.Key]=pair.Value;foreach(var pair in source.NativePoints)NativePoints[pair.Key]=pair.Value; }
     public new void AddRange(IEnumerable<string> source)
     {
-        if(source is MetafilePath path)foreach(var pair in path.NativeCubics)NativeCubics[Count+pair.Key]=pair.Value;
+        if(source is MetafilePath path){foreach(var pair in path.NativeCubics)NativeCubics[Count+pair.Key]=pair.Value;foreach(var pair in path.NativePoints)NativePoints[Count+pair.Key]=pair.Value;}
         base.AddRange(source);
     }
 }
