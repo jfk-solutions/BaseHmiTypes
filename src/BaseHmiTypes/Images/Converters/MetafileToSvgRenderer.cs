@@ -127,11 +127,16 @@ public sealed class MetafileToSvgRenderer
                     if (record.Size >= 32)
                     {
                         var value = ReadTransform(bytes, dataOffset);
-                        if (!IsSingularTransform(value)) state.WorldTransform = value;
+                        if (!IsSingularTransform(value)) { state.WorldTransform = value;state.AdvancedCoordinates=true; }
                     }
                     break;
                 case EMR.ModifyWorldTransform:
-                    if (record.Size >= 36) state.WorldTransform = ModifyWorldTransform(state.WorldTransform, ReadTransform(bytes, dataOffset), U32(bytes, dataOffset + 24));
+                    if (record.Size >= 36)
+                    {
+                        var value=ReadTransform(bytes,dataOffset);var mode=U32(bytes,dataOffset+24);
+                        state.WorldTransform = ModifyWorldTransform(state.WorldTransform,value,mode);
+                        if(mode==1||mode>=2&&mode<=4&&!IsSingularTransform(value))state.AdvancedCoordinates=true;
+                    }
                     break;
                 case EMR.CreatePen:
                     if (record.Size < 28) break;
@@ -856,6 +861,7 @@ public sealed class MetafileToSvgRenderer
             ViewportExtX = state.ViewportExtX,
             ViewportExtY = state.ViewportExtY,
             WorldTransform = state.WorldTransform,
+            AdvancedCoordinates = state.AdvancedCoordinates,
             FillRule = state.FillRule,
             ClockwiseShapes = state.ClockwiseShapes,
             MiterLimit = state.MiterLimit,
@@ -914,6 +920,7 @@ public sealed class MetafileToSvgRenderer
         target.ViewportExtX = restored.ViewportExtX;
         target.ViewportExtY = restored.ViewportExtY;
         target.WorldTransform = restored.WorldTransform;
+        target.AdvancedCoordinates = restored.AdvancedCoordinates;
         target.FillRule = restored.FillRule;
         target.ClockwiseShapes = restored.ClockwiseShapes;
         target.MiterLimit = restored.MiterLimit;
@@ -1451,7 +1458,7 @@ public sealed class MetafileToSvgRenderer
         }
         for (var index = to ? 0 : 1; index < points.Count; index += line ? 1 : 3)
             if (line) AppendNativePoint(path,"L",points[index],state);
-            else AppendNativeCubic(path,points[index],points[index+1],points[index+2]);
+            else AppendNativeCubic(path,points[index],points[index+1],points[index+2],state);
         var end = points[points.Count - 1];
         if (to) { state.CurrentX = end.X; state.CurrentY = end.Y; state.LogicalCurrentX = logical[logical.Count - 1].X; state.LogicalCurrentY = logical[logical.Count - 1].Y; }
         if (state.CurrentPath is not null) { state.PathEndX = end.X; state.PathEndY = end.Y; }
@@ -1504,7 +1511,7 @@ public sealed class MetafileToSvgRenderer
                 AppendNativePoint(path,"L",mapped[index],state);
             else
             {
-                AppendNativeCubic(path,mapped[index],mapped[index+1],mapped[index+2]);
+                AppendNativeCubic(path,mapped[index],mapped[index+1],mapped[index+2],state);
                 index += 2;
             }
             state.PathEndX = state.CurrentX = mapped[index].X;
@@ -1850,7 +1857,15 @@ public sealed class MetafileToSvgRenderer
 
     private static string LineElement(double x1, double y1, double x2, double y2, DrawState state)
     {
-        if (state.Pen.CosmeticDashes && TryCosmeticPixelLine(x1, y1, x2, y2, state, out var pixels)) return pixels;
+        if(state.Pen.CosmeticDashes)
+        {
+            if(state.AdvancedCoordinates)
+            {
+                var path=new MetafilePath();AppendNativePoint(path,"M",(x1,y1),state);AppendNativePoint(path,"L",(x2,y2),state);
+                if(TryCosmeticPixelPath(path,state,PathPaintMode.Stroke,true,out var pixels))return pixels;
+            }
+            else if(TryCosmeticPixelLine(x1,y1,x2,y2,state,out var pixels))return pixels;
+        }
         if (!state.Pen.None && !ReferenceEquals(state.StyledPen, state.Pen)) { state.StyledPen = state.Pen; state.CosmeticPhase = 0; }
         // GDI cosmetic patterns count major-axis device pixels, not Euclidean
         // SVG path length. This also retains the pattern for 45-degree lines.
@@ -1897,36 +1912,30 @@ public sealed class MetafileToSvgRenderer
 
     private static void AppendNativePoint(MetafilePath path,string command,(double X,double Y) point,DrawState state)
     {
+        path.NativePoints[path.Count]=NativeDevicePoint(point,state);
+        path.Add($"{command} {Number(point.X)} {Number(point.Y)}");
+    }
+
+    private static (double X,double Y) NativeDevicePoint((double X,double Y) point,DrawState state)
+    {
         var t=state.WorldTransform;
-        if(t.M11!=1||t.M12!=0||t.M21!=0||t.M22!=1||t.Dx!=0||t.Dy!=0)
+        if(state.AdvancedCoordinates)
         {
             // GDI quantizes the linear component and device translation separately.
             // Keep this metadata independent of SVG's three-decimal formatting.
             double Fixed(double value)=>Math.Round(value*16,MidpointRounding.AwayFromZero)/16;
             var ox=state.ViewportOrgX+(t.Dx-state.WindowOrgX)*state.ViewportExtX/(state.WindowExtX==0?1:state.WindowExtX);
             var oy=state.ViewportOrgY+(t.Dy-state.WindowOrgY)*state.ViewportExtY/(state.WindowExtY==0?1:state.WindowExtY);
-            path.NativePoints[path.Count]=(Fixed(point.X-ox)+Fixed(ox),Fixed(point.Y-oy)+Fixed(oy));
+            return (Fixed(point.X-ox)+Fixed(ox),Fixed(point.Y-oy)+Fixed(oy));
         }
-        path.Add($"{command} {Number(point.X)} {Number(point.Y)}");
+        return (Math.Floor(point.X+.5),Math.Floor(point.Y+.5));
     }
 
-    private static void AppendNativeCubic(MetafilePath path,(double X,double Y) a,(double X,double Y) b,(double X,double Y) c)
+    private static void AppendNativeCubic(MetafilePath path,(double X,double Y) a,(double X,double Y) b,(double X,double Y) c,DrawState state)
     {
-        path.NativeCubics[path.Count]=new[]{a.X,a.Y,b.X,b.Y,c.X,c.Y};
+        var na=NativeDevicePoint(a,state);var nb=NativeDevicePoint(b,state);var nc=NativeDevicePoint(c,state);
+        path.NativeCubics[path.Count]=new[]{na.X,na.Y,nb.X,nb.Y,nc.X,nc.Y};
         path.Add($"C {Number(a.X)} {Number(a.Y)} {Number(b.X)} {Number(b.Y)} {Number(c.X)} {Number(c.Y)}");
-    }
-
-    private static bool FlattenCosmeticCubic((double X,double Y) a,(double X,double Y) b,(double X,double Y) c,(double X,double Y) d,List<(double X,double Y)> result,int depth)
-    {
-        // Native adaptive subdivision retains 27.4 device endpoints. Rounding
-        // these to whole pixels before styling changes both coverage and phase.
-        var error=new[]{Math.Abs(6*(a.X-2*b.X+c.X)),Math.Abs(6*(b.X-2*c.X+d.X)),Math.Abs(6*(a.Y-2*b.Y+c.Y)),Math.Abs(6*(b.Y-2*c.Y+d.Y))}.Max();
-        if(double.IsNaN(error)||double.IsInfinity(error)||result.Count>=65536)return false;
-        if(error<=4){result.Add((Math.Floor(d.X*16+.5)/16,Math.Floor(d.Y*16+.5)/16));return true;}
-        if(depth>=20)return false;
-        (double X,double Y) Mid((double X,double Y) p,(double X,double Y) q)=>((p.X+q.X)/2,(p.Y+q.Y)/2);
-        var ab=Mid(a,b);var bc=Mid(b,c);var cd=Mid(c,d);var abc=Mid(ab,bc);var bcd=Mid(bc,cd);var mid=Mid(abc,bcd);
-        return FlattenCosmeticCubic(a,ab,abc,mid,result,depth+1)&&FlattenCosmeticCubic(mid,bcd,cd,d,result,depth+1);
     }
 
     private static void AppendCosmeticGiqSegment((double X,double Y) start,(double X,double Y) end,DrawState state,StringBuilder foreground,StringBuilder background,bool finalSegment,ref (double X,double Y)? previous)
@@ -1995,6 +2004,11 @@ public sealed class MetafileToSvgRenderer
         element = string.Empty;
         var commands = new List<(char Type, double X, double Y)>();
         double x = 0, y = 0, startX = 0, startY = 0, budget = 0;
+        bool AddBudget(double nextX,double nextY)
+        {
+            if(commands.Count>0){var last=commands[commands.Count-1];budget+=Math.Max(Math.Abs(nextX-last.X),Math.Abs(nextY-last.Y))+2;}
+            return budget<=262144;
+        }
         for (var commandIndex=0; commandIndex<path.Count; commandIndex++)
         {
             var command=path[commandIndex];
@@ -2002,26 +2016,24 @@ public sealed class MetafileToSvgRenderer
             if (values[0]=="C")
             {
                 if (!path.NativeCubics.TryGetValue(commandIndex,out var cubic)) return false;
-                // Fractional transformed controls have additional native path/direct
-                // quantization rules. Retain vector rendering until those are verified.
-                if(cubic.Any(value=>value!=Math.Truncate(value)))return false;
                 (double X,double Y) P(int at)=>(cubic[at],cubic[at+1]);
-                var points=new List<(double X,double Y)>();
-                if (!FlattenCosmeticCubic((x,y),P(0),P(2),P(4),points,0)) return false;
-                foreach(var point in points){budget+=Math.Max(Math.Abs(point.X-x),Math.Abs(point.Y-y))+2;commands.Add(('F',point.X,point.Y));x=point.X;y=point.Y;}
+                if (!NativeBezierFlattener.TryFlatten(new[]{(x,y),P(0),P(2),P(4)},out var points)) return false;
+                foreach(var point in points.Skip(1)){if(!AddBudget(point.X,point.Y))return false;commands.Add(('F',point.X,point.Y));}
+                // A rounded native approximation can finish short of the stored
+                // control. The next cubic's basis starts at that stored control;
+                // the emitted polyline still connects the actual flattened points.
+                x=cubic[4];y=cubic[5];
                 continue;
             }
-            if (values.Length == 1 && values[0] == "Z") { commands.Add(('Z', startX, startY)); budget += Math.Max(Math.Abs(startX-x), Math.Abs(startY-y)); x=startX; y=startY; continue; }
+            if (values.Length == 1 && values[0] == "Z") { if(!AddBudget(startX,startY))return false;commands.Add(('Z', startX, startY));x=startX; y=startY; continue; }
             if (values.Length != 3 || values[0] is not ("M" or "L") ||
                 !double.TryParse(values[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var px) ||
                 !double.TryParse(values[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var py) ||
                 double.IsNaN(px) || double.IsInfinity(px) || double.IsNaN(py) || double.IsInfinity(py)) return false;
-            if(path.NativeCubics.Count>0&&(px!=Math.Truncate(px)||py!=Math.Truncate(py)))return false;
             if(path.NativePoints.TryGetValue(commandIndex,out var nativePoint)){px=nativePoint.X;py=nativePoint.Y;}
             else {px = Math.Floor(px + .5); py = Math.Floor(py + .5);}
             if(double.IsNaN(px)||double.IsInfinity(px)||double.IsNaN(py)||double.IsInfinity(py))return false;
-            if (values[0] == "M") { startX=px; startY=py; } else budget += Math.Max(Math.Abs(px-x), Math.Abs(py-y))+2;
-            if(budget>262144)return false;
+            if (values[0] == "M") { startX=px; startY=py; } else if(!AddBudget(px,py))return false;
             commands.Add((values[0][0],px,py)); x=px; y=py;
         }
         if (budget > 262144 || commands.Count == 0 || commands[0].Type != 'M') return false;
@@ -2355,6 +2367,7 @@ internal sealed class DrawState
     public double ViewportExtY { get; set; } = 1;
 
     public Transform WorldTransform { get; set; } = new();
+    public bool AdvancedCoordinates { get; set; }
 
     public string FillRule { get; set; } = "evenodd";
 

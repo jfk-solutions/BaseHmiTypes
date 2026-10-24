@@ -55,10 +55,10 @@ public class MetafileCosmeticCurveTests
     }
 
     [TestMethod]
-    public void FractionalTransformsRetainAtomicVectorFallback()
+    public void FractionalTransformsUseNativePixelStrokes()
     {
         var bytes=Emf(Record(38,1,1,1,0,0x563412),Record(37,1),Record(35,BitConverter.SingleToInt32Bits(1),0,0,BitConverter.SingleToInt32Bits(1),BitConverter.SingleToInt32Bits(.25f),0),Record(2,0,0,39,39,4,4,30,10,4,30,4,36,30));
-        var svg=new MetafileToSvgRenderer().Render(bytes,".emf")!;StringAssert.Contains(svg,"C ");Assert.IsFalse(svg.Contains("h1v1h-1Z"));
+        var svg=new MetafileToSvgRenderer().Render(bytes,".emf")!;StringAssert.Contains(svg,"h1v1h-1Z");Assert.IsFalse(svg.Contains("C "));
     }
 
     [TestMethod]
