@@ -1,5 +1,6 @@
 // infos at https://github.com/libyal/dtformats/blob/main/documentation/Windows%20(Enhanced)%20Metafile%20Format%20(WMF%20and%20EMF).asciidoc
 import {flattenNativeBezier} from './native-bezier-flattener.js';
+import {buildNativeEllipse} from './native-ellipse-builder.js';
 
 type MetafileObject = PenObject | BrushObject | FontObject;
 
@@ -437,7 +438,7 @@ export class MetafileToSvgRenderer {
         case EMR.ELLIPSE:
           if (record.size < 24) break;
           if (state.currentPath !== undefined) appendEmfShapePath(bytes, dataOffset, record.type === EMR.ELLIPSE, state);
-          else if (state.worldTransform.m12 !== 0 || state.worldTransform.m21 !== 0)
+          else if (state.worldTransform.m12 !== 0 || state.worldTransform.m21 !== 0 || record.type===EMR.ELLIPSE&&state.pen.cosmeticDashes)
             elements.push(pathElement(emfShapePath(bytes, dataOffset, record.type === EMR.ELLIPSE, state).path, state, 'paint'));
           else {
             const rect = transformRect(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12));
@@ -2239,9 +2240,9 @@ function appendNativePoint(path: string[],command: string,point: CosmeticPoint,s
   metadata.set(path.length,nativeDevicePoint(point,state));
   path.push(`${command} ${point[0]} ${point[1]}`);
 }
-function nativeDevicePoint(point:CosmeticPoint,state:DrawState):CosmeticPoint {
+function nativeDevicePoint(point:CosmeticPoint,state:DrawState,forceFixed=false):CosmeticPoint {
   const t=state.worldTransform;
-  if(state.advancedCoordinates){
+  if(state.advancedCoordinates||forceFixed){
     // Match GDI's separately quantized linear component and translation; never
     // recover fixed-point coordinates from rounded SVG display strings.
     const fixed=(value:number)=>Math.sign(value)*Math.floor(Math.abs(value)*16+.5)/16;
@@ -2432,14 +2433,14 @@ function drawRoundRect(x1: number, y1: number, x2: number, y2: number, cornerWid
   path.push('Z');
   if (state.currentPath === undefined) elements.push(pathElement(path, state, 'paint'));
   else {
-    state.currentPath.push(...path); state.pathFigureClosed = true;
+    appendMetafilePath(state.currentPath,path); state.pathFigureClosed = true;
     state.pathStartX = state.pathEndX = start[0]; state.pathStartY = state.pathEndY = start[1];
   }
 }
 
 function appendEmfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean, state: DrawState): void {
   const {path, start} = emfShapePath(bytes, offset, ellipse, state);
-  state.currentPath!.push(...path);
+  appendMetafilePath(state.currentPath!,path);
   state.pathStartX = state.pathEndX = start[0];
   state.pathFigureClosed = true;
   state.pathStartY = state.pathEndY = start[1];
@@ -2451,6 +2452,18 @@ function emfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean, state
   const right = Math.max(i32(bytes, offset), i32(bytes, offset + 8));
   const top = Math.min(i32(bytes, offset + 4), i32(bytes, offset + 12));
   const bottom = Math.max(i32(bytes, offset + 4), i32(bytes, offset + 12));
+  if(ellipse&&state.pen.cosmeticDashes){
+    const controls=buildNativeEllipse([
+      nativeDevicePoint(transformPoint(state,left,top),state,true),
+      nativeDevicePoint(transformPoint(state,right,top),state,true),
+      nativeDevicePoint(transformPoint(state,left,bottom),state,true)],state.clockwiseShapes);
+    if(controls){
+      const start=controls[0],path:string[]=[`M ${start[0]} ${start[1]}`];nativePoints.set(path,new Map([[0,start]]));
+      const cubics=new Map<number,number[]>();nativeCubics.set(path,cubics);
+      for(let i=1;i<controls.length;i+=3){const a=controls[i],b=controls[i+1],c=controls[i+2];cubics.set(path.length,[...a,...b,...c]);path.push(`C ${a[0]} ${a[1]} ${b[0]} ${b[1]} ${c[0]} ${c[1]}`);}
+      path.push('Z');return {path,start};
+    }
+  }
   const path: string[] = [];
   const point = (x: number, y: number) => transformPoint(state, x, y).map(value => Number(value.toFixed(3))).join(' ');
   const start = transformPoint(state, right, ellipse ? (top + bottom) / 2 : state.clockwiseShapes ? bottom : top);
