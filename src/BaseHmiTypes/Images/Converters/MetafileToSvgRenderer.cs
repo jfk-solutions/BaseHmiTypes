@@ -55,7 +55,7 @@ public sealed class MetafileToSvgRenderer
 
         foreach (var record in EmfRecords(bytes))
         {
-            if (UsesEmfMapping(record.Type)) PrepareEmfMapping(state);
+            if (UsesEmfMapping(record.Type) && (record.Type != EMR.SetPixelV || record.Size >= 20)) PrepareEmfMapping(state);
             (state.CurrentX, state.CurrentY) = TransformPoint(state, state.LogicalCurrentX, state.LogicalCurrentY);
             var firstElement = elements.Count;
             var dataOffset = record.Offset + 8;
@@ -196,6 +196,15 @@ public sealed class MetafileToSvgRenderer
                         state.LogicalCurrentY = I32(bytes, dataOffset + 4);
                         break;
                     }
+                case EMR.SetPixelV:
+                    if (record.Size >= 20)
+                    {
+                        var pixel = TransformPoint(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4));
+                        var x = Math.Floor(pixel.X + 0.5); var y = Math.Floor(pixel.Y + 0.5);
+                        if (!double.IsNaN(x) && !double.IsNaN(y) && x >= int.MinValue && x <= int.MaxValue && y >= int.MinValue && y <= int.MaxValue)
+                            elements.Add($"<rect x=\"{Number(x)}\" y=\"{Number(y)}\" width=\"1\" height=\"1\" fill=\"{ColorRef(bytes, dataOffset + 8)}\"{ClipAttr(state)} />");
+                    }
+                    break;
                 case EMR.BeginPath:
                     state.SelectedPath = null;
                     state.CurrentPath = new List<string>();
@@ -956,7 +965,7 @@ public sealed class MetafileToSvgRenderer
     }
 
     private static bool UsesEmfMapping(uint type) => type is
-        EMR.LineTo or EMR.PolylineTo or EMR.PolylineTo16 or EMR.PolyBezier or EMR.PolyBezier16
+        EMR.SetPixelV or EMR.LineTo or EMR.PolylineTo or EMR.PolylineTo16 or EMR.PolyBezier or EMR.PolyBezier16
         or EMR.PolyBezierTo or EMR.PolyBezierTo16 or EMR.PolyDraw or EMR.PolyDraw16
         or EMR.Rectangle or EMR.Ellipse or EMR.RoundRect or EMR.AngleArc or EMR.Arc or EMR.Chord or EMR.Pie or EMR.ArcTo
         or EMR.Polygon or EMR.Polygon16 or EMR.Polyline or EMR.Polyline16
@@ -2059,6 +2068,7 @@ internal static class EMR
     public const uint SetViewportExtEx = 0x000b;
     public const uint SetViewportOrgEx = 0x000c;
     public const uint SetMapMode = 0x0011;
+    public const uint SetPixelV = 0x000f;
     public const uint ScaleViewportExtEx = 0x001f;
     public const uint ScaleWindowExtEx = 0x0020;
     public const uint SetPolyFillMode = 0x0013;
