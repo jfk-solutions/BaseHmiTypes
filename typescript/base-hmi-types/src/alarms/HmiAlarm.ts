@@ -33,6 +33,8 @@ export abstract class HmiBaseAlarm extends HmiAlarm {
   enabled?: boolean;
   tiaAlarmId = 0;
   alarmId = 0;
+  /** Source display number; zero is valid. Never used for event routing. */
+  displayNumber?: number;
   priority = 0;
   priorityTag?: string;
   minimumDurationMilliseconds?: number;

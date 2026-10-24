@@ -33,5 +33,6 @@ public enum HmiAlarmColumnType
     Tag1Value,
     Tag2Value,
     Tag3Value,
-    Tag4Value
+    Tag4Value,
+    AlarmNumber
 }

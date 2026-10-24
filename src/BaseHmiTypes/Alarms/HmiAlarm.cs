@@ -48,6 +48,9 @@ public abstract class HmiBaseAlarm : HmiAlarm
 
     public int AlarmId { get; set; }
 
+    /// <summary>Optional source display number, separate from neutral identity; zero is valid. Never used for event routing.</summary>
+    public int? DisplayNumber { get; set; }
+
     public int Priority { get; set; }
 
     public string? PriorityTag { get; set; }
