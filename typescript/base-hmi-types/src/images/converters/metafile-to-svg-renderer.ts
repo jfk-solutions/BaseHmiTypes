@@ -307,7 +307,7 @@ export class MetafileToSvgRenderer {
           state.logicalCurrentY = i32(bytes, dataOffset + 4);
           [state.currentX, state.currentY] = transformPoint(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4));
           if (state.currentPath) {
-            state.currentPath.push(`M ${state.currentX} ${state.currentY}`);
+            appendNativePoint(state.currentPath,'M',[state.currentX,state.currentY],state);
             state.pathStartX = state.currentX;
             state.pathFigureClosed = false;
             state.pathStartY = state.currentY;
@@ -319,7 +319,7 @@ export class MetafileToSvgRenderer {
           const [x, y] = transformPoint(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4));
           if (state.currentPath) {
             ensurePathPosition(state);
-            state.currentPath.push(`L ${x} ${y}`);
+            appendNativePoint(state.currentPath,'L',[x,y],state);
             state.pathEndX = x;
             state.pathEndY = y;
           }
@@ -469,9 +469,9 @@ export class MetafileToSvgRenderer {
             else elements.push(element);
           } else {
             // Independent figures leave the DC current position unchanged.
-            state.currentPath.push(`M ${points[0][0]} ${points[0][1]}`);
+            appendNativePoint(state.currentPath,'M',points[0],state);
             for (let index = 1; index < points.length; index++)
-              state.currentPath.push(`L ${points[index][0]} ${points[index][1]}`);
+              appendNativePoint(state.currentPath,'L',points[index],state);
             if (closed) state.currentPath.push('Z');
             state.pathFigureClosed = closed;
             state.pathStartX = points[0][0];
@@ -490,8 +490,8 @@ export class MetafileToSvgRenderer {
           const path: string[] = [];
           for (const figure of readEmfCompoundPoints(bytes, record, shortPoints)) {
             const points = figure.map(([x, y]) => hasEmfPlusDrawing ? transformGdiPointWithEmfPlusTransform(state, emfPlusState.transform, x, y) : transformPoint(state, x, y));
-            path.push(`M ${points[0][0]} ${points[0][1]}`);
-            for (let index = 1; index < points.length; index++) path.push(`L ${points[index][0]} ${points[index][1]}`);
+            appendNativePoint(path,'M',points[0],state);
+            for (let index = 1; index < points.length; index++) appendNativePoint(path,'L',points[index],state);
             if (closed) path.push('Z');
             if (state.currentPath !== undefined) {
               state.pathStartX = points[0][0]; state.pathStartY = points[0][1];
@@ -501,7 +501,7 @@ export class MetafileToSvgRenderer {
             }
           }
           if (!path.length) break;
-          if (state.currentPath !== undefined) state.currentPath.push(...path);
+          if (state.currentPath !== undefined) appendMetafilePath(state.currentPath,path);
           else elements.push(pathElement(path, state, closed ? 'paint' : 'stroke'));
           break;
         }
@@ -1412,7 +1412,7 @@ function resetPathConstruction(state: DrawState): void {
 
 function ensurePathPosition(state: DrawState): void {
   if (state.currentPath !== undefined && (state.pathFigureClosed || state.pathEndX !== state.currentX || state.pathEndY !== state.currentY)) {
-    state.currentPath.push(`M ${state.currentX} ${state.currentY}`);
+    appendNativePoint(state.currentPath,'M',[state.currentX,state.currentY],state);
     state.pathStartX = state.currentX; state.pathStartY = state.currentY;
     state.pathFigureClosed = false;
   }
@@ -1427,14 +1427,14 @@ function drawEmfPointCurve(bytes: Uint8Array, record: EmfRecord, state: DrawStat
   if (line ? points.length < 1 : to ? points.length < 3 || points.length % 3 !== 0 : points.length < 4 || (points.length - 1) % 3 !== 0) return;
   const path = state.currentPath ?? [];
   if (to) {
-    if (state.currentPath === undefined) path.push(`M ${state.currentX} ${state.currentY}`);
+    if (state.currentPath === undefined) appendNativePoint(path,'M',[state.currentX,state.currentY],state);
     else ensurePathPosition(state);
   } else {
-    path.push(`M ${points[0][0]} ${points[0][1]}`);
+    appendNativePoint(path,'M',points[0],state);
     if (state.currentPath !== undefined) { state.pathStartX = points[0][0]; state.pathStartY = points[0][1]; state.pathFigureClosed = false; }
   }
   for (let index = to ? 0 : 1; index < points.length; index += line ? 1 : 3) {
-    if (line) path.push(`L ${points[index][0]} ${points[index][1]}`);
+    if (line) appendNativePoint(path,'L',points[index],state);
     else appendNativeCubic(path,points[index],points[index+1],points[index+2]);
   }
   const end = points.at(-1)!;
@@ -1498,21 +1498,21 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
   const path = state.currentPath ?? [];
   if (bytes[typesOffset] !== 6) {
     if (state.currentPath !== undefined) ensurePathPosition(state);
-    else { path.push(`M ${state.currentX} ${state.currentY}`); state.pathStartX = state.currentX; state.pathStartY = state.currentY; state.pathFigureClosed = false; }
+    else { appendNativePoint(path,'M',[state.currentX,state.currentY],state); state.pathStartX = state.currentX; state.pathStartY = state.currentY; state.pathFigureClosed = false; }
   }
   for (let index = 0; index < mapped.length; index++) {
     const type = bytes[typesOffset + index] & ~1;
     if (type !== 6 && state.pathFigureClosed) {
-      path.push(`M ${state.currentX} ${state.currentY}`);
+      appendNativePoint(path,'M',[state.currentX,state.currentY],state);
       state.pathStartX = state.currentX; state.pathStartY = state.currentY;
       state.pathFigureClosed = false;
     }
     if (type === 6) {
       state.pathFigureClosed = false;
-      path.push(`M ${mapped[index][0]} ${mapped[index][1]}`);
+      appendNativePoint(path,'M',mapped[index],state);
       state.pathStartX = mapped[index][0];
       state.pathStartY = mapped[index][1];
-    } else if (type === 2) path.push(`L ${mapped[index][0]} ${mapped[index][1]}`);
+    } else if (type === 2) appendNativePoint(path,'L',mapped[index],state);
     else {
       appendNativeCubic(path,mapped[index],mapped[index+1],mapped[index+2]);
       index += 2;
@@ -2215,10 +2215,29 @@ function penIdentity(pen: PenObject): object { return pen.identity ??= {}; }
 
 // Keep native Bezier controls separate from generated SVG arc approximations.
 const nativeCubics = new WeakMap<string[],Map<number,number[]>>();
+const nativePoints = new WeakMap<string[],Map<number,CosmeticPoint>>();
 function cloneMetafilePath(path: string[]): string[] {
-  const copy=[...path], metadata=nativeCubics.get(path);
-  if(metadata)nativeCubics.set(copy,new Map(metadata));
+  const copy:string[]=[];appendMetafilePath(copy,path);
   return copy;
+}
+function appendMetafilePath(target: string[],path: string[]): void {
+  const cubics=nativeCubics.get(path),points=nativePoints.get(path),offset=target.length;
+  if(cubics){let metadata=nativeCubics.get(target);if(!metadata){metadata=new Map();nativeCubics.set(target,metadata);}for(const [index,value] of cubics)metadata.set(offset+index,value);}
+  if(points){let metadata=nativePoints.get(target);if(!metadata){metadata=new Map();nativePoints.set(target,metadata);}for(const [index,value] of points)metadata.set(offset+index,value);}
+  for(const command of path)target.push(command);
+}
+function appendNativePoint(path: string[],command: string,point: CosmeticPoint,state: DrawState): void {
+  const t=state.worldTransform;
+  if(t.m11!==1||t.m12!==0||t.m21!==0||t.m22!==1||t.dx!==0||t.dy!==0){
+    // Match GDI's separately quantized linear component and translation; never
+    // recover fixed-point coordinates from rounded SVG display strings.
+    const fixed=(value:number)=>Math.sign(value)*Math.floor(Math.abs(value)*16+.5)/16;
+    const ox=state.viewportOrgX+(t.dx-state.windowOrgX)*state.viewportExtX/(state.windowExtX===0?1:state.windowExtX);
+    const oy=state.viewportOrgY+(t.dy-state.windowOrgY)*state.viewportExtY/(state.windowExtY===0?1:state.windowExtY);
+    let metadata=nativePoints.get(path);if(!metadata){metadata=new Map();nativePoints.set(path,metadata);}
+    metadata.set(path.length,[fixed(point[0]-ox)+fixed(ox),fixed(point[1]-oy)+fixed(oy)]);
+  }
+  path.push(`${command} ${point[0]} ${point[1]}`);
 }
 function appendNativeCubic(path: string[], a: [number,number], b: [number,number], c: [number,number]): void {
   let metadata=nativeCubics.get(path);if(!metadata){metadata=new Map();nativeCubics.set(path,metadata);}
@@ -2236,7 +2255,7 @@ function flattenCosmeticCubic(a: CosmeticPoint,b: CosmeticPoint,c: CosmeticPoint
   const ab=mid(a,b),bc=mid(b,c),cd=mid(c,d),abc=mid(ab,bc),bcd=mid(bc,cd),middle=mid(abc,bcd);
   return flattenCosmeticCubic(a,ab,abc,middle,result,depth+1)&&flattenCosmeticCubic(middle,bcd,cd,d,result,depth+1);
 }
-function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawState,foreground: string[],background: string[],previous: CosmeticPoint|undefined): CosmeticPoint|undefined {
+function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawState,foreground: string[],background: string[],finalSegment: boolean,previous: CosmeticPoint|undefined): CosmeticPoint|undefined {
   const horizontal=Math.abs(end[0]-start[0])>=Math.abs(end[1]-start[1]);
   const a1=start[horizontal?0:1],a2=end[horizontal?0:1],b1=start[horizontal?1:0],b2=end[horizontal?1:0];
   if(a1===a2)return previous;
@@ -2249,6 +2268,8 @@ function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawS
   while(phase>=dashes[dash]){phase-=dashes[dash];dash=(dash+1)%dashes.length;ink=!ink;}
   let remaining=dashes[dash]-phase;
   const pixel=(point:CosmeticPoint)=>{
+    const ex=Math.abs(point[0]-end[0]),ey=Math.abs(point[1]-end[1]);
+    if(finalSegment&&(ex+ey<.5||ex+ey===.5&&(ex===0||ey===0)&&end[0]>=point[0]&&end[1]>=point[1]))return;
     if(inside&&same(previous,point))return;
     previous=point;
     if(ink||state.pen.opaqueDashGaps&&state.backgroundMode===2)(ink?foreground:background).push(`M ${point[0]} ${point[1]}h1v1h-1Z`);
@@ -2260,8 +2281,13 @@ function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawS
   const lastAt=stop-sign,stepCount=Math.abs(stop-first);
   for(let step=0;step<stepCount;step++){
     const major=first+step*sign,point=at(major);
-    // Negative 45-degree endpoints use the native diamond-edge exclusion.
-    if(major===lastAt&&b2-b1===-(a2-a1)&&Math.abs(point[0]-end[0])+Math.abs(point[1]-end[1])===.5)continue;
+    if(major===lastAt&&Math.abs(b2-b1)===Math.abs(a2-a1)){
+      // Half-open rotated diamond bounds distinguish exiting/parallel edges.
+      const u=end[0]-point[0]+end[1]-point[1],v=end[0]-point[0]-end[1]+point[1];
+      const du=end[0]-start[0]+end[1]-start[1],dv=end[0]-start[0]-end[1]+start[1];
+      const exits=Math.abs(u)===.5&&u*du>0||Math.abs(v)===.5&&v*dv>0;
+      if(u>-.5&&u<=.5&&v>=-.5&&v<.5&&!exits)continue;
+    }
     pixel(point);
   }
   // Tiny cusps can leave/re-enter a pixel without an intervening grid crossing.
@@ -2289,17 +2315,21 @@ function cosmeticPixelPath(path: string[], state: DrawState, mode: 'stroke'|'fil
     if(values.length!==3||!['M','L'].includes(values[0]))return undefined;
     let px=Number(values[1]),py=Number(values[2]);if(!Number.isFinite(px)||!Number.isFinite(py))return undefined;
     if(metadata?.size&&(!Number.isInteger(px)||!Number.isInteger(py)))return undefined;
-    px=Math.floor(px+.5);py=Math.floor(py+.5);
-    if(values[0]==='M'){startX=px;startY=py;}else budget+=Math.max(Math.abs(px-x),Math.abs(py-y));
+    const nativePoint=nativePoints.get(path)?.get(commandIndex);
+    if(nativePoint){[px,py]=nativePoint;}else{px=Math.floor(px+.5);py=Math.floor(py+.5);}
+    if(!Number.isFinite(px)||!Number.isFinite(py))return undefined;
+    if(values[0]==='M'){startX=px;startY=py;}else budget+=Math.max(Math.abs(px-x),Math.abs(py-y))+2;
+    if(budget>262144)return undefined;
     commands.push({type:values[0],x:px,y:py});x=px;y=py;
   }
   if(budget>262144||!commands.length||commands[0].type!=='M')return undefined;
   penIdentity(state.pen);
   const working=cloneState(state),foreground:string[]=[],background:string[]=[];let firstMove=true,previous:CosmeticPoint|undefined;
   if(working.styledPen!==penIdentity(working.pen)){working.styledPen=penIdentity(working.pen);working.cosmeticPhase=0;}
-  for(const command of commands){
+  for(let index=0;index<commands.length;index++){
+    const command=commands[index];
     if(command.type==='M'){if(!firstMove||!continueStyle)working.cosmeticPhase=0;firstMove=false;previous=undefined;}
-    else previous=cosmeticGiqSegment([x,y],[command.x,command.y],working,foreground,background,previous);
+    else previous=cosmeticGiqSegment([x,y],[command.x,command.y],working,foreground,background,index+1===commands.length||commands[index+1].type==='M',previous);
     x=command.x;y=command.y;
   }
   state.cosmeticPhase=working.cosmeticPhase;state.styledPen=working.styledPen;
@@ -2451,7 +2481,7 @@ function polyElement(points: Array<[number, number]>, closed: boolean, state: Dr
   if (points.length === 0)
     return '';
   if(state.pen.cosmeticDashes){
-    const path=[`M ${points[0][0]} ${points[0][1]}`,...points.slice(1).map(p=>`L ${p[0]} ${p[1]}`)];if(closed)path.push('Z');
+    const path:string[]=[];appendNativePoint(path,'M',points[0],state);for(const point of points.slice(1))appendNativePoint(path,'L',point,state);if(closed)path.push('Z');
     const pixels=cosmeticPixelPath(path,state,closed?'paint':'stroke',false);if(pixels!==undefined)return pixels;
   }
   const tag = closed ? 'polygon' : 'polyline';
