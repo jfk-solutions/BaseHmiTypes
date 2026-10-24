@@ -151,7 +151,7 @@ export class MetafileToSvgRenderer {
     let hasEmfPlusDrawing = false;
 
     for (const record of emfRecords(bytes)) {
-      if (EMF_MAPPING_RECORDS.has(record.type)) prepareEmfMapping(state);
+      if (EMF_MAPPING_RECORDS.has(record.type) && (record.type !== EMR.SETPIXELV || record.size >= 20)) prepareEmfMapping(state);
       [state.currentX, state.currentY] = transformPoint(state, state.logicalCurrentX, state.logicalCurrentY);
       const firstElement = elements.length;
       const dataOffset = record.offset + 8;
@@ -285,6 +285,14 @@ export class MetafileToSvgRenderer {
           state.logicalCurrentY = i32(bytes, dataOffset + 4);
           break;
         }
+        case EMR.SETPIXELV:
+          if (record.size >= 20) {
+            const point = transformPoint(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4));
+            const x = Math.floor(point[0] + 0.5), y = Math.floor(point[1] + 0.5);
+            if (Number.isFinite(x) && Number.isFinite(y) && x >= -2147483648 && x <= 2147483647 && y >= -2147483648 && y <= 2147483647)
+              elements.push(`<rect x="${x}" y="${y}" width="1" height="1" fill="${colorRef(bytes, dataOffset + 8)}"${clipAttr(state)} />`);
+          }
+          break;
         case EMR.BEGINPATH:
           state.selectedPath = undefined;
           state.currentPath = [];
@@ -668,6 +676,7 @@ const EMR = {
   SETVIEWPORTEXTEX: 0x000b,
   SETVIEWPORTORGEX: 0x000c,
   SETMAPMODE: 0x0011,
+  SETPIXELV: 0x000f,
   SCALEVIEWPORTEXTEX: 0x001f,
   SCALEWINDOWEXTEX: 0x0020,
   SETPOLYFILLMODE: 0x0013,
@@ -1208,7 +1217,7 @@ function setEmfExtents(state: DrawState, x: number, y: number, viewport: boolean
 }
 
 const EMF_MAPPING_RECORDS = new Set<number>([
-  EMR.LINETO, EMR.POLYLINETO, EMR.POLYLINETO16, EMR.POLYBEZIER, EMR.POLYBEZIER16,
+  EMR.SETPIXELV, EMR.LINETO, EMR.POLYLINETO, EMR.POLYLINETO16, EMR.POLYBEZIER, EMR.POLYBEZIER16,
   EMR.POLYBEZIERTO, EMR.POLYBEZIERTO16, EMR.POLYDRAW, EMR.POLYDRAW16,
   EMR.RECTANGLE, EMR.ELLIPSE, EMR.ROUNDRECT, EMR.ANGLEARC, EMR.ARC, EMR.CHORD, EMR.PIE, EMR.ARCTO,
   EMR.POLYGON, EMR.POLYGON16, EMR.POLYLINE, EMR.POLYLINE16,
