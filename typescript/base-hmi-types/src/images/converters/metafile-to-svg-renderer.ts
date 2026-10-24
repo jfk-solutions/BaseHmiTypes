@@ -346,6 +346,17 @@ export class MetafileToSvgRenderer {
           if (geometry !== undefined) combineClipGeometry(state, geometry, mode, viewBox, defs, ++clipSequence);
           break;
         }
+        case EMR.FILLRGN: {
+          if (record.size < 64) break;
+          const index = u32(bytes, dataOffset + 20), brush = emfStockObject(index) ?? objects.get(index);
+          if (!brush || brush.kind !== 'brush' || brush.none) break;
+          const rectangles = readEmfRegionRectangles(bytes, record, u32(bytes, dataOffset + 16), 32);
+          if (!rectangles?.length) break;
+          prepareEmfMapping(state);
+          const geometry = emfRegionGeometry(rectangles, state);
+          if (geometry !== undefined) elements.push(`<path ${geometry} stroke="none" fill="${brush.color}"${clipAttr(state)} />`);
+          break;
+        }
         case EMR.OFFSETCLIPRGN:
           if (record.size >= 16) {
             const x = i32(bytes, dataOffset), y = i32(bytes, dataOffset + 4), t = state.worldTransform;
@@ -677,6 +688,7 @@ const EMR = {
   SETVIEWPORTORGEX: 0x000c,
   SETMAPMODE: 0x0011,
   SETPIXELV: 0x000f,
+  FILLRGN: 0x0047,
   SCALEVIEWPORTEXTEX: 0x001f,
   SCALEWINDOWEXTEX: 0x0020,
   SETPOLYFILLMODE: 0x0013,
@@ -1930,21 +1942,38 @@ function emfHeaderViewBox(bytes: Uint8Array): ViewBox | null {
 }
 
 function readEmfClipRegion(bytes: Uint8Array, record: EmfRecord, regionBytes: number): string | undefined {
-  if (regionBytes < 32 || regionBytes > record.size - 16) return undefined;
-  const at = record.offset + 16;
+  const rectangles = readEmfRegionRectangles(bytes, record, regionBytes, 16);
+  return rectangles === undefined ? undefined : emfRegionGeometry(rectangles);
+}
+
+function readEmfRegionRectangles(bytes: Uint8Array, record: EmfRecord, regionBytes: number, regionOffset: number): [number, number, number, number][] | undefined {
+  if (regionBytes < 32 || regionBytes > record.size - regionOffset) return undefined;
+  const at = record.offset + regionOffset;
   if (u32(bytes, at) !== 32 || u32(bytes, at + 4) !== 1) return undefined;
   const count = u32(bytes, at + 8);
   if (count > Math.floor((regionBytes - 32) / 16)) return undefined;
   const rectangleBytes = count * 16, declaredBytes = u32(bytes, at + 12);
   if (declaredBytes !== 0 && declaredBytes !== rectangleBytes) return undefined;
-  const path: string[] = [];
+  const rectangles: [number, number, number, number][] = [];
   for (let index = 0; index < count; index++) {
     const p = at + 32 + index * 16;
     const left = i32(bytes, p), top = i32(bytes, p + 4), right = i32(bytes, p + 8), bottom = i32(bytes, p + 12);
     if (left > right || top > bottom) return undefined;
     if (left === right || top === bottom) continue;
-    // Native recorded region geometry is already in device coordinates.
-    path.push(`M ${left} ${top} L ${right} ${top} L ${right} ${bottom} L ${left} ${bottom} Z`);
+    rectangles.push([left, top, right, bottom]);
+  }
+  return rectangles;
+}
+
+function emfRegionGeometry(rectangles: [number, number, number, number][], state?: DrawState): string | undefined {
+  const path: string[] = [];
+  for (const [left, top, right, bottom] of rectangles) {
+    let points: [number, number][] = [[left, top], [right, top], [right, bottom], [left, bottom]];
+    if (state) points = points.map(([x, y]) => transformPoint(state, x, y));
+    if (points.some(([x, y]) => !Number.isFinite(x) || !Number.isFinite(y))) return undefined;
+    const p = points.map(point => point.map(value => Number(value.toFixed(3))).join(' '));
+    // Clip records contain device rectangles; FillRgn contains logical rectangles.
+    path.push(`M ${p[0]} L ${p[1]} L ${p[2]} L ${p[3]} Z`);
   }
   return `d="${path.join(' ')}" fill-rule="nonzero" clip-rule="nonzero"`;
 }
