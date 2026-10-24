@@ -160,9 +160,13 @@ public sealed class MetafileToSvgRenderer
                     if (record.Size < 52) break;
                     var extendedPenStyle = U32(bytes, dataOffset + 20);
                     var geometricPen = (extendedPenStyle & 0xF0000) == 0x10000;
+                    var extendedPenWidth = ScaledPenWidth(state, I32(bytes, dataOffset + 24));
+                    double[]? dashArray = null;
+                    if (geometricPen && !TryReadGeometricDashes(bytes, record, extendedPenStyle, extendedPenWidth, state, out dashArray)) break;
                     objects[U32(bytes, dataOffset)] = new PenObject
                     {
-                        Width = ScaledPenWidth(state, I32(bytes, dataOffset + 24)),
+                        Width = extendedPenWidth,
+                        DashArray = dashArray,
                         Color = ColorRef(bytes, dataOffset + 32),
                         None = (U32(bytes, dataOffset + 20) & 0x0000000f) == 5,
                         LineCap = geometricPen ? (extendedPenStyle & 0xF00) switch
@@ -1069,6 +1073,42 @@ public sealed class MetafileToSvgRenderer
         return Math.Max(1, (int)Math.Round(Math.Abs(width) * (scale == 0 ? 1 : scale)));
     }
 
+    private static bool TryReadGeometricDashes(byte[] bytes, EmfRecord record, uint style, double width, DrawState state, out double[]? dashes)
+    {
+        dashes = null;
+        var lineStyle = style & 0xf;
+        var count = U32(bytes, record.Offset + 48);
+        if (lineStyle > 7 || (lineStyle != 7 && count != 0)) return false;
+        if (lineStyle is >= 1 and <= 4)
+        {
+            // Native geometric pattern units are pen widths. Cosmetic pens use
+            // different device patterns and opaque-gap rules, not these arrays.
+            var units = lineStyle switch { 1 => new[] { 3, 1 }, 2 => new[] { 1, 1 }, 3 => new[] { 3, 1, 1, 1 }, _ => new[] { 3, 1, 1, 1, 1, 1 } };
+            // For standard styles GDI includes the end caps in each dash's
+            // nominal length. SVG adds caps outside its dash segment instead.
+            var projectingCaps = (style & 0xf00) is 0 or 0x100;
+            dashes = units.Select((unit, index) => (unit + (projectingCaps ? (index % 2 == 0 ? -1 : 1) : 0)) * width).ToArray();
+        }
+        else if (lineStyle == 7)
+        {
+            if (count == 0 || count > 16 || count > (record.Size - 52) / 4) return false;
+            var entries = new double[count];
+            ulong total = 0;
+            var scale = Math.Abs(state.ViewportExtX / (double)(state.WindowExtX == 0 ? 1 : state.WindowExtX));
+            for (var index = 0; index < count; index++)
+            {
+                var entry = U32(bytes, record.Offset + 52 + index * 4);
+                total += entry;
+                entries[index] = entry * (scale == 0 ? 1 : scale);
+            }
+            // GDI rejects an empty cycle and signed-32-bit cycle overflow.
+            if (total == 0 || total > int.MaxValue) return false;
+            // SVG and GDI both reverse ink/gap roles on every odd-count cycle.
+            dashes = entries;
+        }
+        return true;
+    }
+
     private static (double X, double Y) TransformPoint(DrawState state, double x, double y)
     {
         // GDI maps world to page space first, then page to device space.
@@ -1792,6 +1832,7 @@ public sealed class MetafileToSvgRenderer
         if (state.Pen.LineCap is not null) attributes += $" stroke-linecap=\"{state.Pen.LineCap}\"";
         if (state.Pen.LineJoin is not null) attributes += $" stroke-linejoin=\"{state.Pen.LineJoin}\"";
         if (state.Pen.LineJoin == "miter") attributes += $" stroke-miterlimit=\"{Number(state.MiterLimit)}\"";
+        if (state.Pen.DashArray is { Length: > 0 } dashes) attributes += $" stroke-dasharray=\"{string.Join(" ", dashes.Select(Number))}\"";
         return attributes;
     }
 
@@ -1958,6 +1999,7 @@ internal abstract class MetafileObject
 
 internal sealed class PenObject : MetafileObject
 {
+    public double[]? DashArray { get; set; }
     public string? LineCap { get; set; }
 
     public string? LineJoin { get; set; }
