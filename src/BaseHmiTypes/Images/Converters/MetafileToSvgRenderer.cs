@@ -276,6 +276,19 @@ public sealed class MetafileToSvgRenderer
                         OffsetSelectedClip(dx, dy, state, defs, ref clipSequence, clipExpansion);
                     }
                     break;
+                case EMR.FillRgn:
+                    if (record.Size >= 64)
+                    {
+                        var index = U32(bytes, dataOffset + 20);
+                        var fillBrush = EmfStockObject(index) ?? (objects.TryGetValue(index, out var candidate) ? candidate : null);
+                        if (fillBrush is not BrushObject { None: false } brush) break;
+                        var rectangles = ReadEmfRegionRectangles(bytes, record, U32(bytes, dataOffset + 16), 32);
+                        if (rectangles is null || rectangles.Count == 0) break;
+                        PrepareEmfMapping(state);
+                        var geometry = EmfRegionGeometry(rectangles, state);
+                        if (geometry is not null) elements.Add($"<path {geometry} stroke=\"none\" fill=\"{brush.Color}\"{ClipAttr(state)} />");
+                    }
+                    break;
                 case EMR.SetMetaRgn:
                     SetMetaRegion(state, defs, ref clipSequence);
                     break;
@@ -1579,15 +1592,21 @@ public sealed class MetafileToSvgRenderer
 
     private static string? ReadEmfClipRegion(byte[] bytes, EmfRecord record, uint regionBytes)
     {
-        if (regionBytes < 32 || regionBytes > record.Size - 16) return null;
-        var at = record.Offset + 16;
+        var rectangles = ReadEmfRegionRectangles(bytes, record, regionBytes, 16);
+        return rectangles is null ? null : EmfRegionGeometry(rectangles, null);
+    }
+
+    private static List<(int Left, int Top, int Right, int Bottom)>? ReadEmfRegionRectangles(byte[] bytes, EmfRecord record, uint regionBytes, int regionOffset)
+    {
+        if (regionBytes < 32 || regionBytes > record.Size - regionOffset) return null;
+        var at = record.Offset + regionOffset;
         if (U32(bytes, at) != 32 || U32(bytes, at + 4) != 1) return null;
         var count = U32(bytes, at + 8);
         if (count > (regionBytes - 32) / 16) return null;
         var rectangleBytes = count * 16;
         var declaredBytes = U32(bytes, at + 12);
         if (declaredBytes != 0 && declaredBytes != rectangleBytes) return null;
-        var path = new List<string>();
+        var rectangles = new List<(int, int, int, int)>();
         for (var index = 0u; index < count; index++)
         {
             var p = at + 32 + (int)index * 16;
@@ -1595,9 +1614,24 @@ public sealed class MetafileToSvgRenderer
             var right = I32(bytes, p + 8); var bottom = I32(bytes, p + 12);
             if (left > right || top > bottom) return null;
             if (left == right || top == bottom) continue;
-            // Serialized region rectangles are device-space geometry, not paths
-            // in the current world/window transform (native EMF recording agrees).
-            path.Add($"M {Number(left)} {Number(top)} L {Number(right)} {Number(top)} L {Number(right)} {Number(bottom)} L {Number(left)} {Number(bottom)} Z");
+            rectangles.Add((left, top, right, bottom));
+        }
+        return rectangles;
+    }
+
+    private static string? EmfRegionGeometry(List<(int Left, int Top, int Right, int Bottom)> rectangles, DrawState? state)
+    {
+        var path = new List<string>();
+        foreach (var rectangle in rectangles)
+        {
+            var points = new[] { (X: (double)rectangle.Left, Y: (double)rectangle.Top), (X: (double)rectangle.Right, Y: (double)rectangle.Top), (X: (double)rectangle.Right, Y: (double)rectangle.Bottom), (X: (double)rectangle.Left, Y: (double)rectangle.Bottom) };
+            for (var index = 0; index < points.Length; index++)
+            {
+                if (state is not null) points[index] = TransformPoint(state, points[index].X, points[index].Y);
+                if (double.IsNaN(points[index].X) || double.IsInfinity(points[index].X) || double.IsNaN(points[index].Y) || double.IsInfinity(points[index].Y)) return null;
+            }
+            // Clip records contain device rectangles; FillRgn contains logical rectangles.
+            path.Add($"M {Number(points[0].X)} {Number(points[0].Y)} L {Number(points[1].X)} {Number(points[1].Y)} L {Number(points[2].X)} {Number(points[2].Y)} L {Number(points[3].X)} {Number(points[3].Y)} Z");
         }
         return $"d=\"{string.Join(" ", path)}\" fill-rule=\"nonzero\" clip-rule=\"nonzero\"";
     }
@@ -2069,6 +2103,7 @@ internal static class EMR
     public const uint SetViewportOrgEx = 0x000c;
     public const uint SetMapMode = 0x0011;
     public const uint SetPixelV = 0x000f;
+    public const uint FillRgn = 0x0047;
     public const uint ScaleViewportExtEx = 0x001f;
     public const uint ScaleWindowExtEx = 0x0020;
     public const uint SetPolyFillMode = 0x0013;
