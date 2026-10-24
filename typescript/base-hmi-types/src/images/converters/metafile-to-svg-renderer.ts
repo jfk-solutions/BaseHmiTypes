@@ -3,6 +3,7 @@
 type MetafileObject = PenObject | BrushObject | FontObject;
 
 interface PenObject {
+  identity?: object;
   cosmeticDashes?: boolean;
   opaqueDashGaps?: boolean;
   dashArray?: number[];
@@ -33,6 +34,8 @@ const CLIP_VIEWPORT_TOKEN = '__METAFILE_CLIP_VIEWPORT__';
 const DEFAULT_CLIP_VIEWPORT_TOKEN = '__METAFILE_DEFAULT_CLIP_VIEWPORT__';
 
 interface DrawState {
+  styledPen?: object;
+  cosmeticPhase: number;
   resolvedBrushFill?: string;
   backgroundMode: number;
   backgroundColor: string;
@@ -299,6 +302,7 @@ export class MetafileToSvgRenderer {
           objects.delete(u32(bytes, dataOffset));
           break;
         case EMR.MOVETOEX:
+          state.cosmeticPhase = 0;
           state.logicalCurrentX = i32(bytes, dataOffset);
           state.logicalCurrentY = i32(bytes, dataOffset + 4);
           [state.currentX, state.currentY] = transformPoint(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4));
@@ -530,6 +534,9 @@ export class MetafileToSvgRenderer {
             elements.push(image);
           break;
         }
+      }
+      if (!state.pen.cosmeticDashes && !state.pen.none && elements.slice(firstElement).some(element=>element.includes(strokeAttrs(state)))) {
+        state.styledPen=penIdentity(state.pen); state.cosmeticPhase=0;
       }
       applyCosmeticGapBackground(elements, firstElement, state);
       // The metaregion is independent of the selected clip on each drawing.
@@ -971,6 +978,7 @@ function addWmfObject(objects: Array<MetafileObject | null>, object: MetafileObj
 
 function createInitialState(): DrawState {
   return {
+    cosmeticPhase: 0,
     backgroundMode: 2,
     backgroundColor: '#ffffff',
     brushOrgX: 0,
@@ -1430,7 +1438,7 @@ function drawEmfPointCurve(bytes: Uint8Array, record: EmfRecord, state: DrawStat
   const end = points.at(-1)!;
   if (to) { state.currentX = end[0]; state.currentY = end[1]; [state.logicalCurrentX, state.logicalCurrentY] = logical.at(-1)!; }
   if (state.currentPath !== undefined) { state.pathEndX = end[0]; state.pathEndY = end[1]; }
-  else elements.push(pathElement(path, state, 'stroke'));
+  else elements.push(pathElement(path, state, 'stroke', to));
 }
 
 function appendEmfPolyBezierToPath(state: DrawState, points: Array<[number, number]>): void {
@@ -1516,7 +1524,7 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
       state.pathEndX = state.pathStartX; state.pathEndY = state.pathStartY;
     }
   }
-  if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke'));
+  if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke', bytes[typesOffset] !== PolyDrawTypeMoveTo));
 }
 
 function appendEmfPolyDraw16ToPath(state: DrawState, bytes: Uint8Array, offset: number): void {
@@ -2164,6 +2172,7 @@ function lineElement(x1: number, y1: number, x2: number, y2: number, state: Draw
     const pixels = cosmeticPixelLine(x1, y1, x2, y2, state);
     if (pixels !== undefined) return pixels;
   }
+  if (!state.pen.none && state.styledPen !== penIdentity(state.pen)) { state.styledPen=penIdentity(state.pen); state.cosmeticPhase=0; }
   const n = (value: number) => Number(value.toFixed(3));
   const major = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
   const pathLength = state.pen.cosmeticDashes && major > 0 ? ` pathLength="${n(major)}"` : '';
@@ -2180,7 +2189,11 @@ function cosmeticPixelLine(x1: number, y1: number, x2: number, y2: number, state
   if (count > 262144) return undefined;
   const foreground: string[] = [], background: string[] = [];
   const dashes = state.pen.dashArray!;
-  let dash = 0, ink = true, remaining = dashes[0], error = dx - dy;
+  if (state.styledPen !== penIdentity(state.pen)) { state.styledPen=penIdentity(state.pen); state.cosmeticPhase=0; }
+  const cycle=dashes.reduce((a,b)=>a+b,0)*(dashes.length%2===0?1:2);
+  let phase=state.cosmeticPhase%cycle, dash=0, ink=true;
+  while(phase>=dashes[dash]){phase-=dashes[dash];dash=(dash+1)%dashes.length;ink=!ink;}
+  let remaining = dashes[dash]-phase, error = dx - dy;
   const sx = x < endX ? 1 : -1, sy = y < endY ? 1 : -1;
   for (let step = 0; step < count; step++) {
     if (ink || state.pen.opaqueDashGaps && state.backgroundMode === 2)
@@ -2192,7 +2205,35 @@ function cosmeticPixelLine(x1: number, y1: number, x2: number, y2: number, state
     if (twice < dx || twice === dx && sy < 0) { error += dx; y += sy; }
   }
   const paint = (path: string[], color: string) => path.length ? `<path d="${path.join(' ')}" stroke="none" fill="${color}"${clipAttr(state)} />` : '';
+  state.cosmeticPhase=(state.cosmeticPhase+count)%cycle;
   return `<g>${paint(background, state.backgroundColor)}${paint(foreground, state.pen.color)}</g>`;
+}
+
+function penIdentity(pen: PenObject): object { return pen.identity ??= {}; }
+
+function cosmeticPixelPath(path: string[], state: DrawState, mode: 'stroke'|'fill'|'paint', continueStyle: boolean): string | undefined {
+  const commands: Array<{type: string; x: number; y: number}> = [];
+  let x=0,y=0,startX=0,startY=0,budget=0;
+  for(const command of path){
+    const values=command.split(' ').filter(Boolean);
+    if(values.length===1&&values[0]==='Z'){commands.push({type:'Z',x:startX,y:startY});budget+=Math.max(Math.abs(startX-x),Math.abs(startY-y));x=startX;y=startY;continue;}
+    if(values.length!==3||!['M','L'].includes(values[0]))return undefined;
+    let px=Number(values[1]),py=Number(values[2]);if(!Number.isFinite(px)||!Number.isFinite(py))return undefined;
+    px=Math.floor(px+.5);py=Math.floor(py+.5);
+    if(values[0]==='M'){startX=px;startY=py;}else budget+=Math.max(Math.abs(px-x),Math.abs(py-y));
+    commands.push({type:values[0],x:px,y:py});x=px;y=py;
+  }
+  if(budget>262144||!commands.length||commands[0].type!=='M')return undefined;
+  penIdentity(state.pen);
+  const working=cloneState(state),pixels:string[]=[];let firstMove=true;
+  for(const command of commands){
+    if(command.type==='M'){if(!firstMove||!continueStyle)working.cosmeticPhase=0;firstMove=false;}
+    else{const segment=cosmeticPixelLine(x,y,command.x,command.y,working);if(segment===undefined)return undefined;pixels.push(segment);}
+    x=command.x;y=command.y;
+  }
+  state.cosmeticPhase=working.cosmeticPhase;state.styledPen=working.styledPen;
+  const fill=mode==='stroke'?'':`<path d="${path.join(' ')}" stroke="none" ${fillAttrs(state)} ${fillRuleAttr(state)}${clipAttr(state)} />`;
+  return `<g>${fill}${pixels.join('')}</g>`;
 }
 
 function drawAngleArc(cx: number, cy: number, radius: number, startDegrees: number, sweepDegrees: number, state: DrawState, elements: string[]): void {
@@ -2215,7 +2256,7 @@ function drawAngleArc(cx: number, cy: number, radius: number, startDegrees: numb
   [state.currentX, state.currentY] = end;
   state.logicalCurrentX = cx + radius * Math.cos(angle + sweep);
   state.logicalCurrentY = cy + radius * Math.sin(angle + sweep);
-  if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke'));
+  if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke', true));
   else {
     state.pathFigureClosed = false;
     [state.pathEndX, state.pathEndY] = end;
@@ -2253,7 +2294,7 @@ function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, s
   if (closed) path.push('Z');
   const end = map(cx + rx * Math.cos(endAngle), cy + ry * Math.sin(endAngle));
   if (to) { state.currentX = end[0]; state.currentY = end[1]; state.logicalCurrentX = cx + rx * Math.cos(endAngle); state.logicalCurrentY = cy + ry * Math.sin(endAngle); }
-  if (state.currentPath === undefined) elements.push(pathElement(path, state, closed ? 'paint' : 'stroke'));
+  if (state.currentPath === undefined) elements.push(pathElement(path, state, closed ? 'paint' : 'stroke', to));
   else {
     state.pathFigureClosed = closed;
     state.pathEndX = closed ? state.pathStartX : end[0]; state.pathEndY = closed ? state.pathStartY : end[1];
@@ -2336,6 +2377,10 @@ function ellipseElement(left: number, top: number, right: number, bottom: number
 function polyElement(points: Array<[number, number]>, closed: boolean, state: DrawState): string {
   if (points.length === 0)
     return '';
+  if(state.pen.cosmeticDashes){
+    const path=[`M ${points[0][0]} ${points[0][1]}`,...points.slice(1).map(p=>`L ${p[0]} ${p[1]}`)];if(closed)path.push('Z');
+    const pixels=cosmeticPixelPath(path,state,closed?'paint':'stroke',false);if(pixels!==undefined)return pixels;
+  }
   const tag = closed ? 'polygon' : 'polyline';
   const fill = closed ? `${fillAttrs(state)} ${fillRuleAttr(state)}` : 'fill="none"';
   return `<${tag} points="${points.map(([x, y]) => `${x},${y}`).join(' ')}" ${strokeAttrs(state)} ${fill}${clipAttr(state)} />`;
@@ -2352,7 +2397,9 @@ function isTallFallbackDuplicate(points: Array<[number, number]>): boolean {
   return height > width * 2;
 }
 
-function pathElement(path: string[], state: DrawState, mode: 'fill' | 'stroke' | 'paint'): string {
+function pathElement(path: string[], state: DrawState, mode: 'fill' | 'stroke' | 'paint', continueCosmeticStyle = false): string {
+  if(mode!=='fill'&&state.pen.cosmeticDashes){const pixels=cosmeticPixelPath(path,state,mode,continueCosmeticStyle);if(pixels!==undefined)return pixels;}
+  if(mode!=='fill'&&!state.pen.none&&state.styledPen!==penIdentity(state.pen)){state.styledPen=penIdentity(state.pen);state.cosmeticPhase=0;}
   const stroke = mode === 'fill' ? 'stroke="none"' : strokeAttrs(state);
   const fill = mode === 'stroke' ? 'fill="none"' : fillAttrs(state);
   const fillRule = mode === 'stroke' ? '' : ` ${fillRuleAttr(state)}`;

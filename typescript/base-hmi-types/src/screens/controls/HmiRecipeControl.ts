@@ -5,6 +5,8 @@ import { HmiRecipeColumn } from "./HmiRecipeColumn.js";
 import { HmiRecipeViewKind } from "./HmiRecipeViewKind.js";
 
 export class HmiRecipeControl extends HmiControlWindowBase {
+  /** Show one recipe/record/value selection page at a time. */
+  simpleView?: boolean;
   constructor() {
     super();
     this.hmiObjectType = HmiObjectType.HmiRecipeControl;

@@ -283,3 +283,13 @@ with `detail.keys` and `hmi-alarm-action` with `detail.action` and `detail.keys`
 it never reads tags or acknowledges a PLC itself. `refresh()` reapplies the last
 snapshot after the host updates static layout or bound appearance properties.
 The shared HTML component implementation is included in both C# and TypeScript output.
+
+
+Sparse recipe members use `HmiRecipeSparseArray` (`length`/`Length` and zero-based
+lexical values), retained by `SourceSparseArrayValues` / `sourceSparseArrayValues`.
+`Resolve` / `resolve` applies them to a complete explicit baseline without filling
+unknown positions. `HmiRecipeBinaryLayout` describes exact numeric/Boolean field
+offsets, byte length and explicit byte order for opaque snapshots.
+`HmiRecipeBinaryCodec` validates and decodes these snapshots and patches a cloned
+payload while preserving padding and unrelated bits. Unsupported layouts remain
+opaque; no UDT packing is inferred. Both APIs are mirrored in C# and TypeScript.

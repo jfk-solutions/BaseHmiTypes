@@ -1,3 +1,5 @@
+import type {HmiRecipeSparseArray} from './HmiRecipeSparseArray.js';
+import type {HmiRecipeBinaryLayout} from './HmiRecipeBinaryLayout.js';
 import { HmiRecipeStructuredValue } from "./HmiRecipeStructuredValue.js";
 import { HmiTextList } from "../text-graphic-lists/HmiTextList.js";
 import { HmiMultilingualText } from "../common/HmiMultilingualText.js";
@@ -67,6 +69,11 @@ export class HmiRecipeReference {
 }
 
 export class HmiRecipeParameter {
+  binaryLayout?:HmiRecipeBinaryLayout;
+  binaryDefaultValue?:HmiRecipeBinaryValue;
+  /** Live numeric bounds; each overrides the corresponding literal bound. */
+  minimumTag?: string;
+  maximumTag?: string;
   /** Persisted object identity, independent of element IDs and record numbers. */
   sourceObjectId?: string;
   textList?: HmiTextList;
@@ -166,6 +173,8 @@ export class HmiRecipeDataSet {
   readonly values: Record<string, string | undefined> = Object.create(null);
   readonly sourceStructuredValues = new Map<string, HmiRecipeStructuredValue>();
   readonly sourceValues = new Map<string, string | undefined>();
+  /** Sparse zero-based positions; omitted members require a complete explicit baseline. */
+  readonly sourceSparseArrayValues = new Map<string,HmiRecipeSparseArray>();
   /** Flat stored members in storage order, with exact source keys; no PLC bounds are inferred. */
   readonly sourceArrayValues = new Map<string, Array<string | undefined>>();
   readonly sourceBinaryValues = new Map<string, HmiRecipeBinaryValue>();

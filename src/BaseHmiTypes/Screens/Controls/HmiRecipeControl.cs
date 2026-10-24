@@ -10,6 +10,8 @@ public sealed class HmiRecipeControl : HmiControlWindowBase
     }
 
     public HmiRecipeViewKind ViewKind { get; set; }
+    /// <summary>Show one recipe/record/value selection page at a time.</summary>
+    public bool? SimpleView { get; set; }
 
     public HmiProperty<string>? DefaultRecipeName { get; set; }
 

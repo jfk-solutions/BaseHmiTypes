@@ -11,6 +11,9 @@ public class HmiSymbolicIOField : HmiTextWidgetBase
 
     public IList<HmiState> States { get; } = new List<HmiState>();
 
+    /// <summary>Configured dropdown entries and their range/bit selection policy.</summary>
+    public BaseHmiTypes.TextGraphicLists.HmiTextList? TextList { get; set; }
+
     /// <summary>
     /// Gets or sets the number of configured states, excluding any error state.
     /// </summary>

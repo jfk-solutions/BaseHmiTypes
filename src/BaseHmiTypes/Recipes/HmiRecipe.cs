@@ -80,6 +80,11 @@ public sealed class HmiRecipeReference
 
 public sealed class HmiRecipeParameter : IHmiObject
 {
+    public HmiRecipeBinaryLayout? BinaryLayout { get; set; }
+    public HmiRecipeBinaryValue? BinaryDefaultValue { get; set; }
+    /// <summary>Live numeric bounds; when configured, each overrides the corresponding literal bound.</summary>
+    public string? MinimumTag { get; set; }
+    public string? MaximumTag { get; set; }
     /// <summary>Persisted object identity, independent of element IDs and record numbers.</summary>
     public string? SourceObjectId { get; set; }
     public HmiTextList? TextList { get; set; }
@@ -202,6 +207,9 @@ public sealed class HmiRecipeDataSet : IHmiObject
     public IDictionary<string, HmiRecipeStructuredValue> SourceStructuredValues { get; } = new Dictionary<string, HmiRecipeStructuredValue>(StringComparer.Ordinal);
 
     public IDictionary<string, string?> SourceValues { get; } = new Dictionary<string, string?>(StringComparer.Ordinal);
+
+    /// <summary>Sparse zero-based positions; omitted members require a complete explicit baseline.</summary>
+    public IDictionary<string, HmiRecipeSparseArray> SourceSparseArrayValues { get; } = new Dictionary<string, HmiRecipeSparseArray>(StringComparer.Ordinal);
 
     /// <summary>Flat stored array members in storage order, keyed by the exact source key; no PLC bounds are inferred.</summary>
     public IDictionary<string, IList<string?>> SourceArrayValues { get; } = new Dictionary<string, IList<string?>>(StringComparer.Ordinal);
