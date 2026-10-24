@@ -21,9 +21,9 @@ namespace BaseHmiTypes.Tests;
         Assert.AreEqual(fill,rects[0].Attribute("fill")!.Value);Assert.AreEqual("#ff0000",rects[1].Attribute("fill")!.Value);
     }
     [TestMethod] [DataRow(6,"#ffffff")] [DataRow(7,"#000000")] [DataRow(8,"none")]
-    public void StockPensReplaceAnExplicitPenWithoutAddingFill(int stock,string stroke)
+    public void StockPensReplaceAnExplicitPenWithoutChangingDefaultWhiteBrush(int stock,string stroke)
     {
-        var rect=Rectangles(MetafileStockFixtures.Emf(0x80000000u+(uint)stock,pen:true)).Single();Assert.AreEqual(stroke,rect.Attribute("stroke")!.Value);Assert.AreEqual("none",rect.Attribute("fill")!.Value);
+        var rect=Rectangles(MetafileStockFixtures.Emf(0x80000000u+(uint)stock,pen:true)).Single();Assert.AreEqual(stroke,rect.Attribute("stroke")!.Value);Assert.AreEqual("#ffffff",rect.Attribute("fill")!.Value);
     }
     [TestMethod] [DataRow(1u)] [DataRow(0x80000009u)]
     public void OrdinaryAndUnknownStockHandlesDoNotSelectAnUnrelatedBrush(uint handle)

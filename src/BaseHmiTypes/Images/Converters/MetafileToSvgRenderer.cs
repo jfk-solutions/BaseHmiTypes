@@ -45,6 +45,8 @@ public sealed class MetafileToSvgRenderer
             Height = I32(bytes, 20) - I32(bytes, 12) + 1,
         });
         var state = CreateInitialState();
+        // An EMF playback DC starts with the stock white brush, not NULL_BRUSH.
+        state.Brush = new BrushObject { Color = "#ffffff" };
         var mappingDevice = EmfMappingDevice(bytes);
         var stateStack = new Stack<DrawState>();
         var objects = new Dictionary<uint, MetafileObject>();
@@ -293,12 +295,14 @@ public sealed class MetafileToSvgRenderer
                     }
                     break;
                 case EMR.FillRgn:
-                    if (record.Size >= 64)
+                case EMR.PaintRgn:
+                    if (record.Size >= (record.Type == EMR.PaintRgn ? 60 : 64))
                     {
-                        var index = U32(bytes, dataOffset + 20);
-                        var fillBrush = EmfStockObject(index) ?? (objects.TryGetValue(index, out var candidate) ? candidate : null);
+                        var selectedBrush = record.Type == EMR.PaintRgn;
+                        var index = selectedBrush ? 0 : U32(bytes, dataOffset + 20);
+                        var fillBrush = selectedBrush ? state.Brush : EmfStockObject(index) ?? (objects.TryGetValue(index, out var candidate) ? candidate : null);
                         if (fillBrush is not BrushObject { None: false } brush) break;
-                        var rectangles = ReadEmfRegionRectangles(bytes, record, U32(bytes, dataOffset + 16), 32);
+                        var rectangles = ReadEmfRegionRectangles(bytes, record, U32(bytes, dataOffset + 16), selectedBrush ? 28 : 32);
                         if (rectangles is null || rectangles.Count == 0) break;
                         PrepareEmfMapping(state);
                         var geometry = EmfRegionGeometry(rectangles, state);
@@ -2170,6 +2174,7 @@ internal static class EMR
     public const uint SetBkColor = 0x0019;
     public const uint SetPixelV = 0x000f;
     public const uint FillRgn = 0x0047;
+    public const uint PaintRgn = 0x004a;
     public const uint ScaleViewportExtEx = 0x001f;
     public const uint ScaleWindowExtEx = 0x0020;
     public const uint SetPolyFillMode = 0x0013;
