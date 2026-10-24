@@ -195,6 +195,7 @@ public sealed class MetafileToSvgRenderer
                     objects.Remove(U32(bytes, dataOffset));
                     break;
                 case EMR.MoveToEx:
+                    state.CosmeticPhase = 0;
                     state.LogicalCurrentX = I32(bytes, dataOffset);
                     state.LogicalCurrentY = I32(bytes, dataOffset + 4);
                     (state.CurrentX, state.CurrentY) = TransformPoint(state, I32(bytes, dataOffset), I32(bytes, dataOffset + 4));
@@ -458,6 +459,8 @@ public sealed class MetafileToSvgRenderer
                         break;
                     }
             }
+            if (!state.Pen.CosmeticDashes && !state.Pen.None && elements.Skip(firstElement).Any(element=>element.Contains(StrokeAttrs(state))))
+            { state.StyledPen=state.Pen; state.CosmeticPhase=0; }
             ApplyCosmeticGapBackground(elements, firstElement, state);
             // The metaregion is independent of the selected clip on each drawing.
             if (state.MetaMaskId is not null && elements.Count > firstElement)
@@ -828,6 +831,8 @@ public sealed class MetafileToSvgRenderer
         return new DrawState
         {
             Pen = state.Pen,
+            StyledPen = state.StyledPen,
+            CosmeticPhase = state.CosmeticPhase,
             Brush = state.Brush,
             ResolvedBrushFill = state.ResolvedBrushFill,
             BackgroundMode = state.BackgroundMode,
@@ -884,6 +889,8 @@ public sealed class MetafileToSvgRenderer
             return;
         var restored = CloneState(source);
         target.Pen = restored.Pen;
+        target.StyledPen = restored.StyledPen;
+        target.CosmeticPhase = restored.CosmeticPhase;
         target.Brush = restored.Brush;
         target.ResolvedBrushFill = restored.ResolvedBrushFill;
         target.BackgroundMode = restored.BackgroundMode;
@@ -1203,7 +1210,7 @@ public sealed class MetafileToSvgRenderer
         state.CurrentY = end.Y;
         state.LogicalCurrentX = cx + radius * Math.Cos(angle + sweep);
         state.LogicalCurrentY = cy + radius * Math.Sin(angle + sweep);
-        if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke));
+        if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke, true));
         else
         {
             state.PathFigureClosed = false;
@@ -1251,7 +1258,7 @@ public sealed class MetafileToSvgRenderer
         if (closed) path.Add("Z");
         var end = Map(cx + rx * Math.Cos(endAngle), cy + ry * Math.Sin(endAngle));
         if (to) {state.CurrentX = end.X;state.CurrentY = end.Y;state.LogicalCurrentX = cx + rx * Math.Cos(endAngle);state.LogicalCurrentY = cy + ry * Math.Sin(endAngle);}
-        if (state.CurrentPath is null) elements.Add(PathElement(path, state, closed ? PathPaintMode.Paint : PathPaintMode.Stroke));
+        if (state.CurrentPath is null) elements.Add(PathElement(path, state, closed ? PathPaintMode.Paint : PathPaintMode.Stroke, to));
         else
         {
             state.PathFigureClosed = closed;
@@ -1447,7 +1454,7 @@ public sealed class MetafileToSvgRenderer
         var end = points[points.Count - 1];
         if (to) { state.CurrentX = end.X; state.CurrentY = end.Y; state.LogicalCurrentX = logical[logical.Count - 1].X; state.LogicalCurrentY = logical[logical.Count - 1].Y; }
         if (state.CurrentPath is not null) { state.PathEndX = end.X; state.PathEndY = end.Y; }
-        else elements.Add(PathElement(path, state, PathPaintMode.Stroke));
+        else elements.Add(PathElement(path, state, PathPaintMode.Stroke, to));
     }
 
     private static void DrawEmfPolyDraw(DrawState state, byte[] bytes, EmfRecord record, List<string> elements)
@@ -1513,7 +1520,7 @@ public sealed class MetafileToSvgRenderer
                 state.PathEndY = state.PathStartY;
             }
         }
-        if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke));
+        if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke, bytes[typesOffset] != PolyDrawTypeMoveTo));
     }
 
     private static List<(double X, double Y)> ReadEmfPointArray32(byte[] bytes, EmfRecord record, bool shortPoints = false)
@@ -1843,6 +1850,7 @@ public sealed class MetafileToSvgRenderer
     private static string LineElement(double x1, double y1, double x2, double y2, DrawState state)
     {
         if (state.Pen.CosmeticDashes && TryCosmeticPixelLine(x1, y1, x2, y2, state, out var pixels)) return pixels;
+        if (!state.Pen.None && !ReferenceEquals(state.StyledPen, state.Pen)) { state.StyledPen = state.Pen; state.CosmeticPhase = 0; }
         // GDI cosmetic patterns count major-axis device pixels, not Euclidean
         // SVG path length. This also retains the pattern for 45-degree lines.
         var major = Math.Max(Math.Abs(x2 - x1), Math.Abs(y2 - y1));
@@ -1862,7 +1870,12 @@ public sealed class MetafileToSvgRenderer
         var count = Math.Max(dx, dy);
         if (count > 262144) return false;
         var foreground = new StringBuilder(); var background = new StringBuilder();
-        var dash = 0; var ink = true; var remaining = state.Pen.DashArray![0];
+        if (!ReferenceEquals(state.StyledPen, state.Pen)) { state.StyledPen = state.Pen; state.CosmeticPhase = 0; }
+        var cycle = (long)state.Pen.DashArray!.Sum() * (state.Pen.DashArray.Length % 2 == 0 ? 1 : 2);
+        var phase = state.CosmeticPhase % cycle;
+        var dash = 0; var ink = true;
+        while (phase >= state.Pen.DashArray[dash]) { phase -= (long)state.Pen.DashArray[dash]; dash = (dash + 1) % state.Pen.DashArray.Length; ink = !ink; }
+        var remaining = state.Pen.DashArray[dash] - phase;
         var error = dx - dy; var sx = x < endX ? 1 : -1; var sy = y < endY ? 1 : -1;
         for (var step = 0; step < count; step++)
         {
@@ -1877,6 +1890,39 @@ public sealed class MetafileToSvgRenderer
         }
         string Paint(StringBuilder path, string color) => path.Length == 0 ? string.Empty : $"<path d=\"{path.ToString().TrimEnd()}\" stroke=\"none\" fill=\"{color}\"{ClipAttr(state)} />";
         element = $"<g>{Paint(background, state.BackgroundColor)}{Paint(foreground, state.Pen.Color)}</g>";
+        state.CosmeticPhase = (state.CosmeticPhase + (long)count) % cycle;
+        return true;
+    }
+
+    private static bool TryCosmeticPixelPath(List<string> path, DrawState state, PathPaintMode mode, bool continueStyle, out string element)
+    {
+        element = string.Empty;
+        var commands = new List<(char Type, double X, double Y)>();
+        double x = 0, y = 0, startX = 0, startY = 0, budget = 0;
+        foreach (var command in path)
+        {
+            var values = command.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (values.Length == 1 && values[0] == "Z") { commands.Add(('Z', startX, startY)); budget += Math.Max(Math.Abs(startX-x), Math.Abs(startY-y)); x=startX; y=startY; continue; }
+            if (values.Length != 3 || values[0] is not ("M" or "L") ||
+                !double.TryParse(values[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var px) ||
+                !double.TryParse(values[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var py) ||
+                double.IsNaN(px) || double.IsInfinity(px) || double.IsNaN(py) || double.IsInfinity(py)) return false;
+            px = Math.Floor(px + .5); py = Math.Floor(py + .5);
+            if (values[0] == "M") { startX=px; startY=py; } else budget += Math.Max(Math.Abs(px-x), Math.Abs(py-y));
+            commands.Add((values[0][0],px,py)); x=px; y=py;
+        }
+        if (budget > 262144 || commands.Count == 0 || commands[0].Type != 'M') return false;
+        var working = CloneState(state);
+        var pixels = new StringBuilder(); var firstMove = true;
+        foreach (var command in commands)
+        {
+            if (command.Type == 'M') { if (!firstMove || !continueStyle) working.CosmeticPhase=0; firstMove=false; }
+            else { if (!TryCosmeticPixelLine(x,y,command.X,command.Y,working,out var segment)) return false; pixels.Append(segment); }
+            x=command.X; y=command.Y;
+        }
+        state.CosmeticPhase=working.CosmeticPhase; state.StyledPen=working.StyledPen;
+        var fill = mode == PathPaintMode.Stroke ? string.Empty : $"<path d=\"{string.Join(" ",path)}\" stroke=\"none\" {FillAttrs(state)} {FillRuleAttr(state)}{ClipAttr(state)} />";
+        element=$"<g>{fill}{pixels}</g>";
         return true;
     }
 
@@ -1896,13 +1942,21 @@ public sealed class MetafileToSvgRenderer
     {
         if (points.Count == 0)
             return string.Empty;
+        if (state.Pen.CosmeticDashes)
+        {
+            var path = new List<string> { $"M {Number(points[0].X)} {Number(points[0].Y)}" };
+            path.AddRange(points.Skip(1).Select(p=>$"L {Number(p.X)} {Number(p.Y)}")); if (closed) path.Add("Z");
+            if (TryCosmeticPixelPath(path,state,closed?PathPaintMode.Paint:PathPaintMode.Stroke,false,out var pixels)) return pixels;
+        }
         var tag = closed ? "polygon" : "polyline";
         var fill = closed ? $"{FillAttrs(state)} {FillRuleAttr(state)}" : "fill=\"none\"";
         return $"<{tag} points=\"{string.Join(" ", points.ConvertAll(point => $"{Number(point.X)},{Number(point.Y)}"))}\" {StrokeAttrs(state)} {fill}{ClipAttr(state)} />";
     }
 
-    private static string PathElement(List<string> path, DrawState state, PathPaintMode mode)
+    private static string PathElement(List<string> path, DrawState state, PathPaintMode mode, bool continueCosmeticStyle = false)
     {
+        if (mode != PathPaintMode.Fill && state.Pen.CosmeticDashes && TryCosmeticPixelPath(path,state,mode,continueCosmeticStyle,out var pixels)) return pixels;
+        if (mode != PathPaintMode.Fill && !state.Pen.None && !ReferenceEquals(state.StyledPen,state.Pen)) { state.StyledPen=state.Pen; state.CosmeticPhase=0; }
         var stroke = mode == PathPaintMode.Fill ? "stroke=\"none\"" : StrokeAttrs(state);
         var fill = mode == PathPaintMode.Stroke ? "fill=\"none\"" : FillAttrs(state);
         var fillRule = mode == PathPaintMode.Stroke ? string.Empty : $" {FillRuleAttr(state)}";
@@ -2124,6 +2178,8 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class DrawState
 {
+    public PenObject? StyledPen { get; set; }
+    public long CosmeticPhase { get; set; }
     public string? ResolvedBrushFill { get; set; }
     public int BackgroundMode { get; set; } = 2;
     public string BackgroundColor { get; set; } = "#ffffff";
