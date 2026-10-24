@@ -14,10 +14,10 @@ for(const [x,y] of [[1,1],[-1,1],[1,-1],[-1,-1]]){
  test(`Isotropic adjusts larger axis and preserves signs: ${x}/${y}`,()=>endpoint(svg(...mapping(7,10,20,x*40,y*30),record(54,10,20)),x*15,y*30));
 }
 test('Isotropic adjusts other axis',()=>endpoint(svg(...mapping(7,20,10,30,40),record(54,20,10)),30,15));
-test('Isotropic window change adjusts current viewport',()=>endpoint(svg(...mapping(7),record(9,20,20),record(54,20,20)),15,15));
+test('Isotropic window change adjusts requested viewport',()=>endpoint(svg(...mapping(7),record(9,20,20),record(54,20,20)),30,30));
 test('Repeated isotropic mode does not reset extents',()=>endpoint(svg(...mapping(7),record(17,7),record(54,10,20)),15,30));
 test('Isotropic can round small axis to zero',()=>endpoint(svg(...mapping(7,1000,1,1,1000),record(54,1000,1)),1,0));
-test('Anisotropic entry preserves existing isotropic extents',()=>endpoint(svg(...mapping(7),record(17,8),record(54,10,20)),15,30));
+test('Anisotropic entry preserves requested isotropic extents',()=>endpoint(svg(...mapping(7),record(17,8),record(54,10,20)),40,30));
 test('Isotropic entry resets prior anisotropic extents',()=>endpoint(svg(...mapping(),record(17,7),record(54,3400,2100)),1728,-1067));
 test('Text mode resets scale but preserves origins',()=>endpoint(svg(...mapping(),record(10,3,4),record(12,5,6),record(17,1),record(54,20,40)),22,42));
 for(let mode=1;mode<=6;mode++)test(`Anisotropic entry preserves fixed mode extents: ${mode}`,()=>{const m=modes[mode-1];endpoint(svg(record(17,mode),record(17,8),record(9,10,20),record(54,10,20)),m[2],m[3]);});

@@ -30,6 +30,7 @@ const DEFAULT_CLIP_VIEWPORT_TOKEN = '__METAFILE_DEFAULT_CLIP_VIEWPORT__';
 
 interface DrawState {
   mapMode: number;
+  isotropicDirty: boolean;
   pathFigureClosed: boolean;
   clockwiseShapes: boolean;
   miterLimit: number;
@@ -150,6 +151,7 @@ export class MetafileToSvgRenderer {
     let hasEmfPlusDrawing = false;
 
     for (const record of emfRecords(bytes)) {
+      if (EMF_MAPPING_RECORDS.has(record.type)) prepareEmfMapping(state);
       [state.currentX, state.currentY] = transformPoint(state, state.logicalCurrentX, state.logicalCurrentY);
       const firstElement = elements.length;
       const dataOffset = record.offset + 8;
@@ -175,6 +177,10 @@ export class MetafileToSvgRenderer {
           break;
         case EMR.SETVIEWPORTEXTEX:
           if (record.size >= 16) setEmfExtents(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), true);
+          break;
+        case EMR.SCALEWINDOWEXTEX:
+        case EMR.SCALEVIEWPORTEXTEX:
+          if (record.size >= 24) scaleEmfExtents(state, i32(bytes, dataOffset), i32(bytes, dataOffset + 4), i32(bytes, dataOffset + 8), i32(bytes, dataOffset + 12), record.type === EMR.SCALEVIEWPORTEXTEX);
           break;
         case EMR.SETPOLYFILLMODE:
           state.fillRule = polyFillRule(u32(bytes, dataOffset));
@@ -662,6 +668,8 @@ const EMR = {
   SETVIEWPORTEXTEX: 0x000b,
   SETVIEWPORTORGEX: 0x000c,
   SETMAPMODE: 0x0011,
+  SCALEVIEWPORTEXTEX: 0x001f,
+  SCALEWINDOWEXTEX: 0x0020,
   SETPOLYFILLMODE: 0x0013,
   SETTEXTCOLOR: 0x0018,
   SAVEDC: 0x0021,
@@ -894,6 +902,7 @@ function addWmfObject(objects: Array<MetafileObject | null>, object: MetafileObj
 function createInitialState(): DrawState {
   return {
     mapMode: 1,
+    isotropicDirty: false,
     pen: { kind: 'pen', color: '#000000', width: 1, none: false },
     brush: { kind: 'brush', color: 'none', none: true },
     font: { kind: 'font', family: 'Arial', height: 12, weight: 400, italic: false },
@@ -1176,8 +1185,10 @@ function emfMappingDevice(bytes: Uint8Array): [number, number, number, number] {
 
 function setEmfMapMode(state: DrawState, mode: number, device: [number, number, number, number]): void {
   if (mode < 1 || mode > 8) return;
-  if (mode === 8 || (mode === 7 && state.mapMode === 7)) { state.mapMode = mode; return; }
+  if (mode === 8) { state.mapMode = mode; state.isotropicDirty = false; return; }
+  if (mode === 7 && state.mapMode === 7) return;
   state.mapMode = mode;
+  state.isotropicDirty = mode === 7;
   if (mode === 1) {
     state.windowExtX = state.windowExtY = state.viewportExtX = state.viewportExtY = 1;
     return;
@@ -1186,22 +1197,60 @@ function setEmfMapMode(state: DrawState, mode: number, device: [number, number, 
   state.windowExtX = Math.round(device[2] * unitsPerMillimeter);
   state.windowExtY = Math.round(device[3] * unitsPerMillimeter);
   state.viewportExtX = device[0]; state.viewportExtY = -device[1];
-  if (mode === 7) adjustIsotropicExtents(state);
 }
 
 function setEmfExtents(state: DrawState, x: number, y: number, viewport: boolean): void {
   if (state.mapMode < 7 || x === 0 || y === 0) return;
+  if (viewport ? state.viewportExtX === x && state.viewportExtY === y : state.windowExtX === x && state.windowExtY === y) return;
   if (viewport) { state.viewportExtX = x; state.viewportExtY = y; }
   else { state.windowExtX = x; state.windowExtY = y; }
-  if (state.mapMode === 7) adjustIsotropicExtents(state);
+  state.isotropicDirty = state.mapMode === 7;
+}
+
+const EMF_MAPPING_RECORDS = new Set<number>([
+  EMR.LINETO, EMR.POLYLINETO, EMR.POLYLINETO16, EMR.POLYBEZIER, EMR.POLYBEZIER16,
+  EMR.POLYBEZIERTO, EMR.POLYBEZIERTO16, EMR.POLYDRAW, EMR.POLYDRAW16,
+  EMR.RECTANGLE, EMR.ELLIPSE, EMR.ROUNDRECT, EMR.ANGLEARC, EMR.ARC, EMR.CHORD, EMR.PIE, EMR.ARCTO,
+  EMR.POLYGON, EMR.POLYGON16, EMR.POLYLINE, EMR.POLYLINE16,
+  EMR.POLYPOLYGON, EMR.POLYPOLYGON16, EMR.POLYPOLYLINE, EMR.POLYPOLYLINE16,
+  EMR.FILLPATH, EMR.STROKEPATH, EMR.STROKEANDFILLPATH, EMR.EXTTEXTOUTW, EMR.STRETCHDIBITS,
+  EMR.INTERSECTCLIPRECT, EMR.EXCLUDECLIPRECT, EMR.OFFSETCLIPRGN,
+]);
+
+function prepareEmfMapping(state: DrawState): void {
+  // MoveTo, path brackets, Save/Restore and later setters retain requested extents.
+  if (state.mapMode !== 7 || !state.isotropicDirty) return;
+  adjustIsotropicExtents(state);
+  state.isotropicDirty = false;
 }
 
 function adjustIsotropicExtents(state: DrawState): void {
-  const xScale = Math.abs(state.viewportExtX / state.windowExtX), yScale = Math.abs(state.viewportExtY / state.windowExtY);
+  const xScale = nativeAbsoluteExtent(state.viewportExtX) / nativeAbsoluteExtent(state.windowExtX), yScale = nativeAbsoluteExtent(state.viewportExtY) / nativeAbsoluteExtent(state.windowExtY);
   if (xScale > yScale)
-    state.viewportExtX = Math.sign(state.viewportExtX) * Math.round(Math.abs(state.windowExtX) * yScale);
+    state.viewportExtX = roundedIsotropicExtent(state.viewportExtX, nativeAbsoluteExtent(state.windowExtX) * yScale);
   else if (yScale > xScale)
-    state.viewportExtY = Math.sign(state.viewportExtY) * Math.round(Math.abs(state.windowExtY) * xScale);
+    state.viewportExtY = roundedIsotropicExtent(state.viewportExtY, nativeAbsoluteExtent(state.windowExtY) * xScale);
+}
+
+function nativeAbsoluteExtent(value: number): number { return value === -2147483648 ? value : Math.abs(value); }
+function roundedIsotropicExtent(original: number, value: number): number {
+  return Math.imul(Math.sign(original), (Math.sign(value) * Math.round(Math.abs(value))) | 0);
+}
+
+function scaleEmfExtents(state: DrawState, xn: number, xd: number, yn: number, yd: number, viewport: boolean): void {
+  if (state.mapMode < 7) return;
+  const x = scaleExtent(viewport ? state.viewportExtX : state.windowExtX, xn, xd);
+  const y = scaleExtent(viewport ? state.viewportExtY : state.windowExtY, yn, yd);
+  if (x === undefined || y === undefined) return;
+  setEmfExtents(state, x, y, viewport);
+  state.isotropicDirty = state.mapMode === 7;
+}
+
+function scaleExtent(extent: number, numerator: number, denominator: number): number | undefined {
+  if (denominator === 0) return undefined;
+  // Native GDI wraps the signed product before truncating division.
+  const value = Math.trunc(Math.imul(extent, numerator) / denominator);
+  return value === 0 || value < -2147483648 || value > 2147483647 ? undefined : value;
 }
 
 function scaledPenWidth(state: DrawState, width: number): number {
