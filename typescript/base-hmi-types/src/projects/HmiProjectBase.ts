@@ -1,3 +1,4 @@
+import {HmiFieldOwner} from "../scripts/HmiFieldOwner.js";
 import { HmiProjectDevice } from "./HmiProjectDevice.js";
 import { HmiAlarmList } from "../alarms/HmiAlarm.js";
 import { HmiConnectionList } from "../connections/HmiConnectionList.js";
@@ -26,6 +27,9 @@ export abstract class HmiProjectBase implements IHmiProject {
   get globalEvents(): readonly HmiEventBinding[] { return []; }
   /** Counter actions retain source owner metadata; hosts own observation and dispatch. */
   get counterEvents(): readonly HmiEventBinding[] { return []; }
+  /** Source metadata identifies unresolved rendered object associations. */
+  get fieldOwners(): readonly HmiFieldOwner[] { return []; }
+  get fieldEvents(): readonly HmiEventBinding[] { return this.fieldOwners.flatMap(owner => owner.events); }
   async getSecurity(_signal?: AbortSignal): Promise<import("./HmiSecurityConfiguration.js").HmiSecurityConfiguration | undefined> { return undefined; }
   async verifySecurityPassword(_userId: string, _password: string, _signal?: AbortSignal): Promise<boolean> { return false; }
 

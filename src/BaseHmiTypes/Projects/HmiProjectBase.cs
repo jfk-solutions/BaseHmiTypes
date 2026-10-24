@@ -21,6 +21,9 @@ public abstract class HmiProjectBase : IHmiProject, IHmiSecurityProvider
     public virtual IReadOnlyList<HmiEventBinding> GlobalEvents => Array.Empty<HmiEventBinding>();
     /// <summary>Counter event actions with source owner metadata; hosts own observation and dispatch.</summary>
     public virtual IReadOnlyList<HmiEventBinding> CounterEvents => Array.Empty<HmiEventBinding>();
+    /// <summary>Source field owners; source metadata identifies unresolved object associations.</summary>
+    public virtual IReadOnlyList<HmiFieldOwner> FieldOwners => Array.Empty<HmiFieldOwner>();
+    public virtual IReadOnlyList<HmiEventBinding> FieldEvents => FieldOwners.SelectMany(owner => owner.Events).ToArray();
     public virtual ValueTask<HmiSecurityConfiguration?> GetSecurityAsync(CancellationToken cancellationToken = default) => new((HmiSecurityConfiguration?)null);
     public virtual ValueTask<bool> VerifySecurityPasswordAsync(string userId, string password, CancellationToken cancellationToken = default) => new(false);
 
