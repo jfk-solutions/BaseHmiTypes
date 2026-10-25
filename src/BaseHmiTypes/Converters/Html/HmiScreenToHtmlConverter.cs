@@ -5145,7 +5145,10 @@ public partial class HmiScreenToHtmlConverter
         AppendStaticAttribute(html, "bar-mode", gauge.BarMode);
         AppendStaticAttribute(html, "scale-mode", gauge.ScaleMode);
         AppendStaticAttribute(html, "orientation", gauge.Orientation);
-        AppendBooleanAttribute(html, "show-value", gauge.ShowValue.GetStaticValueOrDefault(true));
+        AppendBooleanAttribute(html, "show-value", (gauge.CurrentValueVisible ?? gauge.ShowValue).GetStaticValueOrDefault(true));
+        AppendStaticAttribute(html, "current-value-decimal-places", gauge.CurrentValueDecimalPlaces);
+        AppendStaticAttribute(html, "current-value-color", gauge.CurrentValueColor);
+        AppendAttribute(html, "current-value-font", FormatFont(gauge.CurrentValueFont?.GetForCulture(context.CultureInfo?.LCID)));
         AppendStaticAttribute(html, "value-position", gauge.ValuePosition);
         AppendStaticAttribute(html, "label-color", gauge.LabelColor);
         AppendStaticAttribute(html, "scale-background-color", gauge.ScaleBackgroundColor);
