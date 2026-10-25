@@ -2125,7 +2125,7 @@ public sealed class MetafileToSvgRenderer
     }
     private static bool TryFlattenStoredPath(MetafilePath source,out MetafilePath flattened)
     {
-        var candidate=new MetafilePath{NativeQuadFill=source.NativeQuadFill};flattened=candidate;double x=0,y=0,startX=0,startY=0;
+        var candidate=new MetafilePath{NativePolygonFill=source.NativePolygonFill};flattened=candidate;double x=0,y=0,startX=0,startY=0;
         bool Add(char kind,double px,double py)
         {
             if(candidate.Count>=65536||double.IsNaN(px)||double.IsInfinity(px)||double.IsNaN(py)||double.IsInfinity(py))return false;
@@ -2254,20 +2254,20 @@ public sealed class MetafileToSvgRenderer
     private static bool TryWidenStoredLine(MetafilePath path,DrawState state,out MetafilePath outline)
     {
         outline=new MetafilePath();
-        if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap is not ("butt" or "square")||state.Pen.DashArray is not null||path.Count!=2||!path[0].StartsWith("M ",StringComparison.Ordinal)||!path[1].StartsWith("L ",StringComparison.Ordinal)||!path.NativePoints.TryGetValue(0,out var start)||!path.NativePoints.TryGetValue(1,out var end))return false;
+        if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap is not ("butt" or "square" or "round")||state.Pen.DashArray is not null||path.Count!=2||!path[0].StartsWith("M ",StringComparison.Ordinal)||!path[1].StartsWith("L ",StringComparison.Ordinal)||!path.NativePoints.TryGetValue(0,out var start)||!path.NativePoints.TryGetValue(1,out var end))return false;
         var origin=TransformPoint(state,0,0);var x=TransformPoint(state,1,0);var y=TransformPoint(state,0,1);
-        if(x.X-origin.X!=1||x.Y-origin.Y!=0||y.X-origin.X!=0||y.Y-origin.Y!=1||!NativeFlatPenBuilder.TryBuild(start,end,width,out var points,state.Pen.LineCap=="square"))return false;
+        if(x.X-origin.X!=1||x.Y-origin.Y!=0||y.X-origin.X!=0||y.Y-origin.Y!=1||!NativeFlatPenBuilder.TryBuild(start,end,width,out var points,state.Pen.LineCap=="square",state.Pen.LineCap=="round",state.Pen.LineJoin=="round"))return false;
         foreach(var point in points)
         {
             outline.NativePoints[outline.Count]=point;
             outline.Add($"{(outline.Count==0?'M':'L')} {point.X.ToString("0.####",CultureInfo.InvariantCulture)} {point.Y.ToString("0.####",CultureInfo.InvariantCulture)}");
         }
-        outline.Add("Z");outline.NativeQuadFill=true;return true;
+        outline.Add("Z");outline.NativePolygonFill=true;return true;
     }
 
     private static string PathElement(MetafilePath path, DrawState state, PathPaintMode mode, bool continueCosmeticStyle = false)
     {
-        if(mode==PathPaintMode.Fill&&path.NativeQuadFill&&path.Count==5&&state.Brush.Hatch is null&&Enumerable.Range(0,4).All(i=>path.NativePoints.ContainsKey(i))&&NativeQuadRasterizer.TryFill(Enumerable.Range(0,4).Select(i=>path.NativePoints[i]).ToArray(),out var fillPixels))
+        if(mode==PathPaintMode.Fill&&path.NativePolygonFill&&path.Count>=4&&path[path.Count-1]=="Z"&&state.Brush.Hatch is null&&Enumerable.Range(0,path.Count-1).All(i=>path.NativePoints.ContainsKey(i))&&NativeQuadRasterizer.TryFill(Enumerable.Range(0,path.Count-1).Select(i=>path.NativePoints[i]).ToArray(),out var fillPixels,state.FillRule=="nonzero"))
             return state.Brush.None||fillPixels.Length==0?string.Empty:$"<path d=\"{fillPixels}\" stroke=\"none\" fill=\"{state.Brush.Color}\"{ClipAttr(state)} />";
         if (mode != PathPaintMode.Fill && UsesNativeCosmeticDashes(state) && TryCosmeticPixelPath(path,state,mode,continueCosmeticStyle,out var pixels)) return pixels;
         if (mode != PathPaintMode.Fill && !state.Pen.None && !ReferenceEquals(state.StyledPen,state.Pen)) { state.StyledPen=state.Pen; state.CosmeticPhase=0; }
@@ -2506,11 +2506,11 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class MetafilePath : List<string>
 {
-    public bool NativeQuadFill { get; set; }
+    public bool NativePolygonFill { get; set; }
     public Dictionary<int,double[]> NativeCubics { get; }=new Dictionary<int,double[]>();
     public Dictionary<int,(double X,double Y)> NativePoints { get; }=new Dictionary<int,(double X,double Y)>();
     public MetafilePath() { }
-    public MetafilePath(MetafilePath source):base(source) { NativeQuadFill=source.NativeQuadFill;foreach(var pair in source.NativeCubics)NativeCubics[pair.Key]=pair.Value;foreach(var pair in source.NativePoints)NativePoints[pair.Key]=pair.Value; }
+    public MetafilePath(MetafilePath source):base(source) { NativePolygonFill=source.NativePolygonFill;foreach(var pair in source.NativeCubics)NativeCubics[pair.Key]=pair.Value;foreach(var pair in source.NativePoints)NativePoints[pair.Key]=pair.Value; }
     public new void AddRange(IEnumerable<string> source)
     {
         if(source is MetafilePath path){foreach(var pair in path.NativeCubics)NativeCubics[Count+pair.Key]=pair.Value;foreach(var pair in path.NativePoints)NativePoints[Count+pair.Key]=pair.Value;}

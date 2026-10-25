@@ -2,7 +2,7 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: C# port, existing native ellipse/flattener integration, exact integer
-// rounding and bounded flat/square-cap straight outlines. See THIRD-PARTY-NOTICES.
+// rounding and bounded straight outlines for all cap styles. See THIRD-PARTY-NOTICES.
 using System.Numerics;
 
 namespace BaseHmiTypes.Images.Converters;
@@ -18,11 +18,11 @@ internal static class NativeFlatPenBuilder
         new[]{8,-48,-8,-48,-24,-40,-40,-24,-48,-8,-48,8,-40,24,-24,40,-8,48,8,48,24,40,40,24,48,8,48,-8,40,-24,24,-40}
     };
 
-    internal static bool TryBuild((double X,double Y) start,(double X,double Y) end,double width,out (double X,double Y)[] outline,bool square=false)
+    internal static bool TryBuild((double X,double Y) start,(double X,double Y) end,double width,out (double X,double Y)[] outline,bool square=false,bool round=false,bool roundJoin=false)
     {
         outline=Array.Empty<(double X,double Y)>();
         bool Valid(double v)=>!double.IsNaN(v)&&!double.IsInfinity(v)&&v*16==Math.Truncate(v*16)&&Math.Abs(v*16)<=0x2000000;
-        if(!Valid(start.X)||!Valid(start.Y)||!Valid(end.X)||!Valid(end.Y)||!Valid(width)||width<=0||width>4096)return false;
+        if(square&&round||!Valid(start.X)||!Valid(start.Y)||!Valid(end.X)||!Valid(end.Y)||!Valid(width)||width<=0||width>4096)return false;
         var dx=(long)((end.X-start.X)*16);var dy=(long)((end.Y-start.Y)*16);if(dx==0&&dy==0)return false;
         var originalDx=dx;var originalDy=dy;
         var pen=new List<(long X,long Y)>();var fixedWidth=(long)(width*16);
@@ -61,6 +61,44 @@ internal static class NativeFlatPenBuilder
             var quotient=BigInteger.DivRem(dividend,divisor,out var remainder);if(remainder<0)quotient--;return (long)quotient*8;
         }
         var vx=Round(d.X,b.X,0)/16d;var vy=Round(d.Y,b.Y,1)/16d;if(flip){vx=-vx;vy=-vy;}
+        if(round)
+        {
+            // Select cap vertices against the unrounded tangent point. Exact
+            // rational rays avoid atan2 and cross-product cancellation at ties.
+            BigInteger rx=den==0?d.X:(BigInteger)d.X*den+(BigInteger)(b.X-d.X)*num;
+            BigInteger ry=den==0?d.Y:(BigInteger)d.Y*den+(BigInteger)(b.Y-d.Y)*num;
+            if(flip){rx=-rx;ry=-ry;}
+            var left=0;var right=0;
+            if(roundJoin)
+            {
+                var axis=pen.Any(q=>q.Y==0);var boundary=(n==4?1:2)*Math.Abs(originalDx);
+                var steep=Math.Abs(originalDy)>boundary||Math.Abs(originalDy)==boundary&&axis;
+                var sign=(steep?originalDy<0:originalDx<0||originalDx==0&&originalDy<0)?-1:1;
+                long Height((long X,long Y) q)=>originalDy*q.X-originalDx*q.Y;
+                long Along((long X,long Y) q)=>sign*(originalDx*q.X+originalDy*q.Y);
+                for(var i=1;i<n;i++)if(Height(pen[i])>Height(pen[left])||Height(pen[i])==Height(pen[left])&&Along(pen[i])>Along(pen[left]))left=i;
+                right=(left+n/2)%n;
+                double Half(long value)=>Math.Sign(value)*8*Math.Floor((Math.Abs(value)+4)/8d)/16;
+                vx=Half(pen[right].X);vy=Half(pen[right].Y);
+            }
+            var result=new List<(double X,double Y)>();
+            void Cap((double X,double Y) anchor,bool first)
+            {
+                var ax=first?-rx:rx;var ay=first?-ry:ry;
+                result.Add(first?(anchor.X-vx,anchor.Y-vy):(anchor.X+vx,anchor.Y+vy));
+                var selected=pen.Select(q=>{var cross=ax*q.Y-ay*q.X;return cross<0||cross==0&&ax*q.X+ay*q.Y>0;}).ToArray();
+                var begin=0;for(var i=0;i<n;i++)if(selected[i]&&!selected[(i+n-1)%n]){begin=i;break;}
+                var finish=-1;
+                if(roundJoin){begin=((first?left:right)+1)%n;finish=first?right:left;}
+                var integral=anchor.X==Math.Truncate(anchor.X)&&anchor.Y==Math.Truncate(anchor.Y);
+                for(var i=0;i<n&&(roundJoin?(begin+i)%n!=finish:selected[(begin+i)%n]);i++)
+                {
+                    var q=pen[(begin+i)%n];result.Add((anchor.X+(q.X-(integral?Math.Sign(q.X):0))/16d,anchor.Y+(q.Y-(integral?Math.Sign(q.Y):0))/16d));
+                }
+                result.Add(first?(anchor.X+vx,anchor.Y+vy):(anchor.X-vx,anchor.Y-vy));
+            }
+            Cap(start,true);Cap(end,false);outline=result.ToArray();return true;
+        }
         double ex=0,ey=0;
         if(square)
         {

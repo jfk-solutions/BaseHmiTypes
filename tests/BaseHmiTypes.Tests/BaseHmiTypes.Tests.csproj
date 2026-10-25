@@ -23,6 +23,13 @@
     <EmbeddedResource Include="Fixtures\widen-flat-paths.json" />
     <EmbeddedResource Include="Fixtures\widen-square-paths.json" />
     <EmbeddedResource Include="Fixtures\widen-square-edges.json" />
+    <EmbeddedResource Include="Fixtures\widen-round-miter.json" />
+    <EmbeddedResource Include="Fixtures\widen-round-miter-edges.json" />
+    <EmbeddedResource Include="Fixtures\widen-round-bevel.json" />
+    <EmbeddedResource Include="Fixtures\widen-round-bevel-edges.json" />
+    <EmbeddedResource Include="Fixtures\widen-round-round.json" />
+    <EmbeddedResource Include="Fixtures\widen-round-round-edges.json" />
+    <EmbeddedResource Include="Fixtures\widen-round-round-ties.json" />
     <EmbeddedResource Include="Fixtures\flatten-large-paths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-ellipses.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-roundrects.json" />
