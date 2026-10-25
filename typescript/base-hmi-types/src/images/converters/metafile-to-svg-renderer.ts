@@ -1425,7 +1425,7 @@ function resetPathConstruction(state: DrawState): void {
 
 function ensurePathPosition(state: DrawState): void {
   if (state.currentPath !== undefined && (state.pathFigureClosed || state.pathEndX !== state.currentX || state.pathEndY !== state.currentY)) {
-    appendNativePoint(state.currentPath,'M',[state.currentX,state.currentY],state);
+    appendNativePoint(state.currentPath,'M',[state.currentX,state.currentY],state,hasFractionalCurrentPoint(state));
     state.pathStartX = state.currentX; state.pathStartY = state.currentY;
     state.pathFigureClosed = false;
   }
@@ -1440,7 +1440,7 @@ function drawEmfPointCurve(bytes: Uint8Array, record: EmfRecord, state: DrawStat
   if (line ? points.length < 1 : to ? points.length < 3 || points.length % 3 !== 0 : points.length < 4 || (points.length - 1) % 3 !== 0) return;
   const path = state.currentPath ?? [];
   if (to) {
-    if (state.currentPath === undefined) appendNativePoint(path,'M',[state.currentX,state.currentY],state);
+    if (state.currentPath === undefined) appendNativePoint(path,'M',[state.currentX,state.currentY],state,hasFractionalCurrentPoint(state));
     else ensurePathPosition(state);
   } else {
     appendNativePoint(path,'M',points[0],state);
@@ -1511,12 +1511,12 @@ function drawEmfPolyDraw(state: DrawState, bytes: Uint8Array, record: EmfRecord,
   const path = state.currentPath ?? [];
   if (bytes[typesOffset] !== 6) {
     if (state.currentPath !== undefined) ensurePathPosition(state);
-    else { appendNativePoint(path,'M',[state.currentX,state.currentY],state); state.pathStartX = state.currentX; state.pathStartY = state.currentY; state.pathFigureClosed = false; }
+    else { appendNativePoint(path,'M',[state.currentX,state.currentY],state,hasFractionalCurrentPoint(state)); state.pathStartX = state.currentX; state.pathStartY = state.currentY; state.pathFigureClosed = false; }
   }
   for (let index = 0; index < mapped.length; index++) {
     const type = bytes[typesOffset + index] & ~1;
     if (type !== 6 && state.pathFigureClosed) {
-      appendNativePoint(path,'M',[state.currentX,state.currentY],state);
+      appendNativePoint(path,'M',[state.currentX,state.currentY],state,hasFractionalCurrentPoint(state));
       state.pathStartX = state.currentX; state.pathStartY = state.currentY;
       state.pathFigureClosed = false;
     }
@@ -2243,6 +2243,12 @@ function appendMetafilePath(target: string[],path: string[]): void {
   if(points){let metadata=nativePoints.get(target);if(!metadata){metadata=new Map();nativePoints.set(target,metadata);}for(const [index,value] of points)metadata.set(offset+index,value);}
   for(const command of path)target.push(command);
 }
+// Arc records can retain a native FIX current point in GM_COMPATIBLE. Only
+// preserve that start; new integer logical endpoints keep compatible mapping.
+function hasFractionalCurrentPoint(state:DrawState):boolean {
+  return state.logicalCurrentX!==Math.trunc(state.logicalCurrentX)||state.logicalCurrentY!==Math.trunc(state.logicalCurrentY);
+}
+
 function appendNativePoint(path: string[],command: string,point: CosmeticPoint,state: DrawState,forceFixed=false): void {
   let metadata=nativePoints.get(path);if(!metadata){metadata=new Map();nativePoints.set(path,metadata);}
   metadata.set(path.length,nativeDevicePoint(point,state,forceFixed));
