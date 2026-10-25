@@ -2131,7 +2131,7 @@ public sealed class MetafileToSvgRenderer
             }
         }
     }
-    private static bool TryFlattenStoredPath(MetafilePath source,out MetafilePath flattened)
+    private static bool TryFlattenStoredPath(MetafilePath source,out MetafilePath flattened,Dictionary<int,(double X,double Y)>? tangents=null)
     {
         var candidate=new MetafilePath{NativePolygonFill=source.NativePolygonFill};flattened=candidate;double x=0,y=0,startX=0,startY=0;
         bool Add(char kind,double px,double py)
@@ -2151,7 +2151,20 @@ public sealed class MetafileToSvgRenderer
                 for(var at=0;at<cubic.Length;at+=6)
                 {
                     if(!NativeBezierFlattener.TryFlatten(new[]{(x,y),(cubic[at],cubic[at+1]),(cubic[at+2],cubic[at+3]),(cubic[at+4],cubic[at+5])},out var points))return false;
+                    var first=candidate.Count-1;
                     foreach(var point in points.Skip(1))if(!Add('L',point.X,point.Y))return false;
+                    if(tangents is not null&&candidate.Count>first+2)
+                    {
+                        // WidenPath uses the original endpoint tangents for the
+                        // first/last flattened edges. Explicit FlattenPath does
+                        // not retain them and therefore can widen differently.
+                        var controls=new[]{(X:x,Y:y),(X:cubic[at],Y:cubic[at+1]),(X:cubic[at+2],Y:cubic[at+3]),(X:cubic[at+4],Y:cubic[at+5])};
+                        // A coincident control uses the flattened chord; GDI
+                        // does not search farther controls for a fallback ray.
+                        var start=controls[1];var end=controls[2];
+                        if(start!=controls[0])tangents[first]=(start.X-x,start.Y-y);
+                        if(end!=controls[3])tangents[candidate.Count-2]=(controls[3].X-end.X,controls[3].Y-end.Y);
+                    }
                     x=cubic[at+4];y=cubic[at+5];
                 }
                 continue;
@@ -2262,6 +2275,13 @@ public sealed class MetafileToSvgRenderer
     private static bool TryWidenStoredLine(MetafilePath path,DrawState state,out MetafilePath outline)
     {
         outline=new MetafilePath();
+        Dictionary<int,(double X,double Y)>? tangents=null;
+        if(path.Any(command=>command.StartsWith("C ",StringComparison.Ordinal)))
+        {
+            tangents=new Dictionary<int,(double X,double Y)>();
+            if(state.Pen.LineCap!="round"||state.Pen.LineJoin!="round"||!TryFlattenStoredPath(path,out var flattened,tangents))return false;
+            path=flattened;
+        }
         var closed=path.Count>0&&path[path.Count-1]=="Z";var count=path.Count-(closed?1:0);
         if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap is not ("butt" or "square" or "round")||state.Pen.DashArray is not null||count<2||!path[0].StartsWith("M ",StringComparison.Ordinal)||Enumerable.Range(1,count-1).Any(i=>!path[i].StartsWith("L ",StringComparison.Ordinal))||Enumerable.Range(0,count).Any(i=>!path.NativePoints.ContainsKey(i)))return false;
         var origin=TransformPoint(state,0,0);var x=TransformPoint(state,1,0);var y=TransformPoint(state,0,1);
@@ -2272,7 +2292,7 @@ public sealed class MetafileToSvgRenderer
             if(!NativeFlatPenBuilder.TryBuild(path.NativePoints[0],path.NativePoints[1],width,out var points,state.Pen.LineCap=="square",state.Pen.LineCap=="round",state.Pen.LineJoin=="round"))return false;
             figures=new[]{points};
         }
-        else if(state.Pen.LineCap!="round"||state.Pen.LineJoin!="round"||!NativeFlatPenBuilder.TryBuildRoundFigures(Enumerable.Range(0,count).Select(i=>path.NativePoints[i]).ToArray(),width,closed,out figures))return false;
+        else if(state.Pen.LineCap!="round"||state.Pen.LineJoin!="round"||!NativeFlatPenBuilder.TryBuildRoundFigures(Enumerable.Range(0,count).Select(i=>path.NativePoints[i]).ToArray(),width,closed,out figures,tangents))return false;
         foreach(var figure in figures)
         {
             for(var i=0;i<figure.Length;i++)

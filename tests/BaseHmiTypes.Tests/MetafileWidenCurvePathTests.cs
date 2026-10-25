@@ -12,16 +12,19 @@ public class MetafileWidenCurvePathTests
 {
     public static IEnumerable<object[]> Fixtures()
     {
-        using var stream=typeof(MetafileWidenCurvePathTests).Assembly.GetManifestResourceStream("BaseHmiTypes.Tests.Fixtures.widen-curves-open.json")!;
-        using var doc=JsonDocument.Parse(stream);
-        foreach(var f in doc.RootElement.EnumerateArray())
+        foreach(var cohort in new[]{"widen-curves-open","widen-curves-closed","widen-curves-winding","widen-curves-preflatten"})
         {
-            if(!f.GetProperty("Recorded").GetBoolean()||f.GetProperty("PlaybackDifferences").GetInt32()!=0||!f.GetProperty("Curves").GetBoolean())throw new InvalidDataException("Curved widening requires independent native capture");
+          using var stream=typeof(MetafileWidenCurvePathTests).Assembly.GetManifestResourceStream($"BaseHmiTypes.Tests.Fixtures.{cohort}.json")!;
+          using var doc=JsonDocument.Parse(stream);
+          foreach(var f in doc.RootElement.EnumerateArray())
+          {
+            if(!f.GetProperty("Recorded").GetBoolean()||f.GetProperty("PlaybackDifferences").GetInt32()!=0||!f.GetProperty("Curves").GetBoolean()||f.GetProperty("Cap").GetInt32()!=0||f.GetProperty("Join").GetInt32()!=0)throw new InvalidDataException("Curved widening requires independent native capture");
             var points=f.GetProperty("Points").EnumerateArray().Select(p=>(X:p[0].GetInt32()/16d,Y:p[1].GetInt32()/16d)).ToArray();
             var types=f.GetProperty("Types").GetBytesFromBase64();
             string N(double v)=>v.ToString("0.####",CultureInfo.InvariantCulture);
             var d=string.Join(" ",points.Select((p,i)=>$"{((types[i]&~1)==6?'M':'L')} {N(p.X)} {N(p.Y)}{((types[i]&1)!=0?" Z":"")}"));
-            yield return new object[]{"curves-open",f.GetProperty("Index").GetInt32(),f.GetProperty("Source").GetString()!,f.GetProperty("Hash").GetString()!,d};
+            yield return new object[]{cohort,f.GetProperty("Index").GetInt32(),f.GetProperty("Source").GetString()!,f.GetProperty("Hash").GetString()!,d};
+          }
         }
     }
 
@@ -37,5 +40,16 @@ public class MetafileWidenCurvePathTests
             if(BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(at))==62){BinaryPrimitives.WriteInt32LittleEndian(bytes.AsSpan(at),67);BinaryPrimitives.WriteInt32LittleEndian(bytes.AsSpan(at+8),5);}
         var svg=XDocument.Parse(new MetafileToSvgRenderer().Render(bytes,".emf")!);
         Assert.IsTrue(svg.Descendants().Any(e=>e.Name.LocalName=="path"&&(string?)e.Attribute("d")==expected),$"{cohort}/{index} native outline mismatch");
+    }
+
+    [TestMethod]
+    public void InvalidTangentOverridesFailAtomically()
+    {
+        var points=new[]{(0d,0d),(8d,8d),(16d,0d)};
+        foreach(var entry in new[]{(-1,(1d,0d)),(2,(1d,0d)),(0,(0d,0d)),(0,(double.NaN,0d)),(0,(.01d,0d))})
+        {
+            Assert.IsFalse(NativeFlatPenBuilder.TryBuildRoundFigures(points,3,false,out var outline,new Dictionary<int,(double,double)>{{entry.Item1,entry.Item2}}));
+            Assert.HasCount(0,outline);
+        }
     }
 }

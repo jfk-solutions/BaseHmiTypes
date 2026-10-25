@@ -2,7 +2,8 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: C# port, existing native ellipse/flattener integration, exact integer
-// rounding, straight outlines for all caps, and round-joined open/closed figures.
+// rounding, straight outlines for all caps, round-joined open/closed figures,
+// and native endpoint-tangent directions for curved widening.
 // See THIRD-PARTY-NOTICES.
 using System.Numerics;
 
@@ -131,19 +132,26 @@ internal static class NativeFlatPenBuilder
         outline=figures[0];return true;
     }
 
-    internal static bool TryBuildRoundFigures((double X,double Y)[] input,double width,bool closed,out (double X,double Y)[][] outlines)
+    internal static bool TryBuildRoundFigures((double X,double Y)[] input,double width,bool closed,out (double X,double Y)[][] outlines,IReadOnlyDictionary<int,(double X,double Y)>? tangents=null)
     {
         outlines=Array.Empty<(double X,double Y)[]>();
         bool Valid(double v)=>!double.IsNaN(v)&&!double.IsInfinity(v)&&v*16==Math.Truncate(v*16)&&Math.Abs(v*16)<=0x2000000;
         if(input.Length<2||input.Length>65536||!Valid(width)||width<=0||width>4096||input.Any(p=>!Valid(p.X)||!Valid(p.Y))||!TryGetPen(width,out var pen))return false;
-        var points=new List<(double X,double Y)>();foreach(var p in input)if(points.Count==0||points[points.Count-1]!=p)points.Add(p);
+        if(tangents is not null&&tangents.Any(t=>t.Key<0||t.Key>=input.Length-1||!Valid(t.Value.X)||!Valid(t.Value.Y)||t.Value==(0d,0d)))return false;
+        var points=new List<(double X,double Y)>();var directions=new List<(double X,double Y)>();
+        for(var i=0;i<input.Length;i++)if(points.Count==0||points[points.Count-1]!=input[i])
+        {
+            if(points.Count>0)directions.Add(tangents is not null&&tangents.TryGetValue(i-1,out var tangent)?tangent:(input[i].X-input[i-1].X,input[i].Y-input[i-1].Y));
+            points.Add(input[i]);
+        }
         if(closed&&points.Count>1&&points[points.Count-1]==points[0])points.RemoveAt(points.Count-1);
+        else if(closed&&points.Count>1)directions.Add((points[0].X-points[points.Count-1].X,points[0].Y-points[points.Count-1].Y));
         if(points.Count<2)return false;
         var n=pen.Count;if(2L*points.Count*(n+3)>65536)return false;
         var segs=new (long X,long Y,int L,int R)[closed?points.Count:points.Count-1];
         for(var j=0;j<segs.Length;j++)
         {
-            var next=points[(j+1)%points.Count];var dx=(long)((next.X-points[j].X)*16);var dy=(long)((next.Y-points[j].Y)*16);
+            var dx=(long)(directions[j].X*16);var dy=(long)(directions[j].Y*16);
             var axis=pen.Any(q=>q.Y==0);var boundary=(n==4?1:2)*Math.Abs(dx);
             var steep=Math.Abs(dy)>boundary||Math.Abs(dy)==boundary&&axis;
             var sign=(steep?dy<0:dx<0||dx==0&&dy<0)?-1:1;
