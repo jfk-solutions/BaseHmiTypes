@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {MetafileToSvgRenderer} from '../dist/index.js';
-const fixtures=JSON.parse(fs.readFileSync(new URL('../../../tests/BaseHmiTypes.Tests/Fixtures/flatten-paths.json',import.meta.url),'utf8'));
+const fixtures=['flatten-paths','flatten-large-paths'].flatMap(name=>JSON.parse(fs.readFileSync(new URL(`../../../tests/BaseHmiTypes.Tests/Fixtures/${name}.json`,import.meta.url),'utf8')).map(f=>({...f,Cohort:name})));
 function maskHash(svg){
   const mask=Buffer.alloc(6400);
   for(const m of svg.matchAll(/<path\b[^>]*>/gu)){
@@ -12,12 +12,12 @@ function maskHash(svg){
   }
   return createHash('sha256').update(mask).digest('hex');
 }
-for(const {Index,Recorded,PlaybackDifferences,Source,Hash,Points,Types} of fixtures){
+for(const {Cohort,Index,Recorded,PlaybackDifferences,Source,Hash,Points,Types} of fixtures){
   assert.ok(Recorded&&PlaybackDifferences===0,'FlattenPath requires native API/replay equality');
   const bytes=Buffer.from(Source.split(',')[1],'base64'),types=Buffer.from(Types,'base64');
   const expected=Points.map((p,i)=>{const type=types[i];assert.ok([2,3,6].includes(type));return `${(type&~1)===6?'M':'L'} ${p[0]/16} ${p[1]/16}${type&1?' Z':''}`;}).join(' ');
-  test(`Native FlattenPath stroke pixels and phase ${Index}`,()=>assert.equal(maskHash(new MetafileToSvgRenderer().render(bytes,'.emf')),Hash));
-  for(const consumer of [62,67])test(`FlattenPath consumer ${consumer} uses native points ${Index}`,()=>{
+  test(`Native FlattenPath stroke pixels and phase ${Cohort} ${Index}`,()=>assert.equal(maskHash(new MetafileToSvgRenderer().render(bytes,'.emf')),Hash));
+  for(const consumer of [62,67])test(`FlattenPath consumer ${consumer} uses native points ${Cohort} ${Index}`,()=>{
     const source=Buffer.from(bytes);
     for(let at=source.readUInt32LE(4);at<source.length;at+=source.readUInt32LE(at+4))if(source.readUInt32LE(at)===64){source.writeUInt32LE(consumer,at);if(consumer===67)source.writeUInt32LE(5,at+8);}
     const svg=new MetafileToSvgRenderer().render(source,'.emf');
