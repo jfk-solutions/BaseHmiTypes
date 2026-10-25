@@ -2,7 +2,7 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: port matching C# native ellipse/flattener integration, exact integer
-// rounding, straight outlines for all caps, and round-joined open polylines.
+// rounding, straight outlines for all caps, and round-joined open/closed figures.
 // See THIRD-PARTY-NOTICES.
 import {buildNativeEllipse} from './native-ellipse-builder.js';
 import {flattenNativeBezier} from './native-bezier-flattener.js';
@@ -83,15 +83,20 @@ function buildPen(width:number):Point[]|undefined {
 }
 
 export function buildNativeRoundPolyline(input:Point[],width:number):Point[]|undefined {
+  return buildNativeRoundFigures(input,width,false)?.[0];
+}
+
+export function buildNativeRoundFigures(input:Point[],width:number,closed:boolean):Point[][]|undefined {
   const valid=(v:number)=>Number.isFinite(v)&&Number.isInteger(v*16)&&Math.abs(v*16)<=0x2000000;
   if(input.length<2||input.length>65536||!valid(width)||width<=0||width>4096||input.some(p=>!p.every(valid)))return undefined;
   const pen=buildPen(width);if(!pen)return undefined;
   const points:Point[]=[];for(const p of input)if(!points.length||points.at(-1)![0]!==p[0]||points.at(-1)![1]!==p[1])points.push(p);
+  if(closed&&points.length>1&&points.at(-1)![0]===points[0][0]&&points.at(-1)![1]===points[0][1])points.pop();
   if(points.length<2)return undefined;
   const n=pen.length;if(2*points.length*(n+3)>65536)return undefined;
   const segs:{x:number;y:number;l:number;r:number}[]=[];
-  for(let j=0;j+1<points.length;j++){
-    const dx=(points[j+1][0]-points[j][0])*16,dy=(points[j+1][1]-points[j][1])*16;
+  for(let j=0;j<(closed?points.length:points.length-1);j++){
+    const next=points[(j+1)%points.length],dx=(next[0]-points[j][0])*16,dy=(next[1]-points[j][1])*16;
     const axis=pen.some(q=>q[1]===0),boundary=(n===4?1:2)*Math.abs(dx),steep=Math.abs(dy)>boundary||Math.abs(dy)===boundary&&axis;
     const sign=(steep?dy<0:dx<0||dx===0&&dy<0)?-1:1;
     const height=(q:Point)=>dy*q[0]-dx*q[1],along=(q:Point)=>sign*(dx*q[0]+dy*q[1]);
@@ -118,9 +123,22 @@ export function buildNativeRoundPolyline(input:Point[],width:number):Point[]|und
     else result.push(points[p]);
     side(p,last);
   };
+  if(closed){
+    const count=points.length;
+    for(let j=1;j<=count;j++){
+      const i=j%count,previous=(i+count-1)%count,tr=turn(previous,i);
+      if(tr===0)side(i,segs[previous].r);else join(i,previous,i,false,tr<0);
+    }
+    const right=result.splice(0);
+    for(let j=0;j<count;j++){
+      const i=(count-j)%count,previous=(i+count-1)%count,tr=turn(previous,i);
+      if(tr===0)side(i,segs[i].l);else join(i,i,previous,true,tr>0);
+    }
+    return right.length+result.length>65536?undefined:[right,result];
+  }
   side(0,segs[0].l);walk(0,segs[0].l,segs[0].r,false);side(0,segs[0].r);
   for(let i=0;i+1<segs.length;i++){const tr=turn(i,i+1);if(tr===0)side(i+1,segs[i].r);else join(i+1,i,i+1,false,tr<0);}
   const end=points.length-1,final=segs[segs.length-1];side(end,final.r);walk(end,final.r,final.l,false);side(end,final.l);
   for(let i=segs.length-1;i>0;i--){const tr=turn(i-1,i);if(tr===0)side(i,segs[i].l);else join(i,i,i-1,true,tr>0);}
-  return result.length>65536?undefined:result;
+  return result.length>65536?undefined:[result];
 }

@@ -4,8 +4,8 @@ import {buildNativeEllipse} from './native-ellipse-builder.js';
 import {buildNativeArc} from './native-arc-builder.js';
 import {buildNativeAngleArc} from './native-angle-arc-builder.js';
 import {buildNativeRoundRect} from './native-roundrect-builder.js';
-import {buildNativeFlatPen,buildNativeRoundPolyline} from './native-flat-pen-builder.js';
-import {fillNativeQuad} from './native-quad-rasterizer.js';
+import {buildNativeFlatPen,buildNativeRoundFigures} from './native-flat-pen-builder.js';
+import {fillNativeContours} from './native-quad-rasterizer.js';
 
 type MetafileObject = PenObject | BrushObject | FontObject;
 
@@ -2664,21 +2664,35 @@ function storedPathElement(path:string[],state:DrawState,mode:'fill'|'stroke'|'p
 }
 function widenStoredLine(path:string[],state:DrawState):string[]|undefined {
   const width=state.pen.geometricWidth,metadata=nativePoints.get(path),start=metadata?.get(0),end=metadata?.get(1);
-  if(state.pen.none||width===undefined||!['butt','square','round'].includes(state.pen.lineCap??'')||state.pen.dashArray!==undefined||path.length<2||!path[0].startsWith('M ')||path.slice(1).some(p=>!p.startsWith('L '))||path.some((_,i)=>!metadata?.has(i))||!start||!end)return undefined;
+  const closed=path.length>0&&path.at(-1)==='Z',count=path.length-(closed?1:0);
+  if(state.pen.none||width===undefined||!['butt','square','round'].includes(state.pen.lineCap??'')||state.pen.dashArray!==undefined||count<2||!path[0].startsWith('M ')||path.slice(1,count).some(p=>!p.startsWith('L '))||path.slice(0,count).some((_,i)=>!metadata?.has(i))||!start||!end)return undefined;
   const origin=transformPoint(state,0,0),x=transformPoint(state,1,0),y=transformPoint(state,0,1);
   if(x[0]-origin[0]!==1||x[1]-origin[1]!==0||y[0]-origin[0]!==0||y[1]-origin[1]!==1)return undefined;
-  const points=path.length===2?buildNativeFlatPen(start,end,width,state.pen.lineCap==='square',state.pen.lineCap==='round',state.pen.lineJoin==='round'):
-    state.pen.lineCap==='round'&&state.pen.lineJoin==='round'?buildNativeRoundPolyline(path.map((_,i)=>metadata!.get(i)!),width):undefined;
-  if(!points)return undefined;
-  const outline=points.map((p,i)=>`${i?'L':'M'} ${Number(p[0].toFixed(4))} ${Number(p[1].toFixed(4))}`);outline.push('Z');
-  nativePoints.set(outline,new Map(points.map((p,i)=>[i,p])));nativePolygonFills.add(outline);return outline;
+  let figures:CosmeticPoint[][]|undefined;
+  if(!closed&&count===2){const points=buildNativeFlatPen(start,end,width,state.pen.lineCap==='square',state.pen.lineCap==='round',state.pen.lineJoin==='round');if(points)figures=[points];}
+  else if(state.pen.lineCap==='round'&&state.pen.lineJoin==='round')figures=buildNativeRoundFigures(path.slice(0,count).map((_,i)=>metadata!.get(i)!),width,closed);
+  if(!figures)return undefined;
+  const outline:string[]=[],points=new Map<number,CosmeticPoint>();
+  for(const figure of figures){for(let i=0;i<figure.length;i++){const p=figure[i];points.set(outline.length,p);outline.push(`${i?'L':'M'} ${Number(p[0].toFixed(4))} ${Number(p[1].toFixed(4))}`);}outline.push('Z');}
+  nativePoints.set(outline,points);nativePolygonFills.add(outline);return outline;
+}
+
+function nativeContours(path:string[]):CosmeticPoint[][]|undefined {
+  const result:CosmeticPoint[][]=[],metadata=nativePoints.get(path);let current:CosmeticPoint[]|undefined;
+  for(let i=0;i<path.length;i++){
+    const command=path[i];
+    if(command==='Z'){if(!current?.length)return undefined;result.push(current);current=undefined;}
+    else {
+      if(command.startsWith('M ')){if(current)return undefined;current=[];}else if(!command.startsWith('L '))return undefined;
+      const point=metadata?.get(i);if(!current||!point)return undefined;current.push(point);
+    }
+  }
+  return current||!result.length?undefined:result;
 }
 
 function pathElement(path: string[], state: DrawState, mode: 'fill' | 'stroke' | 'paint', continueCosmeticStyle = false): string {
-  const quad=nativePoints.get(path);
-  if(mode==='fill'&&nativePolygonFills.has(path)&&path.length>=4&&path[path.length-1]==='Z'&&state.brush.hatch===undefined&&quad){
-    const vertices=Array.from({length:path.length-1},(_,i)=>i);
-    const pixels=vertices.every(i=>quad.has(i))?fillNativeQuad(vertices.map(i=>quad.get(i)!),state.fillRule==='nonzero'):undefined;
+  if(mode==='fill'&&nativePolygonFills.has(path)&&state.brush.hatch===undefined){
+    const contours=nativeContours(path),pixels=contours?fillNativeContours(contours,state.fillRule==='nonzero'):undefined;
     if(pixels!==undefined)return state.brush.none||!pixels.length?'':`<path d="${pixels}" stroke="none" fill="${state.brush.color}"${clipAttr(state)} />`;
   }
   if(mode!=='fill'&&usesNativeCosmeticDashes(state)){const pixels=cosmeticPixelPath(path,state,mode,continueCosmeticStyle);if(pixels!==undefined)return pixels;}
