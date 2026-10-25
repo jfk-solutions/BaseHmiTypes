@@ -2339,7 +2339,7 @@ function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawS
   }
 }
 
-function flattenStoredPath(source:string[]):string[]|undefined {
+function flattenStoredPath(source:string[],tangents?:Map<number,CosmeticPoint>):string[]|undefined {
   const candidate:string[]=[],points=new Map<number,CosmeticPoint>();let x=0,y=0,startX=0,startY=0;
   const add=(kind:string,px:number,py:number):boolean=>{
     if(candidate.length>=65536||!Number.isFinite(px)||!Number.isFinite(py))return false;
@@ -2353,7 +2353,14 @@ function flattenStoredPath(source:string[]):string[]|undefined {
       for(let at=0;at<cubic.length;at+=6){
         const flattened=flattenNativeBezier([[x,y],[cubic[at],cubic[at+1]],[cubic[at+2],cubic[at+3]],[cubic[at+4],cubic[at+5]]]);
         if(!flattened)return undefined;
+        const first=candidate.length-1;
         for(const point of flattened.slice(1))if(!add('L',point[0],point[1]))return undefined;
+        if(tangents&&candidate.length>first+2){
+          // WidenPath preserves endpoint tangents; explicit FlattenPath does not.
+          // Coincident adjacent controls use the flattened chord, not a farther control.
+          if(cubic[at]!==x||cubic[at+1]!==y)tangents.set(first,[cubic[at]-x,cubic[at+1]-y]);
+          if(cubic[at+2]!==cubic[at+4]||cubic[at+3]!==cubic[at+5])tangents.set(candidate.length-2,[cubic[at+4]-cubic[at+2],cubic[at+5]-cubic[at+3]]);
+        }
         x=cubic[at+4];y=cubic[at+5];
       }
       continue;
@@ -2663,6 +2670,12 @@ function storedPathElement(path:string[],state:DrawState,mode:'fill'|'stroke'|'p
   try{return pathElement(path,state,mode);}finally{state.styledPen=styled;}
 }
 function widenStoredLine(path:string[],state:DrawState):string[]|undefined {
+  let tangents:Map<number,CosmeticPoint>|undefined;
+  if(path.some(command=>command.startsWith('C '))){
+    tangents=new Map();
+    if(state.pen.lineCap!=='round'||state.pen.lineJoin!=='round')return undefined;
+    const flattened=flattenStoredPath(path,tangents);if(!flattened)return undefined;path=flattened;
+  }
   const width=state.pen.geometricWidth,metadata=nativePoints.get(path),start=metadata?.get(0),end=metadata?.get(1);
   const closed=path.length>0&&path.at(-1)==='Z',count=path.length-(closed?1:0);
   if(state.pen.none||width===undefined||!['butt','square','round'].includes(state.pen.lineCap??'')||state.pen.dashArray!==undefined||count<2||!path[0].startsWith('M ')||path.slice(1,count).some(p=>!p.startsWith('L '))||path.slice(0,count).some((_,i)=>!metadata?.has(i))||!start||!end)return undefined;
@@ -2670,7 +2683,7 @@ function widenStoredLine(path:string[],state:DrawState):string[]|undefined {
   if(x[0]-origin[0]!==1||x[1]-origin[1]!==0||y[0]-origin[0]!==0||y[1]-origin[1]!==1)return undefined;
   let figures:CosmeticPoint[][]|undefined;
   if(!closed&&count===2){const points=buildNativeFlatPen(start,end,width,state.pen.lineCap==='square',state.pen.lineCap==='round',state.pen.lineJoin==='round');if(points)figures=[points];}
-  else if(state.pen.lineCap==='round'&&state.pen.lineJoin==='round')figures=buildNativeRoundFigures(path.slice(0,count).map((_,i)=>metadata!.get(i)!),width,closed);
+  else if(state.pen.lineCap==='round'&&state.pen.lineJoin==='round')figures=buildNativeRoundFigures(path.slice(0,count).map((_,i)=>metadata!.get(i)!),width,closed,tangents);
   if(!figures)return undefined;
   const outline:string[]=[],points=new Map<number,CosmeticPoint>();
   for(const figure of figures){for(let i=0;i<figure.length;i++){const p=figure[i];points.set(outline.length,p);outline.push(`${i?'L':'M'} ${Number(p[0].toFixed(4))} ${Number(p[1].toFixed(4))}`);}outline.push('Z');}

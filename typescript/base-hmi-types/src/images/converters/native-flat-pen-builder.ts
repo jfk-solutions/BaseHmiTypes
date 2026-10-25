@@ -2,7 +2,8 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: port matching C# native ellipse/flattener integration, exact integer
-// rounding, straight outlines for all caps, and round-joined open/closed figures.
+// rounding, straight outlines for all caps, round-joined open/closed figures,
+// and native endpoint-tangent directions for curved widening.
 // See THIRD-PARTY-NOTICES.
 import {buildNativeEllipse} from './native-ellipse-builder.js';
 import {flattenNativeBezier} from './native-bezier-flattener.js';
@@ -86,17 +87,23 @@ export function buildNativeRoundPolyline(input:Point[],width:number):Point[]|und
   return buildNativeRoundFigures(input,width,false)?.[0];
 }
 
-export function buildNativeRoundFigures(input:Point[],width:number,closed:boolean):Point[][]|undefined {
+export function buildNativeRoundFigures(input:Point[],width:number,closed:boolean,tangents?:ReadonlyMap<number,Point>):Point[][]|undefined {
   const valid=(v:number)=>Number.isFinite(v)&&Number.isInteger(v*16)&&Math.abs(v*16)<=0x2000000;
   if(input.length<2||input.length>65536||!valid(width)||width<=0||width>4096||input.some(p=>!p.every(valid)))return undefined;
   const pen=buildPen(width);if(!pen)return undefined;
-  const points:Point[]=[];for(const p of input)if(!points.length||points.at(-1)![0]!==p[0]||points.at(-1)![1]!==p[1])points.push(p);
+  if(tangents&&[...tangents].some(([i,p])=>!Number.isInteger(i)||i<0||i>=input.length-1||!p.every(valid)||p[0]===0&&p[1]===0))return undefined;
+  const points:Point[]=[],directions:Point[]=[];
+  for(let i=0;i<input.length;i++)if(!points.length||points.at(-1)![0]!==input[i][0]||points.at(-1)![1]!==input[i][1]){
+    if(points.length)directions.push(tangents?.get(i-1)??[input[i][0]-input[i-1][0],input[i][1]-input[i-1][1]]);
+    points.push(input[i]);
+  }
   if(closed&&points.length>1&&points.at(-1)![0]===points[0][0]&&points.at(-1)![1]===points[0][1])points.pop();
+  else if(closed&&points.length>1)directions.push([points[0][0]-points.at(-1)![0],points[0][1]-points.at(-1)![1]]);
   if(points.length<2)return undefined;
   const n=pen.length;if(2*points.length*(n+3)>65536)return undefined;
   const segs:{x:number;y:number;l:number;r:number}[]=[];
   for(let j=0;j<(closed?points.length:points.length-1);j++){
-    const next=points[(j+1)%points.length],dx=(next[0]-points[j][0])*16,dy=(next[1]-points[j][1])*16;
+    const dx=directions[j][0]*16,dy=directions[j][1]*16;
     const axis=pen.some(q=>q[1]===0),boundary=(n===4?1:2)*Math.abs(dx),steep=Math.abs(dy)>boundary||Math.abs(dy)===boundary&&axis;
     const sign=(steep?dy<0:dx<0||dx===0&&dy<0)?-1:1;
     const height=(q:Point)=>dy*q[0]-dx*q[1],along=(q:Point)=>sign*(dx*q[0]+dy*q[1]);
