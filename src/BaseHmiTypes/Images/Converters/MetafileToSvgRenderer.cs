@@ -2078,32 +2078,40 @@ public sealed class MetafileToSvgRenderer
         var sign=b>a?1:-1;
         var first=sign>0?Math.Floor(a)-1:Math.Ceiling(a)+1;
         var stop=sign>0?Math.Ceiling(b)+1:Math.Floor(b)-1;
-        bool Inside(double x,double y)
-        {
-            var distance=Math.Abs(x)+Math.Abs(y);
-            if(distance!=.5)return distance<.5;
-            if(y==.5)return true;
-            if(x==.5)return dy!=dx;
-            if(x==-.5)return dy==dx;
-            return y>0&&(x<0?dy==dx:dy==-dx);
-        }
         bool Exits(double x,double y)
         {
-            var u=start.X-x+start.Y-y;var v=start.X-x-start.Y+y;
-            var du=dx+dy;var dv=dx-dy;
-            var enter=double.NegativeInfinity;var exit=double.PositiveInfinity;
-            bool Clip(double origin,double delta)
+            // All endpoints are 27.4 FIX and each segment is bounded by the
+            // 262144-step path budget. Relative products fit Int64 exactly.
+            // Computing a boundary point with floating-point interpolation can
+            // put an exact diamond edge just outside and drop a style step.
+            var sx=(long)((start.X-x)*16);var sy=(long)((start.Y-y)*16);
+            var fx=(long)(dx*16);var fy=(long)(dy*16);
+            long en=0,ed=1,ex=1,xd=1;var haveExit=false;
+            bool Clip(long origin,long delta)
             {
-                if(delta==0)return Math.Abs(origin)<=.5;
-                var t1=(-.5-origin)/delta;var t2=(.5-origin)/delta;
-                enter=Math.Max(enter,Math.Min(t1,t2));exit=Math.Min(exit,Math.Max(t1,t2));
-                return enter<=exit;
+                if(delta==0)return Math.Abs(origin)<=8;
+                var n1=-8-origin;var n2=8-origin;
+                if(delta<0){delta=-delta;var old=n1;n1=-n2;n2=-old;}
+                if(n1*ed>en*delta){en=n1;ed=delta;}
+                if(!haveExit||n2*xd<ex*delta){ex=n2;xd=delta;haveExit=true;}
+                return en*xd<=ex*ed;
             }
-            if(!Clip(u,du)||!Clip(v,dv)||exit<0||exit>1||enter>1)return false;
-            var lo=Math.Max(0,enter);var hi=Math.Min(1,exit);
-            var t=(lo+hi)/2;
-            if(!Inside(start.X+dx*t-x,start.Y+dy*t-y))return false;
-            return exit!=1||!Inside(end.X-x,end.Y-y);
+            var u=sx+sy;var v=sx-sy;var du=fx+fy;var dv=fx-fy;
+            if(!Clip(u,du)||!Clip(v,dv)||ex<0||ex>xd||en>ed)return false;
+            // The two lower parallel edges belong; the two upper ones do not.
+            if(du==0&&u==-8||dv==0&&v==8)return false;
+            bool InsideAt(long n,long d)
+            {
+                var px=sx*d+fx*n;var py=sy*d+fy*n;var edge=8*d;
+                var distance=Math.Abs(px)+Math.Abs(py);
+                if(distance!=edge)return distance<edge;
+                if(py==edge)return true;
+                if(px==edge)return fy!=fx;
+                if(px==-edge)return fy==fx;
+                return py>0&&(px<0?fy==fx:fy==-fx);
+            }
+            if(en*xd==ex*ed&&!InsideAt(ex,xd))return false;
+            return ex!=xd||!InsideAt(1,1);
         }
         var cycle=(long)state.Pen.DashArray!.Sum()*(state.Pen.DashArray.Length%2==0?1:2);
         var phase=state.CosmeticPhase%cycle;var dash=0;var ink=true;

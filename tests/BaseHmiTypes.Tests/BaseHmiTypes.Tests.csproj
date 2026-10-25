@@ -70,6 +70,7 @@
     <EmbeddedResource Include="Fixtures\cosmetic-joined-curves.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-curve-styles.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-curve-sequences.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-degenerate-sequences.json" />
   </ItemGroup>
 
 </Project>

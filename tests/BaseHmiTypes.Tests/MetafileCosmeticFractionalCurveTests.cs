@@ -71,6 +71,17 @@ public class MetafileCosmeticFractionalCurveTests
     [TestMethod] [DynamicData(nameof(NativeSequences))]
     public void FractionalMixedCallsMatchNativePhase(int index,string source,string hash)=>Assert.AreEqual(hash,MaskHash(new MetafileToSvgRenderer().Render(Convert.FromBase64String(source.Split(',')[1]),".emf")!,index%12==10),$"Native sequence {index}");
 
+    public static IEnumerable<object[]> NativeDegenerateSequences()
+    {
+        using var stream=typeof(MetafileCosmeticFractionalCurveTests).Assembly.GetManifestResourceStream("BaseHmiTypes.Tests.Fixtures.cosmetic-degenerate-sequences.json")!;
+        using var document=JsonDocument.Parse(stream);
+        foreach(var e in document.RootElement.EnumerateArray())yield return new object[]{e.GetProperty("Index").GetInt32(),e.GetProperty("Source").GetString()!,e.GetProperty("Hash").GetString()!};
+    }
+
+    // Native API masks are also checked against independent Windows EMF playback.
+    [TestMethod] [DynamicData(nameof(NativeDegenerateSequences))]
+    public void DegenerateMixedCallsMatchNativePhase(int index,string source,string hash)=>Assert.AreEqual(hash,MaskHash(new MetafileToSvgRenderer().Render(Convert.FromBase64String(source.Split(',')[1]),".emf")!,index%12==10),$"Native degenerate sequence {index}");
+
     [TestMethod] [DynamicData(nameof(NativeFixtures))]
     public void FractionalCurveMatchesNativeRasterWithinBudget(string group,int index,string source,string hash,(double X,double Y)[] controls,(double X,double Y)[] expected)
     {
