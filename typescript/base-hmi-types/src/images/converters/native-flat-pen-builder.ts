@@ -2,7 +2,8 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: port matching C# native ellipse/flattener integration, exact integer
-// rounding and bounded straight outlines for all cap styles. See THIRD-PARTY-NOTICES.
+// rounding, straight outlines for all caps, and round-joined open polylines.
+// See THIRD-PARTY-NOTICES.
 import {buildNativeEllipse} from './native-ellipse-builder.js';
 import {flattenNativeBezier} from './native-bezier-flattener.js';
 type Point=[number,number];
@@ -19,14 +20,7 @@ export function buildNativeFlatPen(start:Point,end:Point,width:number,square=fal
   if(square&&roundCap||!start.every(valid)||!end.every(valid)||!valid(width)||width<=0||width>4096)return undefined;
   let dx=(end[0]-start[0])*16,dy=(end[1]-start[1])*16;if(dx===0&&dy===0)return undefined;
   const originalDx=dx,originalDy=dy;
-  const pen:Point[]=[],fixedWidth=width*16;
-  if(fixedWidth<104){const table=hobby[Math.min(5,Math.max(0,Math.floor(width+.5)-1))];for(let i=0;i<table.length;i+=2)pen.push([table[i],table[i+1]]);}
-  else {
-    const radius=Math.ceil(fixedWidth/2)/16,controls=buildNativeEllipse([[-radius,-radius],[radius,-radius],[-radius,radius]]);if(!controls)return undefined;
-    pen.push([controls[0][0]*16,controls[0][1]*16]);
-    for(let i=1;i<=4;i+=3){const flattened=flattenNativeBezier([controls[i-1],controls[i],controls[i+1],controls[i+2]]);if(!flattened)return undefined;for(const p of flattened.slice(1))pen.push([p[0]*16,p[1]*16]);}
-    pen.pop();const half=pen.slice();for(const p of half)pen.push([-p[0],-p[1]]);
-  }
+  const pen=buildPen(width),fixedWidth=width*16;if(!pen)return undefined;
   const flip=dx<0||dx===0&&dy<0;if(flip){dx=-dx;dy=-dy;}
   const h=(p:Point)=>-dy*p[0]+dx*p[1];let best=0;for(let i=1;i<pen.length;i++)if(h(pen[i])>h(pen[best]))best=i;
   const n=pen.length,bh=h(pen[best]);if(flip&&best===0&&h(pen[n-1])===bh)best=n-1;
@@ -74,4 +68,59 @@ export function buildNativeFlatPen(start:Point,end:Point,width:number,square=fal
     }
   }
   return [[start[0]-vx-ex,start[1]-vy-ey],[start[0]+vx-ex,start[1]+vy-ey],[end[0]+vx+ex,end[1]+vy+ey],[end[0]-vx+ex,end[1]-vy+ey]];
+}
+
+function buildPen(width:number):Point[]|undefined {
+  const pen:Point[]=[],fixedWidth=width*16;
+  if(fixedWidth<104){const table=hobby[Math.min(5,Math.max(0,Math.floor(width+.5)-1))];for(let i=0;i<table.length;i+=2)pen.push([table[i],table[i+1]]);}
+  else {
+    const radius=Math.ceil(fixedWidth/2)/16,controls=buildNativeEllipse([[-radius,-radius],[radius,-radius],[-radius,radius]]);if(!controls)return undefined;
+    pen.push([controls[0][0]*16,controls[0][1]*16]);
+    for(let i=1;i<=4;i+=3){const flattened=flattenNativeBezier([controls[i-1],controls[i],controls[i+1],controls[i+2]]);if(!flattened)return undefined;for(const p of flattened.slice(1))pen.push([p[0]*16,p[1]*16]);}
+    pen.pop();const half=pen.slice();for(const p of half)pen.push([-p[0],-p[1]]);
+  }
+  return pen;
+}
+
+export function buildNativeRoundPolyline(input:Point[],width:number):Point[]|undefined {
+  const valid=(v:number)=>Number.isFinite(v)&&Number.isInteger(v*16)&&Math.abs(v*16)<=0x2000000;
+  if(input.length<2||input.length>65536||!valid(width)||width<=0||width>4096||input.some(p=>!p.every(valid)))return undefined;
+  const pen=buildPen(width);if(!pen)return undefined;
+  const points:Point[]=[];for(const p of input)if(!points.length||points.at(-1)![0]!==p[0]||points.at(-1)![1]!==p[1])points.push(p);
+  if(points.length<2)return undefined;
+  const n=pen.length;if(2*points.length*(n+3)>65536)return undefined;
+  const segs:{x:number;y:number;l:number;r:number}[]=[];
+  for(let j=0;j+1<points.length;j++){
+    const dx=(points[j+1][0]-points[j][0])*16,dy=(points[j+1][1]-points[j][1])*16;
+    const axis=pen.some(q=>q[1]===0),boundary=(n===4?1:2)*Math.abs(dx),steep=Math.abs(dy)>boundary||Math.abs(dy)===boundary&&axis;
+    const sign=(steep?dy<0:dx<0||dx===0&&dy<0)?-1:1;
+    const height=(q:Point)=>dy*q[0]-dx*q[1],along=(q:Point)=>sign*(dx*q[0]+dy*q[1]);
+    let left=0;for(let k=1;k<n;k++)if(height(pen[k])>height(pen[left])||height(pen[k])===height(pen[left])&&along(pen[k])>along(pen[left]))left=k;
+    segs.push({x:dx,y:dy,l:left,r:(left+n/2)%n});
+  }
+  const result:Point[]=[],maxX=Math.max(...pen.map(q=>Math.abs(q[0]))),half=(v:number)=>Math.sign(v)*8*Math.floor((Math.abs(v)+4)/8)/16;
+  const side=(p:number,k:number)=>{result.push([points[p][0]+half(pen[k][0]),points[p][1]+half(pen[k][1])]);};
+  const vertex=(p:number,k:number)=>{
+    const a=points[p],q=pen[k],whole=a.every(Number.isInteger);
+    result.push([a[0]+(q[0]-(whole?Math.sign(q[0]):0))/16,a[1]+(q[1]-(whole?Math.sign(q[1]):0))/16]);
+  };
+  const walk=(p:number,a:number,b:number,includeEnd:boolean)=>{for(let k=(a+1)%n;k!==b;k=(k+1)%n)vertex(p,k);if(includeEnd)vertex(p,b);};
+  const turn=(a:number,b:number)=>{
+    // FIX coordinate bounds keep these integer products exact in Number.
+    const s=segs[a],t=segs[b],cross=s.x*t.y-s.y*t.x;if(cross!==0)return cross;
+    if(s.x*t.x+s.y*t.y>=0)return 0;
+    // Native non-axis reversals put their inner triangle on the right side.
+    return s.y===0?Math.sign(s.x):s.x===0?-Math.sign(s.y):1;
+  };
+  const join=(p:number,a:number,b:number,left:boolean,outer:boolean)=>{
+    const first=left?segs[a].l:segs[a].r,last=left?segs[b].l:segs[b].r;side(p,first);if(first===last)return;
+    if(outer){const q=pen[last],include=left&&Math.abs(segs[b].y)>=Math.abs(segs[b].x)&&Math.abs(q[0])===maxX&&q[0]*q[1]<=0;walk(p,first,last,include);}
+    else result.push(points[p]);
+    side(p,last);
+  };
+  side(0,segs[0].l);walk(0,segs[0].l,segs[0].r,false);side(0,segs[0].r);
+  for(let i=0;i+1<segs.length;i++){const tr=turn(i,i+1);if(tr===0)side(i+1,segs[i].r);else join(i+1,i,i+1,false,tr<0);}
+  const end=points.length-1,final=segs[segs.length-1];side(end,final.r);walk(end,final.r,final.l,false);side(end,final.l);
+  for(let i=segs.length-1;i>0;i--){const tr=turn(i-1,i);if(tr===0)side(i,segs[i].l);else join(i,i,i-1,true,tr>0);}
+  return result.length>65536?undefined:result;
 }
