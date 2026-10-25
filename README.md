@@ -7,6 +7,14 @@ keys from adapter-owned hardware signals. Readers own device catalogs; simulator
 state and transport stay outside the model. Both C# and TypeScript expose this
 contract through `HmiDeviceInfo.Frame` / `frame`.
 
+Screens can carry nonvisual `DeviceKeys` / `deviceKeys` targets, each with an
+opaque native `InputCode`, ordinary events, authorization and enabled/visible
+properties. Local bindings override template/global bindings with the same
+code. `HmiDeviceInfo.FrameLedRouting` / `frameLedRouting` carries optional
+two-bit assignments in a normalized logical LED image, independent of PLC
+addresses. Both models are shared by the C# and TypeScript ports. Simulator
+drivers may instead supply normalized LED values by each frame's output code.
+
 BaseHmiTypes is a neutral HMI model assembly for Siemens visualization project readers and converters.
 It intentionally does not use Siemens namespaces and contains only shared container types with minimal behavior.
 

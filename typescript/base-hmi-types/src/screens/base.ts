@@ -23,6 +23,7 @@ export * from "./base/HmiVariableConfirmationSettings.js";
 export * from "./base/HmiScreenRuntimeSettings.js";
 export * from "./base/HmiScreenCacheMode.js";
 export * from "./base/HmiScreenBase.js";
+export * from "./base/HmiDeviceKeyBinding.js";
 export * from "./base/HmiScreenParameter.js";
 export * from "./base/HmiLayer.js";
 export * from "./base/HmiScreenItemBase.js";

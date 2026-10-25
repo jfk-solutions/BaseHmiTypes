@@ -10,6 +10,9 @@ public abstract class HmiScreenBase : HmiScreenModelBase
     /// <summary>Screen-level lifecycle and operator event actions.</summary>
     public List<HmiEventBinding> Events { get; } = [];
 
+    /// <summary>Local keys override template keys with the same native input identity.</summary>
+    public List<HmiDeviceKeyBinding> DeviceKeys { get; } = [];
+
     public HmiScreenKind Kind { get; set; } = HmiScreenKind.Screen;
 
     public string? SourceFormat { get; set; }

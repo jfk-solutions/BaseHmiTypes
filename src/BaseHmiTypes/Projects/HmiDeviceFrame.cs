@@ -11,6 +11,23 @@ public class HmiDeviceFrameBounds
 
 public enum HmiDeviceInputKind { RuntimeKey, HardwareSignal }
 
+public enum HmiDeviceFrameLedEncoding { OffFastSlowOn, OffSlowFastOn, OffFlashRedGreen }
+
+/// <summary>Assignment in a normalized logical LED image; no PLC address is inferred.</summary>
+public class HmiDeviceFrameLedBinding
+{
+    public string OutputCode { get; set; } = string.Empty;
+    public string? LedId { get; set; }
+    public int BitIndex { get; set; }
+    public int BitCount { get; set; } = 2;
+}
+
+public class HmiDeviceFrameLedRouting
+{
+    public HmiDeviceFrameLedEncoding Encoding { get; set; }
+    public List<HmiDeviceFrameLedBinding> Bindings { get; } = new();
+}
+
 /// <summary>A physical HMI key or an adapter-owned hardware signal.</summary>
 public class HmiDeviceFrameControl
 {

@@ -9,6 +9,21 @@ export class HmiDeviceFrameBounds {
 /** A physical input is either an HMI key or a hardware signal handled by an adapter. */
 export enum HmiDeviceInputKind { RuntimeKey = "RuntimeKey", HardwareSignal = "HardwareSignal" }
 
+export type HmiDeviceFrameLedEncoding = 'off-fast-slow-on' | 'off-slow-fast-on' | 'off-flash-red-green';
+
+/** Assignment in a normalized logical LED image; no PLC address is inferred. */
+export class HmiDeviceFrameLedBinding {
+  outputCode = '';
+  ledId?: string;
+  bitIndex = 0;
+  bitCount = 2;
+}
+
+export class HmiDeviceFrameLedRouting {
+  encoding: HmiDeviceFrameLedEncoding = 'off-fast-slow-on';
+  readonly bindings: HmiDeviceFrameLedBinding[] = [];
+}
+
 export class HmiDeviceFrameControl {
   id = "";
   label = "";
