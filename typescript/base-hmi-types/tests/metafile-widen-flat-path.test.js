@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {MetafileToSvgRenderer} from '../dist/index.js';
-const fixtures=['widen-flat-paths','widen-square-paths','widen-square-edges'].flatMap(name=>JSON.parse(fs.readFileSync(new URL(`../../../tests/BaseHmiTypes.Tests/Fixtures/${name}.json`,import.meta.url),'utf8')).map(f=>({...f,Cohort:name})));
+const fixtures=['widen-flat-paths','widen-square-paths','widen-square-edges','widen-round-miter','widen-round-miter-edges','widen-round-bevel','widen-round-bevel-edges','widen-round-round','widen-round-round-edges','widen-round-round-ties'].flatMap(name=>JSON.parse(fs.readFileSync(new URL(`../../../tests/BaseHmiTypes.Tests/Fixtures/${name}.json`,import.meta.url),'utf8')).map(f=>({...f,Cohort:name})));
 function maskHash(svg){
   const mask=Buffer.alloc(6400);
   for(const m of svg.matchAll(/<path\b[^>]*>/gu)){
@@ -12,11 +12,11 @@ function maskHash(svg){
   }
   return createHash('sha256').update(mask).digest('hex');
 }
-for(const {Cohort,Index,Recorded,PlaybackDifferences,Cap,Source,Hash,Width,Input,Points} of fixtures){
-  assert.ok(Recorded&&PlaybackDifferences===0&&[1,2].includes(Cap),'Widening requires independent native API/replay equality');
+for(const {Cohort,Index,Recorded,PlaybackDifferences,Cap,Join=2,Source,Hash,Width,Input,Points} of fixtures){
+  assert.ok(Recorded&&PlaybackDifferences===0&&[0,1,2].includes(Cap)&&[0,1,2].includes(Join),'Widening requires independent native API/replay equality');
   const bytes=Buffer.from(Source.split(',')[1],'base64'),input=Input.map(p=>p.map(v=>v/16)),expected=Points.map(p=>p.map(v=>v/16));
   test(`Native widen outline ${Cohort} ${Index}`,async()=>{
-    const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');assert.deepEqual(buildNativeFlatPen(input[0],input[1],Width,Cap===1),expected);
+    const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');assert.deepEqual(buildNativeFlatPen(input[0],input[1],Width,Cap===1,Cap===0,Join===0),expected);
   });
   test(`Native widen fill pixels ${Cohort} ${Index}`,()=>assert.equal(maskHash(new MetafileToSvgRenderer().render(bytes,'.emf')),Hash));
   test(`Native widen clip geometry ${Cohort} ${Index}`,()=>{
@@ -27,11 +27,16 @@ for(const {Cohort,Index,Recorded,PlaybackDifferences,Cap,Source,Hash,Width,Input
   });
 }
 for(const width of [NaN,Infinity,0,-1,4097])test(`Invalid native widening width is atomic ${width}`,async()=>{
-  const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');for(const square of [false,true])assert.equal(buildNativeFlatPen([0,0],[10,10],width,square),undefined);
+  const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');for(const cap of [0,1,2])assert.equal(buildNativeFlatPen([0,0],[10,10],width,cap===1,cap===0),undefined);
 });
 test('Invalid widening coordinates and raster budget are atomic',async()=>{
   const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');
   const {fillNativeQuad}=await import('../dist/images/converters/native-quad-rasterizer.js');
-  for(const square of [false,true]){assert.equal(buildNativeFlatPen([.01,0],[10,10],1,square),undefined);assert.equal(buildNativeFlatPen([0,0],[0,0],1,square),undefined);}
+  for(const cap of [0,1,2]){assert.equal(buildNativeFlatPen([.01,0],[10,10],1,cap===1,cap===0),undefined);assert.equal(buildNativeFlatPen([0,0],[0,0],1,cap===1,cap===0),undefined);}
   assert.equal(fillNativeQuad([[0,0],[0,1000],[1000,1000],[1000,0]]),undefined);
+});
+test('Polygon fill honors alternate and winding rules',async()=>{
+  const {fillNativeQuad}=await import('../dist/images/converters/native-quad-rasterizer.js'),box=[[0,0],[0,3],[3,3],[3,0]],twice=[...box,...box];
+  assert.equal(fillNativeQuad(twice),'');assert.equal(fillNativeQuad(twice,true),Array.from({length:3},(_,y)=>Array.from({length:3},(_,x)=>`M ${x} ${y}h1v1h-1Z`)).flat().join(' '));
+  assert.equal(fillNativeQuad(Array.from({length:500},()=>box).flat().map(([x,y])=>[x,y*1000])),undefined);
 });

@@ -2,7 +2,7 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: port matching C# native ellipse/flattener integration, exact integer
-// rounding and bounded flat/square-cap straight outlines. See THIRD-PARTY-NOTICES.
+// rounding and bounded straight outlines for all cap styles. See THIRD-PARTY-NOTICES.
 import {buildNativeEllipse} from './native-ellipse-builder.js';
 import {flattenNativeBezier} from './native-bezier-flattener.js';
 type Point=[number,number];
@@ -14,9 +14,9 @@ const hobby=[
   [8,-40,-8,-40,-24,-32,-32,-24,-40,-8,-40,8,-32,24,-24,32,-8,40,8,40,24,32,32,24,40,8,40,-8,32,-24,24,-32],
   [8,-48,-8,-48,-24,-40,-40,-24,-48,-8,-48,8,-40,24,-24,40,-8,48,8,48,24,40,40,24,48,8,48,-8,40,-24,24,-40],
 ];
-export function buildNativeFlatPen(start:Point,end:Point,width:number,square=false):Point[]|undefined {
+export function buildNativeFlatPen(start:Point,end:Point,width:number,square=false,roundCap=false,roundJoin=false):Point[]|undefined {
   const valid=(v:number)=>Number.isFinite(v)&&Number.isInteger(v*16)&&Math.abs(v*16)<=0x2000000;
-  if(!start.every(valid)||!end.every(valid)||!valid(width)||width<=0||width>4096)return undefined;
+  if(square&&roundCap||!start.every(valid)||!end.every(valid)||!valid(width)||width<=0||width>4096)return undefined;
   let dx=(end[0]-start[0])*16,dy=(end[1]-start[1])*16;if(dx===0&&dy===0)return undefined;
   const originalDx=dx,originalDy=dy;
   const pen:Point[]=[],fixedWidth=width*16;
@@ -39,6 +39,32 @@ export function buildNativeFlatPen(start:Point,end:Point,width:number,square=fal
     let quotient=dividend/divisor;if(dividend%divisor<0n)quotient--;return Number(quotient)*8;
   };
   let vx=round(d[0],b[0],0)/16,vy=round(d[1],b[1],1)/16;if(flip){vx=-vx;vy=-vy;}
+  if(roundCap){
+    let rx=den===0?BigInt(d[0]):BigInt(d[0])*BigInt(den)+BigInt(b[0]-d[0])*BigInt(num),ry=den===0?BigInt(d[1]):BigInt(d[1])*BigInt(den)+BigInt(b[1]-d[1])*BigInt(num);
+    if(flip){rx=-rx;ry=-ry;}
+    let left=0,right=0;
+    if(roundJoin){
+      const axis=pen.some(q=>q[1]===0),boundary=(n===4?1:2)*Math.abs(originalDx),steep=Math.abs(originalDy)>boundary||Math.abs(originalDy)===boundary&&axis;
+      const sign=(steep?originalDy<0:originalDx<0||originalDx===0&&originalDy<0)?-1:1;
+      const height=(q:Point)=>originalDy*q[0]-originalDx*q[1],along=(q:Point)=>sign*(originalDx*q[0]+originalDy*q[1]);
+      for(let i=1;i<n;i++)if(height(pen[i])>height(pen[left])||height(pen[i])===height(pen[left])&&along(pen[i])>along(pen[left]))left=i;
+      right=(left+n/2)%n;const half=(value:number)=>Math.sign(value)*8*Math.floor((Math.abs(value)+4)/8)/16;vx=half(pen[right][0]);vy=half(pen[right][1]);
+    }
+    const result:Point[]=[];
+    const cap=(anchor:Point,first:boolean)=>{
+      const ax=first?-rx:rx,ay=first?-ry:ry;
+      result.push(first?[anchor[0]-vx,anchor[1]-vy]:[anchor[0]+vx,anchor[1]+vy]);
+      const selected=pen.map(q=>{const cross=ax*BigInt(q[1])-ay*BigInt(q[0]);return cross<0n||cross===0n&&ax*BigInt(q[0])+ay*BigInt(q[1])>0n;});
+      let begin=0;for(let i=0;i<n;i++)if(selected[i]&&!selected[(i+n-1)%n]){begin=i;break;}
+      let finish=-1;if(roundJoin){begin=((first?left:right)+1)%n;finish=first?right:left;}
+      const integral=Number.isInteger(anchor[0])&&Number.isInteger(anchor[1]);
+      for(let i=0;i<n&&(roundJoin?(begin+i)%n!==finish:selected[(begin+i)%n]);i++){
+        const q=pen[(begin+i)%n];result.push([anchor[0]+(q[0]-(integral?Math.sign(q[0]):0))/16,anchor[1]+(q[1]-(integral?Math.sign(q[1]):0))/16]);
+      }
+      result.push(first?[anchor[0]+vx,anchor[1]+vy]:[anchor[0]-vx,anchor[1]-vy]);
+    };
+    cap(start,true);cap(end,false);return result;
+  }
   let ex=0,ey=0;
   if(square){
     const wholeX=Math.floor(originalDx/16)*16,wholeY=Math.floor(originalDy/16)*16,length=Math.sqrt(wholeX*wholeX+wholeY*wholeY);
