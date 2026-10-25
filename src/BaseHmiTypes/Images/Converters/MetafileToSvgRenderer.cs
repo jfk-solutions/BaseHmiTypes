@@ -264,6 +264,9 @@ public sealed class MetafileToSvgRenderer
                     state.SelectedPath = null;
                     ResetPathConstruction(state);
                     break;
+                case EMR.FlattenPath:
+                    if(state.SelectedPath is {} selected&&TryFlattenStoredPath(selected,out var flattened))state.SelectedPath=flattened;
+                    break;
                 case EMR.CloseFigure:
                     if (state.CurrentPath is { Count: > 0 } && !state.PathFigureClosed)
                     {
@@ -2116,6 +2119,39 @@ public sealed class MetafileToSvgRenderer
             }
         }
     }
+    private static bool TryFlattenStoredPath(MetafilePath source,out MetafilePath flattened)
+    {
+        var candidate=new MetafilePath();flattened=candidate;double x=0,y=0,startX=0,startY=0;
+        bool Add(char kind,double px,double py)
+        {
+            if(candidate.Count>=65536||double.IsNaN(px)||double.IsInfinity(px)||double.IsNaN(py)||double.IsInfinity(py))return false;
+            candidate.NativePoints[candidate.Count]=(px,py);
+            candidate.Add($"{kind} {px.ToString("0.####",CultureInfo.InvariantCulture)} {py.ToString("0.####",CultureInfo.InvariantCulture)}");return true;
+        }
+        for(var index=0;index<source.Count;index++)
+        {
+            var values=source[index].Split(new[]{' '},StringSplitOptions.RemoveEmptyEntries);
+            if(values.Length==0)return false;
+            if(values.Length==1&&values[0]=="Z"){if(candidate.Count>=65536)return false;candidate.Add("Z");x=startX;y=startY;continue;}
+            if(values[0]=="C")
+            {
+                if(!source.NativeCubics.TryGetValue(index,out var cubic)||cubic.Length%6!=0)return false;
+                for(var at=0;at<cubic.Length;at+=6)
+                {
+                    if(!NativeBezierFlattener.TryFlatten(new[]{(x,y),(cubic[at],cubic[at+1]),(cubic[at+2],cubic[at+3]),(cubic[at+4],cubic[at+5])},out var points))return false;
+                    foreach(var point in points.Skip(1))if(!Add('L',point.X,point.Y))return false;
+                    x=cubic[at+4];y=cubic[at+5];
+                }
+                continue;
+            }
+            if(values.Length!=3||values[0] is not ("M" or "L")||!double.TryParse(values[1],NumberStyles.Float,CultureInfo.InvariantCulture,out var px)||!double.TryParse(values[2],NumberStyles.Float,CultureInfo.InvariantCulture,out var py))return false;
+            if(source.NativePoints.TryGetValue(index,out var native)){px=native.X;py=native.Y;}
+            if(!Add(values[0][0],px,py))return false;x=px;y=py;
+            if(values[0]=="M"){startX=x;startY=y;}
+        }
+        return true;
+    }
+
     private static bool TryCosmeticPixelPath(MetafilePath path, DrawState state, PathPaintMode mode, bool continueStyle, out string element)
     {
         element = string.Empty;
@@ -2661,6 +2697,7 @@ internal static class EMR
     public const uint BeginPath = 0x003b;
     public const uint EndPath = 0x003c;
     public const uint AbortPath = 0x0044;
+    public const uint FlattenPath = 0x0041;
     public const uint CloseFigure = 0x003d;
     public const uint FillPath = 0x003e;
     public const uint StrokeAndFillPath = 0x003f;
