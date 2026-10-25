@@ -1050,7 +1050,7 @@ public sealed class MetafileToSvgRenderer
         or EMR.Rectangle or EMR.Ellipse or EMR.RoundRect or EMR.AngleArc or EMR.Arc or EMR.Chord or EMR.Pie or EMR.ArcTo
         or EMR.Polygon or EMR.Polygon16 or EMR.Polyline or EMR.Polyline16
         or EMR.PolyPolygon or EMR.PolyPolygon16 or EMR.PolyPolyline or EMR.PolyPolyline16
-        or EMR.FillPath or EMR.StrokePath or EMR.StrokeAndFillPath or EMR.ExtTextOutW or EMR.StretchDiBits
+        or EMR.WidenPath or EMR.FillPath or EMR.StrokePath or EMR.StrokeAndFillPath or EMR.ExtTextOutW or EMR.StretchDiBits
         or EMR.IntersectClipRect or EMR.ExcludeClipRect or EMR.OffsetClipRgn;
 
     private static void PrepareEmfMapping(DrawState state)
@@ -2254,9 +2254,9 @@ public sealed class MetafileToSvgRenderer
     private static bool TryWidenStoredLine(MetafilePath path,DrawState state,out MetafilePath outline)
     {
         outline=new MetafilePath();
-        if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap!="butt"||state.Pen.DashArray is not null||path.Count!=2||!path[0].StartsWith("M ",StringComparison.Ordinal)||!path[1].StartsWith("L ",StringComparison.Ordinal)||!path.NativePoints.TryGetValue(0,out var start)||!path.NativePoints.TryGetValue(1,out var end))return false;
+        if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap is not ("butt" or "square")||state.Pen.DashArray is not null||path.Count!=2||!path[0].StartsWith("M ",StringComparison.Ordinal)||!path[1].StartsWith("L ",StringComparison.Ordinal)||!path.NativePoints.TryGetValue(0,out var start)||!path.NativePoints.TryGetValue(1,out var end))return false;
         var origin=TransformPoint(state,0,0);var x=TransformPoint(state,1,0);var y=TransformPoint(state,0,1);
-        if(x.X-origin.X!=1||x.Y-origin.Y!=0||y.X-origin.X!=0||y.Y-origin.Y!=1||!NativeFlatPenBuilder.TryBuild(start,end,width,out var points))return false;
+        if(x.X-origin.X!=1||x.Y-origin.Y!=0||y.X-origin.X!=0||y.Y-origin.Y!=1||!NativeFlatPenBuilder.TryBuild(start,end,width,out var points,state.Pen.LineCap=="square"))return false;
         foreach(var point in points)
         {
             outline.NativePoints[outline.Count]=point;

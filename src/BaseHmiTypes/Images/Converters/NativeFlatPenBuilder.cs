@@ -2,7 +2,7 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: C# port, existing native ellipse/flattener integration, exact integer
-// rounding and bounded single-segment flat-cap outlines. See THIRD-PARTY-NOTICES.
+// rounding and bounded flat/square-cap straight outlines. See THIRD-PARTY-NOTICES.
 using System.Numerics;
 
 namespace BaseHmiTypes.Images.Converters;
@@ -18,12 +18,13 @@ internal static class NativeFlatPenBuilder
         new[]{8,-48,-8,-48,-24,-40,-40,-24,-48,-8,-48,8,-40,24,-24,40,-8,48,8,48,24,40,40,24,48,8,48,-8,40,-24,24,-40}
     };
 
-    internal static bool TryBuild((double X,double Y) start,(double X,double Y) end,double width,out (double X,double Y)[] outline)
+    internal static bool TryBuild((double X,double Y) start,(double X,double Y) end,double width,out (double X,double Y)[] outline,bool square=false)
     {
         outline=Array.Empty<(double X,double Y)>();
         bool Valid(double v)=>!double.IsNaN(v)&&!double.IsInfinity(v)&&v*16==Math.Truncate(v*16)&&Math.Abs(v*16)<=0x2000000;
         if(!Valid(start.X)||!Valid(start.Y)||!Valid(end.X)||!Valid(end.Y)||!Valid(width)||width<=0||width>4096)return false;
         var dx=(long)((end.X-start.X)*16);var dy=(long)((end.Y-start.Y)*16);if(dx==0&&dy==0)return false;
+        var originalDx=dx;var originalDy=dy;
         var pen=new List<(long X,long Y)>();var fixedWidth=(long)(width*16);
         if(fixedWidth<104)
         {
@@ -60,6 +61,21 @@ internal static class NativeFlatPenBuilder
             var quotient=BigInteger.DivRem(dividend,divisor,out var remainder);if(remainder<0)quotient--;return (long)quotient*8;
         }
         var vx=Round(d.X,b.X,0)/16d;var vy=Round(d.Y,b.Y,1)/16d;if(flip){vx=-vx;vy=-vy;}
-        outline=new[]{(start.X-vx,start.Y-vy),(start.X+vx,start.Y+vy),(end.X+vx,end.Y+vy),(end.X-vx,end.Y-vy)};return true;
+        double ex=0,ey=0;
+        if(square)
+        {
+            // With an identity widening map GDI normalizes the whole-pixel
+            // (floor, including negative components) vector, but extends along
+            // the original FIX vector. Exact half-FIX ties go away from zero.
+            var wholeX=Math.Floor(originalDx/16d)*16;var wholeY=Math.Floor(originalDy/16d)*16;
+            var length=Math.Sqrt(wholeX*wholeX+wholeY*wholeY);
+            if(length>0)
+            {
+                var ratio=fixedWidth/2d/length;
+                double Extension(long delta){var value=delta*ratio;return Math.Sign(value)*Math.Floor(Math.Abs(value)+.5)/16;}
+                ex=Extension(originalDx);ey=Extension(originalDy);
+            }
+        }
+        outline=new[]{(start.X-vx-ex,start.Y-vy-ey),(start.X+vx-ex,start.Y+vy-ey),(end.X+vx+ex,end.Y+vy+ey),(end.X-vx+ex,end.Y-vy+ey)};return true;
     }
 }
