@@ -12,7 +12,7 @@ internal static class NativeArcBuilder
     }
     private static float Sin(float degrees)=>Interpolate(degrees*(64f/180),i=>Math.Sin(i*Math.PI/64));
     private static float Cos(float degrees)=>Interpolate(degrees*(64f/180),i=>Math.Cos(i*Math.PI/64));
-    private static float Atan2(float y,float x)
+    internal static float Atan2(float y,float x)
     {
         var ax=Math.Abs(x);var ay=Math.Abs(y);
         var angle=ax==0&&ay==0?0:Interpolate(Math.Min(ax,ay)/Math.Max(ax,ay)*32,i=>Math.Atan(i/32d));

@@ -36,6 +36,12 @@
     <EmbeddedResource Include="Fixtures\arc-compatible-chain2.json" />
     <EmbeddedResource Include="Fixtures\arc-compatible-prelude.json" />
     <EmbeddedResource Include="Fixtures\arc-compatible-direct-prelude.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-angle-arcs.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-angle-arc-direct.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-angle-arc-chain1.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-angle-arc-chain2.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-angle-arc-prelude.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-angle-arc-direct-prelude.json" />
     <EmbeddedResource Include="Fixtures\classic-pen-widths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-paths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-curves.json" />

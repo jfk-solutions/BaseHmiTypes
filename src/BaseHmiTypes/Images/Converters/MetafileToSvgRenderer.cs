@@ -1203,22 +1203,32 @@ public sealed class MetafileToSvgRenderer
         (double X, double Y) Map(double a) => TransformPoint(state, cx + radius * Math.Cos(a), cy + radius * Math.Sin(a));
         string Point(double x, double y) { var p = TransformPoint(state, x, y); return $"{Number(p.X)} {Number(p.Y)}"; }
         var start = Map(angle);
+        (double X,double Y)[]? native=null;
+        if((state.Pen.CosmeticDashes||state.CurrentPath is not null)&&NativeAngleArcBuilder.TryBuild(cx,cy,radius,(float)startDegrees,(float)sweepDegrees,
+            (x,y)=>NativeDevicePoint(TransformPoint(state,x,y),state,true),out var controls))native=controls;
         var path = state.CurrentPath ?? new MetafilePath();
-        if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+        if (state.CurrentPath is null) AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state,true);
         else EnsurePathPosition(state);
+        if(native is not null)path.NativePoints[path.Count]=native[0];
         path.Add($"L {Number(start.X)} {Number(start.Y)}");
         var segments = radius == 0 ? 0 : (int)Math.Ceiling(Math.Abs(sweepDegrees) / 90);
         var step = segments == 0 ? 0 : sweep / segments;
         for (var index = 0; index < segments; index++)
         {
             var a = angle + index * step; var b = a + step; var k = 4.0 / 3 * Math.Tan(step / 4);
+            if(native is not null)path.NativeCubics[path.Count]=index==0?native.Skip(1).SelectMany(p=>new[]{p.X,p.Y}).ToArray():Array.Empty<double>();
             path.Add($"C {Point(cx + radius * (Math.Cos(a) - k * Math.Sin(a)), cy + radius * (Math.Sin(a) + k * Math.Cos(a)))} {Point(cx + radius * (Math.Cos(b) + k * Math.Sin(b)), cy + radius * (Math.Sin(b) - k * Math.Cos(b)))} {Point(cx + radius * Math.Cos(b), cy + radius * Math.Sin(b))}");
         }
+        if(native is not null&&segments==0)
+        {
+            path.NativeCubics[path.Count]=native.Skip(1).SelectMany(p=>new[]{p.X,p.Y}).ToArray();
+            var point=Point(cx+radius*Math.Cos(angle),cy+radius*Math.Sin(angle));path.Add($"C {point} {point} {point}");
+        }
         var end = Map(angle + sweep);
-        state.CurrentX = end.X;
-        state.CurrentY = end.Y;
         state.LogicalCurrentX = cx + radius * Math.Cos(angle + sweep);
         state.LogicalCurrentY = cy + radius * Math.Sin(angle + sweep);
+        if(native is not null&&TrySetNativeCurrentPoint(state,native[native.Length-1]))end=native[native.Length-1];
+        state.CurrentX = end.X;state.CurrentY = end.Y;
         if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke, true));
         else
         {
@@ -1226,6 +1236,15 @@ public sealed class MetafileToSvgRenderer
             state.PathEndX = end.X;
             state.PathEndY = end.Y;
         }
+    }
+
+    private static bool TrySetNativeCurrentPoint(DrawState state,(double X,double Y) point)
+    {
+        var origin=TransformPoint(state,0,0);var xAxis=TransformPoint(state,1,0);var yAxis=TransformPoint(state,0,1);
+        var ax=xAxis.X-origin.X;var ay=xAxis.Y-origin.Y;var bx=yAxis.X-origin.X;var by=yAxis.Y-origin.Y;var det=ax*by-ay*bx;
+        if(det==0)return false;
+        var dx=point.X-origin.X;var dy=point.Y-origin.Y;
+        state.LogicalCurrentX=(dx*by-dy*bx)/det;state.LogicalCurrentY=(ax*dy-ay*dx)/det;return true;
     }
 
     private static void DrawArc(uint type, double x1, double y1, double x2, double y2, double sx, double sy, double ex, double ey, DrawState state, List<string> elements, bool transformPoints)
@@ -1278,18 +1297,8 @@ public sealed class MetafileToSvgRenderer
         if (to)
         {
             state.LogicalCurrentX = cx + rx * Math.Cos(endAngle);state.LogicalCurrentY = cy + ry * Math.Sin(endAngle);
-            if(native is not null)
-            {
-                // ArcTo retains the native fixed endpoint, not the ideal
-                // trigonometric intersection, for a subsequent LineTo.
-                var origin=Map(0,0);var xAxis=Map(1,0);var yAxis=Map(0,1);
-                var ax=xAxis.X-origin.X;var ay=xAxis.Y-origin.Y;var bx=yAxis.X-origin.X;var by=yAxis.Y-origin.Y;var det=ax*by-ay*bx;
-                if(det!=0)
-                {
-                    end=native[native.Length-1];var dx=end.X-origin.X;var dy=end.Y-origin.Y;
-                    state.LogicalCurrentX=(dx*by-dy*bx)/det;state.LogicalCurrentY=(ax*dy-ay*dx)/det;
-                }
-            }
+            // Retain the native fixed endpoint for a subsequent LineTo.
+            if(native is not null&&TrySetNativeCurrentPoint(state,native[native.Length-1]))end=native[native.Length-1];
             state.CurrentX = end.X;state.CurrentY = end.Y;
         }
         if (state.CurrentPath is null)
