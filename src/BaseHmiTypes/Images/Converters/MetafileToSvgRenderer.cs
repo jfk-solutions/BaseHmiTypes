@@ -1286,8 +1286,9 @@ public sealed class MetafileToSvgRenderer
             return transformPoints ? TransformPoint(state, x, y) : (x, y);
         }
         string Point(double x, double y) { var point = Map(x, y);return $"{Number(point.X)} {Number(point.Y)}"; }
-        if(transformPoints&&state.Pen.CosmeticDashes&&right>left&&bottom>top&&NativeRoundRectBuilder.TryBuild(new[]{
-            NativeDevicePoint(Map(left,top),state,true),NativeDevicePoint(Map(right,top),state,true),NativeDevicePoint(Map(left,bottom),state,true)},
+        MetafilePath? nativeGeometry=null;
+        if(transformPoints&&(state.Pen.CosmeticDashes||state.CurrentPath is not null)&&right>left&&bottom>top&&NativeRoundRectBuilder.TryBuild(NativeConstructionCorners(new[]{
+            NativeDevicePoint(Map(left,top),state,true),NativeDevicePoint(Map(right,top),state,true),NativeDevicePoint(Map(left,bottom),state,true)},state,rx!=0&&ry!=0),
             Math.Min(Math.Abs(cornerWidth)/(right-left),1),Math.Min(Math.Abs(cornerHeight)/(bottom-top),1),out var nativeControls))
         {
             var native=new MetafilePath();var nativeStart=nativeControls[0];
@@ -1301,9 +1302,13 @@ public sealed class MetafileToSvgRenderer
                 native.Add($"C {Number(a.X)} {Number(a.Y)} {Number(b.X)} {Number(b.Y)} {Number(c.X)} {Number(c.Y)}");i+=3;
             }
             native.Add("Z");
-            if(state.CurrentPath is null)elements.Add(PathElement(native,state,PathPaintMode.Paint));
-            else {state.CurrentPath.AddRange(native);state.PathFigureClosed=true;state.PathStartX=state.PathEndX=nativeStart.X;state.PathStartY=state.PathEndY=nativeStart.Y;}
-            return;
+            if(state.Pen.CosmeticDashes)
+            {
+                if(state.CurrentPath is null)elements.Add(PathElement(native,state,PathPaintMode.Paint));
+                else {state.CurrentPath.AddRange(native);state.PathFigureClosed=true;state.PathStartX=state.PathEndX=nativeStart.X;state.PathStartY=state.PathEndY=nativeStart.Y;}
+                return;
+            }
+            nativeGeometry=native;
         }
         var start = Map(right, top + ry);
         var path = new MetafilePath { $"M {Number(start.X)} {Number(start.Y)}" };
@@ -1322,6 +1327,7 @@ public sealed class MetafileToSvgRenderer
             path.Add($"C {Point(right - rx + kx, bottom)} {Point(right, bottom - ry + ky)} {Point(right, bottom - ry)}");
         }
         path.Add("Z");
+        PreserveNativeShapeMetadata(path,nativeGeometry);
         if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Paint));
         else
         {
@@ -1346,10 +1352,11 @@ public sealed class MetafileToSvgRenderer
         double right = Math.Max(I32(bytes, offset), I32(bytes, offset + 8));
         double top = Math.Min(I32(bytes, offset + 4), I32(bytes, offset + 12));
         double bottom = Math.Max(I32(bytes, offset + 4), I32(bytes, offset + 12));
-        if(ellipse&&state.Pen.CosmeticDashes&&NativeEllipseBuilder.TryBuild(new[]{
+        MetafilePath? nativeGeometry=null;
+        if(ellipse&&(state.Pen.CosmeticDashes||state.CurrentPath is not null)&&NativeEllipseBuilder.TryBuild(NativeConstructionCorners(new[]{
             NativeDevicePoint(TransformPoint(state,left,state.ClockwiseShapes?bottom:top),state,true),
             NativeDevicePoint(TransformPoint(state,right,state.ClockwiseShapes?bottom:top),state,true),
-            NativeDevicePoint(TransformPoint(state,left,state.ClockwiseShapes?top:bottom),state,true)},out var controls))
+            NativeDevicePoint(TransformPoint(state,left,state.ClockwiseShapes?top:bottom),state,true)},state,true),out var controls))
         {
             var native=new MetafilePath();start=controls[0];
             native.NativePoints[0]=start;native.Add($"M {Number(start.X)} {Number(start.Y)}");
@@ -1359,7 +1366,7 @@ public sealed class MetafileToSvgRenderer
                 native.NativeCubics[native.Count]=new[]{a.X,a.Y,b.X,b.Y,c.X,c.Y};
                 native.Add($"C {Number(a.X)} {Number(a.Y)} {Number(b.X)} {Number(b.Y)} {Number(c.X)} {Number(c.Y)}");
             }
-            native.Add("Z");return native;
+            native.Add("Z");if(state.Pen.CosmeticDashes)return native;nativeGeometry=native;
         }
         var path = new MetafilePath();
         string Point(double x, double y)
@@ -1394,7 +1401,32 @@ public sealed class MetafileToSvgRenderer
             }
         }
         path.Add("Z");
+        PreserveNativeShapeMetadata(path,nativeGeometry);
         return path;
+    }
+
+    private static (double X,double Y)[] NativeConstructionCorners((double X,double Y)[] corners,DrawState state,bool curved)
+    {
+        // GDI outsets integer-device curved paths by a quarter pixel when
+        // constructed with NULL_PEN. Freeze this at construction time, not
+        // when a later StrokePath selects its cosmetic pen. Fractional corners
+        // and sharp (zero-radius) rectangles do not receive this device outset.
+        if(!curved||!state.Pen.None||state.CurrentPath is null)return corners;
+        if(corners.Any(p=>p.X!=Math.Truncate(p.X)||p.Y!=Math.Truncate(p.Y)))return corners;
+        var lt=corners[0];var rt=corners[1];var lb=corners[2];
+        var sx=Math.Sign(rt.X-lt.X);if(sx==0)sx=-Math.Sign(lb.X-lt.X);
+        var sy=Math.Sign(lb.Y-lt.Y);if(sy==0)sy=-Math.Sign(rt.Y-lt.Y);
+        var x=sx*.25;var y=sy*.25;
+        return new[]{(lt.X-x,lt.Y-y),(rt.X+x,rt.Y-y),(lb.X-x,lb.Y+y)};
+    }
+
+    private static void PreserveNativeShapeMetadata(MetafilePath path,MetafilePath? native)
+    {
+        // Keep legacy SVG fill/clip geometry intact while freezing the actual
+        // native stroke controls even if no cosmetic pen is selected yet.
+        if(native is null||native.Count!=path.Count)return;
+        foreach(var p in native.NativePoints)path.NativePoints[p.Key]=p.Value;
+        foreach(var c in native.NativeCubics)path.NativeCubics[c.Key]=c.Value;
     }
 
     private static (double Left, double Top, double Right, double Bottom) TransformRect(DrawState state, int left, int top, int right, int bottom)
@@ -1973,72 +2005,65 @@ public sealed class MetafileToSvgRenderer
         path.Add($"C {Number(a.X)} {Number(a.Y)} {Number(b.X)} {Number(b.Y)} {Number(c.X)} {Number(c.Y)}");
     }
 
-    private static void AppendCosmeticGiqSegment((double X,double Y) start,(double X,double Y) end,DrawState state,StringBuilder foreground,StringBuilder background,bool finalSegment,ref (double X,double Y)? previous)
+    private static void AppendCosmeticGiqSegment((double X,double Y) start,(double X,double Y) end,DrawState state,StringBuilder foreground,StringBuilder background)
     {
-        // Grid-intersection quantization uses half-pixel diamonds, not SVG's
-        // continuous arc length. Shared vertices consume only one style step.
-        var horizontal=Math.Abs(end.X-start.X)>=Math.Abs(end.Y-start.Y);
-        var a1=horizontal?start.X:start.Y;var a2=horizontal?end.X:end.Y;var b1=horizontal?start.Y:start.X;var b2=horizontal?end.Y:end.X;
-        if(a1==a2)return;
-        var sign=a2>a1?1:-1;var first=sign>0?Math.Ceiling(a1):Math.Floor(a1);var stop=sign>0?Math.Ceiling(a2):Math.Floor(a2);
-        var vertex=(X:Math.Ceiling(start.X-.5),Y:Math.Ceiling(start.Y-.5));
-        var vx=Math.Abs(vertex.X-start.X);var vy=Math.Abs(vertex.Y-start.Y);
-        var inside=vx+vy<.5||(vx+vy==.5&&(vx==0||vy==0));
-        // Merely touching an axis corner does not enter its diamond when the
-        // segment immediately heads outwards. Tiny rounded-rectangle cusps can
-        // otherwise consume a phantom style step before re-entering that pixel.
-        if(first==stop&&vx+vy==.5&&(vx==0||vy==0)&&
-           (vx==0?Math.Sign(start.Y-vertex.Y)*(end.Y-start.Y)+Math.Abs(end.X-start.X):Math.Sign(start.X-vertex.X)*(end.X-start.X)+Math.Abs(end.Y-start.Y))>0)inside=false;
-        var last=previous;
+        // A native cosmetic segment lights a pixel only when it exits that
+        // pixel's half-pixel diamond. Endpoint inclusion is slope-dependent:
+        // bottom corners always belong, right corners except at slope +1,
+        // and the lower parallel edge belongs at slopes +1/-1. Testing exits
+        // also handles sub-pixel segments and joins without phantom style steps.
+        var dx=end.X-start.X;var dy=end.Y-start.Y;
+        if(dx==0&&dy==0)return;
+        var horizontal=Math.Abs(dx)>=Math.Abs(dy);
+        var a=horizontal?start.X:start.Y;var b=horizontal?end.X:end.Y;
+        var sign=b>a?1:-1;
+        var first=sign>0?Math.Floor(a)-1:Math.Ceiling(a)+1;
+        var stop=sign>0?Math.Ceiling(b)+1:Math.Floor(b)-1;
+        bool Inside(double x,double y)
+        {
+            var distance=Math.Abs(x)+Math.Abs(y);
+            if(distance!=.5)return distance<.5;
+            if(y==.5)return true;
+            if(x==.5)return dy!=dx;
+            if(x==-.5)return dy==dx;
+            return y>0&&(x<0?dy==dx:dy==-dx);
+        }
+        bool Exits(double x,double y)
+        {
+            var u=start.X-x+start.Y-y;var v=start.X-x-start.Y+y;
+            var du=dx+dy;var dv=dx-dy;
+            var enter=double.NegativeInfinity;var exit=double.PositiveInfinity;
+            bool Clip(double origin,double delta)
+            {
+                if(delta==0)return Math.Abs(origin)<=.5;
+                var t1=(-.5-origin)/delta;var t2=(.5-origin)/delta;
+                enter=Math.Max(enter,Math.Min(t1,t2));exit=Math.Min(exit,Math.Max(t1,t2));
+                return enter<=exit;
+            }
+            if(!Clip(u,du)||!Clip(v,dv)||exit<0||exit>1||enter>1)return false;
+            var lo=Math.Max(0,enter);var hi=Math.Min(1,exit);
+            var t=(lo+hi)/2;
+            if(!Inside(start.X+dx*t-x,start.Y+dy*t-y))return false;
+            return exit!=1||!Inside(end.X-x,end.Y-y);
+        }
         var cycle=(long)state.Pen.DashArray!.Sum()*(state.Pen.DashArray.Length%2==0?1:2);
         var phase=state.CosmeticPhase%cycle;var dash=0;var ink=true;
         while(phase>=state.Pen.DashArray[dash]){phase-=(long)state.Pen.DashArray[dash];dash=(dash+1)%state.Pen.DashArray.Length;ink=!ink;}
         var remaining=state.Pen.DashArray[dash]-phase;
-        void Pixel((double X,double Y) p)
+        for(var major=first;sign>0?major<=stop:major>=stop;major+=sign)
         {
-            var ex=Math.Abs(p.X-end.X);var ey=Math.Abs(p.Y-end.Y);
-            // A final endpoint inside its pixel's diamond is not painted. At
-            // axis corners, upper/left ties remain included in that diamond.
-            if(finalSegment&&(ex+ey<.5||ex+ey==.5&&(ex==0||ey==0)&&end.X>=p.X&&end.Y>=p.Y))return;
-            if(last==p&&inside)return;
-            last=p;
-            if(ink||state.Pen.OpaqueDashGaps&&state.BackgroundMode==2)(ink?foreground:background).Append($"M {Number(p.X)} {Number(p.Y)}h1v1h-1Z ");
-            if(--remaining==0){dash=(dash+1)%state.Pen.DashArray.Length;remaining=state.Pen.DashArray[dash];ink=!ink;}
-            state.CosmeticPhase=(state.CosmeticPhase+1)%cycle;
-        }
-        (double X,double Y) At(double major)
-        {
-            var minor=Math.Ceiling(b1+(major-a1)*(b2-b1)/(a2-a1)-.5);
-            return horizontal?(major,minor):(minor,major);
-        }
-        if(inside&&last!=vertex&&(first==stop||At(first)!=vertex))Pixel(vertex);
-        var lastAt=stop-sign;
-        var stepCount=Math.Abs(stop-first);
-        for(var step=0;step<stepCount;step++)
-        {
-            var at=first+step*sign;
-            var p=At(at);
-            if(at==lastAt&&Math.Abs(b2-b1)==Math.Abs(a2-a1))
+            var minor=horizontal?start.Y+(major-start.X)*dy/dx:start.X+(major-start.Y)*dx/dy;
+            var nearest=Math.Ceiling(minor-.5);
+            for(var offset=-1;offset<=1;offset++)
             {
-                // Rotated diamond bounds are half-open. An endpoint on the
-                // exiting edge counts; one still inside the parallel edge does not.
-                var u=end.X-p.X+end.Y-p.Y;var v=end.X-p.X-end.Y+p.Y;
-                var du=end.X-start.X+end.Y-start.Y;var dv=end.X-start.X-end.Y+start.Y;
-                var exits=Math.Abs(u)==.5&&u*du>0||Math.Abs(v)==.5&&v*dv>0;
-                if(u>-.5&&u<=.5&&v>=-.5&&v<.5&&!exits)continue;
+                var x=horizontal?major:nearest+offset;var y=horizontal?nearest+offset:major;
+                if(!Exits(x,y))continue;
+                if(ink||state.Pen.OpaqueDashGaps&&state.BackgroundMode==2)(ink?foreground:background).Append($"M {Number(x)} {Number(y)}h1v1h-1Z ");
+                if(--remaining==0){dash=(dash+1)%state.Pen.DashArray.Length;remaining=state.Pen.DashArray[dash];ink=!ink;}
+                state.CosmeticPhase=(state.CosmeticPhase+1)%cycle;
             }
-            Pixel(p);
         }
-        // A sub-pixel cusp can leave and re-enter the same pixel without any
-        // intervening grid crossing. That is a second style step, not a join.
-        if(last is {} previousPixel)
-        {
-            var ex=Math.Abs(previousPixel.X-end.X);var ey=Math.Abs(previousPixel.Y-end.Y);
-            if(ex+ey>.5||ex+ey==.5&&ex!=0&&ey!=0)last=null;
-        }
-        previous=last;
     }
-
     private static bool TryCosmeticPixelPath(MetafilePath path, DrawState state, PathPaintMode mode, bool continueStyle, out string element)
     {
         element = string.Empty;
@@ -2081,13 +2106,12 @@ public sealed class MetafileToSvgRenderer
         // One native stroke paints every opaque gap before foreground ink;
         // separate LineTo records still paint in their original call order.
         var foreground = new StringBuilder(); var background = new StringBuilder(); var firstMove = true;
-        (double X,double Y)? previous=null;
         if (!ReferenceEquals(working.StyledPen,working.Pen)) { working.StyledPen=working.Pen;working.CosmeticPhase=0; }
         for(var index=0;index<commands.Count;index++)
         {
             var command=commands[index];
-            if (command.Type == 'M') { if (!firstMove || !continueStyle) working.CosmeticPhase=0; firstMove=false;previous=null; }
-            else AppendCosmeticGiqSegment((x,y),(command.X,command.Y),working,foreground,background,index+1==commands.Count||commands[index+1].Type=='M',ref previous);
+            if (command.Type == 'M') { if (!firstMove || !continueStyle) working.CosmeticPhase=0; firstMove=false; }
+            else AppendCosmeticGiqSegment((x,y),(command.X,command.Y),working,foreground,background);
             x=command.X; y=command.Y;
         }
         state.CosmeticPhase=working.CosmeticPhase; state.StyledPen=working.StyledPen;

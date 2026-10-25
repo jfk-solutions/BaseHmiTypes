@@ -21,6 +21,8 @@
     <EmbeddedResource Include="Fixtures\cosmetic-curves.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-ellipses.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-roundrects.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-stored-shapes.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-micro-lines.json" />
     <EmbeddedResource Include="Fixtures\classic-pen-widths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-paths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-curves.json" />
