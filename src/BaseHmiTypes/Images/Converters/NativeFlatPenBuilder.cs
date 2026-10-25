@@ -2,7 +2,8 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: C# port, existing native ellipse/flattener integration, exact integer
-// rounding and bounded straight outlines for all cap styles. See THIRD-PARTY-NOTICES.
+// rounding, straight outlines for all caps, and round-joined open polylines.
+// See THIRD-PARTY-NOTICES.
 using System.Numerics;
 
 namespace BaseHmiTypes.Images.Converters;
@@ -25,24 +26,7 @@ internal static class NativeFlatPenBuilder
         if(square&&round||!Valid(start.X)||!Valid(start.Y)||!Valid(end.X)||!Valid(end.Y)||!Valid(width)||width<=0||width>4096)return false;
         var dx=(long)((end.X-start.X)*16);var dy=(long)((end.Y-start.Y)*16);if(dx==0&&dy==0)return false;
         var originalDx=dx;var originalDy=dy;
-        var pen=new List<(long X,long Y)>();var fixedWidth=(long)(width*16);
-        if(fixedWidth<104)
-        {
-            var table=Hobby[Math.Min(5,Math.Max(0,(int)Math.Floor(width+.5)-1))];
-            for(var i=0;i<table.Length;i+=2)pen.Add((table[i],table[i+1]));
-        }
-        else
-        {
-            var radius=Math.Ceiling(fixedWidth/2d)/16;
-            if(!NativeEllipseBuilder.TryBuild(new[]{(-radius,-radius),(radius,-radius),(-radius,radius)},out var controls))return false;
-            pen.Add(((long)(controls[0].X*16),(long)(controls[0].Y*16)));
-            for(var i=1;i<=4;i+=3)
-            {
-                if(!NativeBezierFlattener.TryFlatten(new[]{controls[i-1],controls[i],controls[i+1],controls[i+2]},out var flattened))return false;
-                foreach(var p in flattened.Skip(1))pen.Add(((long)(p.X*16),(long)(p.Y*16)));
-            }
-            pen.RemoveAt(pen.Count-1);var half=pen.ToArray();foreach(var p in half)pen.Add((-p.X,-p.Y));
-        }
+        if(!TryGetPen(width,out var pen))return false;var fixedWidth=(long)(width*16);
         var flip=dx<0||dx==0&&dy<0;if(flip){dx=-dx;dy=-dy;}
         long H((long X,long Y) p)=>-dy*p.X+dx*p.Y;
         var best=0;for(var i=1;i<pen.Count;i++)if(H(pen[i])>H(pen[best]))best=i;
@@ -115,5 +99,87 @@ internal static class NativeFlatPenBuilder
             }
         }
         outline=new[]{(start.X-vx-ex,start.Y-vy-ey),(start.X+vx-ex,start.Y+vy-ey),(end.X+vx+ex,end.Y+vy+ey),(end.X-vx+ex,end.Y-vy+ey)};return true;
+    }
+
+    private static bool TryGetPen(double width,out List<(long X,long Y)> pen)
+    {
+        pen=new List<(long X,long Y)>();var fixedWidth=(long)(width*16);
+        if(fixedWidth<104)
+        {
+            var table=Hobby[Math.Min(5,Math.Max(0,(int)Math.Floor(width+.5)-1))];
+            for(var i=0;i<table.Length;i+=2)pen.Add((table[i],table[i+1]));
+        }
+        else
+        {
+            var radius=Math.Ceiling(fixedWidth/2d)/16;
+            if(!NativeEllipseBuilder.TryBuild(new[]{(-radius,-radius),(radius,-radius),(-radius,radius)},out var controls))return false;
+            pen.Add(((long)(controls[0].X*16),(long)(controls[0].Y*16)));
+            for(var i=1;i<=4;i+=3)
+            {
+                if(!NativeBezierFlattener.TryFlatten(new[]{controls[i-1],controls[i],controls[i+1],controls[i+2]},out var flattened))return false;
+                foreach(var p in flattened.Skip(1))pen.Add(((long)(p.X*16),(long)(p.Y*16)));
+            }
+            pen.RemoveAt(pen.Count-1);var half=pen.ToArray();foreach(var p in half)pen.Add((-p.X,-p.Y));
+        }
+        return true;
+    }
+
+    internal static bool TryBuildRoundPolyline((double X,double Y)[] input,double width,out (double X,double Y)[] outline)
+    {
+        outline=Array.Empty<(double X,double Y)>();
+        bool Valid(double v)=>!double.IsNaN(v)&&!double.IsInfinity(v)&&v*16==Math.Truncate(v*16)&&Math.Abs(v*16)<=0x2000000;
+        if(input.Length<2||input.Length>65536||!Valid(width)||width<=0||width>4096||input.Any(p=>!Valid(p.X)||!Valid(p.Y))||!TryGetPen(width,out var pen))return false;
+        var points=new List<(double X,double Y)>();foreach(var p in input)if(points.Count==0||points[points.Count-1]!=p)points.Add(p);
+        if(points.Count<2)return false;
+        var n=pen.Count;if(2L*points.Count*(n+3)>65536)return false;
+        var segs=new (long X,long Y,int L,int R)[points.Count-1];
+        for(var j=0;j<segs.Length;j++)
+        {
+            var dx=(long)((points[j+1].X-points[j].X)*16);var dy=(long)((points[j+1].Y-points[j].Y)*16);
+            var axis=pen.Any(q=>q.Y==0);var boundary=(n==4?1:2)*Math.Abs(dx);
+            var steep=Math.Abs(dy)>boundary||Math.Abs(dy)==boundary&&axis;
+            var sign=(steep?dy<0:dx<0||dx==0&&dy<0)?-1:1;
+            long Height((long X,long Y) q)=>dy*q.X-dx*q.Y;
+            long Along((long X,long Y) q)=>sign*(dx*q.X+dy*q.Y);
+            var left=0;for(var k=1;k<n;k++)if(Height(pen[k])>Height(pen[left])||Height(pen[k])==Height(pen[left])&&Along(pen[k])>Along(pen[left]))left=k;
+            segs[j]=(dx,dy,left,(left+n/2)%n);
+        }
+        var result=new List<(double X,double Y)>();var maxX=pen.Max(q=>Math.Abs(q.X));
+        double Half(long v)=>Math.Sign(v)*8*Math.Floor((Math.Abs(v)+4)/8d)/16;
+        void Side(int p,int k)=>result.Add((points[p].X+Half(pen[k].X),points[p].Y+Half(pen[k].Y)));
+        void Vertex(int p,int k)
+        {
+            var a=points[p];var q=pen[k];var whole=a.X==Math.Truncate(a.X)&&a.Y==Math.Truncate(a.Y);
+            result.Add((a.X+(q.X-(whole?Math.Sign(q.X):0))/16d,a.Y+(q.Y-(whole?Math.Sign(q.Y):0))/16d));
+        }
+        void Walk(int p,int a,int b,bool includeEnd)
+        {
+            for(var k=(a+1)%n;k!=b;k=(k+1)%n)Vertex(p,k);
+            if(includeEnd)Vertex(p,b);
+        }
+        long Turn(int a,int b)
+        {
+            var s=segs[a];var t=segs[b];var cross=s.X*t.Y-s.Y*t.X;if(cross!=0)return cross;
+            if(s.X*t.X+s.Y*t.Y>=0)return 0;
+            // Native's exact-reversal tie is not an ordinary signed turn:
+            // non-axis reversals put the inner triangle on the right side.
+            return s.Y==0?Math.Sign(s.X):s.X==0?-Math.Sign(s.Y):1;
+        }
+        void Join(int p,int a,int b,bool left,bool outer)
+        {
+            var first=left?segs[a].L:segs[a].R;var last=left?segs[b].L:segs[b].R;Side(p,first);if(first==last)return;
+            if(outer)
+            {
+                var q=pen[last];var include=left&&Math.Abs(segs[b].Y)>=Math.Abs(segs[b].X)&&Math.Abs(q.X)==maxX&&q.X*q.Y<=0;
+                Walk(p,first,last,include);
+            }
+            else result.Add(points[p]);
+            Side(p,last);
+        }
+        Side(0,segs[0].L);Walk(0,segs[0].L,segs[0].R,false);Side(0,segs[0].R);
+        for(var i=0;i+1<segs.Length;i++){var tr=Turn(i,i+1);if(tr==0)Side(i+1,segs[i].R);else Join(i+1,i,i+1,false,tr<0);}
+        var end=points.Count-1;var final=segs[segs.Length-1];Side(end,final.R);Walk(end,final.R,final.L,false);Side(end,final.L);
+        for(var i=segs.Length-1;i>0;i--){var tr=Turn(i-1,i);if(tr==0)Side(i,segs[i].L);else Join(i,i,i-1,true,tr>0);}
+        if(result.Count>65536)return false;outline=result.ToArray();return true;
     }
 }

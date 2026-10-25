@@ -2262,9 +2262,15 @@ public sealed class MetafileToSvgRenderer
     private static bool TryWidenStoredLine(MetafilePath path,DrawState state,out MetafilePath outline)
     {
         outline=new MetafilePath();
-        if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap is not ("butt" or "square" or "round")||state.Pen.DashArray is not null||path.Count!=2||!path[0].StartsWith("M ",StringComparison.Ordinal)||!path[1].StartsWith("L ",StringComparison.Ordinal)||!path.NativePoints.TryGetValue(0,out var start)||!path.NativePoints.TryGetValue(1,out var end))return false;
+        if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap is not ("butt" or "square" or "round")||state.Pen.DashArray is not null||path.Count<2||!path[0].StartsWith("M ",StringComparison.Ordinal)||Enumerable.Range(1,path.Count-1).Any(i=>!path[i].StartsWith("L ",StringComparison.Ordinal))||Enumerable.Range(0,path.Count).Any(i=>!path.NativePoints.ContainsKey(i)))return false;
         var origin=TransformPoint(state,0,0);var x=TransformPoint(state,1,0);var y=TransformPoint(state,0,1);
-        if(x.X-origin.X!=1||x.Y-origin.Y!=0||y.X-origin.X!=0||y.Y-origin.Y!=1||!NativeFlatPenBuilder.TryBuild(start,end,width,out var points,state.Pen.LineCap=="square",state.Pen.LineCap=="round",state.Pen.LineJoin=="round"))return false;
+        if(x.X-origin.X!=1||x.Y-origin.Y!=0||y.X-origin.X!=0||y.Y-origin.Y!=1)return false;
+        (double X,double Y)[] points;
+        if(path.Count==2)
+        {
+            if(!NativeFlatPenBuilder.TryBuild(path.NativePoints[0],path.NativePoints[1],width,out points,state.Pen.LineCap=="square",state.Pen.LineCap=="round",state.Pen.LineJoin=="round"))return false;
+        }
+        else if(state.Pen.LineCap!="round"||state.Pen.LineJoin!="round"||!NativeFlatPenBuilder.TryBuildRoundPolyline(Enumerable.Range(0,path.Count).Select(i=>path.NativePoints[i]).ToArray(),width,out points))return false;
         foreach(var point in points)
         {
             outline.NativePoints[outline.Count]=point;

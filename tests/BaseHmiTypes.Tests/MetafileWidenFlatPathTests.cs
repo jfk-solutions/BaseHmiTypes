@@ -12,7 +12,7 @@ public class MetafileWidenFlatPathTests
 {
     public static IEnumerable<object[]> Fixtures()
     {
-        foreach(var name in new[]{"widen-flat-paths","widen-square-paths","widen-square-edges","widen-round-miter","widen-round-miter-edges","widen-round-bevel","widen-round-bevel-edges","widen-round-round","widen-round-round-edges","widen-round-round-ties"})
+        foreach(var name in new[]{"widen-flat-paths","widen-square-paths","widen-square-edges","widen-round-miter","widen-round-miter-edges","widen-round-bevel","widen-round-bevel-edges","widen-round-round","widen-round-round-edges","widen-round-round-ties","widen-round-polylines"})
         {
             using var stream=typeof(MetafileWidenFlatPathTests).Assembly.GetManifestResourceStream($"BaseHmiTypes.Tests.Fixtures.{name}.json")!;
             using var doc=JsonDocument.Parse(stream);
@@ -29,7 +29,8 @@ public class MetafileWidenFlatPathTests
     [TestMethod] [DynamicData(nameof(Fixtures))]
     public void NativeOutline(string cohort,int index,string source,string hash,double width,(double X,double Y)[] input,(double X,double Y)[] expected,int cap,int join)
     {
-        Assert.IsTrue(NativeFlatPenBuilder.TryBuild(input[0],input[1],width,out var actual,cap==1,cap==0,join==0));CollectionAssert.AreEqual(expected,actual,$"Native outline {cohort} {index}");
+        (double X,double Y)[] actual;
+        Assert.IsTrue(input.Length>2?NativeFlatPenBuilder.TryBuildRoundPolyline(input,width,out actual):NativeFlatPenBuilder.TryBuild(input[0],input[1],width,out actual,cap==1,cap==0,join==0));CollectionAssert.AreEqual(expected,actual,$"Native outline {cohort} {index}");
     }
     [TestMethod] [DynamicData(nameof(Fixtures))]
     public void NativeFillPixels(string cohort,int index,string source,string hash,double width,(double X,double Y)[] input,(double X,double Y)[] expected,int cap,int join)
@@ -67,5 +68,17 @@ public class MetafileWidenFlatPathTests
         Assert.IsTrue(NativeQuadRasterizer.TryFill(twice,out var winding,true));
         Assert.AreEqual(string.Join(" ",Enumerable.Range(0,3).SelectMany(y=>Enumerable.Range(0,3).Select(x=>$"M {x} {y}h1v1h-1Z"))),winding);
         Assert.IsFalse(NativeQuadRasterizer.TryFill(Enumerable.Repeat(box,500).SelectMany(p=>p).Select(p=>(p.Item1,p.Item2*1000)).ToArray(),out var budget));Assert.AreEqual(string.Empty,budget);
+    }
+
+    [TestMethod]
+    public void InvalidRoundPolylinesAreAtomic()
+    {
+        foreach(var input in new[]{Array.Empty<(double,double)>(),new[]{(0d,0d)},new[]{(0d,0d),(0d,0d)},new[]{(0d,0d),(.01,1d)},new[]{(double.NaN,0d),(1d,1d)},Enumerable.Range(0,65537).Select(i=>((double)i,0d)).ToArray()})
+        {Assert.IsFalse(NativeFlatPenBuilder.TryBuildRoundPolyline(input,3,out var outline));Assert.HasCount(0,outline);}
+        foreach(var width in new[]{double.NaN,double.PositiveInfinity,0d,-1d,4097d})
+        {Assert.IsFalse(NativeFlatPenBuilder.TryBuildRoundPolyline(new[]{(0d,0d),(1d,1d),(2d,0d)},width,out var outline));Assert.HasCount(0,outline);}
+        Assert.IsFalse(NativeFlatPenBuilder.TryBuildRoundPolyline(Enumerable.Range(0,4000).Select(i=>((double)i,i%2==0?0d:1d)).ToArray(),64,out var budget));Assert.HasCount(0,budget);
+        Assert.IsTrue(NativeFlatPenBuilder.TryBuildRoundPolyline(new[]{(0d,0d),(0d,0d),(20d,20d),(20d,20d)},3,out var repeated));
+        Assert.IsTrue(NativeFlatPenBuilder.TryBuild((0,0),(20,20),3,out var single,false,true,true));CollectionAssert.AreEqual(single,repeated);
     }
 }
