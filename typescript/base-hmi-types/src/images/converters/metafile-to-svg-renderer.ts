@@ -334,7 +334,8 @@ export class MetafileToSvgRenderer {
             state.pathEndY = y;
           }
           else
-            elements.push(lineElement(state.currentX, state.currentY, x, y, state));
+            elements.push(lineElement(state.currentX, state.currentY, x, y, state,
+              state.logicalCurrentX!==Math.trunc(state.logicalCurrentX)||state.logicalCurrentY!==Math.trunc(state.logicalCurrentY)));
           state.currentX = x;
           state.currentY = y;
           state.logicalCurrentX = i32(bytes, dataOffset);
@@ -2180,10 +2181,12 @@ function combineClipGeometry(state: DrawState, geometry: string, mode: number, v
   state.activeMaskId = id;
 }
 
-function lineElement(x1: number, y1: number, x2: number, y2: number, state: DrawState): string {
+function lineElement(x1: number, y1: number, x2: number, y2: number, state: DrawState, fixedCurrent=false): string {
   if (usesNativeCosmeticDashes(state)) {
     let pixels:string|undefined;
-    if(state.advancedCoordinates){const path:string[]=[];appendNativePoint(path,'M',[x1,y1],state);appendNativePoint(path,'L',[x2,y2],state);pixels=cosmeticPixelPath(path,state,'stroke',true);}
+    // Preserve ArcTo's fixed current point even without a world-transform
+    // record; new compatible LineTo endpoints keep integer quantization.
+    if(state.advancedCoordinates||fixedCurrent){const path:string[]=[];appendNativePoint(path,'M',[x1,y1],state,fixedCurrent);appendNativePoint(path,'L',[x2,y2],state);pixels=cosmeticPixelPath(path,state,'stroke',true);}
     else pixels = cosmeticPixelLine(x1, y1, x2, y2, state);
     if (pixels !== undefined) return pixels;
   }
@@ -2239,9 +2242,9 @@ function appendMetafilePath(target: string[],path: string[]): void {
   if(points){let metadata=nativePoints.get(target);if(!metadata){metadata=new Map();nativePoints.set(target,metadata);}for(const [index,value] of points)metadata.set(offset+index,value);}
   for(const command of path)target.push(command);
 }
-function appendNativePoint(path: string[],command: string,point: CosmeticPoint,state: DrawState): void {
+function appendNativePoint(path: string[],command: string,point: CosmeticPoint,state: DrawState,forceFixed=false): void {
   let metadata=nativePoints.get(path);if(!metadata){metadata=new Map();nativePoints.set(path,metadata);}
-  metadata.set(path.length,nativeDevicePoint(point,state));
+  metadata.set(path.length,nativeDevicePoint(point,state,forceFixed));
   path.push(`${command} ${point[0]} ${point[1]}`);
 }
 function nativeDevicePoint(point:CosmeticPoint,state:DrawState,forceFixed=false):CosmeticPoint {
