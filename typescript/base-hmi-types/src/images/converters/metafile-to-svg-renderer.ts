@@ -1,6 +1,7 @@
 // infos at https://github.com/libyal/dtformats/blob/main/documentation/Windows%20(Enhanced)%20Metafile%20Format%20(WMF%20and%20EMF).asciidoc
 import {flattenNativeBezier} from './native-bezier-flattener.js';
 import {buildNativeEllipse} from './native-ellipse-builder.js';
+import {buildNativeArc} from './native-arc-builder.js';
 import {buildNativeRoundRect} from './native-roundrect-builder.js';
 
 type MetafileObject = PenObject | BrushObject | FontObject;
@@ -521,7 +522,7 @@ export class MetafileToSvgRenderer {
           break;
         case EMR.STROKEPATH:
           if (state.selectedPath?.length)
-            elements.push(pathElement(state.selectedPath, state, 'stroke'));
+            elements.push(storedPathElement(state.selectedPath, state, 'stroke'));
           state.selectedPath = undefined;
           break;
         case EMR.STROKEANDFILLPATH:
@@ -2317,12 +2318,14 @@ function cosmeticPixelPath(path: string[], state: DrawState, mode: 'stroke'|'fil
     if(values[0]==='C'){
       const cubic=metadata?.get(commandIndex);
       if(!cubic)return undefined;
-      const points=flattenNativeBezier([[x,y],[cubic[0],cubic[1]],[cubic[2],cubic[3]],[cubic[4],cubic[5]]]);
-      if(!points)return undefined;
-      for(const [px,py] of points.slice(1)){if(!addBudget(px,py))return undefined;commands.push({type:'F',x:px,y:py});}
-      // Preserve the true basis for the next cubic even if native flattening
-      // ends short; emitted segments still join the actual flattened vertices.
-      x=cubic[4];y=cubic[5];
+      if(cubic.length%6!==0)return undefined;
+      for(let at=0;at<cubic.length;at+=6){
+        const points=flattenNativeBezier([[x,y],[cubic[at],cubic[at+1]],[cubic[at+2],cubic[at+3]],[cubic[at+4],cubic[at+5]]]);
+        if(!points)return undefined;
+        for(const [px,py] of points.slice(1)){if(!addBudget(px,py))return undefined;commands.push({type:'F',x:px,y:py});}
+        // Keep the stored basis even if native flattening ends short.
+        x=cubic[at+4];y=cubic[at+5];
+      }
       continue;
     }
     if(values.length===1&&values[0]==='Z'){if(!addBudget(startX,startY))return undefined;commands.push({type:'Z',x:startX,y:startY});x=startX;y=startY;continue;}
@@ -2393,24 +2396,42 @@ function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, s
   const point = (x: number, y: number) => map(x, y).map(value => Number(value.toFixed(3))).join(' ');
   const start = map(cx + rx * Math.cos(angle), cy + ry * Math.sin(angle));
   const to = type === EMR.ARCTO, closed = type === EMR.CHORD || type === EMR.PIE, path = state.currentPath ?? [];
+  const native=transformPoints&&(state.pen.cosmeticDashes||state.currentPath!==undefined)?buildNativeArc(left,top,right,bottom,sx,sy,ex,ey,state.clockwiseShapes,(x,y)=>nativeDevicePoint(map(x,y),state,true)):undefined;
+  const setPoint=(point:CosmeticPoint)=>{let metadata=nativePoints.get(path);if(!metadata){metadata=new Map();nativePoints.set(path,metadata);}metadata.set(path.length,point);};
   if (to) {
     if (state.currentPath === undefined) path.push(`M ${state.currentX} ${state.currentY}`);
     else ensurePathPosition(state);
+    if(native)setPoint(native[0]);
     path.push(`L ${start.map(value => Number(value.toFixed(3))).join(' ')}`);
   } else {
+    if(native)setPoint(native[0]);
     path.push(`M ${start.map(value => Number(value.toFixed(3))).join(' ')}`);
     if (state.currentPath !== undefined) { state.pathStartX = start[0]; state.pathStartY = start[1]; }
   }
   const segments = Math.max(1, Math.ceil(Math.abs(sweep) / (Math.PI / 2) - 1e-12)), step = sweep / segments;
   for (let index = 0; index < segments; index++) {
     const a = angle + index * step, b = a + step, k = 4 / 3 * Math.tan(step / 4);
+    // Preserve legacy fill/clip strings; the first cubic carries the complete
+    // native sequence and later legacy cubics are empty expansions.
+    if(native){let metadata=nativeCubics.get(path);if(!metadata){metadata=new Map();nativeCubics.set(path,metadata);}metadata.set(path.length,index===0?native.slice(1).flat():[]);}
     path.push(`C ${point(cx + rx * (Math.cos(a) - k * Math.sin(a)), cy + ry * (Math.sin(a) + k * Math.cos(a)))} ${point(cx + rx * (Math.cos(b) + k * Math.sin(b)), cy + ry * (Math.sin(b) - k * Math.cos(b)))} ${point(cx + rx * Math.cos(b), cy + ry * Math.sin(b))}`);
   }
-  if (type === EMR.PIE) path.push(`L ${point(cx, cy)}`);
+  if (type === EMR.PIE) {if(native)setPoint(nativeDevicePoint(map(cx,cy),state,true));path.push(`L ${point(cx, cy)}`);}
   if (closed) path.push('Z');
-  const end = map(cx + rx * Math.cos(endAngle), cy + ry * Math.sin(endAngle));
-  if (to) { state.currentX = end[0]; state.currentY = end[1]; state.logicalCurrentX = cx + rx * Math.cos(endAngle); state.logicalCurrentY = cy + ry * Math.sin(endAngle); }
-  if (state.currentPath === undefined) elements.push(pathElement(path, state, closed ? 'paint' : 'stroke', to));
+  let end = map(cx + rx * Math.cos(endAngle), cy + ry * Math.sin(endAngle));
+  if (to) {
+    state.logicalCurrentX = cx + rx * Math.cos(endAngle);state.logicalCurrentY = cy + ry * Math.sin(endAngle);
+    if(native){
+      const origin=map(0,0),xAxis=map(1,0),yAxis=map(0,1),ax=xAxis[0]-origin[0],ay=xAxis[1]-origin[1],bx=yAxis[0]-origin[0],by=yAxis[1]-origin[1],det=ax*by-ay*bx;
+      if(det!==0){end=native[native.length-1];const dx=end[0]-origin[0],dy=end[1]-origin[1];state.logicalCurrentX=(dx*by-dy*bx)/det;state.logicalCurrentY=(ax*dy-ay*dx)/det;}
+    }
+    state.currentX = end[0];state.currentY = end[1];
+  }
+  if (state.currentPath === undefined) {
+    const styled=state.styledPen;
+    elements.push(pathElement(path, state, closed ? 'paint' : 'stroke', to));
+    if(!to)state.styledPen=styled;
+  }
   else {
     state.pathFigureClosed = closed;
     state.pathEndX = closed ? state.pathStartX : end[0]; state.pathEndY = closed ? state.pathStartY : end[1];
@@ -2565,6 +2586,11 @@ function isTallFallbackDuplicate(points: Array<[number, number]>): boolean {
   return height > width * 2;
 }
 
+function storedPathElement(path:string[],state:DrawState,mode:'fill'|'stroke'|'paint'):string {
+  // Standalone strokes must not initialize the ambient LineTo pen.
+  const styled=state.styledPen;
+  try{return pathElement(path,state,mode);}finally{state.styledPen=styled;}
+}
 function pathElement(path: string[], state: DrawState, mode: 'fill' | 'stroke' | 'paint', continueCosmeticStyle = false): string {
   if(mode!=='fill'&&usesNativeCosmeticDashes(state)){const pixels=cosmeticPixelPath(path,state,mode,continueCosmeticStyle);if(pixels!==undefined)return pixels;}
   if(mode!=='fill'&&!state.pen.none&&state.styledPen!==penIdentity(state.pen)){state.styledPen=penIdentity(state.pen);state.cosmeticPhase=0;}
