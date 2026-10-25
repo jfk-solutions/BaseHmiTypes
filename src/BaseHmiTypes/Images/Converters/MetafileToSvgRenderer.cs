@@ -2262,26 +2262,52 @@ public sealed class MetafileToSvgRenderer
     private static bool TryWidenStoredLine(MetafilePath path,DrawState state,out MetafilePath outline)
     {
         outline=new MetafilePath();
-        if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap is not ("butt" or "square" or "round")||state.Pen.DashArray is not null||path.Count<2||!path[0].StartsWith("M ",StringComparison.Ordinal)||Enumerable.Range(1,path.Count-1).Any(i=>!path[i].StartsWith("L ",StringComparison.Ordinal))||Enumerable.Range(0,path.Count).Any(i=>!path.NativePoints.ContainsKey(i)))return false;
+        var closed=path.Count>0&&path[path.Count-1]=="Z";var count=path.Count-(closed?1:0);
+        if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap is not ("butt" or "square" or "round")||state.Pen.DashArray is not null||count<2||!path[0].StartsWith("M ",StringComparison.Ordinal)||Enumerable.Range(1,count-1).Any(i=>!path[i].StartsWith("L ",StringComparison.Ordinal))||Enumerable.Range(0,count).Any(i=>!path.NativePoints.ContainsKey(i)))return false;
         var origin=TransformPoint(state,0,0);var x=TransformPoint(state,1,0);var y=TransformPoint(state,0,1);
         if(x.X-origin.X!=1||x.Y-origin.Y!=0||y.X-origin.X!=0||y.Y-origin.Y!=1)return false;
-        (double X,double Y)[] points;
-        if(path.Count==2)
+        (double X,double Y)[][] figures;
+        if(!closed&&count==2)
         {
-            if(!NativeFlatPenBuilder.TryBuild(path.NativePoints[0],path.NativePoints[1],width,out points,state.Pen.LineCap=="square",state.Pen.LineCap=="round",state.Pen.LineJoin=="round"))return false;
+            if(!NativeFlatPenBuilder.TryBuild(path.NativePoints[0],path.NativePoints[1],width,out var points,state.Pen.LineCap=="square",state.Pen.LineCap=="round",state.Pen.LineJoin=="round"))return false;
+            figures=new[]{points};
         }
-        else if(state.Pen.LineCap!="round"||state.Pen.LineJoin!="round"||!NativeFlatPenBuilder.TryBuildRoundPolyline(Enumerable.Range(0,path.Count).Select(i=>path.NativePoints[i]).ToArray(),width,out points))return false;
-        foreach(var point in points)
+        else if(state.Pen.LineCap!="round"||state.Pen.LineJoin!="round"||!NativeFlatPenBuilder.TryBuildRoundFigures(Enumerable.Range(0,count).Select(i=>path.NativePoints[i]).ToArray(),width,closed,out figures))return false;
+        foreach(var figure in figures)
         {
-            outline.NativePoints[outline.Count]=point;
-            outline.Add($"{(outline.Count==0?'M':'L')} {point.X.ToString("0.####",CultureInfo.InvariantCulture)} {point.Y.ToString("0.####",CultureInfo.InvariantCulture)}");
+            for(var i=0;i<figure.Length;i++)
+            {
+                var point=figure[i];outline.NativePoints[outline.Count]=point;
+                outline.Add($"{(i==0?'M':'L')} {point.X.ToString("0.####",CultureInfo.InvariantCulture)} {point.Y.ToString("0.####",CultureInfo.InvariantCulture)}");
+            }
+            outline.Add("Z");
         }
-        outline.Add("Z");outline.NativePolygonFill=true;return true;
+        outline.NativePolygonFill=true;return true;
+    }
+
+    private static bool TryNativeContours(MetafilePath path,out (double X,double Y)[][] contours)
+    {
+        contours=Array.Empty<(double X,double Y)[]>();var result=new List<(double X,double Y)[]>();List<(double X,double Y)>? current=null;
+        for(var i=0;i<path.Count;i++)
+        {
+            var command=path[i];
+            if(command=="Z")
+            {
+                if(current is null||current.Count==0)return false;result.Add(current.ToArray());current=null;
+            }
+            else
+            {
+                if(command.StartsWith("M ",StringComparison.Ordinal)){if(current is not null)return false;current=new List<(double X,double Y)>();}
+                else if(!command.StartsWith("L ",StringComparison.Ordinal))return false;
+                if(current is null||!path.NativePoints.TryGetValue(i,out var point))return false;current.Add(point);
+            }
+        }
+        if(current is not null||result.Count==0)return false;contours=result.ToArray();return true;
     }
 
     private static string PathElement(MetafilePath path, DrawState state, PathPaintMode mode, bool continueCosmeticStyle = false)
     {
-        if(mode==PathPaintMode.Fill&&path.NativePolygonFill&&path.Count>=4&&path[path.Count-1]=="Z"&&state.Brush.Hatch is null&&Enumerable.Range(0,path.Count-1).All(i=>path.NativePoints.ContainsKey(i))&&NativeQuadRasterizer.TryFill(Enumerable.Range(0,path.Count-1).Select(i=>path.NativePoints[i]).ToArray(),out var fillPixels,state.FillRule=="nonzero"))
+        if(mode==PathPaintMode.Fill&&path.NativePolygonFill&&state.Brush.Hatch is null&&TryNativeContours(path,out var contours)&&NativeQuadRasterizer.TryFillContours(contours,out var fillPixels,state.FillRule=="nonzero"))
             return state.Brush.None||fillPixels.Length==0?string.Empty:$"<path d=\"{fillPixels}\" stroke=\"none\" fill=\"{state.Brush.Color}\"{ClipAttr(state)} />";
         if (mode != PathPaintMode.Fill && UsesNativeCosmeticDashes(state) && TryCosmeticPixelPath(path,state,mode,continueCosmeticStyle,out var pixels)) return pixels;
         if (mode != PathPaintMode.Fill && !state.Pen.None && !ReferenceEquals(state.StyledPen,state.Pen)) { state.StyledPen=state.Pen; state.CosmeticPhase=0; }

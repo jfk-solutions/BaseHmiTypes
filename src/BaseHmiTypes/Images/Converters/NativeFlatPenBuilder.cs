@@ -2,7 +2,7 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: C# port, existing native ellipse/flattener integration, exact integer
-// rounding, straight outlines for all caps, and round-joined open polylines.
+// rounding, straight outlines for all caps, and round-joined open/closed figures.
 // See THIRD-PARTY-NOTICES.
 using System.Numerics;
 
@@ -127,15 +127,23 @@ internal static class NativeFlatPenBuilder
     internal static bool TryBuildRoundPolyline((double X,double Y)[] input,double width,out (double X,double Y)[] outline)
     {
         outline=Array.Empty<(double X,double Y)>();
+        if(!TryBuildRoundFigures(input,width,false,out var figures))return false;
+        outline=figures[0];return true;
+    }
+
+    internal static bool TryBuildRoundFigures((double X,double Y)[] input,double width,bool closed,out (double X,double Y)[][] outlines)
+    {
+        outlines=Array.Empty<(double X,double Y)[]>();
         bool Valid(double v)=>!double.IsNaN(v)&&!double.IsInfinity(v)&&v*16==Math.Truncate(v*16)&&Math.Abs(v*16)<=0x2000000;
         if(input.Length<2||input.Length>65536||!Valid(width)||width<=0||width>4096||input.Any(p=>!Valid(p.X)||!Valid(p.Y))||!TryGetPen(width,out var pen))return false;
         var points=new List<(double X,double Y)>();foreach(var p in input)if(points.Count==0||points[points.Count-1]!=p)points.Add(p);
+        if(closed&&points.Count>1&&points[points.Count-1]==points[0])points.RemoveAt(points.Count-1);
         if(points.Count<2)return false;
         var n=pen.Count;if(2L*points.Count*(n+3)>65536)return false;
-        var segs=new (long X,long Y,int L,int R)[points.Count-1];
+        var segs=new (long X,long Y,int L,int R)[closed?points.Count:points.Count-1];
         for(var j=0;j<segs.Length;j++)
         {
-            var dx=(long)((points[j+1].X-points[j].X)*16);var dy=(long)((points[j+1].Y-points[j].Y)*16);
+            var next=points[(j+1)%points.Count];var dx=(long)((next.X-points[j].X)*16);var dy=(long)((next.Y-points[j].Y)*16);
             var axis=pen.Any(q=>q.Y==0);var boundary=(n==4?1:2)*Math.Abs(dx);
             var steep=Math.Abs(dy)>boundary||Math.Abs(dy)==boundary&&axis;
             var sign=(steep?dy<0:dx<0||dx==0&&dy<0)?-1:1;
@@ -176,10 +184,27 @@ internal static class NativeFlatPenBuilder
             else result.Add(points[p]);
             Side(p,last);
         }
+        if(closed)
+        {
+            var count=points.Count;
+            for(var j=1;j<=count;j++)
+            {
+                var i=j%count;var previous=(i+count-1)%count;var tr=Turn(previous,i);
+                if(tr==0)Side(i,segs[previous].R);else Join(i,previous,i,false,tr<0);
+            }
+            var right=result.ToArray();result.Clear();
+            for(var j=0;j<count;j++)
+            {
+                var i=(count-j)%count;var previous=(i+count-1)%count;var tr=Turn(previous,i);
+                if(tr==0)Side(i,segs[i].L);else Join(i,i,previous,true,tr>0);
+            }
+            if(right.Length+result.Count>65536)return false;
+            outlines=new[]{right,result.ToArray()};return true;
+        }
         Side(0,segs[0].L);Walk(0,segs[0].L,segs[0].R,false);Side(0,segs[0].R);
         for(var i=0;i+1<segs.Length;i++){var tr=Turn(i,i+1);if(tr==0)Side(i+1,segs[i].R);else Join(i+1,i,i+1,false,tr<0);}
         var end=points.Count-1;var final=segs[segs.Length-1];Side(end,final.R);Walk(end,final.R,final.L,false);Side(end,final.L);
         for(var i=segs.Length-1;i>0;i--){var tr=Turn(i-1,i);if(tr==0)Side(i,segs[i].L);else Join(i,i,i-1,true,tr>0);}
-        if(result.Count>65536)return false;outline=result.ToArray();return true;
+        if(result.Count>65536)return false;outlines=new[]{result.ToArray()};return true;
     }
 }

@@ -31,6 +31,8 @@
     <EmbeddedResource Include="Fixtures\widen-round-round-edges.json" />
     <EmbeddedResource Include="Fixtures\widen-round-round-ties.json" />
     <EmbeddedResource Include="Fixtures\widen-round-polylines.json" />
+    <EmbeddedResource Include="Fixtures\widen-closed-alternate.json" />
+    <EmbeddedResource Include="Fixtures\widen-closed-winding.json" />
     <EmbeddedResource Include="Fixtures\flatten-large-paths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-ellipses.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-roundrects.json" />

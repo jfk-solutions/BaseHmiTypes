@@ -33,4 +33,4 @@ Licensed under Apache License 2.0. The full license is included at
 THIRD-PARTY-LICENSES/Apache-2.0-emf-converter.txt.
 Changes: C# and TypeScript ports, integration with native ellipse and Bezier builders,
 exact integer rounding, rational cap-arc selection, bounded single-segment
-outlines for all cap styles, round-joined open polylines, and native polygon fill integration.
+outlines for all cap styles, round-joined open/closed polylines, and native compound polygon fill integration.
