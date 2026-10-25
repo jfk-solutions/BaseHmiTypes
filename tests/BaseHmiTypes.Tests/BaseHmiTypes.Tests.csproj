@@ -20,6 +20,7 @@
     <EmbeddedResource Include="Fixtures\unified-authoring-panel.xml" />
     <EmbeddedResource Include="Fixtures\cosmetic-curves.json" />
     <EmbeddedResource Include="Fixtures\flatten-paths.json" />
+    <EmbeddedResource Include="Fixtures\widen-flat-paths.json" />
     <EmbeddedResource Include="Fixtures\flatten-large-paths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-ellipses.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-roundrects.json" />

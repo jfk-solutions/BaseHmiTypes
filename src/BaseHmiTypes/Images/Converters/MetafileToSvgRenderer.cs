@@ -182,6 +182,7 @@ public sealed class MetafileToSvgRenderer
                         Width = extendedPenWidth,
                         DashArray = dashArray,
                         CosmeticDashes = !geometricPen && dashArray is not null,
+                        GeometricWidth = geometricPen ? U32(bytes,dataOffset+24) : (double?)null,
                         Color = ColorRef(bytes, dataOffset + 32),
                         None = (U32(bytes, dataOffset + 20) & 0x0000000f) == 5,
                         LineCap = geometricPen ? (extendedPenStyle & 0xF00) switch
@@ -266,6 +267,9 @@ public sealed class MetafileToSvgRenderer
                     break;
                 case EMR.FlattenPath:
                     if(state.SelectedPath is {} selected&&TryFlattenStoredPath(selected,out var flattened))state.SelectedPath=flattened;
+                    break;
+                case EMR.WidenPath:
+                    if(state.SelectedPath is {} line&&TryWidenStoredLine(line,state,out var outline))state.SelectedPath=outline;
                     break;
                 case EMR.CloseFigure:
                     if (state.CurrentPath is { Count: > 0 } && !state.PathFigureClosed)
@@ -2121,7 +2125,7 @@ public sealed class MetafileToSvgRenderer
     }
     private static bool TryFlattenStoredPath(MetafilePath source,out MetafilePath flattened)
     {
-        var candidate=new MetafilePath();flattened=candidate;double x=0,y=0,startX=0,startY=0;
+        var candidate=new MetafilePath{NativeQuadFill=source.NativeQuadFill};flattened=candidate;double x=0,y=0,startX=0,startY=0;
         bool Add(char kind,double px,double py)
         {
             if(candidate.Count>=65536||double.IsNaN(px)||double.IsInfinity(px)||double.IsNaN(py)||double.IsInfinity(py))return false;
@@ -2247,8 +2251,24 @@ public sealed class MetafileToSvgRenderer
         finally{state.StyledPen=styled;}
     }
 
+    private static bool TryWidenStoredLine(MetafilePath path,DrawState state,out MetafilePath outline)
+    {
+        outline=new MetafilePath();
+        if(state.Pen.None||state.Pen.GeometricWidth is not {} width||state.Pen.LineCap!="butt"||state.Pen.DashArray is not null||path.Count!=2||!path[0].StartsWith("M ",StringComparison.Ordinal)||!path[1].StartsWith("L ",StringComparison.Ordinal)||!path.NativePoints.TryGetValue(0,out var start)||!path.NativePoints.TryGetValue(1,out var end))return false;
+        var origin=TransformPoint(state,0,0);var x=TransformPoint(state,1,0);var y=TransformPoint(state,0,1);
+        if(x.X-origin.X!=1||x.Y-origin.Y!=0||y.X-origin.X!=0||y.Y-origin.Y!=1||!NativeFlatPenBuilder.TryBuild(start,end,width,out var points))return false;
+        foreach(var point in points)
+        {
+            outline.NativePoints[outline.Count]=point;
+            outline.Add($"{(outline.Count==0?'M':'L')} {point.X.ToString("0.####",CultureInfo.InvariantCulture)} {point.Y.ToString("0.####",CultureInfo.InvariantCulture)}");
+        }
+        outline.Add("Z");outline.NativeQuadFill=true;return true;
+    }
+
     private static string PathElement(MetafilePath path, DrawState state, PathPaintMode mode, bool continueCosmeticStyle = false)
     {
+        if(mode==PathPaintMode.Fill&&path.NativeQuadFill&&path.Count==5&&state.Brush.Hatch is null&&Enumerable.Range(0,4).All(i=>path.NativePoints.ContainsKey(i))&&NativeQuadRasterizer.TryFill(Enumerable.Range(0,4).Select(i=>path.NativePoints[i]).ToArray(),out var fillPixels))
+            return state.Brush.None||fillPixels.Length==0?string.Empty:$"<path d=\"{fillPixels}\" stroke=\"none\" fill=\"{state.Brush.Color}\"{ClipAttr(state)} />";
         if (mode != PathPaintMode.Fill && UsesNativeCosmeticDashes(state) && TryCosmeticPixelPath(path,state,mode,continueCosmeticStyle,out var pixels)) return pixels;
         if (mode != PathPaintMode.Fill && !state.Pen.None && !ReferenceEquals(state.StyledPen,state.Pen)) { state.StyledPen=state.Pen; state.CosmeticPhase=0; }
         var stroke = mode == PathPaintMode.Fill ? "stroke=\"none\"" : StrokeAttrs(state);
@@ -2449,6 +2469,7 @@ internal abstract class MetafileObject
 
 internal sealed class PenObject : MetafileObject
 {
+    public double? GeometricWidth { get; set; }
     public double? LogicalWidth { get; set; }
     public bool CosmeticDashes { get; set; }
     public bool OpaqueDashGaps { get; set; }
@@ -2485,10 +2506,11 @@ internal sealed class FontObject : MetafileObject
 
 internal sealed class MetafilePath : List<string>
 {
+    public bool NativeQuadFill { get; set; }
     public Dictionary<int,double[]> NativeCubics { get; }=new Dictionary<int,double[]>();
     public Dictionary<int,(double X,double Y)> NativePoints { get; }=new Dictionary<int,(double X,double Y)>();
     public MetafilePath() { }
-    public MetafilePath(MetafilePath source):base(source) { foreach(var pair in source.NativeCubics)NativeCubics[pair.Key]=pair.Value;foreach(var pair in source.NativePoints)NativePoints[pair.Key]=pair.Value; }
+    public MetafilePath(MetafilePath source):base(source) { NativeQuadFill=source.NativeQuadFill;foreach(var pair in source.NativeCubics)NativeCubics[pair.Key]=pair.Value;foreach(var pair in source.NativePoints)NativePoints[pair.Key]=pair.Value; }
     public new void AddRange(IEnumerable<string> source)
     {
         if(source is MetafilePath path){foreach(var pair in path.NativeCubics)NativeCubics[Count+pair.Key]=pair.Value;foreach(var pair in path.NativePoints)NativePoints[Count+pair.Key]=pair.Value;}
@@ -2698,6 +2720,7 @@ internal static class EMR
     public const uint EndPath = 0x003c;
     public const uint AbortPath = 0x0044;
     public const uint FlattenPath = 0x0041;
+    public const uint WidenPath = 0x0042;
     public const uint CloseFigure = 0x003d;
     public const uint FillPath = 0x003e;
     public const uint StrokeAndFillPath = 0x003f;
