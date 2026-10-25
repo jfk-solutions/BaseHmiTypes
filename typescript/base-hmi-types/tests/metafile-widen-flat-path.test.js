@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {MetafileToSvgRenderer} from '../dist/index.js';
-const fixtures=JSON.parse(fs.readFileSync(new URL('../../../tests/BaseHmiTypes.Tests/Fixtures/widen-flat-paths.json',import.meta.url),'utf8'));
+const fixtures=['widen-flat-paths','widen-square-paths','widen-square-edges'].flatMap(name=>JSON.parse(fs.readFileSync(new URL(`../../../tests/BaseHmiTypes.Tests/Fixtures/${name}.json`,import.meta.url),'utf8')).map(f=>({...f,Cohort:name})));
 function maskHash(svg){
   const mask=Buffer.alloc(6400);
   for(const m of svg.matchAll(/<path\b[^>]*>/gu)){
@@ -12,14 +12,14 @@ function maskHash(svg){
   }
   return createHash('sha256').update(mask).digest('hex');
 }
-for(const {Index,Recorded,PlaybackDifferences,Cap,Source,Hash,Width,Input,Points} of fixtures){
-  assert.ok(Recorded&&PlaybackDifferences===0&&Cap===2,'Flat widening requires independent native API/replay equality');
+for(const {Cohort,Index,Recorded,PlaybackDifferences,Cap,Source,Hash,Width,Input,Points} of fixtures){
+  assert.ok(Recorded&&PlaybackDifferences===0&&[1,2].includes(Cap),'Widening requires independent native API/replay equality');
   const bytes=Buffer.from(Source.split(',')[1],'base64'),input=Input.map(p=>p.map(v=>v/16)),expected=Points.map(p=>p.map(v=>v/16));
-  test(`Native widen outline ${Index}`,async()=>{
-    const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');assert.deepEqual(buildNativeFlatPen(input[0],input[1],Width),expected);
+  test(`Native widen outline ${Cohort} ${Index}`,async()=>{
+    const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');assert.deepEqual(buildNativeFlatPen(input[0],input[1],Width,Cap===1),expected);
   });
-  test(`Native widen fill pixels ${Index}`,()=>assert.equal(maskHash(new MetafileToSvgRenderer().render(bytes,'.emf')),Hash));
-  test(`Native widen clip geometry ${Index}`,()=>{
+  test(`Native widen fill pixels ${Cohort} ${Index}`,()=>assert.equal(maskHash(new MetafileToSvgRenderer().render(bytes,'.emf')),Hash));
+  test(`Native widen clip geometry ${Cohort} ${Index}`,()=>{
     const source=Buffer.from(bytes);
     for(let at=source.readUInt32LE(4);at<source.length;at+=source.readUInt32LE(at+4))if(source.readUInt32LE(at)===62){source.writeUInt32LE(67,at);source.writeUInt32LE(5,at+8);}
     const svg=new MetafileToSvgRenderer().render(source,'.emf'),d=expected.map((p,i)=>`${i?'L':'M'} ${p[0]} ${p[1]}`).join(' ')+' Z';
@@ -27,11 +27,11 @@ for(const {Index,Recorded,PlaybackDifferences,Cap,Source,Hash,Width,Input,Points
   });
 }
 for(const width of [NaN,Infinity,0,-1,4097])test(`Invalid native widening width is atomic ${width}`,async()=>{
-  const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');assert.equal(buildNativeFlatPen([0,0],[10,10],width),undefined);
+  const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');for(const square of [false,true])assert.equal(buildNativeFlatPen([0,0],[10,10],width,square),undefined);
 });
 test('Invalid widening coordinates and raster budget are atomic',async()=>{
   const {buildNativeFlatPen}=await import('../dist/images/converters/native-flat-pen-builder.js');
   const {fillNativeQuad}=await import('../dist/images/converters/native-quad-rasterizer.js');
-  assert.equal(buildNativeFlatPen([.01,0],[10,10],1),undefined);assert.equal(buildNativeFlatPen([0,0],[0,0],1),undefined);
+  for(const square of [false,true]){assert.equal(buildNativeFlatPen([.01,0],[10,10],1,square),undefined);assert.equal(buildNativeFlatPen([0,0],[0,0],1,square),undefined);}
   assert.equal(fillNativeQuad([[0,0],[0,1000],[1000,1000],[1000,0]]),undefined);
 });

@@ -1320,7 +1320,7 @@ const EMF_MAPPING_RECORDS = new Set<number>([
   EMR.RECTANGLE, EMR.ELLIPSE, EMR.ROUNDRECT, EMR.ANGLEARC, EMR.ARC, EMR.CHORD, EMR.PIE, EMR.ARCTO,
   EMR.POLYGON, EMR.POLYGON16, EMR.POLYLINE, EMR.POLYLINE16,
   EMR.POLYPOLYGON, EMR.POLYPOLYGON16, EMR.POLYPOLYLINE, EMR.POLYPOLYLINE16,
-  EMR.FILLPATH, EMR.STROKEPATH, EMR.STROKEANDFILLPATH, EMR.EXTTEXTOUTW, EMR.STRETCHDIBITS,
+  EMR.WIDENPATH, EMR.FILLPATH, EMR.STROKEPATH, EMR.STROKEANDFILLPATH, EMR.EXTTEXTOUTW, EMR.STRETCHDIBITS,
   EMR.INTERSECTCLIPRECT, EMR.EXCLUDECLIPRECT, EMR.OFFSETCLIPRGN,
 ]);
 
@@ -2656,10 +2656,10 @@ function storedPathElement(path:string[],state:DrawState,mode:'fill'|'stroke'|'p
 }
 function widenStoredLine(path:string[],state:DrawState):string[]|undefined {
   const width=state.pen.geometricWidth,metadata=nativePoints.get(path),start=metadata?.get(0),end=metadata?.get(1);
-  if(state.pen.none||width===undefined||state.pen.lineCap!=='butt'||state.pen.dashArray!==undefined||path.length!==2||!path[0].startsWith('M ')||!path[1].startsWith('L ')||!start||!end)return undefined;
+  if(state.pen.none||width===undefined||!['butt','square'].includes(state.pen.lineCap??'')||state.pen.dashArray!==undefined||path.length!==2||!path[0].startsWith('M ')||!path[1].startsWith('L ')||!start||!end)return undefined;
   const origin=transformPoint(state,0,0),x=transformPoint(state,1,0),y=transformPoint(state,0,1);
   if(x[0]-origin[0]!==1||x[1]-origin[1]!==0||y[0]-origin[0]!==0||y[1]-origin[1]!==1)return undefined;
-  const points=buildNativeFlatPen(start,end,width);if(!points)return undefined;
+  const points=buildNativeFlatPen(start,end,width,state.pen.lineCap==='square');if(!points)return undefined;
   const outline=points.map((p,i)=>`${i?'L':'M'} ${Number(p[0].toFixed(4))} ${Number(p[1].toFixed(4))}`);outline.push('Z');
   nativePoints.set(outline,new Map(points.map((p,i)=>[i,p])));nativeQuadFills.add(outline);return outline;
 }

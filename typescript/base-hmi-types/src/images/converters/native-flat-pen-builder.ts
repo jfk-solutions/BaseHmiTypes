@@ -2,7 +2,7 @@
 // effcf337218fefc08e4ac8f74e59cd2af1a9235c (Apache-2.0).
 // Copyright 2025-present pptx-viewer contributors.
 // Changes: port matching C# native ellipse/flattener integration, exact integer
-// rounding and bounded single-segment flat-cap outlines. See THIRD-PARTY-NOTICES.
+// rounding and bounded flat/square-cap straight outlines. See THIRD-PARTY-NOTICES.
 import {buildNativeEllipse} from './native-ellipse-builder.js';
 import {flattenNativeBezier} from './native-bezier-flattener.js';
 type Point=[number,number];
@@ -14,10 +14,11 @@ const hobby=[
   [8,-40,-8,-40,-24,-32,-32,-24,-40,-8,-40,8,-32,24,-24,32,-8,40,8,40,24,32,32,24,40,8,40,-8,32,-24,24,-32],
   [8,-48,-8,-48,-24,-40,-40,-24,-48,-8,-48,8,-40,24,-24,40,-8,48,8,48,24,40,40,24,48,8,48,-8,40,-24,24,-40],
 ];
-export function buildNativeFlatPen(start:Point,end:Point,width:number):Point[]|undefined {
+export function buildNativeFlatPen(start:Point,end:Point,width:number,square=false):Point[]|undefined {
   const valid=(v:number)=>Number.isFinite(v)&&Number.isInteger(v*16)&&Math.abs(v*16)<=0x2000000;
   if(!start.every(valid)||!end.every(valid)||!valid(width)||width<=0||width>4096)return undefined;
   let dx=(end[0]-start[0])*16,dy=(end[1]-start[1])*16;if(dx===0&&dy===0)return undefined;
+  const originalDx=dx,originalDy=dy;
   const pen:Point[]=[],fixedWidth=width*16;
   if(fixedWidth<104){const table=hobby[Math.min(5,Math.max(0,Math.floor(width+.5)-1))];for(let i=0;i<table.length;i+=2)pen.push([table[i],table[i+1]]);}
   else {
@@ -38,5 +39,13 @@ export function buildNativeFlatPen(start:Point,end:Point,width:number):Point[]|u
     let quotient=dividend/divisor;if(dividend%divisor<0n)quotient--;return Number(quotient)*8;
   };
   let vx=round(d[0],b[0],0)/16,vy=round(d[1],b[1],1)/16;if(flip){vx=-vx;vy=-vy;}
-  return [[start[0]-vx,start[1]-vy],[start[0]+vx,start[1]+vy],[end[0]+vx,end[1]+vy],[end[0]-vx,end[1]-vy]];
+  let ex=0,ey=0;
+  if(square){
+    const wholeX=Math.floor(originalDx/16)*16,wholeY=Math.floor(originalDy/16)*16,length=Math.sqrt(wholeX*wholeX+wholeY*wholeY);
+    if(length>0){
+      const ratio=fixedWidth/2/length,extension=(delta:number)=>{const value=delta*ratio;return Math.sign(value)*Math.floor(Math.abs(value)+.5)/16;};
+      ex=extension(originalDx);ey=extension(originalDy);
+    }
+  }
+  return [[start[0]-vx-ex,start[1]-vy-ey],[start[0]+vx-ex,start[1]+vy-ey],[end[0]+vx+ex,end[1]+vy+ey],[end[0]-vx+ex,end[1]-vy+ey]];
 }
