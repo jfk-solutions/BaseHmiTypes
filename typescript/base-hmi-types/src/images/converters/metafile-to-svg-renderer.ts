@@ -2261,47 +2261,49 @@ function appendNativeCubic(path: string[], a: [number,number], b: [number,number
   path.push(`C ${a[0]} ${a[1]} ${b[0]} ${b[1]} ${c[0]} ${c[1]}`);
 }
 type CosmeticPoint = [number,number];
-function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawState,foreground: string[],background: string[],finalSegment: boolean,previous: CosmeticPoint|undefined): CosmeticPoint|undefined {
-  const horizontal=Math.abs(end[0]-start[0])>=Math.abs(end[1]-start[1]);
-  const a1=start[horizontal?0:1],a2=end[horizontal?0:1],b1=start[horizontal?1:0],b2=end[horizontal?1:0];
-  if(a1===a2)return previous;
-  const sign=a2>a1?1:-1,first=sign>0?Math.ceil(a1):Math.floor(a1),stop=sign>0?Math.ceil(a2):Math.floor(a2);
-  const vertex:CosmeticPoint=[Math.ceil(start[0]-.5),Math.ceil(start[1]-.5)];
-  const vx=Math.abs(vertex[0]-start[0]),vy=Math.abs(vertex[1]-start[1]);let inside=vx+vy<.5||vx+vy===.5&&(vx===0||vy===0);
-  // A sub-grid cusp touching an axis corner and immediately leaving its
-  // diamond does not consume a phantom step before re-entering that pixel.
-  if(first===stop&&vx+vy===.5&&(vx===0||vy===0)&&(vx===0?Math.sign(start[1]-vertex[1])*(end[1]-start[1])+Math.abs(end[0]-start[0]):Math.sign(start[0]-vertex[0])*(end[0]-start[0])+Math.abs(end[1]-start[1]))>0)inside=false;
-  const same=(a:CosmeticPoint|undefined,b:CosmeticPoint)=>a?.[0]===b[0]&&a[1]===b[1];
+function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawState,foreground: string[],background: string[]): void {
+  // Native pixels are diamond exits, with slope-dependent boundary inclusion.
+  // This handles sub-pixel segments/joins without phantom dash-phase steps.
+  const dx=end[0]-start[0],dy=end[1]-start[1];
+  if(dx===0&&dy===0)return;
+  const horizontal=Math.abs(dx)>=Math.abs(dy),a=start[horizontal?0:1],b=end[horizontal?0:1],sign=b>a?1:-1;
+  const first=sign>0?Math.floor(a)-1:Math.ceil(a)+1,stop=sign>0?Math.ceil(b)+1:Math.floor(b)-1;
+  const inside=(x:number,y:number)=>{
+    const distance=Math.abs(x)+Math.abs(y);
+    if(distance!==.5)return distance<.5;
+    if(y===.5)return true;
+    if(x===.5)return dy!==dx;
+    if(x===-.5)return dy===dx;
+    return y>0&&(x<0?dy===dx:dy===-dx);
+  };
+  const exits=(x:number,y:number)=>{
+    const u=start[0]-x+start[1]-y,v=start[0]-x-start[1]+y,du=dx+dy,dv=dx-dy;
+    let enter=-Infinity,exit=Infinity;
+    const clip=(origin:number,delta:number)=>{
+      if(delta===0)return Math.abs(origin)<=.5;
+      const t1=(-.5-origin)/delta,t2=(.5-origin)/delta;
+      enter=Math.max(enter,Math.min(t1,t2));exit=Math.min(exit,Math.max(t1,t2));
+      return enter<=exit;
+    };
+    if(!clip(u,du)||!clip(v,dv)||exit<0||exit>1||enter>1)return false;
+    const lo=Math.max(0,enter),hi=Math.min(1,exit),t=(lo+hi)/2;
+    if(!inside(start[0]+dx*t-x,start[1]+dy*t-y))return false;
+    return exit!==1||!inside(end[0]-x,end[1]-y);
+  };
   const dashes=state.pen.dashArray!,cycle=dashes.reduce((a,b)=>a+b,0)*(dashes.length%2===0?1:2);
   let phase=state.cosmeticPhase%cycle,dash=0,ink=true;
   while(phase>=dashes[dash]){phase-=dashes[dash];dash=(dash+1)%dashes.length;ink=!ink;}
   let remaining=dashes[dash]-phase;
-  const pixel=(point:CosmeticPoint)=>{
-    const ex=Math.abs(point[0]-end[0]),ey=Math.abs(point[1]-end[1]);
-    if(finalSegment&&(ex+ey<.5||ex+ey===.5&&(ex===0||ey===0)&&end[0]>=point[0]&&end[1]>=point[1]))return;
-    if(inside&&same(previous,point))return;
-    previous=point;
-    if(ink||state.pen.opaqueDashGaps&&state.backgroundMode===2)(ink?foreground:background).push(`M ${point[0]} ${point[1]}h1v1h-1Z`);
-    if(--remaining===0){dash=(dash+1)%dashes.length;remaining=dashes[dash];ink=!ink;}
-    state.cosmeticPhase=(state.cosmeticPhase+1)%cycle;
-  };
-  const at=(major:number):CosmeticPoint=>{const minor=Math.ceil(b1+(major-a1)*(b2-b1)/(a2-a1)-.5);return horizontal?[major,minor]:[minor,major];};
-  if(inside&&!same(previous,vertex)&&(first===stop||!same(at(first),vertex)))pixel(vertex);
-  const lastAt=stop-sign,stepCount=Math.abs(stop-first);
-  for(let step=0;step<stepCount;step++){
-    const major=first+step*sign,point=at(major);
-    if(major===lastAt&&Math.abs(b2-b1)===Math.abs(a2-a1)){
-      // Half-open rotated diamond bounds distinguish exiting/parallel edges.
-      const u=end[0]-point[0]+end[1]-point[1],v=end[0]-point[0]-end[1]+point[1];
-      const du=end[0]-start[0]+end[1]-start[1],dv=end[0]-start[0]-end[1]+start[1];
-      const exits=Math.abs(u)===.5&&u*du>0||Math.abs(v)===.5&&v*dv>0;
-      if(u>-.5&&u<=.5&&v>=-.5&&v<.5&&!exits)continue;
+  for(let major=first;sign>0?major<=stop:major>=stop;major+=sign){
+    const minor=horizontal?start[1]+(major-start[0])*dy/dx:start[0]+(major-start[1])*dx/dy,nearest=Math.ceil(minor-.5);
+    for(let offset=-1;offset<=1;offset++){
+      const x=horizontal?major:nearest+offset,y=horizontal?nearest+offset:major;
+      if(!exits(x,y))continue;
+      if(ink||state.pen.opaqueDashGaps&&state.backgroundMode===2)(ink?foreground:background).push(`M ${x} ${y}h1v1h-1Z`);
+      if(--remaining===0){dash=(dash+1)%dashes.length;remaining=dashes[dash];ink=!ink;}
+      state.cosmeticPhase=(state.cosmeticPhase+1)%cycle;
     }
-    pixel(point);
   }
-  // Tiny cusps can leave/re-enter a pixel without an intervening grid crossing.
-  if(previous){const ex=Math.abs(previous[0]-end[0]),ey=Math.abs(previous[1]-end[1]);if(ex+ey>.5||ex+ey===.5&&ex!==0&&ey!==0)previous=undefined;}
-  return previous;
 }
 
 function cosmeticPixelPath(path: string[], state: DrawState, mode: 'stroke'|'fill'|'paint', continueStyle: boolean): string | undefined {
@@ -2335,12 +2337,12 @@ function cosmeticPixelPath(path: string[], state: DrawState, mode: 'stroke'|'fil
   }
   if(budget>262144||!commands.length||commands[0].type!=='M')return undefined;
   penIdentity(state.pen);
-  const working=cloneState(state),foreground:string[]=[],background:string[]=[];let firstMove=true,previous:CosmeticPoint|undefined;
+  const working=cloneState(state),foreground:string[]=[],background:string[]=[];let firstMove=true;
   if(working.styledPen!==penIdentity(working.pen)){working.styledPen=penIdentity(working.pen);working.cosmeticPhase=0;}
   for(let index=0;index<commands.length;index++){
     const command=commands[index];
-    if(command.type==='M'){if(!firstMove||!continueStyle)working.cosmeticPhase=0;firstMove=false;previous=undefined;}
-    else previous=cosmeticGiqSegment([x,y],[command.x,command.y],working,foreground,background,index+1===commands.length||commands[index+1].type==='M',previous);
+    if(command.type==='M'){if(!firstMove||!continueStyle)working.cosmeticPhase=0;firstMove=false;}
+    else cosmeticGiqSegment([x,y],[command.x,command.y],working,foreground,background);
     x=command.x;y=command.y;
   }
   state.cosmeticPhase=working.cosmeticPhase;state.styledPen=working.styledPen;
@@ -2424,8 +2426,9 @@ function drawRoundRect(x1: number, y1: number, x2: number, y2: number, cornerWid
     return transformPoints ? transformPoint(state, x, y) : [x, y];
   };
   const point = (x: number, y: number) => map(x, y).map(value => Number(value.toFixed(3))).join(' ');
-  if(transformPoints&&state.pen.cosmeticDashes&&right>left&&bottom>top){
-    const controls=buildNativeRoundRect([nativeDevicePoint(map(left,top),state,true),nativeDevicePoint(map(right,top),state,true),nativeDevicePoint(map(left,bottom),state,true)],Math.min(Math.abs(cornerWidth)/(right-left),1),Math.min(Math.abs(cornerHeight)/(bottom-top),1));
+  let nativeGeometry:string[]|undefined;
+  if(transformPoints&&(state.pen.cosmeticDashes||state.currentPath!==undefined)&&right>left&&bottom>top){
+    const controls=buildNativeRoundRect(nativeConstructionCorners([nativeDevicePoint(map(left,top),state,true),nativeDevicePoint(map(right,top),state,true),nativeDevicePoint(map(left,bottom),state,true)],state,rx!==0&&ry!==0),Math.min(Math.abs(cornerWidth)/(right-left),1),Math.min(Math.abs(cornerHeight)/(bottom-top),1));
     if(controls){
       const path:string[]=[],start=controls[0],points=new Map<number,CosmeticPoint>(),cubics=new Map<number,number[]>();nativePoints.set(path,points);nativeCubics.set(path,cubics);
       const at=(index:number,command:string)=>{const p=controls[index];points.set(path.length,p);path.push(`${command} ${p[0]} ${p[1]}`);};
@@ -2433,9 +2436,12 @@ function drawRoundRect(x1: number, y1: number, x2: number, y2: number, cornerWid
       if(controls.length===4){for(let i=1;i<4;i++)at(i,'L');}
       else for(let i=1;i<16;){if(i%4===0){at(i++,'L');continue;}const a=controls[i],b=controls[i+1],c=controls[i+2];cubics.set(path.length,[...a,...b,...c]);path.push(`C ${a[0]} ${a[1]} ${b[0]} ${b[1]} ${c[0]} ${c[1]}`);i+=3;}
       path.push('Z');
-      if(state.currentPath===undefined)elements.push(pathElement(path,state,'paint'));
-      else {appendMetafilePath(state.currentPath,path);state.pathFigureClosed=true;state.pathStartX=state.pathEndX=start[0];state.pathStartY=state.pathEndY=start[1];}
-      return;
+      if(state.pen.cosmeticDashes){
+        if(state.currentPath===undefined)elements.push(pathElement(path,state,'paint'));
+        else {appendMetafilePath(state.currentPath,path);state.pathFigureClosed=true;state.pathStartX=state.pathEndX=start[0];state.pathStartY=state.pathEndY=start[1];}
+        return;
+      }
+      nativeGeometry=path;
     }
   }
   const start = map(right, top + ry), path = [`M ${point(right, top + ry)}`];
@@ -2451,6 +2457,7 @@ function drawRoundRect(x1: number, y1: number, x2: number, y2: number, cornerWid
       `C ${point(right - rx + kx, bottom)} ${point(right, bottom - ry + ky)} ${point(right, bottom - ry)}`);
   }
   path.push('Z');
+  preserveNativeShapeMetadata(path,nativeGeometry);
   if (state.currentPath === undefined) elements.push(pathElement(path, state, 'paint'));
   else {
     appendMetafilePath(state.currentPath,path); state.pathFigureClosed = true;
@@ -2472,16 +2479,17 @@ function emfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean, state
   const right = Math.max(i32(bytes, offset), i32(bytes, offset + 8));
   const top = Math.min(i32(bytes, offset + 4), i32(bytes, offset + 12));
   const bottom = Math.max(i32(bytes, offset + 4), i32(bytes, offset + 12));
-  if(ellipse&&state.pen.cosmeticDashes){
-    const controls=buildNativeEllipse([
+  let nativeGeometry:string[]|undefined;
+  if(ellipse&&(state.pen.cosmeticDashes||state.currentPath!==undefined)){
+    const controls=buildNativeEllipse(nativeConstructionCorners([
       nativeDevicePoint(transformPoint(state,left,state.clockwiseShapes?bottom:top),state,true),
       nativeDevicePoint(transformPoint(state,right,state.clockwiseShapes?bottom:top),state,true),
-      nativeDevicePoint(transformPoint(state,left,state.clockwiseShapes?top:bottom),state,true)]);
+      nativeDevicePoint(transformPoint(state,left,state.clockwiseShapes?top:bottom),state,true)],state,true));
     if(controls){
       const start=controls[0],path:string[]=[`M ${start[0]} ${start[1]}`];nativePoints.set(path,new Map([[0,start]]));
       const cubics=new Map<number,number[]>();nativeCubics.set(path,cubics);
       for(let i=1;i<controls.length;i+=3){const a=controls[i],b=controls[i+1],c=controls[i+2];cubics.set(path.length,[...a,...b,...c]);path.push(`C ${a[0]} ${a[1]} ${b[0]} ${b[1]} ${c[0]} ${c[1]}`);}
-      path.push('Z');return {path,start};
+      path.push('Z');if(state.pen.cosmeticDashes)return {path,start};nativeGeometry=path;
     }
   }
   const path: string[] = [];
@@ -2501,7 +2509,27 @@ function emfShapePath(bytes: Uint8Array, offset: number, ellipse: boolean, state
     }
   }
   path.push('Z');
+  preserveNativeShapeMetadata(path,nativeGeometry);
   return {path, start};
+}
+
+function nativeConstructionCorners(corners:CosmeticPoint[],state:DrawState,curved:boolean):CosmeticPoint[]{
+  // NULL_PEN outsets curved integer-device paths at construction time only.
+  // Fractional device corners and sharp rectangles do not get this outset.
+  if(!curved||!state.pen.none||state.currentPath===undefined||corners.some(p=>p.some(v=>v!==Math.trunc(v))))return corners;
+  const [lt,rt,lb]=corners;
+  let sx=Math.sign(rt[0]-lt[0]);if(sx===0)sx=-Math.sign(lb[0]-lt[0]);
+  let sy=Math.sign(lb[1]-lt[1]);if(sy===0)sy=-Math.sign(rt[1]-lt[1]);
+  const x=sx*.25,y=sy*.25;
+  return [[lt[0]-x,lt[1]-y],[rt[0]+x,rt[1]-y],[lb[0]-x,lb[1]+y]];
+}
+
+function preserveNativeShapeMetadata(path:string[],native:string[]|undefined):void{
+  // Preserve legacy SVG fill/clip geometry while freezing native stroke data.
+  if(!native||native.length!==path.length)return;
+  const points=nativePoints.get(native),cubics=nativeCubics.get(native);
+  if(points)nativePoints.set(path,new Map(points));
+  if(cubics)nativeCubics.set(path,new Map(cubics));
 }
 
 function rectElement(left: number, top: number, right: number, bottom: number, state: DrawState): string {
