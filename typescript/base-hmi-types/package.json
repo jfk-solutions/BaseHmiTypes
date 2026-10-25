@@ -14,7 +14,8 @@
   },
   "files": [
     "dist",
-    "THIRD-PARTY-NOTICES.txt"
+    "THIRD-PARTY-NOTICES.txt",
+    "THIRD-PARTY-LICENSES"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-unified-catalogs.mjs",

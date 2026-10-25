@@ -4,10 +4,13 @@ import {buildNativeEllipse} from './native-ellipse-builder.js';
 import {buildNativeArc} from './native-arc-builder.js';
 import {buildNativeAngleArc} from './native-angle-arc-builder.js';
 import {buildNativeRoundRect} from './native-roundrect-builder.js';
+import {buildNativeFlatPen} from './native-flat-pen-builder.js';
+import {fillNativeQuad} from './native-quad-rasterizer.js';
 
 type MetafileObject = PenObject | BrushObject | FontObject;
 
 interface PenObject {
+  geometricWidth?: number;
   logicalWidth?: number;
   identity?: object;
   cosmeticDashes?: boolean;
@@ -299,6 +302,7 @@ export class MetafileToSvgRenderer {
             width,
             dashArray,
             cosmeticDashes: !geometric && dashArray !== undefined,
+            geometricWidth: geometric ? u32(bytes,dataOffset+24) : undefined,
             color: colorRef(bytes, dataOffset + 32),
             none: (u32(bytes, dataOffset + 20) & 0x0000000f) === 5,
             lineCap: geometric ? ({0: 'round', 256: 'square', 512: 'butt'} as Record<number, string>)[style & 0xf00] : undefined,
@@ -383,6 +387,9 @@ export class MetafileToSvgRenderer {
           break;
         case EMR.FLATTENPATH:
           if(state.selectedPath!==undefined){const flattened=flattenStoredPath(state.selectedPath);if(flattened!==undefined)state.selectedPath=flattened;}
+          break;
+        case EMR.WIDENPATH:
+          if(state.selectedPath!==undefined){const outline=widenStoredLine(state.selectedPath,state);if(outline!==undefined)state.selectedPath=outline;}
           break;
         case EMR.SELECTCLIPPATH:
           if (record.size >= 12 && u32(bytes, dataOffset) >= 1 && u32(bytes, dataOffset) <= 5 && state.selectedPath?.length) {
@@ -772,6 +779,7 @@ const EMR = {
   ENDPATH: 0x003c,
   ABORTPATH: 0x0044,
   FLATTENPATH: 0x0041,
+  WIDENPATH: 0x0042,
   CLOSEFIGURE: 0x003d,
   FILLPATH: 0x003e,
   STROKEANDFILLPATH: 0x003f,
@@ -2237,11 +2245,13 @@ function penIdentity(pen: PenObject): object { return pen.identity ??= {}; }
 // Keep native Bezier controls separate from generated SVG arc approximations.
 const nativeCubics = new WeakMap<string[],Map<number,number[]>>();
 const nativePoints = new WeakMap<string[],Map<number,CosmeticPoint>>();
+const nativeQuadFills = new WeakSet<string[]>();
 function cloneMetafilePath(path: string[]): string[] {
   const copy:string[]=[];appendMetafilePath(copy,path);
   return copy;
 }
 function appendMetafilePath(target: string[],path: string[]): void {
+  if(nativeQuadFills.has(path)&&target.length===0)nativeQuadFills.add(target);else if(target.length>0)nativeQuadFills.delete(target);
   const cubics=nativeCubics.get(path),points=nativePoints.get(path),offset=target.length;
   if(cubics){let metadata=nativeCubics.get(target);if(!metadata){metadata=new Map();nativeCubics.set(target,metadata);}for(const [index,value] of cubics)metadata.set(offset+index,value);}
   if(points){let metadata=nativePoints.get(target);if(!metadata){metadata=new Map();nativePoints.set(target,metadata);}for(const [index,value] of points)metadata.set(offset+index,value);}
@@ -2345,7 +2355,7 @@ function flattenStoredPath(source:string[]):string[]|undefined {
     if(!add(values[0],point[0],point[1]))return undefined;[x,y]=point;
     if(values[0]==='M'){startX=x;startY=y;}
   }
-  nativePoints.set(candidate,points);return candidate;
+  nativePoints.set(candidate,points);if(nativeQuadFills.has(source))nativeQuadFills.add(candidate);return candidate;
 }
 
 function cosmeticPixelPath(path: string[], state: DrawState, mode: 'stroke'|'fill'|'paint', continueStyle: boolean): string | undefined {
@@ -2644,7 +2654,22 @@ function storedPathElement(path:string[],state:DrawState,mode:'fill'|'stroke'|'p
   const styled=state.styledPen;
   try{return pathElement(path,state,mode);}finally{state.styledPen=styled;}
 }
+function widenStoredLine(path:string[],state:DrawState):string[]|undefined {
+  const width=state.pen.geometricWidth,metadata=nativePoints.get(path),start=metadata?.get(0),end=metadata?.get(1);
+  if(state.pen.none||width===undefined||state.pen.lineCap!=='butt'||state.pen.dashArray!==undefined||path.length!==2||!path[0].startsWith('M ')||!path[1].startsWith('L ')||!start||!end)return undefined;
+  const origin=transformPoint(state,0,0),x=transformPoint(state,1,0),y=transformPoint(state,0,1);
+  if(x[0]-origin[0]!==1||x[1]-origin[1]!==0||y[0]-origin[0]!==0||y[1]-origin[1]!==1)return undefined;
+  const points=buildNativeFlatPen(start,end,width);if(!points)return undefined;
+  const outline=points.map((p,i)=>`${i?'L':'M'} ${Number(p[0].toFixed(4))} ${Number(p[1].toFixed(4))}`);outline.push('Z');
+  nativePoints.set(outline,new Map(points.map((p,i)=>[i,p])));nativeQuadFills.add(outline);return outline;
+}
+
 function pathElement(path: string[], state: DrawState, mode: 'fill' | 'stroke' | 'paint', continueCosmeticStyle = false): string {
+  const quad=nativePoints.get(path);
+  if(mode==='fill'&&nativeQuadFills.has(path)&&path.length===5&&state.brush.hatch===undefined&&quad&&[0,1,2,3].every(i=>quad.has(i))){
+    const pixels=fillNativeQuad([0,1,2,3].map(i=>quad.get(i)!));
+    if(pixels!==undefined)return state.brush.none||!pixels.length?'':`<path d="${pixels}" stroke="none" fill="${state.brush.color}"${clipAttr(state)} />`;
+  }
   if(mode!=='fill'&&usesNativeCosmeticDashes(state)){const pixels=cosmeticPixelPath(path,state,mode,continueCosmeticStyle);if(pixels!==undefined)return pixels;}
   if(mode!=='fill'&&!state.pen.none&&state.styledPen!==penIdentity(state.pen)){state.styledPen=penIdentity(state.pen);state.cosmeticPhase=0;}
   const stroke = mode === 'fill' ? 'stroke="none"' : strokeAttrs(state);
