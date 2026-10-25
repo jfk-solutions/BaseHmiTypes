@@ -442,7 +442,7 @@ public sealed class MetafileToSvgRenderer
                     break;
                 case EMR.StrokePath:
                     if (state.SelectedPath is { Count: > 0 })
-                        elements.Add(PathElement(state.SelectedPath, state, PathPaintMode.Stroke));
+                        elements.Add(StoredPathElement(state.SelectedPath, state, PathPaintMode.Stroke));
                     state.SelectedPath = null;
                     break;
                 case EMR.StrokeAndFillPath:
@@ -1243,15 +1243,20 @@ public sealed class MetafileToSvgRenderer
         string Point(double x, double y) {var point = Map(x, y);return $"{Number(point.X)} {Number(point.Y)}";}
         var start = Map(cx + rx * Math.Cos(angle), cy + ry * Math.Sin(angle));
         var to = type == EMR.ArcTo;var closed = type == EMR.Chord || type == EMR.Pie;
+        (double X,double Y)[]? native=null;
+        if(transformPoints&&(state.Pen.CosmeticDashes||state.CurrentPath is not null)&&NativeArcBuilder.TryBuild(left,top,right,bottom,sx,sy,ex,ey,state.ClockwiseShapes,
+            (x,y)=>NativeDevicePoint(Map(x,y),state,true),out var controls))native=controls;
         var path = state.CurrentPath ?? new MetafilePath();
         if (to)
         {
             if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
             else EnsurePathPosition(state);
+            if(native is not null)path.NativePoints[path.Count]=native[0];
             path.Add($"L {Number(start.X)} {Number(start.Y)}");
         }
         else
         {
+            if(native is not null)path.NativePoints[path.Count]=native[0];
             path.Add($"M {Number(start.X)} {Number(start.Y)}");
             if (state.CurrentPath is not null) {state.PathStartX = start.X;state.PathStartY = start.Y;}
         }
@@ -1260,13 +1265,38 @@ public sealed class MetafileToSvgRenderer
         for (var index = 0; index < segments; index++)
         {
             var a = angle + index * step;var b = a + step;var k = 4.0 / 3 * Math.Tan(step / 4);
+            // Preserve legacy SVG fill/clip strings. The first legacy cubic
+            // carries the complete native quadrant sequence; later legacy
+            // cubics are empty native expansions, not repeated strokes.
+            if(native is not null)path.NativeCubics[path.Count]=index==0?native.Skip(1).SelectMany(p=>new[]{p.X,p.Y}).ToArray():Array.Empty<double>();
             path.Add($"C {Point(cx + rx * (Math.Cos(a) - k * Math.Sin(a)), cy + ry * (Math.Sin(a) + k * Math.Cos(a)))} {Point(cx + rx * (Math.Cos(b) + k * Math.Sin(b)), cy + ry * (Math.Sin(b) - k * Math.Cos(b)))} {Point(cx + rx * Math.Cos(b), cy + ry * Math.Sin(b))}");
         }
-        if (type == EMR.Pie) path.Add($"L {Point(cx, cy)}");
+        if (type == EMR.Pie) {if(native is not null)path.NativePoints[path.Count]=NativeDevicePoint(Map(cx,cy),state,true);path.Add($"L {Point(cx, cy)}");}
         if (closed) path.Add("Z");
         var end = Map(cx + rx * Math.Cos(endAngle), cy + ry * Math.Sin(endAngle));
-        if (to) {state.CurrentX = end.X;state.CurrentY = end.Y;state.LogicalCurrentX = cx + rx * Math.Cos(endAngle);state.LogicalCurrentY = cy + ry * Math.Sin(endAngle);}
-        if (state.CurrentPath is null) elements.Add(PathElement(path, state, closed ? PathPaintMode.Paint : PathPaintMode.Stroke, to));
+        if (to)
+        {
+            state.LogicalCurrentX = cx + rx * Math.Cos(endAngle);state.LogicalCurrentY = cy + ry * Math.Sin(endAngle);
+            if(native is not null)
+            {
+                // ArcTo retains the native fixed endpoint, not the ideal
+                // trigonometric intersection, for a subsequent LineTo.
+                var origin=Map(0,0);var xAxis=Map(1,0);var yAxis=Map(0,1);
+                var ax=xAxis.X-origin.X;var ay=xAxis.Y-origin.Y;var bx=yAxis.X-origin.X;var by=yAxis.Y-origin.Y;var det=ax*by-ay*bx;
+                if(det!=0)
+                {
+                    end=native[native.Length-1];var dx=end.X-origin.X;var dy=end.Y-origin.Y;
+                    state.LogicalCurrentX=(dx*by-dy*bx)/det;state.LogicalCurrentY=(ax*dy-ay*dx)/det;
+                }
+            }
+            state.CurrentX = end.X;state.CurrentY = end.Y;
+        }
+        if (state.CurrentPath is null)
+        {
+            var styled=state.StyledPen;
+            elements.Add(PathElement(path, state, closed ? PathPaintMode.Paint : PathPaintMode.Stroke, to));
+            if(!to)state.StyledPen=styled;
+        }
         else
         {
             state.PathFigureClosed = closed;
@@ -2081,13 +2111,15 @@ public sealed class MetafileToSvgRenderer
             if (values[0]=="C")
             {
                 if (!path.NativeCubics.TryGetValue(commandIndex,out var cubic)) return false;
-                (double X,double Y) P(int at)=>(cubic[at],cubic[at+1]);
-                if (!NativeBezierFlattener.TryFlatten(new[]{(x,y),P(0),P(2),P(4)},out var points)) return false;
-                foreach(var point in points.Skip(1)){if(!AddBudget(point.X,point.Y))return false;commands.Add(('F',point.X,point.Y));}
-                // A rounded native approximation can finish short of the stored
-                // control. The next cubic's basis starts at that stored control;
-                // the emitted polyline still connects the actual flattened points.
-                x=cubic[4];y=cubic[5];
+                if(cubic.Length%6!=0)return false;
+                for(var at=0;at<cubic.Length;at+=6)
+                {
+                    (double X,double Y) P(int offset)=>(cubic[at+offset],cubic[at+offset+1]);
+                    if (!NativeBezierFlattener.TryFlatten(new[]{(x,y),P(0),P(2),P(4)},out var points)) return false;
+                    foreach(var point in points.Skip(1)){if(!AddBudget(point.X,point.Y))return false;commands.Add(('F',point.X,point.Y));}
+                    // Keep the stored basis even if native flattening ends short.
+                    x=cubic[at+4];y=cubic[at+5];
+                }
                 continue;
             }
             if (values.Length == 1 && values[0] == "Z") { if(!AddBudget(startX,startY))return false;commands.Add(('Z', startX, startY));x=startX; y=startY; continue; }
@@ -2146,6 +2178,15 @@ public sealed class MetafileToSvgRenderer
         var tag = closed ? "polygon" : "polyline";
         var fill = closed ? $"{FillAttrs(state)} {FillRuleAttr(state)}" : "fill=\"none\"";
         return $"<{tag} points=\"{string.Join(" ", points.ConvertAll(point => $"{Number(point.X)},{Number(point.Y)}"))}\" {StrokeAttrs(state)} {fill}{ClipAttr(state)} />";
+    }
+
+    private static string StoredPathElement(MetafilePath path,DrawState state,PathPaintMode mode)
+    {
+        // A standalone stroke updates style position but does not initialize
+        // the ambient LineTo pen. Preserve that lazy pen-selection state.
+        var styled=state.StyledPen;
+        try{return PathElement(path,state,mode);}
+        finally{state.StyledPen=styled;}
     }
 
     private static string PathElement(MetafilePath path, DrawState state, PathPaintMode mode, bool continueCosmeticStyle = false)

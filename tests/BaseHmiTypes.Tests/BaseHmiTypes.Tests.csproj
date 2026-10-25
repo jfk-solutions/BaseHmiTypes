@@ -23,6 +23,13 @@
     <EmbeddedResource Include="Fixtures\cosmetic-roundrects.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-stored-shapes.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-micro-lines.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-arcs.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-arc-direct.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-arc-chain1.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-arc-chain2.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-arc-prelude.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-arc-direct-chain.json" />
+    <EmbeddedResource Include="Fixtures\cosmetic-arc-direct-prelude.json" />
     <EmbeddedResource Include="Fixtures\classic-pen-widths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-paths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-curves.json" />
