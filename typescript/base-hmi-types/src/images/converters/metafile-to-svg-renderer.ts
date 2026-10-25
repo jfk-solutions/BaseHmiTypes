@@ -2,6 +2,7 @@
 import {flattenNativeBezier} from './native-bezier-flattener.js';
 import {buildNativeEllipse} from './native-ellipse-builder.js';
 import {buildNativeArc} from './native-arc-builder.js';
+import {buildNativeAngleArc} from './native-angle-arc-builder.js';
 import {buildNativeRoundRect} from './native-roundrect-builder.js';
 
 type MetafileObject = PenObject | BrushObject | FontObject;
@@ -2366,23 +2367,34 @@ function drawAngleArc(cx: number, cy: number, radius: number, startDegrees: numb
   const n = (value: number) => Number(value.toFixed(3));
   const point = (x: number, y: number) => transformPoint(state, x, y).map(n).join(' ');
   const start = map(angle), path = state.currentPath ?? [];
-  if (state.currentPath === undefined) path.push(`M ${n(state.currentX)} ${n(state.currentY)}`);
+  const native=state.pen.cosmeticDashes||state.currentPath!==undefined?buildNativeAngleArc(cx,cy,radius,startDegrees,sweepDegrees,(x,y)=>nativeDevicePoint(transformPoint(state,x,y),state,true)):undefined;
+  if (state.currentPath === undefined) appendNativePoint(path,'M',[state.currentX,state.currentY],state,true);
   else ensurePathPosition(state);
+  if(native){let points=nativePoints.get(path);if(!points){points=new Map();nativePoints.set(path,points);}points.set(path.length,native[0]);}
   path.push(`L ${start.map(n).join(' ')}`);
   const segments = radius === 0 ? 0 : Math.ceil(Math.abs(sweepDegrees) / 90), step = segments === 0 ? 0 : sweep / segments;
   for (let index = 0; index < segments; index++) {
     const a = angle + index * step, b = a + step, k = 4 / 3 * Math.tan(step / 4);
+    if(native){let cubics=nativeCubics.get(path);if(!cubics){cubics=new Map();nativeCubics.set(path,cubics);}cubics.set(path.length,index===0?native.slice(1).flat():[]);}
     path.push(`C ${point(cx + radius * (Math.cos(a) - k * Math.sin(a)), cy + radius * (Math.sin(a) + k * Math.cos(a)))} ${point(cx + radius * (Math.cos(b) + k * Math.sin(b)), cy + radius * (Math.sin(b) - k * Math.cos(b)))} ${point(cx + radius * Math.cos(b), cy + radius * Math.sin(b))}`);
   }
-  const end = map(angle + sweep);
-  [state.currentX, state.currentY] = end;
+  if(native&&segments===0){let cubics=nativeCubics.get(path);if(!cubics){cubics=new Map();nativeCubics.set(path,cubics);}cubics.set(path.length,native.slice(1).flat());const p=point(cx+radius*Math.cos(angle),cy+radius*Math.sin(angle));path.push(`C ${p} ${p} ${p}`);}
+  let end = map(angle + sweep);
   state.logicalCurrentX = cx + radius * Math.cos(angle + sweep);
   state.logicalCurrentY = cy + radius * Math.sin(angle + sweep);
+  if(native&&trySetNativeCurrentPoint(state,native[native.length-1]))end=native[native.length-1];
+  [state.currentX, state.currentY] = end;
   if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke', true));
   else {
     state.pathFigureClosed = false;
     [state.pathEndX, state.pathEndY] = end;
   }
+}
+
+function trySetNativeCurrentPoint(state:DrawState,point:CosmeticPoint):boolean {
+  const origin=transformPoint(state,0,0),xAxis=transformPoint(state,1,0),yAxis=transformPoint(state,0,1),ax=xAxis[0]-origin[0],ay=xAxis[1]-origin[1],bx=yAxis[0]-origin[0],by=yAxis[1]-origin[1],det=ax*by-ay*bx;
+  if(det===0)return false;
+  const dx=point[0]-origin[0],dy=point[1]-origin[1];state.logicalCurrentX=(dx*by-dy*bx)/det;state.logicalCurrentY=(ax*dy-ay*dx)/det;return true;
 }
 
 function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, sx: number, sy: number, ex: number, ey: number, state: DrawState, elements: string[], transformPoints: boolean): void {
@@ -2424,10 +2436,7 @@ function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, s
   let end = map(cx + rx * Math.cos(endAngle), cy + ry * Math.sin(endAngle));
   if (to) {
     state.logicalCurrentX = cx + rx * Math.cos(endAngle);state.logicalCurrentY = cy + ry * Math.sin(endAngle);
-    if(native){
-      const origin=map(0,0),xAxis=map(1,0),yAxis=map(0,1),ax=xAxis[0]-origin[0],ay=xAxis[1]-origin[1],bx=yAxis[0]-origin[0],by=yAxis[1]-origin[1],det=ax*by-ay*bx;
-      if(det!==0){end=native[native.length-1];const dx=end[0]-origin[0],dy=end[1]-origin[1];state.logicalCurrentX=(dx*by-dy*bx)/det;state.logicalCurrentY=(ax*dy-ay*dx)/det;}
-    }
+    if(native&&trySetNativeCurrentPoint(state,native[native.length-1]))end=native[native.length-1];
     state.currentX = end[0];state.currentY = end[1];
   }
   if (state.currentPath === undefined) {

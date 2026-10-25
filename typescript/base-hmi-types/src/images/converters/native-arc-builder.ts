@@ -7,7 +7,7 @@ function interpolate(position:number,fn:(index:number)=>number):number {
 }
 const sin=(degrees:number)=>interpolate(f(degrees*f(64/180)),i=>Math.sin(i*Math.PI/64));
 const cos=(degrees:number)=>interpolate(f(degrees*f(64/180)),i=>Math.cos(i*Math.PI/64));
-function atan2(y:number,x:number):number {
+export function atan2(y:number,x:number):number {
   const ax=Math.abs(x),ay=Math.abs(y);
   let angle=ax===0&&ay===0?0:interpolate(f(f(Math.min(ax,ay)/Math.max(ax,ay))*32),i=>Math.atan(i/32));
   if(ay>ax&&y>=0)angle=f(f(Math.PI/2)-angle);
