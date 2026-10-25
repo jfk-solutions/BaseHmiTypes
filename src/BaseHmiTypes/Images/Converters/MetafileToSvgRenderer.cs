@@ -1227,7 +1227,7 @@ public sealed class MetafileToSvgRenderer
         var end = Map(angle + sweep);
         state.LogicalCurrentX = cx + radius * Math.Cos(angle + sweep);
         state.LogicalCurrentY = cy + radius * Math.Sin(angle + sweep);
-        if(native is not null&&TrySetNativeCurrentPoint(state,native[native.Length-1]))end=native[native.Length-1];
+        if(native is not null&&TrySetNativeCurrentPoint(state,native[native.Length-1]))end=TransformPoint(state,state.LogicalCurrentX,state.LogicalCurrentY);
         state.CurrentX = end.X;state.CurrentY = end.Y;
         if (state.CurrentPath is null) elements.Add(PathElement(path, state, PathPaintMode.Stroke, true));
         else
@@ -1243,7 +1243,11 @@ public sealed class MetafileToSvgRenderer
         var origin=TransformPoint(state,0,0);var xAxis=TransformPoint(state,1,0);var yAxis=TransformPoint(state,0,1);
         var ax=xAxis.X-origin.X;var ay=xAxis.Y-origin.Y;var bx=yAxis.X-origin.X;var by=yAxis.Y-origin.Y;var det=ax*by-ay*bx;
         if(det==0)return false;
-        var dx=point.X-origin.X;var dy=point.Y-origin.Y;
+        // NativeDevicePoint rounds the linear part and translation separately.
+        // Invert that rounded translation so the next record can map and
+        // quantize this current point again without shifting it by one FIX unit.
+        var nativeOrigin=NativeDevicePoint(origin,state,true);
+        var dx=point.X-nativeOrigin.X;var dy=point.Y-nativeOrigin.Y;
         state.LogicalCurrentX=(dx*by-dy*bx)/det;state.LogicalCurrentY=(ax*dy-ay*dx)/det;return true;
     }
 
@@ -1269,7 +1273,7 @@ public sealed class MetafileToSvgRenderer
         var path = state.CurrentPath ?? new MetafilePath();
         if (to)
         {
-            if (state.CurrentPath is null) path.Add($"M {Number(state.CurrentX)} {Number(state.CurrentY)}");
+            if (state.CurrentPath is null) AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state,true);
             else EnsurePathPosition(state);
             if(native is not null)path.NativePoints[path.Count]=native[0];
             path.Add($"L {Number(start.X)} {Number(start.Y)}");
@@ -1298,7 +1302,7 @@ public sealed class MetafileToSvgRenderer
         {
             state.LogicalCurrentX = cx + rx * Math.Cos(endAngle);state.LogicalCurrentY = cy + ry * Math.Sin(endAngle);
             // Retain the native fixed endpoint for a subsequent LineTo.
-            if(native is not null&&TrySetNativeCurrentPoint(state,native[native.Length-1]))end=native[native.Length-1];
+            if(native is not null&&TrySetNativeCurrentPoint(state,native[native.Length-1]))end=TransformPoint(state,state.LogicalCurrentX,state.LogicalCurrentY);
             state.CurrentX = end.X;state.CurrentY = end.Y;
         }
         if (state.CurrentPath is null)
