@@ -30,6 +30,12 @@
     <EmbeddedResource Include="Fixtures\cosmetic-arc-prelude.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-arc-direct-chain.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-arc-direct-prelude.json" />
+    <EmbeddedResource Include="Fixtures\arc-compatible-stored.json" />
+    <EmbeddedResource Include="Fixtures\arc-compatible-direct.json" />
+    <EmbeddedResource Include="Fixtures\arc-compatible-chain1.json" />
+    <EmbeddedResource Include="Fixtures\arc-compatible-chain2.json" />
+    <EmbeddedResource Include="Fixtures\arc-compatible-prelude.json" />
+    <EmbeddedResource Include="Fixtures\arc-compatible-direct-prelude.json" />
     <EmbeddedResource Include="Fixtures\classic-pen-widths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-paths.json" />
     <EmbeddedResource Include="Fixtures\cosmetic-fractional-curves.json" />

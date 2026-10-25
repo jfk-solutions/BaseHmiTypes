@@ -227,7 +227,8 @@ public sealed class MetafileToSvgRenderer
                             state.PathEndY = point.Y;
                         }
                         else
-                            elements.Add(LineElement(state.CurrentX, state.CurrentY, point.X, point.Y, state));
+                            elements.Add(LineElement(state.CurrentX, state.CurrentY, point.X, point.Y, state,
+                                state.LogicalCurrentX!=Math.Truncate(state.LogicalCurrentX)||state.LogicalCurrentY!=Math.Truncate(state.LogicalCurrentY)));
                         state.CurrentX = point.X;
                         state.CurrentY = point.Y;
                         state.LogicalCurrentX = I32(bytes, dataOffset);
@@ -1952,13 +1953,16 @@ public sealed class MetafileToSvgRenderer
         state.ActiveMaskId = maskId;
     }
 
-    private static string LineElement(double x1, double y1, double x2, double y2, DrawState state)
+    private static string LineElement(double x1, double y1, double x2, double y2, DrawState state,bool fixedCurrent=false)
     {
         if(UsesNativeCosmeticDashes(state))
         {
-            if(state.AdvancedCoordinates)
+            if(state.AdvancedCoordinates||fixedCurrent)
             {
-                var path=new MetafilePath();AppendNativePoint(path,"M",(x1,y1),state);AppendNativePoint(path,"L",(x2,y2),state);
+                // ArcTo retains a fixed current point even without an explicit
+                // world-transform record. New compatible-mode LineTo endpoints
+                // still use their normal integer-device quantization.
+                var path=new MetafilePath();AppendNativePoint(path,"M",(x1,y1),state,fixedCurrent);AppendNativePoint(path,"L",(x2,y2),state);
                 if(TryCosmeticPixelPath(path,state,PathPaintMode.Stroke,true,out var pixels))return pixels;
             }
             else if(TryCosmeticPixelLine(x1,y1,x2,y2,state,out var pixels))return pixels;
@@ -2007,9 +2011,9 @@ public sealed class MetafileToSvgRenderer
         return true;
     }
 
-    private static void AppendNativePoint(MetafilePath path,string command,(double X,double Y) point,DrawState state)
+    private static void AppendNativePoint(MetafilePath path,string command,(double X,double Y) point,DrawState state,bool forceFixed=false)
     {
-        path.NativePoints[path.Count]=NativeDevicePoint(point,state);
+        path.NativePoints[path.Count]=NativeDevicePoint(point,state,forceFixed);
         path.Add($"{command} {Number(point.X)} {Number(point.Y)}");
     }
 
