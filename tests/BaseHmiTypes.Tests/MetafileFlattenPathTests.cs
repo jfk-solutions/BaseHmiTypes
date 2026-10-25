@@ -12,19 +12,22 @@ public class MetafileFlattenPathTests
 {
     public static IEnumerable<object[]> Fixtures()
     {
-        using var stream=typeof(MetafileFlattenPathTests).Assembly.GetManifestResourceStream("BaseHmiTypes.Tests.Fixtures.flatten-paths.json")!;
-        using var doc=JsonDocument.Parse(stream);
-        foreach(var f in doc.RootElement.EnumerateArray())
+        foreach(var name in new[]{"flatten-paths","flatten-large-paths"})
         {
-            if(!f.GetProperty("Recorded").GetBoolean()||f.GetProperty("PlaybackDifferences").GetInt32()!=0)throw new InvalidDataException("FlattenPath requires native API/replay equality");
-            var types=Convert.FromBase64String(f.GetProperty("Types").GetString()!);var commands=new List<string>();var i=0;
-            foreach(var point in f.GetProperty("Points").EnumerateArray())
+            using var stream=typeof(MetafileFlattenPathTests).Assembly.GetManifestResourceStream($"BaseHmiTypes.Tests.Fixtures.{name}.json")!;
+            using var doc=JsonDocument.Parse(stream);
+            foreach(var f in doc.RootElement.EnumerateArray())
             {
-                var type=types[i++];Assert.IsTrue((type&~1) is 2 or 6);
-                string N(int at)=>(point[at].GetInt32()/16d).ToString("0.####",CultureInfo.InvariantCulture);
-                commands.Add($"{((type&~1)==6?'M':'L')} {N(0)} {N(1)}");if((type&1)!=0)commands.Add("Z");
+                if(!f.GetProperty("Recorded").GetBoolean()||f.GetProperty("PlaybackDifferences").GetInt32()!=0)throw new InvalidDataException("FlattenPath requires native API/replay equality");
+                var types=Convert.FromBase64String(f.GetProperty("Types").GetString()!);var commands=new List<string>();var i=0;
+                foreach(var point in f.GetProperty("Points").EnumerateArray())
+                {
+                    var type=types[i++];Assert.IsTrue((type&~1) is 2 or 6);
+                    string N(int at)=>(point[at].GetInt32()/16d).ToString("0.####",CultureInfo.InvariantCulture);
+                    commands.Add($"{((type&~1)==6?'M':'L')} {N(0)} {N(1)}");if((type&1)!=0)commands.Add("Z");
+                }
+                yield return new object[]{name,f.GetProperty("Index").GetInt32(),f.GetProperty("Source").GetString()!,f.GetProperty("Hash").GetString()!,string.Join(" ",commands)};
             }
-            yield return new object[]{"flatten-path",f.GetProperty("Index").GetInt32(),f.GetProperty("Source").GetString()!,f.GetProperty("Hash").GetString()!,string.Join(" ",commands)};
         }
     }
     [TestMethod] [DynamicData(nameof(Fixtures))]
