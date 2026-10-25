@@ -1541,7 +1541,7 @@ public sealed class MetafileToSvgRenderer
     {
         if (state.CurrentPath is not null && (state.PathFigureClosed || state.PathEndX != state.CurrentX || state.PathEndY != state.CurrentY))
         {
-            AppendNativePoint(state.CurrentPath,"M",(state.CurrentX,state.CurrentY),state);
+            AppendNativePoint(state.CurrentPath,"M",(state.CurrentX,state.CurrentY),state,HasFractionalCurrentPoint(state));
             state.PathStartX = state.CurrentX;
             state.PathFigureClosed = false;
             state.PathStartY = state.CurrentY;
@@ -1559,7 +1559,7 @@ public sealed class MetafileToSvgRenderer
         var path = state.CurrentPath ?? new MetafilePath();
         if (to)
         {
-            if (state.CurrentPath is null) AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state);
+            if (state.CurrentPath is null) AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state,HasFractionalCurrentPoint(state));
             else EnsurePathPosition(state);
         }
         else
@@ -1599,14 +1599,14 @@ public sealed class MetafileToSvgRenderer
         if (bytes[typesOffset] != PolyDrawTypeMoveTo)
         {
             if (state.CurrentPath is not null) EnsurePathPosition(state);
-            else { AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state); state.PathStartX = state.CurrentX; state.PathStartY = state.CurrentY; state.PathFigureClosed = false; }
+            else { AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state,HasFractionalCurrentPoint(state)); state.PathStartX = state.CurrentX; state.PathStartY = state.CurrentY; state.PathFigureClosed = false; }
         }
         for (var index = 0; index < mapped.Count; index++)
         {
             var type = bytes[typesOffset + index] & ~PolyDrawTypeCloseFigure;
             if (type != PolyDrawTypeMoveTo && state.PathFigureClosed)
             {
-                AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state);
+                AppendNativePoint(path,"M",(state.CurrentX,state.CurrentY),state,HasFractionalCurrentPoint(state));
                 state.PathStartX = state.CurrentX;
                 state.PathStartY = state.CurrentY;
                 state.PathFigureClosed = false;
@@ -2023,6 +2023,11 @@ public sealed class MetafileToSvgRenderer
         state.CosmeticPhase = (state.CosmeticPhase + (long)count) % cycle;
         return true;
     }
+
+    // Arc records can leave a native FIX current point even in GM_COMPATIBLE.
+    // Preserve that start without changing how new integer logical endpoints map.
+    private static bool HasFractionalCurrentPoint(DrawState state)
+        =>state.LogicalCurrentX!=Math.Truncate(state.LogicalCurrentX)||state.LogicalCurrentY!=Math.Truncate(state.LogicalCurrentY);
 
     private static void AppendNativePoint(MetafilePath path,string command,(double X,double Y) point,DrawState state,bool forceFixed=false)
     {
