@@ -2382,7 +2382,7 @@ function drawAngleArc(cx: number, cy: number, radius: number, startDegrees: numb
   let end = map(angle + sweep);
   state.logicalCurrentX = cx + radius * Math.cos(angle + sweep);
   state.logicalCurrentY = cy + radius * Math.sin(angle + sweep);
-  if(native&&trySetNativeCurrentPoint(state,native[native.length-1]))end=native[native.length-1];
+  if(native&&trySetNativeCurrentPoint(state,native[native.length-1]))end=transformPoint(state,state.logicalCurrentX,state.logicalCurrentY);
   [state.currentX, state.currentY] = end;
   if (state.currentPath === undefined) elements.push(pathElement(path, state, 'stroke', true));
   else {
@@ -2394,7 +2394,11 @@ function drawAngleArc(cx: number, cy: number, radius: number, startDegrees: numb
 function trySetNativeCurrentPoint(state:DrawState,point:CosmeticPoint):boolean {
   const origin=transformPoint(state,0,0),xAxis=transformPoint(state,1,0),yAxis=transformPoint(state,0,1),ax=xAxis[0]-origin[0],ay=xAxis[1]-origin[1],bx=yAxis[0]-origin[0],by=yAxis[1]-origin[1],det=ax*by-ay*bx;
   if(det===0)return false;
-  const dx=point[0]-origin[0],dy=point[1]-origin[1];state.logicalCurrentX=(dx*by-dy*bx)/det;state.logicalCurrentY=(ax*dy-ay*dx)/det;return true;
+  // NativeDevicePoint rounds the linear part and translation separately.
+  // Undo that rounded translation so mapping the next record's current point
+  // cannot shift it by another FIX unit.
+  const nativeOrigin=nativeDevicePoint(origin,state,true),dx=point[0]-nativeOrigin[0],dy=point[1]-nativeOrigin[1];
+  state.logicalCurrentX=(dx*by-dy*bx)/det;state.logicalCurrentY=(ax*dy-ay*dx)/det;return true;
 }
 
 function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, sx: number, sy: number, ex: number, ey: number, state: DrawState, elements: string[], transformPoints: boolean): void {
@@ -2414,7 +2418,7 @@ function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, s
   const native=transformPoints&&(state.pen.cosmeticDashes||state.currentPath!==undefined)?buildNativeArc(left,top,right,bottom,sx,sy,ex,ey,state.clockwiseShapes,(x,y)=>nativeDevicePoint(map(x,y),state,true)):undefined;
   const setPoint=(point:CosmeticPoint)=>{let metadata=nativePoints.get(path);if(!metadata){metadata=new Map();nativePoints.set(path,metadata);}metadata.set(path.length,point);};
   if (to) {
-    if (state.currentPath === undefined) path.push(`M ${state.currentX} ${state.currentY}`);
+    if (state.currentPath === undefined) appendNativePoint(path,'M',[state.currentX,state.currentY],state,true);
     else ensurePathPosition(state);
     if(native)setPoint(native[0]);
     path.push(`L ${start.map(value => Number(value.toFixed(3))).join(' ')}`);
@@ -2436,7 +2440,7 @@ function drawArc(type: number, x1: number, y1: number, x2: number, y2: number, s
   let end = map(cx + rx * Math.cos(endAngle), cy + ry * Math.sin(endAngle));
   if (to) {
     state.logicalCurrentX = cx + rx * Math.cos(endAngle);state.logicalCurrentY = cy + ry * Math.sin(endAngle);
-    if(native&&trySetNativeCurrentPoint(state,native[native.length-1]))end=native[native.length-1];
+    if(native&&trySetNativeCurrentPoint(state,native[native.length-1]))end=transformPoint(state,state.logicalCurrentX,state.logicalCurrentY);
     state.currentX = end[0];state.currentY = end[1];
   }
   if (state.currentPath === undefined) {
