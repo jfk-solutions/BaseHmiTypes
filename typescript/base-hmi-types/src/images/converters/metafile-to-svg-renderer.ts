@@ -381,6 +381,9 @@ export class MetafileToSvgRenderer {
           state.selectedPath = undefined;
           resetPathConstruction(state);
           break;
+        case EMR.FLATTENPATH:
+          if(state.selectedPath!==undefined){const flattened=flattenStoredPath(state.selectedPath);if(flattened!==undefined)state.selectedPath=flattened;}
+          break;
         case EMR.SELECTCLIPPATH:
           if (record.size >= 12 && u32(bytes, dataOffset) >= 1 && u32(bytes, dataOffset) <= 5 && state.selectedPath?.length) {
             selectPathClip(state, u32(bytes, dataOffset), viewBox, defs, ++clipSequence);
@@ -768,6 +771,7 @@ const EMR = {
   BEGINPATH: 0x003b,
   ENDPATH: 0x003c,
   ABORTPATH: 0x0044,
+  FLATTENPATH: 0x0041,
   CLOSEFIGURE: 0x003d,
   FILLPATH: 0x003e,
   STROKEANDFILLPATH: 0x003f,
@@ -2315,6 +2319,33 @@ function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawS
       state.cosmeticPhase=(state.cosmeticPhase+1)%cycle;
     }
   }
+}
+
+function flattenStoredPath(source:string[]):string[]|undefined {
+  const candidate:string[]=[],points=new Map<number,CosmeticPoint>();let x=0,y=0,startX=0,startY=0;
+  const add=(kind:string,px:number,py:number):boolean=>{
+    if(candidate.length>=65536||!Number.isFinite(px)||!Number.isFinite(py))return false;
+    points.set(candidate.length,[px,py]);candidate.push(`${kind} ${Number(px.toFixed(4))} ${Number(py.toFixed(4))}`);return true;
+  };
+  for(let index=0;index<source.length;index++){
+    const values=source[index].split(' ').filter(Boolean);if(!values.length)return undefined;
+    if(values.length===1&&values[0]==='Z'){if(candidate.length>=65536)return undefined;candidate.push('Z');x=startX;y=startY;continue;}
+    if(values[0]==='C'){
+      const cubic=nativeCubics.get(source)?.get(index);if(!cubic||cubic.length%6!==0)return undefined;
+      for(let at=0;at<cubic.length;at+=6){
+        const flattened=flattenNativeBezier([[x,y],[cubic[at],cubic[at+1]],[cubic[at+2],cubic[at+3]],[cubic[at+4],cubic[at+5]]]);
+        if(!flattened)return undefined;
+        for(const point of flattened.slice(1))if(!add('L',point[0],point[1]))return undefined;
+        x=cubic[at+4];y=cubic[at+5];
+      }
+      continue;
+    }
+    if(values.length!==3||!['M','L'].includes(values[0]))return undefined;
+    const point=nativePoints.get(source)?.get(index)??[Number(values[1]),Number(values[2])];
+    if(!add(values[0],point[0],point[1]))return undefined;[x,y]=point;
+    if(values[0]==='M'){startX=x;startY=y;}
+  }
+  nativePoints.set(candidate,points);return candidate;
 }
 
 function cosmeticPixelPath(path: string[], state: DrawState, mode: 'stroke'|'fill'|'paint', continueStyle: boolean): string | undefined {
