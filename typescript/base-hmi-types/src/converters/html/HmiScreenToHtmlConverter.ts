@@ -5699,7 +5699,10 @@ function appendGauge(html: string[], gauge: HmiGauge, context: HmiHtmlConvertCon
   appendStaticAttribute(html, "bar-mode", gauge.barMode);
   appendStaticAttribute(html, "scale-mode", gauge.scaleMode);
   appendStaticAttribute(html, "orientation", gauge.orientation);
-  appendBooleanAttribute(html, "show-value", getStaticValueOrDefault(gauge.showValue, true));
+  appendBooleanAttribute(html, "show-value", getStaticValueOrDefault(gauge.currentValueVisible ?? gauge.showValue, true));
+  appendStaticAttribute(html, "current-value-decimal-places", gauge.currentValueDecimalPlaces);
+  appendStaticAttribute(html, "current-value-color", gauge.currentValueColor);
+  appendAttribute(html, "current-value-font", formatFont(gauge.currentValueFont?.getForCulture(context.options.cultureLcid)));
   appendStaticAttribute(html, "value-position", gauge.valuePosition);
   appendStaticAttribute(html, "label-color", gauge.labelColor);
   appendStaticAttribute(html, "scale-background-color", gauge.scaleBackgroundColor);

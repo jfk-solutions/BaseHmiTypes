@@ -39,6 +39,9 @@ const gaugeProperties = {
   scaleMode: Number,
   orientation: Number,
   showValue: Boolean,
+  currentValueDecimalPlaces: Number,
+  currentValueColor: String,
+  currentValueFont: Object,
   valuePosition: Number,
   labelColor: String,
   backgroundColor: String,
@@ -113,6 +116,9 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
   private _scaleMode = 0;
   private _orientation = 0;
   private _showValue = false;
+  private _currentValueDecimalPlaces = Number.NaN;
+  private _currentValueColor = "";
+  private _currentValueFont?: GaugeFont;
   private _valuePosition = 0;
   private _labelColor = "#20242a";
   private _backgroundColor = "#ffffff";
@@ -317,6 +323,13 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     this._labelFont = value;
     this.render();
   }
+
+  get currentValueDecimalPlaces(): number { return this._currentValueDecimalPlaces; }
+  set currentValueDecimalPlaces(value: number) { this.setNumberProperty("_currentValueDecimalPlaces", value, Number.NaN); }
+  get currentValueColor(): string { return this._currentValueColor; }
+  set currentValueColor(value: string) { this.setStringProperty("_currentValueColor", value, ""); }
+  get currentValueFont(): GaugeFont | undefined { return this._currentValueFont; }
+  set currentValueFont(value: GaugeFont | undefined) { this._currentValueFont = value; this.render(); }
 
   connectedCallback(): void {
     this._isConnected = true;
@@ -539,14 +552,26 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
 
   private renderValue(value: number): string {
     const y = this.valuePosition === 1 ? 48 : 55;
-    const font = this.labelFont;
+    const font = this.currentValueFont ?? this.labelFont;
     const family = font?.name ?? "Arial, Helvetica, sans-serif";
-    const weight = this.getFontWeight();
+    const weight = this.getFontWeight(font);
     const style = font?.italic ? "italic" : "normal";
+    // Explicit current-value fonts use logical pixels, independently of the SVG viewBox.
+    // Without one retain the legacy value size (15 SVG units) and label-font fallback.
+    const svg = this.shadowRoot?.getElementById("gauge");
+    const pixelsPerUnit = svg instanceof SVGSVGElement ? Math.min(svg.clientWidth, svg.clientHeight) / 100 : 0;
+    const size = this.currentValueFont?.size;
+    const fontSize = typeof size === "number" && Number.isFinite(size) && size >= 0 && pixelsPerUnit > 0
+      ? size / pixelsPerUnit : 15;
+    const decorations = [];
+    if (this.currentValueFont?.underline) decorations.push("underline");
+    if (this.currentValueFont?.strikethrough) decorations.push("line-through");
+    const text = Number.isFinite(this.currentValueDecimalPlaces)
+      ? value.toFixed(clamp(Math.round(this.currentValueDecimalPlaces), 0, 20)) : formatLabel(value);
 
-    return `<text x="50" y="${y}"
-      fill="${escapeAttribute(this.scaleForegroundColor)}"
-      style="font-family: ${escapeAttribute(family)}; font-size: 15px; font-weight: ${weight}; font-style: ${style}; stroke: none;">${formatLabel(value)}</text>`;
+    return `<text x="50" y="${y}" data-hmi-gauge-value
+      fill="${escapeAttribute(this.currentValueColor || this.scaleForegroundColor)}"
+      style="font-family: ${escapeAttribute(family)}; font-size: ${formatNumber(fontSize)}px; font-weight: ${weight}; font-style: ${style}; text-decoration: ${decorations.join(" ") || "none"}; stroke: none;">${text}</text>`;
   }
 
   private getLabelStyle(): string {
@@ -563,8 +588,7 @@ export class HmiGauge extends BaseCustomWebComponentConnectedReady {
     return `fill="${escapeAttribute(this.labelColor)}" style="font-family: ${escapeAttribute(family)}; font-size: ${formatNumber(size)}px; font-weight: ${weight}; font-style: ${style}; text-decoration: ${decoration};"`;
   }
 
-  private getFontWeight(): string {
-    const font = this.labelFont;
+  private getFontWeight(font = this.labelFont): string {
     return typeof font?.weight === "number" && Number.isFinite(font.weight) && font.weight > 0
       ? String(font.weight)
       : font?.bold ? "700" : "400";

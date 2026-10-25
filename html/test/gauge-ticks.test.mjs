@@ -37,6 +37,40 @@ function createGauge() {
   return gauge;
 }
 
+const currentText = gauge => gauge.svg.innerHTML.match(/<text\b[^>]*data-hmi-gauge-value[^>]*>([^<]*)<\/text>/u);
+for (const [precision, expected] of [[-1,'13'],[0,'13'],[2,'12.50'],[2.5,'12.500'],[20,'12.50000000000000000000'],[25,'12.50000000000000000000']]) {
+  test(`current value precision ${precision}`, () => {
+    const gauge=createGauge();gauge.showValue=true;gauge.value=12.5;
+    gauge.attributeChangedCallback('current-value-decimal-places',null,String(precision));
+    assert.equal(currentText(gauge)[1],expected);
+    gauge.attributeChangedCallback('current-value-decimal-places',String(precision),null);
+    assert.equal(currentText(gauge)[1],'12.5');
+    gauge.currentValueDecimalPlaces=Infinity;assert.equal(currentText(gauge)[1],'12.5');
+    gauge.showValue=false;assert.equal(currentText(gauge),null);
+  });
+}
+for (const size of [50,100,200]) test(`independent current font uses logical pixels at viewport ${size}`,()=>{
+  const gauge=createGauge();gauge.svg.clientWidth=size;gauge.svg.clientHeight=size;
+  gauge.showValue=true;gauge.labelFont={name:'Tick Font',size:6,weight:500};
+  gauge.currentValueFont={name:'Value Font',size:18,weight:600,italic:true,underline:true,strikethrough:true};
+  let text=currentText(gauge)[0];
+  for(const fragment of ['Value Font',`font-size: ${18*100/size}px`,'font-weight: 600','font-style: italic','text-decoration: underline line-through'])assert.ok(text.includes(fragment),fragment);
+  assert.equal([...gauge.svg.innerHTML.matchAll(/font-weight: 500;/gu)].length,3);
+  gauge.attributeChangedCallback('current-value-font','{}',null);
+  text=currentText(gauge)[0];assert.ok(text.includes('Tick Font'));assert.ok(text.includes('font-size: 15px'));assert.ok(text.includes('font-weight: 500'));
+});
+test('current value color and font react, escape attributes, and restore independent fallbacks',()=>{
+  const gauge=createGauge();gauge.showValue=true;gauge.scaleForegroundColor='green';
+  gauge.attributeChangedCallback('current-value-color',null,'red" onload="evil');
+  gauge.attributeChangedCallback('current-value-font',null,JSON.stringify({name:'Arial" onload="evil',size:0,bold:true}));
+  let text=currentText(gauge)[0];assert.ok(text.includes('&quot;'));assert.ok(!text.includes(' onload="'));
+  assert.ok(text.includes('font-size: 0px'));assert.ok(text.includes('font-weight: 700'));
+  gauge.currentValueFont={size:-1};assert.ok(currentText(gauge)[0].includes('font-size: 15px'));
+  gauge.attributeChangedCallback('current-value-color','red',null);
+  assert.ok(currentText(gauge)[0].includes('fill="green"'));
+  gauge.scaleForegroundColor='blue';assert.ok(currentText(gauge)[0].includes('fill="blue"'));
+});
+
 for (const [value,x,y] of [[-1,28.787,76.213],[0,28.787,76.213],[50,50,25],[100,71.213,76.213],[101,71.213,76.213]]) {
   test(`configured needle tracks clamped process value ${value}`,()=>{
     const gauge=createGauge();gauge.endValue=100;gauge.showNeedle=true;gauge.value=value;
