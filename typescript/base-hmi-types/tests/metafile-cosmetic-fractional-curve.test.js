@@ -30,6 +30,8 @@ for(const {group,Index,Source,Hash,Controls,Flattened} of fixtures){
 }
 for(const {Index,Source,Hash} of load('fractional-curve-styles'))test(`Native fractional curve style ${Index}`,()=>assert.equal(maskHash(render(Source)),Hash));
 for(const {Index,Source,Hash} of load('curve-sequences'))test(`Native fractional mixed call phase ${Index}`,()=>assert.equal(maskHash(render(Source),Index%12===10),Hash));
+// Native API masks also match independent Windows EMF playback.
+for(const {Index,Source,Hash} of load('degenerate-sequences'))test(`Native degenerate mixed call phase ${Index}`,()=>assert.equal(maskHash(render(Source),Index%12===10),Hash));
 function record(t,...values){const b=Buffer.alloc(8+values.length*4);b.writeUInt32LE(t);b.writeUInt32LE(b.length,4);values.forEach((v,i)=>b.writeUInt32LE(v>>>0,8+i*4));return b;}
 function records(source){const bytes=Buffer.from(source.split(',')[1],'base64'),result=[];for(let at=88;at<bytes.length;){const size=bytes.readUInt32LE(at+4);if(bytes.readUInt32LE(at)===14)break;result.push(bytes.subarray(at,at+size));at+=size;}return result;}
 function emf(rs){const b=Buffer.concat([Buffer.alloc(88),...rs,record(14,0,0,20)]);for(const [at,v] of [[0,1],[4,88],[16,79],[20,79],[40,0x464d4520],[44,0x10000],[48,b.length],[52,rs.length+2]])b.writeUInt32LE(v,at);b.writeUInt16LE(2,56);return b;}

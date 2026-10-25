@@ -2293,27 +2293,35 @@ function cosmeticGiqSegment(start: CosmeticPoint,end: CosmeticPoint,state: DrawS
   if(dx===0&&dy===0)return;
   const horizontal=Math.abs(dx)>=Math.abs(dy),a=start[horizontal?0:1],b=end[horizontal?0:1],sign=b>a?1:-1;
   const first=sign>0?Math.floor(a)-1:Math.ceil(a)+1,stop=sign>0?Math.ceil(b)+1:Math.floor(b)-1;
-  const inside=(x:number,y:number)=>{
-    const distance=Math.abs(x)+Math.abs(y);
-    if(distance!==.5)return distance<.5;
-    if(y===.5)return true;
-    if(x===.5)return dy!==dx;
-    if(x===-.5)return dy===dx;
-    return y>0&&(x<0?dy===dx:dy===-dx);
-  };
   const exits=(x:number,y:number)=>{
-    const u=start[0]-x+start[1]-y,v=start[0]-x-start[1]+y,du=dx+dy,dv=dx-dy;
-    let enter=-Infinity,exit=Infinity;
+    // Endpoints are 27.4 FIX. The 262144-step budget keeps all relative
+    // cross-products below Number's exact-integer limit, matching C# Int64.
+    // Floating interpolation can move an exact edge outside its diamond and
+    // lose a pixel, shifting the dash phase of subsequent segments.
+    const sx=(start[0]-x)*16,sy=(start[1]-y)*16,fx=dx*16,fy=dy*16;
+    let en=0,ed=1,ex=1,xd=1,haveExit=false;
     const clip=(origin:number,delta:number)=>{
-      if(delta===0)return Math.abs(origin)<=.5;
-      const t1=(-.5-origin)/delta,t2=(.5-origin)/delta;
-      enter=Math.max(enter,Math.min(t1,t2));exit=Math.min(exit,Math.max(t1,t2));
-      return enter<=exit;
+      if(delta===0)return Math.abs(origin)<=8;
+      let n1=-8-origin,n2=8-origin;
+      if(delta<0){delta=-delta;const old=n1;n1=-n2;n2=-old;}
+      if(n1*ed>en*delta){en=n1;ed=delta;}
+      if(!haveExit||n2*xd<ex*delta){ex=n2;xd=delta;haveExit=true;}
+      return en*xd<=ex*ed;
     };
-    if(!clip(u,du)||!clip(v,dv)||exit<0||exit>1||enter>1)return false;
-    const lo=Math.max(0,enter),hi=Math.min(1,exit),t=(lo+hi)/2;
-    if(!inside(start[0]+dx*t-x,start[1]+dy*t-y))return false;
-    return exit!==1||!inside(end[0]-x,end[1]-y);
+    const u=sx+sy,v=sx-sy,du=fx+fy,dv=fx-fy;
+    if(!clip(u,du)||!clip(v,dv)||ex<0||ex>xd||en>ed)return false;
+    // The two lower parallel edges belong; the two upper ones do not.
+    if(du===0&&u===-8||dv===0&&v===8)return false;
+    const insideAt=(n:number,d:number)=>{
+      const px=sx*d+fx*n,py=sy*d+fy*n,edge=8*d,distance=Math.abs(px)+Math.abs(py);
+      if(distance!==edge)return distance<edge;
+      if(py===edge)return true;
+      if(px===edge)return fy!==fx;
+      if(px===-edge)return fy===fx;
+      return py>0&&(px<0?fy===fx:fy===-fx);
+    };
+    if(en*xd===ex*ed&&!insideAt(ex,xd))return false;
+    return ex!==xd||!insideAt(1,1);
   };
   const dashes=state.pen.dashArray!,cycle=dashes.reduce((a,b)=>a+b,0)*(dashes.length%2===0?1:2);
   let phase=state.cosmeticPhase%cycle,dash=0,ink=true;
