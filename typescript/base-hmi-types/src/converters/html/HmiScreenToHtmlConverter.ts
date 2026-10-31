@@ -5973,7 +5973,7 @@ function createAlarmControlStyle(alarmControl: HmiAlarmControl, context: HmiHtml
   const verticalOverflow = scrollBarOverflow(set?.verticalScrollBarVisibility, getStaticValue(alarmControl.showVerticalScrollbar) === true ? "auto" : "hidden");
   let style = createControlWindowStyle(
     alarmControl,
-    `display: flex; flex-direction: column; overflow-x: ${horizontalOverflow};overflow-y: ${verticalOverflow};`,
+    `display: flex; flex-direction: column;overflow-x: ${horizontalOverflow};overflow-y: ${verticalOverflow};`,
   );
   const gridLineColor = getStaticValue(alarmControl.gridLineColor);
   if (gridLineColor !== undefined)
