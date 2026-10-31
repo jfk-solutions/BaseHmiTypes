@@ -19,4 +19,5 @@ export class HmiText extends HmiSurfaceShapeBase {
   verticalAlignment?: HmiProperty<HmiVerticalAlignment>;
   /** Borders wider than one pixel are inside the frame when true, centered when false. */
   drawStrokeInsideFrame?: HmiProperty<boolean>;
+  readOnly?: HmiProperty<boolean>;
 }

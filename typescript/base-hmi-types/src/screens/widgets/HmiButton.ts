@@ -30,4 +30,7 @@ export class HmiButton extends HmiButtonBase {
   disabledImageFallbackToNormal?: HmiProperty<boolean>;
   /** True identifies a latching/toggle button, exposing its pressed snapshot as an accessible toggle state. */
   toggle?: HmiProperty<boolean>;
+  contentSpacing?: HmiProperty<number>;
+  contentSplitRatio?: HmiProperty<number>;
+  contentTextPosition?: HmiProperty<string>;
 }

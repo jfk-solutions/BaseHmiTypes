@@ -2093,7 +2093,8 @@ public partial class HmiScreenToHtmlConverter
         if (unitProperty is HmiTagProperty<HmiMultilingualText> unitTag) AppendAttribute(html, "data-engineering-unit-tag", unitTag.TagName);
         if (!ResolveStaticValue(ioField.Enabled, context))
             AppendAttribute(html, "disabled", "disabled");
-        var text = ResolveStaticValue(ioField.Text, context)?.GetDisplayText(context.CultureInfo);
+        var processValue = context.EffectiveProperties.Resolve(ioField, nameof(HmiIOField.ProcessValue), ioField.ProcessValue);
+        var text = ResolveStaticValue(processValue, context) ?? ResolveStaticValue(ioField.Text, context)?.GetDisplayText(context.CultureInfo);
         if (string.IsNullOrWhiteSpace(text) && ioField.Text is HmiExpressionProperty<HmiMultilingualText> expression)
             text = expression.Expression;
         var integerFormat = System.Text.RegularExpressions.Regex.Match(ResolveStaticValue(ioField.OutputFormat, context) ?? "", @"^\{I(\d+)\}$");
@@ -2103,7 +2104,8 @@ public partial class HmiScreenToHtmlConverter
         AppendAttribute(html, "value", text);
         if (ioField.ReadOnly is not null && ResolveStaticValue(ioField.ReadOnly, context))
             AppendAttribute(html, "readonly", "readonly");
-        if (ioField.MaskInput is not null && ResolveStaticValue(ioField.MaskInput, context))
+        var maskInput = ioField.InputBehavior?.HiddenInput ?? ioField.MaskInput;
+        if (maskInput is not null && ResolveStaticValue(maskInput, context))
             AppendAttribute(html, "type", "password");
         if (ioField.FieldLength is not null)
             AppendAttribute(html, "maxlength", ResolveStaticValue(ioField.FieldLength, context).ToString(CultureInfo.InvariantCulture));
@@ -4611,15 +4613,15 @@ public partial class HmiScreenToHtmlConverter
             HmiShapeBase shape => CreateColorGradient(
                 shape.BackgroundColor, shape.FirstGradientColor, shape.FirstGradientOffset,
                 shape.MiddleGradientColor, shape.SecondGradientColor, shape.SecondGradientOffset,
-                shape.UseFirstGradient, shape.UseSecondGradient, shape.GradientDirection),
+                shape.UseFirstGradient, shape.UseSecondGradient, shape.GradientDirection) ?? CreateUnifiedColorGradient(shape.FillPattern, shape.BackgroundColor, shape.AlternateBackgroundColor),
             HmiWidgetBase widget => CreateColorGradient(
                 widget.BackgroundColor, widget.FirstGradientColor, widget.FirstGradientOffset,
                 widget.MiddleGradientColor, widget.SecondGradientColor, widget.SecondGradientOffset,
-                widget.UseFirstGradient, widget.UseSecondGradient, widget.GradientDirection),
+                widget.UseFirstGradient, widget.UseSecondGradient, widget.GradientDirection) ?? CreateUnifiedColorGradient(widget.FillPattern, widget.BackgroundColor, widget.AlternateBackgroundColor),
             HmiWindowBase window => CreateColorGradient(
                 window.BackgroundColor, window.FirstGradientColor, window.FirstGradientOffset,
                 window.MiddleGradientColor, window.SecondGradientColor, window.SecondGradientOffset,
-                window.UseFirstGradient, window.UseSecondGradient, window.GradientDirection),
+                window.UseFirstGradient, window.UseSecondGradient, window.GradientDirection) ?? CreateUnifiedColorGradient(window.FillPattern, window.BackgroundColor, window.AlternateBackgroundColor),
             _ => null
         };
     }
@@ -4627,7 +4629,19 @@ public partial class HmiScreenToHtmlConverter
     private static ColorGradient? GetColorGradient(HmiScreenBase screen) => CreateColorGradient(
         screen.BackgroundColor, screen.FirstGradientColor, screen.FirstGradientOffset,
         screen.MiddleGradientColor, screen.SecondGradientColor, screen.SecondGradientOffset,
-        screen.UseFirstGradient, screen.UseSecondGradient, screen.GradientDirection);
+        screen.UseFirstGradient, screen.UseSecondGradient, screen.GradientDirection) ?? CreateUnifiedColorGradient(screen.FillPattern, screen.BackgroundColor, screen.AlternateBackgroundColor);
+
+    private static ColorGradient? CreateUnifiedColorGradient(HmiProperty<HmiFillPattern>? pattern, HmiProperty<HmiColor>? first, HmiProperty<HmiColor>? second)
+    {
+        HmiGradientDirection? direction = pattern?.StaticValue switch {
+            HmiFillPattern.GradientHorizontal => HmiGradientDirection.HorizontalFromLeft,
+            HmiFillPattern.GradientVertical => HmiGradientDirection.VerticalFromTop,
+            HmiFillPattern.GradientForwardDiagonal => HmiGradientDirection.DiagonalUp,
+            HmiFillPattern.GradientBackwardDiagonal => HmiGradientDirection.DiagonalDown,
+            _ => null };
+        return direction.HasValue && first?.StaticValue is HmiColor start && second?.StaticValue is HmiColor end
+            ? new ColorGradient(direction.Value, new[] { (start, 0d), (end, 100d) }) : null;
+    }
 
     private static ColorGradient? CreateColorGradient(
         HmiProperty<HmiColor>? backgroundColor,

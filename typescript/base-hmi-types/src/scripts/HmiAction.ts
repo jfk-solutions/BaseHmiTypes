@@ -24,6 +24,12 @@ export class HmiTextScriptAction extends HmiAction {
   readonly kind = HmiActionKind.TextScript;
   language: HmiScriptLanguage = HmiScriptLanguage.Unknown;
   sourceCode?: string;
+  /** Shared engineering definitions for this script, preserved independently of its body. */
+  globalDefinitionAreaScriptCode?: string;
+  async?: boolean;
+  /** Optional callable signature; sourceCode is the editable body. */
+  functionName?: string;
+  readonly parameterNames: string[] = [];
 }
 
 /** Describes an inert request to open a URL or file resource. */

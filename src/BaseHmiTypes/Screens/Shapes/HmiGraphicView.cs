@@ -43,4 +43,10 @@ public class HmiGraphicView : HmiSurfaceShapeBase
 
     /// <summary>Draws borders wider than one pixel inside the frame when true, or centered on it when false.</summary>
     public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
+    public HmiProperty<string>? FillDirection { get; set; }
+
+    public HmiProperty<int>? FillLevel { get; set; }
+
+    public HmiProperty<bool>? ShowFillLevel { get; set; }
+
 }

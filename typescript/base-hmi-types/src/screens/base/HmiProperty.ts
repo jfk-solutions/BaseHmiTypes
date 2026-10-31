@@ -1,3 +1,4 @@
+import type { HmiUnifiedTagDynamization } from "./HmiUnifiedTagDynamization.js";
 export enum HmiPropertyKind {
   Static = "Static",
   Default = "Default",
@@ -35,6 +36,7 @@ export enum HmiTriggerKind {
   Event = "Event",
   Calendar = "Calendar",
   Alarm = "Alarm",
+  Script = "Script",
 }
 
 export enum HmiTagTriggerMode {
@@ -59,12 +61,35 @@ export interface HmiProperty<T> {
 }
 
 export interface HmiDynamicProperty<T> extends HmiProperty<T> {
+  unifiedTagDynamization?: HmiUnifiedTagDynamization;
   triggers: HmiTrigger[];
 }
 
 export interface HmiTrigger {
   readonly kind: HmiTriggerKind;
   name?: string;
+}
+
+export enum HmiScriptTriggerType {
+  Disabled = "Disabled",
+  T1s = "T1s",
+  T2s = "T2s",
+  CustomCycle = "CustomCycle",
+  Tags = "Tags",
+  T5s = "T5s",
+  AutomaticTags = "AutomaticTags",
+  T10s = "T10s",
+  T100ms = "T100ms",
+  T250ms = "T250ms",
+  T500ms = "T500ms",
+}
+
+/** Exact Unified script scheduling, including automatic tag discovery. */
+export interface HmiScriptTrigger extends HmiTrigger {
+  readonly kind: HmiTriggerKind.Script;
+  type: HmiScriptTriggerType;
+  customDuration: string;
+  tagNames: string[];
 }
 
 export interface HmiTagTrigger extends HmiTrigger {
@@ -133,6 +158,11 @@ export interface HmiFaceplateInterfaceProperty<T> extends HmiProperty<T> {
 }
 
 export interface HmiScriptProperty<T> extends HmiDynamicProperty<T> {
+  async?: boolean;
+  globalDefinitionAreaScriptCode?: string;
+  /** Optional callable signature; script is the editable body. */
+  functionName?: string;
+  parameterNames?: string[];
   readonly kind: HmiPropertyKind.Script;
   language: HmiScriptLanguage;
   script?: string;

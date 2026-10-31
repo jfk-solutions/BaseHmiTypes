@@ -15,11 +15,80 @@ namespace BaseHmiTypes.Tests;
 [TestClass]
 public class HmiUnifiedXmlToScreenConverterTests
 {
+    [TestMethod]
+    public void ProducerVersionDoesNotSelectAnotherFormat()
+    {
+        var catalog = HmiUnifiedXmlCatalog.Id;
+        var xml = Archive("<button name=\"Run\"/>").Replace(HmiScreenToUnifiedXmlConverter.CatalogId, catalog)
+            .Replace("apiVersion=\"21.0.0.0\"", "apiVersion=\"19.0.0.0\"");
+        var result = new HmiUnifiedXmlToScreenConverter().Convert(xml);
+        Assert.AreEqual("Main", result.Screen.Name);
+        Assert.IsInstanceOfType<HmiButton>(result.Screen.Layers[0].Items[0]);
+        Assert.AreEqual("Run", result.Screen.Layers[0].Items[0].Name);
+    }
+    [TestMethod]
+    public void DisplayNamesAndFontWeightsAreEditableModelValues()
+    {
+        foreach (var (weight, numeric) in new[] { ("Light", 300), ("SemiBold", 600), ("None", 0) })
+        {
+            var converter = new HmiUnifiedXmlToScreenConverter();
+            var screen = converter.Convert(Archive($"<display-name><multilingual-text-item lang=\"de-DE\" text=\"Start\"/></display-name><button name=\"Run\" font-family=\"TimesNewRoman\" font-weight=\"{weight}\"/>")).Screen;
+            var button = (HmiButton)screen.Layers[0].Items[0];
+            Assert.AreEqual("Start", screen.DisplayName!.Texts[1031]);
+            Assert.AreEqual(numeric, button.Font!.Weight!.StaticValue);
+            screen.DisplayName.Texts[1031] = "Changed";
+            button.Font.Name = "SimSun"; button.Font.Weight = 600;
+            var xml = new HmiScreenToUnifiedXmlConverter().Convert(screen, "Panel").Xml;
+            var restored = converter.Convert(xml).Screen;
+            Assert.AreEqual("Changed", restored.DisplayName!.Texts[1031]);
+            var restoredButton = (HmiButton)restored.Layers[0].Items[0];
+            Assert.AreEqual("SimSun", restoredButton.Font!.Name!.StaticValue);
+            Assert.AreEqual(600, restoredButton.Font.Weight!.StaticValue);
+        }
+    }
     private readonly HmiUnifiedXmlToScreenConverter reader = new();
+    [TestMethod]
+    public void EventEngineeringSettingsSurviveModelEditsAndExport()
+    {
+        var xml = Archive("<button name=\"Run\"><event-handlers><button-event-handler event-type=\"Down\"><script  async=\"True\"><global-definition-area-script-code xml:space=\"preserve\">const n = 1;&#xD;\n</global-definition-area-script-code><script-code xml:space=\"preserve\">old();</script-code></script></button-event-handler></event-handlers></button>");
+        var screen = reader.Convert(xml).Screen;
+        var action = (HmiTextScriptAction)screen.Layers[0].Items[0].Events[0].Action!;
+        Assert.AreEqual(true, action.Async); Assert.AreEqual("const n = 1;\r\n", action.GlobalDefinitionAreaScriptCode);
+        action.SourceCode = "changed();\r\n";
+        var output = new HmiScreenToUnifiedXmlConverter().Convert(screen, "Panel").Xml;
+        StringAssert.Contains(output, "changed"); Assert.IsFalse(output.Contains("old();"));
+        var restored = (HmiTextScriptAction)reader.Convert(output).Screen.Layers[0].Items[0].Events[0].Action!;
+        Assert.AreEqual(action.SourceCode, restored.SourceCode);
+        Assert.AreEqual(action.GlobalDefinitionAreaScriptCode, restored.GlobalDefinitionAreaScriptCode);
+        Assert.AreEqual(action.Async, restored.Async);
+    }
     private static string Archive(string items = "", string screenAttributes = "", string complete = "false") =>
         "<unified-export xmlns=\"" + HmiScreenToUnifiedXmlConverter.Namespace + "\" xmlns:u=\"" + HmiScreenToUnifiedXmlConverter.ContractNamespace +
         "\" version=\"2\" catalog=\"" + HmiScreenToUnifiedXmlConverter.CatalogId + "\" scope=\"screen\" screen=\"Main\" apiVersion=\"21.0.0.0\" complete=\"" + complete + "\">" +
         "<screen name=\"Main\" width=\"800\" height=\"480\" " + screenAttributes + ">" + items + "</screen></unified-export>";
+
+    [TestMethod]
+    public async Task ReadsGradientContentGraphicsAndTextLayout()
+    {
+        var xml = Archive("<button name=\"Run\" graphic=\"Lamp\" alternate-graphic=\"LampOn\" content-mode=\"GraphicAndText\" content-graphic-stretch-mode=\"Fill\" content-horizontal-text-alignment=\"Right\"/><text-box name=\"Caption\" text-wrapping=\"NoWrap\" text-trimming=\"CharacterEllipsis\"/>",
+            "back-color=\"#96AEC2\" alternate-back-color=\"#FFFFFF\" back-fill-pattern=\"GradientVertical\"");
+        var result = reader.Convert(xml); var screen = result.Screen;
+        Assert.AreEqual(HmiFillPattern.GradientVertical, screen.FillPattern!.StaticValue);
+        Assert.AreEqual((byte)255, screen.AlternateBackgroundColor!.StaticValue!.Red);
+        var button = (HmiButton)screen.Layers[0].Items[0]; var caption = (HmiText)screen.Layers[0].Items[1];
+        Assert.AreEqual(HmiButtonType.GraphicAndText, button.Mode!.StaticValue);
+        Assert.AreEqual(1, button.GraphicStretchMode!.StaticValue);
+        Assert.AreEqual(HmiHorizontalAlignment.Right, button.HorizontalAlignment!.StaticValue);
+        Assert.AreEqual("Lamp", button.Image!.StaticValue!.ImageName);
+        Assert.AreEqual("LampOn", button.AlternateImage!.StaticValue!.ImageName);
+        Assert.AreEqual(0, caption.TextWrapping!.StaticValue); Assert.AreEqual(1, caption.TextTrimming!.StaticValue);
+        Assert.IsTrue(result.Diagnostics.Any(d => d.Message.Contains("image data is external")));
+        var renderer = new BaseHmiTypes.Converters.Html.HmiScreenToHtmlConverter();
+        StringAssert.Contains(await renderer.ConvertAsync(screen), "linear-gradient(to bottom");
+        screen.UseFirstGradient = true; screen.FirstGradientColor = new HmiColor { Alpha = 255, Red = 255 };
+        screen.GradientDirection = HmiGradientDirection.HorizontalFromLeft;
+        StringAssert.Contains(await renderer.ConvertAsync(screen), "linear-gradient(to right");
+    }
 
     [TestMethod]
     public void ReadsAllAuthoringScreensAcrossSupportedVersions()
@@ -56,7 +125,7 @@ public class HmiUnifiedXmlToScreenConverterTests
         var dynamicText = result.Screen.Layers[0].Items.OfType<HmiText>().Single(i => i.Name == "Logout_1");
         var script = (HmiScriptProperty<HmiMultilingualText>)dynamicText.Text!;
         StringAssert.Contains(script.Script!, "PlantReferenceNumber");
-        Assert.AreEqual("PlantReferenceNumber", ((HmiTagTrigger)script.Triggers.Single()).TagNames.Single());
+        Assert.AreEqual("PlantReferenceNumber", ((HmiScriptTrigger)script.Triggers.Single()).TagNames.Single());
         Assert.IsNotNull(script.StaticValue);
     }
 
@@ -102,13 +171,13 @@ public class HmiUnifiedXmlToScreenConverterTests
         var result = reader.Convert(Archive("<button name=\"Run\" left=\"1\" font-family=\"Arial\"/><text-box name=\"Caption\" top=\"0\" font-family=\"Arial\"/>", complete: "true"));
         Assert.IsTrue(result.SourceComplete);
         var button = (HmiButton)result.Screen.Layers[0].Items[0];
-        Assert.AreEqual(65d, button.Width.StaticValue); Assert.AreEqual(66d, button.Height.StaticValue);
+        Assert.AreEqual(0d, button.Width.StaticValue); Assert.AreEqual(0d, button.Height.StaticValue);
         Assert.IsTrue(button.Enabled.StaticValue); Assert.IsTrue(button.Visible.StaticValue);
-        Assert.AreEqual(22d, button.Font!.Size!.StaticValue); Assert.IsFalse(button.Font.Bold!.StaticValue);
-        Assert.AreEqual(2, button.ToolTipText!.StaticValue!.Texts.Count);
+        Assert.AreEqual(0d, button.Font!.Size!.StaticValue); Assert.IsFalse(button.Font.Bold!.StaticValue);
+        Assert.AreEqual(0, button.ToolTipText!.StaticValue!.Texts.Count);
         var box = (HmiText)result.Screen.Layers[0].Items[1];
-        Assert.AreEqual(500d, box.Width.StaticValue); Assert.IsFalse(box.Enabled.StaticValue);
-        Assert.AreEqual((byte)255, box.BackgroundColor!.StaticValue.Red); Assert.AreEqual((byte)0, box.BackgroundColor.StaticValue.Green);
+        Assert.AreEqual(0d, box.Width.StaticValue); Assert.IsTrue(box.Enabled.StaticValue);
+        Assert.AreEqual((byte)0, box.BackgroundColor!.StaticValue.Red); Assert.AreEqual((byte)0, box.BackgroundColor.StaticValue.Green);
     }
 
     [TestMethod]
@@ -128,7 +197,7 @@ public class HmiUnifiedXmlToScreenConverterTests
     [TestMethod]
     public void ReadsEventScriptAsInertJavaScriptAndPreservesLineEndings()
     {
-        var result = reader.Convert(Archive("<event-handlers><screen-event-handler event-type=\"Loaded\"><script u:type=\"t5\"><script-code xml:space=\"preserve\">a();&#xD;\n\tb();</script-code></script></screen-event-handler></event-handlers>"));
+        var result = reader.Convert(Archive("<event-handlers><screen-event-handler event-type=\"Loaded\"><script ><script-code xml:space=\"preserve\">a();&#xD;\n\tb();</script-code></script></screen-event-handler></event-handlers>"));
         var action = (HmiTextScriptAction)result.Screen.Events.Single().Action!;
         Assert.AreEqual("a();\r\n\tb();", action.SourceCode); Assert.AreEqual(HmiScriptLanguage.JavaScript, action.Language);
     }
@@ -136,7 +205,7 @@ public class HmiUnifiedXmlToScreenConverterTests
     [TestMethod]
     public void ReadsExplicitPartsAndLosslessUtf16ScriptPayloads()
     {
-        var xml = Archive("<button name=\"Run\" left=\"0\"><font name=\"Arial\" size=\"14\"/><padding left=\"5\"/><event-handlers><button-event-handler event-type=\"Down\"><script u:type=\"t16\"><script-code><u:Value kind=\"scalar\" type=\"System.String\" encoding=\"utf16le-base64\">AQAA2A==</u:Value></script-code></script></button-event-handler></event-handlers></button>");
+        var xml = Archive("<button name=\"Run\" left=\"0\"><font name=\"Arial\" size=\"14\"/><padding left=\"5\"/><event-handlers><button-event-handler event-type=\"Down\"><script ><script-code><u:Value kind=\"scalar\" type=\"System.String\" encoding=\"utf16le-base64\">AQAA2A==</u:Value></script-code></script></button-event-handler></event-handlers></button>");
         var button = (HmiButton)reader.Convert(xml).Screen.Layers[0].Items[0];
         Assert.AreEqual("Arial", button.Font!.Name!.StaticValue);
         Assert.AreEqual(5d, button.Padding!.Left.StaticValue);
@@ -156,9 +225,9 @@ public class HmiUnifiedXmlToScreenConverterTests
     [TestMethod]
     public void ReportsUnknownDataAndRetainsOriginalXml()
     {
-        var xml = Archive("<rectangle name=\"Unknown\"/><button name=\"Run\" left=\"0\" custom=\"keep\"><dynamizations/></button>");
+        var xml = Archive("<unknown-control name=\"Unknown\"/><button name=\"Run\" left=\"0\" custom=\"keep\"><dynamizations/></button>");
         var result = reader.Convert(xml);
-        Assert.IsTrue(result.Diagnostics.Any(d => d.Path.EndsWith("rectangle")));
+        Assert.IsTrue(result.Diagnostics.Any(d => d.Path.EndsWith("unknown-control")));
         Assert.IsTrue(result.Diagnostics.Any(d => d.Path.EndsWith("@custom")));
         Assert.AreEqual(xml, Encoding.UTF8.GetString(result.Screen.SourceData!));
     }
@@ -188,5 +257,17 @@ public class HmiUnifiedXmlToScreenConverterTests
         Assert.ThrowsExactly<FormatException>(() => reader.Convert(Archive("<button enabled=\"true\"/>")));
         Assert.ThrowsExactly<FormatException>(() => reader.Convert(Archive("<button back-color=\"red\"/>")));
         Assert.ThrowsExactly<FormatException>(() => reader.Convert(Archive("<button><text><multilingual-text-item lang=\"de-DE\" text=\"A\"/><multilingual-text-item lang=\"de-DE\" text=\"B\"/></text></button>")));
+    }
+
+    [TestMethod]
+    public void KnownWireContractsDoNotDependOnTheProducerApiVersionLabel()
+    {
+        var reader=new HmiUnifiedXmlToScreenConverter();
+        foreach(var version in new[]{"17.0.0.0","18.0.0.0","20.0.0.0","22.0.0.0"})
+        {
+            var xml=Archive("<button name=\"Run\"/>").Replace("apiVersion=\"21.0.0.0\"","apiVersion=\""+version+"\"");
+            Assert.AreEqual("Run",reader.Convert(xml).Screen.Layers[0].Items[0].Name);
+        }
+        Assert.ThrowsExactly<NotSupportedException>(()=>reader.Convert(Archive("").Replace("21.0.0.0","unknown")));
     }
 }

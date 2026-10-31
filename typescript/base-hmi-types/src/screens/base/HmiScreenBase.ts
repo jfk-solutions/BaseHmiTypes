@@ -1,3 +1,5 @@
+import { HmiHorizontalAlignment } from "./HmiHorizontalAlignment.js";
+import { HmiVerticalAlignment } from "./HmiVerticalAlignment.js";
 import { HmiLayer } from "./HmiLayer.js";
 import { HmiProperty, staticProperty } from "./HmiProperty.js";
 import { HmiCursorMode } from "./HmiCursorMode.js";
@@ -20,6 +22,8 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   /** Configured edge for a native slide-in resource; absent on ordinary screens. */
   slideInEdge?: HmiSlideInEdge;
   kind: HmiScreenKind = HmiScreenKind.Screen;
+  /** Producer API provenance, when known; never selects the XML contract. */
+  engineeringApiVersion?: string;
   sourceFormat?: string;
   sourceData?: Uint8Array;
   readonly sourceProperties: Record<string, string> = {};
@@ -53,6 +57,12 @@ export abstract class HmiScreenBase extends HmiScreenModelBase {
   readonly events: HmiEventBinding[] = [];
   /** Local keys override template keys with the same native input identity. */
   readonly deviceKeys: HmiDeviceKeyBinding[] = [];
+  enabled?: HmiProperty<boolean>;
+  alternateBackgroundColor?: HmiProperty<HmiColor>;
+  horizontalAlignment?: HmiProperty<HmiHorizontalAlignment>;
+  verticalAlignment?: HmiProperty<HmiVerticalAlignment>;
+  backgroundFillMode?: HmiProperty<string>;
+  graphicStretchMode?: HmiProperty<number>;
 }
 
 export enum HmiSlideInEdge { Top = "Top", Left = "Left", Bottom = "Bottom", Right = "Right" }

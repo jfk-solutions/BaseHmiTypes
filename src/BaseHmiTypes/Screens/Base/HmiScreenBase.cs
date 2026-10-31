@@ -15,6 +15,9 @@ public abstract class HmiScreenBase : HmiScreenModelBase
 
     public HmiScreenKind Kind { get; set; } = HmiScreenKind.Screen;
 
+    /// <summary>Producer API provenance, when known; never selects the XML contract.</summary>
+    public string? EngineeringApiVersion { get; set; }
+
     public string? SourceFormat { get; set; }
 
     public byte[]? SourceData { get; set; }
@@ -72,4 +75,16 @@ public abstract class HmiScreenBase : HmiScreenModelBase
     public IList<HmiScreenParameter> Parameters { get; } = new List<HmiScreenParameter>();
 
     public IList<HmiLayer> Layers { get; } = new List<HmiLayer>();
+    public HmiProperty<bool>? Enabled { get; set; }
+
+    public HmiProperty<HmiColor>? AlternateBackgroundColor { get; set; }
+
+    public HmiProperty<HmiHorizontalAlignment>? HorizontalAlignment { get; set; }
+
+    public HmiProperty<HmiVerticalAlignment>? VerticalAlignment { get; set; }
+
+    public HmiProperty<string>? BackgroundFillMode { get; set; }
+
+    public HmiProperty<int>? GraphicStretchMode { get; set; }
+
 }

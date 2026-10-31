@@ -4,6 +4,9 @@ using BaseHmiTypes.Screens.Base;
 
 public sealed class HmiEventBinding
 {
+    /// <summary>Engineering property path for a property change or quality-code event.</summary>
+    public string? PropertyName { get; set; }
+
     public string EventName { get; set; } = string.Empty;
 
     /// <summary>Original event representation, including native dispatch and reference IDs.</summary>
