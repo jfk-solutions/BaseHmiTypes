@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" device="Panel &quot;3&quot; &amp; &lt;North&gt;" apiVersion="21.0.0.0" scope="device" coverage="authored-objects" complete="true" version="2" catalog="983d179ea6e91bd2a948761df24ab7300143033c09018c07bd30c7c0c6a562ba" xmlns="urn:s7mcp:wincc-unified:2">
+<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" device="Panel &quot;3&quot; &amp; &lt;North&gt;" apiVersion="21.0.0.0" scope="device" coverage="authored-objects" complete="true" version="2" catalog="a2300046400ebabbcd8caced099f2128857c68b431b48cf7b655da0462b12463" xmlns="urn:s7mcp:wincc-unified:2">
   <software u:operation="upsert">
     <screen-groups>
       <screen-group name="Plant screens">
@@ -46,19 +46,19 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             </text-box>
             <faceplate-container name="Place &quot;A&quot; &amp; &lt;B&gt;" left="80" top="106" width="56" height="38" contained-type="V1.0.0\Place">
               <interface>
-                <faceplate-interface u:type="t21" property-name="PlaceSelected" value="123" />
-                <faceplate-interface u:type="t21" property-name="PlaceOccupied" value="PlaceOccupied123" />
-                <faceplate-interface u:type="t21" property-name="DataPresent" value="DataPresent123" />
-                <faceplate-interface u:type="t21" property-name="OperationMode" value="OP123" />
-                <faceplate-interface u:type="t21" property-name="PlaceNumber" value="PlaceNumber" />
-                <faceplate-interface u:type="t21" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
-                <faceplate-interface u:type="t20" property-name="DbNumber" value="123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceSelected" value="123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceOccupied" value="PlaceOccupied123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="DataPresent" value="DataPresent123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="OperationMode" value="OP123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceNumber" value="PlaceNumber" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
+                <faceplate-interface u:type="FaceplateInterface.Int64" property-name="DbNumber" value="123" />
               </interface>
             </faceplate-container>
             <faceplate-container name="GroupStatusA" left="10" top="106" width="45" height="45" contained-type="V1.0.0\GroupStatus">
               <interface>
-                <faceplate-interface u:type="t21" property-name="GroupOperationMode" value="OperationModeGroupA" />
-                <faceplate-interface u:type="t21" property-name="GroupName" value="A" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="GroupOperationMode" value="OperationModeGroupA" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="GroupName" value="A" />
               </interface>
             </faceplate-container>
             <button name="Button_0" left="650" top="106" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
@@ -80,10 +80,10 @@ Tags("LockReleaseButton").SetBit(0);</script-code>
             </button>
             <faceplate-container name="1" left="650" top="148" width="140" height="42" contained-type="V1.0.0\SafetyLightGrid">
               <interface>
-                <faceplate-interface u:type="t21" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
-                <faceplate-interface u:type="t21" property-name="BypassActive" value="Muting1BypassActive" />
-                <faceplate-interface u:type="t21" property-name="Triggered" value="Muting1Triggered" />
-                <faceplate-interface u:type="t21" property-name="Reset" value="Muting1Reset" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="BypassActive" value="Muting1BypassActive" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="Triggered" value="Muting1Triggered" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="Reset" value="Muting1Reset" />
               </interface>
             </faceplate-container>
             <button name="Button_2" left="650" top="190" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">

@@ -50,13 +50,13 @@ public class HmiUnifiedXmlToScreenConverterTests
     [TestMethod]
     public void EventEngineeringSettingsSurviveModelEditsAndExport()
     {
-        var xml = Archive("<button name=\"Run\"><event-handlers><button-event-handler event-type=\"Down\"><script  async=\"True\"><global-definition-area-script-code xml:space=\"preserve\">const n = 1;&#xD;\n</global-definition-area-script-code><script-code xml:space=\"preserve\">old();</script-code></script></button-event-handler></event-handlers></button>");
+        var xml = Archive("<button name=\"Run\"><event-handlers><button-event-handler event-type=\"Down\"><script u:type=\"Script\" async=\"True\"><global-definition-area-script-code xml:space=\"preserve\">const n = 1;&#xD;\n</global-definition-area-script-code><script-code xml:space=\"preserve\">old();</script-code></script></button-event-handler></event-handlers></button>");
         var screen = reader.Convert(xml).Screen;
         var action = (HmiTextScriptAction)screen.Layers[0].Items[0].Events[0].Action!;
         Assert.AreEqual(true, action.Async); Assert.AreEqual("const n = 1;\r\n", action.GlobalDefinitionAreaScriptCode);
         action.SourceCode = "changed();\r\n";
         var output = new HmiScreenToUnifiedXmlConverter().Convert(screen, "Panel").Xml;
-        StringAssert.Contains(output, "changed"); Assert.IsFalse(output.Contains("old();"));
+        StringAssert.Contains(output, "changed"); Assert.IsFalse(output.Contains("old();")); Assert.IsFalse(output.Contains("u:type="));
         var restored = (HmiTextScriptAction)reader.Convert(output).Screen.Layers[0].Items[0].Events[0].Action!;
         Assert.AreEqual(action.SourceCode, restored.SourceCode);
         Assert.AreEqual(action.GlobalDefinitionAreaScriptCode, restored.GlobalDefinitionAreaScriptCode);

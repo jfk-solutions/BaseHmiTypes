@@ -25,6 +25,13 @@ test('IO controls and exact tag/resource engineering settings survive edits with
  field.processValue.staticValue='42.75';binding.valueConverter.mappingTable.entries[0].value=true;caption.text.unifiedTagDynamization.resourceList='@Default.Edited';
  const result=new HmiScreenToUnifiedXmlConverter(catalog).convert(screen,'Panel');
  assert.match(result.xml,/apiVersion="19.0.0.0"/);assert.match(result.xml,/condition="9223372036854775809"/);
+ const doc=new DOMParser().parseFromString(result.xml,'application/xml'),n=HmiScreenToUnifiedXmlConverter.namespace,u=HmiScreenToUnifiedXmlConverter.contractNamespace;
+ assert.equal(doc.getElementsByTagNameNS(n,'screen')[0].hasAttributeNS(u,'type'),false);
+ assert.equal(doc.getElementsByTagNameNS(n,'iofield')[0].hasAttributeNS(u,'type'),false);
+ assert.equal(doc.getElementsByTagNameNS(n,'mapping-table-entry-bitmask')[0].getAttributeNS(u,'type'),'MappingTableEntryBitmask.Boolean');
+ assert.equal(doc.getElementsByTagNameNS(n,'mapping-table-entry-range')[0].getAttributeNS(u,'type'),'MappingTableEntryRange.Color');
+ doc.getElementsByTagNameNS(n,'mapping-table-entry-range')[0].removeAttributeNS(u,'type');
+ await assert.rejects(reader.convert(new XMLSerializer().serializeToString(doc)),/ambiguous contract selector/);
  const restoredItems=(await reader.convert(result.xml)).screen.layers[0].items;const restored=restoredItems[0];
  assert.ok(restored instanceof HmiIOField);assert.equal(getStaticValue(restored.processValue),'42.75');
  assert.equal(restored.visible.unifiedTagDynamization.valueConverter.mappingTable.entries[0].value,true);
@@ -81,7 +88,7 @@ catalog.documentElement.setAttribute('id','a'.repeat(64));
  assert.equal(restored.events[0].propertyName,'BackColor');assert.equal(restored.events[0].eventName,'QualityCodeChange');
  restored.sourceData=undefined;restored.sourceProperties={};restored.events[0].propertyName='Visible';
  const xml=writer.convert(restored,'Panel').xml;assert.equal((await reader.convert(xml)).screen.events[0].propertyName,'Visible');
- assert.match(xml,/property-name="Visible"/);assert.doesNotMatch(xml,/u:id=/);
+ assert.match(xml,/property-name="Visible"/);assert.doesNotMatch(xml,/u:id=|u:type=/);
 });
 
 

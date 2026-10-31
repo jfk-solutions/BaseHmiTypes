@@ -1,6 +1,6 @@
 # Shared WinCC Unified format definition
 
-`unified/catalog.xml` is the authoritative wire schema for C# and TypeScript, independent of Siemens major versions. Defaults are stable values of our format; native adapters supply actual source values. The catalog contains no captured project values or API inventory.
+`unified/catalog.xml` is the authoritative wire schema for C# and TypeScript, independent of Siemens major versions. Defaults are stable values of our format; native adapters supply actual source values. The catalog contains no captured project values or API inventory. Contract identifiers are readable semantic names; ambiguous value types use names such as `FaceplateInterface.Int64` and `MappingTableEntryRange.Color`. XML selectors are omitted for tags with a single contract.
 
 `unified/manifest.json` records the type-contract ID and the whole-file SHA-256. The C# assembly embeds `unified/catalog.xml.gz`; `HmiUnifiedXmlCatalog.Open()` and `Read()` decompress it. The TypeScript build verifies the manifest, generates a schema literal for synchronous export, and copies the compressed asset to `dist/catalogs/unified/catalog.xml.gz`. `HmiUnifiedXmlCatalog.load()` returns the bundled definition; `loadFromUrl(url)` and `read(bytes)` load its gzip representation.
 

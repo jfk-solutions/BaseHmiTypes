@@ -35,6 +35,14 @@ public class HmiUnifiedXmlBindingsTests
         field.ProcessValue="42.75";entry.Value=true;resource.ResourceList="@Default.Edited";
         var result=new HmiScreenToUnifiedXmlConverter(catalog).Convert(screen,"Panel");
         StringAssert.Contains(result.Xml,"apiVersion=\"19.0.0.0\"");StringAssert.Contains(result.Xml,"condition=\"9223372036854775809\"");
+        XNamespace n=HmiScreenToUnifiedXmlConverter.Namespace; XNamespace u=HmiScreenToUnifiedXmlConverter.ContractNamespace;
+        var xml=XElement.Parse(result.Xml);
+        Assert.IsNull(xml.Element(n+"screen")!.Attribute(u+"type"));
+        Assert.IsNull(xml.Descendants(n+"iofield").Single().Attribute(u+"type"));
+        Assert.AreEqual("MappingTableEntryBitmask.Boolean",(string?)xml.Descendants(n+"mapping-table-entry-bitmask").Single().Attribute(u+"type"));
+        Assert.AreEqual("MappingTableEntryRange.Color",(string?)xml.Descendants(n+"mapping-table-entry-range").Single().Attribute(u+"type"));
+        var ambiguous=new XElement(xml); ambiguous.Descendants(n+"mapping-table-entry-range").Single().Attribute(u+"type")!.Remove();
+        Assert.ThrowsExactly<FormatException>(()=>reader.Convert(ambiguous.ToString()));
         var restoredItems=reader.Convert(result.Xml).Screen.Layers[0].Items;
         var restored=Assert.IsInstanceOfType<HmiIOField>(restoredItems[0]);
         Assert.AreEqual("42.75",restored.ProcessValue!.StaticValue);
@@ -82,7 +90,7 @@ public class HmiUnifiedXmlBindingsTests
         restored.SourceData=null;restored.SourceProperties.Clear();restored.Events.Single().PropertyName="Visible";
         xml=writer.Convert(restored,"Panel").Xml;
         Assert.AreEqual("Visible",reader.Convert(xml).Screen.Events.Single().PropertyName);
-        StringAssert.Contains(xml,"property-name=\"Visible\"");Assert.IsFalse(xml.Contains("u:id="));
+        StringAssert.Contains(xml,"property-name=\"Visible\"");Assert.IsFalse(xml.Contains("u:id="));Assert.IsFalse(xml.Contains("u:type="));
     }
 
     [TestMethod]

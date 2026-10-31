@@ -95,9 +95,28 @@ Omitted scalar values use **our stable format defaults**, never the destination 
 - Scalars are attributes with readable kebab-case names. Parts such as font and padding use prefixed owner attributes when they have no nested behavior or shared identity. Parts with dynamics remain children.
 - Booleans are True/False. Numeric values use invariant culture and the declared type range. Colors are #RRGGBB or #RRGGBBAA. Enum values use declared symbolic names. Strings preserve whitespace and XML escaping.
 - Multilingual text uses `text`/`display-name`/`tool-tip-text` with `multilingual-text-item lang="en-GB" text="..."`. Formatted caption markup is escaped text; an omitted text payload means the declared empty-string default. An explicit empty collection stays empty.
-- Ordered compositions use child elements. `u:id` is needed only for a referenced object; `u:ref ref="..."` preserves sharing. `u:type` is needed only when a tag has multiple declared typed shapes, such as mapping-table values. Prefix `u` denotes `urn:s7mcp:wincc-unified:2:contract`.
+- Ordered compositions use child elements. `u:id` is needed only for a referenced object; `u:ref ref="..."` preserves sharing. `u:type` is needed only when a tag has multiple declared typed shapes, such as mapping-table values. Selectors use readable semantic names, such as `MappingTableEntryRange.Color`, `MappingTableEntryBitmask.Boolean` and `FaceplateInterface.String`; opaque numeric aliases such as `t5` are not used. Prefix `u` denotes `urn:s7mcp:wincc-unified:2:contract`.
 - Script bodies and global definitions are child strings. Async state, event/property selectors and trigger settings are editable model values. XML-illegal script code units use an explicit typed UTF-16LE base64 payload; ordinary strings never silently replace illegal code units.
 - Duplicate identities, dangling references, ambiguous selectors, invalid ranges and malformed XML are errors. Unknown semantic fields produce diagnostics; they are not a source-XML export fallback.
 - The catalog contains type roles, typed property encodings, stable defaults, owned members, promoted-attribute maps and creation keys. Its ID is the SHA-256 of the normalized `types` subtree (namespace declarations removed, LINQ-to-XML DisableFormatting, UTF-8 without BOM). The manifest separately checks the whole XML bytes. This is a format fingerprint, not a Siemens version.
+
+## Readable type selectors
+
+The element name identifies an ordinary object, so a script needs no type attribute:
+
+```xml
+<script>
+  <script-code>Tags("Start").Write(true);</script-code>
+</script>
+```
+
+A faceplate interface can contain different value types even when their serialized text is identical. Here `u` is the contract namespace declared above:
+
+```xml
+<faceplate-interface u:type="FaceplateInterface.Int64" property-name="Count" value="42"/>
+<faceplate-interface u:type="FaceplateInterface.String" property-name="Caption" value="42"/>
+```
+
+The first value is an integer and the second is a string. Their readable selectors preserve that distinction. C# and TypeScript emit no selector for a tag with one declared contract; a selector is required for a tag with multiple variants. Readers reject a missing, unknown or incompatible selector on an ambiguous tag. Declared contract IDs and internal part references use the same semantic names. A schema change updates the catalog fingerprint; superseded numeric aliases are not retained.
 
 See the [generated compact example](examples/compact-model.screen.xml). The descriptor is the authoritative field-level reference; [coverage](UNIFIED-XML-COVERAGE.md) records implementation limits independently.

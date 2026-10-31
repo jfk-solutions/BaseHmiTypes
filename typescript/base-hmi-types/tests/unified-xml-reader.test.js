@@ -25,13 +25,13 @@ test("producer version is provenance under the shared format", async () => {
   assert.ok(result.screen.layers[0].items[0] instanceof HmiButton);
 });
 test("event engineering settings survive model edits and export", async () => {
-  const xml = archive('<button name="Run"><event-handlers><button-event-handler event-type="Down"><script  async="True"><global-definition-area-script-code xml:space="preserve">const n = 1;&#xD;\n</global-definition-area-script-code><script-code xml:space="preserve">old();</script-code></script></button-event-handler></event-handlers></button>');
+  const xml = archive('<button name="Run"><event-handlers><button-event-handler event-type="Down"><script u:type="Script" async="True"><global-definition-area-script-code xml:space="preserve">const n = 1;&#xD;\n</global-definition-area-script-code><script-code xml:space="preserve">old();</script-code></script></button-event-handler></event-handlers></button>');
   const { screen } = await reader.convert(xml);
   const action = screen.layers[0].items[0].events[0].action;
   assert.equal(action.async, true); assert.equal(action.globalDefinitionAreaScriptCode, "const n = 1;\r\n");
   action.sourceCode = "changed();\r\n";
   const output = new HmiScreenToUnifiedXmlConverter().convert(screen, "Panel");
-  assert.match(output.xml, /changed/); assert.doesNotMatch(output.xml, /old\(\)/);
+  assert.match(output.xml, /changed/); assert.doesNotMatch(output.xml, /old\(\)/); assert.doesNotMatch(output.xml, /u:type=/);
   const restored = (await reader.convert(output.xml)).screen.layers[0].items[0].events[0].action;
   assert.equal(restored.async, action.async);
   assert.equal(restored.globalDefinitionAreaScriptCode, action.globalDefinitionAreaScriptCode);
