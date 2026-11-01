@@ -17,6 +17,16 @@ namespace BaseHmiTypes.Tests;
 public class HmiUnifiedXmlToScreenConverterTests
 {
     [TestMethod]
+    public void FaceplateInstanceInterfaceValuesReachTheNeutralModel()
+    {
+        const string item = "<faceplate-container name=\"CA11\" contained-type=\"V1.0.0\\Place\"><interface><faceplate-interface u:type=\"FaceplateInterface.String\" property-name=\"PlaceName\" value=\"CA11\"/><faceplate-interface u:type=\"FaceplateInterface.Int64\" property-name=\"DbNumber\" value=\"11\"/></interface></faceplate-container>";
+        var converter = new HmiUnifiedXmlToScreenConverter();
+        var container = (HmiFaceplateContainer)converter.Convert(Archive(item)).Screen.Layers[0].Items[0];
+        Assert.AreEqual("CA11", container.InterfaceValues[0].Value);
+        Assert.AreEqual(11L, container.InterfaceValues[1].Value);
+        Assert.Throws<FormatException>(() => converter.Convert(Archive(item.Replace("property-name=\"DbNumber\"", "property-name=\"PlaceName\""))));
+    }
+    [TestMethod]
     public void ProducerVersionDoesNotSelectAnotherFormat()
     {
         var catalog = HmiUnifiedXmlCatalog.Id;

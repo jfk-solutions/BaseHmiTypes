@@ -209,7 +209,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
                     var match = Regex.Match(lexical, @"^V([^\\]+)\\(.+)$");
                     faceplate.FaceplateName = match.Success ? match.Groups[2].Value : lexical;
                     faceplate.FaceplateVersion = match.Success ? match.Groups[1].Value : null;
-                    Report(path, "Faceplate library definition is external; preview uses a placeholder."); continue;
+                    Report(path, "Faceplate library definition requires an external project resource."); continue;
                 }
                 if (!Visual(model, name, value, path + "." + name) && (!Names.TryGetValue(name, out var target) || !Assign(model, target, value)))
                     Report(path + "." + name, "Field retained in SourceProperties; no neutral-model mapping.");
@@ -302,6 +302,20 @@ public sealed class HmiUnifiedXmlToScreenConverter
                 }
                 property.SetValue(model, wrapper);
                 Report(path + ".Dynamizations." + name, "Script and tag triggers mapped; other engineering settings remain in SourceData.");
+            }
+            if (model is HmiFaceplateContainer container)
+            {
+                var supplied = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var entry in node.Elements(N + "interface").Elements(N + "faceplate-interface"))
+                {
+                    var entryContract = Contract(entry);
+                    var name = (string?)entry.Attribute("property-name");
+                    if (string.IsNullOrWhiteSpace(name) || !supplied.Add(name)) throw new FormatException("Missing or duplicate faceplate interface property name.");
+                    var property = entryContract.Elements(U + "property").SingleOrDefault(property => (string?)property.Attribute("name") == "Value");
+                    var lexical = (string?)entry.Attribute("value") ?? property?.Element(U + "default")?.Value;
+                    if (property == null || lexical == null) throw new FormatException("Missing faceplate interface value.");
+                    container.InterfaceValues.Add(new HmiFaceplateInterfaceValue { Name = name, Value = Decode(lexical, property.Element(U + "value")!) });
+                }
             }
             foreach (var attribute in node.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != U + "id" && a.Name != U + "type" && a.Name != U + "operation"))
                 if (attribute.Name.Namespace != XNamespace.None || !allowed.Contains(attribute.Name.LocalName)) Report(path + ".@" + attribute.Name, "Unknown attribute retained in SourceData.");

@@ -204,7 +204,7 @@ class Context {
       if (name === "ContainedType" && model instanceof HmiFaceplateContainer) {
         const match = /^V([^\\]+)\\(.+)$/.exec(lexical);
         model.faceplateName = match?.[2] ?? lexical; model.faceplateVersion = match?.[1];
-        this.report(path, "Faceplate library definition is external; preview uses a placeholder.");
+        this.report(path, "Faceplate library definition requires an external project resource.");
         continue;
       }
       if (!this.visual(model, name, value, `${path}.${name}`) && (!names[name] || !assign(model, names[name], value))) this.report(`${path}.${name}`, "Field retained in sourceProperties; no neutral-model mapping.");
@@ -231,6 +231,19 @@ class Context {
         const textNode = explicit[0] ?? (defaults ? children(defaults)[0] : attr(member,"default-type") ? node.ownerDocument!.createElementNS(n,alias) : undefined);
         const target = name[0].toLowerCase() + name.slice(1);
         if (textNode && !assign(model, target, this.readText(textNode, `${path}.${name}`))) this.report(`${path}.${name}`, "Text has no neutral-model property.");
+      }
+    }
+    if (model instanceof HmiFaceplateContainer) {
+      const supplied = new Set<string>();
+      for (const wrapper of elements(node, n, "interface")) for (const entry of elements(wrapper, n, "faceplate-interface")) {
+        const contract = this.contract(entry), name = attr(entry, "property-name");
+        if (!name?.trim() || supplied.has(name)) throw new Error("Missing or duplicate faceplate interface property name.");
+        supplied.add(name);
+        const property = elements(contract, u, "property").find(property => attr(property, "name") === "Value");
+        if (!property) throw new Error("Missing faceplate interface value contract.");
+        const lexical = attr(entry, "value") ?? text(elements(property, u, "default")[0]);
+        if (lexical === undefined) throw new Error("Missing faceplate interface value.");
+        model.interfaceValues.push({ name, value: decode(lexical, elements(property, u, "value")[0]) });
       }
     }
     for (const attribute of Array.from(node.attributes))

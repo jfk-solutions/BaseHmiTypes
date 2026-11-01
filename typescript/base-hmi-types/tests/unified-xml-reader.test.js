@@ -41,6 +41,13 @@ function archive(items = "") {
   return `<unified-export xmlns="${HmiScreenToUnifiedXmlConverter.namespace}" xmlns:u="${HmiScreenToUnifiedXmlConverter.contractNamespace}" version="2" apiVersion="21.0.0.0"><screen name="Main" width="800" height="480">${items}</screen></unified-export>`;
 }
 
+test("faceplate instance interface values reach the neutral model", async () => {
+  const item = '<faceplate-container name="CA11" contained-type="V1.0.0\\Place"><interface><faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceName" value="CA11"/><faceplate-interface u:type="FaceplateInterface.Int64" property-name="DbNumber" value="11"/></interface></faceplate-container>';
+  const container = (await reader.convert(archive(item))).screen.layers[0].items[0];
+  assert.deepEqual(container.interfaceValues, [{ name: "PlaceName", value: "CA11" }, { name: "DbNumber", value: 11n }]);
+  await assert.rejects(() => reader.convert(archive(item.replace('property-name="DbNumber"', 'property-name="PlaceName"'))), /duplicate faceplate interface/);
+});
+
 test("localized display names and every Unified font weight are editable model values", async () => {
   for (const [weight, numeric] of [["Light", 300], ["SemiBold", 600], ["None", 0]]) {
     const { screen } = await reader.convert(archive(`<display-name><multilingual-text-item lang="de-DE" text="Start"/></display-name><button name="Run" font-family="TimesNewRoman" font-weight="${weight}"/>`));
