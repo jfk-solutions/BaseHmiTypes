@@ -27,7 +27,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
 {
     private static readonly XNamespace N = HmiScreenToUnifiedXmlConverter.Namespace;
     private static readonly XNamespace U = HmiScreenToUnifiedXmlConverter.ContractNamespace;
-    private readonly Dictionary<string, XElement> catalogs = new(StringComparer.Ordinal);
+    private XElement? catalog;
     private static readonly Dictionary<string, string> Names = new(StringComparer.Ordinal)
     {
         ["AcceptOnDeactivated"] = "AcceptOnDeactivated", ["AllowColumnReorder"] = "AllowColumnReorder", ["AllowColumnResize"] = "AllowColumnResize", ["AllowFilter"] = "AllowFilter", ["AllowSort"] = "AllowSort", ["AlternateLineColor"] = "AlternateLineColor", ["AutoPlay"] = "AutoPlay", ["AutoRange"] = "AutoRange", ["BeginValue"] = "BeginValue", ["CaptionColor"] = "CaptionColor", ["ClearOnActivate"] = "ClearOnActivate", ["Color"] = "Color", ["DialLabelColor"] = "DialLabelColor", ["DivisionCount"] = "DivisionCount", ["EndValue"] = "EndValue", ["Filter"] = "Filter", ["FlashingColor"] = "FlashingColor", ["GridLineColor"] = "GridLineColor", ["HiddenInput"] = "HiddenInput", ["HideDetails"] = "HideDetails", ["HomeUrl"] = "HomeUrl", ["InteractiveZooming"] = "InteractiveZooming", ["IsAlternateState"] = "IsAlternateState", ["IsFlashingRequired"] = "IsFlashingRequired", ["Italic"] = "Italic", ["LabelColor"] = "LabelColor", ["LineColor"] = "LineColor", ["MarkerColor"] = "MarkerColor", ["MaximumWidth"] = "MaximumWidth", ["MinimumWidth"] = "MinimumWidth", ["OriginValue"] = "OriginValue", ["ScreenName"] = "ScreenName", ["SelectFullRow"] = "SelectFullRow", ["SelectionBorderColor"] = "SelectionBorderColor", ["ShowDate"] = "ShowDate", ["ShowHours"] = "ShowHours", ["ShowMinutes"] = "ShowMinutes", ["ShowSeconds"] = "ShowSeconds", ["ShowValue"] = "ShowValue", ["Source"] = "Source", ["SubDivisionCount"] = "SubDivisionCount", ["SuppressFlashing"] = "SuppressFlashing", ["TabIntoWindow"] = "TabIntoWindow", ["TickColor"] = "TickColor", ["UncertainColor"] = "UncertainColor", ["Underline"] = "Underline", ["Url"] = "Url", ["UseAlarmColors"] = "UseAlarmColors", ["Value"] = "Value",
@@ -51,9 +51,9 @@ public sealed class HmiUnifiedXmlToScreenConverter
     public HmiUnifiedXmlToScreenConverter(string? catalogXml = null)
     {
         if (catalogXml == null) return;
-        var catalog = Parse(catalogXml);
+        catalog = Parse(catalogXml);
         if (catalog.Name != U + "catalog" || catalog.Attribute("id") == null) throw new FormatException("Invalid Unified catalog.");
-        catalogs.Add((string)catalog.Attribute("id")!, catalog);
+
     }
 
     private static XElement Parse(string xml)
@@ -101,13 +101,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
         var source = root.Elements().Single();
         if (string.IsNullOrWhiteSpace((string?)source.Attribute("name")) || (string?)source.Attribute("name") != (string?)root.Attribute("screen"))
             throw new FormatException("Archive and screen names must agree.");
-        var catalogId = (string?)root.Attribute("catalog") ?? "";
-        if (!catalogs.TryGetValue(catalogId, out var catalog))
-        {
-            using var stream = HmiUnifiedXmlCatalog.Open(catalogId); catalog = XDocument.Load(stream).Root!;
-            if (catalog.Name != U + "catalog" || (string?)catalog.Attribute("id") != catalogId) throw new FormatException("Catalog ID mismatch.");
-            catalogs.Add(catalogId, catalog);
-        }
+        catalog ??= Parse(HmiUnifiedXmlCatalog.Read());
         var context = new Context(catalog);
         var ids = new Dictionary<string, XElement>(StringComparer.Ordinal);
         foreach (var node in root.Descendants())
@@ -167,7 +161,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
         private static readonly Dictionary<string, Type> ControlTypes = typeof(HmiScreenItemBase).Assembly.GetTypes().Where(t => !t.IsAbstract && typeof(HmiScreenItemBase).IsAssignableFrom(t) && t.GetConstructor(Type.EmptyTypes) != null).ToDictionary(t => t.Name, StringComparer.Ordinal);
         public Type? ControlType(XElement node)
         {
-            if (node.Name.Namespace != N || !HasContract(node)) return null;
+            if (node.Name.Namespace != N || node.Ancestors(N + "multilingual-text-item").Any() || !HasContract(node)) return null;
             var name = ((string?)Contract(node).Attribute("name"))?.Split('.').Last();
             if (name == "HmiTextBox") return typeof(HmiText);
             if (name == "HmiSwitch") name = "HmiToggleSwitch";
@@ -442,14 +436,14 @@ public sealed class HmiUnifiedXmlToScreenConverter
                 if (child.Name != N + "multilingual-text-item") { Report(path, "Unsupported text member retained in SourceData."); continue; }
                 Contract(child);
                 foreach (var attribute in child.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != U + "id" && a.Name != U + "type" && a.Name != U + "operation"))
-                    if (attribute.Name != "lang" && attribute.Name != "text") Report(path + ".@" + attribute.Name, "Unknown localized-text attribute retained in SourceData.");
+                    if (attribute.Name != "lang" && attribute.Name != "text" && !HmiUnifiedXmlText.IsPayloadAttribute(attribute)) Report(path + ".@" + attribute.Name, "Unknown localized-text attribute retained in SourceData.");
                 var lang = (string?)child.Attribute("lang") ?? throw new FormatException("Missing text language.");
                 CultureInfo culture;
                 try { culture = CultureInfo.GetCultureInfo(lang); }
                 catch (CultureNotFoundException) { Report(path, "Unsupported language retained in SourceData: " + lang); continue; }
                 if (culture.LCID == 4096) { Report(path, "Language has no stable culture LCID; retained in SourceData: " + lang); continue; }
                 if (result.Texts.ContainsKey(culture.LCID)) throw new FormatException("Duplicate text language.");
-                var text = (string?)child.Attribute("text") ?? Contract(child).Elements(U + "property").Single(p => (string?)p.Attribute("name") == "Text").Element(U + "default")?.Value ?? throw new FormatException("Missing localized text.");
+                var text = HmiUnifiedXmlText.Read(child);
                 result.Texts.Add(culture.LCID, text);
                 // Retain the exact serialized text while allowing the HTML converter to recognize markup.
                 if (text.StartsWith("<body", StringComparison.Ordinal)) result.FormattedTexts.Add(culture.LCID, text);
@@ -459,10 +453,10 @@ public sealed class HmiUnifiedXmlToScreenConverter
 
         private static string ReadCode(XElement node)
         {
-            if (!node.HasElements) return node.Value;
+            if (!node.HasElements) return HmiUnifiedXmlScriptText.ToNative(node.Value);
             var value = node.Element(U + "Value");
             if (node.Elements().Count() != 1 || value == null || value.HasElements || (string?)value.Attribute("kind") != "scalar" || (string?)value.Attribute("type") != "System.String") throw new FormatException("Unsupported script payload.");
-            if ((string?)value.Attribute("encoding") == "text") return value.Value;
+            if ((string?)value.Attribute("encoding") == "text") return HmiUnifiedXmlScriptText.ToNative(value.Value);
             if ((string?)value.Attribute("encoding") != "utf16le-base64") throw new FormatException("Unsupported script string encoding.");
             var bytes = System.Convert.FromBase64String(value.Value);
             if (bytes.Length % 2 != 0) throw new FormatException("Invalid UTF-16 script payload.");

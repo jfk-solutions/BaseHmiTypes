@@ -35,3 +35,5 @@ The runtime evaluates preserved range/bitmask mappings and text/graphic resource
 
 
 The XML grammar/model are shared across producer API versions. Parsing a known contract under another well-formed API-version label does not establish a native adapter for that release. The single shared catalog declares stable format defaults; native adapter capability/version handling remains separate.
+
+Multilingual XML stores direct formatting content without body or redundant unstyled paragraph wrappers. Empty formatted entries preserve their language; plain empty values remain explicit. The C#/TypeScript and transfer codecs preserve styled/multiple paragraphs, body attributes, mixed content and whitespace. Readable script bodies/global definitions use xml:space="preserve", LF in XML and CRLF in engineering strings; encoded code-unit payloads remain explicit.

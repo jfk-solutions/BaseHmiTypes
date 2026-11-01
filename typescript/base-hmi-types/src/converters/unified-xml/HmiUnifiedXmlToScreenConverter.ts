@@ -1,3 +1,4 @@
+import { readUnifiedText, isFormattedTextAttribute } from "./HmiUnifiedXmlText.js";
 import { HmiMediaControl } from "../../screens/controls/HmiMediaControl.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
@@ -69,7 +70,7 @@ function parse(xml: string): Element {
 
 /** Reads XML v2 screen archives with native browser XML and compression APIs. */
 export class HmiUnifiedXmlToScreenConverter {
-  private catalog?: { id: string; root: Element };
+  private catalog?: Element;
   /** Supply catalog XML to avoid fetching the packaged gzip asset. */
   constructor(private readonly catalogXml?: string) {}
 
@@ -118,11 +119,9 @@ export class HmiUnifiedXmlToScreenConverter {
     }
     for (const ref of all.filter(e => e.namespaceURI === u && e.localName === "ref"))
       if (!ids.has(attr(ref, "ref") ?? "")) throw new Error("Dangling object reference.");
-    const catalogId = attr(root, "catalog") ?? "";
-    const catalog = this.catalog?.id === catalogId ? this.catalog.root : parse(this.catalogXml ?? await HmiUnifiedXmlCatalog.load(catalogId));
-    if (catalog.namespaceURI !== u || catalog.localName !== "catalog" || attr(catalog, "id") !== catalogId)
-      throw new Error("Catalog ID mismatch.");
-    this.catalog = { id: catalogId, root: catalog };
+    const catalog = this.catalog ?? parse(this.catalogXml ?? await HmiUnifiedXmlCatalog.load());
+    if (catalog.namespaceURI !== u || catalog.localName !== "catalog") throw new Error("Invalid Unified catalog.");
+    this.catalog = catalog;
     const context = new Context(catalog);
     const screen = new HmiScreen(); const apiVersion=attr(root,"apiVersion"); if(apiVersion!==undefined)screen.engineeringApiVersion=apiVersion; screen.sourceFormat = "WinCCUnifiedXmlV2"; screen.sourceData = new TextEncoder().encode(xml);
     context.map(source, screen, "screen");
@@ -167,6 +166,8 @@ class Context {
   }
   report(path: string, message: string): void { this.diagnostics.push({ path, message }); }
   controlType(node:Element): (new()=>HmiScreenItemBase)|undefined {
+    for(let parent=node.parentNode;parent;parent=parent.parentNode)
+      if(parent.nodeType===1&&(parent as Element).namespaceURI===n&&(parent as Element).localName==='multilingual-text-item')return undefined;
     if(node.namespaceURI!==n||!this.hasContract(node))return undefined;
     const name=attr(this.contract(node),"name")?.split('.').at(-1);
     if(name==='HmiTextBox')return HmiText;
@@ -396,9 +397,9 @@ class Context {
       this.contract(child);
       for (const attribute of Array.from(child.attributes))
         if (attribute.namespaceURI !== "http://www.w3.org/2000/xmlns/" && !(attribute.namespaceURI === u && ["id", "type", "operation"].includes(attribute.localName)) &&
-          (attribute.namespaceURI || !["lang", "text"].includes(attribute.localName))) this.report(`${path}.@${attribute.name}`, "Unknown localized-text attribute retained in sourceData.");
-      const language = attr(child, "lang"), value = attr(child, "text") ?? text(elements(elements(this.contract(child),u,"property").find(p=>attr(p,"name")==="Text")!,u,"default")[0]);
-      if (language === undefined || value === undefined) throw new Error("Missing text language or payload.");
+          (attribute.namespaceURI || !["lang", "text"].includes(attribute.localName)) && !isFormattedTextAttribute(attribute)) this.report(`${path}.@${attribute.name}`, "Unknown localized-text attribute retained in sourceData.");
+      const language = attr(child, "lang"), value = readUnifiedText(child);
+      if (language === undefined) throw new Error("Missing text language.");
       const lcid = cultureId(language);
       if (lcid === undefined) { this.report(path, `Unsupported language ${language}; retained in sourceData.`); continue; }
       if (result.texts.has(lcid)) throw new Error("Duplicate text language.");
@@ -408,10 +409,10 @@ class Context {
   }
 }
 function readCode(node: Element): string {
-  if (!children(node).length) return text(node) ?? "";
+  if (!children(node).length) return (text(node) ?? "").replace(/\r\n|\r/g,"\n").replaceAll("\n","\r\n");
   const value = elements(node, u, "Value")[0];
   if (children(node).length !== 1 || !value || children(value).length || attr(value, "kind") !== "scalar" || attr(value, "type") !== "System.String") throw new Error("Unsupported script payload.");
-  if (attr(value, "encoding") === "text") return text(value) ?? "";
+  if (attr(value, "encoding") === "text") return (text(value) ?? "").replace(/\r\n|\r/g,"\n").replaceAll("\n","\r\n");
   if (attr(value, "encoding") !== "utf16le-base64") throw new Error("Unsupported script string encoding.");
   const bytes = atob(text(value) ?? "");
   if (bytes.length % 2) throw new Error("Invalid UTF-16 script payload.");

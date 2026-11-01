@@ -1,3 +1,4 @@
+import { writeUnifiedText } from "./HmiUnifiedXmlText.js";
 import { HmiMediaControl } from "../../screens/controls/HmiMediaControl.js";
 import { HmiLayoutContainerBase } from "../../screens/base/HmiLayoutContainerBase.js";
 import { HmiContainerBase } from "../../screens/base/HmiContainerBase.js";
@@ -44,7 +45,7 @@ export class HmiUnifiedXmlModelWriter {
         if(screen.kind !== "Screen") this.report("screen.kind", "Screen kind has no Unified XML mapping.");
         const doc = this.catalog.ownerDocument!.implementation.createDocument(n, "unified-export", null), root = doc.documentElement;
         root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:u", u);
-        for (const [key, value] of Object.entries({ version: "2", catalog: attr(this.catalog, "id")!, ...(screen.engineeringApiVersion === undefined ? {} : {apiVersion: screen.engineeringApiVersion}), device, scope: "screen", screen: screen.name!, coverage: "exposed-openness-graph", complete: "false" }))
+        for (const [key, value] of Object.entries({ version: "2", ...(screen.engineeringApiVersion === undefined ? {} : {apiVersion: screen.engineeringApiVersion}), device, scope: "screen", screen: screen.name!, coverage: "exposed-openness-graph", complete: "false" }))
             root.setAttribute(key, value);
         const node = this.write(doc, screen, "screen", "screen");
         if (node)
@@ -77,7 +78,7 @@ export class HmiUnifiedXmlModelWriter {
             if (id && !referenced.has(id)) element.removeAttributeNS(u, 'id');
             if (this.contracts.filter(c => attr(c, 'tag') === element.localName).length === 1) element.removeAttributeNS(u, 'type');
         }
-        return { xml: '<?xml version="1.0" encoding="utf-8"?>\n' + new XMLSerializer().serializeToString(root).replaceAll('\r', '&#xD;').replaceAll('\n', '&#xA;').replaceAll('\t', '&#x9;'), complete: false, diagnostics: this.diagnostics };
+        return { xml: '<?xml version="1.0" encoding="utf-8"?>\n' + prettyXml(root), complete: false, diagnostics: this.diagnostics };
     }
     private select(model: object, tag: string, path: string): Element | undefined {
         const candidates = this.contracts.filter(c => attr(c, "tag") === tag);
@@ -146,12 +147,15 @@ export class HmiUnifiedXmlModelWriter {
                 const scalarType = attr(template, 'type');
                 if ((scalarType?.endsWith('.HmiFontFamily') || scalarType?.endsWith('.HmiFontName')) && typeof value === 'string' && !['Arial', 'Siemens Sans', 'SiemensSans', 'Times New Roman', 'TimesNewRoman', 'SimSun'].includes(value))
                     this.report(path + '.' + name, 'The selected SDK font contract projects this native family to Arial; the model retains the native name.');
-                const lexical = this.scalar(value, template);
-                if ((name !== "Name" || !(model instanceof HmiScreenBase) && !(model instanceof HmiScreenItemBase)) && entries(p, "default")[0]?.textContent === lexical) continue;
+                let lexical = this.scalar(value, template);
+                if(name === "ScriptCode" || name === "GlobalDefinitionAreaScriptCode")lexical=lexical.replace(/\r\n|\r/g,"\n");
+                if(tag === "multilingual-text-item" && name === "Text") { writeUnifiedText(node, lexical); continue; }
+                if (name !== "ScriptCode" && (name !== "Name" || !(model instanceof HmiScreenBase) && !(model instanceof HmiScreenItemBase)) && entries(p, "default")[0]?.textContent === lexical) continue;
                 if (attr(p, "inline") === "true")
                     node.setAttribute(alias, lexical);
                 else {
                     const child = doc.createElementNS(n, alias);
+                    if(name === "ScriptCode" || name === "GlobalDefinitionAreaScriptCode")child.setAttributeNS("http://www.w3.org/XML/1998/namespace","xml:space","preserve");
                     child.textContent = lexical;
                     node.appendChild(child);
                 }
@@ -371,4 +375,37 @@ function get(model: object, name: string): unknown {
     }
     const key = aliases[name] ?? lower(name);
     return rec(model)[lower(name)] ?? rec(model)[key] ?? rec(model)[name];
+}
+
+/** Indent structural XML without adding whitespace to text, script, or mixed content. */
+function prettyXml(root: Element): string {
+    const copy = root.cloneNode(true) as Element;
+    function indent(node: Element, depth: number, preserve = false): void {
+        const space = node.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'space');
+        preserve = space === 'preserve' || preserve && space !== 'default';
+        const nodes = Array.from(node.childNodes);
+        const elements = nodes.filter((child): child is Element => child.nodeType === 1);
+        if (node.namespaceURI === n && node.localName === 'multilingual-text-item' || preserve || !elements.length || nodes.some(child => child.nodeType !== 1)) return;
+        for (const child of elements) {
+            indent(child, depth + 1, preserve);
+            node.insertBefore(node.ownerDocument!.createTextNode('\n' + '  '.repeat(depth + 1)), child);
+        }
+        node.appendChild(node.ownerDocument!.createTextNode('\n' + '  '.repeat(depth)));
+    }
+    indent(copy, 0);
+    const xml = new XMLSerializer().serializeToString(copy);
+    // Attribute line breaks require entities; text line feeds remain readable.
+    let inTag = false, quote = '', result = '';
+    for (const ch of xml) {
+        if (inTag && quote) {
+            result += ch === '\r' ? '&#xD;' : ch === '\n' ? '&#xA;' : ch === '\t' ? '&#x9;' : ch;
+            if (ch === quote) quote = '';
+        } else {
+            result += ch === '\r' ? '&#xD;' : ch;
+            if (ch === '<') inTag = true;
+            else if (inTag && (ch === '"' || ch === "'")) quote = ch;
+            else if (ch === '>') inTag = false;
+        }
+    }
+    return result;
 }

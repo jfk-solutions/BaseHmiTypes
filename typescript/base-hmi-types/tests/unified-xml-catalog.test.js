@@ -5,7 +5,7 @@ import test from "node:test";
 import { HmiUnifiedXmlCatalog, HmiScreenToUnifiedXmlConverter } from "../dist/index.js";
 
 const bytes = new Uint8Array(await readFile(HmiUnifiedXmlCatalog.url));
-const expectedHash = "5e5239691089763db79965a5de1c24cd8cc5d1c34de13a20dba3d9cad4e6ba27";
+const expectedHash = "5c0b0285e65f47b810886e5ad4856d62ecc0c8a7bc5066aaed36ad76fb1b3404";
 
 test("browser decompression API restores the exact released XML bytes", async () => {
   const xml = await HmiUnifiedXmlCatalog.read(bytes);

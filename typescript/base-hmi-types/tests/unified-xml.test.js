@@ -20,7 +20,7 @@ test("Unified export uses the fixed catalog and declares incomplete coverage", (
   const result = converter.convert(screen, "Panel");
   assert.equal(result.complete, false);
   assert.match(result.xml, /xmlns="urn:s7mcp:wincc-unified:2"/);
-  assert.ok(result.xml.includes(`catalog="${HmiScreenToUnifiedXmlConverter.catalogId}"`));
+  assert.doesNotMatch(result.xml, /\bcatalog=/);
   assert.doesNotMatch(result.xml, /apiVersion=/);
   assert.match(result.xml, /scope="screen" screen="Main"/);
   assert.match(result.xml, /complete="false"/);
@@ -39,7 +39,7 @@ test("preserves item identity, order, unsigned values and Unified booleans", () 
   assert.match(result.xml, /width="4294967295"/);
   assert.match(result.xml, /enabled="False"/);
   assert.match(result.xml, /back-color="#0116FE"/);
-  assert.match(result.xml, /<button.*<text-box.*<u:ref ref="o2"\/>/);
+  assert.match(result.xml, /<button.*<text-box.*<u:ref ref="o2"\/>/s);
 });
 
 test("retains formatted multilingual text, empty text and attribute whitespace", () => {

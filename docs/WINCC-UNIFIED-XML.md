@@ -45,9 +45,9 @@ To export with a released selected catalog, construct `HmiScreenToUnifiedXmlConv
 
 Scalar values are attributes: geometry, colors, flags, references, authorization names and property-event selectors. When a catalog declares an `attribute-map`, unshared scalar-only font, padding and content parts are promoted to prefixed attributes on their owner, for example `font-family="Arial"`, `font-size="14"` and `padding-left="4"`. A part with a binding, owned content or a shared identity remains an element. Ordered collections, localized text and multiline script bodies remain child elements; they are semantic data, not generic property/value wrappers.
 
-Writers omit scalar values equal to the selected immutable catalog defaults and multilingual singleton parts equal to their complete catalog template. They omit IDs with no references and type selectors when the tag has one contract. Shared-object references and ambiguous typed contracts retain their selectors. This compaction must reproduce the same full engineering graph when expanded; a small document must not discard settings. Catalog IDs identify shared format defaults, not source-screen XML. Catalog definitions are never embedded in a screen export.
+Writers omit ordinary scalar values equal to the shared format defaults. Language entries remain explicit even when their formatted payload is empty. They omit IDs with no references and type selectors when the tag has one contract. Shared-object references and ambiguous typed contracts retain their selectors. This compaction must reproduce the same full engineering graph when expanded; a small document must not discard settings. The host always supplies the single bundled schema and its stable defaults. Screen exports contain no catalog ID, fingerprint, or embedded schema.
 
-[This generated screen example](examples/compact-model.screen.xml) shows the actual writer output. Its geometry and appearance are attributes, its localized caption contains language/text attributes, and its event script is plain element text. Empty script globals can be necessary to override a nonempty catalog default. The archive's completeness flag describes implementation coverage, independently of compactness.
+[This generated screen example](examples/compact-model.screen.xml) shows the actual writer output. Its geometry and appearance are attributes, its localized captions contain language entries with direct text and HTML children, and its event script is plain element text. Empty script globals can be necessary to override a nonempty catalog default. The archive's completeness flag describes implementation coverage, independently of compactness.
 
 ## Property events and PLC references
 
@@ -57,8 +57,8 @@ Writers omit scalar values equal to the selected immutable catalog defaults and 
 <property-event-handlers>
   <property-event-handler event-type="Change" property-name="Visible">
     <script>
-      <global-definition-area-script-code />
-      <script-code>Tags("Changed").Write(true);</script-code>
+      <global-definition-area-script-code xml:space="preserve"/>
+      <script-code xml:space="preserve">Tags("Changed").Write(true);</script-code>
     </script>
   </property-event-handler>
 </property-event-handlers>
@@ -81,9 +81,9 @@ There is one XML v2 wire format and one semantic model, not a separate XML langu
 | Engineering API version | Identifies the API used by the producer/import adapter and its available features. |
 | Configured HMI/Runtime version | Constrains device capabilities; it is separate from the project file version. |
 | XML format version | Chooses our wire grammar; currently v2. |
-| Catalog ID | Identifies immutable encoding rules and omitted-value defaults. It is not inherently tied to one TIA major version. |
+| Bundled schema checksum | Internal package integrity metadata; never included in a screen document. |
 
-The single definition is [`catalogs/unified/catalog.xml`](../catalogs/unified/catalog.xml). C#, TypeScript, the add-in and S7Mcp use the same descriptor. There are no per-TIA-major catalogs or loaders for superseded exported files. Old IDs are rejected; regenerate exports with the current producer. Native project-version adapters remain necessary and are independent of XML compatibility.
+The single definition is [`catalogs/unified/catalog.xml`](../catalogs/unified/catalog.xml). C#, TypeScript, the add-in and S7Mcp use the same descriptor. There are no per-TIA-major catalogs or loaders for superseded exported files. Exported documents do not select a catalog. Readers use the host's bundled definition; checksums stay inside schema assets and packaging metadata. Native project-version adapters remain necessary and are independent of XML compatibility.
 
 Omitted scalar values use **our stable format defaults**, never the destination TIA defaults or values from a sample project. False, zero and empty strings are the ordinary defaults; Visible/Enabled are true and Opacity is one. Enum defaults are declared explicitly. Text starts with an empty language collection, without captured project cultures. Native adapters must materialize actual Siemens values before export, including inherited/style/default values, so different Siemens defaults cannot silently alter the result.
 
@@ -91,14 +91,64 @@ Omitted scalar values use **our stable format defaults**, never the destination 
 
 ## Wire rules
 
-- Root: `unified-export`, `version="2"`, current `catalog`, `scope="screen"` or `scope="device"`, device/name metadata, `coverage` and `complete`. Screen exports contain one `screen`; device authoring contains `software` with owned screen groups/screens/tag tables.
+- Root: `unified-export`, `version="2"`, `scope="screen"` or `scope="device"`, device/name metadata, `coverage` and `complete`. Screen exports contain one `screen`; device authoring contains `software` with owned screen groups/screens/tag tables.
 - Scalars are attributes with readable kebab-case names. Parts such as font and padding use prefixed owner attributes when they have no nested behavior or shared identity. Parts with dynamics remain children.
 - Booleans are True/False. Numeric values use invariant culture and the declared type range. Colors are #RRGGBB or #RRGGBBAA. Enum values use declared symbolic names. Strings preserve whitespace and XML escaping.
-- Multilingual text uses `text`/`display-name`/`tool-tip-text` with `multilingual-text-item lang="en-GB" text="..."`. Formatted caption markup is escaped text; an omitted text payload means the declared empty-string default. An explicit empty collection stays empty.
+- Multilingual text uses `text`/`display-name`/`tool-tip-text` with `multilingual-text-item lang="en-GB"`. Formatted text uses direct mixed content; omitted content means native `<body><p/></body>`. Plain strings use an explicit `text` attribute, including `text=""`. Language entries are preserved, and an empty collection stays empty.
 - Ordered compositions use child elements. `u:id` is needed only for a referenced object; `u:ref ref="..."` preserves sharing. `u:type` is needed only when a tag has multiple declared typed shapes, such as mapping-table values. Selectors use readable semantic names, such as `MappingTableEntryRange.Color`, `MappingTableEntryBitmask.Boolean` and `FaceplateInterface.String`; opaque numeric aliases such as `t5` are not used. Prefix `u` denotes `urn:s7mcp:wincc-unified:2:contract`.
 - Script bodies and global definitions are child strings. Async state, event/property selectors and trigger settings are editable model values. XML-illegal script code units use an explicit typed UTF-16LE base64 payload; ordinary strings never silently replace illegal code units.
 - Duplicate identities, dangling references, ambiguous selectors, invalid ranges and malformed XML are errors. Unknown semantic fields produce diagnostics; they are not a source-XML export fallback.
-- The catalog contains type roles, typed property encodings, stable defaults, owned members, promoted-attribute maps and creation keys. Its ID is the SHA-256 of the normalized `types` subtree (namespace declarations removed, LINQ-to-XML DisableFormatting, UTF-8 without BOM). The manifest separately checks the whole XML bytes. This is a format fingerprint, not a Siemens version.
+- The catalog contains type roles, typed property encodings, stable defaults, owned members, promoted-attribute maps and creation keys. Its ID is the SHA-256 of the normalized `types` subtree (namespace declarations removed, LINQ-to-XML DisableFormatting, UTF-8 without BOM). The manifest separately checks the whole XML bytes. These checksums are internal integrity metadata. They are not serialized into screen exports, which use the single bundled schema.
+
+## Formatting and script line endings
+
+C# and TypeScript exporters pretty-print structural XML with two-space indentation and LF line breaks. They do not insert indentation into multilingual payloads, including payloads consisting only of formatting elements. Text, tabs, leading/trailing spaces, blank paragraphs and paragraph attributes remain data; they are never trimmed to decide whether a translation is empty.
+
+`script-code` and `global-definition-area-script-code` carry `xml:space="preserve"`. Their readable XML text uses LF. Export converts CRLF and bare CR line endings to LF; import reconstructs CRLF for the engineering script string. Existing CRLF is normalized first, so import never produces doubled carriage returns. Spaces, tabs and blank lines are preserved, including whitespace-only and empty script bodies. JavaScript escape sequences such as the two characters `\n` are not line endings and are not modified. Explicit UTF-16LE base64 payloads retain their code units instead of undergoing text normalization.
+
+```xml
+<script>
+  <script-code xml:space="preserve">
+HMIRuntime.Tags.SysFct.SetBitInTag("LockHeaderLeft", 0);
+Tags("PictureNumber").Write(Screen.ScreenNumber);</script-code>
+</script>
+```
+
+`xml:space` declares meaningful whitespace; it does not disable XML line-ending normalization. The LF/CRLF convention makes repeated `&#xD;` escapes unnecessary in readable scripts. Other text, including multilingual content and attribute values, does not use this script-specific normalization: carriage returns and attribute line breaks are escaped where necessary to preserve their characters.
+
+## Multilingual text and direct HTML
+
+Every translation remains a `multilingual-text-item` with a `lang` attribute. Omitting the formatted payload does **not** omit its language entry. An omitted language, an explicitly empty formatted translation, and an empty plain string are distinct:
+
+```xml
+<text>
+  <multilingual-text-item lang="de-DE"/>
+  <multilingual-text-item lang="en-GB">Start <b>pump</b></multilingual-text-item>
+  <multilingual-text-item lang="en-US" text=""/>
+</text>
+```
+
+The empty German entry reconstructs native `<body><p/></body>`. The English formatted entry reconstructs `<body><p>Start <b>pump</b></p></body>`. The last entry is a plain empty string. `<text/>` contains zero language entries; import does not invent translations or borrow project languages for it. Absence of an entire text property uses the declared empty collection default.
+
+Formatted payload is mixed XML content directly inside the language entry. There is no escaped HTML attribute, outer `body` element, extra HTML namespace, or `xmlns` reset. Formatting tags inherit the format namespace. The codec treats all descendants of a multilingual entry as formatting data, even when a tag name matches an engineering control; they never create screen controls or execute scripts. HTML formatting element names are not restricted to the engineering control catalog. Attributes and mixed text remain ordered data. Literal/plain strings use `text="..."`, including literal angle brackets escaped as ordinary XML attribute content. Strings that merely resemble invalid body markup remain literal strings.
+
+The public XML must be well-formed: close void elements such as `br` as `<br/>` and escape literal ampersands. On import, the codec converts formatting elements back to unqualified native markup and restores the native wrapper. Quotes, entity spelling, and empty-tag spacing may be canonicalized; character data, attribute values, whitespace and formatting structure are preserved. The model stores editable multilingual values; export never falls back to an original screen document.
+
+### Omitting the redundant paragraph
+
+The native outer `body` is implicit. A sole outer `p` is also implicit **only when it has no attributes and is the body's only node**. Its child text and inline formatting are lifted directly into the language entry. Multiple paragraphs, styled paragraphs, and whitespace outside a paragraph stay explicit:
+
+```xml
+<multilingual-text-item lang="de-DE"><p style="text-align:center">Centered</p><p>Second paragraph</p></multilingual-text-item>
+```
+
+Do not collapse styled empty paragraphs, spaces, line breaks, or multiple empty paragraphs into an empty translation. Only the canonical unstyled empty paragraph has the omitted-payload meaning.
+
+With no paragraph flag, a top-level block element means that paragraphs remain explicit; otherwise import supplies the implicit single paragraph. Block detection is case-insensitive for `p`, `div`, `ul`, `ol`, `li`, `dl`, `dt`, `dd`, `table`, `thead`, `tbody`, `tfoot`, `tr`, `td`, `th`, `h1` through `h6`, `pre`, `blockquote`, `hr`, `section`, `article`, `header`, `footer`, `main`, `aside`, `nav`, `address`, `figure`, `figcaption`, `form`, `fieldset`, `details`, `summary`, `menu` and `center`. This list controls only wrapper inference; it is not a restriction on formatting tag names.
+
+Most entries need no wrapper metadata. For unusual native values, `paragraph="False"` preserves inline/empty body content that originally had no paragraph; `paragraph="True"` preserves an implicit paragraph when top-level block content would otherwise imply explicit paragraph structure. Native body attributes are retained only when present, as `body-style`, `body-dir`, `body-lang`, and analogous `body-*` attributes. Native `xml:*` body attributes retain their XML-qualified names. These attributes are restored onto the native body, not onto an invented paragraph.
+
+Plain `text` attributes cannot be combined with formatted child content or wrapper metadata. Invalid paragraph flags and foreign formatting namespaces are rejected. XML namespace declarations are not part of ordinary multilingual payloads. These rules are the same in C#, TypeScript, and the transfer adapter.
 
 ## Readable type selectors
 
@@ -106,7 +156,7 @@ The element name identifies an ordinary object, so a script needs no type attrib
 
 ```xml
 <script>
-  <script-code>Tags("Start").Write(true);</script-code>
+  <script-code xml:space="preserve">Tags("Start").Write(true);</script-code>
 </script>
 ```
 
@@ -117,6 +167,6 @@ A faceplate interface can contain different value types even when their serializ
 <faceplate-interface u:type="FaceplateInterface.String" property-name="Caption" value="42"/>
 ```
 
-The first value is an integer and the second is a string. Their readable selectors preserve that distinction. C# and TypeScript emit no selector for a tag with one declared contract; a selector is required for a tag with multiple variants. Readers reject a missing, unknown or incompatible selector on an ambiguous tag. Declared contract IDs and internal part references use the same semantic names. A schema change updates the catalog fingerprint; superseded numeric aliases are not retained.
+The first value is an integer and the second is a string. Their readable selectors preserve that distinction. C# and TypeScript emit no selector for a tag with one declared contract; a selector is required for a tag with multiple variants. Readers reject a missing, unknown or incompatible selector on an ambiguous tag. Declared contract IDs and internal part references use the same semantic names. Internal schema checksums may change when the bundled definition changes; screen XML carries no such fingerprint. Superseded numeric type aliases are not retained.
 
 See the [generated compact example](examples/compact-model.screen.xml). The descriptor is the authoritative field-level reference; [coverage](UNIFIED-XML-COVERAGE.md) records implementation limits independently.

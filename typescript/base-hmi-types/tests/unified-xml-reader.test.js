@@ -4,7 +4,7 @@ import test from "node:test";
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import {
   HmiUnifiedXmlToScreenConverter, HmiScreenToUnifiedXmlConverter, HmiUnifiedXmlCatalog,
-  HmiScreen, HmiButton, HmiGraphicView, HmiText, HmiScreenToHtmlConverter, HmiLayer, HmiFont, HmiThickness, HmiMultilingualText, staticProperty,
+  HmiScreen, HmiButton, HmiGraphicView, HmiText, HmiScreenToHtmlConverter, HmiLayer, HmiEventBinding, HmiTextScriptAction, HmiScriptLanguage, HmiFont, HmiThickness, HmiMultilingualText, staticProperty,
 } from "../dist/index.js";
 
 // Test-only DOM implementation. Production browser modules use the native globals.
@@ -38,7 +38,7 @@ test("event engineering settings survive model edits and export", async () => {
   assert.equal(restored.sourceCode, action.sourceCode);
 });
 function archive(items = "", complete = "false") {
-  return `<unified-export xmlns="${HmiScreenToUnifiedXmlConverter.namespace}" xmlns:u="${HmiScreenToUnifiedXmlConverter.contractNamespace}" version="2" catalog="${HmiScreenToUnifiedXmlConverter.catalogId}" scope="screen" screen="Main" apiVersion="21.0.0.0" complete="${complete}"><screen name="Main" width="800" height="480">${items}</screen></unified-export>`;
+  return `<unified-export xmlns="${HmiScreenToUnifiedXmlConverter.namespace}" xmlns:u="${HmiScreenToUnifiedXmlConverter.contractNamespace}" version="2" scope="screen" screen="Main" apiVersion="21.0.0.0" complete="${complete}"><screen name="Main" width="800" height="480">${items}</screen></unified-export>`;
 }
 
 test("localized display names and every Unified font weight are editable model values", async () => {
@@ -148,7 +148,7 @@ test("unsupported fields, controls and members are diagnosed and retained", asyn
 
 test("reader rejects unsupported profiles, malformed XML and DTDs", async () => {
   await assert.rejects(reader.convert(archive().replace('scope="screen"', 'scope="device"')));
-  await assert.rejects(reader.convert(archive().replace(HmiScreenToUnifiedXmlConverter.catalogId, "0".repeat(64))));
+  await assert.rejects(reader.convert(archive().replace('version="2"', 'version="99"')));
   await assert.rejects(reader.convert("<bad>"));
   await assert.rejects(reader.convert("<!DOCTYPE x>" + archive()));
 });
@@ -222,4 +222,22 @@ test('known wire contracts do not depend on the producer API version label',asyn
   assert.equal(result.screen.layers[0].items[0].name,'Run');
  }
  await assert.rejects(reader.convert(archive().replace('apiVersion="21.0.0.0"','apiVersion="unknown"')));
+});
+
+test("pretty printing uses the bundled schema and preserves payload whitespace", async () => {
+  const globals=" \t\r\n",caption="\n caption \t\r\n",device="Panel\t\nName";
+  for(const code of ["\n  const value = \"a > b < c\";\n\treturn value;\r\n"," \t\r\n",""]){
+    const screen=Object.assign(new HmiScreen(),{name:"Main",displayName:HmiMultilingualText.fromText(caption,1031)});
+    screen.events.push(Object.assign(new HmiEventBinding(),{eventName:"Loaded",action:Object.assign(new HmiTextScriptAction(),{
+      language:HmiScriptLanguage.JavaScript,sourceCode:code,globalDefinitionAreaScriptCode:globals})}));
+    const output=new HmiScreenToUnifiedXmlConverter().convert(screen,device).xml;
+    const root=new DOMParser().parseFromString(output,"application/xml").documentElement;
+    assert.equal(root.hasAttribute("catalog"),false);assert.equal(root.getAttribute("device"),device);
+    assert.equal(root.getElementsByTagNameNS(HmiScreenToUnifiedXmlConverter.namespace,"script-code")[0].getAttributeNS("http://www.w3.org/XML/1998/namespace","space"),"preserve");
+    assert.match(output,/\n[ \t]+<screen\b/);
+    const restored=(await new HmiUnifiedXmlToScreenConverter().convert(output)).screen,action=restored.events[0].action;
+    assert.equal(action.sourceCode,code.replace(/\r\n|\r/g,"\n").replaceAll("\n","\r\n"));assert.equal(action.globalDefinitionAreaScriptCode,globals);
+    assert.doesNotMatch(new XMLSerializer().serializeToString(root.getElementsByTagNameNS(HmiScreenToUnifiedXmlConverter.namespace,"script-code")[0]),/&#(?:xD|13);/);
+    assert.equal(restored.displayName.texts.get(1031),caption);
+  }
 });

@@ -46,7 +46,7 @@ test('IO controls and exact tag/resource engineering settings survive edits with
 
 test('selected V21 contracts preserve script settings and text whitespace without source data',async()=>{
  const v21=await HmiUnifiedXmlCatalog.read(new Uint8Array(await readFile(HmiUnifiedXmlCatalog.url)));
- const xml=`<unified-export xmlns="urn:s7mcp:wincc-unified:2" xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2" catalog="${HmiScreenToUnifiedXmlConverter.catalogId}" apiVersion="21.0.0.0" scope="screen" screen="Main" complete="false"><screen name="Main"><button name="Run"><dynamizations><script-dynamization property-name="Visible" async="True"><script-code>return true;&#xD;\n</script-code><trigger type="AutomaticTags" custom-duration=""><tag name=""/></trigger></script-dynamization></dynamizations></button></screen></unified-export>`;
+ const xml=`<unified-export xmlns="urn:s7mcp:wincc-unified:2" xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2" apiVersion="21.0.0.0" scope="screen" screen="Main" complete="false"><screen name="Main"><button name="Run"><dynamizations><script-dynamization property-name="Visible" async="True"><script-code>return true;&#xD;\n</script-code><trigger type="AutomaticTags" custom-duration=""><tag name=""/></trigger></script-dynamization></dynamizations></button></screen></unified-export>`;
  const reader=new HmiUnifiedXmlToScreenConverter(v21),{screen}=await reader.convert(xml),original=screen.layers[0].items[0].visible;
  screen.sourceData=undefined;screen.layers[0].items[0].sourceData=undefined;
  const result=new HmiScreenToUnifiedXmlConverter(v21).convert(screen,'Panel');

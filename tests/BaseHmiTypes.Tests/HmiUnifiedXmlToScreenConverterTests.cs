@@ -1,5 +1,6 @@
 using System.Text;
 using System.Xml;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using BaseHmiTypes.Common;
 using BaseHmiTypes.Converters.UnifiedXml;
@@ -46,6 +47,30 @@ public class HmiUnifiedXmlToScreenConverterTests
             Assert.AreEqual(600, restoredButton.Font.Weight!.StaticValue);
         }
     }
+    [TestMethod]
+    public void PrettyPrintingUsesTheBundledSchemaAndPreservesPayloadWhitespace()
+    {
+        const string globals = " \t\r\n";
+        const string caption = "\n caption \t\r\n";
+        const string device = "Panel\t\nName";
+        foreach (var code in new[] { "\n  const value = \"a > b < c\";\n\treturn value;\r\n", " \t\r\n", "" })
+        {
+            var screen = new HmiScreen { Name = "Main", DisplayName = HmiMultilingualText.FromText(caption, 1031) };
+            screen.Events.Add(new HmiEventBinding { EventName = "Loaded", Action = new HmiTextScriptAction {
+                Language = HmiScriptLanguage.JavaScript, SourceCode = code, GlobalDefinitionAreaScriptCode = globals } });
+            var output = new HmiScreenToUnifiedXmlConverter().Convert(screen, device).Xml;
+            var root = XElement.Parse(output);
+            Assert.IsNull(root.Attribute("catalog")); Assert.AreEqual(device, (string?)root.Attribute("device"));
+            Assert.AreEqual("preserve", (string?)root.Descendants(XName.Get("script-code",HmiScreenToUnifiedXmlConverter.Namespace)).Single().Attribute(XNamespace.Xml+"space"));
+            StringAssert.Matches(output, new Regex(@"\n[ \t]+<screen\b"));
+            var restored = new HmiUnifiedXmlToScreenConverter().Convert(output).Screen;
+            var action = (HmiTextScriptAction)restored.Events.Single().Action!;
+            Assert.AreEqual(code.Replace("\r\n","\n").Replace("\r","\n").Replace("\n","\r\n"), action.SourceCode); Assert.AreEqual(globals, action.GlobalDefinitionAreaScriptCode);
+            Assert.IsFalse(root.Descendants(XName.Get("script-code",HmiScreenToUnifiedXmlConverter.Namespace)).Single().ToString().Contains("&#xD;"));
+            Assert.AreEqual(caption, restored.DisplayName!.Texts[1031]);
+        }
+    }
+
     private readonly HmiUnifiedXmlToScreenConverter reader = new();
     [TestMethod]
     public void EventEngineeringSettingsSurviveModelEditsAndExport()
@@ -64,7 +89,7 @@ public class HmiUnifiedXmlToScreenConverterTests
     }
     private static string Archive(string items = "", string screenAttributes = "", string complete = "false") =>
         "<unified-export xmlns=\"" + HmiScreenToUnifiedXmlConverter.Namespace + "\" xmlns:u=\"" + HmiScreenToUnifiedXmlConverter.ContractNamespace +
-        "\" version=\"2\" catalog=\"" + HmiScreenToUnifiedXmlConverter.CatalogId + "\" scope=\"screen\" screen=\"Main\" apiVersion=\"21.0.0.0\" complete=\"" + complete + "\">" +
+        "\" version=\"2\" scope=\"screen\" screen=\"Main\" apiVersion=\"21.0.0.0\" complete=\"" + complete + "\">" +
         "<screen name=\"Main\" width=\"800\" height=\"480\" " + screenAttributes + ">" + items + "</screen></unified-export>";
 
     [TestMethod]
@@ -236,7 +261,7 @@ public class HmiUnifiedXmlToScreenConverterTests
     public void RejectsWrongProfileMalformedXmlAndDtd()
     {
         Assert.ThrowsExactly<NotSupportedException>(() => reader.Convert(Archive().Replace("scope=\"screen\"", "scope=\"device\"")));
-        Assert.ThrowsExactly<NotSupportedException>(() => reader.Convert(Archive().Replace(HmiScreenToUnifiedXmlConverter.CatalogId, new string('0', 64))));
+        Assert.ThrowsExactly<NotSupportedException>(() => reader.Convert(Archive().Replace("version=\"2\"", "version=\"99\"")));
         Assert.ThrowsExactly<XmlException>(() => reader.Convert("<bad>"));
         Assert.ThrowsExactly<XmlException>(() => reader.Convert("<!DOCTYPE x [<!ENTITY test 'x'>]>" + Archive()));
     }

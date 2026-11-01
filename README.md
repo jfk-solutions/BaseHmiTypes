@@ -152,7 +152,7 @@ const result = new HmiScreenToUnifiedXmlConverter().convert(screen, "Panel", 103
 This first writer maps ordinary screens, buttons, text boxes and graphic views;
 it writes static geometry, visibility/enabled state, supported colors, numeric
 appearance properties, font/padding parts and localized text. Formatted text takes
-precedence for the same language and is preserved as an escaped string. Default
+precedence for the same language and is stored as direct mixed HTML content, without redundant body or unstyled paragraph wrappers. Empty formatted translations retain their language entry. Default
 language text requires the explicit LCID argument; TypeScript diagnoses LCIDs
 outside its supported mapping. Layers flatten in collection order with a diagnostic;
 shared item instances use object references. Unsupported screen kinds produce diagnostics while retaining an XML export.
@@ -197,7 +197,7 @@ const screen = result.screen;
 
 The browser reader uses native `DOMParser` and `XMLSerializer`; it has no
 third-party runtime dependency. Without the optional constructor argument, it
-loads the packaged catalog selected by the document through `HmiUnifiedXmlCatalog.load(id)`.
+uses the single bundled schema through `HmiUnifiedXmlCatalog.load()`. Screen XML contains no catalog selector or fingerprint. Both exporters pretty-print structural XML while preserving payload whitespace.
 The DOM library used by automated Node.js tests is a development dependency only.
 
 Both readers also provide `convertScreens(xml)` / `ConvertScreens(xml)`, returning one result for

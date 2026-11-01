@@ -35,7 +35,7 @@ internal sealed class HmiUnifiedXmlModelWriter
         Report("screen", "Engineering model export is not yet certified complete.");
         if (screen.Kind != HmiScreenKind.Screen) Report("screen.kind", "Screen kind has no Unified XML mapping.");
         var root = new XElement(N + "unified-export", new XAttribute(XNamespace.Xmlns + "u", U),
-            new XAttribute("version", "2"), new XAttribute("catalog", (string)catalog.Attribute("id")!),
+            new XAttribute("version", "2"),
             screen.EngineeringApiVersion == null ? null : new XAttribute("apiVersion", screen.EngineeringApiVersion),
             new XAttribute("device", device), new XAttribute("scope", "screen"), new XAttribute("screen", screen.Name!),
             new XAttribute("coverage", "exposed-openness-graph"), new XAttribute("complete", "false"));
@@ -77,7 +77,7 @@ internal sealed class HmiUnifiedXmlModelWriter
             if (contracts.Count(c => (string?)c.Attribute("tag") == element.Name.LocalName) == 1) element.Attribute(U + "type")?.Remove();
         }
         var buffer = new System.Text.StringBuilder();
-        using (var writer = XmlWriter.Create(buffer, new XmlWriterSettings { OmitXmlDeclaration = true, Indent = true, NewLineHandling = NewLineHandling.Entitize })) root.WriteTo(writer);
+        using (var writer = XmlWriter.Create(buffer, new XmlWriterSettings { OmitXmlDeclaration = true, Indent = true, IndentChars = "  ", NewLineChars = "\n", NewLineHandling = NewLineHandling.Entitize })) root.WriteTo(writer);
         return new("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + buffer, diagnostics);
     }
     private XElement? Select(object model, string tag, string path)
@@ -124,9 +124,11 @@ internal sealed class HmiUnifiedXmlModelWriter
                 if (scalarType != null && (scalarType.EndsWith(".HmiFontFamily") || scalarType.EndsWith(".HmiFontName")) && value is string family && !new[] { "Arial", "Siemens Sans", "SiemensSans", "Times New Roman", "TimesNewRoman", "SimSun" }.Contains(family))
                     Report(path + "." + name, "The selected SDK font contract projects this native family to Arial; the model retains the native name.");
                 var lexical = Scalar(value, template);
-                if ((name != "Name" || model is not HmiScreenBase && model is not HmiScreenItemBase) && property.Element(U + "default")?.Value == lexical) continue;
+                if (HmiUnifiedXmlScriptText.IsScript(name)) lexical = HmiUnifiedXmlScriptText.ToXml(lexical);
+                if (tag == "multilingual-text-item" && name == "Text") { HmiUnifiedXmlText.Write(node, lexical); continue; }
+                if (name != "ScriptCode" && (name != "Name" || model is not HmiScreenBase && model is not HmiScreenItemBase) && property.Element(U + "default")?.Value == lexical) continue;
                 if ((string?)property.Attribute("inline") == "true") node.SetAttributeValue(alias, lexical);
-                else node.Add(new XElement(N + alias, lexical));
+                else node.Add(new XElement(N + alias, name is "ScriptCode" or "GlobalDefinitionAreaScriptCode" ? new XAttribute(XNamespace.Xml + "space", "preserve") : null, lexical));
             }
             catch (Exception ex) when (ex is ArgumentException or FormatException or OverflowException or XmlException) { Report(path + "." + name, ex.Message); }
         }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" device="Panel &quot;3&quot; &amp; &lt;North&gt;" apiVersion="21.0.0.0" scope="device" coverage="authored-objects" complete="true" version="2" catalog="a2300046400ebabbcd8caced099f2128857c68b431b48cf7b655da0462b12463" xmlns="urn:s7mcp:wincc-unified:2">
+<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" device="Panel &quot;3&quot; &amp; &lt;North&gt;" apiVersion="21.0.0.0" scope="device" coverage="authored-objects" complete="true" version="2" xmlns="urn:s7mcp:wincc-unified:2">
   <software u:operation="upsert">
     <screen-groups>
       <screen-group name="Plant screens">
@@ -23,14 +23,14 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             </event-handlers>
             <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
             </text-box>
             <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
             </text-box>
             <rectangle name="Rectangle0" width="60" height="32" back-color="#83A6CC" border-color="#181C31" border-width="1" />
@@ -40,8 +40,8 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             <rectangle name="RecRectangle4" width="60" height="32" back-color="#FFEB00" border-color="#181C31" border-width="2" dash-type="Dash" back-fill-pattern="Transparent" />
             <text-box name="TxtRectangle4" width="60" height="32" back-color="#FFFFFF" font-size="16" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Rectangle4&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Rectangle4&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Rectangle4</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Rectangle4</multilingual-text-item>
               </text>
             </text-box>
             <faceplate-container name="Place &quot;A&quot; &amp; &lt;B&gt;" left="80" top="106" width="56" height="38" contained-type="V1.0.0\Place">
@@ -63,8 +63,8 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             </faceplate-container>
             <button name="Button_0" left="650" top="106" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Scale Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Scale Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Scale Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Scale Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -88,8 +88,8 @@ Tags("LockReleaseButton").SetBit(0);</script-code>
             </faceplate-container>
             <button name="Button_2" left="650" top="190" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;CC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;CC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">CC Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">CC Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -104,8 +104,8 @@ Tags("NumberWorkPlaceContourError").Write(123);</script-code>
             </button>
             <button name="Button_3" left="650" top="232" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;VL Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;VL Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">VL Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">VL Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -136,8 +136,8 @@ HMIRuntime.UI.SysFct.ChangeScreen("599 Reference Carrier", Screen.Parent.Path);<
             </button>
             <button name="Button_4" left="650" top="274" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;TC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;TC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">TC Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">TC Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -168,8 +168,8 @@ HMIRuntime.UI.SysFct.ChangeScreen("599 Reference Carrier", Screen.Parent.Path);<
             </button>
             <button name="Button_5" left="650" top="316" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;TT Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;TT Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">TT Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">TT Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -198,14 +198,14 @@ HMIRuntime.UI.SysFct.ChangeScreen("598 Reference Turntable", Screen.Parent.Path)
             </button>
             <button name="BtnPanel_3" width="69" height="47" back-color="#CCFFFF00" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" graphic="UnifiedPanel" alternate-graphic="UnifiedPanel" content-mode="GraphicAndText" content-text-position="InFront" content-graphic-stretch-mode="Fill" font-size="14" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;3&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;3&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">3</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">3</multilingual-text-item>
               </text>
             </button>
             <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -219,8 +219,8 @@ HMIRuntime.UI.SysFct.ChangeScreen("502 Functions", Screen.Parent.Path);</script-
             </button>
             <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -252,20 +252,20 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             </event-handlers>
             <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
             </text-box>
             <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
             </text-box>
             <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -279,8 +279,8 @@ HMIRuntime.UI.SysFct.ChangeScreen("003 Panel \"3\" &amp; &lt;North&gt;", Screen.
             </button>
             <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -312,20 +312,20 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             </event-handlers>
             <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
             </text-box>
             <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
             </text-box>
             <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -339,8 +339,8 @@ HMIRuntime.UI.SysFct.ChangeScreen("103 Panel \"3\" &amp; &lt;North&gt;", Screen.
             </button>
             <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -372,20 +372,20 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             </event-handlers>
             <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
             </text-box>
             <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
             </text-box>
             <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -399,8 +399,8 @@ HMIRuntime.UI.SysFct.ChangeScreen("203 Panel \"3\" &amp; &lt;North&gt;", Screen.
             </button>
             <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -432,20 +432,20 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             </event-handlers>
             <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
             </text-box>
             <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
             </text-box>
             <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -459,8 +459,8 @@ HMIRuntime.UI.SysFct.ChangeScreen("303 Panel \"3\" &amp; &lt;North&gt;", Screen.
             </button>
             <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -492,20 +492,20 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             </event-handlers>
             <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
             </text-box>
             <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
             </text-box>
             <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -519,8 +519,8 @@ HMIRuntime.UI.SysFct.ChangeScreen("403 Panel \"3\" &amp; &lt;North&gt;", Screen.
             </button>
             <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -552,20 +552,20 @@ HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
             </event-handlers>
             <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
             </text-box>
             <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
             </text-box>
             <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
@@ -579,8 +579,8 @@ HMIRuntime.UI.SysFct.ChangeScreen("1503 Panel \"3\" &amp; &lt;North&gt;", Screen
             </button>
             <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="" alternate-graphic="" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
             </button>
           </screen>

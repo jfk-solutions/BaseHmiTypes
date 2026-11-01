@@ -89,7 +89,7 @@ public class HmiScreenToUnifiedXmlConverterTests
         var result = converter.Convert(screen, "Panel");
         var root = XDocument.Parse(result.Xml).Root!;
         Assert.AreEqual(Ns + "unified-export", root.Name);
-        Assert.AreEqual(HmiScreenToUnifiedXmlConverter.CatalogId, (string?)root.Attribute("catalog"));
+        Assert.IsNull(root.Attribute("catalog"));
         Assert.IsNull(root.Attribute("apiVersion"));
         Assert.AreEqual("screen", (string?)root.Attribute("scope"));
         Assert.AreEqual("Main", (string?)root.Attribute("screen"));
