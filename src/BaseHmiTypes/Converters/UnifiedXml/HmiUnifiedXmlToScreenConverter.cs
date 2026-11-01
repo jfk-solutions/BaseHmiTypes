@@ -68,7 +68,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
     public IReadOnlyList<HmiUnifiedXmlImportResult> ConvertScreens(string xml)
     {
         var root = Parse(xml);
-        if (root.Elements().Count() == 1 && root.Elements().Single().Name == N + "screen") return new[] { Convert(xml) };
+        if (root.Elements().Count(e => e.Name.Namespace == N) == 1 && root.Element(N + "screen") != null) return new[] { Convert(xml) };
         if (root.Name != N + "unified-export" || (string?)root.Attribute("version") != "2"
             || root.Elements().Count() != 1 || root.Elements().Single().Name != N + "software")
             throw new NotSupportedException("Expected a Unified XML v2 screen or software document.");
@@ -81,6 +81,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
             var selected = new XElement(screen);
             var operation = screen.AncestorsAndSelf().Select(e => (string?)e.Attribute(U + "operation")).FirstOrDefault(value => value != null);
             if (operation != null) selected.SetAttributeValue(U + "operation", operation);
+            envelope.Add(root.Elements(U + "Warnings").Select(w => new XElement(w)));
             envelope.Add(selected);
             var result = Convert(envelope.ToString(SaveOptions.DisableFormatting));
             result.Screen.SourceData = Encoding.UTF8.GetBytes(xml); results.Add(result);
@@ -94,8 +95,8 @@ public sealed class HmiUnifiedXmlToScreenConverter
         if (root.Name != N + "unified-export" || (string?)root.Attribute("version") != "2" ||
             (root.Attribute("apiVersion") != null && !Regex.IsMatch((string)root.Attribute("apiVersion")!, @"^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$")))
             throw new NotSupportedException("Expected a screen-scope Unified XML v2 archive with a valid engineering API version.");
-        if (root.Elements().Count() != 1 || root.Elements().Single().Name != N + "screen") throw new FormatException("Exactly one screen root is required.");
-        var source = root.Elements().Single();
+        if (root.Elements().Count(e => e.Name == N + "screen") != 1 || root.Elements().Any(e => e.Name != N + "screen" && e.Name != U + "Warnings")) throw new FormatException("Exactly one screen root is required.");
+        var source = root.Element(N + "screen")!;
         if (string.IsNullOrWhiteSpace((string?)source.Attribute("name")))
             throw new FormatException("Screen name is required.");
         catalog ??= Parse(HmiUnifiedXmlCatalog.Read());
@@ -112,6 +113,8 @@ public sealed class HmiUnifiedXmlToScreenConverter
         foreach (var reference in root.Descendants(U + "ref"))
             if (!ids.ContainsKey((string?)reference.Attribute("ref") ?? "")) throw new FormatException("Dangling object reference.");
         var screen = new HmiScreen { EngineeringApiVersion = (string?)root.Attribute("apiVersion"), SourceFormat = "WinCCUnifiedXmlV2", SourceData = Encoding.UTF8.GetBytes(xml) };
+        screen.UnifiedExportWarnings.AddRange(root.Elements(U + "Warnings").Elements(U + "Warning").Select(w => w.Value));
+        foreach (var warning in screen.UnifiedExportWarnings) context.Report("screen", warning);
         context.Map(source, screen, "screen");
         var layer = new HmiLayer { Name = "Unified screen items" };
         screen.Layers.Add(layer);
@@ -151,6 +154,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
 
     private sealed class Context
     {
+        private readonly Dictionary<XElement, HmiUnifiedEngineeringObject> engineering = new();
         public readonly List<HmiUnifiedXmlDiagnostic> Diagnostics = [];
         private readonly Dictionary<string, XElement> contracts;
         public Context(XElement catalog) => contracts = catalog.Element(U + "types")!.Elements().ToDictionary(e => (string)e.Attribute("id")!, StringComparer.Ordinal);
@@ -183,6 +187,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
 
         public void Map(XElement node, HmiScreenModelBase model, string path)
         {
+            model.UnifiedEngineering = ReadEngineering(node);
             var contract = Contract(node);
             model.Id = (string?)node.Attribute(U + "id");
             var operation = (string?)node.Attribute(U + "operation");
@@ -199,7 +204,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
                 var lexical = (string?)node.Attribute(alias) ?? property.Element(U + "default")?.Value;
                 if (lexical == null)
                 {
-                    if ((string?)property.Element(U + "value")?.Attribute("kind") != "null") Report(path + "." + name, "Required value is absent and has no catalog default.");
+                    if ((string?)property.Attribute("optional") != "true" && (string?)property.Element(U + "value")?.Attribute("kind") != "null") Report(path + "." + name, "Required value is absent and has no catalog default.");
                     continue;
                 }
                 source[name] = lexical;
@@ -211,18 +216,18 @@ public sealed class HmiUnifiedXmlToScreenConverter
                     faceplate.FaceplateVersion = match.Success ? match.Groups[1].Value : null;
                     Report(path, "Faceplate library definition requires an external project resource."); continue;
                 }
-                if (!Visual(model, name, value, path + "." + name) && (!Names.TryGetValue(name, out var target) || !Assign(model, target, value)))
-                    Report(path + "." + name, "Field retained in SourceProperties; no neutral-model mapping.");
+                if (!Visual(model, name, value, path + "." + name)) Assign(model, Names.TryGetValue(name, out var target) ? target : name, value);
             }
             foreach (var member in contract.Elements(U + "member"))
             {
                 var name = (string)member.Attribute("name")!;
                 var alias = (string)member.Attribute("xml")!;
+                if (node.Elements(N + alias).Any(e => (string?)e.Attribute(U + "null") == "true")) continue;
                 if (member.Attribute("attribute-map") is XAttribute mappings)
                 {
                     var childContract = contracts[(string)member.Attribute("attribute-type")!];
                     var part = new XElement(N + alias, new XAttribute(U + "type", (string)childContract.Attribute("id")!));
-                    var explicitParts = node.Elements(N + alias).ToArray();
+                    var explicitParts = node.Elements(N + alias).Select(ResolveOwned).ToArray();
                     if (explicitParts.Length > 1) throw new FormatException("Duplicate singleton part.");
                     if (explicitParts.Length == 1) part = explicitParts[0];
                     foreach (var pair in mappings.Value.Split(' '))
@@ -238,11 +243,11 @@ public sealed class HmiUnifiedXmlToScreenConverter
                 }
                 else if ((name == "Font" || name == "Padding" || name == "Content" || name == "InputBehavior") && node.Elements(N + alias).Any())
                 {
-                    var part = node.Elements(N + alias).First(); MapPart(part, Contract(part), model, name, source, path);
+                    var part = ResolveOwned(node.Elements(N + alias).First()); MapPart(part, Contract(part), model, name, source, path);
                 }
                 else if (name is "Text" or "AlternateText" or "ToolTipText" or "DisplayName")
                 {
-                    var elements = node.Elements(N + alias).ToArray();
+                    var elements = node.Elements(N + alias).Select(ResolveOwned).ToArray();
                     if (elements.Length > 1) throw new FormatException("Duplicate text singleton.");
                     var textNode = elements.SingleOrDefault() ?? member.Element(U + "default-element")?.Elements().SingleOrDefault() ?? (member.Attribute("default-type") != null ? new XElement(N + alias) : null);
                     if (textNode != null && !Assign(model, name, ReadText(textNode, path + "." + name))) Report(path + "." + name, "Text has no neutral-model property.");
@@ -324,6 +329,68 @@ public sealed class HmiUnifiedXmlToScreenConverter
             foreach (var child in node.Elements())
                 if (child.Name != U + "ref" && (child.Name.Namespace != N || !handled.Contains(child.Name.LocalName) && ControlType(child) == null))
                     Report(path + "." + child.Name.LocalName, "Unsupported member retained in SourceData.");
+        }
+
+        private XElement ResolveOwned(XElement node)
+        {
+            var reference = node.Name == U + "ref" ? (string?)node.Attribute("ref") : (string?)node.Attribute(U + "owned-ref") == "true" ? (string?)node.Attribute(U + "ref") : null;
+            return reference == null ? node : node.AncestorsAndSelf().Last().DescendantsAndSelf().Single(e => (string?)e.Attribute(U + "id") == reference);
+        }
+
+        private HmiUnifiedEngineeringObject ReadEngineering(XElement input)
+        {
+            var node = ResolveOwned(input);
+            if (engineering.TryGetValue(node, out var previous)) return previous;
+            var contract = Contract(node);
+            var result = new HmiUnifiedEngineeringObject((string)contract.Attribute("name")!, (string)contract.Attribute("tag")!); engineering.Add(node, result);
+            foreach (var property in contract.Elements(U + "property"))
+            {
+                var name = (string)property.Attribute("name")!; var alias = (string)property.Attribute("xml")!;
+                var template = property.Element(U + "value")!; var part = node.Element(N + alias);
+                if (part?.Element(U + "Value") is { } literal) { result[name] = ReadLiteral(literal); continue; }
+                if (property.Element(U + "items") is { } list)
+                {
+                    var entries = (string?)list.Attribute("flattened") == "true" ? node.Elements(N + (string)list.Attribute("tag")!) : part?.Elements(N + (string)list.Attribute("tag")!) ?? Enumerable.Empty<XElement>();
+                    result[name] = entries.Select(e => (string?)e.Attribute("name") ?? e.Value).ToArray(); continue;
+                }
+                var baseline = property.Element(U + "default");
+                if (node.Name == N + "multilingual-text-item" && name == "Text") { result[name] = HmiUnifiedXmlText.Read(node); continue; }
+                var lexical = (string?)node.Attribute(alias) ?? part?.Value ?? baseline?.Value;
+                if ((string?)baseline?.Attribute("kind") == "null" && node.Attribute(alias) == null && part == null) result[name] = null;
+                else if (lexical != null && (string?)template.Attribute("kind") != "variant") result[name] = (string?)template.Attribute("kind") == "language" ? lexical : Decode(lexical, template);
+            }
+            foreach (var member in contract.Elements(U + "member"))
+            {
+                var name = (string)member.Attribute("name")!; var alias = (string)member.Attribute("xml")!;
+                var direct = node.Elements(N + alias).Select(ResolveOwned).ToArray();
+                if (direct.Any(e => (string?)e.Attribute(U + "null") == "true")) { result[name] = null; continue; }
+                var owned = name == "ScreenItems" ? node.Elements().Where(e => e.Name == U + "ref" || ControlType(e) != null)
+                    : member.Attribute("item-tags") is { } tags ? node.Elements().Where(e => e.Name.Namespace == N && tags.Value.Split(' ').Contains(e.Name.LocalName))
+                    : (string?)member.Attribute("flattened") == "true" ? direct : direct.SelectMany(e => e.Elements());
+                if (!owned.Any() && member.Attribute("attribute-type") is { } partType)
+                {
+                    var schema = contracts[partType.Value];
+                    var part = new XElement(N + (string)schema.Attribute("tag")!, new XAttribute(U + "type", partType.Value));
+                    foreach (var pair in ((string?)member.Attribute("attribute-map") ?? "").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Split('=')))
+                        if (node.Attribute(pair[1]) is { } value) part.SetAttributeValue(pair[0], value.Value);
+                    owned = new[] { part };
+                }
+                if (!owned.Any() && member.Attribute("default-type") is { } defaultType)
+                    owned = new[] { new XElement(N + (string)contracts[defaultType.Value].Attribute("tag")!, new XAttribute(U + "type", defaultType.Value)) };
+                if (!owned.Any() && member.Element(U + "default-element") is { } defaults) owned = defaults.Elements().Select(e => new XElement(e));
+                var values = owned.Select(ReadEngineering).ToArray();
+                if ((string?)member.Attribute("collection") == "true") result[name] = values;
+                else if (values.Length == 1) result[name] = values[0];
+            }
+            return result;
+        }
+
+        private HmiUnifiedEngineeringValue ReadLiteral(XElement node)
+        {
+            var kind = (string)node.Attribute("kind")!;
+            object? value = kind == "null" ? null : kind == "array" || kind == "string-list" ? node.Elements(U + "Value").Select(ReadLiteral).ToArray()
+                : (string?)node.Attribute("encoding") == "utf16le-base64" ? node.Value : Decode(node.Value, node);
+            return new HmiUnifiedEngineeringValue(kind, (string?)node.Attribute("type"), value, (string?)node.Attribute("encoding"));
         }
 
         private void ReadTagDynamization(XElement node, object model, string path)
@@ -502,7 +569,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
         private static object Decode(string lexical, XElement template)
         {
             var type = (string?)template.Attribute("type");
-            if ((string?)template.Attribute("kind") == "enum" || type == "System.String") return lexical;
+            if ((string?)template.Attribute("kind") == "enum" || type is "System.String" or "System.DateTime" or "System.TimeSpan" or "System.Guid" or "System.Decimal" or "System.Char" or "System.Byte[]") return lexical;
             if (type == "System.Boolean") return lexical == "True" ? true : lexical == "False" ? false : throw new FormatException("Invalid Boolean.");
             if (type == "System.Drawing.Color")
             {
@@ -518,7 +585,7 @@ public sealed class HmiUnifiedXmlToScreenConverter
                 "System.UInt64" => ulong.Parse(lexical, CultureInfo.InvariantCulture), "System.Int64" => long.Parse(lexical, CultureInfo.InvariantCulture),
                 "System.UInt32" => uint.Parse(lexical, CultureInfo.InvariantCulture), "System.UInt16" => ushort.Parse(lexical, CultureInfo.InvariantCulture),
                 "System.Int32" => int.Parse(lexical, CultureInfo.InvariantCulture), "System.Int16" => short.Parse(lexical, CultureInfo.InvariantCulture),
-                "System.Byte" => byte.Parse(lexical, CultureInfo.InvariantCulture), _ => throw new NotSupportedException("Unsupported value type: " + type)
+                "System.SByte" => sbyte.Parse(lexical, CultureInfo.InvariantCulture), "System.Byte" => byte.Parse(lexical, CultureInfo.InvariantCulture), _ => throw new NotSupportedException("Unsupported value type: " + type)
             };
         }
     }

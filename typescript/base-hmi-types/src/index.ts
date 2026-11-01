@@ -22,3 +22,4 @@ export * from "./scripts.js";
 export * from "./tags.js";
 export * from "./text-graphic-lists.js";
 export * from "./zip.js";
+export * from "./screens/base/HmiUnifiedEngineeringObject.js";

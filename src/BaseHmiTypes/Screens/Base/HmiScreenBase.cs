@@ -5,6 +5,9 @@ using BaseHmiTypes.Common;
 
 public abstract class HmiScreenBase : HmiScreenModelBase
 {
+    /// <summary>Explicit property omissions reported by a Unified engineering export.</summary>
+    public List<string> UnifiedExportWarnings { get; } = [];
+
     /// <summary>Configured edge for a native slide-in resource; absent on ordinary screens.</summary>
     public HmiSlideInEdge? SlideInEdge { get; set; }
     /// <summary>Screen-level lifecycle and operator event actions.</summary>

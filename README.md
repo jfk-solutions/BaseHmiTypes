@@ -149,18 +149,12 @@ const result = new HmiScreenToUnifiedXmlConverter().convert(screen, "Panel", 103
 // result.xml, result.complete, result.diagnostics
 ```
 
-This first writer maps ordinary screens, buttons, text boxes and graphic views;
-it writes static geometry, visibility/enabled state, supported colors, numeric
-appearance properties, font/padding parts and localized text. Formatted text takes
-precedence for the same language and is stored as direct mixed HTML content, without redundant body or unstyled paragraph wrappers. Empty formatted translations retain their language entry. Default
-language text requires the explicit LCID argument; TypeScript diagnoses LCIDs
-outside its supported mapping. Layers flatten in collection order with a diagnostic;
-shared item instances use object references. Unsupported screen kinds produce diagnostics while retaining an XML export.
-Unsupported controls, bindings, source payloads and other populated fields
-produce diagnostics. JavaScript screen/button events retain body, shared globals and async state. Dynamic properties never export their static fallback as a
-replacement for a missing dynamization contract. Fractional/out-of-range integers,
-lossy Single conversions and XML-illegal inline strings are diagnosed and omitted.
-Font-family mappings currently cover Arial and SiemensSans.
+The writer supports the exposed Unified palette through the shared fixed catalog,
+including shapes, standard controls, custom web control containers and owned parts.
+SDK-named settings beyond the neutral preview model are editable through
+`UnifiedEngineering` / `unifiedEngineering`. Export retains explicit omission
+warnings and reports unsupported source conversions. See the coverage assessment
+for live evidence and public API limitations.
 
 **Every result has `Complete == false` / `complete === false` and XML
 `complete="false"`.** The neutral model lacks the version-specific engineering

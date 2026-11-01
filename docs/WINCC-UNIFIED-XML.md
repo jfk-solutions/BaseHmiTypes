@@ -170,3 +170,12 @@ A faceplate interface can contain different value types even when their serializ
 The first value is an integer and the second is a string. Their readable selectors preserve that distinction. C# and TypeScript emit no selector for a tag with one declared contract; a selector is required for a tag with multiple variants. Readers reject a missing, unknown or incompatible selector on an ambiguous tag. Declared contract IDs and internal part references use the same semantic names. Internal schema checksums may change when the bundled definition changes; screen XML carries no such fingerprint. Superseded numeric type aliases are not retained.
 
 See the [generated compact example](examples/compact-model.screen.xml). The descriptor is the authoritative field-level reference; [coverage](UNIFIED-XML-COVERAGE.md) records implementation limits independently.
+
+
+## Extended engineering settings and omissions
+
+The fixed catalog is authored offline from installed public SDK metadata with `tools/UnifiedCatalogBuilder`. Runtime export does not generate contracts or copy defaults from a project. New fields are optional; explicit nulls, variant values, nullable owned parts and shared owned references retain their distinctions.
+
+`UnifiedEngineering` / `unifiedEngineering` exposes SDK property names and ordered owned objects independently of neutral preview coverage. Neutral scalar edits override their mapped engineering values. Other owned collections remain editable through the engineering graph. Anonymous collections declared with `identity="position"` bind by ordered slot and concrete type; named collections still require matching ordered identity keys. Additional destination entries and incompatible types are rejected.
+
+`u:Warnings/u:Warning` preserves explicit getter omissions. The model exposes them through `UnifiedExportWarnings` / `unifiedExportWarnings`, and export diagnostics repeat them. A warning retains the destination value for that omitted setting; it does not invent a replacement. Other read failures make capture incomplete. Hidden provider data and unsupported public font projections are outside this format's completeness claim.

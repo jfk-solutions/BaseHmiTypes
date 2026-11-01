@@ -19,6 +19,9 @@ import { HmiDeviceKeyBinding } from './HmiDeviceKeyBinding.js';
 import type { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
 
 export abstract class HmiScreenBase extends HmiScreenModelBase {
+  /** Explicit property omissions reported by a Unified engineering export. */
+  readonly unifiedExportWarnings: string[] = [];
+
   /** Configured edge for a native slide-in resource; absent on ordinary screens. */
   slideInEdge?: HmiSlideInEdge;
   kind: HmiScreenKind = HmiScreenKind.Screen;

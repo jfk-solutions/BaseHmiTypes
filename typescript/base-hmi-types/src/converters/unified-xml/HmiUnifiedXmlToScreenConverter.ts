@@ -29,6 +29,7 @@ import { HmiButtonType } from "../../screens/widgets/HmiButtonType.js";
 import { HmiGradientDirection } from "../../screens/base/HmiGradientDirection.js";
 import { HmiImageSourceKind } from "../../screens/base/HmiImageSource.js";
 import { HmiFillPattern } from "../../screens/base/HmiFillPattern.js";
+import { HmiUnifiedEngineeringObject, HmiUnifiedEngineeringValue } from '../../screens/base/HmiUnifiedEngineeringObject.js';
 
 export interface HmiUnifiedXmlImportResult {
   readonly screen: HmiScreen;
@@ -78,7 +79,7 @@ export class HmiUnifiedXmlToScreenConverter {
   /** Read individual exports or all screens in a software authoring document. Scripts stay inert. */
   async convertScreens(xml: string): Promise<readonly HmiUnifiedXmlImportResult[]> {
     const root = parse(xml);
-    if (children(root).length === 1 && children(root)[0].namespaceURI === n && children(root)[0].localName === "screen") return [await this.convert(xml)];
+    if (children(root).filter(e => e.namespaceURI === n).length === 1 && elements(root,n,"screen").length === 1) return [await this.convert(xml)];
     if (root.namespaceURI !== n || root.localName !== "unified-export" || attr(root, "version") !== "2"
       || children(root).length !== 1 || children(root)[0].localName !== "software" || children(root)[0].namespaceURI !== n)
       throw new Error("Expected a Unified XML v2 screen or software document.");
@@ -92,6 +93,7 @@ export class HmiUnifiedXmlToScreenConverter {
       while (ancestor && !key(ancestor, "operation")) ancestor = ancestor.parentNode?.nodeType === 1 ? ancestor.parentNode as Element : null;
       const operation = ancestor ? key(ancestor, "operation") : undefined;
       if (operation) selected.setAttributeNS(u, "u:operation", operation);
+      for (const warning of elements(root,u,"Warnings")) envelope.appendChild(warning.cloneNode(true));
       envelope.appendChild(selected);
       const result = await this.convert(new XMLSerializer().serializeToString(envelope));
       result.screen.sourceData = new TextEncoder().encode(xml);
@@ -105,7 +107,7 @@ export class HmiUnifiedXmlToScreenConverter {
     if (root.namespaceURI !== n || root.localName !== "unified-export" || attr(root, "version") !== "2" ||
       (attr(root,"apiVersion") !== undefined && !/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/.test(attr(root,"apiVersion")!)))
       throw new Error("Expected a screen-scope Unified XML v2 archive with a valid engineering API version.");
-    const roots = children(root);
+    const roots = children(root).filter(e => e.namespaceURI !== u || e.localName !== "Warnings");
     if (roots.length !== 1 || roots[0].namespaceURI !== n || roots[0].localName !== "screen") throw new Error("Exactly one screen root is required.");
     const source = roots[0];
     if (!attr(source, "name")?.trim()) throw new Error("Screen name is required.");
@@ -122,6 +124,8 @@ export class HmiUnifiedXmlToScreenConverter {
     this.catalog = catalog;
     const context = new Context(catalog);
     const screen = new HmiScreen(); const apiVersion=attr(root,"apiVersion"); if(apiVersion!==undefined)screen.engineeringApiVersion=apiVersion; screen.sourceFormat = "WinCCUnifiedXmlV2"; screen.sourceData = new TextEncoder().encode(xml);
+    screen.unifiedExportWarnings.push(...elements(root,u,"Warnings").flatMap(w => elements(w,u,"Warning").map(w => w.textContent ?? "")));
+    for (const warning of screen.unifiedExportWarnings) context.report("screen",warning);
     context.map(source, screen, "screen");
     const layer = new HmiLayer(); layer.name = "Unified screen items"; screen.layers.push(layer);
     const nodes = children(source).flatMap(e => e.namespaceURI === n && e.localName === "screen-items" ? children(e) : [e])
@@ -154,6 +158,7 @@ export class HmiUnifiedXmlToScreenConverter {
 }
 
 class Context {
+  private readonly engineering = new Map<Element, HmiUnifiedEngineeringObject>();
   readonly diagnostics: HmiUnifiedXmlDiagnostic[] = [];
   private readonly contracts: Map<string, Element>;
   constructor(catalog: Element) {
@@ -186,6 +191,7 @@ class Context {
     return candidates[0];
   }
   map(node: Element, model: HmiScreen | HmiScreenItemBase, path: string): void {
+    model.unifiedEngineering = this.readEngineering(node);
     const contract = this.contract(node); model.id = key(node, "id");
     const operation = key(node, "operation");
     if (operation && !["create", "update", "upsert"].includes(operation)) throw new Error("Invalid authoring operation.");
@@ -196,7 +202,7 @@ class Context {
       if(attr(node,alias)===undefined&&attr(elements(property,u,"default")[0],"kind")==="null")continue;
       const lexical = attr(node, alias) ?? text(elements(property, u, "default")[0]);
       if (lexical === undefined) {
-        if (attr(elements(property, u, "value")[0], "kind") !== "null") this.report(`${path}.${name}`, "Required value is absent and has no catalog default.");
+        if (attr(property, "optional") !== "true" && attr(elements(property, u, "value")[0], "kind") !== "null") this.report(`${path}.${name}`, "Required value is absent and has no catalog default.");
         continue;
       }
       model.sourceProperties[name] = lexical;
@@ -207,13 +213,14 @@ class Context {
         this.report(path, "Faceplate library definition requires an external project resource.");
         continue;
       }
-      if (!this.visual(model, name, value, `${path}.${name}`) && (!names[name] || !assign(model, names[name], value))) this.report(`${path}.${name}`, "Field retained in sourceProperties; no neutral-model mapping.");
+      this.visual(model, name, value, `${path}.${name}`) || assign(model, names[name] ?? name[0]!.toLowerCase() + name.slice(1), value);
     }
     for (const member of elements(contract, u, "member")) {
       const name = attr(member, "name")!, alias = attr(member, "xml")!, mappings = attr(member, "attribute-map");
+      if (elements(node, n, alias).some(e => key(e, 'null') === 'true')) continue;
       if (mappings !== undefined) {
         const childContract = this.contracts.get(attr(member, "attribute-type")!)!;
-        const explicit = elements(node, n, alias);
+        const explicit = elements(node, n, alias).map(e => this.resolveOwned(e));
         if (explicit.length > 1) throw new Error("Duplicate singleton part.");
         const part = explicit[0] ?? node.ownerDocument!.createElementNS(n, alias);
         for (const pair of mappings.split(" ")) {
@@ -223,9 +230,9 @@ class Context {
         }
         this.part(part, childContract, model, name, path);
       } else if (["Font", "Padding", "Content", "InputBehavior"].includes(name) && elements(node, n, alias).length) {
-        const part = elements(node, n, alias)[0]; this.part(part, this.contract(part), model, name, path);
+        const part = this.resolveOwned(elements(node, n, alias)[0]!); this.part(part, this.contract(part), model, name, path);
       } else if (["Text", "AlternateText", "ToolTipText", "DisplayName"].includes(name)) {
-        const explicit = elements(node, n, alias);
+        const explicit = elements(node, n, alias).map(e => this.resolveOwned(e));
         if (explicit.length > 1) throw new Error("Duplicate text singleton.");
         const defaults = elements(member, u, "default-element")[0];
         const textNode = explicit[0] ?? (defaults ? children(defaults)[0] : attr(member,"default-type") ? node.ownerDocument!.createElementNS(n,alias) : undefined);
@@ -308,6 +315,64 @@ class Context {
     for (const child of children(node))
       if (!(child.namespaceURI === u && child.localName === "ref") && (child.namespaceURI !== n || !handled.has(child.localName)&&this.controlType(child)===undefined))
         this.report(`${path}.${child.localName}`, "Unsupported member retained in sourceData.");
+  }
+  private readEngineering(input: Element): HmiUnifiedEngineeringObject {
+    const node = this.resolveOwned(input);
+    const previous = this.engineering.get(node); if (previous) return previous;
+    const contract = this.contract(node), result = new HmiUnifiedEngineeringObject(attr(contract, 'name')!, attr(contract, 'tag')!);
+    this.engineering.set(node, result);
+    for (const property of elements(contract, u, 'property')) {
+      const name = attr(property, 'name')!, alias = attr(property, 'xml')!, template = elements(property, u, 'value')[0]!;
+      const part = elements(node, n, alias)[0], literal = part ? elements(part, u, 'Value')[0] : undefined;
+      if (literal) { result.values[name] = this.readLiteral(literal); continue; }
+      const list = elements(property, u, 'items')[0];
+      if (list) {
+        const entries = attr(list, 'flattened') === 'true' ? elements(node, n, attr(list, 'tag')!) : part ? elements(part, n, attr(list, 'tag')!) : [];
+        result.values[name] = entries.map(e => attr(e, 'name') ?? text(e) ?? ''); continue;
+      }
+      const baseline = elements(property, u, 'default')[0];
+      if (node.localName === 'multilingual-text-item' && name === 'Text') { result.values[name] = readUnifiedText(node); continue; }
+      const lexical = attr(node, alias) ?? (part ? text(part) : text(baseline));
+      if (attr(baseline, 'kind') === 'null' && attr(node, alias) === undefined && !part) result.values[name] = null;
+      else if (lexical !== undefined && attr(template, 'kind') !== 'variant') {
+        try { result.values[name] = attr(template, 'kind') === 'language' ? lexical : decode(lexical, template); }
+        catch (error) { throw new Error('Invalid engineering property ' + result.typeName + '.' + name, {cause:error}); }
+      }
+    }
+    for (const member of elements(contract, u, 'member')) {
+      const name = attr(member, 'name')!, alias = attr(member, 'xml')!;
+      const direct = elements(node, n, alias);
+      if (direct.some(e => key(e, 'null') === 'true')) { result.values[name] = null; continue; }
+      let owned = name === 'ScreenItems' ? children(node).filter(e => e.namespaceURI === u && e.localName === 'ref' || this.controlType(e) !== undefined)
+        : attr(member, 'item-tags') ? children(node).filter(e => e.namespaceURI === n && attr(member, 'item-tags')!.split(' ').includes(e.localName))
+        : attr(member, 'flattened') === 'true' ? direct : direct.flatMap(children);
+      if (!owned.length && attr(member, 'attribute-type')) {
+        const schema = this.contracts.get(attr(member, 'attribute-type')!)!;
+        const part = node.ownerDocument!.createElementNS(n, attr(schema, 'tag')!); part.setAttributeNS(u, 'u:type', attr(schema, 'id')!);
+        for (const pair of (attr(member, 'attribute-map') ?? '').split(' ').filter(Boolean)) { const [field, owner] = pair.split('='); const value = attr(node, owner!); if (value !== undefined) part.setAttribute(field!, value); }
+        owned = [part];
+      }
+      if (!owned.length && attr(member, 'default-type')) {
+        const schema = this.contracts.get(attr(member, 'default-type')!)!, part = node.ownerDocument!.createElementNS(n, attr(schema, 'tag')!);
+        part.setAttributeNS(u, 'u:type', attr(schema, 'id')!); owned = [part];
+      }
+      if (!owned.length) { const defaults = elements(member, u, 'default-element')[0]; if (defaults) owned = children(defaults).map(e => e.cloneNode(true) as Element); }
+      const values = owned.map(child => this.readEngineering(child));
+      if (attr(member, 'collection') === 'true') result.values[name] = values;
+      else if (values.length === 1) result.values[name] = values[0];
+    }
+    return result;
+  }
+  private resolveOwned(input: Element): Element {
+    const root = input.ownerDocument!.documentElement;
+    return input.namespaceURI === u && input.localName === 'ref' || key(input, 'owned-ref') === 'true'
+      ? [root, ...Array.from(root.getElementsByTagName('*'))].find(e => key(e, 'id') === (attr(input, 'ref') ?? key(input, 'ref'))) ?? (() => { throw new Error('Dangling engineering reference.'); })() : input;
+  }
+  private readLiteral(node: Element): HmiUnifiedEngineeringValue {
+    const kind = attr(node, 'kind')!, type = attr(node, 'type');
+    const value = kind === 'null' ? null : kind === 'array' || kind === 'string-list' ? elements(node, u, 'Value').map(e => this.readLiteral(e))
+      : attr(node, 'encoding') === 'utf16le-base64' ? text(node) : decode(text(node) ?? '', node);
+    return new HmiUnifiedEngineeringValue(kind, type, value, attr(node, 'encoding'));
   }
   private readTagDynamization(node:Element,model:object,path:string):void {
     this.contract(node);
@@ -441,7 +506,7 @@ function assign(model: object, target: string, value: unknown, scalar = true): b
 }
 function decode(lexical: string, template: Element): unknown {
   const type = attr(template, "type");
-  if (attr(template, "kind") === "enum" || type === "System.String") return lexical;
+  if (attr(template, "kind") === "enum" || ["System.String", "System.DateTime", "System.TimeSpan", "System.Guid", "System.Decimal", "System.Char", "System.Byte[]"].includes(type ?? "")) return lexical;
   if (type === "System.Boolean") return decodeBoolean(lexical);
   if (type === "System.Drawing.Color") {
     return decodeColor(lexical);
@@ -455,7 +520,7 @@ function decode(lexical: string, template: Element): unknown {
     const value=BigInt(lexical),min=type==='System.UInt64'?0n:-9223372036854775808n,max=type==='System.UInt64'?18446744073709551615n:9223372036854775807n;
     if(value<min||value>max)throw new Error('Typed integer out of range.');return value;
   }
-  const ranges: Record<string, [number, number]> = { "System.UInt32": [0, 4294967295], "System.UInt16": [0, 65535], "System.Int32": [-2147483648, 2147483647], "System.Int16": [-32768, 32767], "System.Byte": [0, 255] };
+  const ranges: Record<string, [number, number]> = { "System.UInt32": [0, 4294967295], "System.UInt16": [0, 65535], "System.Int32": [-2147483648, 2147483647], "System.Int16": [-32768, 32767], "System.Byte": [0, 255], "System.SByte": [-128, 127] };
   const range = ranges[type ?? ""], value = Number(lexical);
   if (!range || !/^-?[0-9]+$/.test(lexical) || !Number.isInteger(value) || value < range[0] || value > range[1]) throw new Error("Invalid or unsupported typed integer.");
   return value;

@@ -16,6 +16,8 @@ import { HmiText } from "../../screens/shapes/HmiText.js";
 import { HmiTextBox } from "../../screens/widgets/HmiTextBox.js";
 import { HmiFaceplateContainer } from "../../screens/base/HmiFaceplateContainer.js";
 import { HmiMultilingualText } from "../../common/HmiMultilingualText.js";
+import { HmiUnifiedEngineeringObject, HmiUnifiedEngineeringValue } from '../../screens/base/HmiUnifiedEngineeringObject.js';
+import { HmiScreenModelBase } from '../../screens/base/HmiScreenModelBase.js';
 const n = "urn:s7mcp:wincc-unified:2", u = n + ":contract";
 const children = (e: Element) => Array.from(e.childNodes).filter((x): x is Element => x.nodeType === 1);
 const entries = (e: Element, name: string) => children(e).filter(x => x.namespaceURI === u && x.localName === name);
@@ -47,6 +49,13 @@ export class HmiUnifiedXmlModelWriter {
         root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:u", u);
         for (const [key, value] of Object.entries({ version: "2", ...(screen.engineeringApiVersion === undefined ? {} : {apiVersion: screen.engineeringApiVersion}), coverage: "exposed-openness-graph" }))
             root.setAttribute(key, value);
+        if (screen.unifiedExportWarnings.length) {
+            const warnings=doc.createElementNS(u, 'u:Warnings');
+            for (const message of screen.unifiedExportWarnings) {
+                const warning=doc.createElementNS(u, 'u:Warning');warning.textContent=message;warnings.appendChild(warning);this.report('screen',message);
+            }
+            root.appendChild(warnings);
+        }
         const node = this.write(doc, screen, "screen", "screen");
         if (node)
             root.appendChild(node);
@@ -81,7 +90,8 @@ export class HmiUnifiedXmlModelWriter {
         return { xml: '<?xml version="1.0" encoding="utf-8"?>\n' + prettyXml(root), complete: false, diagnostics: this.diagnostics };
     }
     private select(model: object, tag: string, path: string): Element | undefined {
-        const candidates = this.contracts.filter(c => attr(c, "tag") === tag);
+        const identity = model instanceof HmiUnifiedEngineeringObject ? model : model instanceof HmiScreenModelBase ? model.unifiedEngineering : undefined;
+        const candidates = this.contracts.filter(c => attr(c, "tag") === tag && (!identity || attr(c, 'name') === identity.typeName));
         const matching = candidates.filter(c => entries(c, "property").every(p => this.compatible(this.unwrap(get(model, attr(p, "name")!), path, false), entries(p, "value")[0]!)));
         if (matching.length === 1)
             return matching[0];
@@ -126,12 +136,19 @@ export class HmiUnifiedXmlModelWriter {
         node.setAttributeNS(u, "u:type", attr(schema, "id")!);
         for (const p of entries(schema, "property")) {
             const name = attr(p, "name")!, alias = attr(p, "xml")!, value = this.unwrap(get(model, name), `${path}.${name}`), template = entries(p, "value")[0]!;
+            const supplied = model instanceof HmiUnifiedEngineeringObject ? model : model instanceof HmiScreenModelBase ? model.unifiedEngineering : undefined;
+            if (value == null && supplied?.values[name] === null && (attr(template,'nullable') === 'true' || ['null','variant'].includes(attr(template,'kind')!))) {
+                const child=doc.createElementNS(n,alias);child.appendChild(this.literal(doc,null));node.appendChild(child);continue;
+            }
             if (value === undefined || value === null) {
-                if (!entries(p, "default").length && attr(template, "kind") !== "null")
+                if (attr(p, "optional") !== "true" && !entries(p, "default").length && attr(template, "kind") !== "null")
                     this.report(`${path}.${name}`, "Required engineering value is absent.");
                 continue;
             }
             try {
+                if (attr(template, 'kind') === 'variant' || value instanceof HmiUnifiedEngineeringValue) {
+                    const child = doc.createElementNS(n, alias); child.appendChild(this.literal(doc, value)); node.appendChild(child); continue;
+                }
                 const list = entries(p, 'items')[0];
                 if (list && Array.isArray(value)) {
                     const target = attr(list, 'flattened') === 'true' ? node : doc.createElementNS(n, alias);
@@ -166,6 +183,10 @@ export class HmiUnifiedXmlModelWriter {
         }
         for (const m of entries(schema, "member")) {
             const name = attr(m, "name")!, alias = attr(m, "xml")!, nodes: Element[] = [];
+            const engineering = model instanceof HmiUnifiedEngineeringObject ? model : model instanceof HmiScreenModelBase ? model.unifiedEngineering : undefined;
+            if (attr(m, 'nullable') === 'true' && engineering && Object.hasOwn(engineering.values, name) && engineering.values[name] === null && get(model, name) == null) {
+                const part = doc.createElementNS(n, alias); part.setAttributeNS(u, 'u:null', 'true'); node.appendChild(part); continue;
+            }
             let values: object[];
             try {
                 values = this.members(model, name, path);
@@ -175,10 +196,17 @@ export class HmiUnifiedXmlModelWriter {
                 continue;
             }
             for (const value of values) {
-                const part = attr(m, "attribute-type") ?? attr(m, "default-type"), partSchema = part ? this.contracts.find(c => attr(c, "id") === part) : undefined;
-                const child = this.write(doc, value, this.tag(value, name), `${path}.${name}`, partSchema);
-                if (child)
-                    nodes.push(child);
+                const part = attr(m, "attribute-type") ?? attr(m, "default-type");
+                const declared = value instanceof HmiScreenItemBase || value instanceof HmiUnifiedEngineeringObject || name === 'Dynamizations' || name === 'Entries' ? undefined : attr(m, 'declared-type');
+                const roleTag = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+                const declaredCandidates = declared ? this.contracts.filter(c => attr(c, 'name') === declared && (attr(m, 'collection') === 'true' || attr(c, 'tag') === roleTag)) : [];
+                const partSchema = part ? this.contracts.find(c => attr(c, "id") === part) : declaredCandidates.length === 1 ? declaredCandidates[0] : undefined;
+                const child = this.write(doc, value, partSchema ? attr(partSchema, 'tag')! : this.tag(value, name), `${path}.${name}`, partSchema);
+                if (child) {
+                    if (attr(m, 'collection') === 'false' && child.namespaceURI === u && child.localName === 'ref') {
+                        const owned = doc.createElementNS(n, alias); owned.setAttributeNS(u, 'u:owned-ref', 'true'); owned.setAttributeNS(u, 'u:ref', attr(child, 'ref')!); nodes.push(owned);
+                    } else nodes.push(child);
+                }
             }
             if (name === "ScreenItems" || attr(m, "item-tags") !== undefined || attr(m, "flattened") === "true" || attr(m, "attribute-type") !== undefined)
                 for (const child of nodes)
@@ -191,7 +219,7 @@ export class HmiUnifiedXmlModelWriter {
             }
         }
         const mapped = new Set([...entries(schema, 'property'), ...entries(schema, 'member')].map(e => attr(e, 'name')!));
-        const ignored = new Set(['id', 'hmiObjectType', 'sourceData', 'sourceProperties', 'sourceFormat', 'storageBusinessObject', 'handlerTag', 'kind', 'engineeringApiVersion']);
+        const ignored = new Set(['id', 'hmiObjectType', 'sourceData', 'sourceProperties', 'sourceFormat', 'storageBusinessObject', 'handlerTag', 'kind', 'engineeringApiVersion', 'unifiedEngineering', 'unifiedExportWarnings']);
         if (mapped.has('ScreenItems'))
             ignored.add('layers');
         if ((mapped.has('EventHandlers') || mapped.has('PropertyEventHandlers')))
@@ -211,6 +239,7 @@ export class HmiUnifiedXmlModelWriter {
             ignored.add('alternateImage');
         if (mapped.has('BackGraphic'))
             ignored.add('backgroundImage');
+        if (model instanceof HmiFont && model.localizedFonts.size <= 1) ignored.add('localizedFonts');
         if (mapped.has('Weight'))
             ignored.add('bold');
         if (mapped.has('Items') && model instanceof HmiMultilingualText) {
@@ -221,14 +250,18 @@ export class HmiUnifiedXmlModelWriter {
             for (const field of ['language', 'functionName', 'parameterNames'])
                 ignored.add(field);
         const mappedFields = new Set([...mapped].flatMap(name => [lower(name),aliases[name] ?? lower(name)]));
-        for (const [field, value] of Object.entries(model)) {
-            if (value === undefined || value === null || Array.isArray(value) && value.length === 0 || value instanceof Map && value.size === 0 || ignored.has(field) || mappedFields.has(field))
+        const engineeringData = model instanceof HmiUnifiedEngineeringObject ? model : model instanceof HmiScreenModelBase ? model.unifiedEngineering : undefined;
+        for (const field of engineeringData?.unmappedProperties ?? []) this.report(`${path}.${field}`, 'Native engineering value has no supported conversion.');
+        if (model instanceof HmiScreenModelBase && model.unifiedEngineering) return node;
+        for (const [field, value] of Object.entries(model instanceof HmiUnifiedEngineeringObject ? model.values : model)) {
+            if (value === undefined || value === null || Array.isArray(value) && value.length === 0 || value instanceof Map && value.size === 0 || ignored.has(field) || mappedFields.has(model instanceof HmiUnifiedEngineeringObject ? lower(field) : field))
                 continue;
             this.report(`${path}.${field}`, 'Populated model field has no selected catalog mapping.');
         }
         return node;
     }
     private members(model: object, name: string, path: string): object[] {
+        if (model instanceof HmiUnifiedEngineeringObject) { const value = model.values[name]; return value == null ? [] : Array.isArray(value) ? value : [value as object]; }
         if (name === 'ScreenItems' && model instanceof HmiScreenBase)
             return model.layers.flatMap(l => l.items);
         if (name === 'Dynamizations') {
@@ -263,16 +296,29 @@ export class HmiUnifiedXmlModelWriter {
                     throw new Error(`Unsupported language LCID ${lcid}.`);
                 return { language: locale, text: model.formattedTexts.get(k) ?? model.texts.get(k) };
             });
-        if (name === 'Content')
-            return [{ contentMode: get(model, 'Mode'), graphicStretchMode: get(model, 'GraphicStretchMode'), horizontalTextAlignment: get(model, 'HorizontalAlignment'), verticalTextAlignment: get(model, 'VerticalAlignment'), textTrimming: get(model, 'TextTrimming'), spacing: get(model, 'ContentSpacing'), splitRatio: get(model, 'ContentSplitRatio'), textPosition: get(model, 'ContentTextPosition') }];
-        const value = this.unwrap(get(model, name), `${path}.${name}`);
+        if (name === 'Content') {
+            const source = model instanceof HmiScreenModelBase ? model.unifiedEngineering?.values.Content : undefined;
+            const result = source instanceof HmiUnifiedEngineeringObject
+                ? new HmiUnifiedEngineeringObject(source.typeName, source.tag)
+                : new HmiUnifiedEngineeringObject('Siemens.Engineering.HmiUnified.UI.Parts.HmiContentPart', 'content');
+            if (source instanceof HmiUnifiedEngineeringObject) Object.assign(result.values, source.values);
+            for (const [field, property] of Object.entries({ ContentMode: 'Mode', GraphicStretchMode: 'GraphicStretchMode', HorizontalTextAlignment: 'HorizontalAlignment', VerticalTextAlignment: 'VerticalAlignment', TextTrimming: 'TextTrimming', Spacing: 'ContentSpacing', SplitRatio: 'ContentSplitRatio', TextPosition: 'ContentTextPosition' })) {
+                const value = get(model, property); if (value != null) result.values[field] = value;
+            }
+            return [result];
+        }
+        const graph = model instanceof HmiScreenModelBase ? model.unifiedEngineering : undefined;
+        const ownedValue = graph && !['Font','Padding','InputBehavior','Text','AlternateText','ToolTipText','DisplayName'].includes(name) && Object.hasOwn(graph.values,name) ? graph.values[name] : get(model,name);
+        const value = this.unwrap(ownedValue, `${path}.${name}`);
         return value === undefined || value === null ? [] : Array.isArray(value) ? value : [value as object];
     }
     private tag(value: object, role: string): string {
+        if (value instanceof HmiUnifiedEngineeringObject) return value.tag;
+        if (value instanceof HmiScreenModelBase && value.unifiedEngineering) return value.unifiedEngineering.tag;
         if (value instanceof HmiScreenItemBase) {
             if (value instanceof HmiText || value instanceof HmiTextBox)
                 return 'text-box';
-            const className=value instanceof HmiCustomWidgetContainer?'HmiCustomWebControlContainer':value.constructor.name;
+            const className=value instanceof HmiCustomWidgetContainer?'HmiCustomWebControlContainer':value.constructor.name==='HmiToggleSwitch'?'HmiSwitch':value.constructor.name;
             const tags=[...new Set(this.contracts.filter(c=>attr(c,'name')?.endsWith('.'+className)).map(c=>attr(c,'tag')!))];
             if(tags.length===1)return tags[0]!;
             return value.constructor.name.slice(3).replace(/(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])/g, '-$1').toLowerCase().replace('io-field', 'iofield');
@@ -354,16 +400,32 @@ export class HmiUnifiedXmlModelWriter {
         }
         return String(value);
     }
+    private literal(doc: Document, raw: unknown): Element {
+        const exact = raw instanceof HmiUnifiedEngineeringValue ? raw : undefined, value = exact ? exact.value : raw;
+        const kind = exact?.kind ?? (value == null ? 'null' : Array.isArray(value) ? 'array' : 'scalar');
+        const node = doc.createElementNS(u, 'u:Value'); node.setAttribute('kind', kind);
+        if (kind === 'null') return node;
+        const type = exact?.typeName ?? (Array.isArray(value) ? 'System.Object[]' : typeof value === 'boolean' ? 'System.Boolean' : typeof value === 'bigint' ? 'System.Int64' : typeof value === 'number' ? 'System.Double' : typeof value === 'string' ? 'System.String' : undefined);
+        if (!type) throw new Error('No lossless engineering value codec.');
+        node.setAttribute('type', type);
+        if (kind === 'array' || kind === 'string-list') { for (const entry of value as unknown[]) node.appendChild(this.literal(doc, entry)); return node; }
+        if (type === 'System.String') { node.setAttribute('encoding', exact?.encoding ?? 'text'); node.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve'); }
+        const template = doc.createElement('value'); template.setAttribute('type', type); template.setAttribute('kind', kind);
+        node.textContent = this.scalar(value, template); return node;
+    }
 }
 function get(model: object, name: string): unknown {
+    if (model instanceof HmiUnifiedEngineeringObject) return model.values[name];
     if(name==='Url'&&model instanceof HmiMediaControl)return model.source;
     if(name==='ScreenItems'&&(model instanceof HmiContainerBase||model instanceof HmiLayoutContainerBase))return model.items;
     if(rec(model).kind==='Tag'&&'tagNames'in model&&name==='Type')return'Tags';
     if(rec(model).kind==='Tag'&&'tagNames'in model&&name==='CustomDuration')return'';
     if (name === 'Weight' && model instanceof HmiFont && model.weight === undefined && model.bold !== undefined)
         return model.bold.staticValue ? 700 : 400;
-    if (name === 'ContainedType' && model instanceof HmiFaceplateContainer)
+    if (name === 'ContainedType' && model instanceof HmiFaceplateContainer) {
+        if (!model.faceplateName && model.faceplateVersion === undefined && model.unifiedEngineering && Object.hasOwn(model.unifiedEngineering.values,name)) return model.unifiedEngineering.values[name];
         return model.faceplateVersion === undefined ? model.faceplateName : `V${model.faceplateVersion}\\${model.faceplateName}`;
+    }
     if (['Graphic', 'AlternateGraphic', 'BackGraphic'].includes(name)) {
         const raw = get(model, name === 'Graphic' ? 'Image' : name === 'AlternateGraphic' ? 'AlternateImage' : 'BackgroundImage') as {
             staticValue?: {
@@ -371,10 +433,10 @@ function get(model: object, name: string): unknown {
             };
             imageName?: string;
         } | undefined;
-        return raw?.staticValue?.imageName ?? raw?.imageName ?? (name === 'Graphic' ? get(model, 'Source') : undefined);
+        return raw?.staticValue?.imageName ?? raw?.imageName ?? (model instanceof HmiScreenModelBase && model.unifiedEngineering && Object.hasOwn(model.unifiedEngineering.values,name) ? model.unifiedEngineering.values[name] : name === 'Graphic' ? get(model, 'Source') : undefined);
     }
     const key = aliases[name] ?? lower(name);
-    return rec(model)[lower(name)] ?? rec(model)[key] ?? rec(model)[name];
+    return rec(model)[lower(name)] ?? rec(model)[key] ?? rec(model)[name] ?? (model instanceof HmiScreenModelBase ? model.unifiedEngineering?.values[name] : undefined);
 }
 
 /** Indent structural XML without adding whitespace to text, script, or mixed content. */

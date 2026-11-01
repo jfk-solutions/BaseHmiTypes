@@ -94,17 +94,7 @@ catalog.documentElement.setAttribute('id','a'.repeat(64));
 
 test('additional control scalar settings remain editable with SDK-verified property contracts',async()=>{
  const original=await HmiUnifiedXmlCatalog.read(new Uint8Array(await readFile(HmiUnifiedXmlCatalog.url)));
- const catalog=new DOMParser().parseFromString(original,'application/xml'),u='urn:s7mcp:wincc-unified:2:contract';
- function type(name,tag,properties){
-  const fields=[['Name','System.String'],...properties].map(([field,kind])=>`<property name="${field}" xml="${field.replace(/([a-z])([A-Z])/g,'$1-$2').toLowerCase()}" inline="true"><value kind="scalar" type="${kind}"/></property>`).join('');
-  const node=new DOMParser().parseFromString(`<type xmlns="${u}" id="${tag}" tag="${tag}" name="${name}">${fields}</type>`,'application/xml').documentElement;
-  catalog.getElementsByTagNameNS(u,'types')[0].appendChild(catalog.importNode(node,true));
- }
- type('Siemens.Engineering.HmiUnified.UI.Widgets.HmiClock','clock',[['ShowHours','System.Boolean'],['ShowMinutes','System.Boolean'],['ShowSeconds','System.Boolean']]);
- type('Siemens.Engineering.HmiUnified.UI.Controls.HmiWebControl','web-control',[['HomeUrl','System.String'],['Url','System.String']]);
- type('Siemens.Engineering.HmiUnified.UI.Controls.HmiMediaControl','media-control',[['AutoPlay','System.Boolean'],['Url','System.String']]);
- type('Siemens.Engineering.HmiUnified.UI.Widgets.HmiBar','bar',[['OriginValue','System.Double']]);
- catalog.documentElement.setAttribute('id','b'.repeat(64));const schema=new XMLSerializer().serializeToString(catalog);
+ const schema=original;
  const screen=Object.assign(new HmiScreen(),{name:'Main'}),layer=new HmiLayer();screen.layers.push(layer);
  layer.items.push(Object.assign(new HmiClock(),{name:'Clock',showHours:staticProperty(true),showMinutes:staticProperty(false),showSeconds:staticProperty(true)}),Object.assign(new HmiWebControl(),{name:'Web',homeUrl:staticProperty('https://example.invalid/'),url:staticProperty('')}),Object.assign(new HmiMediaControl(),{name:'Media',autoPlay:staticProperty(false),source:staticProperty('media.mp4')}),Object.assign(new HmiBar(),{name:'Level',originValue:staticProperty(-12.5)}));
  const writer=new HmiScreenToUnifiedXmlConverter(schema),reader=new HmiUnifiedXmlToScreenConverter(schema);
@@ -124,4 +114,31 @@ test('scalar font and padding parts become owner attributes with unchanged model
  assert.equal(node.getAttribute('font-size'),'17');assert.equal(node.getAttribute('padding-left'),'4');assert.equal(node.getElementsByTagNameNS(n,'font').length,0);assert.equal(node.getElementsByTagNameNS(n,'padding').length,0);
  const restored=(await reader.convert(result.xml)).screen.layers.flatMap(l=>l.items).find(i=>i.name===button.name);
  assert.equal(getStaticValue(restored.font.size),17);assert.equal(getStaticValue(restored.padding.left),4);
+});
+
+
+test('owned engineering settings remain editable without preview fields or source snapshots', async () => {
+ const reader=new HmiUnifiedXmlToScreenConverter();
+ const {screen}=await reader.convert(`<unified-export xmlns="urn:s7mcp:wincc-unified:2" version="2"><screen name="Main"><alarm-control name="Alarms"><alarm-view row-height="37" allow-sort="False"><columns><alarm-line-column-part name="State" visible="False" width="123"><content spacing="7"/></alarm-line-column-part></columns></alarm-view></alarm-control></screen></unified-export>`);
+ const control=screen.layers[0].items[0], view=control.unifiedEngineering.values.AlarmView;
+ assert.equal(view.values.RowHeight,37);assert.equal(view.values.AllowSort,false);
+ const column=view.values.Columns[0];assert.equal(column.values.Width,123);assert.equal(column.values.Content.values.Spacing,7);
+ screen.sourceData=undefined;screen.sourceProperties={};control.sourceData=undefined;control.sourceProperties={};
+ view.values.RowHeight=42;column.values.Width=180;column.values.Content.values.Spacing=11;
+ const xml=new HmiScreenToUnifiedXmlConverter().convert(screen,'Panel').xml;
+ const restored=(await reader.convert(xml)).screen.layers[0].items[0].unifiedEngineering.values.AlarmView;
+ assert.equal(restored.values.RowHeight,42);assert.equal(restored.values.Columns[0].values.Width,180);assert.equal(restored.values.Columns[0].values.Visible,false);assert.equal(restored.values.Columns[0].values.Content.values.Spacing,11);
+});
+
+
+test('omission diagnostics and null references survive editable model export', async () => {
+ const schema=await HmiUnifiedXmlCatalog.read(new Uint8Array(await readFile(HmiUnifiedXmlCatalog.url)));
+ const reader=new HmiUnifiedXmlToScreenConverter(schema);
+ const {screen}=await reader.convert(`<unified-export xmlns="urn:s7mcp:wincc-unified:2" xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2"><u:Warnings><u:Warning>Unavailable getter was omitted.</u:Warning></u:Warnings><screen name="Main"><faceplate-container name="Empty"><contained-type><u:Value kind="null"/></contained-type></faceplate-container></screen></unified-export>`);
+ screen.sourceData=undefined;screen.sourceProperties={};
+ const result=new HmiScreenToUnifiedXmlConverter(schema).convert(screen,'Panel');
+ assert.ok(result.diagnostics.some(d=>d.message==='Unavailable getter was omitted.'));
+ const restored=(await reader.convertScreens(result.xml))[0].screen;
+ assert.deepEqual(restored.unifiedExportWarnings,['Unavailable getter was omitted.']);
+ assert.equal(restored.layers[0].items[0].unifiedEngineering.values.ContainedType.kind,'null');
 });

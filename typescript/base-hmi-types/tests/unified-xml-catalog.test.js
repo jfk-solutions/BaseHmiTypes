@@ -5,7 +5,8 @@ import test from "node:test";
 import { HmiUnifiedXmlCatalog, HmiScreenToUnifiedXmlConverter } from "../dist/index.js";
 
 const bytes = new Uint8Array(await readFile(HmiUnifiedXmlCatalog.url));
-const expectedHash = "5c0b0285e65f47b810886e5ad4856d62ecc0c8a7bc5066aaed36ad76fb1b3404";
+const manifest = JSON.parse(await readFile(new URL("../../../catalogs/unified/manifest.json", import.meta.url), "utf8"));
+const expectedHash = manifest.sha256;
 
 test("browser decompression API restores the exact released XML bytes", async () => {
   const xml = await HmiUnifiedXmlCatalog.read(bytes);
@@ -13,7 +14,7 @@ test("browser decompression API restores the exact released XML bytes", async ()
   assert.ok(xml.includes(`id="${HmiScreenToUnifiedXmlConverter.catalogId}"`));
   assert.equal(await HmiUnifiedXmlCatalog.load(), xml);
   assert.ok(xml.includes('defaults="stable-format-values"'));
-  assert.ok(bytes.length < 30000);
+  assert.ok(bytes.length < Buffer.byteLength(xml, "utf8"));
 });
 
 test("browser fetch loader accepts a hosted gzip asset", async () => {

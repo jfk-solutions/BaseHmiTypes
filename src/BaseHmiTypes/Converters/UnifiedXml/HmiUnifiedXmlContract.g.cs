@@ -1,3 +1,3 @@
-// Generated from catalogs/unified/manifest.json.
+// Generated from the shared format definition.
 namespace BaseHmiTypes.Converters.UnifiedXml;
-internal static class HmiUnifiedXmlContract { internal const string Id = "353cbfaaa807e4aa55bac38f63e7deabcda353fe7c6b0ea18ef9a9ca242535d2"; }
+internal static class HmiUnifiedXmlContract { internal const string Id = "1b0469040c7d3518b7ea7661c98df68c80ea019a7bbcb400ea7b906817c8d4e3"; }

@@ -62,7 +62,7 @@ test("rejects lossy scalar conversion and static fallbacks on dynamic properties
   button.borderWidth = staticProperty(256); button.opacity = staticProperty(0.1);
   button.visible = tagProperty("Show", true); button.sourceProperties.Unknown = "source-only";
   const result = converter.convert(withItems(button, new HmiRectangle()), "Panel");
-  const itemXml = result.xml.slice(result.xml.indexOf("<button"));
+  const itemXml = result.xml.slice(result.xml.indexOf("<button"), result.xml.indexOf("<rectangle"));
   assert.doesNotMatch(itemXml, /width=|left=|border-width=|visible=|Show|source-only/);
   for (const field of ["width", "left", "borderWidth", "visible"])
     assert.ok(result.diagnostics.some(d => d.path.toLowerCase().endsWith(`.${field}`.toLowerCase())), field);

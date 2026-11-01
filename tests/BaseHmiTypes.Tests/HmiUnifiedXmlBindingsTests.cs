@@ -96,18 +96,7 @@ public class HmiUnifiedXmlBindingsTests
     [TestMethod]
     public void AdditionalControlScalarSettingsRemainEditable()
     {
-        XNamespace u=HmiScreenToUnifiedXmlConverter.ContractNamespace;
-        var catalog=XElement.Parse(HmiUnifiedXmlCatalog.Read());
-        void Type(string name,string tag,params (string Name,string Type)[] properties)
-        {
-            catalog.Element(u+"types")!.Add(new XElement(u+"type",new XAttribute("id",tag),new XAttribute("tag",tag),new XAttribute("name",name),
-                properties.Prepend(("Name","System.String")).Select(p=>new XElement(u+"property",new XAttribute("name",p.Item1),new XAttribute("xml",System.Text.RegularExpressions.Regex.Replace(p.Item1,"([a-z])([A-Z])","$1-$2").ToLowerInvariant()),new XAttribute("inline","true"),new XElement(u+"value",new XAttribute("kind","scalar"),new XAttribute("type",p.Item2))))));
-        }
-        Type("Siemens.Engineering.HmiUnified.UI.Widgets.HmiClock","clock",("ShowHours","System.Boolean"),("ShowMinutes","System.Boolean"),("ShowSeconds","System.Boolean"));
-        Type("Siemens.Engineering.HmiUnified.UI.Controls.HmiWebControl","web-control",("HomeUrl","System.String"),("Url","System.String"));
-        Type("Siemens.Engineering.HmiUnified.UI.Controls.HmiMediaControl","media-control",("AutoPlay","System.Boolean"),("Url","System.String"));
-        Type("Siemens.Engineering.HmiUnified.UI.Widgets.HmiBar","bar",("OriginValue","System.Double"));
-        catalog.SetAttributeValue("id",new string('b',64));var schema=catalog.ToString();
+        var schema=HmiUnifiedXmlCatalog.Read();
         var screen=new HmiScreen{Name="Main"};var layer=new HmiLayer();screen.Layers.Add(layer);
         layer.Items.Add(new HmiClock{Name="Clock",ShowHours=true,ShowMinutes=false,ShowSeconds=true});
         layer.Items.Add(new HmiWebControl{Name="Web",HomeUrl="https://example.invalid/",Url=""});
@@ -135,5 +124,39 @@ public class HmiUnifiedXmlBindingsTests
         Assert.AreEqual("17",(string?)node.Attribute("font-size"));Assert.AreEqual("4",(string?)node.Attribute("padding-left"));Assert.IsNull(node.Element(n+"font"));Assert.IsNull(node.Element(n+"padding"));
         var restored=reader.Convert(output.Xml).Screen.Layers.SelectMany(l=>l.Items).OfType<HmiButton>().Single(i=>i.Name==button.Name);
         Assert.AreEqual(17d,restored.Font!.Size!.StaticValue);Assert.AreEqual(4d,restored.Padding!.Left!.StaticValue);
+    }
+    [TestMethod]
+    public void OwnedEngineeringSettingsRemainEditableWithoutPreviewFieldsOrSourceSnapshots()
+    {
+        var reader = new HmiUnifiedXmlToScreenConverter();
+        var screen = reader.Convert("""
+            <unified-export xmlns="urn:s7mcp:wincc-unified:2" version="2"><screen name="Main"><alarm-control name="Alarms"><alarm-view row-height="37" allow-sort="False"><columns><alarm-line-column-part name="State" visible="False" width="123"><content spacing="7"/></alarm-line-column-part></columns></alarm-view></alarm-control></screen></unified-export>
+            """).Screen;
+        var control = screen.Layers[0].Items[0];
+        var view = (HmiUnifiedEngineeringObject)control.UnifiedEngineering!["AlarmView"]!;
+        Assert.AreEqual((byte)37, view["RowHeight"]); Assert.AreEqual(false, view["AllowSort"]);
+        var column = ((System.Collections.IEnumerable)view["Columns"]!).Cast<HmiUnifiedEngineeringObject>().First();
+        var content = (HmiUnifiedEngineeringObject)column["Content"]!;
+        screen.SourceData = null; screen.SourceProperties.Clear(); control.SourceData = null; control.SourceProperties.Clear();
+        view["RowHeight"] = (byte)42; column["Width"] = 180u; content["Spacing"] = 11u;
+        var xml = new HmiScreenToUnifiedXmlConverter().Convert(screen, "Panel").Xml;
+        var restored = (HmiUnifiedEngineeringObject)reader.Convert(xml).Screen.Layers[0].Items[0].UnifiedEngineering!["AlarmView"]!;
+        var restoredColumn = ((System.Collections.IEnumerable)restored["Columns"]!).Cast<HmiUnifiedEngineeringObject>().First();
+        Assert.AreEqual((byte)42, restored["RowHeight"]); Assert.AreEqual(180u, restoredColumn["Width"]); Assert.AreEqual(false, restoredColumn["Visible"]);
+        Assert.AreEqual(11u, ((HmiUnifiedEngineeringObject)restoredColumn["Content"]!)["Spacing"]);
+    }
+    [TestMethod]
+    public void OmissionDiagnosticsAndNullReferencesSurviveModelExport()
+    {
+        var reader = new HmiUnifiedXmlToScreenConverter();
+        var screen = reader.Convert("""
+            <unified-export xmlns="urn:s7mcp:wincc-unified:2" xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2"><u:Warnings><u:Warning>Unavailable getter was omitted.</u:Warning></u:Warnings><screen name="Main"><faceplate-container name="Empty"><contained-type><u:Value kind="null"/></contained-type></faceplate-container></screen></unified-export>
+            """).Screen;
+        screen.SourceData = null; screen.SourceProperties.Clear();
+        var result = new HmiScreenToUnifiedXmlConverter().Convert(screen, "Panel");
+        Assert.IsTrue(result.Diagnostics.Any(d => d.Message == "Unavailable getter was omitted."));
+        var restored = reader.ConvertScreens(result.Xml).Single().Screen;
+        CollectionAssert.AreEqual(new[] { "Unavailable getter was omitted." }, restored.UnifiedExportWarnings);
+        Assert.AreEqual("null", ((HmiUnifiedEngineeringValue)restored.Layers[0].Items[0].UnifiedEngineering!["ContainedType"]!).Kind);
     }
 }

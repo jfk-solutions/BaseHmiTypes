@@ -38,6 +38,8 @@ internal sealed class HmiUnifiedXmlModelWriter
             new XAttribute("version", "2"),
             screen.EngineeringApiVersion == null ? null : new XAttribute("apiVersion", screen.EngineeringApiVersion),
             new XAttribute("coverage", "exposed-openness-graph"));
+        if (screen.UnifiedExportWarnings.Count > 0) root.Add(new XElement(U + "Warnings", screen.UnifiedExportWarnings.Select(warning => new XElement(U + "Warning", warning))));
+        foreach (var warning in screen.UnifiedExportWarnings) Report("screen", warning);
         var node = Write(screen, "screen", "screen"); if (node != null) root.Add(node);
         var referenced = new HashSet<string>(root.Descendants(U + "ref").Select(e => (string)e.Attribute("ref")!));
         foreach (var owner in root.Descendants().Where(e => e.Attribute(U + "type") != null).ToArray())
@@ -81,7 +83,8 @@ internal sealed class HmiUnifiedXmlModelWriter
     }
     private XElement? Select(object model, string tag, string path)
     {
-        var candidates = contracts.Where(c => (string?)c.Attribute("tag") == tag).ToArray();
+        var identity = model as HmiUnifiedEngineeringObject ?? (model as HmiScreenModelBase)?.UnifiedEngineering;
+        var candidates = contracts.Where(c => (string?)c.Attribute("tag") == tag && (identity == null || (string?)c.Attribute("name") == identity.TypeName)).ToArray();
         var matching = candidates.Where(c => c.Elements(U + "property").All(p => Compatible(Unwrap(Get(model, (string)p.Attribute("name")!), path, false), p.Element(U + "value")!))).ToArray();
         if (matching.Length == 1) return matching[0];
         if (matching.Length > 1)
@@ -110,9 +113,15 @@ internal sealed class HmiUnifiedXmlModelWriter
             var name = (string)property.Attribute("name")!; var alias = (string)property.Attribute("xml")!;
             var value = Unwrap(Get(model, name), path + "." + name);
             var template = property.Element(U + "value")!;
-            if (value == null) { if (property.Element(U + "default") == null && (string?)template.Attribute("kind") != "null") Report(path + "." + name, "Required engineering value is absent."); continue; }
+            if (value == null && (model as HmiUnifiedEngineeringObject ?? (model as HmiScreenModelBase)?.UnifiedEngineering) is { } supplied
+                && supplied.TryGetValue(name, out var suppliedValue) && suppliedValue == null
+                && ((string?)template.Attribute("nullable") == "true" || (string?)template.Attribute("kind") is "null" or "variant"))
+            { node.Add(new XElement(N + alias, Literal(null))); continue; }
+            if (value == null) { if ((string?)property.Attribute("optional") != "true" && property.Element(U + "default") == null && (string?)template.Attribute("kind") != "null") Report(path + "." + name, "Required engineering value is absent."); continue; }
             try
             {
+                if ((string?)template.Attribute("kind") == "variant" || value is HmiUnifiedEngineeringValue)
+                { node.Add(new XElement(N + alias, Literal(value))); continue; }
                 if (property.Element(U + "items") is XElement list && value is IEnumerable strings)
                 {
                     var values = strings.Cast<object>().Select(v => new XElement(N + ((string?)list.Attribute("tag") ?? "tag"), new XAttribute("name", System.Convert.ToString(v, CultureInfo.InvariantCulture) ?? "")));
@@ -134,6 +143,9 @@ internal sealed class HmiUnifiedXmlModelWriter
         foreach (var member in schema.Elements(U + "member"))
         {
             var name = (string)member.Attribute("name")!; var alias = (string)member.Attribute("xml")!;
+            var engineering = model as HmiUnifiedEngineeringObject ?? (model as HmiScreenModelBase)?.UnifiedEngineering;
+            if ((string?)member.Attribute("nullable") == "true" && engineering != null && engineering.TryGetValue(name, out var supplied) && supplied == null && Get(model, name) == null)
+            { node.Add(new XElement(N + alias, new XAttribute(U + "null", true))); continue; }
             object[] values;
             try { values = Members(model, name, path).ToArray(); }
             catch (Exception ex) when (ex is ArgumentException or FormatException) { Report(path + "." + name, ex.Message); continue; }
@@ -141,14 +153,20 @@ internal sealed class HmiUnifiedXmlModelWriter
             foreach (var value in values)
             {
                 var childTag = Tag(value, name);
-                XElement? partSchema = (member.Attribute("attribute-type") ?? member.Attribute("default-type")) is XAttribute partId ? contracts.Single(c => (string?)c.Attribute("id") == partId.Value) : null;
-                var child = Write(value, childTag, path + "." + name, partSchema); if (child != null) children.Add(child);
+                var roleTag = System.Text.RegularExpressions.Regex.Replace(name, "([a-z0-9])([A-Z])", "$1-$2").ToLowerInvariant();
+                var declared = value is HmiScreenItemBase or HmiUnifiedEngineeringObject || name is "Dynamizations" or "Entries" ? null : (string?)member.Attribute("declared-type");
+                var declaredCandidates = contracts.Where(c => (string?)c.Attribute("name") == declared && ((string?)member.Attribute("collection") == "true" || (string?)c.Attribute("tag") == roleTag)).ToArray();
+                XElement? partSchema = (member.Attribute("attribute-type") ?? member.Attribute("default-type")) is XAttribute partId ? contracts.Single(c => (string?)c.Attribute("id") == partId.Value) : declaredCandidates.Length == 1 ? declaredCandidates[0] : null;
+                if (partSchema != null) childTag = (string)partSchema.Attribute("tag")!;
+                var child = Write(value, childTag, path + "." + name, partSchema);
+                if (child != null) children.Add((string?)member.Attribute("collection") == "false" && child.Name == U + "ref"
+                    ? new XElement(N + alias, new XAttribute(U + "owned-ref", true), new XAttribute(U + "ref", (string)child.Attribute("ref")!)) : child);
             }
             if (name == "ScreenItems" || member.Attribute("item-tags") != null || (string?)member.Attribute("flattened") == "true" || member.Attribute("attribute-type") != null) node.Add(children);
             else if (children.Count > 0 || name is "Items" or "Entries") node.Add(new XElement(N + alias, children));
         }
         var mapped = new HashSet<string>(schema.Elements(U + "property").Select(p => (string)p.Attribute("name")!).Concat(schema.Elements(U + "member").Select(m => (string)m.Attribute("name")!)), StringComparer.Ordinal);
-        var ignored = new HashSet<string> { "Id", "HmiObjectType", "SourceData", "SourceProperties", "SourceFormat", "StorageBusinessObject", "HandlerTag", "Kind", "EngineeringApiVersion" };
+        var ignored = new HashSet<string> { "Id", "HmiObjectType", "SourceData", "SourceProperties", "SourceFormat", "StorageBusinessObject", "HandlerTag", "Kind", "EngineeringApiVersion", "UnifiedEngineering", "UnifiedExportWarnings" };
         if (mapped.Contains("ScreenItems")) ignored.Add("Layers");
         if (mapped.Contains("EventHandlers") || mapped.Contains("PropertyEventHandlers")) ignored.Add("Events");
         if (mapped.Contains("ContainedType")) ignored.UnionWith(new[] { "FaceplateName", "FaceplateVersion" });
@@ -157,11 +175,15 @@ internal sealed class HmiUnifiedXmlModelWriter
         if (mapped.Contains("Graphic")) ignored.UnionWith(new[] { "Image", "Source" });
         if (mapped.Contains("AlternateGraphic")) ignored.Add("AlternateImage");
         if (mapped.Contains("BackGraphic")) ignored.Add("BackgroundImage");
+        if (model is HmiFont singleFont && singleFont.LocalizedFonts.Count <= 1) ignored.Add("LocalizedFonts");
         if (mapped.Contains("Weight")) ignored.Add("Bold");
         if (mapped.Contains("Items") && model is HmiMultilingualText) ignored.UnionWith(new[] { "Texts", "FormattedTexts", "CategoryTypeId", "CategorySubtype", "SourceDefaultLanguageId" });
         if (model is HmiTextScriptAction) ignored.UnionWith(new[] { "Language", "FunctionName", "ParameterNames" });
         var fields = model is IDictionary<string, object?> dictionary ? dictionary : model.GetType().GetProperties().Where(p => p.CanRead && p.GetIndexParameters().Length == 0).ToDictionary(p => p.Name, p => p.GetValue(model));
         var mappedFields = new HashSet<string>(mapped.Concat(mapped.Select(name => Aliases.TryGetValue(name, out var alias) ? alias : name)));
+        var engineeringData = model as HmiUnifiedEngineeringObject ?? (model as HmiScreenModelBase)?.UnifiedEngineering;
+        if (engineeringData != null) foreach (var field in engineeringData.UnmappedProperties) Report(path + "." + field, "Native engineering value has no supported conversion.");
+        if (model is HmiScreenModelBase { UnifiedEngineering: not null }) return node;
         foreach (var field in fields)
         {
             if (field.Value == null || field.Value is ICollection collection && collection.Count == 0 || ignored.Contains(field.Key) || mappedFields.Contains(field.Key)) continue;
@@ -171,6 +193,11 @@ internal sealed class HmiUnifiedXmlModelWriter
     }
     private IEnumerable<object> Members(object model, string name, string path)
     {
+        if (model is HmiUnifiedEngineeringObject engineering)
+        {
+            if (!engineering.TryGetValue(name, out var value) || value == null) return [];
+            return value is IEnumerable values && value is not string && value is not IDictionary ? values.Cast<object>() : new[] { value };
+        }
         if (name == "ScreenItems" && model is HmiScreenBase screen) return screen.Layers.SelectMany(l => l.Items).Cast<object>();
         if (name == "Dynamizations")
         {
@@ -203,20 +230,31 @@ internal sealed class HmiUnifiedXmlModelWriter
                 ["Language"] = CultureInfo.GetCultureInfo(k <= 0 ? culture ?? throw new FormatException("Default language requires an explicit LCID.") : k).Name,
                 ["Text"] = text.FormattedTexts.TryGetValue(k, out var formatted) ? formatted : text.Texts[k] });
         if (name == "Content") return new[] { Content(model) };
-        var memberValue = Unwrap(Get(model, name), path + "." + name);
+        var graph = (model as HmiScreenModelBase)?.UnifiedEngineering;
+        var ownedValue = graph != null && name is not ("Font" or "Padding" or "InputBehavior" or "Text" or "AlternateText" or "ToolTipText" or "DisplayName") && graph.TryGetValue(name, out var suppliedMember) ? suppliedMember : Get(model, name);
+        var memberValue = Unwrap(ownedValue, path + "." + name);
         if (memberValue == null) return [];
         if (memberValue is IEnumerable list && memberValue is not string && memberValue is not IDictionary) return list.Cast<object>();
         return new[] { memberValue };
     }
-    private static Dictionary<string, object?> Content(object owner) => new() {
-        ["ContentMode"] = Get(owner, "Mode"), ["GraphicStretchMode"] = Get(owner, "GraphicStretchMode"), ["HorizontalTextAlignment"] = Get(owner, "HorizontalAlignment"),
-        ["VerticalTextAlignment"] = Get(owner, "VerticalAlignment"), ["TextTrimming"] = Get(owner, "TextTrimming"), ["Spacing"] = Get(owner, "ContentSpacing"), ["SplitRatio"] = Get(owner, "ContentSplitRatio"), ["TextPosition"] = Get(owner, "ContentTextPosition") };
+    private static HmiUnifiedEngineeringObject Content(object owner)
+    {
+        var graph = (owner as HmiScreenModelBase)?.UnifiedEngineering;
+        var source = graph != null && graph.TryGetValue("Content", out var content) ? content as HmiUnifiedEngineeringObject : null;
+        var result = new HmiUnifiedEngineeringObject(source?.TypeName ?? "Siemens.Engineering.HmiUnified.UI.Parts.HmiContentPart", source?.Tag ?? "content");
+        if (source != null) foreach (var field in source) result[field.Key] = field.Value;
+        foreach (var (name, property) in new[] { ("ContentMode", "Mode"), ("GraphicStretchMode", "GraphicStretchMode"), ("HorizontalTextAlignment", "HorizontalAlignment"), ("VerticalTextAlignment", "VerticalAlignment"), ("TextTrimming", "TextTrimming"), ("Spacing", "ContentSpacing"), ("SplitRatio", "ContentSplitRatio"), ("TextPosition", "ContentTextPosition") })
+            if (Get(owner, property) is { } value) result[name] = value;
+        return result;
+    }
     private string Tag(object value, string role)
     {
+        if (value is HmiUnifiedEngineeringObject engineering) return engineering.Tag;
+        if (value is HmiScreenModelBase { UnifiedEngineering: { } identity }) return identity.Tag;
         if (value is HmiScreenItemBase item)
         {
             if (item is HmiText || item is HmiTextBox) return "text-box";
-            var className = item is HmiCustomWidgetContainer ? "HmiCustomWebControlContainer" : item.GetType().Name;
+            var className = item is HmiCustomWidgetContainer ? "HmiCustomWebControlContainer" : item is HmiToggleSwitch ? "HmiSwitch" : item.GetType().Name;
             var declaredTags = contracts.Where(c => ((string?)c.Attribute("name"))?.EndsWith("." + className, StringComparison.Ordinal) == true).Select(c => (string)c.Attribute("tag")!).Distinct().ToArray();
             if (declaredTags.Length == 1) return declaredTags[0];
             var name = item.GetType().Name.Substring(3);
@@ -244,14 +282,19 @@ internal sealed class HmiUnifiedXmlModelWriter
         if (name == "Url" && model is HmiMediaControl media) return media.Source;
         if (name == "ScreenItems" && model is HmiContainerBase container) return container.Items;
         if (name == "ScreenItems" && model is HmiLayoutContainerBase layout) return layout.Items;
-        if (name == "ContainedType" && model is HmiFaceplateContainer faceplate) return faceplate.FaceplateVersion == null ? faceplate.FaceplateName : "V" + faceplate.FaceplateVersion + "\\" + faceplate.FaceplateName;
+        if (name == "ContainedType" && model is HmiFaceplateContainer faceplate)
+        {
+            if (string.IsNullOrEmpty(faceplate.FaceplateName) && faceplate.FaceplateVersion == null && faceplate.UnifiedEngineering?.TryGetValue(name, out var contained) == true) return contained;
+            return faceplate.FaceplateVersion == null ? faceplate.FaceplateName : "V" + faceplate.FaceplateVersion + "\\" + faceplate.FaceplateName;
+        }
         if (name is "Graphic" or "AlternateGraphic" or "BackGraphic")
         {
             var image = Get(model, name == "Graphic" ? "Image" : name == "AlternateGraphic" ? "AlternateImage" : "BackgroundImage");
             var source = image?.GetType().GetProperty("StaticValue")?.GetValue(image) as HmiImageSource ?? image as HmiImageSource;
-            return source?.ImageName ?? (name == "Graphic" ? Get(model, "Source") : null);
+            return source?.ImageName ?? (model is HmiScreenModelBase { UnifiedEngineering: { } data } && data.TryGetValue(name, out var reference) ? reference : name == "Graphic" ? Get(model, "Source") : null);
         }
-        return (model.GetType().GetProperty(name) ?? model.GetType().GetProperty(Aliases.TryGetValue(name, out var alias) ? alias : name))?.GetValue(model);
+        var result = (model.GetType().GetProperty(name) ?? model.GetType().GetProperty(Aliases.TryGetValue(name, out var alias) ? alias : name))?.GetValue(model);
+        return result ?? (model is HmiScreenModelBase { UnifiedEngineering: { } engineering } && engineering.TryGetValue(name, out var fallback) ? fallback : null);
     }
     private object? Unwrap(object? value, string path, bool report = true)
     {
@@ -289,5 +332,19 @@ internal sealed class HmiUnifiedXmlModelWriter
             _ = type switch { "System.Byte" => (object)byte.Parse(result, CultureInfo.InvariantCulture), "System.Int16" => short.Parse(result, CultureInfo.InvariantCulture), "System.UInt16" => ushort.Parse(result, CultureInfo.InvariantCulture), "System.Int32" => int.Parse(result, CultureInfo.InvariantCulture), "System.UInt32" => uint.Parse(result, CultureInfo.InvariantCulture), _ => ulong.Parse(result, CultureInfo.InvariantCulture) };
         }
         return result;
+    }
+    private static XElement Literal(object? raw)
+    {
+        var exact = raw as HmiUnifiedEngineeringValue;
+        var value = exact != null ? exact.Value : raw;
+        var kind = exact?.Kind ?? (value == null ? "null" : value is Array ? "array" : value.GetType().IsEnum ? "enum" : "scalar");
+        var node = new XElement(U + "Value", new XAttribute("kind", kind));
+        if (kind == "null") return node;
+        var type = exact?.TypeName ?? (value is HmiColor ? "System.Drawing.Color" : value!.GetType().FullName)!;
+        node.Add(new XAttribute("type", type));
+        if (kind is "array" or "string-list") { node.Add(((IEnumerable)value!).Cast<object?>().Select(Literal)); return node; }
+        if (type == "System.String") node.Add(new XAttribute("encoding", exact?.Encoding ?? "text"), new XAttribute(XNamespace.Xml + "space", "preserve"));
+        node.Value = Scalar(value!, new XElement("value", new XAttribute("type", type), new XAttribute("kind", kind)));
+        return node;
     }
 }
