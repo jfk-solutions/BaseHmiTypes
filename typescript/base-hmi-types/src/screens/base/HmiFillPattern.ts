@@ -31,4 +31,16 @@ export enum HmiFillPattern {
   Diamonds = "Diamonds",
   Scales = "Scales",
   Waves = "Waves",
+  BackwardDiagonal = "BackwardDiagonal",
+  Cross = "Cross",
+  ForwardDiagonal = "ForwardDiagonal",
+  GradientHorizontal = "GradientHorizontal",
+  GradientVertical = "GradientVertical",
+  GradientForwardDiagonal = "GradientForwardDiagonal",
+  GradientBackwardDiagonal = "GradientBackwardDiagonal",
+  GradientHorizontalTricolor = "GradientHorizontalTricolor",
+  GradientVerticalTricolor = "GradientVerticalTricolor",
+  GradientForwardDiagonalTricolor = "GradientForwardDiagonalTricolor",
+  GradientBackwardDiagonalTricolor = "GradientBackwardDiagonalTricolor",
+
 }

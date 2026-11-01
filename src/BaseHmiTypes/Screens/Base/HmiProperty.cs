@@ -41,7 +41,8 @@ public enum HmiTriggerKind
     Cycle,
     Event,
     Calendar,
-    Alarm
+    Alarm,
+    Script
 }
 
 public enum HmiTagTriggerMode
@@ -78,6 +79,7 @@ public abstract class HmiProperty<T>
 
 public abstract class HmiDynamicProperty<T> : HmiProperty<T>
 {
+    public HmiUnifiedTagDynamization? UnifiedTagDynamization { get; set; }
     public IList<HmiTrigger> Triggers { get; } = new List<HmiTrigger>();
 }
 
@@ -86,6 +88,17 @@ public abstract class HmiTrigger
     public abstract HmiTriggerKind Kind { get; }
 
     public string? Name { get; set; }
+}
+
+public enum HmiScriptTriggerType { Disabled, T1s, T2s, CustomCycle, Tags, T5s, AutomaticTags, T10s, T100ms, T250ms, T500ms }
+
+/// <summary>Exact Unified script scheduling configuration, including automatic dependency discovery.</summary>
+public sealed class HmiScriptTrigger : HmiTrigger
+{
+    public override HmiTriggerKind Kind => HmiTriggerKind.Script;
+    public HmiScriptTriggerType Type { get; set; }
+    public string CustomDuration { get; set; } = string.Empty;
+    public IList<string> TagNames { get; } = new List<string>();
 }
 
 public sealed class HmiTagTrigger : HmiTrigger
@@ -183,6 +196,13 @@ public sealed class HmiFaceplateInterfaceProperty<T> : HmiProperty<T>
 
 public sealed class HmiScriptProperty<T> : HmiDynamicProperty<T>
 {
+    /// <summary>Optional callable signature; Script contains the editable body.</summary>
+    public string? FunctionName { get; set; }
+
+    public IList<string> ParameterNames { get; } = new List<string>();
+    public bool? Async { get; set; }
+    public string? GlobalDefinitionAreaScriptCode { get; set; }
+
     public override HmiPropertyKind Kind => HmiPropertyKind.Script;
 
     public HmiScriptLanguage Language { get; set; } = HmiScriptLanguage.Unknown;

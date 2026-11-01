@@ -1,28 +1,16 @@
 using System.IO.Compression;
 using System.Text;
-
 namespace BaseHmiTypes.Converters.UnifiedXml;
-
-/// <summary>Loads the compressed catalog using only .NET runtime libraries.</summary>
+/// <summary>The single Unified wire contract; independent of the producer's Siemens version.</summary>
 public static class HmiUnifiedXmlCatalog
 {
-    /// <summary>Opens a fresh, non-seekable XML stream. The caller must dispose it.</summary>
-    public static Stream OpenV21() => Open(HmiScreenToUnifiedXmlConverter.CatalogId);
-
-    public static Stream Open(string id)
+    public const string Id = HmiUnifiedXmlContract.Id;
+    public static Stream Open(string id = Id)
     {
-        if (!System.Text.RegularExpressions.Regex.IsMatch(id ?? "", "^[a-f0-9]{64}$")) throw new FormatException("Invalid Unified catalog identifier.");
-        var stream = typeof(HmiUnifiedXmlCatalog).Assembly.GetManifestResourceStream(
-            "BaseHmiTypes.Converters.UnifiedXml.Catalogs." + id + ".xml.gz")
-            ?? throw new NotSupportedException("The requested Unified catalog is not bundled: " + id);
-        try { return new GZipStream(stream, CompressionMode.Decompress); }
-        catch { stream.Dispose(); throw; }
+        if (id != Id) throw new NotSupportedException("Unsupported Unified format catalog: " + id);
+        var stream = typeof(HmiUnifiedXmlCatalog).Assembly.GetManifestResourceStream("BaseHmiTypes.Converters.UnifiedXml.Catalog.xml.gz")
+            ?? throw new InvalidOperationException("The shared Unified format catalog is not packaged.");
+        try { return new GZipStream(stream, CompressionMode.Decompress); } catch { stream.Dispose(); throw; }
     }
-
-    public static string ReadV21()
-    {
-        using var stream = OpenV21();
-        using var reader = new StreamReader(stream, new UTF8Encoding(false, true));
-        return reader.ReadToEnd();
-    }
+    public static string Read() { using var stream = Open(); using var reader = new StreamReader(stream, new UTF8Encoding(false,true)); return reader.ReadToEnd(); }
 }

@@ -1,507 +1,586 @@
 <?xml version="1.0" encoding="utf-8"?>
-<unified-export xmlns="urn:s7mcp:wincc-unified:2" xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2" catalog="55f590b8a6b10661b5d5bab2b6451aa77112078f77326349ef0068b520b8b61d" device="Panel &quot;3&quot; &amp; &lt;North&gt;" apiVersion="21.0.0.0" scope="device" coverage="authored-objects" complete="true">
+<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" apiVersion="21.0.0.0" coverage="authored-objects" version="2" xmlns="urn:s7mcp:wincc-unified:2">
   <software u:operation="upsert">
     <screen-groups>
       <screen-group name="Plant screens">
         <screens>
-          <screen name="003 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="3">
+          <screen name="003 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="3" width="800" height="480" back-color="#96AEC2" alternate-back-color="#FFFFFF" back-fill-pattern="GradientVertical">
             <event-handlers>
               <screen-event-handler event-type="Loaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PictureNumber").Write(Screen.ScreenNumber);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockHeaderLeft", 0);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
                 </script>
               </screen-event-handler>
               <screen-event-handler event-type="Unloaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PreviousScreenName").Write(Screen.Name);</script-code>
                 </script>
               </screen-event-handler>
             </event-handlers>
-            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <rectangle name="Rectangle0" left="0" top="0" width="60" height="32" back-color="#83A6CC" border-width="1" dash-type="Solid" back-fill-pattern="Solid" />
-            <rectangle name="Rectangle1" left="0" top="0" width="60" height="32" back-color="#CB7CF0" border-width="1" dash-type="Solid" back-fill-pattern="Solid" />
-            <rectangle name="Rectangle2" left="0" top="0" width="60" height="32" back-color="#7E7E7E" border-width="1" dash-type="Solid" back-fill-pattern="Solid" />
-            <rectangle name="Rectangle3" left="0" top="0" width="60" height="32" back-color="#FFEB00" border-width="2" dash-type="Dash" back-fill-pattern="Solid" />
-            <rectangle name="RecRectangle4" left="0" top="0" width="60" height="32" back-color="#FFEB00" border-width="2" dash-type="Dash" back-fill-pattern="Transparent" />
-            <text-box name="TxtRectangle4" left="0" top="0" width="60" height="32">
+            <rectangle name="Rectangle0" width="60" height="32" back-color="#83A6CC" border-color="#181C31" border-width="1" />
+            <rectangle name="Rectangle1" width="60" height="32" back-color="#CB7CF0" border-color="#181C31" border-width="1" />
+            <rectangle name="Rectangle2" width="60" height="32" back-color="#7E7E7E" border-color="#181C31" border-width="1" />
+            <rectangle name="Rectangle3" width="60" height="32" back-color="#FFEB00" border-color="#181C31" border-width="2" dash-type="Dash" />
+            <rectangle name="RecRectangle4" width="60" height="32" back-color="#FFEB00" border-color="#181C31" border-width="2" dash-type="Dash" back-fill-pattern="Transparent" />
+            <text-box name="TxtRectangle4" width="60" height="32" back-color="#FFFFFF" font-size="16" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Rectangle4&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Rectangle4&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Rectangle4</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Rectangle4</multilingual-text-item>
               </text>
-              <font weight="Bold" />
             </text-box>
             <faceplate-container name="Place &quot;A&quot; &amp; &lt;B&gt;" left="80" top="106" width="56" height="38" contained-type="V1.0.0\Place">
               <interface>
-                <faceplate-interface u:type="interface-string" property-name="PlaceSelected" value="123" />
-                <faceplate-interface u:type="interface-string" property-name="PlaceOccupied" value="PlaceOccupied123" />
-                <faceplate-interface u:type="interface-string" property-name="DataPresent" value="DataPresent123" />
-                <faceplate-interface u:type="interface-string" property-name="OperationMode" value="OP123" />
-                <faceplate-interface u:type="interface-string" property-name="PlaceNumber" value="PlaceNumber" />
-                <faceplate-interface u:type="interface-string" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
-                <faceplate-interface u:type="interface-integer" property-name="DbNumber" value="123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceSelected" value="123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceOccupied" value="PlaceOccupied123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="DataPresent" value="DataPresent123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="OperationMode" value="OP123" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceNumber" value="PlaceNumber" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
+                <faceplate-interface u:type="FaceplateInterface.Int64" property-name="DbNumber" value="123" />
               </interface>
             </faceplate-container>
             <faceplate-container name="GroupStatusA" left="10" top="106" width="45" height="45" contained-type="V1.0.0\GroupStatus">
               <interface>
-                <faceplate-interface u:type="interface-string" property-name="GroupOperationMode" value="OperationModeGroupA" />
-                <faceplate-interface u:type="interface-string" property-name="GroupName" value="A" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="GroupOperationMode" value="OperationModeGroupA" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="GroupName" value="A" />
               </interface>
             </faceplate-container>
-            <button name="Button_0" left="650" top="106" width="140" height="42">
+            <button name="Button_0" left="650" top="106" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Scale Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Scale Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Scale Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Scale Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
-              <content content-mode="Text" />
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">HMIRuntime.UI.SysFct.ChangeScreen(&quot;551 ScaleParameter&quot;, Screen.Parent.Path);&#xA;Tags(&quot;ControlScaleScaleNumber&quot;).Write(4);&#xA;Tags(&quot;LockHeaderLeft&quot;).SetBit(0);&#xA;Tags(&quot;LockReleaseButton&quot;).SetBit(0);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">HMIRuntime.UI.SysFct.ChangeScreen("551 ScaleParameter", Screen.Parent.Path);
+Tags("ControlScaleScaleNumber").Write(4);
+Tags("LockHeaderLeft").SetBit(0);
+Tags("LockReleaseButton").SetBit(0);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
             <faceplate-container name="1" left="650" top="148" width="140" height="42" contained-type="V1.0.0\SafetyLightGrid">
               <interface>
-                <faceplate-interface u:type="interface-string" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
-                <faceplate-interface u:type="interface-string" property-name="BypassActive" value="Muting1BypassActive" />
-                <faceplate-interface u:type="interface-string" property-name="Triggered" value="Muting1Triggered" />
-                <faceplate-interface u:type="interface-string" property-name="Reset" value="Muting1Reset" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="PlaceName" value="Place &quot;A&quot; &amp; &lt;B&gt;" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="BypassActive" value="Muting1BypassActive" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="Triggered" value="Muting1Triggered" />
+                <faceplate-interface u:type="FaceplateInterface.String" property-name="Reset" value="Muting1Reset" />
               </interface>
             </faceplate-container>
-            <button name="Button_2" left="650" top="190" width="140" height="42">
+            <button name="Button_2" left="650" top="190" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;CC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;CC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">CC Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">CC Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
-              <content content-mode="Text" />
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">HMIRuntime.UI.SysFct.ChangeScreen(&quot;520 ContourLengthwise&quot;, Screen.Parent.Path);&#xA;Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;Tags(&quot;NumberWorkPlaceContourError&quot;).Write(123);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">HMIRuntime.UI.SysFct.ChangeScreen("520 ContourLengthwise", Screen.Parent.Path);
+Tags("ResetPlaceSelection").SetBit(0);
+Tags("NumberWorkPlaceContourError").Write(123);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
-            <button name="Button_3" left="650" top="232" width="140" height="42">
+            <button name="Button_3" left="650" top="232" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;VL Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;VL Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">VL Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">VL Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
-              <content content-mode="Text" />
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;LockHeaderLeft&quot;).SetBit(0);&#xA;Tags(&quot;ResetPlacesExceptOfPlaceNumber&quot;).Write(123);&#xA;Tags(&quot;123&quot;).SetBit(0);&#xA;Tags(&quot;PlaceNumber&quot;).Write(123);&#xA;Tags(&quot;PictureCallSelectionType&quot;).Write(1);&#xA;Tags(&quot;PictureCallSelectionPlace&quot;).Write(8);&#xA;Tags(&quot;Plus1&quot;).ResetBit(0);&#xA;Tags(&quot;Minus1&quot;).ResetBit(0);&#xA;Tags(&quot;Plus2&quot;).ResetBit(0);&#xA;Tags(&quot;Minus2&quot;).ResetBit(0);&#xA;Tags(&quot;Plus3&quot;).ResetBit(0);&#xA;Tags(&quot;Minus3&quot;).ResetBit(0);&#xA;Tags(&quot;Plus4&quot;).ResetBit(0);&#xA;Tags(&quot;Minus4&quot;).ResetBit(0);&#xA;Tags(&quot;Plus5&quot;).ResetBit(0);&#xA;Tags(&quot;Minus5&quot;).ResetBit(0);&#xA;Tags(&quot;Plus6&quot;).ResetBit(0);&#xA;Tags(&quot;Minus6&quot;).ResetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;599 Reference Carrier&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("LockHeaderLeft").SetBit(0);
+Tags("ResetPlacesExceptOfPlaceNumber").Write(123);
+Tags("123").SetBit(0);
+Tags("PlaceNumber").Write(123);
+Tags("PictureCallSelectionType").Write(1);
+Tags("PictureCallSelectionPlace").Write(8);
+Tags("Plus1").ResetBit(0);
+Tags("Minus1").ResetBit(0);
+Tags("Plus2").ResetBit(0);
+Tags("Minus2").ResetBit(0);
+Tags("Plus3").ResetBit(0);
+Tags("Minus3").ResetBit(0);
+Tags("Plus4").ResetBit(0);
+Tags("Minus4").ResetBit(0);
+Tags("Plus5").ResetBit(0);
+Tags("Minus5").ResetBit(0);
+Tags("Plus6").ResetBit(0);
+Tags("Minus6").ResetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("599 Reference Carrier", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
-            <button name="Button_4" left="650" top="274" width="140" height="42">
+            <button name="Button_4" left="650" top="274" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;TC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;TC Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">TC Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">TC Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
-              <content content-mode="Text" />
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;LockHeaderLeft&quot;).SetBit(0);&#xA;Tags(&quot;ResetPlacesExceptOfPlaceNumber&quot;).Write(123);&#xA;Tags(&quot;123&quot;).SetBit(0);&#xA;Tags(&quot;PlaceNumber&quot;).Write(123);&#xA;Tags(&quot;PictureCallSelectionType&quot;).Write(2);&#xA;Tags(&quot;PictureCallSelectionPlace&quot;).Write(8);&#xA;Tags(&quot;Plus1&quot;).ResetBit(0);&#xA;Tags(&quot;Minus1&quot;).ResetBit(0);&#xA;Tags(&quot;Plus2&quot;).ResetBit(0);&#xA;Tags(&quot;Minus2&quot;).ResetBit(0);&#xA;Tags(&quot;Plus3&quot;).ResetBit(0);&#xA;Tags(&quot;Minus3&quot;).ResetBit(0);&#xA;Tags(&quot;Plus4&quot;).ResetBit(0);&#xA;Tags(&quot;Minus4&quot;).ResetBit(0);&#xA;Tags(&quot;Plus5&quot;).ResetBit(0);&#xA;Tags(&quot;Minus5&quot;).ResetBit(0);&#xA;Tags(&quot;Plus6&quot;).ResetBit(0);&#xA;Tags(&quot;Minus6&quot;).ResetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;599 Reference Carrier&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("LockHeaderLeft").SetBit(0);
+Tags("ResetPlacesExceptOfPlaceNumber").Write(123);
+Tags("123").SetBit(0);
+Tags("PlaceNumber").Write(123);
+Tags("PictureCallSelectionType").Write(2);
+Tags("PictureCallSelectionPlace").Write(8);
+Tags("Plus1").ResetBit(0);
+Tags("Minus1").ResetBit(0);
+Tags("Plus2").ResetBit(0);
+Tags("Minus2").ResetBit(0);
+Tags("Plus3").ResetBit(0);
+Tags("Minus3").ResetBit(0);
+Tags("Plus4").ResetBit(0);
+Tags("Minus4").ResetBit(0);
+Tags("Plus5").ResetBit(0);
+Tags("Minus5").ResetBit(0);
+Tags("Plus6").ResetBit(0);
+Tags("Minus6").ResetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("599 Reference Carrier", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
-            <button name="Button_5" left="650" top="316" width="140" height="42">
+            <button name="Button_5" left="650" top="316" width="140" height="42" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" border-width="2" graphic="" alternate-graphic="" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;TT Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;TT Place &amp;quot;A&amp;quot; &amp;amp; &amp;lt;B&amp;gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">TT Place "A" &amp; &lt;B&gt;</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">TT Place "A" &amp; &lt;B&gt;</multilingual-text-item>
               </text>
-              <content content-mode="Text" />
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;LockHeaderLeft&quot;).SetBit(0);&#xA;Tags(&quot;ResetPlacesExceptOfPlaceNumber&quot;).Write(123);&#xA;Tags(&quot;SelectTurntablePlace&quot;).Write(&quot;Place \&quot;A\&quot; &amp; &lt;B&gt;....&quot;);&#xA;Tags(&quot;123&quot;).SetBit(0);&#xA;Tags(&quot;Plus1&quot;).ResetBit(0);&#xA;Tags(&quot;Minus1&quot;).ResetBit(0);&#xA;Tags(&quot;Plus2&quot;).ResetBit(0);&#xA;Tags(&quot;Minus2&quot;).ResetBit(0);&#xA;Tags(&quot;Plus3&quot;).ResetBit(0);&#xA;Tags(&quot;Minus3&quot;).ResetBit(0);&#xA;Tags(&quot;Plus4&quot;).ResetBit(0);&#xA;Tags(&quot;Minus4&quot;).ResetBit(0);&#xA;Tags(&quot;Plus5&quot;).ResetBit(0);&#xA;Tags(&quot;Minus5&quot;).ResetBit(0);&#xA;Tags(&quot;Plus6&quot;).ResetBit(0);&#xA;Tags(&quot;Minus6&quot;).ResetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;598 Reference Turntable&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("LockHeaderLeft").SetBit(0);
+Tags("ResetPlacesExceptOfPlaceNumber").Write(123);
+Tags("SelectTurntablePlace").Write("Place \"A\" &amp; &lt;B&gt;....");
+Tags("123").SetBit(0);
+Tags("Plus1").ResetBit(0);
+Tags("Minus1").ResetBit(0);
+Tags("Plus2").ResetBit(0);
+Tags("Minus2").ResetBit(0);
+Tags("Plus3").ResetBit(0);
+Tags("Minus3").ResetBit(0);
+Tags("Plus4").ResetBit(0);
+Tags("Minus4").ResetBit(0);
+Tags("Plus5").ResetBit(0);
+Tags("Minus5").ResetBit(0);
+Tags("Plus6").ResetBit(0);
+Tags("Minus6").ResetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("598 Reference Turntable", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
-            <button name="BtnPanel_3" left="0" top="0" width="69" height="47" graphic="UnifiedPanel" alternate-graphic="UnifiedPanel" border-width="0" back-color="#CCFFFF00">
+            <button name="BtnPanel_3" width="69" height="47" back-color="#CCFFFF00" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#979796" alternate-border-color="#2C2A29" graphic="UnifiedPanel" alternate-graphic="UnifiedPanel" content-mode="GraphicAndText" content-text-position="InFront" content-graphic-stretch-mode="Fill" font-size="14" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;3&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;3&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">3</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">3</multilingual-text-item>
               </text>
-              <content content-mode="GraphicAndText" text-position="InFront" graphic-stretch-mode="Fill" />
-              <font size="14" weight="Bold" />
-              <padding />
             </button>
-            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;502 Functions&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("502 Functions", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
-            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;103 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
-                  </script>
-                </button-event-handler>
-              </event-handlers>
-            </button>
-          </screen>
-          <screen name="103 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="103">
-            <event-handlers>
-              <screen-event-handler event-type="Loaded">
-                <script>
-                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
-                </script>
-              </screen-event-handler>
-              <screen-event-handler event-type="Unloaded">
-                <script>
-                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
-                </script>
-              </screen-event-handler>
-            </event-handlers>
-            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
-              <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-              </text>
-              <font size="21" weight="Bold" />
-            </text-box>
-            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
-              <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-              </text>
-              <font size="21" weight="Bold" />
-            </text-box>
-            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
-              <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-              </text>
-              <event-handlers>
-                <button-event-handler event-type="Down">
-                  <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;003 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
-                  </script>
-                </button-event-handler>
-              </event-handlers>
-            </button>
-            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
-              <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-              </text>
-              <event-handlers>
-                <button-event-handler event-type="Down">
-                  <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;203 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
-                  </script>
-                </button-event-handler>
-              </event-handlers>
-            </button>
-          </screen>
-          <screen name="203 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="203">
-            <event-handlers>
-              <screen-event-handler event-type="Loaded">
-                <script>
-                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
-                </script>
-              </screen-event-handler>
-              <screen-event-handler event-type="Unloaded">
-                <script>
-                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
-                </script>
-              </screen-event-handler>
-            </event-handlers>
-            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
-              <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-              </text>
-              <font size="21" weight="Bold" />
-            </text-box>
-            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
-              <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-              </text>
-              <font size="21" weight="Bold" />
-            </text-box>
-            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
-              <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-              </text>
-              <event-handlers>
-                <button-event-handler event-type="Down">
-                  <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;103 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
-                  </script>
-                </button-event-handler>
-              </event-handlers>
-            </button>
-            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
-              <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-              </text>
-              <event-handlers>
-                <button-event-handler event-type="Down">
-                  <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;303 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("103 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
           </screen>
-          <screen name="303 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="303">
+          <screen name="103 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="103" width="800" height="480" back-color="#96AEC2" alternate-back-color="#FFFFFF" back-fill-pattern="GradientVertical">
             <event-handlers>
               <screen-event-handler event-type="Loaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PictureNumber").Write(Screen.ScreenNumber);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockHeaderLeft", 0);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
                 </script>
               </screen-event-handler>
               <screen-event-handler event-type="Unloaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PreviousScreenName").Write(Screen.Name);</script-code>
                 </script>
               </screen-event-handler>
             </event-handlers>
-            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;203 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("003 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
-            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;403 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("203 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
           </screen>
-          <screen name="403 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="403">
+          <screen name="203 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="203" width="800" height="480" back-color="#96AEC2" alternate-back-color="#FFFFFF" back-fill-pattern="GradientVertical">
             <event-handlers>
               <screen-event-handler event-type="Loaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PictureNumber").Write(Screen.ScreenNumber);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockHeaderLeft", 0);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
                 </script>
               </screen-event-handler>
               <screen-event-handler event-type="Unloaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PreviousScreenName").Write(Screen.Name);</script-code>
                 </script>
               </screen-event-handler>
             </event-handlers>
-            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;303 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("103 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
-            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;1503 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("303 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
           </screen>
-          <screen name="1503 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="1503">
+          <screen name="303 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="303" width="800" height="480" back-color="#96AEC2" alternate-back-color="#FFFFFF" back-fill-pattern="GradientVertical">
             <event-handlers>
               <screen-event-handler event-type="Loaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PictureNumber").Write(Screen.ScreenNumber);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockHeaderLeft", 0);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
                 </script>
               </screen-event-handler>
               <screen-event-handler event-type="Unloaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PreviousScreenName").Write(Screen.Name);</script-code>
                 </script>
               </screen-event-handler>
             </event-handlers>
-            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;403 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("203 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
-            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;1603 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("403 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
           </screen>
-          <screen name="1603 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="1603">
+          <screen name="403 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="403" width="800" height="480" back-color="#96AEC2" alternate-back-color="#FFFFFF" back-fill-pattern="GradientVertical">
             <event-handlers>
               <screen-event-handler event-type="Loaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PictureNumber&quot;).Write(Screen.ScreenNumber);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockHeaderLeft&quot;, 0);&#xA;HMIRuntime.Tags.SysFct.ResetBitInTag(&quot;LockReleaseButton&quot;, 0);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PictureNumber").Write(Screen.ScreenNumber);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockHeaderLeft", 0);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
                 </script>
               </screen-event-handler>
               <screen-event-handler event-type="Unloaded">
                 <script>
-                  <script-code xml:space="preserve">Tags(&quot;PreviousScreenName&quot;).Write(Screen.Name);</script-code>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PreviousScreenName").Write(Screen.Name);</script-code>
                 </script>
               </screen-event-handler>
             </event-handlers>
-            <text-box name="TxtDummyHeader" left="0" top="0" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Header&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <text-box name="TxtDummyBottom" left="0" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False">
+            <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;Dummy Footer&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
               </text>
-              <font size="21" weight="Bold" />
             </text-box>
-            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
               <event-handlers>
                 <button-event-handler event-type="Down">
                   <script>
-                    <script-code xml:space="preserve">Tags(&quot;ResetPlaceSelection&quot;).SetBit(0);&#xA;HMIRuntime.UI.SysFct.ChangeScreen(&quot;1503 Panel \&quot;3\&quot; &amp; &lt;North&gt;&quot;, Screen.Parent.Path);</script-code>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("303 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
                   </script>
                 </button-event-handler>
               </event-handlers>
             </button>
-            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" graphic="" alternate-graphic="" border-width="1" border-color="#507295" alternate-border-color="#507295">
-              <content content-mode="Graphic" />
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
               <text>
-                <multilingual-text-item lang="de-DE" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
-                <multilingual-text-item lang="en-GB" text="&lt;body&gt;&lt;p&gt;&lt;/p&gt;&lt;/body&gt;" />
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("1503 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+          </screen>
+          <screen name="1503 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="1503" width="800" height="480" back-color="#96AEC2" alternate-back-color="#FFFFFF" back-fill-pattern="GradientVertical">
+            <event-handlers>
+              <screen-event-handler event-type="Loaded">
+                <script>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PictureNumber").Write(Screen.ScreenNumber);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockHeaderLeft", 0);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
+                </script>
+              </screen-event-handler>
+              <screen-event-handler event-type="Unloaded">
+                <script>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PreviousScreenName").Write(Screen.Name);</script-code>
+                </script>
+              </screen-event-handler>
+            </event-handlers>
+            <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
+              <text>
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
+              </text>
+            </text-box>
+            <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
+              <text>
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
+              </text>
+            </text-box>
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
+              <text>
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("403 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteVor_Inaktiv" alternate-graphic="Unified_SeiteVor_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
+              <text>
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("1603 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+          </screen>
+          <screen name="1603 Panel &quot;3&quot; &amp; &lt;North&gt;" screen-number="1603" width="800" height="480" back-color="#96AEC2" alternate-back-color="#FFFFFF" back-fill-pattern="GradientVertical">
+            <event-handlers>
+              <screen-event-handler event-type="Loaded">
+                <script>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PictureNumber").Write(Screen.ScreenNumber);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockHeaderLeft", 0);
+HMIRuntime.Tags.SysFct.ResetBitInTag("LockReleaseButton", 0);</script-code>
+                </script>
+              </screen-event-handler>
+              <screen-event-handler event-type="Unloaded">
+                <script>
+                  <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                  <script-code xml:space="preserve">Tags("PreviousScreenName").Write(Screen.Name);</script-code>
+                </script>
+              </screen-event-handler>
+            </event-handlers>
+            <text-box name="TxtDummyHeader" width="800" height="96" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
+              <text>
+                <multilingual-text-item lang="de-DE">Dummy Header</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Header</multilingual-text-item>
+              </text>
+            </text-box>
+            <text-box name="TxtDummyBottom" top="414" width="670" height="66" back-color="#FF00FF" opacity="0.4" visible="False" font-size="21" font-weight="Bold">
+              <text>
+                <multilingual-text-item lang="de-DE">Dummy Footer</multilingual-text-item>
+                <multilingual-text-item lang="en-GB">Dummy Footer</multilingual-text-item>
+              </text>
+            </text-box>
+            <button name="BtnPreviousScreen" left="670" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="Unified_SeiteZurück_Inaktiv" alternate-graphic="Unified_SeiteZurück_Aktiv" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
+              <text>
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
+              </text>
+              <event-handlers>
+                <button-event-handler event-type="Down">
+                  <script>
+                    <global-definition-area-script-code xml:space="preserve"></global-definition-area-script-code>
+                    <script-code xml:space="preserve">Tags("ResetPlaceSelection").SetBit(0);
+HMIRuntime.UI.SysFct.ChangeScreen("1503 Panel \"3\" &amp; &lt;North&gt;", Screen.Parent.Path);</script-code>
+                  </script>
+                </button-event-handler>
+              </event-handlers>
+            </button>
+            <button name="BtnNextScreen" left="735" top="414" width="65" height="66" back-color="#FFFFFF" alternate-back-color="#FFFFFF" fore-color="#2C2A29" border-color="#507295" alternate-border-color="#507295" border-width="1" graphic="" alternate-graphic="" content-mode="Graphic" content-graphic-stretch-mode="Uniform" font-size="16">
+              <text>
+                <multilingual-text-item lang="de-DE" />
+                <multilingual-text-item lang="en-GB" />
               </text>
             </button>
           </screen>
@@ -569,7 +648,7 @@
           <tag name="ButtonArrowUp" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.ButtonArrowUp" acquisition-cycle="T100ms" />
           <tag name="ButtonSelectionPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.ButtonSelectionPlace" acquisition-cycle="T100ms" />
           <tag name="ButtonSelectionType" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.ButtonSelectionType" acquisition-cycle="T100ms" />
-          <tag u:type="internal-tag" name="ButtonTeachenPressed" data-type="Bool" />
+          <tag name="ButtonTeachenPressed" data-type="Bool" />
           <tag name="ControllerType" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.ControllerType" acquisition-cycle="T100ms" />
           <tag name="InverterFaultState" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.InverterFaultState" acquisition-cycle="T100ms" />
           <tag name="InverterState" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.InverterState" acquisition-cycle="T100ms" />
@@ -577,7 +656,7 @@
           <tag name="LimitSwitchOff" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.LimitSwitchOff" acquisition-cycle="T100ms" />
           <tag name="MonitoringActualPosition" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.MonitoringActualPosition" acquisition-cycle="T100ms" />
           <tag name="MonitoringLimitSwitch" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.MonitoringLimitSwitch" acquisition-cycle="T100ms" />
-          <tag u:type="internal-tag" name="NoPlaceSelectionReset" data-type="Bool" />
+          <tag name="NoPlaceSelectionReset" data-type="Bool" />
           <tag name="OperationModeGroup" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.OperationModeGroup" acquisition-cycle="T100ms" />
           <tag name="OperationModePlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Carrier.OperationModePlace" acquisition-cycle="T100ms" />
           <tag name="PictureCallSelectionPlace" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Carrier.PictureCallSelectionPlace" acquisition-cycle="T100ms" />
@@ -734,19 +813,19 @@
       </tag-table>
       <tag-table name="InternalVariables">
         <tags>
-          <tag u:type="internal-tag" name="Brightness" data-type="Int" />
-          <tag u:type="internal-tag" name="CountLifeSignal" data-type="Int" />
-          <tag u:type="internal-tag" name="HideHeader" data-type="Bool" />
-          <tag u:type="internal-tag" name="Infotext" data-type="Bool" />
-          <tag u:type="internal-tag" name="LifeSignalInternal" data-type="Bool" />
-          <tag u:type="internal-tag" name="LifeSignalInternalToggle" data-type="Int" />
-          <tag u:type="internal-tag" name="LockHeaderLeft" data-type="Bool" />
-          <tag u:type="internal-tag" name="LockReleaseButton" data-type="Bool" />
-          <tag u:type="internal-tag" name="OpenContourCrosswiseAutomatic" data-type="Bool" />
-          <tag u:type="internal-tag" name="OpenContourLengthwiseAutomatic" data-type="Bool" />
-          <tag u:type="internal-tag" name="PreviousScreenName" data-type="WString" />
-          <tag u:type="internal-tag" name="PreviousScreenNameErrorPlaceData" data-type="WString" />
-          <tag u:type="slot-number" name="SlotNumber" data-type="Int" initial-value="3" />
+          <tag name="Brightness" data-type="Int" />
+          <tag name="CountLifeSignal" data-type="Int" />
+          <tag name="HideHeader" data-type="Bool" />
+          <tag name="Infotext" data-type="Bool" />
+          <tag name="LifeSignalInternal" data-type="Bool" />
+          <tag name="LifeSignalInternalToggle" data-type="Int" />
+          <tag name="LockHeaderLeft" data-type="Bool" />
+          <tag name="LockReleaseButton" data-type="Bool" />
+          <tag name="OpenContourCrosswiseAutomatic" data-type="Bool" />
+          <tag name="OpenContourLengthwiseAutomatic" data-type="Bool" />
+          <tag name="PreviousScreenName" data-type="WString" />
+          <tag name="PreviousScreenNameErrorPlaceData" data-type="WString" />
+          <tag name="SlotNumber" data-type="Int" initial-value="3" />
         </tags>
       </tag-table>
       <tag-table name="Scale">
@@ -781,17 +860,17 @@
           <tag name="DisplayScaleScaleNumber" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.ScaleNumber" acquisition-cycle="T100ms" />
           <tag name="DisplayScaleSlackRope" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.SlackRope" acquisition-cycle="T100ms" />
           <tag name="DisplayScaleStatus" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Scale.Status" acquisition-cycle="T100ms" />
-          <tag u:type="internal-tag" name="PushButton1" data-type="Int" />
-          <tag u:type="internal-tag" name="PushButton2" data-type="Int" />
-          <tag u:type="internal-tag" name="PushButton3" data-type="Int" />
-          <tag u:type="internal-tag" name="PushButton4" data-type="Int" />
-          <tag u:type="internal-tag" name="PushButton5" data-type="Int" />
+          <tag name="PushButton1" data-type="Int" />
+          <tag name="PushButton2" data-type="Int" />
+          <tag name="PushButton3" data-type="Int" />
+          <tag name="PushButton4" data-type="Int" />
+          <tag name="PushButton5" data-type="Int" />
         </tags>
       </tag-table>
       <tag-table name="OperationModeGroups">
         <tags>
           <tag name="OperationModeGroupSPS" connection="HMI_Connection_1" plc-tag="TouchInterface.OperationModeGroupCpu" acquisition-cycle="T100ms" />
-          <tag name="OperationModeGroupA" connection="HMI_Connection_1" plc-tag="TouchInterface.OperationModeGroupA" />
+          <tag name="OperationModeGroupA" connection="HMI_Connection_1" plc-tag="TouchInterface.OperationModeGroupA" acquisition-cycle="T100ms" />
         </tags>
       </tag-table>
       <tag-table name="PlaceData">
@@ -942,29 +1021,29 @@
       </tag-table>
       <tag-table name="DataPresent">
         <tags>
-          <tag name="DataPresent123" connection="HMI_Connection_1" plc-tag="TouchInterface.DataPresent[123]" />
+          <tag name="DataPresent123" connection="HMI_Connection_1" plc-tag="TouchInterface.DataPresent[123]" acquisition-cycle="T100ms" />
         </tags>
       </tag-table>
       <tag-table name="OperationModePlaces">
         <tags>
-          <tag name="OP123" connection="HMI_Connection_1" plc-tag="TouchInterface.OperationMode[123]" />
+          <tag name="OP123" connection="HMI_Connection_1" plc-tag="TouchInterface.OperationMode[123]" acquisition-cycle="T100ms" />
         </tags>
       </tag-table>
       <tag-table name="PlaceOccupied">
         <tags>
-          <tag name="PlaceOccupied123" connection="HMI_Connection_1" plc-tag="TouchInterface.PlaceOccupied[123]" />
+          <tag name="PlaceOccupied123" connection="HMI_Connection_1" plc-tag="TouchInterface.PlaceOccupied[123]" acquisition-cycle="T100ms" />
         </tags>
       </tag-table>
       <tag-table name="PlacesSelected">
         <tags>
-          <tag name="123" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Place[123]" />
+          <tag name="123" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Place[123]" acquisition-cycle="T100ms" />
         </tags>
       </tag-table>
       <tag-table name="Muting">
         <tags>
-          <tag name="Muting1BypassActive" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Muting.1BypassActive" />
-          <tag name="Muting1Triggered" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Muting.1Triggered" />
-          <tag name="Muting1Reset" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Muting.1Reset" />
+          <tag name="Muting1BypassActive" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Muting.1BypassActive" acquisition-cycle="T100ms" />
+          <tag name="Muting1Triggered" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Display.Muting.1Triggered" acquisition-cycle="T100ms" />
+          <tag name="Muting1Reset" connection="HMI_Connection_1" plc-tag="TouchInterface.Panel[3].Control.Muting.1Reset" acquisition-cycle="T100ms" />
         </tags>
       </tag-table>
     </tag-tables>

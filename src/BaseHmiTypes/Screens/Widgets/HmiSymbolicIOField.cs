@@ -4,6 +4,8 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public class HmiSymbolicIOField : HmiTextWidgetBase
 {
+    public HmiProperty<string>? ResourceList { get; set; }
+    public HmiProperty<int>? SelectedIndex { get; set; }
     public HmiSymbolicIOField()
     {
         HmiObjectType = BaseHmiTypes.Screens.Base.HmiObjectType.HmiSymbolicIOField;

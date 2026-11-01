@@ -102,3 +102,5 @@ export * from "./base/HmiTrendYAxisRangeMode.js";
 export * from "./base/HmiTrendYAxisCustomBoundSource.js";
 export * from "./base/HmiTrendYAxisScaleMode.js";
 export * from "./base/HmiTouchAreaShape.js";
+
+export * from "./base/HmiUnifiedTagDynamization.js";

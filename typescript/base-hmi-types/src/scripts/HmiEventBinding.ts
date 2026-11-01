@@ -2,6 +2,7 @@ import { HmiAction } from "./HmiAction.js";
 import type { HmiProperty } from "../screens/base/HmiProperty.js";
 
 export class HmiEventBinding {
+  propertyName?: string;
   eventName = "";
   sourceFormat?: string;
   sourceData?: Uint8Array;

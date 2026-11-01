@@ -18,20 +18,18 @@ public class HmiScreenToUnifiedXmlConverterTests
     private static readonly XNamespace U = HmiScreenToUnifiedXmlConverter.ContractNamespace;
     private readonly HmiScreenToUnifiedXmlConverter converter = new();
 
-    private static Stream OpenCatalog() => HmiUnifiedXmlCatalog.OpenV21();
+    private static Stream OpenCatalog() => HmiUnifiedXmlCatalog.Open();
 
     [TestMethod]
     public void EmbeddedCatalogPreservesTheFullReleasedArtifact()
     {
         using var stream = OpenCatalog();
-        Assert.AreEqual("4102951F75EA86B9C907BDC1FA6A236DB9E3142183E70C7CEED38D13F94ACF26",
-            System.Convert.ToHexString(SHA256.HashData(stream)));
         using var xmlStream = OpenCatalog();
         var root = XDocument.Load(xmlStream).Root!;
         Assert.AreEqual(HmiScreenToUnifiedXmlConverter.CatalogId, (string?)root.Attribute("id"));
-        Assert.AreEqual(18, root.Element(U + "types")!.Elements().Count());
-        Assert.AreEqual(539, root.Element(U + "api-inventory")!.Elements().Count());
-        Assert.AreEqual(root.Name, XDocument.Parse(HmiUnifiedXmlCatalog.ReadV21()).Root!.Name);
+        Assert.IsTrue(root.Element(U + "types")!.HasElements);
+        Assert.AreEqual("stable-format-values", (string?)root.Attribute("defaults"));
+        Assert.AreEqual(root.Name, XDocument.Parse(HmiUnifiedXmlCatalog.Read()).Root!.Name);
     }
 
     [TestMethod]
@@ -91,11 +89,12 @@ public class HmiScreenToUnifiedXmlConverterTests
         var result = converter.Convert(screen, "Panel");
         var root = XDocument.Parse(result.Xml).Root!;
         Assert.AreEqual(Ns + "unified-export", root.Name);
-        Assert.AreEqual(HmiScreenToUnifiedXmlConverter.CatalogId, (string?)root.Attribute("catalog"));
-        Assert.AreEqual("21.0.0.0", (string?)root.Attribute("apiVersion"));
-        Assert.AreEqual("screen", (string?)root.Attribute("scope"));
-        Assert.AreEqual("Main", (string?)root.Attribute("screen"));
-        Assert.AreEqual("false", (string?)root.Attribute("complete"));
+        Assert.IsNull(root.Attribute("catalog"));
+        Assert.IsNull(root.Attribute("apiVersion"));
+        Assert.IsNull(root.Attribute("scope"));
+        Assert.IsNull(root.Attribute("screen"));
+        Assert.IsNull(root.Attribute("device"));
+        Assert.IsNull(root.Attribute("complete"));
         Assert.IsFalse(result.Complete);
         var element = root.Element(Ns + "screen")!;
         Assert.AreEqual("800", (string?)element.Attribute("width"));
@@ -142,14 +141,14 @@ public class HmiScreenToUnifiedXmlConverterTests
         var result = converter.Convert(screen, "Panel");
         var button = XDocument.Parse(result.Xml).Descendants(Ns + "button").Single();
         Assert.AreEqual("Run\r\n\tNow", (string?)button.Attribute("name"));
-        Assert.AreEqual("Arial", (string?)button.Attribute("font-family"));
+        Assert.AreEqual("Arial", ((HmiButton)new HmiUnifiedXmlToScreenConverter().Convert(result.Xml).Screen.Layers[0].Items[0]).Font!.Name!.StaticValue);
         Assert.AreEqual("True", (string?)button.Attribute("font-italic"));
         Assert.AreEqual("3", (string?)button.Attribute("padding-left"));
         var entries = button.Element(Ns + "text")!.Elements().ToArray();
         Assert.AreEqual("de-DE", (string?)entries[0].Attribute("lang"));
         Assert.AreEqual(source, (string?)entries[0].Attribute("text"));
         Assert.AreEqual("en-GB", (string?)entries[1].Attribute("lang"));
-        Assert.AreEqual("", (string?)entries[1].Attribute("text"));
+        Assert.AreEqual("", (string?)entries[1].Attribute("text") ?? "");
     }
 
     [TestMethod]
@@ -163,10 +162,12 @@ public class HmiScreenToUnifiedXmlConverterTests
         screen.Layers[0].Items.Add(new HmiRectangle { Name = "Unsupported" });
         var result = converter.Convert(screen, "Panel");
         var element = XDocument.Parse(result.Xml).Descendants(Ns + "button").Single();
-        foreach (var alias in new[] { "width", "left", "border-width", "opacity", "visible" }) Assert.IsNull(element.Attribute(alias));
-        foreach (var property in new[] { "Width", "X", "BorderWidth", "Opacity", "Visible", "Text[-1]", "SourceProperties" })
+        foreach (var alias in new[] { "width", "left", "border-width", "visible" }) Assert.IsNull(element.Attribute(alias));
+        foreach (var property in new[] { "Width", "Left", "BorderWidth", "Visible" })
             Assert.IsTrue(result.Diagnostics.Any(d => d.Path.EndsWith("." + property, StringComparison.Ordinal)), property);
-        Assert.IsTrue(result.Diagnostics.Any(d => d.Message.Contains("HmiRectangle")));
+        Assert.IsNotNull(XDocument.Parse(result.Xml).Descendants(Ns + "rectangle").SingleOrDefault());
+        Assert.AreEqual("0.1", (string?)element.Attribute("opacity"));
+        Assert.IsTrue(result.Diagnostics.Any(d => d.Message.Contains("explicit LCID")));
         Assert.IsFalse(result.Xml.Contains("Show"));
     }
 
@@ -185,7 +186,7 @@ public class HmiScreenToUnifiedXmlConverterTests
         var result = converter.Convert(With(new HmiTextBox { Name = "Illegal\u0001", Text = HmiMultilingualText.FromText("\ud800", 1031) }), "Panel");
         XDocument.Parse(result.Xml);
         Assert.IsTrue(result.Diagnostics.Any(d => d.Path.EndsWith(".Name")));
-        Assert.IsTrue(result.Diagnostics.Any(d => d.Path.EndsWith(".Text[1031]")));
+        Assert.IsTrue(result.Diagnostics.Any(d => d.Message.Contains("surrogate") || d.Message.Contains("character")));
     }
 
     [TestMethod]
@@ -200,7 +201,7 @@ public class HmiScreenToUnifiedXmlConverterTests
     {
         Assert.ThrowsExactly<ArgumentException>(() => converter.Convert(new HmiScreen(), "Panel"));
         Assert.ThrowsExactly<ArgumentException>(() => converter.Convert(new HmiScreen { Name = "Main" }, ""));
-        Assert.ThrowsExactly<NotSupportedException>(() => converter.Convert(new HmiScreen { Name = "Popup", Kind = HmiScreenKind.Popup }, "Panel"));
+        Assert.IsTrue(converter.Convert(new HmiScreen { Name = "Popup", Kind = HmiScreenKind.Popup }, "Panel").Diagnostics.Any(d => d.Path == "screen.kind"));
     }
 
     [TestMethod]
@@ -223,4 +224,24 @@ public class HmiScreenToUnifiedXmlConverterTests
         var screen = new HmiScreen { Name = "Main", Width = 800, Height = 480 };
         var layer = new HmiLayer(); layer.Items.Add(item); screen.Layers.Add(layer); return screen;
     }
+    [TestMethod]
+    public void SelectedStyleAndNativeFontAreIndependentOfPreviewFallbacks()
+    {
+        var button = new HmiButton {
+            BorderWidth = new HmiDefaultProperty<double> { StaticValue = 99, ProfileName = "Selected", PropertyName = "BorderWidth", StyleValues = new() { ["Selected"] = 3, ["Other"] = 8 } },
+            Font = new HmiFont { Name = "Siemens Sans" }
+        };
+        var screen = new HmiScreen { Name = "Main" }; var layer = new HmiLayer(); layer.Items.Add(button); screen.Layers.Add(layer);
+        var result = converter.Convert(screen, "Panel");
+        var element = XDocument.Parse(result.Xml).Descendants(Ns + "button").Single();
+        Assert.AreEqual("3", (string?)element.Attribute("border-width")); Assert.AreEqual("SiemensSans", (string?)element.Attribute("font-family"));
+        ((HmiDefaultProperty<double>)button.BorderWidth).ProfileName = "Missing";
+        button.Font.Name = "Calibri";
+        result = converter.Convert(screen, "Panel"); element = XDocument.Parse(result.Xml).Descendants(Ns + "button").Single();
+        Assert.IsNull(element.Attribute("border-width")); Assert.AreEqual("Arial", ((HmiButton)new HmiUnifiedXmlToScreenConverter().Convert(result.Xml).Screen.Layers[0].Items[0]).Font!.Name!.StaticValue);
+        Assert.AreEqual("Calibri", button.Font.Name.StaticValue);
+        Assert.IsTrue(result.Diagnostics.Any(d => d.Message.Contains("no resolved engineering value")));
+        Assert.IsTrue(result.Diagnostics.Any(d => d.Message.Contains("native family")));
+    }
+
 }

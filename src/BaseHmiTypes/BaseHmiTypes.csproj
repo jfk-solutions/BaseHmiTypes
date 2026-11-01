@@ -29,8 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\..\catalogs\unified-v21\*.xml.gz"
-                      LogicalName="BaseHmiTypes.Converters.UnifiedXml.Catalogs.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\catalogs\unified\catalog.xml.gz" LogicalName="BaseHmiTypes.Converters.UnifiedXml.Catalog.xml.gz" />
     <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
     <None Include="..\..\THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="\" />
     <None Include="..\..\THIRD-PARTY-LICENSES\*.txt" Pack="true" PackagePath="THIRD-PARTY-LICENSES" />

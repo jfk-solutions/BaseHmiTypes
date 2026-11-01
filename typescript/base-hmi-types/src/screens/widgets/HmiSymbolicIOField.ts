@@ -5,6 +5,8 @@ import { HmiState } from "./HmiState.js";
 import { HmiStateTriggerMode } from "./HmiStateTriggerMode.js";
 
 export class HmiSymbolicIOField extends HmiTextWidgetBase {
+  resourceList?: HmiProperty<string>;
+  selectedIndex?: HmiProperty<number>;
   /** Configured dropdown entries and their range/bit selection policy. */
   textList?: import('../../text-graphic-lists/HmiTextList.js').HmiTextList;
   readonly states: HmiState[] = [];

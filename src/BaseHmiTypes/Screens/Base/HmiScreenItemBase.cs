@@ -94,4 +94,18 @@ public abstract class HmiScreenItemBase : HmiScreenModelBase
     public HmiConfirmationDialogSettings? TouchConfirmationDialog { get; set; }
 
     public IList<HmiEventBinding> Events { get; } = new List<HmiEventBinding>();
+    public HmiProperty<string>? Authorization { get; set; }
+
+    public HmiProperty<bool>? RequireExplicitUnlock { get; set; }
+
+    public HmiProperty<string>? CurrentQuality { get; set; }
+
+    public HmiProperty<string>? RotationCenterPlacement { get; set; }
+
+    public HmiProperty<bool>? ShowFocusVisual { get; set; }
+
+    public HmiProperty<string>? StyleItemClass { get; set; }
+
+    public HmiProperty<bool>? VisualizeQuality { get; set; }
+
 }

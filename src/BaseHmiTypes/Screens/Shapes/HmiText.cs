@@ -31,4 +31,6 @@ public class HmiText : HmiSurfaceShapeBase
 
     /// <summary>Draws borders wider than one pixel inside the frame when true, or centered on it when false.</summary>
     public HmiProperty<bool>? DrawStrokeInsideFrame { get; set; }
+    public HmiProperty<bool>? ReadOnly { get; set; }
+
 }

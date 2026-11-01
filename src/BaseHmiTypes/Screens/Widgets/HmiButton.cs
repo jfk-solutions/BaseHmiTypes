@@ -37,4 +37,10 @@ public class HmiButton : HmiButtonBase
 
     /// <summary>True/omitted retains the normal image when a configured disabled-image replacement is missing. False suppresses the normal image instead.</summary>
     public HmiProperty<bool>? DisabledImageFallbackToNormal { get; set; }
+    public HmiProperty<int>? ContentSpacing { get; set; }
+
+    public HmiProperty<double>? ContentSplitRatio { get; set; }
+
+    public HmiProperty<string>? ContentTextPosition { get; set; }
+
 }

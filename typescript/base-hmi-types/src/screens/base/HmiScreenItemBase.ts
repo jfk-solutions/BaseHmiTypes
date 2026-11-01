@@ -58,4 +58,11 @@ export abstract class HmiScreenItemBase extends HmiScreenModelBase {
   touchAreaShape?: HmiTouchAreaShape;
   touchConfirmationDialog?: HmiConfirmationDialogSettings;
   readonly events: HmiEventBinding[] = [];
+  authorization?: HmiProperty<string>;
+  requireExplicitUnlock?: HmiProperty<boolean>;
+  currentQuality?: HmiProperty<string>;
+  rotationCenterPlacement?: HmiProperty<string>;
+  showFocusVisual?: HmiProperty<boolean>;
+  styleItemClass?: HmiProperty<string>;
+  visualizeQuality?: HmiProperty<boolean>;
 }

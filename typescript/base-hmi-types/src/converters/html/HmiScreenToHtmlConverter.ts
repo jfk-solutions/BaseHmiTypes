@@ -1881,7 +1881,8 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
   if (unitProperty !== undefined) html.push(' data-engineering-unit="', escapeHtml(unit ?? ""), '"');
   if (unitProperty?.kind === HmiPropertyKind.Tag) appendAttribute(html, "data-engineering-unit-tag", (unitProperty as HmiTagProperty<HmiMultilingualText>).tagName);
   if (resolveStaticValue(ioField.enabled, context, tryConvertFaceplateBooleanValue) === false) appendAttribute(html, "disabled", "disabled");
-  let text = resolveStaticValue(ioField.text, context, tryConvertFaceplateTextValue)?.getDisplayText(context.options.cultureLcid);
+  const processValue = context.effectiveProperties.resolve(ioField, "processValue", ioField.processValue);
+  let text = resolveStaticValue(processValue, context, value => typeof value === "string" || typeof value === "number" ? String(value) : undefined) ?? resolveStaticValue(ioField.text, context, tryConvertFaceplateTextValue)?.getDisplayText(context.options.cultureLcid);
   if (!text?.trim() && ioField.text?.kind === HmiPropertyKind.Expression)
     text = (ioField.text as HmiExpressionProperty<HmiMultilingualText>).expression;
   const integerFormat = /^\{I(\d+)\}$/.exec(getStaticValue(ioField.outputFormat) ?? "");
@@ -1891,7 +1892,7 @@ function appendInput(html: string[], ioField: HmiIOField, context: HmiHtmlConver
   appendAttribute(html, "value", text);
   if (resolveStaticValue(ioField.readOnly, context, tryConvertFaceplateBooleanValue) === true)
     appendAttribute(html, "readonly", "readonly");
-  if (resolveStaticValue(ioField.maskInput, context, tryConvertFaceplateBooleanValue) === true)
+  if (resolveStaticValue(ioField.inputBehavior?.hiddenInput ?? ioField.maskInput, context, tryConvertFaceplateBooleanValue) === true)
     appendAttribute(html, "type", "password");
   const fieldLength = resolveStaticValue(ioField.fieldLength, context, tryConvertFaceplateInt32Value);
   if (fieldLength !== undefined)
@@ -5185,6 +5186,8 @@ function appendFillPatternCss(html: string[], pattern: HmiFillPattern, patternCo
 }
 
 interface ColorGradientSource {
+  fillPattern?: HmiProperty<HmiFillPattern>;
+  alternateBackgroundColor?: HmiProperty<HmiColor>;
   backgroundColor?: HmiProperty<HmiColor>;
   firstGradientColor?: HmiProperty<HmiColor>;
   firstGradientOffset?: HmiProperty<number>;
@@ -5212,7 +5215,17 @@ function createColorGradient(source: ColorGradientSource): ColorGradient | undef
   const secondColor = getStaticValue(source.secondGradientColor);
   const firstEnabled = getStaticValueOrDefault(source.useFirstGradient, false) && firstColor !== undefined;
   const secondEnabled = getStaticValueOrDefault(source.useSecondGradient, false) && secondColor !== undefined;
-  if (!firstEnabled && !secondEnabled) return undefined;
+  if (!firstEnabled && !secondEnabled) {
+    const directions: Partial<Record<HmiFillPattern, HmiGradientDirection>> = {
+      [HmiFillPattern.GradientHorizontal]: HmiGradientDirection.HorizontalFromLeft,
+      [HmiFillPattern.GradientVertical]: HmiGradientDirection.VerticalFromTop,
+      [HmiFillPattern.GradientForwardDiagonal]: HmiGradientDirection.DiagonalUp,
+      [HmiFillPattern.GradientBackwardDiagonal]: HmiGradientDirection.DiagonalDown,
+    };
+    const pattern = getStaticValue(source.fillPattern), direction = pattern === undefined ? undefined : directions[pattern];
+    const start = getStaticValue(source.backgroundColor), end = getStaticValue(source.alternateBackgroundColor);
+    return direction !== undefined && start && end ? { direction, stops: [{color: start, offset: 0}, {color: end, offset: 100}] } : undefined;
+  }
 
   const middle = getStaticValue(source.middleGradientColor)
     ?? getStaticValue(source.backgroundColor)

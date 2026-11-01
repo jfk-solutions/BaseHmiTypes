@@ -29,6 +29,16 @@ public sealed class HmiTextScriptAction : HmiAction
     public HmiScriptLanguage Language { get; set; } = HmiScriptLanguage.Unknown;
 
     public string? SourceCode { get; set; }
+
+    /// <summary>Shared engineering definitions, independent of the script body.</summary>
+    public string? GlobalDefinitionAreaScriptCode { get; set; }
+
+    public bool? Async { get; set; }
+
+    /// <summary>Optional callable signature. SourceCode contains the editable body, not a generated wrapper.</summary>
+    public string? FunctionName { get; set; }
+
+    public IList<string> ParameterNames { get; } = new List<string>();
 }
 
 /// <summary>

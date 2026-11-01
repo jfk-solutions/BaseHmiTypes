@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2" apiVersion="19.0.0.0" coverage="exposed-openness-graph" xmlns="urn:s7mcp:wincc-unified:2">
+  <screen name="Main">
+    <iofield iofield-type="InputOutput" name="Value" output-format="{F2}" process-value="10.25">
+      <dynamizations>
+        <tag-dynamization data-type="Bool" dynamization-type="Tag" property-name="Visible" tag="State" use-indirect-addressing="True">
+          <value-converter>
+            <mapping-table condition-type="Bitmask">
+              <entries>
+                <mapping-table-entry-bitmask u:type="MappingTableEntryBitmask.Boolean" bit-dynamization-type="MultiBit" condition="9223372036854775809" flashing="True" flashing-rate="Fast" relevant="18446744073709551615" />
+              </entries>
+            </mapping-table>
+          </value-converter>
+        </tag-dynamization>
+        <tag-dynamization data-type="Int" dynamization-type="Tag" property-name="BackColor" read-only="True" tag="ColorMode">
+          <value-converter>
+            <mapping-table condition-type="Range">
+              <entries>
+                <mapping-table-entry-range u:type="MappingTableEntryRange.Color" alternate-value="#AABBCC01" flashing-rate="Medium" from="-5" range-type="Range" to="3" value="#1122337F" />
+              </entries>
+            </mapping-table>
+          </value-converter>
+        </tag-dynamization>
+      </dynamizations>
+      <input-behavior accept-on-deactivated="True" hidden-input="True">
+        <dynamizations>
+          <tag-dynamization data-type="Bool" dynamization-type="Tag" property-name="HiddenInput" tag="Mask" />
+        </dynamizations>
+      </input-behavior>
+    </iofield>
+    <symbolic-iofield name="State" process-value="7" resource-list="@Default.Messages" selected-index="2" />
+    <button name="Caption">
+      <dynamizations>
+        <resource-list-dynamization dynamization-type="ResourceList" property-name="Text" resource-list="@Default.Messages" tag="State" />
+      </dynamizations>
+    </button>
+  </screen>
+</unified-export>

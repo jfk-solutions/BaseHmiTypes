@@ -116,16 +116,22 @@ even in mixed projects whose project-wide profile is Advanced.
 Leave it disabled for runtime rendering; internal control settings such as hidden
 table columns are unaffected.
 
+## WinCC Unified XML format
+
+BaseHmiTypes owns the [Unified XML specification](docs/WINCC-UNIFIED-XML.md), the
+[wire reference](docs/WINCC-UNIFIED-XML.html) and shared format definition. S7Mcp, the TIA add-in and native
+TIA project readers must produce and consume the same engineering format.
+
 ## WinCC Unified XML screen writer
 
 `HmiScreenToUnifiedXmlConverter` writes an XML v2 inspection archive using the
-fixed V21 catalog extracted via TIA Portal Openness.
+shared format definition, independent of the producer TIA version.
 The contract mapping targets specification revision 2.1; later catalog changes
 require a deliberate mapping review.
 The full [catalog and extraction details](catalogs/README.md) are checked in,
 embedded in the C# assembly and included in the npm package.
-It is stored as `.xml.gz`; `HmiUnifiedXmlCatalog.OpenV21()` in C# and
-`await HmiUnifiedXmlCatalog.loadV21(url)` in the browser decompress it using
+It is stored as `.xml.gz`; `HmiUnifiedXmlCatalog.Open()` in C# and
+`await HmiUnifiedXmlCatalog.loadFromUrl(url)` in the browser decompress it using
 built-in runtime APIs, without an additional compression dependency.
 The C# and TypeScript APIs return XML plus a separate diagnostics list.
 
@@ -146,12 +152,12 @@ const result = new HmiScreenToUnifiedXmlConverter().convert(screen, "Panel", 103
 This first writer maps ordinary screens, buttons, text boxes and graphic views;
 it writes static geometry, visibility/enabled state, supported colors, numeric
 appearance properties, font/padding parts and localized text. Formatted text takes
-precedence for the same language and is preserved as an escaped string. Default
+precedence for the same language and is stored as direct mixed HTML content, without redundant body or unstyled paragraph wrappers. Empty formatted translations retain their language entry. Default
 language text requires the explicit LCID argument; TypeScript diagnoses LCIDs
 outside its supported mapping. Layers flatten in collection order with a diagnostic;
-shared item instances use object references. Unsupported screen kinds fail.
-Unsupported controls, events, bindings, source payloads and other populated fields
-produce diagnostics. Dynamic properties never export their static fallback as a
+shared item instances use object references. Unsupported screen kinds produce diagnostics while retaining an XML export.
+Unsupported controls, bindings, source payloads and other populated fields
+produce diagnostics. JavaScript screen/button events retain body, shared globals and async state. Dynamic properties never export their static fallback as a
 replacement for a missing dynamization contract. Fractional/out-of-range integers,
 lossy Single conversions and XML-illegal inline strings are diagnosed and omitted.
 Font-family mappings currently cover Arial and SiemensSans.
@@ -163,12 +169,12 @@ defaults to invent unread source fields. Output is for inspection and is rejecte
 for full engineering restoration. A restorable writer still needs a full
 V21 source semantic mapping, including all required fields, scripts and bindings;
 no live TIA import has been verified. The destination must have the matching
-immutable catalog (`89ce7b2e…a76bdd1a`) and any referenced graphics or other dependencies.
+shared catalog and any referenced graphics or other dependencies.
 
 ## WinCC Unified XML screen reader
 
 `HmiUnifiedXmlToScreenConverter` reads XML v2 screen archives using the bundled
-V21 catalog and returns `Screen`, `SourceComplete` and `Diagnostics` (camel case
+shared catalog and returns `Screen`, `SourceComplete` and `Diagnostics` (camel case
 in TypeScript). It accepts complete archives and incomplete inspection exports.
 `SourceComplete` reports the input flag; it does not certify that every source
 field maps to the neutral model. Review diagnostics independently.
@@ -184,20 +190,19 @@ var screen = result.Screen;
 import { HmiUnifiedXmlCatalog, HmiUnifiedXmlToScreenConverter } from "@jfk-solutions/base-hmi-types";
 
 // Pass the exact bundled catalog XML when the asset is hosted at a custom URL.
-const catalogXml = await HmiUnifiedXmlCatalog.loadV21(catalogUrl);
+const catalogXml = await HmiUnifiedXmlCatalog.loadFromUrl(catalogUrl);
 const result = await new HmiUnifiedXmlToScreenConverter(catalogXml).convert(screenXml);
 const screen = result.screen;
 ```
 
 The browser reader uses native `DOMParser` and `XMLSerializer`; it has no
 third-party runtime dependency. Without the optional constructor argument, it
-loads the packaged catalog selected by the document through `HmiUnifiedXmlCatalog.load(id)`.
+uses the single bundled schema through `HmiUnifiedXmlCatalog.load()`. Screen XML contains no catalog selector or fingerprint. Both exporters pretty-print structural XML while preserving payload whitespace.
 The DOM library used by automated Node.js tests is a development dependency only.
 
 Both readers also provide `convertScreens(xml)` / `ConvertScreens(xml)`, returning one result for
 an individual screen export or each screen in a device-scope software authoring
-document. It accepts V19, V20 and V21 metadata with the bundled original and
-authoring catalogs. Authoring previews also map rectangles, faceplate containers
+document. Producer API metadata does not choose another schema. Authoring previews also map rectangles, faceplate containers
 and screen windows; missing external definitions remain placeholders. Partial
 updates use catalog defaults for visualization and report that the existing
 target values are unavailable. They do not reconstruct the existing TIA project.
@@ -301,3 +306,6 @@ offsets, byte length and explicit byte order for opaque snapshots.
 `HmiRecipeBinaryCodec` validates and decodes these snapshots and patches a cloned
 payload while preserving padding and unrelated bits. Unsupported layouts remain
 opaque; no UDT packing is inferred. Both APIs are mirrored in C# and TypeScript.
+
+
+Unified XML engineering import/export and its complete-model requirement are documented in [the format guide](docs/WINCC-UNIFIED-XML.md). For the contract-driven writer, pass released catalog XML to `new HmiScreenToUnifiedXmlConverter(catalogXml)`; export consumes editable model values, including tag/resource mapping tables and script settings. The no-argument constructor uses the same shared schema. Superseded catalogs and old exported-file support have been removed. Check [coverage](docs/UNIFIED-XML-COVERAGE.md) before relying on a native-project round trip.

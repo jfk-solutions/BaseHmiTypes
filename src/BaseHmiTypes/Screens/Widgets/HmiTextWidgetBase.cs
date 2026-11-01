@@ -5,6 +5,10 @@ namespace BaseHmiTypes.Screens.Widgets;
 
 public abstract class HmiTextWidgetBase : HmiWidgetBase
 {
+    public HmiProperty<string>? ProcessValue { get; set; }
+    public HmiProperty<string>? IOFieldType { get; set; }
+    public HmiInputBehavior? InputBehavior { get; set; }
+
     public HmiProperty<HmiMultilingualText>? Text { get; set; }
 
     public HmiProperty<HmiMultilingualText>? AlternateText { get; set; }

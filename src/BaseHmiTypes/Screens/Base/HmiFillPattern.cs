@@ -33,5 +33,16 @@ public enum HmiFillPattern
     Ovals,
     Diamonds,
     Scales,
-    Waves
+    Waves,
+    BackwardDiagonal,
+    Cross,
+    ForwardDiagonal,
+    GradientHorizontal,
+    GradientVertical,
+    GradientForwardDiagonal,
+    GradientBackwardDiagonal,
+    GradientHorizontalTricolor,
+    GradientVerticalTricolor,
+    GradientForwardDiagonalTricolor,
+    GradientBackwardDiagonalTricolor,
 }
