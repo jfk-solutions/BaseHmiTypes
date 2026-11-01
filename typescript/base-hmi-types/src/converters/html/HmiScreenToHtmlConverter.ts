@@ -5255,6 +5255,8 @@ function appendColorGradientStyle(html: string[], gradient: ColorGradient | unde
   if (gradient === undefined) return;
   const stops = gradient.stops.map(stop => `${colorToCss(stop.color)} ${toCss(stop.offset)}%`).join(", ");
   html.push(`${property}: linear-gradient(${gradientDirectionToCss(gradient.direction)}, ${stops});`);
+  if (property === "background-image")
+    html.push("background-size: 100% 100%;background-repeat: no-repeat;");
 }
 
 function gradientDirectionToCss(direction: HmiGradientDirection): string {

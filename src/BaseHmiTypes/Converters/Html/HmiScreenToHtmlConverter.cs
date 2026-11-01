@@ -4697,6 +4697,8 @@ public partial class HmiScreenToHtmlConverter
         foreach (var (color, offset) in value.Stops)
             html.Append(", ").Append(ToCss(color)).Append(' ').Append(ToCss(offset)).Append('%');
         html.Append(");");
+        if (property == "background-image")
+            html.Append("background-size: 100% 100%;background-repeat: no-repeat;");
     }
 
     private static void AppendFillAnimationStyle(StringBuilder html, HmiShapeBase item, HmiHtmlConvertContext context)
