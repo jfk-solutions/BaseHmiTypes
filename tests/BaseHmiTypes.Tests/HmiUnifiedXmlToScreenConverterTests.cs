@@ -60,7 +60,7 @@ public class HmiUnifiedXmlToScreenConverterTests
                 Language = HmiScriptLanguage.JavaScript, SourceCode = code, GlobalDefinitionAreaScriptCode = globals } });
             var output = new HmiScreenToUnifiedXmlConverter().Convert(screen, device).Xml;
             var root = XElement.Parse(output);
-            Assert.IsNull(root.Attribute("catalog")); Assert.AreEqual(device, (string?)root.Attribute("device"));
+            Assert.IsNull(root.Attribute("catalog")); Assert.IsNull(root.Attribute("device"));
             Assert.AreEqual("preserve", (string?)root.Descendants(XName.Get("script-code",HmiScreenToUnifiedXmlConverter.Namespace)).Single().Attribute(XNamespace.Xml+"space"));
             StringAssert.Matches(output, new Regex(@"\n[ \t]+<screen\b"));
             var restored = new HmiUnifiedXmlToScreenConverter().Convert(output).Screen;
@@ -87,9 +87,9 @@ public class HmiUnifiedXmlToScreenConverterTests
         Assert.AreEqual(action.GlobalDefinitionAreaScriptCode, restored.GlobalDefinitionAreaScriptCode);
         Assert.AreEqual(action.Async, restored.Async);
     }
-    private static string Archive(string items = "", string screenAttributes = "", string complete = "false") =>
+    private static string Archive(string items = "", string screenAttributes = "") =>
         "<unified-export xmlns=\"" + HmiScreenToUnifiedXmlConverter.Namespace + "\" xmlns:u=\"" + HmiScreenToUnifiedXmlConverter.ContractNamespace +
-        "\" version=\"2\" scope=\"screen\" screen=\"Main\" apiVersion=\"21.0.0.0\" complete=\"" + complete + "\">" +
+        "\" version=\"2\" apiVersion=\"21.0.0.0\">" +
         "<screen name=\"Main\" width=\"800\" height=\"480\" " + screenAttributes + ">" + items + "</screen></unified-export>";
 
     [TestMethod]
@@ -193,8 +193,8 @@ public class HmiUnifiedXmlToScreenConverterTests
     [TestMethod]
     public void ExpandsCatalogDefaultsAndBlankTextTemplates()
     {
-        var result = reader.Convert(Archive("<button name=\"Run\" left=\"1\" font-family=\"Arial\"/><text-box name=\"Caption\" top=\"0\" font-family=\"Arial\"/>", complete: "true"));
-        Assert.IsTrue(result.SourceComplete);
+        var result = reader.Convert(Archive("<button name=\"Run\" left=\"1\" font-family=\"Arial\"/><text-box name=\"Caption\" top=\"0\" font-family=\"Arial\"/>"));
+        Assert.IsFalse(result.SourceComplete);
         var button = (HmiButton)result.Screen.Layers[0].Items[0];
         Assert.AreEqual(0d, button.Width.StaticValue); Assert.AreEqual(0d, button.Height.StaticValue);
         Assert.IsTrue(button.Enabled.StaticValue); Assert.IsTrue(button.Visible.StaticValue);
@@ -260,7 +260,7 @@ public class HmiUnifiedXmlToScreenConverterTests
     [TestMethod]
     public void RejectsWrongProfileMalformedXmlAndDtd()
     {
-        Assert.ThrowsExactly<NotSupportedException>(() => reader.Convert(Archive().Replace("scope=\"screen\"", "scope=\"device\"")));
+        Assert.ThrowsExactly<FormatException>(() => reader.Convert(Archive().Replace("<screen ", "<software ").Replace("</screen>", "</software>")));
         Assert.ThrowsExactly<NotSupportedException>(() => reader.Convert(Archive().Replace("version=\"2\"", "version=\"99\"")));
         Assert.ThrowsExactly<XmlException>(() => reader.Convert("<bad>"));
         Assert.ThrowsExactly<XmlException>(() => reader.Convert("<!DOCTYPE x [<!ENTITY test 'x'>]>" + Archive()));

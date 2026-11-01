@@ -22,8 +22,8 @@ test("Unified export uses the fixed catalog and declares incomplete coverage", (
   assert.match(result.xml, /xmlns="urn:s7mcp:wincc-unified:2"/);
   assert.doesNotMatch(result.xml, /\bcatalog=/);
   assert.doesNotMatch(result.xml, /apiVersion=/);
-  assert.match(result.xml, /scope="screen" screen="Main"/);
-  assert.match(result.xml, /complete="false"/);
+  assert.doesNotMatch(result.xml, /\b(?:scope|screen|device)=/);
+  assert.doesNotMatch(result.xml, /\bcomplete=/);
   assert.match(result.xml, /width="800"/);
   assert.match(result.xml, /back-color="#0116FE7F"/);
   assert.match(result.xml, /screen-number="501"/);

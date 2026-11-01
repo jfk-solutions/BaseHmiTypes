@@ -91,9 +91,10 @@ public class HmiScreenToUnifiedXmlConverterTests
         Assert.AreEqual(Ns + "unified-export", root.Name);
         Assert.IsNull(root.Attribute("catalog"));
         Assert.IsNull(root.Attribute("apiVersion"));
-        Assert.AreEqual("screen", (string?)root.Attribute("scope"));
-        Assert.AreEqual("Main", (string?)root.Attribute("screen"));
-        Assert.AreEqual("false", (string?)root.Attribute("complete"));
+        Assert.IsNull(root.Attribute("scope"));
+        Assert.IsNull(root.Attribute("screen"));
+        Assert.IsNull(root.Attribute("device"));
+        Assert.IsNull(root.Attribute("complete"));
         Assert.IsFalse(result.Complete);
         var element = root.Element(Ns + "screen")!;
         Assert.AreEqual("800", (string?)element.Attribute("width"));

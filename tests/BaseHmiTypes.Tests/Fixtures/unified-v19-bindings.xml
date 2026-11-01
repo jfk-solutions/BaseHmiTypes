@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2" apiVersion="19.0.0.0" device="Panel" scope="screen" screen="Main" coverage="exposed-openness-graph" complete="false" xmlns="urn:s7mcp:wincc-unified:2">
+<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2" apiVersion="19.0.0.0" coverage="exposed-openness-graph" xmlns="urn:s7mcp:wincc-unified:2">
   <screen name="Main">
     <iofield iofield-type="InputOutput" name="Value" output-format="{F2}" process-value="10.25">
       <dynamizations>

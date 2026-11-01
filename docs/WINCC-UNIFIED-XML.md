@@ -12,7 +12,7 @@ Screen scope includes the screen and every owned control/part/event/dynamization
 
 ## Export and completeness
 
-Export returns XML and a separate list of warnings describing missing mappings. Unsupported but valid screen content must not prevent producing an inspection export. Malformed names, invalid XML characters or structurally invalid model input still require validation. A partial export must enumerate omissions and retain `complete="false"`; a complete exporter accounts for every semantic field in its declared scope. Changing this flag without implementing the missing data violates the format.
+Export returns XML and a separate list of warnings describing missing mappings. Unsupported but valid screen content must not prevent producing an inspection export. Malformed names, invalid XML characters or structurally invalid model input still require validation. Export results enumerate omissions separately; a complete exporter accounts for every semantic field in its declared content. The XML envelope has no completeness flag and import never requires one. Actual unsupported content is handled by validation and target-capability preflight.
 
 The target is complete export for all supported Unified screen/control types in both languages. Missing mappings are implementation defects, not a permanent reduced-model design. Native-source adapters must supply version-aware engineering values rather than inferring missing settings from rendered HTML. Preview coverage and engineering export coverage are independent.
 
@@ -47,7 +47,7 @@ Scalar values are attributes: geometry, colors, flags, references, authorization
 
 Writers omit ordinary scalar values equal to the shared format defaults. Language entries remain explicit even when their formatted payload is empty. They omit IDs with no references and type selectors when the tag has one contract. Shared-object references and ambiguous typed contracts retain their selectors. This compaction must reproduce the same full engineering graph when expanded; a small document must not discard settings. The host always supplies the single bundled schema and its stable defaults. Screen exports contain no catalog ID, fingerprint, or embedded schema.
 
-[This generated screen example](examples/compact-model.screen.xml) shows the actual writer output. Its geometry and appearance are attributes, its localized captions contain language entries with direct text and HTML children, and its event script is plain element text. Empty script globals can be necessary to override a nonempty catalog default. The archive's completeness flag describes implementation coverage, independently of compactness.
+[This generated screen example](examples/compact-model.screen.xml) shows the actual writer output. Its geometry and appearance are attributes, its localized captions contain language entries with direct text and HTML children, and its event script is plain element text. Empty script globals can be necessary to override a nonempty catalog default. Coverage and completeness diagnostics belong to the separate export result, independently of compactness.
 
 ## Property events and PLC references
 
@@ -91,7 +91,7 @@ Omitted scalar values use **our stable format defaults**, never the destination 
 
 ## Wire rules
 
-- Root: `unified-export`, `version="2"`, `scope="screen"` or `scope="device"`, device/name metadata, `coverage` and `complete`. Screen exports contain one `screen`; device authoring contains `software` with owned screen groups/screens/tag tables.
+- Root: unified-export with version="2", optional apiVersion provenance and coverage metadata. A screen document contains one screen; device authoring contains one software with owned screen groups/screens/tag tables. There are no complete, scope, screen or device envelope attributes. Readers infer content from the child element and use the screen child's required name for identity. The destination device is selected by the caller. Export diagnostics remain separate; import performs structural validation and target-capability preflight. The existing model-reader SourceComplete/sourceComplete result remains false (not certified), since absence of a flag cannot certify engineering coverage.
 - Scalars are attributes with readable kebab-case names. Parts such as font and padding use prefixed owner attributes when they have no nested behavior or shared identity. Parts with dynamics remain children.
 - Booleans are True/False. Numeric values use invariant culture and the declared type range. Colors are #RRGGBB or #RRGGBBAA. Enum values use declared symbolic names. Strings preserve whitespace and XML escaping.
 - Multilingual text uses `text`/`display-name`/`tool-tip-text` with `multilingual-text-item lang="en-GB"`. Formatted text uses direct mixed content; omitted content means native `<body><p/></body>`. Plain strings use an explicit `text` attribute, including `text=""`. Language entries are preserved, and an empty collection stays empty.

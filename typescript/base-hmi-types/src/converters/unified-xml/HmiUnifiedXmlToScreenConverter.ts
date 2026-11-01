@@ -32,6 +32,7 @@ import { HmiFillPattern } from "../../screens/base/HmiFillPattern.js";
 
 export interface HmiUnifiedXmlImportResult {
   readonly screen: HmiScreen;
+  /** False when source engineering completeness is not independently certified; not an XML import gate. */
   readonly sourceComplete: boolean;
   readonly diagnostics: readonly HmiUnifiedXmlDiagnostic[];
 }
@@ -77,8 +78,8 @@ export class HmiUnifiedXmlToScreenConverter {
   /** Read individual exports or all screens in a software authoring document. Scripts stay inert. */
   async convertScreens(xml: string): Promise<readonly HmiUnifiedXmlImportResult[]> {
     const root = parse(xml);
-    if (attr(root, "scope") === "screen") return [await this.convert(xml)];
-    if (root.namespaceURI !== n || root.localName !== "unified-export" || attr(root, "version") !== "2" || attr(root, "scope") !== "device"
+    if (children(root).length === 1 && children(root)[0].namespaceURI === n && children(root)[0].localName === "screen") return [await this.convert(xml)];
+    if (root.namespaceURI !== n || root.localName !== "unified-export" || attr(root, "version") !== "2"
       || children(root).length !== 1 || children(root)[0].localName !== "software" || children(root)[0].namespaceURI !== n)
       throw new Error("Expected a Unified XML v2 screen or software document.");
     const screens = Array.from(root.getElementsByTagNameNS(n, "screen"));
@@ -86,7 +87,6 @@ export class HmiUnifiedXmlToScreenConverter {
     const results: HmiUnifiedXmlImportResult[] = [];
     for (const screen of screens) {
       const envelope = root.cloneNode(false) as Element;
-      envelope.setAttribute("scope", "screen"); envelope.setAttribute("screen", attr(screen, "name") ?? "");
       const selected = screen.cloneNode(true) as Element;
       let ancestor: Element | null = screen;
       while (ancestor && !key(ancestor, "operation")) ancestor = ancestor.parentNode?.nodeType === 1 ? ancestor.parentNode as Element : null;
@@ -102,15 +102,13 @@ export class HmiUnifiedXmlToScreenConverter {
 
   async convert(xml: string): Promise<HmiUnifiedXmlImportResult> {
     const root = parse(xml);
-    if (root.namespaceURI !== n || root.localName !== "unified-export" || attr(root, "version") !== "2" || attr(root, "scope") !== "screen" ||
+    if (root.namespaceURI !== n || root.localName !== "unified-export" || attr(root, "version") !== "2" ||
       (attr(root,"apiVersion") !== undefined && !/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/.test(attr(root,"apiVersion")!)))
       throw new Error("Expected a screen-scope Unified XML v2 archive with a valid engineering API version.");
-    const complete = attr(root, "complete");
-    if (complete !== "true" && complete !== "false") throw new Error("Invalid archive complete flag.");
     const roots = children(root);
     if (roots.length !== 1 || roots[0].namespaceURI !== n || roots[0].localName !== "screen") throw new Error("Exactly one screen root is required.");
     const source = roots[0];
-    if (!attr(source, "name")?.trim() || attr(source, "name") !== attr(root, "screen")) throw new Error("Archive and screen names must agree.");
+    if (!attr(source, "name")?.trim()) throw new Error("Screen name is required.");
     const ids = new Map<string, Element>();
     const all = Array.from(root.getElementsByTagName("*"));
     for (const node of all) {
@@ -150,9 +148,8 @@ export class HmiUnifiedXmlToScreenConverter {
       const item = items.get(target);
       if (item) layer.items.push(item); else context.report("screen.screen-items", "Reference or control cannot be represented; retained in screen sourceData.");
     }
-    if (complete === "false") context.report("screen", "The source archive is marked incomplete.");
     if (attr(root, "coverage") === "authored-objects") context.report("screen", "Authoring preview uses catalog defaults; existing target values and external project resources are unavailable.");
-    return { screen, sourceComplete: complete === "true", diagnostics: context.diagnostics };
+    return { screen, sourceComplete: false, diagnostics: context.diagnostics };
   }
 }
 

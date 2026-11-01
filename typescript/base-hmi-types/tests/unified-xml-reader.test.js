@@ -37,8 +37,8 @@ test("event engineering settings survive model edits and export", async () => {
   assert.equal(restored.globalDefinitionAreaScriptCode, action.globalDefinitionAreaScriptCode);
   assert.equal(restored.sourceCode, action.sourceCode);
 });
-function archive(items = "", complete = "false") {
-  return `<unified-export xmlns="${HmiScreenToUnifiedXmlConverter.namespace}" xmlns:u="${HmiScreenToUnifiedXmlConverter.contractNamespace}" version="2" scope="screen" screen="Main" apiVersion="21.0.0.0" complete="${complete}"><screen name="Main" width="800" height="480">${items}</screen></unified-export>`;
+function archive(items = "") {
+  return `<unified-export xmlns="${HmiScreenToUnifiedXmlConverter.namespace}" xmlns:u="${HmiScreenToUnifiedXmlConverter.contractNamespace}" version="2" apiVersion="21.0.0.0"><screen name="Main" width="800" height="480">${items}</screen></unified-export>`;
 }
 
 test("localized display names and every Unified font weight are editable model values", async () => {
@@ -94,8 +94,8 @@ test("reader recovers supported writer data, exact text, item order and identity
 });
 
 test("reader expands stable format defaults without captured language templates", async () => {
-  const result = await reader.convert(archive('<button name="Run" left="1" font-family="Arial"/><text-box name="Caption" top="0" font-family="Arial"/>', "true"));
-  assert.equal(result.sourceComplete, true);
+  const result = await reader.convert(archive('<button name="Run" left="1" font-family="Arial"/><text-box name="Caption" top="0" font-family="Arial"/>'));
+  assert.equal(result.sourceComplete, false);
   const [button, box] = result.screen.layers[0].items;
   assert.equal(button.width.staticValue, 0); assert.equal(button.height.staticValue, 0);
   assert.equal(button.enabled.staticValue, true); assert.equal(button.visible.staticValue, true);
@@ -147,7 +147,7 @@ test("unsupported fields, controls and members are diagnosed and retained", asyn
 });
 
 test("reader rejects unsupported profiles, malformed XML and DTDs", async () => {
-  await assert.rejects(reader.convert(archive().replace('scope="screen"', 'scope="device"')));
+  await assert.rejects(reader.convert(archive().replace("<screen ", "<software ").replace("</screen>", "</software>")));
   await assert.rejects(reader.convert(archive().replace('version="2"', 'version="99"')));
   await assert.rejects(reader.convert("<bad>"));
   await assert.rejects(reader.convert("<!DOCTYPE x>" + archive()));
@@ -232,7 +232,7 @@ test("pretty printing uses the bundled schema and preserves payload whitespace",
       language:HmiScriptLanguage.JavaScript,sourceCode:code,globalDefinitionAreaScriptCode:globals})}));
     const output=new HmiScreenToUnifiedXmlConverter().convert(screen,device).xml;
     const root=new DOMParser().parseFromString(output,"application/xml").documentElement;
-    assert.equal(root.hasAttribute("catalog"),false);assert.equal(root.getAttribute("device"),device);
+    assert.equal(root.hasAttribute("catalog"),false);assert.equal(root.hasAttribute("device"),false);
     assert.equal(root.getElementsByTagNameNS(HmiScreenToUnifiedXmlConverter.namespace,"script-code")[0].getAttributeNS("http://www.w3.org/XML/1998/namespace","space"),"preserve");
     assert.match(output,/\n[ \t]+<screen\b/);
     const restored=(await new HmiUnifiedXmlToScreenConverter().convert(output)).screen,action=restored.events[0].action;

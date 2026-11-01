@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2" apiVersion="21.0.0.0" device="Panel" scope="screen" screen="501 StartScreen" coverage="exposed-openness-graph" complete="false" xmlns="urn:s7mcp:wincc-unified:2">
+<unified-export xmlns:u="urn:s7mcp:wincc-unified:2:contract" version="2" apiVersion="21.0.0.0" coverage="exposed-openness-graph" xmlns="urn:s7mcp:wincc-unified:2">
   <screen alternate-back-color="#FFFFFF" back-color="#96AEC2" back-fill-pattern="GradientVertical" back-graphic-stretch-mode="UniformToFill" height="480" name="501 StartScreen" screen-number="501" width="800">
     <display-name>
       <multilingual-text-item lang="de-DE" />

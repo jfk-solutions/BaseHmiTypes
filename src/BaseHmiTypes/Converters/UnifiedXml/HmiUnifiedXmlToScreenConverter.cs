@@ -16,6 +16,7 @@ namespace BaseHmiTypes.Converters.UnifiedXml;
 public sealed class HmiUnifiedXmlImportResult
 {
     public HmiScreen Screen { get; }
+    /// <summary>False when source engineering completeness is not independently certified; not an XML import gate.</summary>
     public bool SourceComplete { get; }
     public IReadOnlyList<HmiUnifiedXmlDiagnostic> Diagnostics { get; }
     internal HmiUnifiedXmlImportResult(HmiScreen screen, bool sourceComplete, List<HmiUnifiedXmlDiagnostic> diagnostics)
@@ -67,8 +68,8 @@ public sealed class HmiUnifiedXmlToScreenConverter
     public IReadOnlyList<HmiUnifiedXmlImportResult> ConvertScreens(string xml)
     {
         var root = Parse(xml);
-        if ((string?)root.Attribute("scope") == "screen") return new[] { Convert(xml) };
-        if (root.Name != N + "unified-export" || (string?)root.Attribute("version") != "2" || (string?)root.Attribute("scope") != "device"
+        if (root.Elements().Count() == 1 && root.Elements().Single().Name == N + "screen") return new[] { Convert(xml) };
+        if (root.Name != N + "unified-export" || (string?)root.Attribute("version") != "2"
             || root.Elements().Count() != 1 || root.Elements().Single().Name != N + "software")
             throw new NotSupportedException("Expected a Unified XML v2 screen or software document.");
         var screens = root.Descendants(N + "screen").ToArray();
@@ -77,7 +78,6 @@ public sealed class HmiUnifiedXmlToScreenConverter
         foreach (var screen in screens)
         {
             var envelope = new XElement(root.Name, root.Attributes());
-            envelope.SetAttributeValue("scope", "screen"); envelope.SetAttributeValue("screen", (string?)screen.Attribute("name") ?? "");
             var selected = new XElement(screen);
             var operation = screen.AncestorsAndSelf().Select(e => (string?)e.Attribute(U + "operation")).FirstOrDefault(value => value != null);
             if (operation != null) selected.SetAttributeValue(U + "operation", operation);
@@ -92,15 +92,12 @@ public sealed class HmiUnifiedXmlToScreenConverter
     {
         var root = Parse(xml);
         if (root.Name != N + "unified-export" || (string?)root.Attribute("version") != "2" ||
-            (string?)root.Attribute("scope") != "screen" ||
             (root.Attribute("apiVersion") != null && !Regex.IsMatch((string)root.Attribute("apiVersion")!, @"^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$")))
             throw new NotSupportedException("Expected a screen-scope Unified XML v2 archive with a valid engineering API version.");
-        var complete = (string?)root.Attribute("complete");
-        if (complete != "true" && complete != "false") throw new FormatException("Invalid archive complete flag.");
         if (root.Elements().Count() != 1 || root.Elements().Single().Name != N + "screen") throw new FormatException("Exactly one screen root is required.");
         var source = root.Elements().Single();
-        if (string.IsNullOrWhiteSpace((string?)source.Attribute("name")) || (string?)source.Attribute("name") != (string?)root.Attribute("screen"))
-            throw new FormatException("Archive and screen names must agree.");
+        if (string.IsNullOrWhiteSpace((string?)source.Attribute("name")))
+            throw new FormatException("Screen name is required.");
         catalog ??= Parse(HmiUnifiedXmlCatalog.Read());
         var context = new Context(catalog);
         var ids = new Dictionary<string, XElement>(StringComparer.Ordinal);
@@ -148,9 +145,8 @@ public sealed class HmiUnifiedXmlToScreenConverter
             if (items.TryGetValue(target, out var item)) layer.Items.Add(item);
             else context.Report("screen.screen-items", "Reference or control cannot be represented; retained in screen SourceData.");
         }
-        if (complete == "false") context.Report("screen", "The source archive is marked incomplete.");
         if ((string?)root.Attribute("coverage") == "authored-objects") context.Report("screen", "Authoring preview uses catalog defaults; existing target values and external project resources are unavailable.");
-        return new(screen, complete == "true", context.Diagnostics);
+        return new(screen, false, context.Diagnostics);
     }
 
     private sealed class Context

@@ -45,7 +45,7 @@ export class HmiUnifiedXmlModelWriter {
         if(screen.kind !== "Screen") this.report("screen.kind", "Screen kind has no Unified XML mapping.");
         const doc = this.catalog.ownerDocument!.implementation.createDocument(n, "unified-export", null), root = doc.documentElement;
         root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:u", u);
-        for (const [key, value] of Object.entries({ version: "2", ...(screen.engineeringApiVersion === undefined ? {} : {apiVersion: screen.engineeringApiVersion}), device, scope: "screen", screen: screen.name!, coverage: "exposed-openness-graph", complete: "false" }))
+        for (const [key, value] of Object.entries({ version: "2", ...(screen.engineeringApiVersion === undefined ? {} : {apiVersion: screen.engineeringApiVersion}), coverage: "exposed-openness-graph" }))
             root.setAttribute(key, value);
         const node = this.write(doc, screen, "screen", "screen");
         if (node)

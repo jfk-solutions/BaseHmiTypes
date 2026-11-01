@@ -37,8 +37,7 @@ internal sealed class HmiUnifiedXmlModelWriter
         var root = new XElement(N + "unified-export", new XAttribute(XNamespace.Xmlns + "u", U),
             new XAttribute("version", "2"),
             screen.EngineeringApiVersion == null ? null : new XAttribute("apiVersion", screen.EngineeringApiVersion),
-            new XAttribute("device", device), new XAttribute("scope", "screen"), new XAttribute("screen", screen.Name!),
-            new XAttribute("coverage", "exposed-openness-graph"), new XAttribute("complete", "false"));
+            new XAttribute("coverage", "exposed-openness-graph"));
         var node = Write(screen, "screen", "screen"); if (node != null) root.Add(node);
         var referenced = new HashSet<string>(root.Descendants(U + "ref").Select(e => (string)e.Attribute("ref")!));
         foreach (var owner in root.Descendants().Where(e => e.Attribute(U + "type") != null).ToArray())
