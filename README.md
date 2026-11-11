@@ -303,3 +303,5 @@ opaque; no UDT packing is inferred. Both APIs are mirrored in C# and TypeScript.
 
 
 Unified XML engineering import/export and its complete-model requirement are documented in [the format guide](docs/WINCC-UNIFIED-XML.md). For the contract-driven writer, pass released catalog XML to `new HmiScreenToUnifiedXmlConverter(catalogXml)`; export consumes editable model values, including tag/resource mapping tables and script settings. The no-argument constructor uses the same shared schema. Superseded catalogs and old exported-file support have been removed. Check [coverage](docs/UNIFIED-XML-COVERAGE.md) before relying on a native-project round trip.
+
+HmiImage.LocalizedImages (TypeScript: localizedImages) retains per-culture image payloads under the same logical resource identity. HTML rendering selects the requested culture and otherwise uses the neutral image.

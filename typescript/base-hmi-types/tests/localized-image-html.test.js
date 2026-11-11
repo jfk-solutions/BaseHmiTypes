@@ -12,3 +12,16 @@ test('localized image sources follow render culture and retain their neutral fal
   }
   assert.equal(source.uri, 'default.svg'); assert.equal(source.localizedUris.size, 2);
 });
+
+test('named project images preserve localized payloads through ID resolution',async()=>{
+ const {HmiImage,HmiImageType}=await import('../dist/index.js');
+ const image=Object.assign(new HmiImage(),{id:'logical',name:'Active',imageType:HmiImageType.Png,data:new Uint8Array([1])});
+ image.localizedImages.set(1031,Object.assign(new HmiImage(),{imageType:HmiImageType.Png,data:new Uint8Array([2])}));
+ const screen=new HmiScreen(),layer=new HmiLayer();screen.layers.push(layer);
+ layer.items.push(Object.assign(new HmiButton(),{name:'Graphic',image:staticProperty({kind:HmiImageSourceKind.Uri,imageId:'logical'})}));
+ const project={info:{},getImage:async id=>id==='logical'?image:undefined};
+ for(const [cultureLcid,payload]of [[1031,'Ag=='],[2057,'AQ==']]) {
+  const html=await new HmiScreenToHtmlConverter().convertAsync(screen,project,{cultureLcid});assert.ok(html.includes('data:image/png;base64,'+payload));
+ }
+ assert.equal(image.data[0],1);
+});

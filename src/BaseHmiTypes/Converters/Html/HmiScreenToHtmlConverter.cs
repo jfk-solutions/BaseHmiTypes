@@ -718,7 +718,7 @@ public partial class HmiScreenToHtmlConverter
             return null;
 
         var resolved = await project.GetImageAsync(image.ImageId!, cancellationToken).ConfigureAwait(false);
-        return ResolveImageUri(resolved);
+        return ResolveImageUri(cultureLcid is int culture && resolved?.LocalizedImages.TryGetValue(culture, out var variant) == true ? variant : resolved);
     }
 
     private static string? ResolveMetafileDataUri(string uri)

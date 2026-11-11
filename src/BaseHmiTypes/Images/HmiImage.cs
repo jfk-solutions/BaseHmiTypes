@@ -12,5 +12,7 @@ public sealed class HmiImage : IHmiObject
 
     public string? MimeType { get; set; }
 
+    public Dictionary<int, HmiImage> LocalizedImages { get; } = new();
+
     public byte[] Data { get; set; } = Array.Empty<byte>();
 }

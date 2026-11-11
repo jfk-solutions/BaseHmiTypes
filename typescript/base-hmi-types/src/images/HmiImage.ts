@@ -8,4 +8,5 @@ export class HmiImage implements IHmiObject {
   imageType: HmiImageType = HmiImageType.Unknown;
   mimeType?: string;
   data = new Uint8Array();
+  localizedImages = new Map<number, HmiImage>();
 }

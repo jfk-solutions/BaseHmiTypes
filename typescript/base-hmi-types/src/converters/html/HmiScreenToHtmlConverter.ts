@@ -7296,7 +7296,7 @@ async function resolveImageUri(
   }
 
   const resolved = await project.getImage(image.imageId, signal);
-  return resolveImageUriFromImage(resolved);
+  return resolveImageUriFromImage((cultureLcid === undefined ? undefined : resolved?.localizedImages?.get(cultureLcid)) ?? resolved);
 }
 
 function resolveMetafileDataUri(uri: string): string | undefined {
