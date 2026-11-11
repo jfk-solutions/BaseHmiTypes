@@ -6386,11 +6386,29 @@ public partial class HmiScreenToHtmlConverter
         html.Append("transform: rotate(").Append(ToCss(item.RotationAngle.GetStaticValueOrDefault())).Append("deg);");
         if (item.RotationCenterX != null && item.RotationCenterY != null)
         {
-            html.Append("transform-origin: ")
-                .Append(ToCss(item.RotationCenterX.GetStaticValueOrDefault()))
-                .Append("px ")
-                .Append(ToCss(item.RotationCenterY.GetStaticValueOrDefault()))
-                .Append("px;");
+            var x = item.RotationCenterX.GetStaticValueOrDefault();
+            var y = item.RotationCenterY.GetStaticValueOrDefault();
+            var placement = item.RotationCenterPlacement.GetStaticValueOrDefault(string.Empty);
+            if (placement == "AbsoluteFromCenter")
+            {
+                html.Append("transform-origin: calc(50% + ").Append(ToCss(x))
+                    .Append("px) calc(50% + ").Append(ToCss(y)).Append("px);");
+            }
+            else if (placement == "NormedFromCenter")
+            {
+                html.Append("transform-origin: ").Append(ToCss((1 + x) * 50))
+                    .Append("% ").Append(ToCss((1 + y) * 50)).Append("%;");
+            }
+            else
+            {
+                if (placement == "AbsoluteToContainer")
+                {
+                    x -= item.X.GetStaticValueOrDefault();
+                    y -= item.Y.GetStaticValueOrDefault();
+                }
+                html.Append("transform-origin: ").Append(ToCss(x))
+                    .Append("px ").Append(ToCss(y)).Append("px;");
+            }
         }
         else
         {

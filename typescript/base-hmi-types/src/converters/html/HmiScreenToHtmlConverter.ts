@@ -6713,7 +6713,16 @@ function appendItemTransform(html: string[], item: HmiScreenItemBase): void {
   const rotationCenterX = getStaticValue(item.rotationCenterX);
   const rotationCenterY = getStaticValue(item.rotationCenterY);
   if (rotationCenterX !== undefined && rotationCenterY !== undefined) {
-    html.push(`transform-origin: ${toCss(rotationCenterX)}px ${toCss(rotationCenterY)}px;`);
+    const placement = getStaticValue(item.rotationCenterPlacement);
+    if (placement === "AbsoluteFromCenter") {
+      html.push(`transform-origin: calc(50% + ${toCss(rotationCenterX)}px) calc(50% + ${toCss(rotationCenterY)}px);`);
+    } else if (placement === "NormedFromCenter") {
+      html.push(`transform-origin: ${toCss((1 + rotationCenterX) * 50)}% ${toCss((1 + rotationCenterY) * 50)}%;`);
+    } else if (placement === "AbsoluteToContainer") {
+      html.push(`transform-origin: ${toCss(rotationCenterX - getStaticValueOrDefault(item.x, 0))}px ${toCss(rotationCenterY - getStaticValueOrDefault(item.y, 0))}px;`);
+    } else {
+      html.push(`transform-origin: ${toCss(rotationCenterX)}px ${toCss(rotationCenterY)}px;`);
+    }
   } else {
     html.push("transform-origin: center;");
   }

@@ -1099,6 +1099,27 @@ public class HmiScreenToHtmlConverterTests
     }
 
     [TestMethod]
+    [DataRow("AbsoluteFromCenter", 0d, 0d, "calc(50% + 0px) calc(50% + 0px)")]
+    [DataRow("AbsoluteFromCenter", 10d, -20d, "calc(50% + 10px) calc(50% + -20px)")]
+    [DataRow("NormedFromCenter", -1d, 1d, "0% 100%")]
+    [DataRow("AbsoluteToContainer", 400d, 300d, "92px 40px")]
+    public async Task ConvertAsync_RespectsRotationPivotPlacement(string placement, double x, double y, string origin)
+    {
+        var label = new HmiText
+        {
+            Name = "Aushub", X = 308, Y = 260, Width = 95, Height = 32,
+            RotationAngle = 270, RotationCenterX = x, RotationCenterY = y,
+            RotationCenterPlacement = placement
+        };
+        var screen = new HmiScreen();
+        var layer = new HmiLayer();
+        layer.Items.Add(label);
+        screen.Layers.Add(layer);
+        var html = await new HmiScreenToHtmlConverter().ConvertAsync(screen);
+        StringAssert.Contains(html, "transform: rotate(270deg);transform-origin: " + origin + ";");
+    }
+
+    [TestMethod]
     public async Task ConvertAsync_RendersRectangleRotation()
     {
         var rectangle = new HmiRectangle

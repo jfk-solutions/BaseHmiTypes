@@ -962,6 +962,30 @@ test("HTML converter renders disabled foreground colors", async () => {
   assert.match(html, /text-shadow: 1px 1px #2C3742;/);
 });
 
+for (const [placement, x, y, origin] of [
+  ["AbsoluteFromCenter", 0, 0, "calc(50% + 0px) calc(50% + 0px)"],
+  ["AbsoluteFromCenter", 10, -20, "calc(50% + 10px) calc(50% + -20px)"],
+  ["NormedFromCenter", -1, 1, "0% 100%"],
+  ["AbsoluteToContainer", 400, 300, "92px 40px"],
+]) test(`HTML converter respects rotation pivot placement ${placement} (${x}, ${y})`, async () => {
+  const label = new HmiText();
+  label.name = "Aushub";
+  label.x = staticProperty(308);
+  label.y = staticProperty(260);
+  label.width = staticProperty(95);
+  label.height = staticProperty(32);
+  label.rotationAngle = staticProperty(270);
+  label.rotationCenterX = staticProperty(x);
+  label.rotationCenterY = staticProperty(y);
+  label.rotationCenterPlacement = staticProperty(placement);
+  const screen = new HmiScreen();
+  const layer = new HmiLayer();
+  layer.items.push(label);
+  screen.layers.push(layer);
+  const html = await new HmiScreenToHtmlConverter().convertAsync(screen);
+  assert.ok(html.includes(`transform: rotate(270deg);transform-origin: ${origin};`));
+});
+
 test("HTML converter renders rectangle rotation", async () => {
   const rectangle = new HmiRectangle();
   rectangle.name = "RotatedRectangle";
